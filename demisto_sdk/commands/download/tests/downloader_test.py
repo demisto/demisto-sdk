@@ -1199,12 +1199,12 @@ def test_list_files_flag(mocker):
         return_value=(mock_bundle_response, None, None),
     )
 
-    # Mock "create_custom_content_table" just for spying, to get its return value
-    content_table_mock = mocker.spy(Downloader, "create_custom_content_table")
+    list_file_method_mock = mocker.spy(downloader, "list_all_custom_content")
+    content_table_mock = mocker.spy(downloader, "create_custom_content_table")
     assert downloader.download() == 0
 
     expected_table = (
-        "CONTENT NAME                CONTENT TYPE\n"
+        "Content Name                Content Type\n"
         "--------------------------  ----------------\n"
         "CommonServerUserPowerShell  script\n"
         "CommonServerUserPython      script\n"
@@ -1218,6 +1218,7 @@ def test_list_files_flag(mocker):
         "custom_playbook             playbook"
     )
 
+    assert list_file_method_mock.call_count == 1
     assert content_table_mock.call_count == 1
     assert expected_table in content_table_mock.spy_return
 
@@ -1253,9 +1254,7 @@ def test_auto_replace_uuids_flag(mocker, auto_replace_uuids: bool):
     mocker.patch.object(downloader, "verify_output_path", return_value=True)
     mocker.patch.object(downloader, "build_existing_pack_structure", return_value={})
     mocker.patch.object(downloader, "write_files_into_output_path", return_value=True)
-    mock_replace_uuids = mocker.patch.object(
-        downloader, "replace_uuid_ids"
-    )
+    mock_replace_uuids = mocker.spy(downloader, "replace_uuid_ids")
 
     downloader.download()
 

@@ -1464,8 +1464,10 @@ def upload(ctx, **kwargs):
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
-    "-f", "--force", help="If downloaded content already exists in the output directory, overwrite it. ",
-    is_flag=True
+    "-f",
+    "--force",
+    help="If downloaded content already exists in the output directory, overwrite it. ",
+    is_flag=True,
 )
 @click.option(
     "-lf",

@@ -6,7 +6,7 @@
   * Improved error handling & messages, logs, and documentation (`demisto-sdk download --help`) for the command to be more descriptive.
   * Fixed an issue where custom PowerShell-based integrations and automations would not download properly.
   * Fixed an issue where names of the following custom content items would not be replaced from UUIDs:
-    * Classifiers 
+    * Classifiers
     * Dashboards
     * Indicator Types
     * Reports

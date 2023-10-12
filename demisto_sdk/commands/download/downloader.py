@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import shutil
 import tarfile
@@ -6,11 +8,10 @@ from collections import defaultdict
 from io import BytesIO, StringIO
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Dict, DefaultDict
-
-import mergedeep
+from typing import DefaultDict, Dict
 
 import demisto_client.demisto_api
+import mergedeep
 from demisto_client.demisto_api.rest import ApiException
 from dictor import dictor
 from flatten_dict import unflatten
@@ -22,12 +23,12 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_FILE_ENDINGS,
     ENTITY_NAME_SEPARATORS,
     ENTITY_TYPE_TO_DIR,
-    FileType,
     INTEGRATIONS_DIR,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
     UUID_REGEX,
+    FileType,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -87,10 +88,7 @@ ITEM_TYPE_TO_PREFIX = {
 }
 
 # Fields to keep on existing content items when overwriting them with a download (fields that are omitted by the server)
-KEEP_EXISTING_JSON_FIELDS = [
-    "fromVersion",
-    "toVersion"
-]
+KEEP_EXISTING_JSON_FIELDS = ["fromVersion", "toVersion"]
 KEEP_EXISTING_YAML_FIELDS = [
     "fromversion",
     "toversion",
@@ -122,10 +120,11 @@ class Downloader:
         keep_empty_folders (bool): Whether to keep empty folders when using init.
         auto_replace_uuids (bool):  Whether to replace the UUIDs.
     """
+
     def __init__(
         self,
         output: str | None = None,
-        input: tuple[str] = tuple(),
+        input: tuple = tuple(),
         regex: str | None = None,
         force: bool = False,
         insecure: bool = False,
@@ -168,63 +167,75 @@ class Downloader:
             int: Exit code. 1 if failed, 0 if succeeded
         """
         try:
+            if self.list_files:
+                # No flag validations are needed, since only the '-lf' flag is used.
+                self.list_all_custom_content()
+                return 0
+
             if not self.verify_flags():
                 return 1
 
-            # If using list-files mode, output path input is not mandatory, as no files are downloaded
-            if not self.list_files:
-                output_path = Path(self.output_pack_path)
+            output_path = Path(self.output_pack_path)
 
-                if not self.verify_output_path(output_path=output_path):
-                    return 1
+            if not self.verify_output_path(output_path=output_path):
+                return 1
 
-                if self.init:
-                    output_path = self.initialize_output_path(root_folder=output_path)
+            if self.init:
+                output_path = self.initialize_output_path(root_folder=output_path)
 
-            if self.download_system_items and not self.list_files:
-                downloaded_content_objects = self.fetch_system_content()
+            if self.download_system_items:
+                content_item_type: str = self.system_item_type
+                downloaded_content_objects = self.fetch_system_content(
+                    content_item_type=content_item_type
+                )
 
-            else:
+            else:  # Custom content
                 all_custom_content_data = self.download_custom_content()
-                all_custom_content_objects = self.parse_custom_content_data(custom_content_data=all_custom_content_data)
+                all_custom_content_objects = self.parse_custom_content_data(
+                    custom_content_data=all_custom_content_data
+                )
 
-                # If we're in list-files mode, print the list of all available custom content and exit
-                if self.list_files:
-                    logger.info(f"list-files (-lf) mode detected. Listing available custom content files "
-                                f"({len(all_custom_content_objects)}):")
-                    table_str = self.create_custom_content_table(custom_content_objects=all_custom_content_objects)
-
-                    logger.info(table_str)
-                    return 0
-
-                uuid_mapping = self.create_uuid_to_name_mapping(custom_content_objects=all_custom_content_objects)
+                uuid_mapping = self.create_uuid_to_name_mapping(
+                    custom_content_objects=all_custom_content_objects
+                )
 
                 # Filter custom content so that we'll process only downloaded content
                 downloaded_content_objects = self.filter_custom_content(
-                    custom_content_objects=all_custom_content_objects)
+                    custom_content_objects=all_custom_content_objects
+                )
 
                 if not downloaded_content_objects:
-                    logger.info(f"No custom content matching the provided input filters was found.")
+                    logger.info(
+                        "No custom content matching the provided input filters was found."
+                    )
                     return 0
 
                 if self.auto_replace_uuids:
                     # Replace UUID IDs with names in filtered content (only content we download)
                     changed_uuids_count = 0
                     for file_object in downloaded_content_objects.values():
-                        if self.replace_uuid_ids(custom_content_object=file_object, uuid_mapping=uuid_mapping):
+                        if self.replace_uuid_ids(
+                            custom_content_object=file_object, uuid_mapping=uuid_mapping
+                        ):
                             changed_uuids_count += 1
 
                     if changed_uuids_count > 0:
-                        logger.info(f"Replaced UUID IDs with names in {changed_uuids_count} custom content items.")
+                        logger.info(
+                            f"Replaced UUID IDs with names in {changed_uuids_count} custom content items."
+                        )
 
-            existing_pack_data = self.build_existing_pack_structure(existing_pack_path=output_path)
+            existing_pack_data = self.build_existing_pack_structure(
+                existing_pack_path=output_path
+            )
 
-            result = self.write_files_into_output_path(downloaded_content_objects=downloaded_content_objects,
-                                                       output_path=output_path,
-                                                       existing_pack_structure=existing_pack_data)
+            result = self.write_files_into_output_path(
+                downloaded_content_objects=downloaded_content_objects,
+                output_path=output_path,
+                existing_pack_structure=existing_pack_data,
+            )
 
             if not result:
-                logger.error(f"Download failed.")
+                logger.error("Download failed.")
                 return 1
 
             return 0
@@ -233,7 +244,7 @@ class Downloader:
             if not isinstance(e, HandledError):
                 logger.error(f"Error: {e}")
 
-            logger.debug(traceback.format_exc())
+            logger.debug("Traceback:\n" + traceback.format_exc())
             return 1
 
     def verify_flags(self) -> bool:
@@ -243,17 +254,15 @@ class Downloader:
         Returns:
             bool: Whether the flags are valid or not.
         """
-        # If listing files, input / output flags are ignored.
-        if self.list_files:
-            return True
-
         if not self.output_pack_path:
             logger.error("Error: Missing required parameter '-o' / '--output'.")
             return False
 
         if not any((self.input_files, self.download_all_custom_content, self.regex)):
-            logger.error("Error: No input parameter has been provided "
-                         "('-i' / '--input', '-r' / '--regex', '-a' / '--all).")
+            logger.error(
+                "Error: No input parameter has been provided "
+                "('-i' / '--input', '-r' / '--regex', '-a' / '--all)."
+            )
             return False
 
         if self.download_system_items:
@@ -264,18 +273,42 @@ class Downloader:
                 return False
 
             if self.regex:
-                logger.error("Error: RegEx flag ('-r' / '--regex') can only be used for custom content. "
-                             "Use '-i' / '--input' to provide a list of system items to download.")
+                logger.error(
+                    "Error: RegEx flag ('-r' / '--regex') can only be used for custom content. "
+                    "Use '-i' / '--input' to provide a list of system items to download."
+                )
                 return False
 
             if self.download_all_custom_content:
-                logger.error("Error: All custom content flag ('-a' / '--all') can only be used for custom content. "
-                             "Use '-i' / '--input' to provide a list of system items to download.")
+                logger.error(
+                    "Error: All custom content flag ('-a' / '--all') can only be used for custom content. "
+                    "Use '-i' / '--input' to provide a list of system items to download."
+                )
                 return False
 
         return True
 
-    def filter_custom_content(self, custom_content_objects: dict[str, dict]) -> dict[str, dict]:
+    def list_all_custom_content(self):
+        """
+        List all custom content available to download from the configured XSOAR instance.
+        """
+        all_custom_content_data = self.download_custom_content()
+        all_custom_content_objects = self.parse_custom_content_data(
+            custom_content_data=all_custom_content_data
+        )
+
+        logger.info(
+            f"List of custom content files available to download ({len(all_custom_content_objects)}):\n"
+        )
+        table_str = self.create_custom_content_table(
+            custom_content_objects=all_custom_content_objects
+        )
+
+        logger.info(table_str)
+
+    def filter_custom_content(
+        self, custom_content_objects: dict[str, dict]
+    ) -> dict[str, dict]:
         """
         Filter custom content data to include only relevant files for the current download command.
         The function also updates self.input_file with names of content matching the filter.
@@ -300,16 +333,20 @@ class Downloader:
 
             # Filter according input / regex flags
             if (
-                    self.download_all_custom_content or
-                    (self.regex and re.match(self.regex, content_item_name)) or
-                    content_item_name in self.input_files
+                self.download_all_custom_content
+                or (self.regex and re.match(self.regex, content_item_name))
+                or content_item_name in self.input_files
             ):
                 filtered_custom_content_objects[file_name] = content_item_data
 
-        logger.info(f"Filtering process completed, {len(filtered_custom_content_objects)}/{original_count} items remain.")
+        logger.info(
+            f"Filtering process completed, {len(filtered_custom_content_objects)}/{original_count} items remain."
+        )
         return filtered_custom_content_objects
 
-    def create_uuid_to_name_mapping(self, custom_content_objects: dict[str, dict]) -> dict[str, str]:
+    def create_uuid_to_name_mapping(
+        self, custom_content_objects: dict[str, dict]
+    ) -> dict[str, str]:
         """
         Find and map UUID IDs of custom content to their names.
 
@@ -327,7 +364,10 @@ class Downloader:
         for content_object in custom_content_objects.values():
             content_item_id = content_object["id"]
 
-            if re.match(UUID_REGEX, content_item_id) and content_item_id not in duplicate_ids:
+            if (
+                re.match(UUID_REGEX, content_item_id)
+                and content_item_id not in duplicate_ids
+            ):
                 if content_item_id not in mapping:
                     mapping[content_item_id] = content_object["name"]
 
@@ -357,30 +397,37 @@ class Downloader:
         try:
             self.client = demisto_client.configure(verify_ssl=verify)
             api_response: HTTPResponse = demisto_client.generic_request_func(
-                self.client, "/content/bundle", "GET",  _preload_content=False,
+                self.client,
+                "/content/bundle",
+                "GET",
+                _preload_content=False,
             )[0]
 
         except Exception as e:
             if isinstance(e, ApiException) and e.status == 401:
-                logger.error(f"Server authentication error: {e}\n"
-                             "Please verify that the required environment variables ('DEMISTO_API_KEY', or "
-                             "'DEMISTO_USERNAME' and 'DEMISTO_PASSWORD') are properly configured."
-                             )
+                logger.error(
+                    f"Server authentication error: {e}\n"
+                    "Please verify that the required environment variables ('DEMISTO_API_KEY', or "
+                    "'DEMISTO_USERNAME' and 'DEMISTO_PASSWORD') are properly configured."
+                )
 
             elif isinstance(e, MaxRetryError):
-                logger.error(f"Failed connecting to server: {e}.\n"
-                             "Please verify that the environment variable 'DEMISTO_BASE_URL' is properly configured, "
-                             "and that the server is accessible.\n"
-                             "If the server is using a self-signed certificate, try using the '--insecure' flag.")
+                logger.error(
+                    f"Failed connecting to server: {e}.\n"
+                    "Please verify that the environment variable 'DEMISTO_BASE_URL' is properly configured, "
+                    "and that the server is accessible.\n"
+                    "If the server is using a self-signed certificate, try using the '--insecure' flag."
+                )
 
             else:
                 logger.error(f"Error while fetching custom content: {e}")
 
-            logger.debug(traceback.format_exc())
             raise HandledError from e
 
         logger.info("Custom content bundle fetched successfully.")
-        logger.debug(f"Downloaded content bundle size (bytes): {len(api_response.data)}")
+        logger.debug(
+            f"Downloaded content bundle size (bytes): {len(api_response.data)}"
+        )
 
         loaded_files: dict[str, StringIO] = {}
 
@@ -391,13 +438,17 @@ class Downloader:
             logger.debug("Loading custom content bundle to memory...")
             for file in tar_members:
                 file_name = file.name.lstrip("/")
-                file_data = StringIO(safe_read_unicode(tar.extractfile(file).read()))
-                loaded_files[file_name] = file_data
+
+                if extracted_file := tar.extractfile(file):
+                    file_data = StringIO(safe_read_unicode(extracted_file.read()))
+                    loaded_files[file_name] = file_data
 
         logger.debug("Custom content items loaded to memory successfully.")
         return loaded_files
 
-    def replace_uuid_ids(self, custom_content_object: dict, uuid_mapping: dict[str, str]) -> bool:
+    def replace_uuid_ids(
+        self, custom_content_object: dict, uuid_mapping: dict[str, str]
+    ) -> bool:
         """
         Find and replace UUID IDs of custom content items with their names.
         The method first creates a mapping of a UUID to a name, and then replaces all UUIDs using this mapping.
@@ -414,9 +465,13 @@ class Downloader:
 
         if uuid_matches:
             for uuid in set(uuid_matches).intersection(uuid_mapping):
-                logger.debug(f"Replacing UUID '{uuid}' with '{uuid_mapping[uuid]}' in "
-                             f"'{custom_content_object['name']}'")
-                content_item_file_str = content_item_file_str.replace(uuid, uuid_mapping[uuid])
+                logger.debug(
+                    f"Replacing UUID '{uuid}' with '{uuid_mapping[uuid]}' in "
+                    f"'{custom_content_object['name']}'"
+                )
+                content_item_file_str = content_item_file_str.replace(
+                    uuid, uuid_mapping[uuid]
+                )
 
             # Update ID, if it's a UUID
             if custom_content_object["id"] in uuid_mapping:
@@ -424,23 +479,24 @@ class Downloader:
 
             # Update custom content object
             custom_content_object["file"] = StringIO(content_item_file_str)
-            loaded_file_data = get_file_details(content_item_file_str,
-                                                full_file_path=custom_content_object["file_name"])
+            loaded_file_data = get_file_details(
+                content_item_file_str, full_file_path=custom_content_object["file_name"]
+            )
             custom_content_object["data"] = loaded_file_data
 
             return True
         return False
 
-    def build_req_params(self) -> tuple[str, str, dict]:
-        endpoint = ITEM_TYPE_TO_ENDPOINT[self.system_item_type]
-        req_type = ITEM_TYPE_TO_REQUEST_TYPE[self.system_item_type]
+    def build_req_params(self, content_item_type: str) -> tuple[str, str, dict]:
+        endpoint = ITEM_TYPE_TO_ENDPOINT[content_item_type]
+        req_type = ITEM_TYPE_TO_REQUEST_TYPE[content_item_type]
         verify = (
             (not self.insecure) if self.insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
 
         req_body: dict = {}
-        if self.system_item_type in ["Playbook", "Classifier", "Mapper"]:
+        if content_item_type in ["Playbook", "Classifier", "Mapper"]:
             filter_by_names = " or ".join(self.input_files)
             req_body = {"query": f"name:{filter_by_names}"}
 
@@ -462,17 +518,23 @@ class Downloader:
         for script in content_items:
             endpoint = f"automation/load/{script}"
             api_response: dict = demisto_client.generic_request_func(
-                self.client, endpoint, "POST", response_type="object",
+                self.client,
+                endpoint,
+                "POST",
+                response_type="object",
             )[0]
 
             if not isinstance(api_response, dict):
                 # If there are API issues, it might return HTML, which is returned as a string.
-                raise ApiException(f"Unexpected response from server:\n"
-                                   f"'{api_response}'.")
+                raise ApiException(
+                    f"Unexpected response from server:\n" f"'{api_response}'."
+                )
 
             downloaded_automations.append(api_response)
 
-        logger.debug(f"{len(downloaded_automations)} system automations were successfully downloaded.")
+        logger.debug(
+            f"{len(downloaded_automations)} system automations were successfully downloaded."
+        )
         return downloaded_automations
 
     def get_system_playbook(self, content_items: list[str]) -> list[dict]:
@@ -492,47 +554,64 @@ class Downloader:
             endpoint = f"/playbook/{playbook}/yaml"
             try:
                 api_response: dict = demisto_client.generic_request_func(
-                    self.client, endpoint, "GET", response_type="object",
+                    self.client,
+                    endpoint,
+                    "GET",
+                    response_type="object",
                 )[0]
 
             except ApiException as err:
                 # handling in case the id and name are not the same,
                 # trying to get the id by the name through a different api call
-                logger.debug(f"API call using playbook's name failed:\n{err}\n"
-                             f"Attempting to fetch using playbook's ID...")
+                logger.debug(
+                    f"API call using playbook's name failed:\n{err}\n"
+                    f"Attempting to fetch using playbook's ID..."
+                )
 
                 playbook_id = self.get_playbook_id_by_playbook_name(playbook)
 
                 if not playbook_id:
                     raise
 
-                logger.debug(f"Found matching ID for '{playbook}' - {playbook_id}.\n"
-                             f"Attempting to fetch playbook's YAML file using the ID.")
+                logger.debug(
+                    f"Found matching ID for '{playbook}' - {playbook_id}.\n"
+                    f"Attempting to fetch playbook's YAML file using the ID."
+                )
 
                 endpoint = f"/playbook/{playbook_id}/yaml"
                 api_response = demisto_client.generic_request_func(
-                    self.client, endpoint, "GET",  response_type="object",
+                    self.client,
+                    endpoint,
+                    "GET",
+                    response_type="object",
                 )[0]
 
             if not isinstance(api_response, dict):
                 # If there are API issues, it might return HTML, which is returned as a string.
-                raise ApiException(f"Unexpected response from server:\n"
-                                   f"'{api_response}'.")
+                raise ApiException(
+                    f"Unexpected response from server:\n" f"'{api_response}'."
+                )
 
             downloaded_playbooks.append(api_response)
 
-        logger.debug(f"'{len(downloaded_playbooks)}' system playbooks were downloaded successfully.")
+        logger.debug(
+            f"'{len(downloaded_playbooks)}' system playbooks were downloaded successfully."
+        )
         return downloaded_playbooks
 
-    def generate_content_file_name(self, content_item: dict, content_item_type: str) -> str:
+    def generate_content_file_name(
+        self, content_item: dict, content_item_type: str
+    ) -> str:
         item_name: str = content_item.get("name") or content_item.get("id")
-        result = (item_name.replace("/", "_").replace(" ", "_") +
-                  ITEM_TYPE_TO_PREFIX[content_item_type])
+        result = (
+            item_name.replace("/", "_").replace(" ", "_")
+            + ITEM_TYPE_TO_PREFIX[content_item_type]
+        )
 
         # Remove duplicate underscores
         return re.sub(r"_{2,}", "_", result)
 
-    def fetch_system_content(self) -> dict[str, dict]:
+    def fetch_system_content(self, content_item_type: str) -> dict[str, dict]:
         """
         Fetch system content from the server.
 
@@ -540,51 +619,62 @@ class Downloader:
             dict[str, dict]: A dictionary mapping content item's file names, to dictionaries containing metadata
                 and content of the item.
         """
-        endpoint, req_type, req_body = self.build_req_params()
+        endpoint, req_type, req_body = self.build_req_params(
+            content_item_type=content_item_type
+        )
         downloaded_items: list[dict]
 
-        if self.system_item_type == "Automation":
-            downloaded_items = self.get_system_automation(content_items=self.input_files)
+        if content_item_type == "Automation":
+            downloaded_items = self.get_system_automation(
+                content_items=self.input_files
+            )
 
-        elif self.system_item_type == "Playbook":
+        elif content_item_type == "Playbook":
             downloaded_items = self.get_system_playbook(content_items=self.input_files)
 
         else:
             logger.info("Fetching system items...")
             api_response = demisto_client.generic_request_func(
-                self.client, endpoint, req_type, body=req_body, response_type="object",
+                self.client,
+                endpoint,
+                req_type,
+                body=req_body,
+                response_type="object",
             )[0]
 
-            if self.system_item_type in ("Classifier", "Mapper"):
+            if content_item_type in ("Classifier", "Mapper"):
                 if classifiers_data := api_response.get("classifiers"):
                     downloaded_items = classifiers_data
 
                 else:
-                    logger.warning("Could not find expected 'classifiers' key in API response.")
+                    logger.warning(
+                        "Could not find expected 'classifiers' key in API response."
+                    )
                     logger.debug(f"API response:\n{json.dumps(api_response)}")
                     downloaded_items = []
 
             else:
                 downloaded_items = api_response
 
-        logger.info(
-            f"Fetched {len(downloaded_items)} system items from server."
-        )
+        logger.info(f"Fetched {len(downloaded_items)} system items from server.")
 
         content_objects: dict[str, dict] = {}
 
         for content_item in downloaded_items:
-            file_name = self.generate_content_file_name(content_item=content_item,
-                                                        content_item_type=self.system_item_type)
+            file_name = self.generate_content_file_name(
+                content_item=content_item, content_item_type=content_item_type
+            )
             file_data = StringIO(json.dumps(content_item))
-            content_object = self.create_content_item_object(file_name=file_name,
-                                                             file_data=file_data,
-                                                             _loaded_data=content_item)
+            content_object = self.create_content_item_object(
+                file_name=file_name, file_data=file_data, _loaded_data=content_item
+            )
             content_objects[file_name] = content_object
 
         return content_objects
 
-    def parse_custom_content_data(self, custom_content_data: dict[str, StringIO]) -> dict[str, dict]:
+    def parse_custom_content_data(
+        self, custom_content_data: dict[str, StringIO]
+    ) -> dict[str, dict]:
         """
         Converts a mapping of file names to raw file data (StringIO),
         into a mapping of file names to custom content objects (parsed & loaded data)
@@ -613,7 +703,9 @@ class Downloader:
                 missing_field = False
                 for _field in ("id", "name", "entity", "type"):
                     if not custom_content_object.get(_field):
-                        logger.warning(f"'{file_name}' will be skipped as its {_field} could not be detected.")
+                        logger.warning(
+                            f"'{file_name}' will be skipped as its {_field} could not be detected."
+                        )
                         missing_field = True
                         break
 
@@ -638,10 +730,14 @@ class Downloader:
                 logger.error(f"Error while parsing '{file_name}': {e}")
                 raise
 
-        logger.info(f"Successfully parsed {len(custom_content_objects)} custom content objects.")
+        logger.info(
+            f"Successfully parsed {len(custom_content_objects)} custom content objects."
+        )
         return custom_content_objects
 
-    def create_custom_content_table(self, custom_content_objects: dict[str, dict]) -> str:
+    def create_custom_content_table(
+        self, custom_content_objects: dict[str, dict]
+    ) -> str:
         """
         Return a printable list of all custom content that's available to download from the configured XSOAR instance.
 
@@ -658,7 +754,7 @@ class Downloader:
                 file_type: FileType = file_object["type"]
                 tabulate_data.append([item_name, file_type.value])
 
-        return tabulate(tabulate_data, headers=["CONTENT NAME", "CONTENT TYPE"])
+        return tabulate(tabulate_data, headers=["Content Name", "Content Type"])
 
     def initialize_output_path(self, root_folder: Path) -> Path:
         """
@@ -717,20 +813,20 @@ class Downloader:
             logger.error(
                 f"Error: Path '{output_path.absolute()}' does not exist, or isn't a directory."
             )
+            return False
 
         elif not output_path.parent.name == "Packs":
             logger.error(
                 f"Error: Path '{output_path.absolute()}' is invalid.\n"
                 f"The provided output path for the download must be inside a 'Packs' folder. e.g., 'Packs/MyPack'."
             )
+            return False
 
-        # All validations passed
-        else:
-            return True
+        return True
 
-        return False
-
-    def build_existing_pack_structure(self, existing_pack_path: Path) -> dict[str, dict[str, list[dict]]]:
+    def build_existing_pack_structure(
+        self, existing_pack_path: Path
+    ) -> dict[str, dict[str, list[dict]]]:
         """
         Create a pack structure from the content in the existing output path.
         Used later to determine which files already exist in the output path (by their content name, not file name).
@@ -770,14 +866,18 @@ class Downloader:
 
                 if directory_name in (INTEGRATIONS_DIR, SCRIPTS_DIR):
                     # If entity is of type integration/script it will have dirs, otherwise files
-                    entity_instances_paths = [p for p in content_entity_path.iterdir() if p.is_dir()]
+                    entity_instances_paths = [
+                        p for p in content_entity_path.iterdir() if p.is_dir()
+                    ]
                 else:
-                    entity_instances_paths = [p for p in content_entity_path.iterdir() if p.is_file()]
+                    entity_instances_paths = [
+                        p for p in content_entity_path.iterdir() if p.is_file()
+                    ]
 
                 for entity_instance_path in entity_instances_paths:
                     content_data = self.build_pack_content_object(
                         content_entity=directory_name,
-                        entity_instance_path=entity_instance_path
+                        entity_instance_path=entity_instance_path,
                     )
 
                     if content_data is not None:
@@ -807,9 +907,7 @@ class Downloader:
             str(entity_instance_path), CONTENT_FILE_ENDINGS, recursive=False
         )
 
-        metadata = self.get_metadata_file(
-            content_entity, entity_instance_path
-        )
+        metadata = self.get_metadata_file(content_entity, entity_instance_path)
 
         if not metadata:
             logger.warning(
@@ -822,7 +920,9 @@ class Downloader:
 
         # if main file doesn't exist/no entity instance path exist the content object won't be added to the pack content
         if not all((content_item_id, content_item_name, file_paths)):
-            logger.debug(f"Existing content item '{content_item_name}' could not be parsed.")
+            logger.debug(
+                f"Existing content item '{content_item_name}' could not be parsed."
+            )
             return None
 
         content_item_files = []
@@ -899,10 +999,7 @@ class Downloader:
                 return get_yaml(content_path)
 
         else:
-            if (
-                content_path.is_file()
-                and content_path.suffix == ".json"
-            ):
+            if content_path.is_file() and content_path.suffix == ".json":
                 return get_json(content_path)
 
         return None
@@ -920,7 +1017,9 @@ class Downloader:
         """
         return file_name.replace("automation-", "script-").replace("playbook-", "")
 
-    def create_content_item_object(self, file_name: str, file_data: StringIO, _loaded_data: dict | None = None) -> dict:
+    def create_content_item_object(
+        self, file_name: str, file_data: StringIO, _loaded_data: dict | None = None
+    ) -> dict:
         """
         Convert a single custom content item to a content object.
 
@@ -939,12 +1038,16 @@ class Downloader:
             loaded_file_data = _loaded_data
 
         else:
-            loaded_file_data = get_file_details(file_content=file_data.getvalue(), full_file_path=file_name)
+            loaded_file_data = get_file_details(
+                file_content=file_data.getvalue(), full_file_path=file_name
+            )
 
             if not loaded_file_data:
-                raise ValueError(f"Unsupported file extension: '{file_extension}'")
+                raise ValueError(f"File '{file_extension}' could not be parsed.")
 
-        file_type = find_type(path=file_name, _dict=loaded_file_data, file_type=file_extension)
+        file_type = find_type(
+            path=file_name, _dict=loaded_file_data, file_type=file_extension
+        )
         content_id = get_id(file_content=loaded_file_data)
 
         # For integrations, 'get_display_name' returns the 'display' field, but we use the 'name' field.
@@ -952,11 +1055,18 @@ class Downloader:
             content_name = loaded_file_data.get("name")
 
         else:
-            content_name = get_display_name(file_path=file_name, file_data=loaded_file_data)
+            content_name = get_display_name(
+                file_path=file_name, file_data=loaded_file_data
+            )
 
-        if (file_type == FileType.PLAYBOOK and
-                (content_name.lower().endswith(("test", "_test", "-test")) or
-                 content_name.lower().startswith("test"))):
+        if (
+            file_type == FileType.PLAYBOOK
+            and content_name
+            and (
+                content_name.lower().endswith(("test", "_test", "-test"))
+                or content_name.lower().startswith("test")
+            )
+        ):
             file_entity = TEST_PLAYBOOKS_DIR
 
         else:
@@ -981,7 +1091,6 @@ class Downloader:
 
         return custom_content_object
 
-
     @staticmethod
     def create_directory_name(content_item_name: str) -> str:
         """
@@ -998,9 +1107,12 @@ class Downloader:
             content_item_name = content_item_name.replace(separator, "")
         return content_item_name
 
-    def write_files_into_output_path(self, downloaded_content_objects: dict[str, dict],
-                                     existing_pack_structure: dict[str, dict[str, list[dict]]],
-                                     output_path: Path) -> bool:
+    def write_files_into_output_path(
+        self,
+        downloaded_content_objects: dict[str, dict],
+        existing_pack_structure: dict[str, dict[str, list[dict]]],
+        output_path: Path,
+    ) -> bool:
         """
         Download the files after processing is done to the output directory.
         For integrations / scripts, YAML extraction is done.
@@ -1023,36 +1135,42 @@ class Downloader:
         for file_name, content_object in downloaded_content_objects.items():
             content_item_name: str = content_object["name"]
             content_item_entity: str = content_object["entity"]
-            content_item_not_skipped = True
+            content_item_skipped = False
 
             try:
                 if content_item_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-                    file_downloaded = self.download_unified_content(content_object=content_object,
-                                                                    existing_pack_structure=existing_pack_structure,
-                                                                    output_path=output_path,
-                                                                    overwrite_existing=self.force)
+                    file_downloaded = self.download_unified_content(
+                        content_object=content_object,
+                        existing_pack_structure=existing_pack_structure,
+                        output_path=output_path,
+                        overwrite_existing=self.force,
+                    )
 
                 else:
-                    file_downloaded = self.download_non_unified_content(content_object=content_object,
-                                                                        existing_pack_structure=existing_pack_structure,
-                                                                        output_path=output_path,
-                                                                        overwrite_existing=self.force)
+                    file_downloaded = self.download_non_unified_content(
+                        content_object=content_object,
+                        existing_pack_structure=existing_pack_structure,
+                        output_path=output_path,
+                        overwrite_existing=self.force,
+                    )
 
                 # If even one file was skipped, we mark the file as skipped for the logs
                 if not file_downloaded:
-                    content_item_not_skipped = False
+                    content_item_skipped = True
 
             except Exception as e:
                 failed_downloads_count += 1
-                logger.error(f"Failed to download content item '{content_item_name}': {e}")
+                logger.error(
+                    f"Failed to download content item '{content_item_name}': {e}"
+                )
                 logger.debug(traceback.format_exc())
                 continue
 
-            if content_item_not_skipped:
-                successful_downloads_count += 1
+            if content_item_skipped:
+                existing_files_skipped_count += 1
 
             else:
-                existing_files_skipped_count += 1
+                successful_downloads_count += 1
 
         summary_log = ""
 
@@ -1073,12 +1191,17 @@ class Downloader:
 
         logger.info(summary_log.rstrip("\n"))
 
-        return not failed_downloads_count  # Return True if no downloads failed, False otherwise.
+        return (
+            not failed_downloads_count
+        )  # Return True if no downloads failed, False otherwise.
 
-    def download_unified_content(self, content_object: dict,
-                                 existing_pack_structure: dict[str, dict[str, list[dict]]],
-                                 output_path: Path,
-                                 overwrite_existing: bool = False) -> bool:
+    def download_unified_content(
+        self,
+        content_object: dict,
+        existing_pack_structure: dict[str, dict[str, list[dict]]],
+        output_path: Path,
+        overwrite_existing: bool = False,
+    ) -> bool:
         """
         Download unified content items.
         Existing content items will be skipped if 'overwrite_existing' is False.
@@ -1105,7 +1228,9 @@ class Downloader:
         )
 
         if content_item_exists:
-            if not overwrite_existing:  # If file exists, and we don't want to overwrite it, skip it.
+            if (
+                not overwrite_existing
+            ):  # If file exists, and we don't want to overwrite it, skip it.
                 logger.debug(
                     f"Content item '{content_item_name}' will be skipped as it already exists in output pack."
                 )
@@ -1114,11 +1239,15 @@ class Downloader:
             # If we overwrite existing files, we need to extract the existing files to a temp directory
             # for a "smart" merge.
             temp_dir = mkdtemp()
-            content_item_output_path = temp_dir
+            content_item_output_path = Path(temp_dir)
 
         else:
-            content_item_output_path = output_path / content_item_entity / content_directory_name
-            content_item_output_path.mkdir(parents=True, exist_ok=True)  # Create path if it doesn't exist
+            content_item_output_path = (
+                output_path / content_item_entity / content_directory_name
+            )
+            content_item_output_path.mkdir(
+                parents=True, exist_ok=True
+            )  # Create path if it doesn't exist
             content_item_output_path = str(content_item_output_path)
 
         extractor = YmlSplitter(
@@ -1131,11 +1260,14 @@ class Downloader:
             no_auto_create_dir=True,
         )
         extractor.extract_to_package_format()
-        extracted_file_paths: list[str] = get_child_files(directory=content_item_output_path)
+        extracted_file_paths: list[str] = get_child_files(
+            directory=content_item_output_path
+        )
 
-        for extracted_file_path in extracted_file_paths:
+        for extracted_file_path_str in extracted_file_paths:
+            extracted_file_path = Path(extracted_file_path_str)
+
             if content_item_exists:
-                extracted_file_path = Path(extracted_file_path)
                 extracted_file_extension = extracted_file_path.suffix
 
                 # Get the file name to search for in the existing output pack
@@ -1147,33 +1279,43 @@ class Downloader:
                 # Find extracted file's matching existing file
                 corresponding_pack_file_object: dict | None = None
 
-                for file_object in existing_pack_structure[content_item_entity][content_item_name]:
+                for file_object in existing_pack_structure[content_item_entity][
+                    content_item_name
+                ]:
                     if Path(file_object["path"]).name == expected_filename:
                         corresponding_pack_file_object = file_object
                         break
 
                 if corresponding_pack_file_object:
-                    corresponding_pack_file_path = corresponding_pack_file_object["path"]
+                    corresponding_pack_file_path = Path(
+                        corresponding_pack_file_object["path"]
+                    )
 
                 else:
-                    corresponding_pack_file_path = str(output_path /
-                                                       content_item_entity /
-                                                       self.create_directory_name(content_item_name) /
-                                                       expected_filename)
+                    corresponding_pack_file_path = (
+                        output_path
+                        / content_item_entity
+                        / self.create_directory_name(content_item_name)
+                        / expected_filename
+                    )
 
-                if extracted_file_extension == ".yml":  # "smart" merge is relevant only for YAML files
+                if (
+                    extracted_file_extension == ".yml"
+                ):  # "smart" merge is relevant only for YAML files
                     self.update_data(  # Add existing fields that were removed by the server to the new file
                         file_to_update=extracted_file_path,
                         original_file=corresponding_pack_file_path,
                         is_yaml=(extracted_file_extension == ".yml"),
                     )
 
-                shutil.move(src=extracted_file_path, dst=corresponding_pack_file_path)
-                final_path = Path(corresponding_pack_file_path)
+                shutil.move(
+                    src=str(extracted_file_path), dst=str(corresponding_pack_file_path)
+                )
+                final_path = corresponding_pack_file_path
 
             # If the file doesn't exist in the pack, the files were extracted to the output path
             else:
-                final_path = Path(extracted_file_path)
+                final_path = extracted_file_path
 
             if self.run_format and final_path.suffix in (".yml", ".yaml", ".json"):
                 format_manager(
@@ -1182,20 +1324,24 @@ class Downloader:
                     assume_answer=False,
                 )
 
-        try:  # Clean up temp dir
-            shutil.rmtree(temp_dir, ignore_errors=True)
+        if temp_dir:
+            try:  # Clean up temp dir
+                shutil.rmtree(temp_dir, ignore_errors=True)
 
-        except shutil.Error as e:
-            logger.warning(f"Failed to remove temp dir '{temp_dir}': {e}")
-            logger.debug(traceback.format_exc())
+            except shutil.Error as e:
+                logger.warning(f"Failed to remove temp dir '{temp_dir}': {e}")
+                logger.debug(traceback.format_exc())
 
         logger.debug(f"Content item '{content_item_name}' was successfully downloaded.")
         return True
 
-    def download_non_unified_content(self, content_object: dict,
-                                     existing_pack_structure: dict[str, dict[str, list[dict]]],
-                                     output_path: Path,
-                                     overwrite_existing: bool = False) -> bool:
+    def download_non_unified_content(
+        self,
+        content_object: dict,
+        existing_pack_structure: dict[str, dict[str, list[dict]]],
+        output_path: Path,
+        overwrite_existing: bool = False,
+    ) -> bool:
         """
         Download non-unified content items.
         Existing content items will be skipped if 'overwrite_existing' is False.
@@ -1232,28 +1378,31 @@ class Downloader:
         file_name: str = content_object["file_name"]
         file_path = temp_dir / file_name
         file_data: StringIO = content_object["file"]
-
-        with open(file_path, "w") as f:
-            f.write(file_data.getvalue())
+        file_path.write_text(file_data.getvalue())
 
         if content_item_exists:
             # The corresponding_pack_object will have a list of length 1 as value if it's an old file which isn't
             # integration or script
-            corresponding_pack_file_object: dict = existing_pack_structure[content_item_entity][content_item_name][0]
-            corresponding_pack_file_path: str = corresponding_pack_file_object["path"]
+            corresponding_pack_file_object: dict = existing_pack_structure[
+                content_item_entity
+            ][content_item_name][0]
+            corresponding_pack_file_path = Path(corresponding_pack_file_object["path"])
 
             self.update_data(
                 file_to_update=file_path,
                 original_file=corresponding_pack_file_path,
-                is_yaml=(content_item_extension in ("yml", "yaml")))
+                is_yaml=(content_item_extension in ("yml", "yaml")),
+            )
 
             content_item_output_path = corresponding_pack_file_path
 
         else:  # If the content item doesn't exist in the output pack, create a new directory for it
             content_item_output_path = output_path / content_item_entity
-            content_item_output_path.mkdir(parents=True, exist_ok=True)  # Create path if it doesn't exist
+            content_item_output_path.mkdir(
+                parents=True, exist_ok=True
+            )  # Create path if it doesn't exist
 
-        shutil.move(src=file_path, dst=content_item_output_path)
+        shutil.move(src=str(file_path), dst=str(content_item_output_path))
 
         try:  # Clean up temp dir
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -1262,34 +1411,32 @@ class Downloader:
             logger.warning(f"Failed to remove temp dir '{temp_dir}': {e}")
             logger.debug(traceback.format_exc())
 
-            if self.run_format and content_item_output_path.suffix.lstrip(".") in ("yml", "yaml", "json"):
-                format_manager(
-                    input=str(content_item_output_path),
-                    no_validate=False,
-                    assume_answer=False,
-                )
+        if self.run_format and content_item_output_path.suffix.lstrip(".") in (
+            "yml",
+            "yaml",
+            "json",
+        ):
+            format_manager(
+                input=str(content_item_output_path),
+                no_validate=False,
+                assume_answer=False,
+            )
 
         logger.debug(f"Content item '{content_item_name}' was successfully downloaded.")
         return True
 
     @staticmethod
-    def update_data(file_to_update: Path | str, original_file: str, is_yaml: bool) -> None:
+    def update_data(file_to_update: Path, original_file: Path, is_yaml: bool) -> None:
         """
         Collects special chosen fields from the file_path_to_read and writes them into the file_path_to_write.
 
         Args:
-            file_to_update (Path | str): Path to the new file to merge 'original_file' into.
-            original_file (str): Path to the original file to merge into 'file_to_update'.
+            file_to_update (Path): Path to the new file to merge 'original_file' into.
+            original_file (Path): Path to the original file to merge into 'file_to_update'.
             is_yaml (bool): True if the file is a yml file, False if it's a json file.
         """
-        file_to_update = Path(file_to_update)
-
-        pack_obj_data = get_dict_from_file(original_file)[0]
-        fields = (
-            KEEP_EXISTING_YAML_FIELDS
-            if is_yaml
-            else KEEP_EXISTING_JSON_FIELDS
-        )
+        pack_obj_data = get_dict_from_file(str(original_file))[0]
+        fields = KEEP_EXISTING_YAML_FIELDS if is_yaml else KEEP_EXISTING_JSON_FIELDS
         # Creates a nested-complex dict of all fields to be deleted by the server.
         # We need the dict to be nested, to easily merge it later to the file data.
         preserved_data: dict = unflatten(
@@ -1311,7 +1458,9 @@ class Downloader:
         else:  # json
             write_dict(file_to_update, data=file_data, handler=json, indent=4)
 
-    def get_split_item_expected_filename(self, content_item_name: str, file_extension: str) -> str:
+    def get_split_item_expected_filename(
+        self, content_item_name: str, file_extension: str
+    ) -> str:
         """
         Creates a file name to search for in the existing pack.
 
@@ -1322,7 +1471,7 @@ class Downloader:
         Returns:
             str: The expected file name
         """
-        if file_extension.lstrip('.') in ("py", "ps1", "js", "yml", "yaml"):
+        if file_extension.lstrip(".") in ("py", "ps1", "js", "yml", "yaml"):
             return f"{self.create_directory_name(content_item_name)}.{file_extension.lstrip('.')}"
 
         else:  # Description & image files have their type within the file name
@@ -1332,9 +1481,7 @@ class Downloader:
                 file_type = "image"
             else:
                 file_type = ""
-                logger.warning(
-                    f"Unsupported file extension '{file_extension}'."
-                )
+                logger.warning(f"Unsupported file extension '{file_extension}'.")
 
             return f"{self.create_directory_name(content_item_name)}_{file_type}.{file_extension.lstrip('.')}"
 

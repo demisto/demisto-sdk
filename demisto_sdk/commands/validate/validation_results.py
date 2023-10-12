@@ -7,7 +7,14 @@ from demisto_sdk.commands.validate.validators.base_validator import ValidationRe
 
 
 class ValidationResults:
-    def __init__(self, json_file_path):
+    def __init__(self, json_file_path, only_throw_warnings):
+        """
+            The ValidationResults init method.
+        Args:
+            json_file_path (str): The json path to write the outputs into.
+            only_throw_warnings (list): The list of error codes to only warn about.
+        """
+        self.only_throw_warnings = only_throw_warnings
         self.results: List[ValidationResult] = []
         if json_file_path:
             self.json_file_path = (
@@ -19,6 +26,14 @@ class ValidationResults:
             self.json_file_path = ""
 
     def post_results(self, only_throw_warning=[]):
+        """
+            Go through the validation results list,
+            posting the warnings / failure message for failed validation,
+            and calculates the exit_code.
+
+        Returns:
+            int: The exit code number - 1 if the validations failed, otherwise return 0
+        """
         exit_code = 0
         if self.json_file_path:
             self.write_validation_results()
@@ -32,6 +47,10 @@ class ValidationResults:
         return exit_code
 
     def write_validation_results(self):
+        """
+        If the json path argument is given,
+        Writing all the results into a json file located in the given path.
+        """
         json_validations_list = [result.format_json_message for result in self.results]
 
         json_object = json.dumps(json_validations_list, indent=4)

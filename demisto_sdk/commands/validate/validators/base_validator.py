@@ -39,17 +39,10 @@ class BaseValidator(ABC, BaseModel):
     def should_run(
         cls, content_item: BaseContent, ignorable_errors: list, support_level_dict: dict
     ) -> bool:
-        should_run = isinstance(content_item, cls.content_types)
-        if (
-            cls.error_code in content_item.ignored_errors
-            and cls.error_code in ignorable_errors
-        ):
-            should_run = False
-        if cls.error_code in support_level_dict.get(content_item.support_level, {}).get(
-            "ignore", []
-        ):
-            should_run = False
-        return should_run
+        return all([isinstance(content_item, cls.content_types),
+                    not is_error_ignored(cls.error_code, content_item.ignored_errors, ignorable_errors),
+                    not is_support_level_support_validation(cls.error_code, support_level_dict, content_item.support_level)
+                    ])
 
     @classmethod
     def is_valid(cls, content_item: BaseContent) -> ValidationResult:
@@ -58,3 +51,31 @@ class BaseValidator(ABC, BaseModel):
     @classmethod
     def fix(cls, content_item: BaseContent) -> None:
         raise NotImplementedError
+
+def is_error_ignored(err_code, ignored_errors, ignorable_errors):
+    """
+    Check if the given validation error code is ignored by the current item ignored error list.
+
+    Args:
+        err_code (str): The validation's error code.
+        ignored_errors (list): The list of the content item ignored errors.
+        ignorable_errors (list): The list of the ignorable errors.
+
+    Returns:
+        bool: True if the given error code should and allow to be ignored by the given item, otherwise return False.
+    """
+    return err_code in ignored_errors and err_code in ignorable_errors
+
+def is_support_level_support_validation(err_code, support_level_dict, item_support_level):
+    """
+    Check if the given validation error code is ignored according to the item's support level.
+
+    Args:
+        err_code (str): The validation's error code.
+        support_level_dict (dict): The support level dictionary from the config file.
+        item_support_level (str): The content item support level.
+
+    Returns:
+        bool: True if the given error code is in the ignored section of the support level dict corresponding to the item's support level, otherwise return False.
+    """
+    return err_code in support_level_dict.get(item_support_level, {}).get("ignore", [])

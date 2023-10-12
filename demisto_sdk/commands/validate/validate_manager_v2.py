@@ -35,13 +35,20 @@ class ValidateManager:
         allow_autofix=False,
         config_file_path=None,
     ):
+        self.is_circle = only_committed_files
+        self.validate_all = validate_all
+        self.use_git = use_git
+        self.file_path=file_path
+        self.staged = staged
+        self.debug_git = debug_git
+        self.include_untracked = include_untracked
+        self.run_with_multiprocessing = multiprocessing
+        self.is_external_repo = is_external_repo
         self.config_reader = ConfigReader(
             config_file_path=config_file_path,
             category_to_run=config_file_category_to_run,
         )
-        self.objects_to_run = self.gather_objects_to_run(
-            file_path, use_git, validate_all
-        )
+        self.objects_to_run = self.gather_objects_to_run()
         self.allow_autofix = allow_autofix
         (
             self.validations_to_run,
@@ -50,23 +57,22 @@ class ValidateManager:
             self.ignorable_errors,
             self.support_level_dict,
         ) = self.config_reader.gather_validations_to_run(use_git=use_git)
+        self.validation_results = ValidationResults(json_file_path=json_file_path, self.warnings)
         self.validators = self.filter_validators()
-        self.is_circle = only_committed_files
-        self.validate_all = validate_all
-        self.use_git = use_git
-        self.staged = staged
-        self.debug_git = debug_git
-        self.include_untracked = include_untracked
-        self.run_with_multiprocessing = multiprocessing
-        self.is_external_repo = is_external_repo
-        self.validation_results = ValidationResults(json_file_path=json_file_path)
 
-        if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
-            self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver)
-        else:
-            self.prev_ver = self.setup_prev_ver(prev_ver)
+        # if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+        #     self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver)
+        # else:
+        #     self.prev_ver = self.setup_prev_ver(prev_ver)
 
     def run_validation(self):
+        """
+            Running all the relevant validation on all the filtered files based on the should_run calculations,
+            calling the fix method if the validation fail, has an autofix, and the allow_autofix flag is given,
+            and calling the post_results at the end.
+        Returns:
+            int: the exit code to obtained from the calculations of post_results.
+        """
         for validator in self.validators:
             for content_object in self.objects_to_run:
                 if validator.should_run(
@@ -76,23 +82,30 @@ class ValidateManager:
                     try:
                         if not validation_result.is_valid:
                             self.validation_results.results.append(validation_result)
-                            validator.fix(content_object)
+                            if self.allow_autofix:
+                                validator.fix(content_object)
                     except NotImplementedError:
                         continue
 
-        return self.validation_results.post_results(self.warnings)
+        return self.validation_results.post_results()
 
-    def gather_objects_to_run(self, file_paths, use_git, validate_all):
+    def gather_objects_to_run(self):
+        """
+        Filter the file that should run according to the given flag (-i/-g/-a).
+
+        Returns:
+            set: the set of files that should be validated.
+        """
         content_objects_to_run = set()
-        if use_git:
-            file_paths = GitUtil()._get_all_changed_files()
-        elif file_paths:
-            for file_path in file_paths:
+        if self.use_git:
+            self.file_path = GitUtil()._get_all_changed_files()
+        elif self.file_path:
+            for file_path in self.file_path:
                 content_object = BaseContent.from_path(Path(file_path))
                 if content_object is None:
                     raise Exception(f"no content found in {file_path}")
                 content_objects_to_run.add(content_object)
-        if validate_all:
+        if self.validate_all:
             content_dto = ContentDTO.from_path(CONTENT_PATH)
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
@@ -106,6 +119,13 @@ class ValidateManager:
         return final_content_objects_to_run
 
     def filter_validators(self):
+        """
+        Filter the validations by their error code
+        according to the validations supported by the given flags according to the config file.
+
+        Returns:
+            list: the list of the filtered validators
+        """
         # gather validator from validate package
         validators = BaseValidator.__subclasses__()
         filtered_validators = []

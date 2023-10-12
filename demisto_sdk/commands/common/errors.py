@@ -22,7 +22,6 @@ from demisto_sdk.commands.common.constants import (
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     XSOAR_CONTEXT_AND_OUTPUTS_URL,
-    XSOAR_CONTEXT_STANDARD_URL,
     FileType,
     MarketplaceVersions,
 )
@@ -721,10 +720,6 @@ ERROR_CODE: Dict = {
     },
     "command_reputation_output_capitalization_incorrect": {
         "code": "IN158",
-        "related_field": "outputs",
-    },
-    "command_reputation_output_is_missing": {
-        "code": "IN159",
         "related_field": "outputs",
     },
     # IT - Incident Types
@@ -4414,12 +4409,3 @@ class Errors:
     ):
         return f"The {command_name} command returns the following reputation output:\n{invalid_output} for object: {used_object}.\
 The capitalization is incorrect. For further information: {XSOAR_CONTEXT_AND_OUTPUTS_URL}"
-
-    @staticmethod
-    @error_code_decorator
-    def command_reputation_output_is_missing(
-        command_name: str, reputation_output: str, objects_missing_outputs: str
-    ):
-        return f"The {command_name} command is using a reputation command context objects: {objects_missing_outputs},\
-which is missing the following mandatory outputs: {reputation_output}.\
-For further info: {XSOAR_CONTEXT_STANDARD_URL}"

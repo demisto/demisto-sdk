@@ -2912,7 +2912,27 @@ class TestisContextChanged:
                 "contextPath": "URL.Data",
                 "description": "test description.",
                 "type": "string",
-            }
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
         ],
     }
     INVALID_COMMAND_OUTPUTS = {
@@ -2922,7 +2942,27 @@ class TestisContextChanged:
                 "contextPath": "Url.Data",
                 "description": "data.",
                 "type": "string",
-            }
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
         ],
     }
     MISSING_COMMAND_OUTPUTS = {
@@ -2932,13 +2972,33 @@ class TestisContextChanged:
                 "contextPath": "Endpoint.Hostname",
                 "description": "endpoint hostname",
                 "type": "string",
-            }
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
         ],
     }
     IS_OUTPUT_FOR_REPUTATION_INPUTS = [
         (VALID_COMMAND_OUTPUTS, True),
         (INVALID_COMMAND_OUTPUTS, False),
-        (MISSING_COMMAND_OUTPUTS, False),
+        (MISSING_COMMAND_OUTPUTS, True),
     ]
 
     @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)

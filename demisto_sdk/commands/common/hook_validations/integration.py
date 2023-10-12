@@ -622,31 +622,7 @@ class IntegrationValidator(ContentEntityValidator):
                         result = False
         return result
 
-    # def validate_all_reputation_outputs_exist(self, command_name, reputation_name: str, context_output_path: str) -> bool:
-    #     result = True
-    #     if required_output_paths := REPUTATION_TO_REQUIRED_OUTPUT.get(reputation_name.lower(), None):
-    #         if context_output_path not in required_output_paths:
-    #             error_message, error_code = Errors.command_reputation_output_is_missing(
-    #                 command_name,
-    #                 required_output_paths,
-    #                 context_output_path)
-    #             if self.handle_error(
-    #                 error_message,
-    #                 error_code,
-    #                 file_path=self.file_path,
-    #                 warning=self.structure_validator.quiet_bc):
-    #                 result = False
-    #     return result
-
-    # def validate_context_reputation_output(self, context_output_path: str, command_name: str) -> bool:
-    #     result = True
-    #     for reputation_name in MANDATORY_REPUTATION_CONTEXT_NAMES:
-    #         if context_output_path.lower().startswith(f"{reputation_name.lower()}."):
-    #             result = self.validate_reputation_name_spelling(reputation_name, context_output_path, command_name) and\
-    #                 self.validate_all_reputation_outputs_exist(command_name, reputation_name, context_output_path)
-    #     return result
-
-    @error_codes("DB100,DB101,IN107,IN158,IN159")
+    @error_codes("DB100,DB101,IN107,IN158")
     def is_outputs_for_reputations_commands_valid(self) -> bool:
         """Check if a reputation command (domain/email/file/ip/url)
             has the correct DBotScore outputs according to the context standard

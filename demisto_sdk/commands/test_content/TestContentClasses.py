@@ -232,6 +232,7 @@ class TestPlaybook:
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
         self.test_suite.add_property("is_xsiam", self.build_context.is_xsiam)
         self.test_suite.add_property("server_type", self.build_context.server_type)
+        self.test_suite.add_property("product_type", self.build_context.product_type)
         self.test_suite.add_property("memCheck", self.build_context.memCheck)
         self.test_suite.add_property(
             "server_numeric_version", self.build_context.server_numeric_version
@@ -701,6 +702,7 @@ class TestPlaybook:
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
         self.server_type = kwargs["server_type"]
+        self.product_type = kwargs["product_type"]
         self.is_xsiam = self.server_type in [XSIAM_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE]
         self.logging_module: ParallelLoggingManager = logging_module
         self.server = kwargs["server"]

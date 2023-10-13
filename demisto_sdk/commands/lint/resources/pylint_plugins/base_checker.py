@@ -106,9 +106,8 @@ class CustomBaseChecker(BaseChecker):
         self.commands = (
             os.getenv("commands", "").split(",") if os.getenv("commands") else []
         )
-        self.is_script = True if os.getenv("is_script") == "True" else False
         # we treat scripts as they already implement the test-module
-        self.test_module_implemented = False if not self.is_script else True
+        self.test_module_implemented = self.is_script = os.getenv("is_script") == "True"
 
     # ------------------------------------- visit functions -------------------------------------------------
     """
@@ -143,6 +142,9 @@ class CustomBaseChecker(BaseChecker):
 
     def visit_if(self, node):
         self._commands_in_if_statment_checker(node)
+
+    def visit_match_case(self, node):
+        self._commands_in_match_statement_checker(node)
 
     # ------------------------------------- leave functions -------------------------------------------------
     """
@@ -445,6 +447,51 @@ class CustomBaseChecker(BaseChecker):
             # for elif clause
             for elif_clause in node.orelse:
                 _check_if(elif_clause.test.ops[0][1])
+
+        except Exception:
+            pass
+
+    # -------------------------------------------- Match Node ---------------------------------------------
+
+    def _commands_in_match_statement_checker(self, node):
+        """
+        Args: node which is a Match Node.
+        Check all possible appearances of implementations of commands in an If statement:
+        - if command exist in a regular if statement e.g. if 'command' == command
+        - if command exist in a regular if with conditions e.g. command == 'command1' or command == 'commands2
+        - if command exist in a elif clause of an if.
+        - if command exist in a list / dict of commands e.g. ['command1','command2']  or {'command1','command2'}
+        - if command exist in a tuple of commands e.g. ('command1','command2')
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+
+        def _check_match(comp_with):
+            """
+            Internal function that inferences the value of the comp_with argument.
+            If the inferred value is a command which is in the commands list, removes it , as we found an implementation
+            Returns:
+
+            """
+            # for regular if 'command' == command with inference mechanize
+            commands = self._infer_name(comp_with)
+
+            for command in commands:
+                if command in self.commands:
+                    self.commands.remove(command)
+
+                if not self.test_module_implemented and command == TEST_MODULE:
+                    self.test_module_implemented = True
+
+        try:
+            # ASSUMING IT'S RUNNING ON THE CLASS: astroid.MatchCase
+            # for "case 'command1' | 'commands2'"
+            if isinstance(node.pattern, astroid.MatchOr):
+                for match_value in node.pattern.patterns:
+                    _check_match(match_value.value)
+
+            elif isinstance(node.pattern, astroid.MatchValue):
+                _check_match(node.pattern.value)
 
         except Exception:
             pass

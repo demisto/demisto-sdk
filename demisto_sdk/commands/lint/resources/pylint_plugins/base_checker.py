@@ -143,7 +143,7 @@ class CustomBaseChecker(BaseChecker):
     def visit_if(self, node):
         self._commands_in_if_statment_checker(node)
 
-    def visit_match_case(self, node):
+    def visit_match(self, node):
         self._commands_in_match_statement_checker(node)
 
     # ------------------------------------- leave functions -------------------------------------------------
@@ -410,9 +410,7 @@ class CustomBaseChecker(BaseChecker):
                     self.test_module_implemented = True
 
             # for if command in ['command1','command2'] or for if command in {'command1','command2'}
-            if isinstance(comp_with, astroid.List) or isinstance(
-                comp_with, astroid.Set
-            ):
+            if isinstance(comp_with, astroid.List) or isinstance(comp_with, astroid.Set):
                 for var_lst in comp_with.itered():
                     commands = self._infer_name(var_lst)
 
@@ -456,22 +454,17 @@ class CustomBaseChecker(BaseChecker):
     def _commands_in_match_statement_checker(self, node):
         """
         Args: node which is a Match Node.
-        Check all possible appearances of implementations of commands in an If statement:
-        - if command exist in a regular if statement e.g. if 'command' == command
-        - if command exist in a regular if with conditions e.g. command == 'command1' or command == 'commands2
-        - if command exist in a elif clause of an if.
-        - if command exist in a list / dict of commands e.g. ['command1','command2']  or {'command1','command2'}
-        - if command exist in a tuple of commands e.g. ('command1','command2')
+        Check all possible appearances of implementations of commands in an Match case statement:
+        - if command exists in a regular match case e.g. >>> case 'command1':
+        - if command exists in a match case with an or operator e.g. >>> case 'command1' | 'command2':
 
-        Adds the relevant error message using `add_message` function if one of the above exists.
+        Adds the relevant error message using `add_message` function if none of the above exists.
         """
 
         def _check_match(comp_with):
             """
             Internal function that inferences the value of the comp_with argument.
             If the inferred value is a command which is in the commands list, removes it , as we found an implementation
-            Returns:
-
             """
             # for regular if 'command' == command with inference mechanize
             commands = self._infer_name(comp_with)
@@ -484,14 +477,15 @@ class CustomBaseChecker(BaseChecker):
                     self.test_module_implemented = True
 
         try:
-            # ASSUMING IT'S RUNNING ON THE CLASS: astroid.MatchCase
-            # for "case 'command1' | 'commands2'"
-            if isinstance(node.pattern, astroid.MatchOr):
-                for match_value in node.pattern.patterns:
-                    _check_match(match_value.value)
+            for case in node.cases:
+                # running on astroid.Match
+                # for "case 'command1' | 'commands2'"
+                if isinstance(case.pattern, astroid.MatchOr):
+                    for match_value in case.pattern.patterns:
+                        _check_match(match_value.value)
 
-            elif isinstance(node.pattern, astroid.MatchValue):
-                _check_match(node.pattern.value)
+                elif isinstance(case.pattern, astroid.MatchValue):
+                    _check_match(case.pattern.value)
 
         except Exception:
             pass

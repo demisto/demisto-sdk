@@ -25,6 +25,7 @@ class TestFile:
 
 
 class FileTesting(ABC):
+    @pytest.fixture()
     @abstractmethod
     def input_files(self, git_repo):
         pass

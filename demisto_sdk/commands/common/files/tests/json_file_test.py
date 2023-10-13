@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import List, Tuple
 
+import pytest
+
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
@@ -10,6 +12,7 @@ from TestSuite.test_tools import ChangeCWD
 
 
 class TestJsonFile(FileTesting):
+    @pytest.fixture()
     def input_files(self, git_repo):
         file_content = {"test": "test"}
         pack = git_repo.create_pack("test")

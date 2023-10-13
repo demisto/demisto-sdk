@@ -11,7 +11,7 @@ from TestSuite.test_tools import ChangeCWD
 
 
 class TestBinaryFile(FileTesting):
-    @pytest.fixture(autouse=True)
+    @pytest.fixture()
     def input_files(self, git_repo):
         pack = git_repo.create_pack("test")
         integration = pack.create_integration()

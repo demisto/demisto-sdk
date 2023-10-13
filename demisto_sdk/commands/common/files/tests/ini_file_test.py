@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import List, Tuple
 
+import pytest
+
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.ini_file import IniFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
@@ -9,6 +11,7 @@ from TestSuite.test_tools import ChangeCWD
 
 
 class TestIniFile(FileTesting):
+    @pytest.fixture()
     def input_files(self, git_repo):
         pack = git_repo.create_pack()
         pack.pack_ignore.write_list(

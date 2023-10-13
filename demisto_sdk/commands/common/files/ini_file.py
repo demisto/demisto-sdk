@@ -31,9 +31,9 @@ class IniFile(TextFile):
         }
 
         """
-        config = ConfigParser()
+        config = ConfigParser(allow_no_value=True)
         for section, values in data.items():
             config[section] = values
 
         with path.open("w", encoding=encoding or self.default_encoding) as ini_file:
-            config.write(ini_file)
+            config.write(ini_file, space_around_delimiters=False)

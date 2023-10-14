@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import List, Tuple
 
 import pytest
@@ -29,6 +30,15 @@ class FileTesting(ABC):
     @abstractmethod
     def input_files(self, git_repo):
         pass
+
+    @staticmethod
+    def get_requests_mock(mocker, path: str):
+        import requests
+
+        api_response = requests.Response()
+        api_response.status_code = 200
+        api_response._content = Path(path).read_bytes()
+        return mocker.patch.object(requests, "get", return_value=api_response)
 
     @abstractmethod
     def test_read_from_local_path(self, input_files: Tuple[List[str], str]):

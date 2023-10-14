@@ -63,16 +63,10 @@ class TestTextFile(FileTesting):
                 ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
-        import requests
 
         text_file_paths, _ = input_files
         for path in text_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            requests_mocker = mocker.patch.object(
-                requests, "get", return_value=api_response
-            )
+            requests_mocker = self.get_requests_mock(mocker, path=path)
             assert TextFile.read_from_github_api(path) == Path(path).read_text()
             # make sure that the URL is sent correctly
             assert (
@@ -83,16 +77,9 @@ class TestTextFile(FileTesting):
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
         from urllib.parse import unquote
 
-        import requests
-
         text_file_paths, _ = input_files
         for path in text_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            requests_mocker = mocker.patch.object(
-                requests, "get", return_value=api_response
-            )
+            requests_mocker = self.get_requests_mock(mocker, path=path)
             assert (
                 TextFile.read_from_gitlab_api(
                     path,
@@ -111,14 +98,10 @@ class TestTextFile(FileTesting):
             }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
-        import requests
 
         text_file_paths, _ = input_files
         for path in text_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            mocker.patch.object(requests, "get", return_value=api_response)
+            self.get_requests_mock(mocker, path=path)
             assert TextFile.read_from_http_request(path) == Path(path).read_text()
 
     def test_write_file(self, git_repo):

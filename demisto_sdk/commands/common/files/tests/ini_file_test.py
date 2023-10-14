@@ -57,16 +57,10 @@ class TestIniFile(FileTesting):
                 assert actual_file_content.sections()
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
-        import requests
 
         text_file_paths, _ = input_files
         for path in text_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            requests_mocker = mocker.patch.object(
-                requests, "get", return_value=api_response
-            )
+            requests_mocker = self.get_requests_mock(mocker, path=path)
             actual_file_content = IniFile.read_from_github_api(path)
             # make sure that the URL is sent correctly
             assert (
@@ -78,16 +72,9 @@ class TestIniFile(FileTesting):
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
         from urllib.parse import unquote
 
-        import requests
-
         text_file_paths, _ = input_files
         for path in text_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            requests_mocker = mocker.patch.object(
-                requests, "get", return_value=api_response
-            )
+            requests_mocker = self.get_requests_mock(mocker, path=path)
             actual_file_content = IniFile.read_from_gitlab_api(
                 path,
                 git_content_config=GitContentConfig(
@@ -105,14 +92,10 @@ class TestIniFile(FileTesting):
             }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
-        import requests
 
         text_file_paths, _ = input_files
         for path in text_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            mocker.patch.object(requests, "get", return_value=api_response)
+            self.get_requests_mock(mocker, path=path)
             actual_file_content = IniFile.read_from_http_request(path)
             assert actual_file_content.sections()
 

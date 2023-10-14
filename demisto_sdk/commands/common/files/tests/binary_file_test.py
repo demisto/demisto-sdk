@@ -50,16 +50,10 @@ class TestBinaryFile(FileTesting):
                 ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
-        import requests
 
         binary_file_paths, _ = input_files
         for path in binary_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            requests_mocker = mocker.patch.object(
-                requests, "get", return_value=api_response
-            )
+            requests_mocker = self.get_requests_mock(mocker, path=path)
             assert BinaryFile.read_from_github_api(path) == Path(path).read_bytes()
             # make sure that the URL is sent correctly
             assert (
@@ -70,16 +64,9 @@ class TestBinaryFile(FileTesting):
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
         from urllib.parse import unquote
 
-        import requests
-
         binary_file_paths, _ = input_files
         for path in binary_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            requests_mocker = mocker.patch.object(
-                requests, "get", return_value=api_response
-            )
+            requests_mocker = self.get_requests_mock(mocker, path=path)
             assert (
                 BinaryFile.read_from_gitlab_api(
                     path,
@@ -98,18 +85,15 @@ class TestBinaryFile(FileTesting):
             }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
-        import requests
 
         binary_file_paths, _ = input_files
         for path in binary_file_paths:
-            api_response = requests.Response()
-            api_response.status_code = 200
-            api_response._content = Path(path).read_bytes()
-            mocker.patch.object(requests, "get", return_value=api_response)
+            self.get_requests_mock(mocker, path=path)
             assert BinaryFile.read_from_http_request(path) == Path(path).read_bytes()
 
     def test_write_file(self, git_repo):
-        _path = Path(git_repo.path) / "file.txt"
-        BinaryFile.write_file("text".encode(), output_path=_path)
+        _path = Path(git_repo.path) / "file.bin"
+        file_content = "text".encode()
+        BinaryFile.write_file(file_content, output_path=_path)
         assert _path.exists()
-        assert _path.read_text() == "text"
+        assert _path.read_bytes() == file_content

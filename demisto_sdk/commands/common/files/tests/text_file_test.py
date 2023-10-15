@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 class TestTextFile(FileTesting):
@@ -47,6 +47,19 @@ class TestTextFile(FileTesting):
             assert (
                 actual_file_content == expected_file_content
             ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
+
+    def test_read_from_local_path_unicode_error(self, mocker, git_repo):
+        from demisto_sdk.commands.common.logger import logger
+
+        _path = Path(git_repo.path) / "file"
+        debug_logger_mocker = mocker.patch.object(logger, "debug")
+        # create a byte sequence that cannot be decoded using utf-8 which represents the char ÿ
+        _path.write_bytes(b"\xff")
+        assert TextFile.read_from_local_path(_path) == "ÿ"
+        assert str_in_call_args_list(
+            debug_logger_mocker.call_args_list,
+            required_str=f"Error when decoding file {_path} with utf-8",
+        )
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
 

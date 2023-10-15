@@ -18,6 +18,10 @@ class TextFile(File):
         try:
             return file_content.decode(self.default_encoding)
         except UnicodeDecodeError:
+            original_file_encoding = UnicodeDammit(file_content).original_encoding
+            logger.debug(
+                f"Error when decoding file {self.input_path} with {self.default_encoding}, trying to decode the file with original encoding {original_file_encoding}"
+            )
             try:
                 return UnicodeDammit(file_content).unicode_markup
             except UnicodeDecodeError as e:

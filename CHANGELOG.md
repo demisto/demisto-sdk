@@ -4,11 +4,14 @@
 * Updated the **run-unit-tests** command to not fail on JavaScript items, but skip them instead.
 * Updated the `validate` pre-commit hook to run before the `run-unit-tests` hook. This will prevent `validate` from falling on errors about temporary files that are sometimes created when running unit-tests.
 * Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
+* Added a new key **supportlevelheader** to the integration schema.
 * **format** command will run without the content graph if graph creation fails.
 * Internal: Replaced the `tools._read_file` function with a more generic `tools.safe_read_unicode` function.
 * Internal: Added `pathlib.Path` support to the `tools.get_yml_paths_in_dir` and `tools.get_child_directories` functions.
 * Fixed an issue in the **test-modeling-rule** command, where possible exceptions were not caught.
 * Added the *--delete_existing_dataset/-dd* flag to the **modeling-rules test** command to delete an existing dataset in the tenant.
+* Added a new validation (`IN159`) which validates that reputation commands context outputs are spelled according to standards.
+* Internal: Added a `loaded_data` parameter to `YmlSplitter` to allow passing preloaded YAML data.
 
 ## 1.20.7
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.

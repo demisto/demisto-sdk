@@ -612,6 +612,8 @@ class IntegrationValidator(ContentEntityValidator):
             bool: True if the reputation name is spelled correctly, False otherwise."""
         result = True
         for reputation_name in MANDATORY_REPUTATION_CONTEXT_NAMES:
+            # In context output we expect a dot after reputation name as this is the structure
+            # of a valid context output: URL.DATA, Domain.Admin etc.
             if context_output_path.lower().startswith(f"{reputation_name.lower()}."):
                 if reputation_name not in context_output_path:
                     (
@@ -632,8 +634,9 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes("DB100,DB101,IN107,IN158")
     def is_outputs_for_reputations_commands_valid(self) -> bool:
         """Check if a reputation command (domain/email/file/ip/url)
-            has the correct DBotScore outputs according to the context standard
-            https://xsoar.pan.dev/docs/integrations/context-standards
+            1. Has the correct DBotScore outputs according to the context standard
+               https://xsoar.pan.dev/docs/integrations/context-standards
+            2. Is spelled correctly.
 
         Returns:
             bool. Whether a reputation command holds valid outputs
@@ -651,11 +654,12 @@ class IntegrationValidator(ContentEntityValidator):
                 context_outputs_paths = set()
                 context_outputs_descriptions = set()
                 for output in command.get("outputs", []):
-                    context_outputs_paths.add(output.get("contextPath"))
+                    context_path = output.get("contextPath")
+                    context_outputs_paths.add(context_path)
                     context_outputs_descriptions.add(output.get("description"))
                     output_for_reputation_valid = (
                         self.validate_reputation_name_spelling(
-                            command_name, output.get("contextPath")
+                            command_name, context_path
                         )
                     )
 

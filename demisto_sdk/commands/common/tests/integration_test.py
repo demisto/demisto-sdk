@@ -2969,8 +2969,8 @@ class TestisContextChanged:
         "name": "endpoint",
         "outputs": [
             {
-                "contextPath": "Endpoint.Hostname",
-                "description": "endpoint hostname",
+                "contextPath": "Endpoint.Critical",
+                "description": "The percentage of critical findings on the host.",
                 "type": "string",
             },
             {
@@ -2998,7 +2998,7 @@ class TestisContextChanged:
     IS_OUTPUT_FOR_REPUTATION_INPUTS = [
         (VALID_COMMAND_OUTPUTS, True),
         (INVALID_COMMAND_OUTPUTS, False),
-        (MISSING_COMMAND_OUTPUTS, True),
+        (MISSING_COMMAND_OUTPUTS, False),
     ]
 
     @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
@@ -3008,12 +3008,16 @@ class TestisContextChanged:
         """
         Cover IN158 validation which validates the spelling of command output paths for reputation commands.
         Given
-        - The outputs and command_name of a command context.
+        The outputs and command_name of a command context.
+            - Case 1: A valid command output, URL is spelled correctly, all DBotScore outputs are present.
+            - Case 2: An invalid command output, URL is not spelled correctly (Url), all DBotScore outputs are present.
+            - Case 3: An invalid command output, Endpoint is missing one of the mandatory output paths (ID, IPAddress, Hostname), all DBotScore outputs are present.
         When
         - Calling the is_outputs_for_reputations_commands_valid validation.
         Then
-        - Upon valid spelling defined in constants.py: MANDATORY_REPUTATION_CONTEXT_NAMES
-        will return True otherwise False
+            - Case 1: Make sure validation pass.
+            - Case 2: Make sure validation fails.
+            - Case 3: Make sure validation fails.
         """
         content = {"script": {"commands": [outputs]}}
         structure = mock_structure("", content)

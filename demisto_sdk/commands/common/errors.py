@@ -590,10 +590,6 @@ ERROR_CODE: Dict = {
         "code": "IN157",
         "related_field": "deprecated",
     },
-    "invalid_deprecation__only_description_deprecated": {
-        "code": "IN158",
-        "related_field": "deprecated",
-    },
     "invalid_deprecated_integration_description": {
         "code": "IN128",
         "related_field": "",
@@ -717,6 +713,10 @@ ERROR_CODE: Dict = {
     "nativeimage_exist_in_integration_yml": {
         "code": "IN157",
         "related_field": "script",
+    },
+    "invalid_deprecation__only_description_deprecated": {
+        "code": "IN158",
+        "related_field": "deprecated",
     },
     "command_reputation_output_capitalization_incorrect": {
         "code": "IN159",

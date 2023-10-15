@@ -631,7 +631,7 @@ class IntegrationValidator(ContentEntityValidator):
                         result = False
         return result
 
-    @error_codes("DB100,DB101,IN107,IN158")
+    @error_codes("DB100,DB101,IN107,IN159")
     def is_outputs_for_reputations_commands_valid(self) -> bool:
         """Check if a reputation command (domain/email/file/ip/url)
             1. Has the correct DBotScore outputs according to the context standard

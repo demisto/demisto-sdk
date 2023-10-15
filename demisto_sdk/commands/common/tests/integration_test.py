@@ -3006,7 +3006,7 @@ class TestisContextChanged:
         self, outputs: List[Dict[str, Any]], result: bool
     ):
         """
-        Cover IN158 validation which validates the spelling of command output paths for reputation commands.
+        Cover IN159 validation which validates the spelling of command output paths for reputation commands.
         Given
         The outputs and command_name of a command context.
             - Case 1: A valid command output, URL is spelled correctly, all DBotScore outputs are present.

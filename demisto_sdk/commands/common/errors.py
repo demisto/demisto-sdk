@@ -719,7 +719,7 @@ ERROR_CODE: Dict = {
         "related_field": "script",
     },
     "command_reputation_output_capitalization_incorrect": {
-        "code": "IN158",
+        "code": "IN159",
         "related_field": "outputs",
     },
     # IT - Incident Types

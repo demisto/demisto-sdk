@@ -1,3 +1,4 @@
+import functools
 import os
 import re
 from pathlib import Path
@@ -43,6 +44,7 @@ class GitUtil:
                 f"Unable to find Repository from current {repo_path.absolute()} - aborting"
             )
 
+    @functools.cache
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files().split("\n")))
 
@@ -514,6 +516,7 @@ class GitUtil:
 
         return extracted_paths
 
+    @functools.cache
     def _get_staged_files(self) -> Set[Path]:
         """Get only staged files
 

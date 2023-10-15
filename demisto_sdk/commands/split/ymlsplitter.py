@@ -76,7 +76,9 @@ class YmlSplitter:
         self.lines_inserted_at_code_start = 0
         self.config = configuration or Configuration()
         self.auto_create_dir = not no_auto_create_dir
-        self.yml_data = input_file_data if input_file_data is not None else get_yaml(self.input)
+        self.yml_data = (
+            input_file_data if input_file_data is not None else get_yaml(self.input)
+        )
         self.api_module_path: Optional[str] = None
 
     def get_output_path(self):

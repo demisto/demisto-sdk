@@ -4407,5 +4407,5 @@ class Errors:
         invalid_output: str,
         reputation_name: str,
     ):
-        return f"The {command_name} command returns the following reputation output:\n{invalid_output} for object: {reputation_name}.\
-The capitalization is incorrect. For further information: {XSOAR_CONTEXT_AND_OUTPUTS_URL}"
+        return f"The {command_name} command returns the following reputation output:\n{invalid_output} for reputation: {reputation_name}.\
+The capitalization is incorrect. For further information refer to {XSOAR_CONTEXT_AND_OUTPUTS_URL}"

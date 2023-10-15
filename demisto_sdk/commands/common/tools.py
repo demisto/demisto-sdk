@@ -3530,52 +3530,54 @@ def get_display_name(file_path: str | Path, file_data: dict | None = None) -> st
     :rtype: ``str``
     :return The display name
     """
-    _file_path = Path(file_path)
-    _file_data: dict = file_data or {}
+    file_path = Path(file_path)
 
-    if not file_data and _file_path.suffix in (".yml", ".yaml", ".json"):
-        _file_data = get_file(_file_path)
+    if not file_data and file_path.suffix in (".yml", ".yaml", ".json"):
+        file_data = get_file(file_path)
 
-    if "display" in _file_data:
-        return _file_data["display"]
-    elif (
-        "layout" in _file_data
-        and isinstance(_file_data["layout"], dict)
-        and "id" in _file_data["layout"]
-    ):
-        return _file_data["layout"]["id"]
-    elif "name" in _file_data:
-        return _file_data["name"]
-    elif "TypeName" in _file_data:
-        return _file_data["TypeName"]
-    elif "brandName" in _file_data:
-        return _file_data["brandName"]
-    elif "reputationCommand" in _file_data and "details" in _file_data:
-        return _file_data["details"]
-    elif "id" in _file_data:
-        return _file_data["id"]
-    elif "trigger_name" in _file_data:
-        return _file_data["trigger_name"]
-    elif "rule_name" in _file_data:
-        return _file_data["rule_name"]
-    elif (
-        "dashboards_data" in _file_data
-        and "dashboards_data" in _file_data
-        and isinstance(_file_data["dashboards_data"], list)
-        and len(_file_data["dashboards_data"]) > 0
-        and "name" in _file_data["dashboards_data"][0]
-    ):
-        return _file_data["dashboards_data"][0]["name"]
-    elif (
-        "templates_data" in _file_data
-        and "templates_data" in _file_data
-        and isinstance(_file_data["templates_data"], list)
-        and len(_file_data["templates_data"]) > 0
-        and "report_name" in _file_data["templates_data"][0]
-    ):
-        return _file_data["templates_data"][0]["report_name"]
+    if not file_data:
+        file_data = {}
 
-    return Path(_file_path).name
+    if "display" in file_data:
+        return file_data["display"]
+    elif (
+        "layout" in file_data
+        and isinstance(file_data["layout"], dict)
+        and "id" in file_data["layout"]
+    ):
+        return file_data["layout"]["id"]
+    elif "name" in file_data:
+        return file_data["name"]
+    elif "TypeName" in file_data:
+        return file_data["TypeName"]
+    elif "brandName" in file_data:
+        return file_data["brandName"]
+    elif "reputationCommand" in file_data and "details" in file_data:
+        return file_data["details"]
+    elif "id" in file_data:
+        return file_data["id"]
+    elif "trigger_name" in file_data:
+        return file_data["trigger_name"]
+    elif "rule_name" in file_data:
+        return file_data["rule_name"]
+    elif (
+        "dashboards_data" in file_data
+        and "dashboards_data" in file_data
+        and isinstance(file_data["dashboards_data"], list)
+        and len(file_data["dashboards_data"]) > 0
+        and "name" in file_data["dashboards_data"][0]
+    ):
+        return file_data["dashboards_data"][0]["name"]
+    elif (
+        "templates_data" in file_data
+        and "templates_data" in file_data
+        and isinstance(file_data["templates_data"], list)
+        and len(file_data["templates_data"]) > 0
+        and "report_name" in file_data["templates_data"][0]
+    ):
+        return file_data["templates_data"][0]["report_name"]
+
+    return file_path.name
 
 
 def get_invalid_incident_fields_from_mapper(

@@ -172,7 +172,8 @@ class Downloader:
                 self.list_all_custom_content()
                 return 0
 
-            if not self.verify_flags():
+            if not self.output_pack_path:
+                logger.error("Error: Missing required parameter '-o' / '--output'.")
                 return 1
 
             output_path = Path(self.output_pack_path)
@@ -184,12 +185,33 @@ class Downloader:
                 output_path = self.initialize_output_path(root_folder=output_path)
 
             if self.download_system_items:
-                content_item_type: str = self.system_item_type
+                if not self.input_files:
+                    logger.error(
+                        "Error: Missing required parameter for downloading system items: '-i' / '--input'."
+                    )
+                    return 1
+
+                if not self.system_item_type:
+                    logger.error(
+                        "Error: Missing required parameter for downloading system items: '-it' / '--item-type'."
+                    )
+                    return 1
+
+                content_item_type: str = self.system_item_type  # type: ignore[assignment]
                 downloaded_content_objects = self.fetch_system_content(
                     content_item_type=content_item_type
                 )
 
             else:  # Custom content
+                if not any(
+                    (self.input_files, self.download_all_custom_content, self.regex)
+                ):
+                    logger.error(
+                        "Error: No input parameter has been provided "
+                        "('-i' / '--input', '-r' / '--regex', '-a' / '--all)."
+                    )
+                    return 1
+
                 all_custom_content_data = self.download_custom_content()
                 all_custom_content_objects = self.parse_custom_content_data(
                     custom_content_data=all_custom_content_data
@@ -246,47 +268,6 @@ class Downloader:
 
             logger.debug("Traceback:\n" + traceback.format_exc())
             return 1
-
-    def verify_flags(self) -> bool:
-        """
-        Verify that the flags provided by the user are valid and used correctly.
-
-        Returns:
-            bool: Whether the flags are valid or not.
-        """
-        if not self.output_pack_path:
-            logger.error("Error: Missing required parameter '-o' / '--output'.")
-            return False
-
-        if not any((self.input_files, self.download_all_custom_content, self.regex)):
-            logger.error(
-                "Error: No input parameter has been provided "
-                "('-i' / '--input', '-r' / '--regex', '-a' / '--all)."
-            )
-            return False
-
-        if self.download_system_items:
-            if not self.system_item_type:
-                logger.error(
-                    "Error: Missing required parameter for downloading system items: '-it' / '--item-type'."
-                )
-                return False
-
-            if self.regex:
-                logger.error(
-                    "Error: RegEx flag ('-r' / '--regex') can only be used for custom content. "
-                    "Use '-i' / '--input' to provide a list of system items to download."
-                )
-                return False
-
-            if self.download_all_custom_content:
-                logger.error(
-                    "Error: All custom content flag ('-a' / '--all') can only be used for custom content. "
-                    "Use '-i' / '--input' to provide a list of system items to download."
-                )
-                return False
-
-        return True
 
     def list_all_custom_content(self):
         """
@@ -602,7 +583,7 @@ class Downloader:
     def generate_content_file_name(
         self, content_item: dict, content_item_type: str
     ) -> str:
-        item_name: str = content_item.get("name") or content_item.get("id")
+        item_name: str = content_item.get("name") or content_item["id"]
         result = (
             item_name.replace("/", "_").replace(" ", "_")
             + ITEM_TYPE_TO_PREFIX[content_item_type]
@@ -1059,6 +1040,8 @@ class Downloader:
                 file_path=file_name, file_data=loaded_file_data
             )
 
+        file_entity: str | None
+
         if (
             file_type == FileType.PLAYBOOK
             and content_name
@@ -1069,8 +1052,11 @@ class Downloader:
         ):
             file_entity = TEST_PLAYBOOKS_DIR
 
-        else:
+        elif file_type:
             file_entity = ENTITY_TYPE_TO_DIR.get(file_type)
+
+        else:
+            file_entity = None
 
         if not content_id:
             logger.warning(f"Could not find the ID of '{file_name}'.")
@@ -1086,7 +1072,9 @@ class Downloader:
             "data": loaded_file_data,  # dict
         }
 
-        if file_code_language := get_code_lang(loaded_file_data, file_entity):
+        if file_entity and (
+            file_code_language := get_code_lang(loaded_file_data, file_entity)
+        ):
             custom_content_object["code_lang"] = file_code_language
 
         return custom_content_object
@@ -1248,11 +1236,11 @@ class Downloader:
             content_item_output_path.mkdir(
                 parents=True, exist_ok=True
             )  # Create path if it doesn't exist
-            content_item_output_path = str(content_item_output_path)
+            content_item_output_path = content_item_output_path
 
         extractor = YmlSplitter(
             input=content_object["file_name"],
-            output=content_item_output_path,
+            output=str(content_item_output_path),
             loaded_data=content_object["data"],
             file_type=content_item_type.value,
             base_name=content_directory_name,
@@ -1261,7 +1249,7 @@ class Downloader:
         )
         extractor.extract_to_package_format()
         extracted_file_paths: list[str] = get_child_files(
-            directory=content_item_output_path
+            directory=str(content_item_output_path)
         )
 
         for extracted_file_path_str in extracted_file_paths:

@@ -357,32 +357,54 @@ class TestFlags:
     def test_missing_output_flag(self, mocker):
         """
         Given: A downloader object
-        When: The user tries to download a system items without specifying the output flag
-        Then: Ensure downloader.verify_flags() returns False and logs the error
+        When: The user tries to download a system item without specifying the output flag
+        Then: Ensure downloader returns a '1' error code and logs the error
         """
-        downloader = Downloader()
+        downloader = Downloader(input=("test",))
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
-        assert downloader.verify_flags() is False
+        assert downloader.download() == 1
         assert str_in_call_args_list(
             logger_info.call_args_list,
             "Error: Missing required parameter '-o' / '--output'.",
         )
 
-    def test_missing_input_flag(self, mocker):
+    def test_missing_input_flag_system(self, mocker):
         """
         Given: A downloader object
-        When: The user tries to download a system items without specifying any input flag
-        Then: Ensure downloader.verify_flags() returns False and logs the error
+        When: The user tries to download a system item without specifying any input flag
+        Then: Ensure downloader returns a '1' error code and logs the error
         """
-        downloader = Downloader(output="Output", input=tuple())
+        downloader = Downloader(output="Output", input=tuple(), system=True)
+        mocker.patch.object(Downloader, "verify_output_path", return_value=True)
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
-        assert downloader.verify_flags() is False
+        assert downloader.download() == 1
         assert str_in_call_args_list(
             logger_info.call_args_list,
-            "Error: No input parameter has been provided "
-            "('-i' / '--input', '-r' / '--regex', '-a' / '--all).",
+            "Error: Missing required parameter for downloading system items: '-i' / '--input'.",
+        )
+
+    def test_missing_input_flag_custom(self, mocker):
+        """
+        Given: A downloader object
+        When: The user tries to download a custom content item without specifying any input flag
+        Then: Ensure downloader returns a '1' error code and logs the error
+        """
+        downloader = Downloader(
+            output="Output",
+            input=tuple(),
+            regex=None,
+            all_custom_content=False,
+            system=False,
+        )
+        mocker.patch.object(Downloader, "verify_output_path", return_value=True)
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+        assert downloader.download() == 1
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            "Error: No input parameter has been provided ('-i' / '--input', '-r' / '--regex', '-a' / '--all).",
         )
 
     def test_missing_item_type(self, mocker):
@@ -394,9 +416,10 @@ class TestFlags:
         downloader = Downloader(
             output="Output", input=("My Playbook",), system=True, item_type=None
         )
+        mocker.patch.object(Downloader, "verify_output_path", return_value=True)
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
-        assert downloader.verify_flags() is False
+        assert downloader.download() == 1
         assert str_in_call_args_list(
             logger_info.call_args_list,
             "Error: Missing required parameter for downloading system items: '-it' / '--item-type'.",
@@ -953,7 +976,9 @@ def test_build_req_params(
     downloader = Downloader(
         input=input_content, system=True, item_type=item_type, insecure=insecure
     )
-    res_endpoint, res_req_type, res_req_body = downloader.build_req_params()
+    res_endpoint, res_req_type, res_req_body = downloader.build_req_params(
+        content_item_type=item_type
+    )
     assert endpoint == res_endpoint
     assert req_type == res_req_type
     assert req_body == res_req_body

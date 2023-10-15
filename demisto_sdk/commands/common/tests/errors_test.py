@@ -2,7 +2,7 @@ import re
 import unittest
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.errors import ERROR_CODE, Errors
 
 ERROR_CODE_REGEX = re.compile(r"[A-Z]{2}\d{3}")
 
@@ -176,3 +176,15 @@ class TestErrors(unittest.TestCase):
             assert ERROR_CODE_REGEX.fullmatch(
                 error["code"]
             ), f"{error} does not match an error code format"
+
+
+def test_dupe_error_codes():
+    from collections import Counter
+
+    counter = Counter(error["code"] for error in ERROR_CODE.values())
+
+    assert not (
+        duplicates := tuple(
+            error_code for error_code, count in counter.items() if count > 1
+        )
+    ), f"{duplicates} appear more than once in errors.py/ERROR_CODE, change the newer."

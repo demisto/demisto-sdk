@@ -195,10 +195,6 @@ class Downloader:
                     custom_content_data=all_custom_content_data
                 )
 
-                uuid_mapping = self.create_uuid_to_name_mapping(
-                    custom_content_objects=all_custom_content_objects
-                )
-
                 # Filter custom content so that we'll process only downloaded content
                 downloaded_content_objects = self.filter_custom_content(
                     custom_content_objects=all_custom_content_objects
@@ -212,6 +208,10 @@ class Downloader:
 
                 if self.auto_replace_uuids:
                     # Replace UUID IDs with names in filtered content (only content we download)
+                    uuid_mapping = self.create_uuid_to_name_mapping(
+                        custom_content_objects=all_custom_content_objects
+                    )
+
                     changed_uuids_count = 0
                     for file_object in downloaded_content_objects.values():
                         if self.replace_uuid_ids(

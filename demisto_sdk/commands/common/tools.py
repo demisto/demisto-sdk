@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import contextlib
 import glob
-import io
 import logging
 import os
 import re
 import shlex
 import sys
+import traceback
 import urllib.parse
 from collections import OrderedDict
 from concurrent.futures import as_completed
@@ -15,6 +17,7 @@ from datetime import datetime
 from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
+from io import StringIO, TextIOWrapper
 from pathlib import Path, PosixPath
 from subprocess import PIPE, Popen
 from time import sleep
@@ -119,7 +122,10 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig, Git
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import (
+    XSOAR_Handler,
+    YAML_Handler,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -261,19 +267,19 @@ def get_mp_tag_parser():
     return MARKETPLACE_TAG_PARSER
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str | Path) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
-    :param project_dir: string path to the project_dir
-    :param error_msg: the error msg to show to the user in case not yml files found in the directory
+    :param project_dir: path to the project_dir
     :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
     string path to the first yml file in project_dir
     """
-    yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
+    project_dir_path = Path(project_dir)
+    yml_files = [str(path) for path in project_dir_path.glob("*.yml")]
+
     if not yml_files:
-        if error_msg:
-            logger.info(error_msg)
         return [], ""
+
     return yml_files, yml_files[0]
 
 
@@ -657,8 +663,7 @@ def filter_packagify_changes(
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            with open(file_path) as f:
-                details = yaml.load(f)
+            details = get_file(file_path, raise_on_error=True)
 
             uniq_identifier = "_".join(
                 [
@@ -685,16 +690,21 @@ def filter_packagify_changes(
     return modified_files, updated_added_files, removed_files
 
 
-def get_child_directories(directory):
-    """Return a list of paths of immediate child directories of the 'directory' argument"""
-    if not os.path.isdir(directory):
-        return []
-    child_directories = [
-        os.path.join(directory, path)
-        for path in os.listdir(directory)
-        if os.path.isdir(os.path.join(directory, path))
-    ]
-    return child_directories
+def get_child_directories(directory: str | Path) -> list[str]:
+    """
+    Get a list of all directories within a directory.
+    Does not search recursively.
+    Args:
+        directory (str | Path): The directory to search in
+    Returns:
+        list[str]: A list of paths (in string format) of immediate child directories of the 'directory' argument
+    """
+    directory_path = Path(directory)
+
+    if directory_path.is_dir():
+        return [str(path) for path in directory_path.iterdir() if path.is_dir()]
+
+    return []
 
 
 def get_child_files(directory):
@@ -756,36 +766,39 @@ def get_last_remote_release_version():
                 f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
                 f"This may happen if you are not connected to the internet."
             )
-        logger.info(
-            f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
+        logger.warning(
+            f"Could not find the latest version of 'demisto-sdk'.\nError: {exc_msg}"
         )
         return ""
 
 
-def _read_file(file_path: Path) -> str:
-    """returns the body of a text-based file, after reading it as UTF8, or trying to guess its encoding.
+def safe_read_unicode(bytes_data: bytes) -> str:
+    """
+    Safely read unicode data from bytes.
 
     Args:
-        file_path (Path): file to read
+        bytes_data (bytes): bytes to read.
 
     Returns:
-        str: file contents
+        str: A string representation of the parsed bytes.
     """
     try:
-        return file_path.read_text(encoding="utf8")
+        return bytes_data.decode("utf-8")
 
     except UnicodeDecodeError:
         try:
-            # guesses the original encoding
-            return UnicodeDammit(file_path.read_bytes()).unicode_markup
+            logger.debug(
+                "Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
+            )
+            return UnicodeDammit(bytes_data).unicode_markup
 
         except UnicodeDecodeError:
-            logger.info(f"could not auto-detect encoding for file {file_path}")
+            logger.error("Could not auto-detect encoding.")
             raise
 
 
 def safe_write_unicode(
-    write_method: Callable[[io.TextIOWrapper], Any],
+    write_method: Callable[[TextIOWrapper], Any],
     path: Path,
 ):
     # Write unicode content into a file.
@@ -816,11 +829,17 @@ def safe_write_unicode(
 
 @lru_cache
 def get_file(
-    file_path: Union[str, Path],
+    file_path: str | Path,
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = False,
+    raise_on_error: bool = False,
 ):
+    """
+    Get file contents.
+
+    if raise_on_error = False, this function will return empty dict
+    """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
@@ -834,27 +853,30 @@ def get_file(
         raise FileNotFoundError(file_path)
 
     try:
-        file_content = _read_file(file_path)
+        file_content = safe_read_unicode(file_path.read_bytes())
         if return_content:
             return file_content
     except IOError as e:
-        logger.error(f"Could not read file {file_path}.\nError: {e}")
+        logger.error(f"Could not read file '{file_path}': {e}")
+        logger.debug("Traceback:\n" + traceback.format_exc())
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
-            replaced = io.StringIO(
+            replaced = StringIO(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
 
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
-            result = json.load(io.StringIO(file_content))
+            result = json.load(StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
             return json.loads(result) if isinstance(result, str) else result
     except Exception as e:
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
+        if raise_on_error:
+            raise
         return {}
 
 
@@ -886,13 +908,13 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
+def get_yaml(file_path: str | Path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
 
 
-def get_json(file_path, cache_clear=False):
+def get_json(file_path: str | Path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear)
@@ -1661,6 +1683,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
 
+    elif path.name == ".vulture_whitelist.py":
+        return FileType.VULTURE_WHITELIST
+
     elif path.suffix == ".py":
         return FileType.PYTHON_FILE
 
@@ -1728,6 +1753,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         or path.suffix.lower() == ".txt"
     ):
         return FileType.TXT
+
     elif path.name == ".pylintrc":
         return FileType.PYLINTRC
 
@@ -1758,10 +1784,10 @@ def find_type(
         ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
         ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
             True to ignore, False otherwise.
-        clear_cache (bool): wether to clear the cache
+        clear_cache (bool): whether to clear the cache.
 
     Returns:
-        FileType: string representing of the content file type, None otherwise.
+        FileType: Enum representation of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -2492,7 +2518,7 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
     """
-    Returns the code language by the file entity
+    Returns content item's code language (python / javascript).
     :param file_data: The file data
     :param file_entity: The file entity
     :return: The code language
@@ -2818,9 +2844,30 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     return different_contexts
 
 
-def write_yml(yml_path: str, yml_data: Dict):
-    with open(yml_path, "w") as f:
-        yaml.dump(yml_data, f)  # ruamel preservers multilines
+def write_dict(
+    path: Union[Path, str],
+    data: Dict,
+    handler: Optional[XSOAR_Handler] = None,
+    indent: int = 0,
+    sort_keys: bool = False,
+    **kwargs,
+):
+    """
+    Write unicode content into a json/yml file.
+    """
+    path = Path(path)
+    if not handler:
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            handler = json
+        elif suffix in {".yaml", ".yml"}:
+            handler = yaml
+        else:
+            raise ValueError(f"The file {path} is neither json/yml")
+
+    safe_write_unicode(
+        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path  # type: ignore[union-attr]
+    )
 
 
 def to_kebab_case(s: str):
@@ -3237,12 +3284,13 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        with open(metadata_path) as metadata_file:
-            metadata = json.load(metadata_file)
-            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
-            if not marketplaces:
-                return [MarketplaceVersions.XSOAR.value]
-            return marketplaces
+        if not (
+            marketplaces := get_file(metadata_path, raise_on_error=True).get(
+                MARKETPLACE_KEY_PACK_METADATA
+            )
+        ):
+            return [MarketplaceVersions.XSOAR.value]
+        return marketplaces
     except FileNotFoundError:
         return []
 
@@ -3716,7 +3764,7 @@ def get_id(file_content: Dict) -> Union[str, None]:
         file_content: the content of the file.
 
     Returns:
-        str: the ID of the content item in case found, None otherwise.
+        str | None: the ID of the content item in case found, None otherwise.
     """
     if "commonfields" in file_content:
         return file_content["commonfields"].get("id")
@@ -3946,16 +3994,5 @@ def parse_int_or_default(value: Any, default: int) -> int:
         return default
 
 
-def is_sentence_ends_with_bracket(description: str):
-    """
-    Check if the sentence ends with a bracket and valid.
-    Args:
-        description: The description sentence to test.
-
-    Returns:
-        boolean: True if the sentence ends with a bracket and valid.
-
-    """
-    return (
-        description.endswith(")") and len(description) >= 2 and description[-2] == "."
-    )
+def get_all_repo_pack_ids() -> list:
+    return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]

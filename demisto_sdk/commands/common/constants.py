@@ -101,6 +101,19 @@ EVENT_COLLECTOR = "EventCollector"
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
 DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
+DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "code.pan.run")
+DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
+    "CI_PROJECT_ID", "2596"
+)  # the default is the id of the content repo in code.pan.run
+
+# Marketplaces
+TEST_XDR_PREFIX = os.getenv("TEST_XDR_PREFIX", "")
+
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = TEST_XDR_PREFIX + "marketplace-dist"
+DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = TEST_XDR_PREFIX + "marketplace-v2-dist"
+DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = TEST_XDR_PREFIX + "xpanse-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = TEST_XDR_PREFIX + "marketplace-saas-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = TEST_XDR_PREFIX + "marketplace-dist-dev"
 
 
 class FileType(str, Enum):
@@ -180,6 +193,7 @@ class FileType(str, Enum):
     UNIFIED_YML = "unified_yml"
     INI = "ini"
     PEM = "pem"
+    VULTURE_WHITELIST = "vulture_whitelist"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1161,17 +1175,11 @@ def urljoin(*args: str):
     ).rstrip("/")
 
 
-OFFICIAL_CONTENT_ID_SET_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
-)
+OFFICIAL_CONTENT_ID_SET_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/id_set.json"
 
-OFFICIAL_CONTENT_GRAPH_PATH = (
-    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
-)
+OFFICIAL_CONTENT_GRAPH_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/content_graph"
 
-OFFICIAL_INDEX_JSON_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
-)
+OFFICIAL_INDEX_JSON_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/packs/index.json"
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
@@ -1348,6 +1356,18 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     "endpoint": {"default": ["ip"], "required": False},
 }
 
+MANDATORY_REPUTATION_CONTEXT_NAMES = {
+    "Certificate",
+    "CVE",
+    "Domain",
+    "Email",
+    "Endpoint",
+    "File",
+    "InfoFile",
+    "IP",
+    "URL",
+}
+
 ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
 GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union(
@@ -1373,6 +1393,9 @@ XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"
 PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
 XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
+XSOAR_CONTEXT_AND_OUTPUTS_URL = (
+    "https://xsoar.pan.dev/docs/integrations/context-and-outputs"
+)
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
@@ -1585,6 +1608,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."', "\n}", "\n]"]
+
 FIRST_FETCH = "first_fetch"
 
 MAX_FETCH = "max_fetch"
@@ -1732,16 +1757,11 @@ class MarketplaceVersions(str, Enum):
     XSOAR_ON_PREM = "xsoar_on_prem"
 
 
-MARKETPLACE_XSOAR_DIST = "marketplace-dist"
-MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
-MARKETPLACE_XPANSE_DIST = "xpanse-dist"
-MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
-
 MarketplaceVersionToMarketplaceName = {
-    MarketplaceVersions.XSOAR.value: MARKETPLACE_XSOAR_DIST,
-    MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAM_DIST,
-    MarketplaceVersions.XPANSE.value: MARKETPLACE_XPANSE_DIST,
-    MarketplaceVersions.XSOAR_SAAS.value: MARKETPLACE_XSOAR_SAAS_DIST,
+    MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
+    MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
+    MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
+    MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
@@ -1869,7 +1889,7 @@ FORMATTING_SCRIPT = "indicator-format"
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
-TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 
 URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
 
@@ -1907,3 +1927,7 @@ SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 class ImagesFolderNames(str, Enum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
+
+
+class PreCommitModes(str, Enum):
+    NIGHTLY = "nightly"

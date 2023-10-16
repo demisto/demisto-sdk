@@ -156,23 +156,6 @@ update_type=minor
 
 ---
 
-### Autocomplete
-
-Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
-for zsh users run in the terminal
-
-```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
-```
-
-for regular bashrc users run in the terminal
-
-```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
-```
-
----
-
 ## License
 
 MIT - See [LICENSE](LICENSE) for more information.

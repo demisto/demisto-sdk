@@ -1408,6 +1408,7 @@ class Downloader:
             content_item_output_path.mkdir(
                 parents=True, exist_ok=True
             )  # Create path if it doesn't exist
+            content_item_output_path = content_item_output_path / file_name
 
         shutil.move(src=str(file_path), dst=str(content_item_output_path))
 
@@ -1418,11 +1419,7 @@ class Downloader:
             logger.warning(f"Failed to remove temp dir '{temp_dir}': {e}")
             logger.debug(traceback.format_exc())
 
-        if self.run_format and content_item_output_path.suffix.lstrip(".") in (
-            "yml",
-            "yaml",
-            "json",
-        ):
+        if self.run_format:
             format_manager(
                 input=str(content_item_output_path),
                 no_validate=False,

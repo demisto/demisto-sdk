@@ -1260,7 +1260,7 @@ class Downloader:
         extractor = YmlSplitter(
             input=content_object["file_name"],
             output=str(content_item_output_path),
-            loaded_data=content_object["data"],
+            input_file_data=content_object["data"],
             file_type=content_item_type.value,
             base_name=content_directory_name,
             no_readme=content_item_exists,

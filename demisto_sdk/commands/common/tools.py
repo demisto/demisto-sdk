@@ -3486,7 +3486,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     return field_name
 
 
-def get_display_name(file_path: str, file_data: dict | None = None) -> str:
+def get_display_name(file_path: str | Path, file_data: dict | None = None) -> str:
     """Gets the entity display name from the file.
 
     :param file_path: The entity file path
@@ -3495,48 +3495,54 @@ def get_display_name(file_path: str, file_data: dict | None = None) -> str:
     :rtype: ``str``
     :return The display name
     """
+    file_path = Path(file_path)
+
+    if not file_data and file_path.suffix in (".yml", ".yaml", ".json"):
+        file_data = get_file(file_path)
+
     if not file_data:
-        file_extension = os.path.splitext(file_path)[1]
-        if file_extension in [".yml", ".json"]:
-            file_data = get_file(file_path)
+        file_data = {}
 
     if "display" in file_data:
-        return file_data.get("display")
-    elif "layout" in file_data and isinstance(file_data["layout"], dict):
-        return file_data["layout"].get("id")
+        return file_data["display"]
+    elif (
+        "layout" in file_data
+        and isinstance(file_data["layout"], dict)
+        and "id" in file_data["layout"]
+    ):
+        return file_data["layout"]["id"]
     elif "name" in file_data:
-        return file_data.get("name")
+        return file_data["name"]
     elif "TypeName" in file_data:
-        return file_data.get("TypeName")
+        return file_data["TypeName"]
     elif "brandName" in file_data:
-        return file_data.get("brandName")
-    elif "reputationCommand" in file_data:
-        return file_data.get("details")
+        return file_data["brandName"]
+    elif "details" in file_data and isinstance(file_data["details"], str):
+        return file_data["details"]
     elif "id" in file_data:
-        return file_data.get("id")
+        return file_data["id"]
     elif "trigger_name" in file_data:
-        return file_data.get("trigger_name")
+        return file_data["trigger_name"]
     elif "rule_name" in file_data:
-        return file_data.get("rule_name")
-
+        return file_data["rule_name"]
     elif (
         "dashboards_data" in file_data
-        and file_data.get("dashboards_data")
+        and "dashboards_data" in file_data
         and isinstance(file_data["dashboards_data"], list)
+        and len(file_data["dashboards_data"]) > 0
+        and "name" in file_data["dashboards_data"][0]
     ):
-        dashboard_data = file_data.get("dashboards_data", [{}])[0]
-        return dashboard_data.get("name")
-
+        return file_data["dashboards_data"][0]["name"]
     elif (
         "templates_data" in file_data
-        and file_data.get("templates_data")
+        and "templates_data" in file_data
         and isinstance(file_data["templates_data"], list)
+        and len(file_data["templates_data"]) > 0
+        and "report_name" in file_data["templates_data"][0]
     ):
-        r_name = file_data.get("templates_data", [{}])[0]
-        return r_name.get("report_name")
+        return file_data["templates_data"][0]["report_name"]
 
-    else:
-        return Path(file_path).name
+    return file_path.name
 
 
 def get_invalid_incident_fields_from_mapper(
@@ -3738,11 +3744,14 @@ def get_id(file_content: Dict) -> Union[str, None]:
         return file_content["dashboards_data"][0].get("global_id")
     elif "templates_data" in file_content:
         return file_content["templates_data"][0].get("global_id")
-    elif "layout" in file_content:
-        if found_id := file_content.get("id"):
-            return found_id
 
-    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id", "typeId"):
+    for key in (
+        "global_rule_id",
+        "trigger_id",
+        "content_global_id",
+        "rule_id",
+        "typeId",
+    ):
         if key in file_content:
             return file_content[key]
 

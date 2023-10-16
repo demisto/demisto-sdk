@@ -241,11 +241,17 @@ class File(ABC, BaseModel):
             logger.warning(
                 f"Received error {e} when trying to retrieve {git_path_url} content from Github, retrying"
             )
-            return cls.read_from_http_request(
-                git_path_url,
-                params=frozenset({"token": github_token}.items()),
-                timeout=timeout,
-            )
+            try:
+                return cls.read_from_http_request(
+                    git_path_url,
+                    params=frozenset({"token": github_token}.items()),
+                    timeout=timeout,
+                )
+            except FileReadError:
+                logger.exception(
+                    f"Could not retrieve the content of {git_path_url} file from Github"
+                )
+                raise
 
     @classmethod
     def read_from_gitlab_api(

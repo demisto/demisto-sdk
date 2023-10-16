@@ -298,7 +298,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    @error_codes("IN128,IN160")
+    @error_codes("IN128,IN158")
     def _is_valid_deprecated_integration_description(self) -> bool:
         is_deprecated = self.current_file.get("deprecated", False)
         description = self.current_file.get("description", "")

@@ -272,7 +272,7 @@ class IntegrationValidator(ContentEntityValidator):
                     self.is_valid = False
         return self.is_valid
 
-    @error_codes("IN127,IN157")
+    @error_codes("IN127,IN160")
     def _is_valid_deprecated_integration_display_name(self) -> bool:
         is_deprecated = self.current_file.get("deprecated", False)
         is_display_name_deprecated = self.current_file.get("display", "").endswith(
@@ -2382,7 +2382,7 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
         return True
 
-    @error_codes("IN151")
+    @error_codes("IN161")
     def is_valid_xsiam_marketplace(self):
         """Checks if XSIAM integration has only the marketplacev2 entry"""
         is_siem = self.current_file.get("script", {}).get("isfetchevents")

@@ -686,7 +686,7 @@ ERROR_CODE: Dict = {
         "related_field": "display",
     },
     "invalid_siem_marketplaces_entry": {
-        "code": "IN158",
+        "code": "IN161",
         "related_field": "display",
     },
     "empty_command_arguments": {

@@ -2340,7 +2340,7 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
         return True
 
-    @error_codes("IN158")
+    @error_codes("IN161")
     def is_valid_xsiam_marketplace(self):
         """Checks if XSIAM integration has only the marketplacev2 entry"""
         is_siem = self.current_file.get("script", {}).get("isfetchevents")

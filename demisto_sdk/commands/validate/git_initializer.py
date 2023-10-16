@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     specify_files_from_directory,
 )
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
 
 
 class GitInitializer:
@@ -42,7 +43,7 @@ class GitInitializer:
         is_external_repo=None,
         debug_git=None,
         include_untracked=None,
-        print_ignored_files=None
+        print_ignored_files=None,
     ):
         self.staged = staged
         self.use_git = use_git
@@ -72,7 +73,6 @@ class GitInitializer:
                 logger.info("Unable to connect to git")
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
-        return self.branch_name
 
     def setup_prev_ver(self, prev_ver: Optional[str]):
         """Setting up the prev_ver parameter"""
@@ -98,10 +98,9 @@ class GitInitializer:
             self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver)
         else:
             self.prev_ver = self.setup_prev_ver(prev_ver)
-        return self.prev_ver
 
     def collect_files_to_run(self, file_path):
-        
+
         (
             modified_files,
             added_files,
@@ -127,7 +126,14 @@ class GitInitializer:
             include_untracked=self.include_untracked,
         )
 
-        return  modified_files, added_files, changed_meta_files, old_format_files, valid_types, deleted_files
+        return (
+            modified_files,
+            added_files,
+            changed_meta_files,
+            old_format_files,
+            valid_types,
+            deleted_files,
+        )
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
@@ -173,9 +179,16 @@ class GitInitializer:
                 ):
                     return False
             else:
-                return False
-                # to implement: return validation_result
-        return True
+                return ValidationResult(
+                error_code="BA107", is_valid=False, message="Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command.",
+                file_path=""
+                )
+        if self.handle_error:
+            return True
+        else:
+            return ValidationResult(
+            error_code="BA107", is_valid=True, message="", file_path=""
+            )
 
     def print_git_config(self):
         logger.info(
@@ -280,7 +293,7 @@ class GitInitializer:
                 self.new_packs.add(get_pack_name(str(path)))
 
         return changed_metadata_files
-    
+
     def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """
         Get the added and modified before file filtration to only relevant files
@@ -547,9 +560,12 @@ class GitInitializer:
 
         return True
 
-
     def specify_files_by_status(
-        self, modified_files: Set, added_files: Set, old_format_files: Set, file_path: str
+        self,
+        modified_files: Set,
+        added_files: Set,
+        old_format_files: Set,
+        file_path: str,
     ) -> Tuple[Set, Set, Set]:
         """Filter the files identified from git to only specified files.
 

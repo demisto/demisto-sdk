@@ -2,7 +2,7 @@ import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Callable, List, Optional, Set, Tuple
+from typing import Callable, List, Optional, Set
 
 import pebble
 from git import GitCommandError
@@ -150,7 +150,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_ignore_content,
     get_pack_name,
     get_pack_names_from_files,
-    get_relative_path_from_packs_dir,
     get_remote_file,
     get_yaml,
     is_file_in_pack,
@@ -278,10 +277,10 @@ class ValidateManager:
             is_external_repo=self.is_external_repo,
             debug_git=self.debug_git,
             include_untracked=include_untracked,
-            print_ignored_files=print_ignored_files
+            print_ignored_files=print_ignored_files,
         )
-        self.branch_name = self.git_initializer.validate_git_installed()
-        self.prev_ver = self.git_initializer.set_prev_ver(prev_ver)
+        self.git_initializer.validate_git_installed()
+        self.git_initializer.set_prev_ver(prev_ver)
 
         self.check_only_schema = False
         self.always_valid = False
@@ -755,7 +754,9 @@ class ValidateManager:
         ):
             self.git_initializer.ignored_files.add(file_path)
             return True
-        elif not self.git_initializer.is_valid_file_type(file_type, file_path, pack_error_ignore_list):
+        elif not self.git_initializer.is_valid_file_type(
+            file_type, file_path, pack_error_ignore_list
+        ):
             return False
 
         if file_type == FileType.XSOAR_CONFIG:
@@ -783,9 +784,9 @@ class ValidateManager:
             file_path,
             predefined_scheme=file_type,
             ignored_errors=pack_error_ignore_list,
-            tag=self.prev_ver,
+            tag=self.git_initializer.prev_ver,
             old_file_path=old_file_path,
-            branch_name=self.branch_name,
+            branch_name=self.git_initializer.branch_name,
             is_new_file=not is_modified,
             json_file_path=self.json_file_path,
             skip_schema_check=self.skip_schema_check,
@@ -1099,7 +1100,7 @@ class ValidateManager:
             changed_meta_files,
             old_format_files,
             valid_types,
-            deleted_files
+            deleted_files,
         ) = self.git_initializer.collect_files_to_run(self.file_path)
 
         validation_results = {valid_git_setup, valid_types}
@@ -1755,7 +1756,7 @@ class ValidateManager:
             id_set_path=self.id_set_path,
             private_repo=self.is_external_repo,
             skip_id_set_creation=self.skip_id_set_creation,
-            prev_ver=self.prev_ver,
+            prev_ver=self.git_initializer.prev_ver,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -2140,7 +2141,9 @@ class ValidateManager:
             packs_that_should_have_new_rn.remove(API_MODULES_PACK)
 
         # new packs should not have RN
-        packs_that_should_have_new_rn = packs_that_should_have_new_rn - self.git_initializer.new_packs
+        packs_that_should_have_new_rn = (
+            packs_that_should_have_new_rn - self.git_initializer.new_packs
+        )
 
         packs_that_have_new_rn = self.get_packs_with_added_release_notes(added_files)
 

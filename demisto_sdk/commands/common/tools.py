@@ -65,7 +65,6 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     ID_IN_COMMONFIELDS,
-    PathLevel,
     ID_IN_ROOT,
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
@@ -119,6 +118,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     IdSetKeys,
     MarketplaceVersions,
+    PathLevel,
     urljoin,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -4102,5 +4102,3 @@ def get_file_by_status(
         filtered_added_files.add(file_path)
 
     return filtered_modified_files, filtered_added_files, filtered_old_format
-
-

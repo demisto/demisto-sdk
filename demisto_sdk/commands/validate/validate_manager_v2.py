@@ -38,6 +38,11 @@ class ValidateManager:
         self.is_circle = only_committed_files
         self.staged = staged
         self.run_with_multiprocessing = multiprocessing
+        self.git_initializer = GitInitializer(
+            use_git=use_git, staged=staged, is_circle=self.is_circle
+        )
+        self.git_initializer.validate_git_installed()
+        self.git_initializer.set_prev_ver(prev_ver)
         self.config_reader = ConfigReader(
             config_file_path=config_file_path,
             category_to_run=config_file_category_to_run,
@@ -55,11 +60,6 @@ class ValidateManager:
             json_file_path=json_file_path, only_throw_warnings=self.warnings
         )
         self.validators = self.filter_validators()
-        self.git_initializer = GitInitializer(
-            use_git=use_git, staged=staged, is_circle=self.is_circle
-        )
-        self.git_util, self.branch_name = self.git_initializer.validate_git_installed()
-        self.prev_ver = self.git_initializer.set_prev_ver(prev_ver)
 
     def run_validation(self):
         """
@@ -77,7 +77,7 @@ class ValidateManager:
                     validation_result = validator.is_valid(content_object)
                     try:
                         if not validation_result.is_valid:
-                            self.validation_results.results.append(validation_result)
+                            self.validation_results.append(validation_result)
                             if self.allow_autofix:
                                 validator.fix(content_object)
                     except NotImplementedError:
@@ -94,7 +94,11 @@ class ValidateManager:
         """
         content_objects_to_run = set()
         if self.use_git:
-            self.file_path = GitUtil()._get_all_changed_files()
+            self.file_path = self.get_files_from_git()
+        elif not any([self.file_path, self.validate_all]):
+            self.use_git, self.git_initializer.use_git = True, True
+            self.is_circle, self.git_initializer.is_circle = True, True
+            self.file_path = self.get_files_from_git()
         if self.file_path:
             for file_path in self.file_path:
                 content_object = BaseContent.from_path(Path(file_path))
@@ -140,3 +144,16 @@ class ValidateManager:
                 if run_validation:
                     filtered_validators.append(validator)
         return filtered_validators
+
+    def get_files_from_git(self):
+        self.validation_results.append(self.git_initializer.setup_git_params())
+        self.git_initializer.print_git_config()
+
+        (
+            modified_files,
+            added_files,
+            changed_meta_files,
+            old_format_files,
+            valid_types,
+            deleted_files,
+        ) = self.git_initializer.collect_files_to_run(self.file_path)

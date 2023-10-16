@@ -178,7 +178,12 @@ class TestErrors(unittest.TestCase):
             ), f"{error} does not match an error code format"
 
 
-def test_dupe_error_codes():
+def test_error_code_uniqueness():
+    """
+    Given   The ERROR_CODE data structure
+    When    Iterating over the error codes
+    Then    Make sure error codes are unique
+    """
     from collections import Counter
 
     counter = Counter(error["code"] for error in ERROR_CODE.values())

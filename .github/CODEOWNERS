@@ -7,14 +7,14 @@ demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun
 .devcontainer/ @ilaner
 
 # CircleCI
-.circleci/ @dorschw @GuyAfik
+.circleci/ @GuyAfik
 
 # Dependencies
-Pipfile* @dorschw @GuyAfik
-pyproject.toml @dorschw @GuyAfik
+Pipfile* @GuyAfik
+pyproject.toml @GuyAfik
 
 # Pytest.ini
-pytest.ini @dorschw
+pytest.ini @GuyAfik
 
 # Content graph
 demisto_sdk/commands/content_graph/** @dantavori @ilaner
@@ -23,4 +23,4 @@ demisto_sdk/commands/content_graph/** @dantavori @ilaner
 demisto_sdk/commands/test_content/test_modeling_rule/ @daryakoval
 
 # Misc
-demisto_sdk/__main__.py @dorschw @GuyAfik
+demisto_sdk/__main__.py @GuyAfik

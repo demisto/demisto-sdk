@@ -284,6 +284,7 @@ def create_xsiam_build(mocker, tmp_file):
         "xsiam_machine": "qa2-test-111111",
         "xsiam_servers_api_keys_path": xsiam_api_keys_path,
         "artifacts_path": tmp_file,
+        "product_type": "xsoar",
     }
     return BuildContext(kwargs, logging_manager)
 

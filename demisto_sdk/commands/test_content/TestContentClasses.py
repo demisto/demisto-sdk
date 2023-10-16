@@ -189,6 +189,7 @@ class Conf:
         ]
         self.skipped_tests: Dict[str, str] = conf.get("skipped_tests")  # type: ignore
         self.skipped_integrations: Dict[str, str] = conf.get("skipped_integrations")  # type: ignore
+        self.skipped_integrations_set = set(self.skipped_integrations.keys())
         self.unmockable_integrations: Dict[str, str] = conf.get("unmockable_integrations")  # type: ignore
         self.parallel_integrations: List[str] = conf["parallel_integrations"]
         self.docker_thresholds = conf.get("docker_thresholds", {}).get("images", {})
@@ -371,24 +372,26 @@ class TestPlaybook:
             return False
 
         def test_has_skipped_integration():
-            for integration in self.configuration.test_integrations:
-                # So now we know that the test is in the filtered tests
-                if integration in self.build_context.conf.skipped_integrations:
-                    self.build_context.logging_module.debug(
-                        f"Skipping {self} because it has a skipped integration {integration}"
-                    )
-                    # The playbook should be run but has a skipped integration
+            if skipped_integrations := (
+                self.build_context.conf.skipped_integrations_set
+                & set(self.configuration.test_integrations)
+            ):
+                # The playbook should be run but has a skipped integration.
+                self.build_context.logging_module.debug(
+                    f"Skipping {self} because it has a skipped integrations:{','.join(skipped_integrations)}"
+                )
+                results: List[Result] = []
+                for integration in skipped_integrations:
+
                     if (
                         self.build_context.filtered_tests
                         and self.configuration.playbook_id
                         in self.build_context.filtered_tests
                     ):
                         # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
-                        skip_reason = self.build_context.conf.skipped_integrations[
-                            integration
-                        ]
                         msg = (
-                            f"{self.configuration.playbook_id} - reason: {skip_reason}"
+                            f"{self.configuration.playbook_id} - reason: "
+                            f"{self.build_context.conf.skipped_integrations[integration]}"
                         )
                         self.build_context.tests_data_keeper.playbook_skipped_integration.add(
                             msg
@@ -396,11 +399,16 @@ class TestPlaybook:
                         log_message = f"The integration {integration} is skipped and critical for the test {self}."
                         self.test_suite_system_err.append(log_message)
                         self.build_context.logging_module.warning(log_message)
-                        self.close_test_suite([Skipped(msg)])
-                        skipped_tests_collected[
-                            self.configuration.playbook_id
-                        ] = f"The integration {integration} is skipped"
-                    return True
+                        results.append(Skipped(msg))
+
+                skipped_tests_collected[
+                    self.configuration.playbook_id
+                ] = f'The integrations:{",".join(skipped_integrations)} are skipped'
+                self.test_suite.add_property(
+                    "skipped_integrations", ",".join(skipped_integrations)
+                )
+                self.close_test_suite(results)
+                return True
 
             return False
 

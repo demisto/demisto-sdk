@@ -5,6 +5,7 @@ import shutil
 import tarfile
 import traceback
 from collections import defaultdict
+from enum import Enum
 from io import BytesIO, StringIO
 from pathlib import Path
 from tempfile import mkdtemp
@@ -54,37 +55,38 @@ from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
+
+class ContentItemType(Enum):
+    AUTOMATION = "Automation"
+    CLASSIFIER = "Classifier"
+    FIELD = "Field"
+    INCIDENT_TYPE = "IncidentType"
+    INDICATOR_TYPE = "IndicatorType"
+    LAYOUT = "Layout"
+    MAPPER = "Mapper"
+    PLAYBOOK = "Playbook"
+
+
 ITEM_TYPE_TO_ENDPOINT: dict = {
-    "IncidentType": "/incidenttype",
-    "IndicatorType": "/reputation",
-    "Field": "/incidentfields",
-    "Layout": "/layouts",
-    "Playbook": "/playbook/search",
-    "Automation": "automation/load/",
-    "Classifier": "/classifier/search",
-    "Mapper": "/classifier/search",
+    ContentItemType.AUTOMATION: "automation/load/",
+    ContentItemType.CLASSIFIER: "/classifier/search",
+    ContentItemType.FIELD: "/incidentfields",
+    ContentItemType.INCIDENT_TYPE: "/incidenttype",
+    ContentItemType.INDICATOR_TYPE: "/reputation",
+    ContentItemType.LAYOUT: "/layouts",
+    ContentItemType.MAPPER: "/classifier/search",
+    ContentItemType.PLAYBOOK: "/playbook/search",
 }
 
 ITEM_TYPE_TO_REQUEST_TYPE = {
-    "IncidentType": "GET",
-    "IndicatorType": "GET",
-    "Field": "GET",
-    "Layout": "GET",
-    "Playbook": "GET",
-    "Automation": "POST",
-    "Classifier": "POST",
-    "Mapper": "POST",
-}
-
-ITEM_TYPE_TO_PREFIX = {
-    "IncidentType": ".json",
-    "IndicatorType": ".json",
-    "Field": ".json",
-    "Layout": ".json",
-    "Playbook": ".yml",
-    "Automation": ".yml",
-    "Classifier": ".json",
-    "Mapper": ".json",
+    ContentItemType.AUTOMATION: "POST",
+    ContentItemType.CLASSIFIER: "POST",
+    ContentItemType.FIELD: "GET",
+    ContentItemType.INCIDENT_TYPE: "GET",
+    ContentItemType.INDICATOR_TYPE: "GET",
+    ContentItemType.LAYOUT: "GET",
+    ContentItemType.MAPPER: "POST",
+    ContentItemType.PLAYBOOK: "GET",
 }
 
 # Fields to keep on existing content items when overwriting them with a download (fields that are omitted by the server)
@@ -109,13 +111,12 @@ class Downloader:
         input_files (list): A list of content item's names (not file names) to download.
         regex (str): A RegEx pattern to use for filtering the custom content files to download.
         force (bool): Whether to overwrite files that already exist in the output pack.
-        insecure (bool): Whether to use insecure connection for API calls.
         client (Demisto client): Demisto client objecgt to use for API calls.
         list_files (bool): Whether to list all downloadable files or not (if True, all other flags are ignored).
         download_all_custom_content (bool): Whether to download all available custom content.
         run_format (bool): Whether to run 'format' on downloaded files.
         download_system_items (bool): Whether the current download is for system items.
-        system_item_type (str): The items type to download (relevant only for system items).
+        system_item_type (ContentItemType): The items type to download (relevant only for system items).
         init (bool): Whether to initialize a new Pack structure in the output path and download the items to it.
         keep_empty_folders (bool): Whether to keep empty folders when using init.
         auto_replace_uuids (bool):  Whether to replace the UUIDs.
@@ -143,12 +144,11 @@ class Downloader:
         self.regex = regex
         self.force = force
         self.download_system_items = system
-        self.system_item_type = item_type
-        self.insecure = insecure
+        self.system_item_type = ContentItemType(item_type) if item_type else None
         self.list_files = list_files
         self.download_all_custom_content = all_custom_content
         self.run_format = run_format
-        self.client = None
+        self.client = demisto_client.configure(verify_ssl=not insecure)
         self.init = init
         self.keep_empty_folders = keep_empty_folders
         self.auto_replace_uuids = auto_replace_uuids
@@ -197,7 +197,7 @@ class Downloader:
                     )
                     return 1
 
-                content_item_type: str = self.system_item_type  # type: ignore[assignment]
+                content_item_type = self.system_item_type
                 downloaded_content_objects = self.fetch_system_content(
                     content_item_type=content_item_type
                 )
@@ -369,14 +369,13 @@ class Downloader:
         and create a StringIO object containing file data for each file within it.
 
         Returns:
-            dict[str, StringIO]: A dictionary mapping custom content's file names to file objects.
+            dict[str, StringIO]: A dictionary mapping custom content's file names to their content.
         """
-        # Set to 'verify' to None so that 'demisto_client' will use the environment variable 'DEMISTO_VERIFY_SSL'.
-        verify = not self.insecure if self.insecure else None
-        logger.info("Fetching custom content bundle from server...")
-
         try:
-            self.client = demisto_client.configure(verify_ssl=verify)
+            logger.info(
+                f"Fetching custom content bundle from server ({self.client.api_client.configuration.host})..."
+            )
+
             api_response: HTTPResponse = demisto_client.generic_request_func(
                 self.client,
                 "/content/bundle",
@@ -416,7 +415,6 @@ class Downloader:
             tar_members = tar.getmembers()
             logger.debug(f"Custom content bundle contains {len(tar_members)} items.")
 
-            logger.debug("Loading custom content bundle to memory...")
             for file in tar_members:
                 file_name = file.name.lstrip("/")
 
@@ -468,16 +466,18 @@ class Downloader:
             return True
         return False
 
-    def build_req_params(self, content_item_type: str) -> tuple[str, str, dict]:
+    def build_req_params(
+        self, content_item_type: ContentItemType
+    ) -> tuple[str, str, dict]:
         endpoint = ITEM_TYPE_TO_ENDPOINT[content_item_type]
         req_type = ITEM_TYPE_TO_REQUEST_TYPE[content_item_type]
-        verify = (
-            (not self.insecure) if self.insecure else None
-        )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
-        self.client = demisto_client.configure(verify_ssl=verify)
 
         req_body: dict = {}
-        if content_item_type in ["Playbook", "Classifier", "Mapper"]:
+        if content_item_type in [
+            ContentItemType.CLASSIFIER,
+            ContentItemType.MAPPER,
+            ContentItemType.PLAYBOOK,
+        ]:
             filter_by_names = " or ".join(self.input_files)
             req_body = {"query": f"name:{filter_by_names}"}
 
@@ -494,24 +494,27 @@ class Downloader:
             list[dict]: A list of downloaded system automations represented as dictionaries.
         """
         downloaded_automations: list[dict] = []
-        logger.info("Fetching system automations...")
+        logger.info(
+            f"Fetching system automations from server ({self.client.api_client.configuration.host})..."
+        )
 
         for script in content_items:
             endpoint = f"automation/load/{script}"
-            api_response: dict = demisto_client.generic_request_func(
+            api_response = demisto_client.generic_request_func(
                 self.client,
                 endpoint,
                 "POST",
                 response_type="object",
             )[0]
 
-            if not isinstance(api_response, dict):
-                # If there are API issues, it might return HTML, which is returned as a string.
-                raise ApiException(
-                    f"Unexpected response from server:\n" f"'{api_response}'."
-                )
+            if isinstance(api_response, dict):
+                downloaded_automations.append(api_response)
 
-            downloaded_automations.append(api_response)
+            else:
+                # If there are API issues, it might return HTML data (represented by a string).
+                raise ApiException(
+                    f"Unexpected server response:\n" f"'{api_response}'."
+                )
 
         logger.debug(
             f"{len(downloaded_automations)} system automations were successfully downloaded."
@@ -529,7 +532,9 @@ class Downloader:
             list[dict]: A list of downloaded system playbooks represented as dictionaries.
         """
         downloaded_playbooks: list[dict] = []
-        logger.info("Fetching system playbooks...")
+        logger.info(
+            f"Fetching system playbooks from server ({self.client.api_client.configuration.host})..."
+        )
 
         for playbook in content_items:
             endpoint = f"/playbook/{playbook}/yaml"
@@ -570,7 +575,7 @@ class Downloader:
             if not isinstance(api_response, dict):
                 # If there are API issues, it might return HTML, which is returned as a string.
                 raise ApiException(
-                    f"Unexpected response from server:\n" f"'{api_response}'."
+                    f"Unexpected server response:\n" f"'{api_response}'."
                 )
 
             downloaded_playbooks.append(api_response)
@@ -581,20 +586,29 @@ class Downloader:
         return downloaded_playbooks
 
     def generate_content_file_name(
-        self, content_item: dict, content_item_type: str
+        self, content_item: dict, content_item_type: ContentItemType
     ) -> str:
         item_name: str = content_item.get("name") or content_item["id"]
-        result = (
-            item_name.replace("/", "_").replace(" ", "_")
-            + ITEM_TYPE_TO_PREFIX[content_item_type]
+        suffix = (
+            ".yml"
+            if content_item_type
+            in (ContentItemType.AUTOMATION, ContentItemType.PLAYBOOK)
+            else ".json"
         )
+
+        result = item_name.replace("/", "_").replace(" ", "_") + suffix
 
         # Remove duplicate underscores
         return re.sub(r"_{2,}", "_", result)
 
-    def fetch_system_content(self, content_item_type: str) -> dict[str, dict]:
+    def fetch_system_content(
+        self, content_item_type: ContentItemType
+    ) -> dict[str, dict]:
         """
         Fetch system content from the server.
+
+        Args:
+            content_item_type (ContentItemType): The type of system content to fetch.
 
         Returns:
             dict[str, dict]: A dictionary mapping content item's file names, to dictionaries containing metadata
@@ -605,16 +619,18 @@ class Downloader:
         )
         downloaded_items: list[dict]
 
-        if content_item_type == "Automation":
+        if content_item_type == ContentItemType.AUTOMATION:
             downloaded_items = self.get_system_automation(
                 content_items=self.input_files
             )
 
-        elif content_item_type == "Playbook":
+        elif content_item_type == ContentItemType.PLAYBOOK:
             downloaded_items = self.get_system_playbook(content_items=self.input_files)
 
         else:
-            logger.info("Fetching system items...")
+            logger.info(
+                f"Fetching system items from server ({self.client.api_client.configuration.host})..."
+            )
             api_response = demisto_client.generic_request_func(
                 self.client,
                 endpoint,
@@ -623,15 +639,18 @@ class Downloader:
                 response_type="object",
             )[0]
 
-            if content_item_type in ("Classifier", "Mapper"):
+            if content_item_type in (
+                ContentItemType.CLASSIFIER,
+                ContentItemType.MAPPER,
+            ):
                 if classifiers_data := api_response.get("classifiers"):
                     downloaded_items = classifiers_data
 
                 else:
-                    logger.warning(
-                        "Could not find expected 'classifiers' key in API response."
+                    logger.debug(
+                        "Could not find expected 'classifiers' key in API response.\n"
+                        f"API response:\n{json.dumps(api_response)}"
                     )
-                    logger.debug(f"API response:\n{json.dumps(api_response)}")
                     downloaded_items = []
 
             else:
@@ -1290,7 +1309,7 @@ class Downloader:
                 if (
                     extracted_file_extension == ".yml"
                 ):  # "smart" merge is relevant only for YAML files
-                    self.update_data(  # Add existing fields that were removed by the server to the new file
+                    self.preserve_fields(  # Add existing fields that were removed by the server to the new file
                         file_to_update=extracted_file_path,
                         original_file=corresponding_pack_file_path,
                         is_yaml=(extracted_file_extension == ".yml"),
@@ -1376,7 +1395,7 @@ class Downloader:
             ][content_item_name][0]
             corresponding_pack_file_path = Path(corresponding_pack_file_object["path"])
 
-            self.update_data(
+            self.preserve_fields(
                 file_to_update=file_path,
                 original_file=corresponding_pack_file_path,
                 is_yaml=(content_item_extension in ("yml", "yaml")),
@@ -1414,9 +1433,11 @@ class Downloader:
         return True
 
     @staticmethod
-    def update_data(file_to_update: Path, original_file: Path, is_yaml: bool) -> None:
+    def preserve_fields(
+        file_to_update: Path, original_file: Path, is_yaml: bool
+    ) -> None:
         """
-        Collects special chosen fields from the file_path_to_read and writes them into the file_path_to_write.
+        Preserve specific fields from the 'original_file' and add their values to 'file_to_update'.
 
         Args:
             file_to_update (Path): Path to the new file to merge 'original_file' into.

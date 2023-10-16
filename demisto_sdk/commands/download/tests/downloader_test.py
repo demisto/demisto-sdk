@@ -745,9 +745,9 @@ class TestDownloadExistingFile:
     def test_update_data_yml(self, tmp_path):
         env = Environment(tmp_path)
         downloader = Downloader()
-        downloader.update_data(
+        downloader.preserve_fields(
             file_to_update=env.CUSTOM_CONTENT_INTEGRATION_PATH,
-            original_file=f"{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml",
+            original_file=env.INTEGRATION_INSTANCE_PATH / "TestIntegration.yml",
             is_yaml=True,
         )
         file_data = get_yaml(env.CUSTOM_CONTENT_INTEGRATION_PATH)
@@ -768,9 +768,9 @@ class TestDownloadExistingFile:
     def test_update_data_json(self, tmp_path):
         env = Environment(tmp_path)
         downloader = Downloader()
-        downloader.update_data(
+        downloader.preserve_fields(
             file_to_update=env.CUSTOM_CONTENT_LAYOUT_PATH,
-            original_file=str(env.LAYOUT_INSTANCE_PATH),
+            original_file=env.LAYOUT_INSTANCE_PATH,
             is_yaml=False,
         )
         file_data: dict = get_json(env.CUSTOM_CONTENT_LAYOUT_PATH)
@@ -971,29 +971,33 @@ def test_build_req_params(
     req_body,
     monkeypatch,
 ):
-    monkeypatch.setenv("DEMISTO_BASE_URL", "http://demisto.instance.com:8080/")
-    monkeypatch.setenv("DEMISTO_API_KEY", "API_KEY")
     downloader = Downloader(
         input=input_content, system=True, item_type=item_type, insecure=insecure
     )
     res_endpoint, res_req_type, res_req_body = downloader.build_req_params(
-        content_item_type=item_type
+        content_item_type=ContentItemType(item_type)
     )
-    assert endpoint == res_endpoint
-    assert req_type == res_req_type
-    assert req_body == res_req_body
+    assert res_endpoint == endpoint
+    assert res_req_type == req_type
+    assert res_req_body == req_body
 
 
 @pytest.mark.parametrize(
     "content_item, content_type, expected_result",
     [
-        ({"name": "name 1"}, "Playbook", "name_1.yml"),
-        ({"name": "name 1"}, "Field", "name_1.json"),
-        ({"name": "name with / slash in it"}, "Playbook", "name_with_slash_in_it.yml"),
-        ({"id": "id 1"}, "Field", "id_1.json"),
+        ({"name": "name 1"}, ContentItemType.PLAYBOOK, "name_1.yml"),
+        ({"name": "name 1"}, ContentItemType.FIELD, "name_1.json"),
+        (
+            {"name": "name with / slash in it"},
+            ContentItemType.PLAYBOOK,
+            "name_with_slash_in_it.yml",
+        ),
+        ({"id": "id 1"}, ContentItemType.FIELD, "id_1.json"),
     ],
 )
-def test_build_file_name(content_item: dict, content_type: str, expected_result: str):
+def test_build_file_name(
+    content_item: dict, content_type: ContentItemType, expected_result: str
+):
     downloader = Downloader()
 
     downloader.system_item_type = content_type
@@ -1068,8 +1072,8 @@ def test_safe_write_unicode_to_non_unicode(
         )
     )
 
-    Downloader.update_data(
-        file_to_update=dest, original_file=str(source), is_yaml=(suffix == ".yml")
+    Downloader.preserve_fields(
+        file_to_update=dest, original_file=source, is_yaml=(suffix == ".yml")
     )
 
     # make sure the two files were merged correctly

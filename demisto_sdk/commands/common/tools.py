@@ -3552,7 +3552,7 @@ def get_display_name(file_path: str | Path, file_data: dict | None = None) -> st
         return file_data["TypeName"]
     elif "brandName" in file_data:
         return file_data["brandName"]
-    elif "reputationCommand" in file_data and "details" in file_data:
+    elif "details" in file_data and isinstance(file_data["details"], str):
         return file_data["details"]
     elif "id" in file_data:
         return file_data["id"]

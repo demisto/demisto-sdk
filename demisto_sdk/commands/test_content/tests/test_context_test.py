@@ -1,4 +1,3 @@
-import ast
 import logging
 from functools import partial
 
@@ -561,8 +560,8 @@ class TestPrintContextToLog:
         Then:
             - Ensure that a proper json result is being printed to the context
         """
-        dt_result = "{'foo': 'goo'}"
-        expected_result = json.dumps(ast.literal_eval(dt_result))
+        dt_result = {"foo": "goo"}
+        expected_result = json.dumps(dt_result, indent=4)
         playbook_instance = self.create_playbook_instance(mocker)
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (dt_result, 200, {})
@@ -585,7 +584,7 @@ class TestPrintContextToLog:
         expected_dt = "{}"
         playbook_instance = self.create_playbook_instance(mocker)
         client = mocker.MagicMock()
-        client.api_client.call_api.return_value = (expected_dt, 200, {})
+        client.api_client.call_api.return_value = ({}, 200, {})
         playbook_instance.print_context_to_log(client, incident_id="1")
         assert (
             playbook_instance.build_context.logging_module.info.call_args[0][0]
@@ -602,8 +601,10 @@ class TestPrintContextToLog:
         Then:
             - Ensure that an exception is raised and handled via logging error
         """
-        expected_dt = None
-        expected_error = "unable to parse result for result with value: None"
+        expected_dt = {
+            None
+        }  # Set isn't serializable, thus causing an exception, which is expected.
+        expected_error = "unable to parse result for result with value: {None}"
         playbook_instance = self.create_playbook_instance(mocker)
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (expected_dt, 200, {})

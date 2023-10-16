@@ -223,6 +223,7 @@ def get_mocked_build_context(
         "mem_check": False,
         "server_type": "XSOAR",
         "artifacts_path": tmp_file,
+        "product_type": "xsoar",
     }
     return BuildContext(kwargs, logging_manager)
 

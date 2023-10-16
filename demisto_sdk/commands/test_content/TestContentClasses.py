@@ -689,7 +689,7 @@ class TestPlaybook:
                 return
             try:
                 self.build_context.logging_module.info(json.dumps(response, indent=4))
-            except ValueError:
+            except (ValueError, TypeError, json.JSONDecodeError):
                 self.build_context.logging_module.error(
                     f"unable to parse result for result with value: {response}"
                 )

@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
+* Added JUnit XML output support for **test-content** command.
 * Improved logging for **lint** and **prepare-content** commands.
 
 ## 1.20.6

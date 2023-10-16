@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Internal: Fixed an issue where the `tools.get_display_name` function would return incorrect values for "Indicator Type" content items.
 * Changed the error code of the **validate** check for deprecated display names from `IN157` (duplicated a code used by a `nativeimage` check) to `IN160` (new code).
 * Changed the error code of the **validate** check for invalid SIEM marketplace values from `IN151` (duplicated a code used by a check for empty command arguments) to `IN161` (new code).
 * Updated the **run-unit-tests** command to not fail on JavaScript items, but skip them instead.

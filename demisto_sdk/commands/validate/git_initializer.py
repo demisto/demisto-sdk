@@ -180,14 +180,16 @@ class GitInitializer:
                     return False
             else:
                 return ValidationResult(
-                error_code="BA107", is_valid=False, message="Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command.",
-                file_path=""
+                    error_code="BA107",
+                    is_valid=False,
+                    message="Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command.",
+                    file_path="",
                 )
         if self.handle_error:
             return True
         else:
             return ValidationResult(
-            error_code="BA107", is_valid=True, message="", file_path=""
+                error_code="BA107", is_valid=True, message="", file_path=""
             )
 
     def print_git_config(self):

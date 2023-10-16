@@ -58,6 +58,6 @@ class ValidationResults:
         # Writing to sample.json
         with open(self.json_file_path, "w") as outfile:
             outfile.write(json_object)
-    
+
     def append(self, validation_result: ValidationResult):
         self.results.append(validation_result)

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import PreCommitModes
 
@@ -15,8 +15,9 @@ class Hook(ABC):
         all_files: bool = False,
         input_mode: bool = False,
     ) -> None:
-        self.hooks = repo["hooks"]
+        self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
+        self.hook_index = self.hooks.index(self.base_hook)
         self.hooks.remove(self.base_hook)
         self.mode = mode
         self.all_files = all_files

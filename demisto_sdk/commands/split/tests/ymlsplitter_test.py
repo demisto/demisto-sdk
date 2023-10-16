@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -592,3 +593,31 @@ def test_update_api_module_contribution(mocker):
         f"import demistomock as demisto  # noqa: F401\n"
         f"{get_dummy_module()}"
     )
+
+
+def test_input_file_data_parameter(mocker, monkeypatch):
+    """
+    Given: A unified YML file
+    When: Using YmlSplitter on this file with the 'input_file_data' parameter, which allows passing pre-loaded data,
+        to avoid unnecessary loading from disk.
+    Then: Ensure that the data is used instead of loading from disk.
+    """
+    import demisto_sdk.commands.common.tools
+
+    input_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml")
+    file_data = get_yaml(file_path=input_path)
+
+    get_yaml_mock = mocker.spy(demisto_sdk.commands.common.tools, "get_yaml")
+    monkeypatch.setattr(
+        "demisto_sdk.commands.split.ymlsplitter.get_yaml", get_yaml_mock
+    )
+    extractor = YmlSplitter(
+        input=str(input_path), input_file_data=file_data, file_type="integration"
+    )
+    assert get_yaml_mock.call_count == 0
+
+    # Assure "get_yaml" is called when not using 'input_file_data', and that the loaded data is the same as the
+    # preloaded data.
+    extractor = YmlSplitter(input=str(input_path), file_type="integration")
+    assert get_yaml_mock.call_count == 1
+    assert extractor.yml_data == file_data

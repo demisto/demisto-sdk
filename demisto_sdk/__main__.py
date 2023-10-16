@@ -20,6 +20,7 @@ from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
@@ -1172,7 +1173,7 @@ def lint(ctx, **kwargs):
 @click.option(
     "--previous-coverage-report-url",
     help="URL of the previous coverage report.",
-    default="https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+    default=f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
     type=str,
 )
 @click.pass_context
@@ -1515,6 +1516,11 @@ def upload(ctx, **kwargs):
     help="Keep empty folders when using the --init flag",
     is_flag=True,
     default=False,
+)
+@click.option(
+    "--auto-replace-uuids/--no-auto-replace-uuids",
+    help="Whether to replace the uuids.",
+    default=True,
 )
 @click.pass_context
 @logging_setup_decorator
@@ -3539,7 +3545,6 @@ def exit_from_program(result=0, **kwargs):
 
 
 # ====================== modeling-rules command group ====================== #
-
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
 app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)

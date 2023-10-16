@@ -813,8 +813,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
             is_external_repo=is_external_repo,
             staged=kwargs["staged"],
             json_file_path=kwargs.get("json_file"),
-            debug_git=kwargs.get("debug_git"),
-            include_untracked=kwargs.get("include_untracked"),
             multiprocessing=run_with_mp,
             config_file_category_to_run=not kwargs.get("category_to_run"),
             allow_autofix=kwargs.get("allow_fix"),

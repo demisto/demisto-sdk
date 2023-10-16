@@ -68,6 +68,14 @@ class ContentItem(BaseContent):
         return self.in_pack.pack_id if self.in_pack else ""
 
     @property
+    def support(self) -> str:
+        return self.in_pack.support if self.in_pack and self.in_pack.support else ""
+
+    @property
+    def ignored_errors(self) -> list:
+        return self.in_pack.ignored_errors.get(self.path.name, []) if self.in_pack and self.in_pack.ignored_errors else []
+
+    @property
     def pack_name(self) -> str:
         return self.in_pack.name if self.in_pack else ""
 

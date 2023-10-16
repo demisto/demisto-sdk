@@ -3,9 +3,11 @@ from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
-
+from demisto_sdk.commands.validate.git_initializer import (
+    GitInitializer
+)
 import pebble
-from git import GitCommandError, InvalidGitRepositoryError
+from git import GitCommandError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
@@ -16,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DEMISTO_GIT_PRIMARY_BRANCH,
-    DEMISTO_GIT_UPSTREAM,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
@@ -30,7 +31,6 @@ from demisto_sdk.commands.common.constants import (
     FileType_ALLOWED_TO_DELETE,
     PathLevel,
 )
-from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
     DEFAULT_ID_SET_PATH,
@@ -268,24 +268,17 @@ class ValidateManager:
         )
 
         self.deprecation_validator = DeprecationValidator(id_set_file=self.id_set_file)
-
-        try:
-            self.git_util = Content.git_util()
-            self.branch_name = self.git_util.get_current_git_branch_or_hash()
-        except (InvalidGitRepositoryError, TypeError):
-            # if we are using git - fail the validation by raising the exception.
-            if self.use_git:
-                raise
-            # if we are not using git - simply move on.
-            else:
-                logger.info("Unable to connect to git")
-                self.git_util = None  # type: ignore[assignment]
-                self.branch_name = ""
-
-        if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
-            self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver)
-        else:
-            self.prev_ver = self.setup_prev_ver(prev_ver)
+        self.is_external_repo = is_external_repo
+        self.git_initializer = GitInitializer(use_git=use_git, staged=staged,
+                                              skip_docker_checks=self.skip_docker_checks,
+                                              is_backward_check=self.is_backward_check,
+                                              skip_dependencies=self.skip_dependencies,
+                                              skip_pack_rn_validation = self.skip_pack_rn_validation,
+                                              is_circle = self.is_circle,
+                                              handle_error = self.handle_error,
+                                              is_external_repo = self.is_external_repo)
+        self.branch_name = self.git_initializer.validate_git_installed()
+        self.prev_ver = self.git_initializer.set_prev_ver(prev_ver)
 
         self.check_only_schema = False
         self.always_valid = False
@@ -312,7 +305,6 @@ class ValidateManager:
             FileType.VULTURE_WHITELIST,
         )
 
-        self.is_external_repo = is_external_repo
         if is_external_repo:
             if not self.no_configuration_prints:
                 logger.info("Running in a private repository")
@@ -390,8 +382,8 @@ class ValidateManager:
             is_valid = self.run_validation_on_specific_files()
         else:
             # default validate to -g --post-commit
-            self.use_git = True
-            self.is_circle = True
+            self.use_git, self.git_initializer.use_git = True, True
+            self.is_circle, self.git_initializer.is_circle = True, True
             is_valid = self.run_validation_using_git()
         return self.print_final_report(is_valid)
 
@@ -430,7 +422,7 @@ class ValidateManager:
         """Run validations only on specific files"""
         files_validation_result = set()
         if self.use_git:
-            self.setup_git_params()
+            self.git_initializer.setup_git_params()
         files_to_validate = self.file_path.split(",")
 
         for path in files_to_validate:
@@ -808,7 +800,7 @@ class ValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or (self.git_util and self.git_util._is_file_git_ignored(file_path))
+            or (self.git_initializer.git_util and self.git_initializer.git_util._is_file_git_ignored(file_path))
             or self.detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
@@ -1261,9 +1253,9 @@ class ValidateManager:
 
     def run_validation_using_git(self):
         """Runs validation on only changed packs/files (g)"""
-        valid_git_setup = self.setup_git_params()
+        valid_git_setup = self.git_initializer.setup_git_params()
         if not self.no_configuration_prints:
-            self.print_git_config()
+            self.git_initializer.print_git_config()
 
         (
             modified_files,
@@ -1282,7 +1274,7 @@ class ValidateManager:
             ) = self.specify_files_by_status(
                 modified_files, added_files, old_format_files
             )
-        deleted_files = self.git_util.deleted_files(
+        deleted_files = self.git_initializer.git_util.deleted_files(
             prev_ver=self.prev_ver,
             committed_only=self.is_circle,
             staged_only=self.staged,
@@ -1992,7 +1984,7 @@ class ValidateManager:
         Args:
             modified_files: The list of modified files.
         """
-        all_files = self.git_util.get_all_files()
+        all_files = self.git_initializer.git_util.get_all_files()
         all_files_edited_in_pack_ignore: set = set()
         for file_path in modified_files:
             # handle renamed files
@@ -2013,11 +2005,11 @@ class ValidateManager:
                 logger.debug(
                     f"Could not get {old_file_path} from remote master branch, trying to get it from local branch"
                 )
-                primary_branch = GitUtil.find_primary_branch(self.git_util.repo)
+                primary_branch = GitUtil.find_primary_branch(self.git_initializer.git_util.repo)
                 _pack_ignore_default_branch_path = f"{primary_branch}:{old_file_path}"
                 try:
                     old_pack_ignore_content = (
-                        self.git_util.get_local_remote_file_content(
+                        self.git_initializer.git_util.get_local_remote_file_content(
                             _pack_ignore_default_branch_path
                         )
                     )
@@ -2372,101 +2364,6 @@ class ValidateManager:
 
     """ ######################################## Git Tools and filtering ####################################### """
 
-    def setup_prev_ver(self, prev_ver: Optional[str]):
-        """Setting up the prev_ver parameter"""
-        # if prev_ver parameter is set, use it
-        if prev_ver:
-            return prev_ver
-
-        # If git is connected - Use it to get prev_ver
-        if self.git_util:
-            # If demisto exists in remotes if so set prev_ver as 'demisto/master'
-            if self.git_util.check_if_remote_exists("demisto"):
-                return "demisto/master"
-
-            # Otherwise, use git to get the primary branch
-            _, branch = self.git_util.handle_prev_ver()
-            return f"{DEMISTO_GIT_UPSTREAM}/" + branch
-
-        # Default to 'origin/master'
-        return f"{DEMISTO_GIT_UPSTREAM}/master"
-
-    def setup_git_params(self):
-        """Setting up the git relevant params"""
-        self.branch_name = (
-            self.git_util.get_current_git_branch_or_hash()
-            if (self.git_util and not self.branch_name)
-            else self.branch_name
-        )
-
-        # check remote validity
-        if "/" in self.prev_ver and not self.git_util.check_if_remote_exists(
-            self.prev_ver
-        ):
-            non_existing_remote = self.prev_ver.split("/")[0]
-            logger.info(
-                f"[red]Could not find remote {non_existing_remote} reverting to "
-                f"{str(self.git_util.repo.remote())}[/red]"
-            )
-            self.prev_ver = self.prev_ver.replace(
-                non_existing_remote, str(self.git_util.repo.remote())
-            )
-
-        # if running on release branch check against last release.
-        if self.branch_name.startswith("21.") or self.branch_name.startswith("22."):
-            self.skip_pack_rn_validation = True
-            self.prev_ver = os.environ.get("GIT_SHA1")
-            self.is_circle = True
-
-            # when running against git while on release branch - show errors but don't fail the validation
-            self.always_valid = True
-
-        # On main or master don't check RN
-        elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
-            self.skip_pack_rn_validation = True
-            error_message, error_code = Errors.running_on_master_with_git()
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path="General",
-                warning=(not self.is_external_repo or self.is_circle),
-                drop_line=True,
-            ):
-                return False
-        return True
-
-    def print_git_config(self):
-        logger.info(
-            f"\n[cyan]================= Running validation on branch {self.branch_name} =================[/cyan]"
-        )
-        logger.info(f"Validating against {self.prev_ver}")
-
-        if self.branch_name in [
-            self.prev_ver,
-            self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
-        ]:  # pragma: no cover
-            logger.info("Running only on last commit")
-
-        elif self.is_circle:
-            logger.info("Running only on committed files")
-
-        elif self.staged:
-            logger.info("Running only on staged files")
-
-        else:
-            logger.info("Running on committed and staged files")
-
-        if self.skip_pack_rn_validation:
-            logger.info("Skipping release notes validation")
-
-        if self.skip_docker_checks:
-            logger.info("Skipping Docker checks")
-
-        if not self.is_backward_check:
-            logger.info("Skipping backwards compatibility checks")
-
-        if self.skip_dependencies:
-            logger.info("Skipping pack dependencies check")
 
     def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """
@@ -2479,21 +2376,21 @@ class ValidateManager:
             - The unfiltered renamed files
         """
         # get files from git by status identification against prev-ver
-        modified_files = self.git_util.modified_files(
+        modified_files = self.git_initializer.git_util.modified_files(
             prev_ver=self.prev_ver,
             committed_only=self.is_circle,
             staged_only=self.staged,
             debug=self.debug_git,
             include_untracked=self.include_untracked,
         )
-        added_files = self.git_util.added_files(
+        added_files = self.git_initializer.git_util.added_files(
             prev_ver=self.prev_ver,
             committed_only=self.is_circle,
             staged_only=self.staged,
             debug=self.debug_git,
             include_untracked=self.include_untracked,
         )
-        renamed_files = self.git_util.renamed_files(
+        renamed_files = self.git_initializer.git_util.renamed_files(
             prev_ver=self.prev_ver,
             committed_only=self.is_circle,
             staged_only=self.staged,

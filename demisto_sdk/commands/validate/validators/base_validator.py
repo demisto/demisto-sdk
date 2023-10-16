@@ -41,7 +41,7 @@ class BaseValidator(ABC, BaseModel):
     ) -> bool:
         return all([isinstance(content_item, cls.content_types),
                     not is_error_ignored(cls.error_code, content_item.ignored_errors, ignorable_errors),
-                    not is_support_level_support_validation(cls.error_code, support_level_dict, content_item.support_level)
+                    not is_support_level_support_validation(cls.error_code, support_level_dict, content_item.support)
                     ])
 
     @classmethod

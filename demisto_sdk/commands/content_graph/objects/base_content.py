@@ -85,8 +85,8 @@ class BaseContentMetaclass(ModelMetaclass):
             model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
         return model_cls
 
-
-class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
+    
+class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
@@ -163,6 +163,36 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
         return json_dct
 
+    @abstractmethod
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
+        pass
+
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
+    ) -> None:
+        # Implemented at the ContentItem/Pack level rather than here
+        raise NotImplementedError()
+
+    def add_relationship(
+        self, relationship_type: RelationshipType, relationship: "RelationshipData"
+    ) -> None:
+        if relationship.content_item_to == self:
+            # skip adding circular dependency
+            return
+        self.relationships_data[relationship_type].add(relationship)
+
+
+class BaseContent(BaseContentModel):
+    path: Path
+
     @staticmethod
     @lru_cache
     def from_path(path: Path) -> Optional["BaseContent"]:
@@ -212,32 +242,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
             )
             return None
-
-    @abstractmethod
-    def dump(
-        self,
-        path: DirectoryPath,
-        marketplace: MarketplaceVersions,
-    ) -> None:
-        pass
-
-    def upload(
-        self,
-        client: demisto_client,
-        marketplace: MarketplaceVersions,
-        target_demisto_version: Version,
-        **kwargs,
-    ) -> None:
-        # Implemented at the ContentItem/Pack level rather than here
-        raise NotImplementedError()
-
-    def add_relationship(
-        self, relationship_type: RelationshipType, relationship: "RelationshipData"
-    ) -> None:
-        if relationship.content_item_to == self:
-            # skip adding circular dependency
-            return
-        self.relationships_data[relationship_type].add(relationship)
 
 
 class UnknownContent(BaseContent):

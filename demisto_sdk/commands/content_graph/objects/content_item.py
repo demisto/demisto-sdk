@@ -73,7 +73,11 @@ class ContentItem(BaseContent):
 
     @property
     def ignored_errors(self) -> list:
-        return self.in_pack.ignored_errors.get(self.path.name, []) if self.in_pack and self.in_pack.ignored_errors else []
+        return (
+            self.in_pack.ignored_errors.get(self.path.name, [])
+            if self.in_pack and self.in_pack.ignored_errors
+            else []
+        )
 
     @property
     def pack_name(self) -> str:

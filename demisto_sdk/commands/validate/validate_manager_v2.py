@@ -30,11 +30,11 @@ class ValidateManager:
         staged=False,
         allow_autofix=False,
         config_file_path=None,
-        only_committed_files=None
+        only_committed_files=None,
     ):
         self.validate_all = validate_all
         self.use_git = use_git
-        self.file_path=file_path
+        self.file_path = file_path
         self.is_circle = only_committed_files
         self.staged = staged
         self.run_with_multiprocessing = multiprocessing
@@ -51,9 +51,13 @@ class ValidateManager:
             self.ignorable_errors,
             self.support_level_dict,
         ) = self.config_reader.gather_validations_to_run(use_git=use_git)
-        self.validation_results = ValidationResults(json_file_path=json_file_path, only_throw_warnings=self.warnings)
+        self.validation_results = ValidationResults(
+            json_file_path=json_file_path, only_throw_warnings=self.warnings
+        )
         self.validators = self.filter_validators()
-        self.git_initializer = GitInitializer(use_git=use_git, staged=staged, is_circle = self.is_circle)
+        self.git_initializer = GitInitializer(
+            use_git=use_git, staged=staged, is_circle=self.is_circle
+        )
         self.git_util, self.branch_name = self.git_initializer.validate_git_installed()
         self.prev_ver = self.git_initializer.set_prev_ver(prev_ver)
 

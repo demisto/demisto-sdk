@@ -39,10 +39,17 @@ class BaseValidator(ABC, BaseModel):
     def should_run(
         cls, content_item: BaseContent, ignorable_errors: list, support_level_dict: dict
     ) -> bool:
-        return all([isinstance(content_item, cls.content_types),
-                    not is_error_ignored(cls.error_code, content_item.ignored_errors, ignorable_errors),
-                    not is_support_level_support_validation(cls.error_code, support_level_dict, content_item.support)
-                    ])
+        return all(
+            [
+                isinstance(content_item, cls.content_types),
+                not is_error_ignored(
+                    cls.error_code, content_item.ignored_errors, ignorable_errors
+                ),
+                not is_support_level_support_validation(
+                    cls.error_code, support_level_dict, content_item.support
+                ),
+            ]
+        )
 
     @classmethod
     def is_valid(cls, content_item: BaseContent) -> ValidationResult:
@@ -51,6 +58,7 @@ class BaseValidator(ABC, BaseModel):
     @classmethod
     def fix(cls, content_item: BaseContent) -> None:
         raise NotImplementedError
+
 
 def is_error_ignored(err_code, ignored_errors, ignorable_errors):
     """
@@ -66,7 +74,10 @@ def is_error_ignored(err_code, ignored_errors, ignorable_errors):
     """
     return err_code in ignored_errors and err_code in ignorable_errors
 
-def is_support_level_support_validation(err_code, support_level_dict, item_support_level):
+
+def is_support_level_support_validation(
+    err_code, support_level_dict, item_support_level
+):
     """
     Check if the given validation error code is ignored according to the item's support level.
 

@@ -810,7 +810,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
             use_git=kwargs["use_git"],
             file_path=file_path,
             validate_all=kwargs.get("validate_all"),
-            is_external_repo=is_external_repo,
             staged=kwargs["staged"],
             json_file_path=kwargs.get("json_file"),
             multiprocessing=run_with_mp,

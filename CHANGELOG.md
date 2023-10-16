@@ -5,6 +5,7 @@
 * Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
 * Added a new key **supportlevelheader** to the integration schema.
 * **format** command will run without the content graph if graph creation fails.
+* Internal: Updated the `GENERAL_DEFAULT_FROMVERSION` variable from **6.9.0** to **6.10.0**.
 * Internal: Replaced the `tools._read_file` function with a more generic `tools.safe_read_unicode` function.
 * Internal: Added `pathlib.Path` support to the `tools.get_yml_paths_in_dir` and `tools.get_child_directories` functions.
 * Fixed an issue in the **test-modeling-rule** command, where possible exceptions were not caught.

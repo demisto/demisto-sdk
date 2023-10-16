@@ -586,7 +586,7 @@ ERROR_CODE: Dict = {
         "related_field": "display",
     },
     "invalid_integration_deprecation__only_display_name_suffix": {
-        "code": "IN157",
+        "code": "IN160",
         "related_field": "deprecated",
     },
     "invalid_deprecation__only_description_deprecated": {
@@ -686,7 +686,7 @@ ERROR_CODE: Dict = {
         "related_field": "display",
     },
     "invalid_siem_marketplaces_entry": {
-        "code": "IN151",
+        "code": "IN158",
         "related_field": "display",
     },
     "empty_command_arguments": {

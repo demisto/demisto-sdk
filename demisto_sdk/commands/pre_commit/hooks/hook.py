@@ -1,19 +1,22 @@
+import re
+
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import PreCommitModes
+from demisto_sdk.commands.common.logger import logger
 
 
 class Hook(ABC):
     def __init__(
-        self,
-        hook: dict,
-        repo: dict,
-        mode: Optional[PreCommitModes] = None,
-        all_files: bool = False,
-        input_mode: bool = False,
+            self,
+            hook: dict,
+            repo: dict,
+            mode: Optional[PreCommitModes] = None,
+            all_files: bool = False,
+            input_mode: bool = False,
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
@@ -31,6 +34,37 @@ class Hook(ABC):
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
         ...
+
+    def set_files_on_hook(self, hook: dict, files) -> int:
+        """
+        Mutates a hook, setting a regex for file exact match on the hook
+        according to the file's *file* and *exclude* properties
+        Args:
+            hook: The hook to mutate
+            files: The files to set on the hook
+        Returns:
+            The number of files set
+        """
+        include_pattern = None
+        exclude_pattern = None
+        try:
+
+            if files_reg := hook.get("files"):
+                include_pattern = re.compile(files_reg)
+            if exclude_reg := hook.get("exclude"):
+                exclude_pattern = re.compile(exclude_reg)
+        except re.error:
+            logger.info('regex not set correctly on hook. Ignoring')
+
+        files_to_run_on_hook = {
+            file
+            for file in [str(file) for file in files]  # todo had a check that file is git file. needed?
+            if (not include_pattern or re.search(include_pattern, file))  # include all if not defined
+               and (not exclude_pattern or not re.search(exclude_pattern, file))}  # only exclude if defined
+        hook["files"] = join_files(files_to_run_on_hook)
+
+        # hook.pop("exclude", None)
+        return len(files_to_run_on_hook)
 
 
 def join_files(files: Set[Path], separator: str = "|") -> str:

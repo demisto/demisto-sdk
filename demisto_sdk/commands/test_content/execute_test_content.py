@@ -49,7 +49,7 @@ def _add_pr_comment(comment, logging_module):
                 res["items"][0].get("comments_url") if res.get("items", []) else None
             )
             if issue_url:
-                # Check if a comment about skipped tests already exists. If there is,first delete it and then post a
+                # Check if a comment about skipped tests already exists. If there is, first delete it and then post a
                 # new comment:
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)

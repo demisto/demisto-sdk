@@ -3012,7 +3012,7 @@ class ValidateManager:
 
         if PACKS_DIR not in path.parts:
             logger.debug(
-                "non-content files are excempt from is_valid_path checks, skipping them"
+                "non-content files are exempt from is_valid_path checks, skipping them"
             )
             return True
 
@@ -3021,7 +3021,7 @@ class ValidateManager:
 
         if pack_name == DEPRECATED_CONTENT_PACK:
             logger.debug(
-                f"files under {DEPRECATED_CONTENT_PACK} are excempt from is_valid_path checks, skipping them."
+                f"files under {DEPRECATED_CONTENT_PACK} are exempt from is_valid_path checks, skipping them."
             )
             return True
 
@@ -3053,6 +3053,25 @@ class ValidateManager:
         else:
             # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
             first_level_folder = path.parts[-depth + 1]
+
+            for prefix, folder in (
+                ("script", ContentType.SCRIPT),
+                ("integration", ContentType.INTEGRATION),
+            ):
+                if (
+                    path.name.startswith(prefix)
+                    and first_level_folder == folder.as_folder
+                    and path.suffix
+                    in {
+                        ".md",
+                        ".yml",
+                    }  # only these suffixes fail validate-all as of the day we merge this validation.
+                ):
+                    # old, unified format, e.g. Packs/some_pack/Scripts/script-foo.yml
+                    logger.debug(
+                        "Unified files (while discouraged), are exempt from path validation (BA120), skipping them"
+                    )
+                    return True
 
             if first_level_folder not in FIRST_LEVEL_FOLDERS and _handle_error(
                 Errors.invalid_first_level_folder

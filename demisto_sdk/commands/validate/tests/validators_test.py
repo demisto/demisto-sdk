@@ -3465,8 +3465,7 @@ def test_is_path_allowed__invalid_first_level(repo, mocker, nested: bool):
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
-    folder_name = "folder_name"
-    assert folder_name not in FIRST_LEVEL_FOLDERS
+    assert (folder_name := "folder_name") not in FIRST_LEVEL_FOLDERS
 
     pack = repo.create_pack()
     mid_path = (folder_name, "foo", "bar") if nested else (folder_name)
@@ -3479,14 +3478,28 @@ def test_is_path_allowed__invalid_first_level(repo, mocker, nested: bool):
 @pytest.mark.parametrize(
     "path",
     (
+        pytest.param(
+            Path("Packs/myPack/Scripts/script-foo.yml"), id="Unified script (yml)"
+        ),
+        pytest.param(
+            Path("Packs/myPack/Scripts/script-foo.md"), id="Unified script (md)"
+        ),
+        pytest.param(
+            Path("Packs/myPack/Integrations/integration-foo.yml"),
+            id="Unified integration (yml)",
+        ),
+        pytest.param(
+            Path("Packs/myPack/Integrations/integration-foo.md"),
+            id="Unified integration (md)",
+        ),
         pytest.param(Path("Packs/DeprecatedContent/foo"), id="DeprecatedContent"),
         pytest.param(Path("foo/bar"), id="not under Packs"),
     ),
 )
-def test_is_path_allowed__excempt(mocker, path):
+def test_is_path_allowed__exempt(mocker, path):
     """
     Given
-            A file under a path excempt
+            A file under a path exempt
     When
             Running validate
     Then
@@ -3497,7 +3510,7 @@ def test_is_path_allowed__excempt(mocker, path):
 
     assert validate_manager.is_valid_path(path)
 
-    assert "are excempt" in flatten_call_args(logger_debug.call_args)[0]
+    assert "are exempt" in flatten_call_args(logger_debug.call_args)[0]
 
 
 def test_first_level_folders_subset():

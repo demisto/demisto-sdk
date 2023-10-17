@@ -2634,6 +2634,7 @@ class TestMarketplaceTagParser:
         ({"layout": {"id": "Testlayout"}}, "Testlayout"),
         ({"dashboards_data": [{"name": "D Name"}]}, "D Name"),
         ({"templates_data": [{"report_name": "R Name"}]}, "R Name"),
+        ({"id": "Test1", "details": "Test2"}, "Test2"),  # IndicatorType Content Items
     ],
 )
 def test_get_display_name(data, answer, tmpdir):

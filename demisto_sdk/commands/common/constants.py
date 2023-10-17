@@ -1356,6 +1356,18 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     "endpoint": {"default": ["ip"], "required": False},
 }
 
+MANDATORY_REPUTATION_CONTEXT_NAMES = {
+    "Certificate",
+    "CVE",
+    "Domain",
+    "Email",
+    "Endpoint",
+    "File",
+    "InfoFile",
+    "IP",
+    "URL",
+}
+
 ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
 GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union(
@@ -1381,6 +1393,9 @@ XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"
 PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
 XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
+XSOAR_CONTEXT_AND_OUTPUTS_URL = (
+    "https://xsoar.pan.dev/docs/integrations/context-and-outputs"
+)
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
@@ -1411,7 +1426,7 @@ DEFAULT_PYTHON_VERSION = "3.10"
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = "6.9.0"
+GENERAL_DEFAULT_FROMVERSION = "6.10.0"
 VERSION_5_5_0 = "5.5.0"
 DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"

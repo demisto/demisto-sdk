@@ -23,7 +23,9 @@ from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.download.downloader import *
 from TestSuite.test_tools import str_in_call_args_list
 
-TEST_DATA_FOLDER = Path.cwd() / "tests_data"
+
+TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
+TESTS_ENV_FOLDER = Path(__file__).parent / "tests_env"
 
 
 def load_test_data(file_name: str, folder: str | None = None) -> dict:
@@ -38,10 +40,10 @@ def load_test_data(file_name: str, folder: str | None = None) -> dict:
         dict: Dictionary data loaded from the json file.
     """
     if folder:
-        path = TEST_DATA_FOLDER / folder / f"{file_name}.json"
+        path = TESTS_DATA_FOLDER / folder / f"{file_name}.json"
 
     else:
-        path = TEST_DATA_FOLDER / f"{file_name}.json"
+        path = TESTS_DATA_FOLDER / f"{file_name}.json"
 
     with open(path, "r") as f:
         return json.load(f)
@@ -58,9 +60,9 @@ class Environment:
         tests_path: Path = self.tmp_path / "tests"
         tests_env_path: Path = tests_path / "tests_env"
         tests_data_path: Path = tests_path / "tests_data"
-        shutil.copytree(src=(Path.cwd() / "tests_env"), dst=str(tests_env_path))
+        shutil.copytree(src=str(TESTS_ENV_FOLDER), dst=str(tests_env_path))
         shutil.copytree(
-            src=(Path.cwd() / "tests_data"),
+            src=str(TESTS_DATA_FOLDER),
             dst=str(tests_data_path),
         )
 
@@ -313,7 +315,7 @@ class TestHelperMethods:
         downloader = Downloader()
 
         mock_bundle_data = (
-            TEST_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+            TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
         ).read_bytes()
         mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
         mocker.patch.object(
@@ -437,7 +439,7 @@ class TestFlags:
         downloader = Downloader(all_custom_content=True, output=env.CONTENT_BASE_PATH)
 
         mock_bundle_data = (
-            TEST_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+            TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
         ).read_bytes()
         mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
         mocker.patch.object(
@@ -1102,7 +1104,7 @@ def test_uuids_replacement_in_content_items(mocker):
     }
 
     mock_bundle_data = (
-        TEST_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+        TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
     ).read_bytes()
     mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
     mocker.patch.object(
@@ -1145,7 +1147,7 @@ def test_get_system_playbook(mocker):
     Then:
         Ensure the function works as expected and returns the playbook.
     """
-    playbook_path = TEST_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
+    playbook_path = TESTS_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
     playbook_data = get_yaml(playbook_path)
     mocker.patch.object(
         demisto_client, "generic_request_func", return_value=[playbook_data]
@@ -1167,7 +1169,7 @@ def test_get_system_playbook_item_does_not_exist_by_name(mocker):
     Then:
         Ensure that the function tries to retrieve the playbook its ID instead.
     """
-    playbook_path = TEST_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
+    playbook_path = TESTS_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
 
     playbook = get_yaml(playbook_path)
     playbook["id"] = "dummy_-_playbook"
@@ -1220,7 +1222,7 @@ def test_list_files_flag(mocker):
     """
     downloader = Downloader(list_files=True)
     mock_bundle_data = (
-        TEST_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+        TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
     ).read_bytes()
     mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
 
@@ -1267,7 +1269,7 @@ def test_auto_replace_uuids_flag(mocker, auto_replace_uuids: bool):
         - Ensure that when 'auto_replace_uuids' is set to false, the 'replace_uuid_ids' method is not called.
     """
     mock_bundle_data = (
-        TEST_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+        TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
     ).read_bytes()
     mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
     mocker.patch.object(

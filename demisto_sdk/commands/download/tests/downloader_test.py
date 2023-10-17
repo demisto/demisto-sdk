@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import builtins
 import logging
+import os
 import shutil
 from io import TextIOWrapper
 from pathlib import Path
@@ -26,6 +27,10 @@ from TestSuite.test_tools import str_in_call_args_list
 
 TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
 TESTS_ENV_FOLDER = Path(__file__).parent / "tests_env"
+
+# Avoid missing environment variables errors
+os.environ["DEMISTO_BASE_URL"] = "https://fake-xsoar-server.com"
+os.environ["DEMISTO_API_KEY"] = "fake_api_key"
 
 
 def load_test_data(file_name: str, folder: str | None = None) -> dict:

@@ -13,16 +13,18 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple, Union
+from typing import IO, Any, Dict, Iterable, Optional, Tuple, Union
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
+    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -158,9 +160,9 @@ def logging_setup_decorator(func, *args, **kwargs):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
-            console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
-            file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log-file-path") or None,
+            console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+            file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+            log_file_path=kwargs.get("log_file_path") or None,
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -195,9 +197,9 @@ def logging_setup_decorator(func, *args, **kwargs):
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
     logging_setup(
-        console_log_threshold=kwargs.get("console-log-threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file-log-threshold", logging.DEBUG),
-        log_file_path=kwargs.get("log-file-path"),
+        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
+        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        log_file_path=kwargs.get("log_file_path"),
     )
     global logger
     logger = logging.getLogger("demisto-sdk")
@@ -1171,15 +1173,15 @@ def lint(ctx, **kwargs):
 @click.option(
     "--previous-coverage-report-url",
     help="URL of the previous coverage report.",
-    default="https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+    default=f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
     type=str,
 )
 @click.pass_context
 def coverage_analyze(ctx, **kwargs):
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log-file-path") or None,
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
@@ -1514,6 +1516,11 @@ def upload(ctx, **kwargs):
     help="Keep empty folders when using the --init flag",
     is_flag=True,
     default=False,
+)
+@click.option(
+    "--auto-replace-uuids/--no-auto-replace-uuids",
+    help="Whether to replace the uuids.",
+    default=True,
 )
 @click.pass_context
 @logging_setup_decorator
@@ -2102,7 +2109,7 @@ def generate_docs(ctx, **kwargs):
 
         else:
             raise Exception(
-                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file."
+                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.[/red]"
             )
 
         return 0
@@ -2588,9 +2595,9 @@ def postman_codegen(
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log-file-path") or None,
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
@@ -2805,8 +2812,8 @@ def openapi_codegen(ctx, **kwargs):
             if root_objects:
                 command_to_run = command_to_run + f' -r "{root_objects}"'
             if (
-                kwargs.get("console-log-threshold")
-                and int(kwargs.get("console-log-threshold", logging.INFO))
+                kwargs.get("console_log_threshold")
+                and int(kwargs.get("console_log_threshold", logging.INFO))
                 >= logging.DEBUG
             ):
                 command_to_run = command_to_run + " -v"
@@ -3377,6 +3384,11 @@ def update_content_graph(
     default=False,
 )
 @click.option(
+    "--mode",
+    help="Special mode to run the pre-commit with",
+    type=click.Choice([mode.value for mode in list(PreCommitModes)]),
+)
+@click.option(
     "-ut/--no-ut",
     "--unit-test/--no-unit-test",
     help="Whether to run unit tests for content items",
@@ -3438,6 +3450,7 @@ def pre_commit(
     staged_only: bool,
     git_diff: bool,
     all_files: bool,
+    mode: Optional[str],
     unit_test: bool,
     skip: str,
     validate: bool,
@@ -3452,6 +3465,7 @@ def pre_commit(
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
+    mode = PreCommitModes(mode) if mode else None
     if file_paths and input:
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
@@ -3470,6 +3484,7 @@ def pre_commit(
             staged_only,
             git_diff,
             all_files,
+            mode,
             unit_test,
             skip,
             validate,
@@ -3515,7 +3530,6 @@ def exit_from_program(result=0, **kwargs):
 
 
 # ====================== modeling-rules command group ====================== #
-
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
 app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)

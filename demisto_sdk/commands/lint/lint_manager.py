@@ -36,7 +36,6 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name,
     get_json,
     is_external_repository,
-    retrieve_file_ending,
 )
 from demisto_sdk.commands.content_graph.commands.update import (
     update_content_graph,
@@ -209,20 +208,21 @@ class LintManager:
                 content_repo=facts["content_repo"],  # type: ignore
                 is_external_repo=is_external_repo,
             )
-            logger.debug("Test mandatory modules successfully collected")
+            logger.debug("Test mandatory modules successfully collected.")
         except (git.GitCommandError, DemistoException) as e:
             if is_external_repo:
-                logger.info(
-                    "[red]You are running on an external repo - "
-                    "run `.hooks/bootstrap` before running the demisto-sdk lint command\n"
-                    "See here for additional information: https://xsoar.pan.dev/docs/concepts/dev-setup[/red]"
+                logger.error(
+                    "When running on an external repository, you are required to first run "
+                    "the '.hooks/bootstrap' script before running the demisto-sdk lint command.\n"
+                    "For additional information, refer to: https://xsoar.pan.dev/docs/concepts/dev-setup"
                 )
             else:
-                logger.info(
-                    "[red]Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master[/red]"
+                logger.error(
+                    "Unable to fetch mandatory files (test-modules, demisto-mock.py, etc.) - "
+                    "corrupt repository or pull from master. Aborting!"
                 )
             logger.error(
-                f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}"
+                f"demisto-sdk-unable to fetch mandatory files (test-modules, demisto-mock.py, etc.): {e}"
             )
             sys.exit(1)
         except (
@@ -1306,7 +1306,7 @@ class LintManager:
 
     @staticmethod
     def get_full_file_path_for_vulture(file_name: str, content_path: str) -> str:
-        """Get the full file path to a file with a given name name from the content path
+        """Get the full file path to a file with a given name from the content path
 
         Args:
             file_name (str): The file name of the file to find
@@ -1315,11 +1315,11 @@ class LintManager:
         Returns:
             str. The path to the file
         """
-        file_ending = retrieve_file_ending(file_name)
-        if not file_ending:
+        file_extension = Path(file_name).suffix
+        if not file_extension:
             file_name = f"{file_name}.py"
-        elif file_ending != "py":
-            file_name = file_name.replace(file_ending, "py")
+        elif file_extension != ".py":
+            file_name = file_name.replace(file_extension, ".py")
         return find_file(content_path, file_name)
 
     def vulture_error_formatter(self, errors: Dict, json_contents: List) -> None:

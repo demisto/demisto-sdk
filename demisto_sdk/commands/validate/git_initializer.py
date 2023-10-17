@@ -6,24 +6,17 @@ from git import InvalidGitRepositoryError
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
-    PACKS_DIR,
-    PACKS_PACK_META_FILE_NAME,
-    VALIDATION_USING_GIT_IGNORABLE_DATA,
-    FileType,
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
     find_type,
-    get_file,
     get_file_by_status,
-    get_pack_ignore_content,
-    get_pack_name,
     get_relative_path_from_packs_dir,
+    is_old_file_format,
     specify_files_from_directory,
 )
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
@@ -34,31 +27,11 @@ class GitInitializer:
         self,
         use_git=None,
         staged=None,
-        skip_docker_checks=None,
-        is_backward_check=None,
-        skip_dependencies=None,
-        skip_pack_rn_validation=None,
         is_circle=None,
-        handle_error=None,
-        is_external_repo=None,
-        debug_git=None,
-        include_untracked=None,
-        print_ignored_files=None,
     ):
         self.staged = staged
         self.use_git = use_git
-        self.skip_docker_checks = skip_docker_checks
-        self.is_backward_check = is_backward_check
-        self.skip_dependencies = skip_dependencies
-        self.skip_pack_rn_validation = skip_pack_rn_validation
         self.is_circle = is_circle
-        self.handle_error = handle_error
-        self.is_external_repo = is_external_repo
-        self.debug_git = debug_git
-        self.include_untracked = include_untracked
-        self.ignored_files = set()
-        self.print_ignored_files = print_ignored_files
-        self.new_packs = set()
 
     def validate_git_installed(self):
         try:
@@ -104,10 +77,11 @@ class GitInitializer:
         (
             modified_files,
             added_files,
-            changed_meta_files,
-            old_format_files,
-            valid_types,
         ) = self.get_changed_files_from_git()
+
+        (modified_files, added_files, old_format_files) = self.get_old_format_files(
+            modified_files, added_files
+        )
 
         # filter to only specified paths if given
         if file_path:
@@ -123,17 +97,33 @@ class GitInitializer:
             prev_ver=self.prev_ver,
             committed_only=self.is_circle,
             staged_only=self.staged,
-            include_untracked=self.include_untracked,
         )
 
         return (
             modified_files,
             added_files,
-            changed_meta_files,
             old_format_files,
-            valid_types,
             deleted_files,
         )
+
+    def get_old_format_files(self, modified_files, added_files):
+        old_format_modified_files, modified_files = self.filter_old_format(
+            modified_files
+        )
+        old_format_added_files, added_files = self.filter_old_format(added_files)
+        old_format_files: set = old_format_modified_files.union(old_format_added_files)
+        return modified_files, added_files, old_format_files
+
+    def filter_old_format(self, files_set):
+        old_format_files = set()
+        new_format_files = set()
+        for file_path in files_set:
+            file_type = find_type(file_path)
+            if is_old_file_format(file_path, file_type):
+                old_format_files.add(file_path)
+            else:
+                new_format_files.add(file_path)
+        return old_format_files, new_format_files
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
@@ -216,24 +206,12 @@ class GitInitializer:
         if self.skip_pack_rn_validation:
             logger.info("Skipping release notes validation")
 
-        if self.skip_docker_checks:
-            logger.info("Skipping Docker checks")
-
-        if not self.is_backward_check:
-            logger.info("Skipping backwards compatibility checks")
-
-        if self.skip_dependencies:
-            logger.info("Skipping pack dependencies check")
-
-    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set, Set, bool]:
+    def get_changed_files_from_git(self) -> Tuple[Set, Set]:
         """Get the added and modified after file filtration to only relevant files for validate
 
         Returns:
             - The filtered modified files (including the renamed files)
             - The filtered added files
-            - The changed metadata files
-            - The modified old-format files (legacy unified python files)
-            - Boolean flag that indicates whether all file types are supported
         """
 
         (
@@ -242,59 +220,12 @@ class GitInitializer:
             renamed_files,
         ) = self.get_unfiltered_changed_files_from_git()
 
-        # filter files only to relevant files
-        filtered_modified, old_format_files, _ = self.filter_to_relevant_files(
-            modified_files
-        )
-        filtered_renamed, _, valid_types_renamed = self.filter_to_relevant_files(
-            renamed_files
-        )
-        filtered_modified = filtered_modified.union(filtered_renamed)
+        modified_files = modified_files.union(renamed_files)
 
-        (
-            filtered_added,
-            old_format_added,
-            valid_types_added,
-        ) = self.filter_to_relevant_files(added_files)
-        old_format_files |= old_format_added
-
-        valid_types = all((valid_types_added, valid_types_renamed))
-
-        # extract metadata files from the recognised changes
-        changed_meta = self.pack_metadata_extraction(
-            modified_files, added_files, renamed_files
-        )
-        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(
-            changed_meta, check_metadata_files=True
-        )
-        old_format_files |= old_format_changed
         return (
-            filtered_modified,
-            filtered_added,
-            filtered_changed_meta,
-            old_format_files,
-            valid_types,
+            modified_files,
+            added_files,
         )
-
-    """ ######################################## Git Tools and filtering ####################################### """
-
-    def pack_metadata_extraction(self, modified_files, added_files, renamed_files):
-        """Extract pack metadata files from the modified and added files
-
-        Return all modified metadata file paths
-        and get all newly added packs from the added metadata files."""
-        changed_metadata_files = set()
-        for path in modified_files.union(renamed_files):
-            file_path = str(path[1]) if isinstance(path, tuple) else str(path)
-
-            if file_path.endswith(PACKS_PACK_META_FILE_NAME):
-                changed_metadata_files.add(file_path)
-
-        for path in added_files:
-            if str(path).endswith(PACKS_PACK_META_FILE_NAME):
-                self.new_packs.add(get_pack_name(str(path)))
-
-        return changed_metadata_files
 
     def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """
@@ -311,256 +242,23 @@ class GitInitializer:
             prev_ver=self.prev_ver,
             committed_only=self.is_circle,
             staged_only=self.staged,
-            debug=self.debug_git,
-            include_untracked=self.include_untracked,
+            debug=True,
         )
         added_files = self.git_util.added_files(
             prev_ver=self.prev_ver,
             committed_only=self.is_circle,
             staged_only=self.staged,
-            debug=self.debug_git,
-            include_untracked=self.include_untracked,
+            debug=True,
         )
         renamed_files = self.git_util.renamed_files(
             prev_ver=self.prev_ver,
             committed_only=self.is_circle,
             staged_only=self.staged,
-            debug=self.debug_git,
-            include_untracked=self.include_untracked,
+            debug=True,
             get_only_current_file_names=True,
         )
 
         return modified_files, added_files, renamed_files
-
-    def filter_to_relevant_files(self, file_set, check_metadata_files=False):
-        """Goes over file set and returns only a filtered set of only files relevant for validation"""
-        filtered_set: set = set()
-        old_format_files: set = set()
-        valid_types: set = set()
-        for path in file_set:
-            old_path = None
-            if isinstance(path, tuple):
-                file_path = str(path[1])
-                old_path = str(path[0])
-
-            else:
-                file_path = str(path)
-
-            try:
-                (
-                    formatted_path,
-                    old_path,
-                    valid_file_extension,
-                ) = self.check_file_relevance_and_format_path(
-                    file_path,
-                    old_path,
-                    old_format_files,
-                    check_metadata_files=check_metadata_files,
-                )
-                valid_types.add(valid_file_extension)
-                if formatted_path:
-                    if old_path:
-                        filtered_set.add((old_path, formatted_path))
-                    else:
-                        filtered_set.add(formatted_path)
-
-            # handle a case where a file was deleted locally though recognised as added against master.
-            except FileNotFoundError:
-                if file_path not in self.ignored_files:
-                    if self.print_ignored_files:
-                        logger.info(f"[yellow]ignoring file {file_path}[/yellow]")
-                    self.ignored_files.add(file_path)
-
-        return filtered_set, old_format_files, all(valid_types)
-
-    def check_file_relevance_and_format_path(
-        self, file_path, old_path, old_format_files, check_metadata_files=False
-    ):
-        """
-        Determines if a file is relevant for validation and create any modification to the file_path if needed
-        :returns a tuple(string, string, bool) where
-            - the first element is the path of the file that should be returned, if the file isn't relevant then returns an empty string
-            - the second element is the old path in case the file was renamed, if the file wasn't renamed then return an empty string
-            - true if the file type is supported OR file type is not supported, but should be ignored, false otherwise
-        """
-        irrelevant_file_output = "", "", True
-        if file_path.split(os.path.sep)[0] in (
-            ".gitlab",
-            ".circleci",
-            ".github",
-            ".devcontainer",
-            ".vscode",
-        ):
-            return irrelevant_file_output
-
-        file_type = find_type(file_path)
-
-        if file_type == FileType.CONF_JSON:
-            return file_path, "", True
-
-        if file_type == FileType.VULTURE_WHITELIST:
-            return irrelevant_file_output
-
-        if self.ignore_files_irrelevant_for_validation(
-            file_path, check_metadata_files=check_metadata_files
-        ):
-            return irrelevant_file_output
-
-        if not self.is_valid_file_type(
-            file_type, file_path, get_pack_ignore_content(get_pack_name(file_path))
-        ):
-            return "", "", False
-
-        # redirect non-test code files to the associated yml file
-        if file_type in [
-            FileType.PYTHON_FILE,
-            FileType.POWERSHELL_FILE,
-            FileType.JAVASCRIPT_FILE,
-            FileType.XIF_FILE,
-            FileType.MODELING_RULE_XIF,
-            FileType.PARSING_RULE_XIF,
-        ]:
-            if not (
-                str(file_path).endswith("_test.py")
-                or str(file_path).endswith(".Tests.ps1")
-                or str(file_path).endswith("_test.js")
-            ):
-                file_path = (
-                    file_path.replace(".py", ".yml")
-                    .replace(".ps1", ".yml")
-                    .replace(".js", ".yml")
-                    .replace(".xif", ".yml")
-                )
-
-                if old_path:
-                    old_path = (
-                        old_path.replace(".py", ".yml")
-                        .replace(".ps1", ".yml")
-                        .replace(".js", ".yml")
-                        .replace(".xif", ".yml")
-                    )
-            else:
-                return irrelevant_file_output
-
-        if file_type == FileType.XDRC_TEMPLATE_YML:
-            file_path = file_path.replace(".yml", ".json")
-
-            if old_path:
-                old_path = old_path.replace(".yml", ".json")
-
-        # redirect schema file when updating release notes
-        if file_type == FileType.MODELING_RULE_SCHEMA:
-            file_path = file_path.replace("_schema", "").replace(".json", ".yml")
-
-            if old_path:
-                old_path = old_path.replace("_schema", "").replace(".json", ".yml")
-
-        # redirect _testdata.json file to the associated yml file
-        if file_type == FileType.MODELING_RULE_TEST_DATA:
-            file_path = file_path.replace("_testdata.json", ".yml")
-
-            if old_path:
-                old_path = old_path.replace("_testdata.json", ".yml")
-
-        # check for old file format
-        if self.is_old_file_format(file_path, file_type):
-            old_format_files.add(file_path)
-            return irrelevant_file_output
-
-        # if renamed file - return a tuple
-        if old_path:
-            return file_path, old_path, True
-
-        # else return the file path
-        else:
-            return file_path, "", True
-
-    def ignore_files_irrelevant_for_validation(
-        self, file_path: str, check_metadata_files: bool = False
-    ) -> bool:
-        """
-        Will ignore files that are not in the packs directory, are .txt files or are in the
-        VALIDATION_USING_GIT_IGNORABLE_DATA tuple.
-
-        Args:
-            file_path: path of file to check if should be ignored.
-            check_metadata_files: If True will not ignore metadata files.
-        Returns: True if file is ignored, false otherwise
-        """
-
-        if PACKS_DIR not in file_path:
-            self.ignore_file(file_path)
-            return True
-
-        if check_metadata_files and find_type(file_path) == FileType.METADATA:
-            return False
-
-        if file_path.endswith(".txt"):
-            self.ignore_file(file_path)
-            return True
-
-        if any(name in str(file_path) for name in VALIDATION_USING_GIT_IGNORABLE_DATA):
-            self.ignore_file(file_path)
-            return True
-        return False
-
-    def ignore_file(self, file_path: str) -> None:
-        if self.print_ignored_files:
-            logger.info(f"[yellow]ignoring file {file_path}[/yellow]")
-        self.ignored_files.add(file_path)
-
-    """ ######################################## Validate Tools ############################################### """
-
-    @staticmethod
-    def is_old_file_format(file_path: str, file_type: FileType):
-        if file_type not in {FileType.INTEGRATION, FileType.SCRIPT}:
-            return False
-        file_yml = get_file(file_path)
-        # check for unified integration
-        if file_type == FileType.INTEGRATION and file_yml.get("script", {}).get(
-            "script", "-"
-        ) not in ["-", ""]:
-            if file_yml.get("script", {}).get("type", "javascript") != "python":
-                return False
-            return True
-
-        # check for unified script
-        if file_type == FileType.SCRIPT and file_yml.get("script", "-") not in [
-            "-",
-            "",
-        ]:
-            if file_yml.get("type", "javascript") != "python":
-                return False
-            return True
-        return False
-
-    @error_codes("BA102,IM110")
-    def is_valid_file_type(
-        self, file_type: FileType, file_path: str, ignored_errors: dict
-    ):
-        """
-        If a file_type is unsupported, will return `False`.
-        """
-        if not file_type:
-            error_message, error_code = Errors.file_type_not_supported(
-                file_type, file_path
-            )
-            if str(file_path).endswith(".png"):
-                error_message, error_code = Errors.invalid_image_name_or_location()
-            if self.handle_error:
-                if self.handle_error(
-                    error_message=error_message,
-                    error_code=error_code,
-                    file_path=file_path,
-                    drop_line=True,
-                    ignored_errors=ignored_errors,
-                ):
-                    return False
-            else:
-                # to implement: create a validation result version
-                return False
-
-        return True
 
     def specify_files_by_status(
         self,

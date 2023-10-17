@@ -59,15 +59,17 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
                 cursor = sql_connection.cursor()
                 files = cursor.execute("SELECT * FROM file").fetchall()
                 for id_, file in files:
+                    if 'conftest' in file:
+                        cursor.execute(
+                            "DELETE FROM file WHERE id = ?", (id_,)
+                        )  # delete the file from the coverage report, as it is not relevant.
                     if not file.startswith("/content"):
                         # means that the .coverage file is already fixed
                         continue
                     file = Path(file).relative_to("/content")
                     if (
                         not (CONTENT_PATH / file).exists()
-                        or file.parent.name
-                        not in file.name  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
-                        or file.name == 'conftest.py'
+                        or file.parent.name != file.stem  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
                     ):
                         logger.debug(f"Removing {file} from coverage report")
                         cursor.execute(

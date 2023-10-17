@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List, Optional
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -37,17 +38,13 @@ class ValidateManager:
         self.is_circle = only_committed_files
         self.staged = staged
         self.run_with_multiprocessing = multiprocessing
-        self.git_initializer = GitInitializer(
-            use_git=use_git, staged=staged, is_circle=self.is_circle
-        )
-        self.git_initializer.validate_git_installed()
-        self.git_initializer.set_prev_ver(prev_ver)
+        self.allow_autofix = allow_autofix
+        self.initialize_git(prev_ver)
         self.config_reader = ConfigReader(
             config_file_path=config_file_path,
             category_to_run=config_file_category_to_run,
         )
         self.objects_to_run = self.gather_objects_to_run()
-        self.allow_autofix = allow_autofix
         (
             self.validations_to_run,
             self.validations_to_ignore,
@@ -59,6 +56,18 @@ class ValidateManager:
             json_file_path=json_file_path, only_throw_warnings=self.warnings
         )
         self.validators = self.filter_validators()
+
+    def initialize_git(self, prev_ver: Optional[str]):
+        """Initialize the git GitInitializer settings.
+
+        Args:
+            prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
+        """
+        self.git_initializer = GitInitializer(
+            use_git=self.use_git, staged=self.staged, is_circle=self.is_circle
+        )
+        self.git_initializer.validate_git_installed()
+        self.git_initializer.set_prev_ver(prev_ver)
 
     def run_validation(self):
         """
@@ -99,7 +108,7 @@ class ValidateManager:
             self.is_circle, self.git_initializer.is_circle = True, True
             self.file_path = self.get_files_from_git()
         if self.file_path:
-            for file_path in self.file_path:
+            for file_path in self.file_path.split(","):
                 content_object = BaseContent.from_path(Path(file_path))
                 if content_object is None:
                     raise Exception(f"no content found in {file_path}")
@@ -117,13 +126,13 @@ class ValidateManager:
             final_content_objects_to_run.add(content_object)
         return final_content_objects_to_run
 
-    def filter_validators(self):
+    def filter_validators(self) -> List[BaseValidator]:
         """
         Filter the validations by their error code
         according to the validations supported by the given flags according to the config file.
 
         Returns:
-            list: the list of the filtered validators
+            List[BaseValidator]: the list of the filtered validators
         """
         # gather validator from validate package
         validators = BaseValidator.__subclasses__()
@@ -145,14 +154,18 @@ class ValidateManager:
         return filtered_validators
 
     def get_files_from_git(self):
+        """Return all files added/changed/deleted.
+
+        Returns:
+            _type_: _description_
+        """
         self.validation_results.append(self.git_initializer.setup_git_params())
         self.git_initializer.print_git_config()
 
         (
             modified_files,
             added_files,
-            changed_meta_files,
             old_format_files,
-            valid_types,
             deleted_files,
         ) = self.git_initializer.collect_files_to_run(self.file_path)
+        return modified_files, added_files, old_format_files, deleted_files,

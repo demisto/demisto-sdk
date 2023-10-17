@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -34,6 +33,8 @@ class GitInitializer:
         self.is_circle = is_circle
 
     def validate_git_installed(self):
+        """Initialize git util.
+        """
         try:
             self.git_util = Content.git_util()
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
@@ -48,7 +49,14 @@ class GitInitializer:
                 self.branch_name = ""
 
     def setup_prev_ver(self, prev_ver: Optional[str]):
-        """Setting up the prev_ver parameter"""
+        """Calculate the prev_ver to set
+
+        Args:
+            prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
+
+        Returns:
+            str: The prev_ver to set.
+        """
         # if prev_ver parameter is set, use it
         if prev_ver:
             return prev_ver
@@ -66,13 +74,25 @@ class GitInitializer:
         # Default to 'origin/master'
         return f"{DEMISTO_GIT_UPSTREAM}/master"
 
-    def set_prev_ver(self, prev_ver):
-        if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
-            self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver)
-        else:
-            self.prev_ver = self.setup_prev_ver(prev_ver)
+    def set_prev_ver(self, prev_ver: Optional[str]):
+        """Setting up the prev_ver parameter
 
-    def collect_files_to_run(self, file_path):
+        Args:
+            prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
+        """
+        if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+            prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver
+        self.prev_ver = self.setup_prev_ver(prev_ver)
+
+    def collect_files_to_run(self, file_path: str) -> Tuple[Set, Set, Set, Set]:
+        """Collecting the files to validate
+
+        Args:
+            file_path (str): A comma separated list of file paths to filter to only specified paths.
+
+        Returns:
+            Tuple[Set, Set, Set, Set]: The modified files, added files, old format files, and deleted files sets.
+        """
 
         (
             modified_files,
@@ -106,7 +126,16 @@ class GitInitializer:
             deleted_files,
         )
 
-    def get_old_format_files(self, modified_files, added_files):
+    def get_old_format_files(self, modified_files: set, added_files: set) -> Tuple[Set, Set, Set]:
+        """Filter the given sets into old format files, modified, and added files sets.
+
+        Args:
+            modified_files (set): The set of the modified files paths
+            added_files (set): The set of the added files paths
+
+        Returns:
+            Tuple[Set, Set, Set]: The modified files, added files, and the old format files sets.
+        """
         old_format_modified_files, modified_files = self.filter_old_format(
             modified_files
         )
@@ -114,7 +143,15 @@ class GitInitializer:
         old_format_files: set = old_format_modified_files.union(old_format_added_files)
         return modified_files, added_files, old_format_files
 
-    def filter_old_format(self, files_set):
+    def filter_old_format(self, files_set: set) -> Tuple[Set, Set]:
+        """Split the given set into sets of old and new format files.
+
+        Args:
+            files_set (set): The set to filter
+
+        Returns:
+            Tuple[Set, Set]: The old and the new format files sets.
+        """
         old_format_files = set()
         new_format_files = set()
         for file_path in files_set:
@@ -125,7 +162,7 @@ class GitInitializer:
                 new_format_files.add(file_path)
         return old_format_files, new_format_files
 
-    def setup_git_params(self):
+    def setup_git_params(self,):
         """Setting up the git relevant params"""
         self.branch_name = (
             self.git_util.get_current_git_branch_or_hash()
@@ -157,32 +194,19 @@ class GitInitializer:
 
         # On main or master don't check RN
         elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
-            self.skip_pack_rn_validation = True
-            error_message, error_code = Errors.running_on_master_with_git()
-            if self.handle_error:
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path="General",
-                    warning=(not self.is_external_repo or self.is_circle),
-                    drop_line=True,
-                ):
-                    return False
-            else:
-                return ValidationResult(
-                    error_code="BA107",
-                    is_valid=False,
-                    message="Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command.",
-                    file_path="",
-                )
-        if self.handle_error:
-            return True
-        else:
             return ValidationResult(
-                error_code="BA107", is_valid=True, message="", file_path=""
+                error_code="BA107",
+                is_valid=False,
+                message="Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command.",
+                file_path="",
             )
+        return ValidationResult(
+            error_code="BA107", is_valid=True, message="", file_path=""
+        )
 
     def print_git_config(self):
+        """Printing the git configurations - all the relevant flags.
+        """
         logger.info(
             f"\n[cyan]================= Running validation on branch {self.branch_name} =================[/cyan]"
         )
@@ -203,15 +227,12 @@ class GitInitializer:
         else:
             logger.info("Running on committed and staged files")
 
-        if self.skip_pack_rn_validation:
-            logger.info("Skipping release notes validation")
-
     def get_changed_files_from_git(self) -> Tuple[Set, Set]:
-        """Get the added and modified after file filtration to only relevant files for validate
+        """Get the added and modified files.
 
         Returns:
-            - The filtered modified files (including the renamed files)
-            - The filtered added files
+            - The modified files (including the renamed files)
+            - The added files
         """
 
         (

@@ -1,6 +1,6 @@
 import toml
 
-CONFIG_FILE_PATH = "/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate_poc/validation_conf.toml"
+CONFIG_FILE_PATH = "/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate/config.toml"
 USE_GIT = "use_git"
 VALIDATE_ALL = "validate_all"
 

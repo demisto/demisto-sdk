@@ -42,6 +42,7 @@ IDE_TO_FOLDER = {IDE.VSCODE: ".vscode", IDE.PYCHARM: ".idea"}
 
 def get_integration_params(project_id: str, secret_id: str) -> dict:
     """This function retrieves the parameters of an integration from Google Secret Manager
+    *Note*: This function will not run if the `DEMISTO_SDK_GCP_PROJECT_ID` env variable is not set.
 
     Args:
         project_id (str): GSM project id
@@ -319,7 +320,7 @@ def configure_params(
     if not secret_id:
         secret_id = integration_script.name.replace(" ", "_")
         secret_id = re.sub(r"[()]", "", secret_id)
-    if (project_id := os.getenv("DEMISTO_GCP_PROJECT_ID")) and isinstance(
+    if (project_id := os.getenv("DEMISTO_SDK_GCP_PROJECT_ID")) and isinstance(
         integration_script, Integration
     ):
         params = get_integration_params(project_id, secret_id)
@@ -342,7 +343,7 @@ def configure_params(
             json.dump(params, f, indent=4)
     else:
         logger.info(
-            "Skipping searching in Google Secret Manager as DEMISTO_GCP_PROJECT_ID is not set"
+            "Skipping searching in Google Secret Manager as DEMISTO_SDK_GCP_PROJECT_ID is not set"
         )
 
 

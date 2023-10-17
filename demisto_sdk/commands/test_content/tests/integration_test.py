@@ -85,11 +85,13 @@ def test_create_module(mocker, incident_configuration, expected):
         "circleci": "",
         "slack": "",
         "server_type": "XSOAR",
+        "product_type": "XSOAR",
         "build_number": "",
         "branch_name": "",
         "is_ami": "",
         "mem_check": "",
         "server_version": "",
+        "artifacts_path": ".",
     }
     mocker.patch.object(
         BuildContext, "_load_conf_files", return_value=(Dummyconf(), "")

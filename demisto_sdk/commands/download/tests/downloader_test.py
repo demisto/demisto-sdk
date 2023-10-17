@@ -24,7 +24,6 @@ from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.download.downloader import *
 from TestSuite.test_tools import str_in_call_args_list
 
-
 TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
 TESTS_ENV_FOLDER = Path(__file__).parent / "tests_env"
 

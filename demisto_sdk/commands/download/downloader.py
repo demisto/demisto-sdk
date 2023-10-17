@@ -166,6 +166,8 @@ class Downloader:
         Returns:
             int: Exit code. 1 if failed, 0 if succeeded
         """
+        input_files_missing = False  # Used for returning an exit code of 1 if one of the inputs is missing.
+
         try:
             if self.list_files:
                 # No flag validations are needed, since only the '-lf' flag is used.
@@ -222,11 +224,24 @@ class Downloader:
                     custom_content_objects=all_custom_content_objects
                 )
 
+                if self.input_files:
+                    downloaded_content_names = [
+                        item["name"] for item in downloaded_content_objects.values()
+                    ]
+
+                    for content_item in self.input_files:
+                        if content_item not in downloaded_content_names:
+                            logger.warning(
+                                f"Custom content item '{content_item}' provided as an input "
+                                f"could not be found / parsed."
+                            )
+                            input_files_missing = True
+
                 if not downloaded_content_objects:
                     logger.info(
                         "No custom content matching the provided input filters was found."
                     )
-                    return 0
+                    return 1 if input_files_missing else 0
 
                 if self.auto_replace_uuids:
                     # Replace UUID IDs with names in filtered content (only content we download)
@@ -260,7 +275,7 @@ class Downloader:
                 logger.error("Download failed.")
                 return 1
 
-            return 0
+            return 1 if input_files_missing else 0
 
         except Exception as e:
             if not isinstance(e, HandledError):

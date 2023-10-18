@@ -17,7 +17,9 @@ class ConfigReader:
         self.config_file_content: dict = toml.load(self.config_file_path)
         self.category_to_run = category_to_run
 
-    def gather_validations_to_run(self, use_git: bool) -> Tuple[List, List, List, List, dict]:
+    def gather_validations_to_run(
+        self, use_git: bool
+    ) -> Tuple[List, List, List, List, dict]:
         """Extract the relevant information from the relevant category in the config file.
 
         Args:

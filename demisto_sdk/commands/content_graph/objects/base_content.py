@@ -193,10 +193,15 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
 class BaseContent(BaseContentModel):
     path: Path
     git_status: Optional[str]
+    old_file_path: Optional[Path]
 
     @staticmethod
     @lru_cache
-    def from_path(path: Path, git_status: Optional[str] = None) -> Optional["BaseContent"]:
+    def from_path(
+        path: Path,
+        git_status: Optional[str] = None,
+        old_file_path: Optional[Path] = None,
+    ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
             path.is_dir() and path.parent.name == PACKS_FOLDER
@@ -239,6 +244,7 @@ class BaseContent(BaseContentModel):
         try:
             obj = model.from_orm(content_item_parser)
             obj.git_status = git_status
+            obj.old_file_path = old_file_path
             return obj
         except Exception as e:
             logger.error(

@@ -1,36 +1,51 @@
 import os
+from pathlib import Path
 from typing import Optional, Set, Tuple
 
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
+    ADDED,
+    DELETED,
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
+    MODIFIED,
+    RENAMED,
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
-    find_type,
     get_file_by_status,
     get_relative_path_from_packs_dir,
-    is_old_file_format,
     specify_files_from_directory,
 )
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
 
 
-class GitInitializer:
+class Initializer:
     def __init__(
         self,
-        use_git=None,
+        use_git=False,
         staged=None,
         committed_only=None,
+        prev_ver=None,
+        file_path=None,
+        validate_all=False,
+        validation_results=None,
     ):
         self.staged = staged
         self.use_git = use_git
+        self.file_path = file_path
+        self.validate_all = validate_all
         self.committed_only = committed_only
+        self.validation_results = validation_results
+        self.prev_ver = prev_ver
 
     def validate_git_installed(self):
         """Initialize git util."""
@@ -73,38 +88,36 @@ class GitInitializer:
         # Default to 'origin/master'
         return f"{DEMISTO_GIT_UPSTREAM}/master"
 
-    def set_prev_ver(self, prev_ver: Optional[str]):
+    def set_prev_ver(self):
         """Setting up the prev_ver parameter
 
         Args:
             prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
         """
-        if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
-            prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver
-        self.prev_ver = self.setup_prev_ver(prev_ver)
+        if self.prev_ver and not self.prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+            self.prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + self.prev_ver
+        self.prev_ver = self.setup_prev_ver(self.prev_ver)
 
-    def collect_files_to_run(self, file_path: str) -> Tuple[Set, Set, Set]:
+    def collect_files_to_run(self, file_path: str) -> Tuple[Set, Set, Set, Set]:
         """Collecting the files to validate divided to modified, added, and deleted.
 
         Args:
             file_path (str): A comma separated list of file paths to filter to only specified paths.
 
         Returns:
-            Tuple[Set, Set, Set]: The modified, added, and deleted files sets.
+            Tuple[Set, Set, Set, Set]: The modified, added, renamed, and deleted files sets.
         """
 
         (
             modified_files,
             added_files,
-        ) = self.get_changed_files_from_git()
+            renamed_files,
+        ) = self.get_unfiltered_changed_files_from_git()
 
         # filter to only specified paths if given
         if file_path:
-            (
-                modified_files,
-                added_files,
-            ) = self.specify_files_by_status(
-                modified_files, added_files, file_path
+            (modified_files, added_files, renamed_files) = self.specify_files_by_status(
+                modified_files, added_files, renamed_files, file_path
             )
 
         deleted_files = self.git_util.deleted_files(
@@ -116,6 +129,7 @@ class GitInitializer:
         return (
             modified_files,
             added_files,
+            renamed_files,
             deleted_files,
         )
 
@@ -189,26 +203,16 @@ class GitInitializer:
         else:
             logger.info("Running on committed and staged files")
 
-    def get_changed_files_from_git(self) -> Tuple[Set, Set]:
+    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """Get the added and modified files.
 
         Returns:
-            - The modified files (including the renamed files)
-            - The added files
+            - The modified files (including the renamed files).
+            - The renamed files.
+            - The added files.
         """
 
-        (
-            modified_files,
-            added_files,
-            renamed_files,
-        ) = self.get_unfiltered_changed_files_from_git()
-
-        modified_files = modified_files.union(renamed_files)
-
-        return (
-            modified_files,
-            added_files,
-        )
+        return self.get_unfiltered_changed_files_from_git()
 
     def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """
@@ -247,13 +251,15 @@ class GitInitializer:
         self,
         modified_files: Set,
         added_files: Set,
+        renamed_files: Set,
         file_path: str,
-    ) -> Tuple[Set, Set]:
+    ) -> Tuple[Set, Set, Set]:
         """Filter the files identified from git to only specified files.
 
         Args:
             modified_files(Set): A set of modified and renamed files.
             added_files(Set): A set of added files.
+            renamed_files(Set): A set of renamed files.
             file_path(str): comma separated list of files.
 
         Returns:
@@ -262,16 +268,18 @@ class GitInitializer:
         """
         filtered_modified_files: Set = set()
         filtered_added_files: Set = set()
+        filtered_renamed_files: Set = set()
 
         for path in file_path.split(","):
             path = get_relative_path_from_packs_dir(path)
             file_level = detect_file_level(path)
             if file_level == PathLevel.FILE:
-                temp_modified, temp_added, _ = get_file_by_status(
-                    modified_files, None, path
+                temp_modified, temp_added, temp_renamed = get_file_by_status(
+                    modified_files, None, path, renamed_files=renamed_files
                 )
                 filtered_modified_files = filtered_modified_files.union(temp_modified)
                 filtered_added_files = filtered_added_files.union(temp_added)
+                filtered_renamed_files = filtered_renamed_files.union(temp_renamed)
 
             else:
                 filtered_modified_files = filtered_modified_files.union(
@@ -280,5 +288,97 @@ class GitInitializer:
                 filtered_added_files = filtered_added_files.union(
                     specify_files_from_directory(added_files, path)
                 )
+                filtered_renamed_files = filtered_renamed_files.union(
+                    specify_files_from_directory(renamed_files, path)
+                )
 
-        return filtered_modified_files, filtered_added_files
+        return filtered_modified_files, filtered_added_files, filtered_renamed_files
+
+    def gather_objects_to_run(self) -> Set[BaseContent]:
+        """
+        Filter the file that should run according to the given flag (-i/-g/-a).
+
+        Returns:
+            set: the set of files that should be validated.
+        """
+        content_objects_to_run = set()
+        final_content_objects_to_run: Set[BaseContent] = set()
+        if self.use_git:
+            content_objects_to_run = self.get_files_from_git()
+        elif self.file_path:
+            content_objects_to_run = self.paths_to_basecontent_set(
+                set(self.file_path.split(",")), None
+            )
+        elif self.validate_all:
+            content_dto = ContentDTO.from_path(CONTENT_PATH)
+            if not isinstance(content_dto, ContentDTO):
+                raise Exception("no content found")
+            content_objects_to_run = set(content_dto.packs)
+        else:
+            self.use_git = True, True
+            self.committed_only = True, True
+            content_objects_to_run = self.get_files_from_git()
+        for content_object in content_objects_to_run:
+            if isinstance(content_object, Pack):
+                for content_item in content_object.content_items:
+                    final_content_objects_to_run.add(content_item)
+            final_content_objects_to_run.add(content_object)
+        return final_content_objects_to_run
+
+    def get_files_from_git(self) -> Set[BaseContent]:
+        """Return all files added/changed/deleted.
+
+        Returns:
+            Set[BaseContent]: The set of all the files from git successfully casted to BaseContent
+        """
+        self.validate_git_installed()
+        self.set_prev_ver()
+        self.validation_results.append(self.setup_git_params())
+        self.print_git_config()
+
+        (
+            modified_files,
+            added_files,
+            renamed_files,
+            deleted_files,
+        ) = self.collect_files_to_run(self.file_path)
+        validations_set: Set[BaseContent] = set()
+        validations_set = validations_set.union(
+            self.paths_to_basecontent_set(modified_files, MODIFIED)
+        )
+        validations_set = validations_set.union(
+            self.paths_to_basecontent_set(renamed_files, RENAMED)
+        )
+        validations_set = validations_set.union(
+            self.paths_to_basecontent_set(added_files, ADDED)
+        )
+        validations_set = validations_set.union(
+            self.paths_to_basecontent_set(deleted_files, DELETED)
+        )
+        return validations_set
+
+    def paths_to_basecontent_set(
+        self, files_set: set, git_status: Optional[str]
+    ) -> Set[BaseContent]:
+        """Return a set of all the successful casts to BaseContent from given set of files.
+
+        Args:
+            files_set (set): The set of file paths to case into BaseContent.
+            git_status (Optional[str]): The git status for the given files (if given).
+
+        Returns:
+            Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
+        """
+        basecontent_set: Set[BaseContent] = set()
+        for file_path in files_set:
+            if git_status == RENAMED:
+                temp_obj = BaseContent.from_path(
+                    Path(file_path[0]), git_status, Path(file_path[1])
+                )
+            else:
+                temp_obj = BaseContent.from_path(Path(file_path), git_status, None)
+            if temp_obj is None:
+                raise Exception(f"no content found in {file_path}")
+            else:
+                basecontent_set.add(temp_obj)
+        return basecontent_set

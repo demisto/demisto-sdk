@@ -408,7 +408,7 @@ class ValidateManager:
 
         for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
-            file_level = self.detect_file_level(path)
+            file_level = detect_file_level(path)
 
             if file_level == PathLevel.FILE:
                 logger.info(
@@ -782,7 +782,7 @@ class ValidateManager:
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
             or (self.git_util and self.git_util._is_file_git_ignored(file_path))
-            or self.detect_file_level(file_path)
+            or detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
             self.ignored_files.add(file_path)
@@ -2607,7 +2607,7 @@ class ValidateManager:
                 old_path = old_path.replace("_testdata.json", ".yml")
 
         # check for old file format
-        if is_old_file_format(file_path, file_type):
+        if self.is_old_file_format(file_path, file_type):
             old_format_files.add(file_path)
             return irrelevant_file_output
 

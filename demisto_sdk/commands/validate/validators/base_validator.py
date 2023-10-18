@@ -70,7 +70,9 @@ class BaseValidator(ABC, BaseModel):
         raise NotImplementedError
 
 
-def is_error_ignored(err_code: str, ignored_errors: List[str], ignorable_errors: List[str]) -> bool:
+def is_error_ignored(
+    err_code: str, ignored_errors: List[str], ignorable_errors: List[str]
+) -> bool:
     """
     Check if the given validation error code is ignored by the current item ignored error list.
 

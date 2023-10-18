@@ -1,14 +1,10 @@
-from pathlib import Path
-from typing import List, Optional
+from typing import List, Set
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
 )
-from demisto_sdk.commands.validate.git_initializer import GitInitializer
+from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import (
     ValidationResults,
 )
@@ -33,41 +29,29 @@ class ValidateManager:
         only_committed_files=None,
     ):
         self.validate_all = validate_all
-        self.use_git = use_git
         self.file_path = file_path
-        self.committed_only = only_committed_files
         self.staged = staged
         self.run_with_multiprocessing = multiprocessing
         self.allow_autofix = allow_autofix
         self.config_file_path = config_file_path
         self.category_to_run = config_file_category_to_run
         self.json_file_path = json_file_path
-        self.initialize_git(prev_ver)
-        self.initialize_config_reader()
-        self.objects_to_run = self.gather_objects_to_run()
-        self.validation_results = ValidationResults(
-            json_file_path=self.json_file_path, only_throw_warnings=self.warnings
-        )
-        self.validators = self.filter_validators()
-
-    def initialize_git(self, prev_ver: Optional[str]):
-        """Initialize the git GitInitializer settings.
-
-        Args:
-            prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
-        """
-        self.git_initializer = GitInitializer(
-            use_git=self.use_git, staged=self.staged, committed_only=self.committed_only
-        )
-        self.git_initializer.validate_git_installed()
-        self.git_initializer.set_prev_ver(prev_ver)
-
-    def initialize_config_reader(self):
-        """initialize the ConfigReader class and related fields."""
+        self.validation_results = ValidationResults(json_file_path=self.json_file_path)
         self.config_reader = ConfigReader(
             config_file_path=self.config_file_path,
             category_to_run=self.category_to_run,
         )
+        self.initializer = Initializer(
+            use_git=use_git,
+            staged=self.staged,
+            committed_only=only_committed_files,
+            prev_ver=prev_ver,
+            file_path=self.file_path,
+            validate_all=self.validate_all,
+            validation_results=self.validation_results,
+        )
+        self.use_git = self.initializer.use_git
+        self.committed_only = self.initializer.committed_only
         (
             self.validations_to_run,
             self.validations_to_ignore,
@@ -75,8 +59,10 @@ class ValidateManager:
             self.ignorable_errors,
             self.support_level_dict,
         ) = self.config_reader.gather_validations_to_run(use_git=self.use_git)
+        self.objects_to_run: Set[BaseContent] = self.initializer.gather_objects_to_run()
+        self.validators = self.filter_validators()
 
-    def run_validation(self):
+    def run_validation(self) -> int:
         """
             Running all the relevant validation on all the filtered files based on the should_run calculations,
             calling the fix method if the validation fail, has an autofix, and the allow_autofix flag is given,
@@ -99,39 +85,6 @@ class ValidateManager:
                         continue
 
         return self.validation_results.post_results()
-
-    def gather_objects_to_run(self):
-        """
-        Filter the file that should run according to the given flag (-i/-g/-a).
-
-        Returns:
-            set: the set of files that should be validated.
-        """
-        content_objects_to_run = set()
-        if self.use_git:
-            self.file_path = self.get_files_from_git()
-        elif not any([self.file_path, self.validate_all]):
-            self.use_git, self.git_initializer.use_git = True, True
-            self.is_circle, self.git_initializer.committed_only = True, True
-            self.file_path = self.get_files_from_git()
-        if self.file_path:
-            for file_path in self.file_path.split(","):
-                content_object = BaseContent.from_path(Path(file_path))
-                if content_object is None:
-                    raise Exception(f"no content found in {file_path}")
-                content_objects_to_run.add(content_object)
-        elif self.validate_all:
-            content_dto = ContentDTO.from_path(CONTENT_PATH)
-            if not isinstance(content_dto, ContentDTO):
-                raise Exception("no content found")
-            content_objects_to_run = set(content_dto.packs)
-        final_content_objects_to_run = set()
-        for content_object in content_objects_to_run:
-            if isinstance(content_object, Pack):
-                for content_item in content_object.content_items:
-                    final_content_objects_to_run.add(content_item)
-            final_content_objects_to_run.add(content_object)
-        return final_content_objects_to_run
 
     def filter_validators(self) -> List[BaseValidator]:
         """
@@ -159,21 +112,3 @@ class ValidateManager:
                 if run_validation:
                     filtered_validators.append(validator)
         return filtered_validators
-
-    def get_files_from_git(self):
-        """Return all files added/changed/deleted.
-
-        Returns:
-            _type_: _description_
-        """
-        self.validation_results.append(self.git_initializer.setup_git_params())
-        self.git_initializer.print_git_config()
-
-        (
-            modified_files,
-            added_files,
-            deleted_files,
-        ) = self.git_initializer.collect_files_to_run(self.file_path)
-        modified_files = [BaseContent.from_path(Path(modified_file_path), "M") for modified_file_path in modified_files]
-        added_files = [BaseContent.from_path(Path(added_file_path), "A") for added_file_path in added_files]
-        deleted_files = [BaseContent.from_path(Path(deleted_file_path), "D") for deleted_file_path in deleted_files]

@@ -7,7 +7,11 @@ from demisto_sdk.commands.validate.validators.base_validator import ValidationRe
 
 
 class ValidationResults:
-    def __init__(self, json_file_path: Optional[str], only_throw_warnings: List[str]):
+    def __init__(
+        self,
+        json_file_path: Optional[str],
+        only_throw_warnings: Optional[List[str]] = None,
+    ):
         """
             The ValidationResults init method.
         Args:
@@ -39,7 +43,10 @@ class ValidationResults:
             self.write_validation_results()
         for result in self.results:
             if not result.is_valid:
-                if result.error_code in self.only_throw_warning:
+                if (
+                    self.only_throw_warning
+                    and result.error_code in self.only_throw_warning
+                ):
                     logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
                 else:
                     logger.error(f"[red]{result.format_readable_message}[/red]")

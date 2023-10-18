@@ -4063,7 +4063,10 @@ def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
 
 
 def get_file_by_status(
-    modified_files: Set, old_format_files: Optional[Set], file_path: str
+    modified_files: Set,
+    old_format_files: Optional[Set],
+    file_path: str,
+    renamed_files: Optional[Set] = None,
 ) -> Tuple[Set, Set, Set]:
     """Given a specific file path identify in which git status set
     it exists and return a set containing that file and 2 additional empty sets.
@@ -4072,14 +4075,15 @@ def get_file_by_status(
         modified_files(Set): A set of modified and renamed files.
         old_format_files(Optional[Set]): A set of old format files.
         file_path(str): The file path to check.
+        renamed_files(Optional[Set]): A set of renamed files.
 
     Returns:
-        Tuple[Set, Set, Set]. 3 sets representing modified, added or old format files respectively
+        Tuple[Set, Set, Set]. 3 sets representing modified, added and old format or renamed files respectively
         where the file path is in the appropriate set
     """
     filtered_modified_files: Set = set()
     filtered_added_files: Set = set()
-    filtered_old_format: Set = set()
+    filtered_old_format_or_renamed_files: Set = set()
 
     # go through modified files and try to identify if the file is there
     for file in modified_files:
@@ -4088,7 +4092,7 @@ def get_file_by_status(
             return (
                 filtered_modified_files,
                 filtered_added_files,
-                filtered_old_format,
+                filtered_old_format_or_renamed_files,
             )
 
         # handle renamed files which are in tuples
@@ -4097,15 +4101,28 @@ def get_file_by_status(
             return (
                 filtered_modified_files,
                 filtered_added_files,
-                filtered_old_format,
+                filtered_old_format_or_renamed_files,
             )
+    if renamed_files:
+        for file in renamed_files:
+            if file_path in file:
+                filtered_old_format_or_renamed_files.add(file)
+                return (
+                    filtered_modified_files,
+                    filtered_added_files,
+                    filtered_old_format_or_renamed_files,
+                )
 
     # if the file is not modified check if it is in old format files
     if old_format_files and file_path in old_format_files:
-        filtered_old_format.add(file_path)
+        filtered_old_format_or_renamed_files.add(file_path)
 
     else:
         # if not found in either modified or old format consider the file newly added
         filtered_added_files.add(file_path)
 
-    return filtered_modified_files, filtered_added_files, filtered_old_format
+    return (
+        filtered_modified_files,
+        filtered_added_files,
+        filtered_old_format_or_renamed_files,
+    )

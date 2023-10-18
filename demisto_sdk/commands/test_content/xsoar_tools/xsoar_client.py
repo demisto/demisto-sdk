@@ -73,6 +73,11 @@ class XsoarApiInterface(ABC):
 
 
 class XsoarNGApiClient(XsoarApiInterface):
+
+    def __init__(self, xsoar_client_config: XsoarApiClientConfig):
+        super().__init__(xsoar_client_config)
+        self.external_base_url = self.base_url.replace("api", "ext")  # url for long-running integrations
+
     def create_integration_instance(
         self, _id: str, name: str, integration_instance_config: Dict
     ):
@@ -129,7 +134,6 @@ class XsoarNGApiClient(XsoarApiInterface):
             path="/xsoar/settings/integration",
             body=module_instance,
         )
-
 
     def delete_integration_instance(self, instance_id: str):
         return demisto_client.generic_request_func(

@@ -1,9 +1,11 @@
+import ast
 import os
 import urllib.parse
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 import demisto_client
+from demisto_client.demisto_api.rest import ApiException
 from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 
@@ -21,8 +23,9 @@ class XsoarApiClientConfig(BaseModel):
 
 class XsoarApiInterface(ABC):
     def __init__(self, xsoar_client_config: XsoarApiClientConfig):
+        self.base_url = xsoar_client_config.base_url
         self.client = demisto_client.configure(
-            base_url=xsoar_client_config.base_url,
+            base_url=self.base_url,
             api_key=xsoar_client_config.api_key.get_secret_value(),
             auth_id=xsoar_client_config.auth_id,
             verify_ssl=False,
@@ -127,6 +130,7 @@ class XsoarNGApiClient(XsoarApiInterface):
             body=module_instance,
         )
 
+
     def delete_integration_instance(self, instance_id: str):
         return demisto_client.generic_request_func(
             self=self.client,
@@ -189,11 +193,12 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
 
     def get_integrations_module_configuration(self, _id: Optional[str] = None) -> Union[List, Dict[str, Any]]:
-        response, status_code = demisto_client.generic_request_func(
+        raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/xsoar/settings/integration/search",
         )
+        response = ast.literal_eval(raw_response)
         if not _id:
             return response
         for config in response.get("configurations") or []:
@@ -201,3 +206,5 @@ class XsoarNGApiClient(XsoarApiInterface):
                 return config
 
         raise ValueError(f'Could not find module configuration for integration ID {_id}')
+
+

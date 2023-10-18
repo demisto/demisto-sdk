@@ -167,7 +167,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
 
     def create_indicator(self, value: str, indicator_type: str, score: int = 0):
-        return demisto_client.generic_request_func(
+        raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/xsoar/indicator/create",
@@ -179,6 +179,7 @@ class XsoarNGApiClient(XsoarApiInterface):
                 }
             },
         )
+        return ast.literal_eval(raw_response)
 
     def delete_indicators(
         self,

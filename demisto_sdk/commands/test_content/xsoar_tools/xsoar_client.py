@@ -30,7 +30,7 @@ class XsoarApiInterface(ABC):
 
     @abstractmethod
     def create_integration_instance(
-        self, instance_name: str, instance_configuration: Dict[str, Any]
+        self, _id: str, name: str, integration_instance_config: Dict
     ):
         pass
 
@@ -64,16 +64,67 @@ class XsoarApiInterface(ABC):
     ):
         pass
 
+    @abstractmethod
+    def get_integrations_module_configuration(self, _id: str):
+        pass
+
 
 class XsoarNGApiClient(XsoarApiInterface):
     def create_integration_instance(
-        self, instance_name: str, instance_configuration: Dict[str, Any]
+        self, _id: str, name: str, integration_instance_config: Dict
     ):
+        integrations_metadata: Dict[str, Any] = self.get_integrations_module_configuration(_id)
+
+        module_instance = {
+            "brand": integrations_metadata["name"],
+            "category": integrations_metadata["category"],
+            "configuration": integrations_metadata,
+            "data": [],
+            "enabled": "true",
+            "engine": "",
+            "id": "",
+            "isIntegrationScript": True,  # type: ignore
+            "name": name,
+            "passwordProtected": False,
+            "version": 0,
+            "incomingMapperId": integrations_metadata.get("defaultMapperIn", ""),
+            "mappingId": integrations_metadata.get("defaultClassifier", ""),
+            "outgoingMapperId": integrations_metadata.get("defaultMapperOut", ""),
+        }
+
+        module_configuration: List[Dict[str, Any]] = integrations_metadata["configuration"]
+
+        for param_conf in module_configuration:
+            if param_conf["display"] in integration_instance_config or param_conf["name"] in integration_instance_config:
+                # param defined in conf
+                key = (
+                    param_conf["display"]
+                    if param_conf["display"] in integration_instance_config
+                    else param_conf["name"]
+                )
+                if key in {"credentials", "creds_apikey"}:
+                    credentials = integration_instance_config[key]
+                    param_value = {
+                        "credential": "",
+                        "identifier": credentials.get("identifier", ""),
+                        "password": credentials["password"],
+                        "passwordChanged": False,
+                    }
+                else:
+                    param_value = integration_instance_config[key]
+
+                param_conf["value"] = param_value
+                param_conf["hasvalue"] = True
+            elif param_conf["defaultValue"]:
+                # param is required - take default value
+                param_conf["value"] = param_conf["defaultValue"]
+            module_instance["data"].append(param_conf)
+
         return demisto_client.generic_request_func(
             self=self.client,
             method="PUT",
             path="/xsoar/settings/integration",
-            body=instance_configuration,
+            body=module_instance,
         )
 
     def delete_integration_instance(self, instance_id: str):
@@ -136,3 +187,17 @@ class XsoarNGApiClient(XsoarApiInterface):
             path="/xsoar/indicator/batchDelete",
             body=body,
         )
+
+    def get_integrations_module_configuration(self, _id: Optional[str] = None) -> Union[List, Dict[str, Any]]:
+        response = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/xsoar/settings/integration/search",
+        )
+        if not _id:
+            return response
+        for config in response.get("configurations") or []:
+            if config.get("id") == _id:
+                return config
+
+        raise ValueError(f'Could not find module configuration for integration ID {_id}')

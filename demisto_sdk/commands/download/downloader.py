@@ -531,8 +531,8 @@ class Downloader:
                     f"Unexpected server response:\n" f"'{api_response}'."
                 )
 
-        logger.debug(
-            f"{len(downloaded_automations)} system automations were successfully downloaded."
+        logger.info(
+            f"Successfully downloaded {len(downloaded_automations)} system automations."
         )
         return downloaded_automations
 
@@ -595,8 +595,8 @@ class Downloader:
 
             downloaded_playbooks.append(api_response)
 
-        logger.debug(
-            f"'{len(downloaded_playbooks)}' system playbooks were downloaded successfully."
+        logger.info(
+            f"Successfully downloaded {len(downloaded_playbooks)} system playbooks."
         )
         return downloaded_playbooks
 
@@ -670,8 +670,9 @@ class Downloader:
 
             else:
                 downloaded_items = api_response
-
-        logger.info(f"Fetched {len(downloaded_items)} system items from server.")
+                logger.info(
+                    f"Successfully downloaded {len(downloaded_items)} system content items."
+                )
 
         content_objects: dict[str, dict] = {}
 
@@ -685,6 +686,12 @@ class Downloader:
             )
             content_objects[file_name] = content_object
 
+        downloaded_content_names = [
+            f"{item['name']}" for item in content_objects.values()
+        ]
+        logger.debug(
+            f"Downloaded system content items: {', '.join(downloaded_content_names)}"
+        )
         return content_objects
 
     def parse_custom_content_data(

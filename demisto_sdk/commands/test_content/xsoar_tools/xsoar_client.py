@@ -128,27 +128,30 @@ class XsoarNGApiClient(XsoarApiInterface):
                 param_conf["value"] = param_conf["defaultValue"]
             module_instance["data"].append(param_conf)
 
-        return demisto_client.generic_request_func(
+        raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="PUT",
             path="/xsoar/settings/integration",
             body=module_instance,
         )
+        return ast.literal_eval(raw_response)
 
     def delete_integration_instance(self, instance_id: str):
-        return demisto_client.generic_request_func(
+        raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="DELETE",
             path=f"/xsoar/settings/integration/{urllib.parse.quote(instance_id)}",
         )
+        return ast.literal_eval(raw_response)
 
     def get_incident(self, incident_id: str):
-        return demisto_client.generic_request_func(
+        raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/xsoar/public/v1/incidents/search",
             body={"filters": {"id": incident_id}},
         )
+        return ast.literal_eval(raw_response)
 
     def delete_incidents(
         self,
@@ -159,12 +162,14 @@ class XsoarNGApiClient(XsoarApiInterface):
         if isinstance(incident_ids, str):
             incident_ids = [incident_ids]
         body = {"ids": incident_ids, "filter": filters or {}, "all": _all}
-        return demisto_client.generic_request_func(
+
+        raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="DELETE",
             path="/xsoar/incident/batchDelete",
             body=body,
         )
+        return ast.literal_eval(raw_response)
 
     def create_indicator(self, value: str, indicator_type: str, score: int = 0):
         raw_response, _, _ = demisto_client.generic_request_func(

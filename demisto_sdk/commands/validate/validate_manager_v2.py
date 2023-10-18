@@ -47,9 +47,9 @@ class ValidateManager:
             committed_only=only_committed_files,
             prev_ver=prev_ver,
             file_path=self.file_path,
-            validate_all=self.validate_all,
-            validation_results=self.validation_results,
+            all_files=self.validate_all,
         )
+        self.objects_to_run: Set[BaseContent] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         (
@@ -59,7 +59,6 @@ class ValidateManager:
             self.ignorable_errors,
             self.support_level_dict,
         ) = self.config_reader.gather_validations_to_run(use_git=self.use_git)
-        self.objects_to_run: Set[BaseContent] = self.initializer.gather_objects_to_run()
         self.validators = self.filter_validators()
 
     def run_validation(self) -> int:

@@ -16,18 +16,18 @@ from demisto_sdk.commands.content_graph.parsers.repository import RepositoryPars
 USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
-def all_content_repo():
-    """
-    Returns a ContentDTO object with all the packs of the content repository.
-    """
-    repo_parser = RepositoryParser(CONTENT_PATH)
-    repo_parser.parse()
-    return ContentDTO.from_orm(repo_parser)
-
-
 class ContentDTO(BaseModel):
     path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
+    
+    @staticmethod
+    def from_path(path: Path=CONTENT_PATH):
+        """
+        Returns a ContentDTO object with all the packs of the content repository.
+        """
+        repo_parser = RepositoryParser(path)
+        repo_parser.parse()
+        return ContentDTO.from_orm(repo_parser)
 
     def dump(
         self,

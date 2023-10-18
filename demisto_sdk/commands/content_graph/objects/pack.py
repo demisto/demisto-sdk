@@ -113,6 +113,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
+    ignored_errors: dict
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )

@@ -7,7 +7,6 @@ from git import InvalidGitRepositoryError
 from demisto_sdk.commands.common.constants import (
     ADDED,
     DELETED,
-    DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
     MODIFIED,
     RENAMED,
@@ -25,7 +24,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
 
 
 class Initializer:
@@ -36,15 +34,13 @@ class Initializer:
         committed_only=None,
         prev_ver=None,
         file_path=None,
-        validate_all=False,
-        validation_results=None,
+        all_files=False,
     ):
         self.staged = staged
         self.use_git = use_git
         self.file_path = file_path
-        self.validate_all = validate_all
+        self.all_files = all_files
         self.committed_only = committed_only
-        self.validation_results = validation_results
         self.prev_ver = prev_ver
 
     def validate_git_installed(self):
@@ -99,7 +95,7 @@ class Initializer:
         self.prev_ver = self.setup_prev_ver(self.prev_ver)
 
     def collect_files_to_run(self, file_path: str) -> Tuple[Set, Set, Set, Set]:
-        """Collecting the files to validate divided to modified, added, and deleted.
+        """Collecting the files to run on divided to modified, added, and deleted.
 
         Args:
             file_path (str): A comma separated list of file paths to filter to only specified paths.
@@ -135,11 +131,8 @@ class Initializer:
 
     def setup_git_params(
         self,
-    ) -> ValidationResult:
+    ):
         """Setting up the git relevant params.
-
-        Returns:
-            ValidationResult: Result for wether Running on master branch or not.
         """
         self.branch_name = (
             self.git_util.get_current_git_branch_or_hash()
@@ -162,31 +155,15 @@ class Initializer:
 
         # if running on release branch check against last release.
         if self.branch_name.startswith("21.") or self.branch_name.startswith("22."):
-            self.skip_pack_rn_validation = True
             self.prev_ver = os.environ.get("GIT_SHA1")
             self.committed_only = True
-
-            # when running against git while on release branch - show errors but don't fail the validation
-            self.always_valid = True
-
-        # On main or master don't check RN
-        elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
-            return ValidationResult(
-                error_code="BA107",
-                is_valid=False,
-                message="Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command.",
-                file_path="",
-            )
-        return ValidationResult(
-            error_code="BA107", is_valid=True, message="", file_path=""
-        )
 
     def print_git_config(self):
         """Printing the git configurations - all the relevant flags."""
         logger.info(
-            f"\n[cyan]================= Running validation on branch {self.branch_name} =================[/cyan]"
+            f"\n[cyan]================= Running on branch {self.branch_name} =================[/cyan]"
         )
-        logger.info(f"Validating against {self.prev_ver}")
+        logger.info(f"Running against {self.prev_ver}")
 
         if self.branch_name in [
             self.prev_ver,
@@ -263,8 +240,8 @@ class Initializer:
             file_path(str): comma separated list of files.
 
         Returns:
-            Tuple[Set, Set]. 2 sets for modified, added files where the only files that
-            appear are the ones specified by the 'file_path' ValidateManager parameter
+            Tuple[Set, Set, Set]. 3 sets for modified, added, and renamed files where the only files that
+            appear are the ones specified by file_path.
         """
         filtered_modified_files: Set = set()
         filtered_added_files: Set = set()
@@ -299,7 +276,7 @@ class Initializer:
         Filter the file that should run according to the given flag (-i/-g/-a).
 
         Returns:
-            set: the set of files that should be validated.
+            set: the set of files that should run.
         """
         content_objects_to_run = set()
         final_content_objects_to_run: Set[BaseContent] = set()
@@ -309,14 +286,14 @@ class Initializer:
             content_objects_to_run = self.paths_to_basecontent_set(
                 set(self.file_path.split(",")), None
             )
-        elif self.validate_all:
+        elif self.all_files:
             content_dto = ContentDTO.from_path(CONTENT_PATH)
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)
         else:
-            self.use_git = True, True
-            self.committed_only = True, True
+            self.use_git = True,
+            self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
         for content_object in content_objects_to_run:
             if isinstance(content_object, Pack):
@@ -333,7 +310,7 @@ class Initializer:
         """
         self.validate_git_installed()
         self.set_prev_ver()
-        self.validation_results.append(self.setup_git_params())
+        self.setup_git_params()
         self.print_git_config()
 
         (
@@ -342,20 +319,20 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
-        validations_set: Set[BaseContent] = set()
-        validations_set = validations_set.union(
+        basecontent_set: Set[BaseContent] = set()
+        basecontent_set = basecontent_set.union(
             self.paths_to_basecontent_set(modified_files, MODIFIED)
         )
-        validations_set = validations_set.union(
+        basecontent_set = basecontent_set.union(
             self.paths_to_basecontent_set(renamed_files, RENAMED)
         )
-        validations_set = validations_set.union(
+        basecontent_set = basecontent_set.union(
             self.paths_to_basecontent_set(added_files, ADDED)
         )
-        validations_set = validations_set.union(
+        basecontent_set = basecontent_set.union(
             self.paths_to_basecontent_set(deleted_files, DELETED)
         )
-        return validations_set
+        return basecontent_set
 
     def paths_to_basecontent_set(
         self, files_set: set, git_status: Optional[str]

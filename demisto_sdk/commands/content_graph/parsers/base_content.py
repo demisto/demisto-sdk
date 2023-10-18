@@ -21,7 +21,6 @@ class BaseContentParser(ABC):
 
     def __init__(self, path: Path) -> None:
         self.path: Path = path
-        self.ignored_errors: list = []
 
     @property
     @abstractmethod

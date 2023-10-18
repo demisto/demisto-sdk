@@ -194,6 +194,9 @@ class BaseContent(BaseContentModel):
     path: Path
     git_status: Optional[str]
     old_file_path: Optional[Path]
+    
+    def __hash__(self):
+        return hash(self.path)
 
     @staticmethod
     @lru_cache

@@ -33,7 +33,6 @@ class PackMetadata(BaseModel):
     updated: Optional[str] = Field("")
     legacy: Optional[bool]
     support: Optional[str]
-    ignored_errors: Optional[dict]
     url: Optional[str]
     email: Optional[str]
     eulaLink: Optional[str]

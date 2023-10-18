@@ -1,5 +1,4 @@
 import re
-
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
@@ -38,6 +37,7 @@ class Hook(ABC):
     def set_files_on_hook(self, hook: dict, files) -> int:
         """
         Mutates a hook, setting a regex for file exact match on the hook
+        Note, we could easily support glob syntax here too in the future.
         according to the file's *file* and *exclude* properties
         Args:
             hook: The hook to mutate

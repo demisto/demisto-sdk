@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.docker_helper import get_docker, get_python_version
+from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -165,19 +165,7 @@ class PreCommitRunner:
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
         [GenericDocker(**hook, **kwargs).prepare_hook(python_version_to_files=self.python_version_to_files)
-         for hook in hooks if hook.get('id', '').endswith('in-docker')]
-
-    def update_config_with_docker_hooks(self, hooks, config):  # todo hopefully remove
-        docker_hooks = [v for k, v in hooks.items() if k.endswith("in-docker")]
-        prepared_docker_hooks = self.prepare_docker_hooks(docker_hooks)
-        if local_repo := [r for r in config["repos"] if r["repo"] == "local"]:
-            local_repo = local_repo[0]
-
-            for i, hook in reversed(list(enumerate(local_repo["hooks"]))):
-                if hook["id"] in [hook.get("id") for hook in docker_hooks]:
-                    del local_repo["hooks"][i]
-
-            local_repo["hooks"].extend(prepared_docker_hooks)
+         for hook_id, hook in hooks.items() if hook_id.endswith('in-docker')]
 
 
     def run(
@@ -347,11 +335,6 @@ def group_by_python_version(
             | code_files_to_include
             | {integration_script.path}  # add the python including files here
         )
-        # add_tmp_lint_files(content_repo=CONTENT_PATH,
-        #                    modules=modules,
-        #                    lint_files=list(code_files_to_include),
-        #                    pack_path=integration_script.path.parent,
-        #                    pack_type=TYPE_PYTHON if any(file.suffix == '.py' for file in code_files_to_include) else TYPE_PWSH).__enter__()
 
     if infra_files:
         python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
@@ -430,9 +413,9 @@ def pre_commit_manager(
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files, exclude_files = group_by_python_version(files_to_run)
+    python_version_to_files, exclude_files = group_by_python_version(files_to_run, git_util)
     pre_commit_runner = PreCommitRunner(
-        bool(input_files), all_files, mode, python_version_to_files, sdk_ref
+        bool(input_files), all_files, mode, python_version_to_files, sdk_ref, git_util
     )
     return pre_commit_runner.run(
         unit_test,

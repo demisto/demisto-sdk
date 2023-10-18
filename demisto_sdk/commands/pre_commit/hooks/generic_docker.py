@@ -1,22 +1,25 @@
-import os
-
-import itertools
-
-from demisto_sdk.commands.common.docker_helper import get_docker
-from demisto_sdk.commands.common.tools import get_yaml, logger
-from demisto_sdk.commands.lint.helpers import get_test_modules
-
 import functools
+import itertools
+import os
+from copy import deepcopy
+from pathlib import Path
+
 from docker.errors import DockerException
 
-from pathlib import Path
-from typing import Iterable, Optional
-
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.docker_helper import get_docker
+from demisto_sdk.commands.common.tools import get_yaml, logger
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
-from demisto_sdk.commands.run_unit_tests.unit_tests_runner import DOCKER_PYTHONPATHv2
-from copy import deepcopy
 
-from demisto_sdk.commands.common.constants import PreCommitModes
+
+@functools.cache
+def get_docker_python_path() -> str:
+    path_to_replace = str(Path(CONTENT_PATH))
+    docker_path = [str(path).replace(path_to_replace, '/src') for path in PYTHONPATH]
+    path = ":".join(sorted(docker_path))
+    logger.debug(f'pythonpath in docker being set to {path}')
+    return path
+
 
 
 class GenericDocker(Hook):
@@ -36,7 +39,7 @@ class GenericDocker(Hook):
             new_hook["language"] = "docker_image"
             new_hook[
                 "entry"
-            ] = f"--entrypoint '{self.base_hook['entry']}' -e {get_docker_python_path()} {tag}"
+            ] = f'--entrypoint {self.base_hook["entry"]} --env "PYTHONPATH={get_docker_python_path()}" {tag} '
             number_files_set = self.set_files_on_hook(new_hook, files)
             if number_files_set:
                 all_hooks.append(new_hook)
@@ -80,6 +83,6 @@ def devtest_image(param):
         return image
 
 
-@functools.cache
-def get_docker_python_path():  # TODO investigate what this is
-    ":".join(str(path) for path in sorted(DOCKER_PYTHONPATHv2))
+@functools.cache # precommit_env check this instead.
+def get_python_path():  # TODO investigate what this is
+    ":".join(str(path) for path in sorted(PYTHONPATH))

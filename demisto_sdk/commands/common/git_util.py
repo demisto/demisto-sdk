@@ -46,7 +46,7 @@ class GitUtil:
 
     @functools.cache
     def get_all_files(self) -> Set[Path]:
-        return set(map(Path, self.repo.git.ls_files().split("\n")))
+        return set(map(Path, self.repo.git.ls_files('-z').split("\x00")))
 
     def modified_files(
         self,

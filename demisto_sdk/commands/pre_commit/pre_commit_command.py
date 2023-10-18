@@ -164,7 +164,7 @@ class PreCommitRunner:
             self.files_to_run
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
-        [GenericDocker(**hook, **kwargs).prepare_hook(python_version_to_files=self.python_version_to_files)
+        [GenericDocker(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
          for hook_id, hook in hooks.items() if hook_id.endswith('in-docker')]
 
 

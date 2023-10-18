@@ -189,7 +189,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
 
     def get_integrations_module_configuration(self, _id: Optional[str] = None) -> Union[List, Dict[str, Any]]:
-        response = demisto_client.generic_request_func(
+        response, status_code = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/xsoar/settings/integration/search",

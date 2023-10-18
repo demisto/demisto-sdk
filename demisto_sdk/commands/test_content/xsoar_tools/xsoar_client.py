@@ -190,12 +190,13 @@ class XsoarNGApiClient(XsoarApiInterface):
         if isinstance(indicator_ids, str):
             indicator_ids = [indicator_ids]
         body = {"ids": indicator_ids, "filter": filters or {}, "all": _all, "DoNotWhitelist": not should_exclude}
-        return demisto_client.generic_request_func(
+        raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="DELETE",
             path="/xsoar/indicator/batchDelete",
             body=body,
         )
+        return ast.literal_eval(raw_response)
 
     def get_integrations_module_configuration(self, _id: Optional[str] = None) -> Union[List, Dict[str, Any]]:
         raw_response, _, _ = demisto_client.generic_request_func(

@@ -192,10 +192,11 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
 class BaseContent(BaseContentModel):
     path: Path
+    git_status: Optional[str]
 
     @staticmethod
     @lru_cache
-    def from_path(path: Path) -> Optional["BaseContent"]:
+    def from_path(path: Path, git_status: Optional[str] = None) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
             path.is_dir() and path.parent.name == PACKS_FOLDER
@@ -236,7 +237,9 @@ class BaseContent(BaseContentModel):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         try:
-            return model.from_orm(content_item_parser)
+            obj = model.from_orm(content_item_parser)
+            obj.git_status = git_status
+            return obj
         except Exception as e:
             logger.error(
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"

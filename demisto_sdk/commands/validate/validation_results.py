@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -7,14 +7,14 @@ from demisto_sdk.commands.validate.validators.base_validator import ValidationRe
 
 
 class ValidationResults:
-    def __init__(self, json_file_path, only_throw_warnings):
+    def __init__(self, json_file_path: Optional[str], only_throw_warnings: List[str]):
         """
             The ValidationResults init method.
         Args:
-            json_file_path (str): The json path to write the outputs into.
+            json_file_path Optional[str]: The json path to write the outputs into.
             only_throw_warnings (list): The list of error codes to only warn about.
         """
-        self.only_throw_warnings = only_throw_warnings
+        self.only_throw_warning = only_throw_warnings
         self.results: List[ValidationResult] = []
         if json_file_path:
             self.json_file_path = (
@@ -25,7 +25,7 @@ class ValidationResults:
         else:
             self.json_file_path = ""
 
-    def post_results(self, only_throw_warning=[]):
+    def post_results(self) -> int:
         """
             Go through the validation results list,
             posting the warnings / failure message for failed validation,
@@ -39,7 +39,7 @@ class ValidationResults:
             self.write_validation_results()
         for result in self.results:
             if not result.is_valid:
-                if result.error_code in only_throw_warning:
+                if result.error_code in self.only_throw_warning:
                     logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
                 else:
                     logger.error(f"[red]{result.format_readable_message}[/red]")

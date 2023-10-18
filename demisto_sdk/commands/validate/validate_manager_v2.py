@@ -35,25 +35,18 @@ class ValidateManager:
         self.validate_all = validate_all
         self.use_git = use_git
         self.file_path = file_path
-        self.is_circle = only_committed_files
+        self.committed_only = only_committed_files
         self.staged = staged
         self.run_with_multiprocessing = multiprocessing
         self.allow_autofix = allow_autofix
+        self.config_file_path = config_file_path
+        self.category_to_run = config_file_category_to_run
+        self.json_file_path = json_file_path
         self.initialize_git(prev_ver)
-        self.config_reader = ConfigReader(
-            config_file_path=config_file_path,
-            category_to_run=config_file_category_to_run,
-        )
+        self.initialize_config_reader()
         self.objects_to_run = self.gather_objects_to_run()
-        (
-            self.validations_to_run,
-            self.validations_to_ignore,
-            self.warnings,
-            self.ignorable_errors,
-            self.support_level_dict,
-        ) = self.config_reader.gather_validations_to_run(use_git=use_git)
         self.validation_results = ValidationResults(
-            json_file_path=json_file_path, only_throw_warnings=self.warnings
+            json_file_path=self.json_file_path, only_throw_warnings=self.warnings
         )
         self.validators = self.filter_validators()
 
@@ -64,10 +57,24 @@ class ValidateManager:
             prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
         """
         self.git_initializer = GitInitializer(
-            use_git=self.use_git, staged=self.staged, is_circle=self.is_circle
+            use_git=self.use_git, staged=self.staged, committed_only=self.committed_only
         )
         self.git_initializer.validate_git_installed()
         self.git_initializer.set_prev_ver(prev_ver)
+
+    def initialize_config_reader(self):
+        """initialize the ConfigReader class and related fields."""
+        self.config_reader = ConfigReader(
+            config_file_path=self.config_file_path,
+            category_to_run=self.category_to_run,
+        )
+        (
+            self.validations_to_run,
+            self.validations_to_ignore,
+            self.warnings,
+            self.ignorable_errors,
+            self.support_level_dict,
+        ) = self.config_reader.gather_validations_to_run(use_git=self.use_git)
 
     def run_validation(self):
         """
@@ -105,7 +112,7 @@ class ValidateManager:
             self.file_path = self.get_files_from_git()
         elif not any([self.file_path, self.validate_all]):
             self.use_git, self.git_initializer.use_git = True, True
-            self.is_circle, self.git_initializer.is_circle = True, True
+            self.is_circle, self.git_initializer.committed_only = True, True
             self.file_path = self.get_files_from_git()
         if self.file_path:
             for file_path in self.file_path.split(","):
@@ -165,7 +172,8 @@ class ValidateManager:
         (
             modified_files,
             added_files,
-            old_format_files,
             deleted_files,
         ) = self.git_initializer.collect_files_to_run(self.file_path)
-        return modified_files, added_files, old_format_files, deleted_files,
+        modified_files = [BaseContent.from_path(Path(modified_file_path), "M") for modified_file_path in modified_files]
+        added_files = [BaseContent.from_path(Path(added_file_path), "A") for added_file_path in added_files]
+        deleted_files = [BaseContent.from_path(Path(deleted_file_path), "D") for deleted_file_path in deleted_files]

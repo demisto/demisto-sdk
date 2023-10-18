@@ -20,10 +20,10 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_pack_name,
     has_remote_configured,
-    is_old_file_format,
     is_origin_content_repo,
     run_command,
 )
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 @functools.lru_cache()
@@ -370,7 +370,7 @@ def filter_changed_files(
             elif (
                 file_status.lower() in ["m", "a", "r"]
                 and file_type in [FileType.INTEGRATION, FileType.SCRIPT]
-                and is_old_file_format(file_path, file_type)
+                and ValidateManager.is_old_file_format(file_path, file_type)
             ):
                 old_format_files.add(file_path)
             # identify modified files

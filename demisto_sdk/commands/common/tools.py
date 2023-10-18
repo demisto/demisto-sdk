@@ -4063,14 +4063,14 @@ def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
 
 
 def get_file_by_status(
-    modified_files: Set, old_format_files: Set, file_path: str
+    modified_files: Set, old_format_files: Optional[Set], file_path: str
 ) -> Tuple[Set, Set, Set]:
     """Given a specific file path identify in which git status set
     it exists and return a set containing that file and 2 additional empty sets.
 
     Args:
         modified_files(Set): A set of modified and renamed files.
-        old_format_files(Set): A set of old format files.
+        old_format_files(Optional[Set]): A set of old format files.
         file_path(str): The file path to check.
 
     Returns:
@@ -4101,7 +4101,7 @@ def get_file_by_status(
             )
 
     # if the file is not modified check if it is in old format files
-    if file_path in old_format_files:
+    if old_format_files and file_path in old_format_files:
         filtered_old_format.add(file_path)
 
     else:
@@ -4109,35 +4109,3 @@ def get_file_by_status(
         filtered_added_files.add(file_path)
 
     return filtered_modified_files, filtered_added_files, filtered_old_format
-
-
-def is_old_file_format(file_path: str, file_type: FileType):
-    """Check if the file is an old format file or new format file
-
-    Args:
-        file_path (str): The file path
-        file_type (FileType): The file type
-
-    Returns:
-        bool: True if the given file is in old format. Otherwise, return False.
-    """
-    if file_type not in {FileType.INTEGRATION, FileType.SCRIPT}:
-        return False
-    file_yml = get_file(file_path)
-    # check for unified integration
-    if file_type == FileType.INTEGRATION and file_yml.get("script", {}).get(
-        "script", "-"
-    ) not in ["-", ""]:
-        if file_yml.get("script", {}).get("type", "javascript") != "python":
-            return False
-        return True
-
-    # check for unified script
-    if file_type == FileType.SCRIPT and file_yml.get("script", "-") not in [
-        "-",
-        "",
-    ]:
-        if file_yml.get("type", "javascript") != "python":
-            return False
-        return True
-    return False

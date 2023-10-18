@@ -158,7 +158,6 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_file_in_pack,
-    is_old_file_format,
     open_id_set_file,
     run_command_os,
     specify_files_from_directory,
@@ -2697,6 +2696,36 @@ class ValidateManager:
                     )
 
         return ignored_errors_list
+
+    @staticmethod
+    def is_old_file_format(file_path: str, file_type: FileType) -> bool:
+        """Check if the file is an old format file or new format file
+        Args:
+            file_path (str): The file path
+            file_type (FileType): The file type
+        Returns:
+            bool: True if the given file is in old format. Otherwise, return False.
+        """
+        if file_type not in {FileType.INTEGRATION, FileType.SCRIPT}:
+            return False
+        file_yml = get_file(file_path)
+        # check for unified integration
+        if file_type == FileType.INTEGRATION and file_yml.get("script", {}).get(
+            "script", "-"
+        ) not in ["-", ""]:
+            if file_yml.get("script", {}).get("type", "javascript") != "python":
+                return False
+            return True
+
+        # check for unified script
+        if file_type == FileType.SCRIPT and file_yml.get("script", "-") not in [
+            "-",
+            "",
+        ]:
+            if file_yml.get("type", "javascript") != "python":
+                return False
+            return True
+        return False
 
     @staticmethod
     def get_packs_with_added_release_notes(added_files):

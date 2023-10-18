@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, Tuple, Type
+from typing import ClassVar, List, Tuple, Type
 
 from pydantic import BaseModel
 
@@ -39,6 +39,16 @@ class BaseValidator(ABC, BaseModel):
     def should_run(
         cls, content_item: BaseContent, ignorable_errors: list, support_level_dict: dict
     ) -> bool:
+        """check wether to run validation on the given content item or not.
+
+        Args:
+            content_item (BaseContent): The content item to run the validation on.
+            ignorable_errors (list): The list of the errors that can be ignored.
+            support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
+
+        Returns:
+            bool: True if the validation should run. Otherwise, return False.
+        """
         return all(
             [
                 isinstance(content_item, cls.content_types),
@@ -60,7 +70,7 @@ class BaseValidator(ABC, BaseModel):
         raise NotImplementedError
 
 
-def is_error_ignored(err_code, ignored_errors, ignorable_errors):
+def is_error_ignored(err_code: str, ignored_errors: List[str], ignorable_errors: List[str]) -> bool:
     """
     Check if the given validation error code is ignored by the current item ignored error list.
 
@@ -76,8 +86,8 @@ def is_error_ignored(err_code, ignored_errors, ignorable_errors):
 
 
 def is_support_level_support_validation(
-    err_code, support_level_dict, item_support_level
-):
+    err_code: str, support_level_dict: dict, item_support_level: str
+) -> bool:
     """
     Check if the given validation error code is ignored according to the item's support level.
 

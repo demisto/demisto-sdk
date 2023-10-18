@@ -1277,7 +1277,8 @@ class TestValidators:
             "CortexXDR",
             "Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml",
         )
-        res = tools.is_old_file_format(test_file, FileType.INTEGRATION)
+        validate_manager = ValidateManager()
+        res = validate_manager.is_old_file_format(test_file, FileType.INTEGRATION)
         assert res is False
 
     def test_is_old_file_format_unified(self):
@@ -1296,7 +1297,8 @@ class TestValidators:
             files_path,
             "UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml",
         )
-        res = tools.is_old_file_format(test_file, FileType.INTEGRATION)
+        validate_manager = ValidateManager()
+        res = validate_manager.is_old_file_format(test_file, FileType.INTEGRATION)
         assert res is True
 
     def test_validate_no_missing_release_notes__no_missing_rn(self, repo):
@@ -2314,9 +2316,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
         "demisto_sdk.commands.validate.validate_manager.find_type",
         return_value=FileType.INTEGRATION,
     )
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.is_old_file_format", return_value=False
-    )
+    mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
     input_file_path = "Packs/PackName/Integrations/IntegrationName/IntegrationName.yml"
     assert validator_obj.check_file_relevance_and_format_path(
         input_file_path, None, set()
@@ -2486,9 +2486,7 @@ def test_check_file_relevance_and_format_path_file_to_format(
         "demisto_sdk.commands.validate.validate_manager.find_type",
         return_value=file_type,
     )
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.is_old_file_format", return_value=False
-    )
+    mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
     assert validator_obj.check_file_relevance_and_format_path(
         input_file_path, None, set()
     ) == ("Packs/some_file.yml", "", True)
@@ -2518,9 +2516,7 @@ def test_check_file_relevance_and_format_path_file_to_format_parsing_rules(
         "demisto_sdk.commands.validate.validate_manager.find_type",
         return_value=file_type,
     )
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.is_old_file_format", return_value=False
-    )
+    mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
     assert validator_obj.check_file_relevance_and_format_path(
         input_file_path, None, set()
     ) == ("Packs/PackName/ParsingRules/Name/some_file.yml", "", True)
@@ -2552,9 +2548,7 @@ def test_check_file_relevance_and_format_path_file_to_format_with_old_path(
         "demisto_sdk.commands.validate.validate_manager.find_type",
         return_value=file_type,
     )
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.is_old_file_format", return_value=False
-    )
+    mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
     assert validator_obj.check_file_relevance_and_format_path(
         input_file_path, old_file_path, set()
     ) == ("Packs/some_file.yml", "Packs/old_file_path.yml", True)
@@ -2576,9 +2570,7 @@ def test_check_file_relevance_and_format_path_old_format_file(mocker):
         "demisto_sdk.commands.validate.validate_manager.find_type",
         return_value=FileType.INTEGRATION,
     )
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.is_old_file_format", return_value=True
-    )
+    mocker.patch.object(validator_obj, "is_old_file_format", return_value=True)
     old_format_files: set = set()
     assert validator_obj.check_file_relevance_and_format_path(
         "Packs/some_test.yml", None, old_format_files
@@ -2993,9 +2985,7 @@ def test_check_file_relevance_and_format_path(mocker, f_path, f_type, expected_r
     mocker.patch.object(
         ValidateManager, "ignore_files_irrelevant_for_validation", return_value=False
     )
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.is_old_file_format", return_value=True
-    )
+    mocker.patch.object(ValidateManager, "is_old_file_format", return_value=False)
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.find_type", return_value=f_type
     )

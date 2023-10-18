@@ -1,7 +1,6 @@
 from copy import deepcopy
 
 import pytest
-from commands.test_content.tests.build_context_test import generate_test_configuration
 
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
@@ -11,6 +10,9 @@ from demisto_sdk.commands.test_content.TestContentClasses import (
     Integration,
     TestConfiguration,
     TestPlaybook,
+)
+from demisto_sdk.commands.test_content.tests.build_context_test import (
+    generate_test_configuration,
 )
 
 CONFIGURATION = {

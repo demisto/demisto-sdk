@@ -185,10 +185,11 @@ class XsoarNGApiClient(XsoarApiInterface):
         indicator_ids: Union[str, List[str]],
         filters: Dict[str, Any] = None,
         _all: bool = False,
+        should_exclude: bool = False
     ):
         if isinstance(indicator_ids, str):
             indicator_ids = [indicator_ids]
-        body = {"ids": indicator_ids, "filter": filters or {}, "all": _all}
+        body = {"ids": indicator_ids, "filter": filters or {}, "all": _all, "DoNotWhitelist": not should_exclude}
         return demisto_client.generic_request_func(
             self=self.client,
             method="DELETE",

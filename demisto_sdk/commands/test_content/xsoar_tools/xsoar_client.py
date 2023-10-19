@@ -28,8 +28,6 @@ class XsoarApiClientConfig(BaseModel):
         return v
 
 
-
-
 class XsoarApiInterface(ABC):
     def __init__(self, xsoar_client_config: XsoarApiClientConfig):
         self.base_url = xsoar_client_config.base_url
@@ -37,7 +35,6 @@ class XsoarApiInterface(ABC):
             base_url=self.base_url,
             api_key=xsoar_client_config.api_key.get_secret_value(),
             auth_id=xsoar_client_config.auth_id,
-            verify_ssl=False
         )
 
     @abstractmethod
@@ -239,7 +236,8 @@ class XsoarNGApiClient(XsoarApiInterface):
             },
             response_type=response_type,
         )
-        logger.info(f'create_indicator, {status_code=}, {raw_response=}')
+        if status_code != 200:
+            raise Exception(f"status code is {status_code}")
         return raw_response
 
     @retry_http_request()

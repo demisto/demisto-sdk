@@ -4,13 +4,13 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 import demisto_client
-from pydantic import BaseModel, Field, HttpUrl, SecretStr
+from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from demisto_sdk.utils.utils import retry_http_request
 from demisto_sdk.commands.common.logger import logger
 
 
 class XsoarApiClientConfig(BaseModel):
-    base_url: HttpUrl = Field(
+    base_url: str = Field(
         default=os.getenv("DEMISTO_BASE_URL"), description="XSIAM Tenant Base URL"
     )
     api_key: SecretStr = Field(
@@ -19,6 +19,15 @@ class XsoarApiClientConfig(BaseModel):
     auth_id: Optional[str] = Field(
         default=os.getenv("XSIAM_AUTH_ID"), description="XSIAM Auth ID"
     )
+
+    @validator("base_url", always=True)
+    def get_base_url(cls, v: str) -> str:
+        xsoar_suffix = "xsoar"
+        if not v.endswith(xsoar_suffix):
+            return f'{v}/{xsoar_suffix}'
+        return v
+
+
 
 
 class XsoarApiInterface(ABC):
@@ -89,6 +98,15 @@ class XsoarApiInterface(ABC):
 
 
 class XsoarNGApiClient(XsoarApiInterface):
+
+    def __init__(self, xsoar_client_config: XsoarApiClientConfig):
+        base_url = xsoar_client_config.base_url
+        if 'xsoar' in base_url:
+            self.base_url = base_url
+        else:
+            self.base_url = f'{base_url}/xsoar'
+        super().__init__(xsoar_client_config)
+
     @property
     def external_base_url(self):
         return self.base_url.replace("api", "ext")  # url for long-running integrations
@@ -158,7 +176,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="PUT",
-            path="/xsoar/settings/integration",
+            path="/settings/integration",
             body=module_instance,
             response_type=response_type,
         )
@@ -171,7 +189,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="DELETE",
-            path=f"/xsoar/settings/integration/{urllib.parse.quote(instance_id)}",
+            path=f"/settings/integration/{urllib.parse.quote(instance_id)}",
             response_type=response_type,
         )
         return raw_response
@@ -181,7 +199,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/public/v1/incidents/search",
+            path="/public/v1/incidents/search",
             body={"filters": {"id": incident_id}},
             response_type=response_type,
         )
@@ -202,7 +220,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/incidents/batchDelete",
+            path="/incidents/batchDelete",
             body=body,
             response_type=response_type,
         )
@@ -219,7 +237,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, status_code, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/indicator/create",
+            path="/indicator/create",
             body={
                 "indicator": {
                     "value": value,
@@ -252,7 +270,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/indicators/batchDelete",
+            path="/indicators/batchDelete",
             body=body,
             response_type=response_type,
         )
@@ -265,7 +283,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/settings/integration/search",
+            path="/settings/integration/search",
             response_type=response_type,
         )
         if not _id:

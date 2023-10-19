@@ -125,7 +125,7 @@ For example: if the following configurations are given:
 select = [BA]
 ignore = [BA101]
 [support_level.xsoar]
-ignore = [BA102] 
+ignore = [BA102]
 then validate will run all the validation with error code BA except for BA101 and in case of xsoar supported files, the validation with error code BA102 will be skipped as well..
 
 If you wish to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.

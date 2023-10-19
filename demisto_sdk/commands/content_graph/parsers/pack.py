@@ -13,7 +13,12 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import capital_case, get_json, get_pack_ignore_content, get_pack_name
+from demisto_sdk.commands.common.tools import (
+    capital_case,
+    get_json,
+    get_pack_ignore_content,
+    get_pack_name,
+)
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
     PACK_METADATA_FILENAME,
@@ -305,9 +310,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         ):
             return True
         return False
-    
+
     def parse_ignored_errors(self):
-        """Sets the pack's ignored_errors field.
-        """
+        """Sets the pack's ignored_errors field."""
         self.ignored_errors = get_pack_ignore_content(get_pack_name(self.path))
-        a=5

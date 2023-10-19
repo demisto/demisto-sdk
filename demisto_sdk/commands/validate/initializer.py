@@ -132,8 +132,7 @@ class Initializer:
     def setup_git_params(
         self,
     ):
-        """Setting up the git relevant params.
-        """
+        """Setting up the git relevant params."""
         self.branch_name = (
             self.git_util.get_current_git_branch_or_hash()
             if (self.git_util and not self.branch_name)
@@ -292,7 +291,7 @@ class Initializer:
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)
         else:
-            self.use_git = True,
+            self.use_git = (True,)
             self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
         for content_object in content_objects_to_run:

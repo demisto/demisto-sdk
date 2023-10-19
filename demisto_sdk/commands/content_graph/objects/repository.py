@@ -19,9 +19,9 @@ USE_MULTIPROCESSING = False  # toggle this for better debugging
 class ContentDTO(BaseModel):
     path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
-    
+
     @staticmethod
-    def from_path(path: Path=CONTENT_PATH):
+    def from_path(path: Path = CONTENT_PATH):
         """
         Returns a ContentDTO object with all the packs of the content repository.
         """

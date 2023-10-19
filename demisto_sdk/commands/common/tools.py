@@ -3784,7 +3784,13 @@ def get_id(file_content: Dict) -> Union[str, None]:
     elif "templates_data" in file_content:
         return file_content["templates_data"][0].get("global_id")
 
-    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id"):
+    for key in (
+        "global_rule_id",
+        "trigger_id",
+        "content_global_id",
+        "rule_id",
+        "typeId",
+    ):
         if key in file_content:
             return file_content[key]
 

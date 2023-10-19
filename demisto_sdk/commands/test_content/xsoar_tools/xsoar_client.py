@@ -22,9 +22,9 @@ class XsoarApiClientConfig(BaseModel):
 
     @validator("base_url", always=True)
     def get_base_url(cls, v: str) -> str:
-        xsoar_suffix = "/xsoar"
+        xsoar_suffix = "xsoar"
         if not v.endswith(xsoar_suffix):
-            return f'{v}{xsoar_suffix}'
+            v = f'{v}/{xsoar_suffix}'
         return v
 
 

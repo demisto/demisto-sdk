@@ -201,7 +201,8 @@ class Downloader:
 
                 content_item_type = self.system_item_type
                 downloaded_content_objects = self.fetch_system_content(
-                    content_item_type=content_item_type
+                    content_item_type=content_item_type,
+                    content_item_names=self.input_files,
                 )
 
             else:  # Custom content
@@ -307,7 +308,6 @@ class Downloader:
     ) -> dict[str, dict]:
         """
         Filter custom content data to include only relevant files for the current download command.
-        The function also updates self.input_file with names of content matching the filter.
 
         Args:
             custom_content_objects (dict[str, dict]): A dictionary mapping custom content file names
@@ -482,7 +482,9 @@ class Downloader:
         return False
 
     def build_req_params(
-        self, content_item_type: ContentItemType
+        self,
+        content_item_type: ContentItemType,
+        content_item_names: list[str],
     ) -> tuple[str, str, dict]:
         endpoint = ITEM_TYPE_TO_ENDPOINT[content_item_type]
         req_type = ITEM_TYPE_TO_REQUEST_TYPE[content_item_type]
@@ -493,12 +495,12 @@ class Downloader:
             ContentItemType.MAPPER,
             ContentItemType.PLAYBOOK,
         ]:
-            filter_by_names = " or ".join(self.input_files)
+            filter_by_names = " or ".join(content_item_names)
             req_body = {"query": f"name:{filter_by_names}"}
 
         return endpoint, req_type, req_body
 
-    def get_system_automation(self, content_items: list[str]) -> list[dict]:
+    def get_system_automations(self, content_items: list[str]) -> dict[str, dict]:
         """
         Fetch system automations from server.
 
@@ -506,37 +508,61 @@ class Downloader:
             content_items (list[str]): A list of system automation names to fetch.
 
         Returns:
-            list[dict]: A list of downloaded system automations represented as dictionaries.
+            dict[str, dict]: A dictionary mapping downloaded automations file names,
+                to corresponding dictionaries containing metadata and content.
         """
-        downloaded_automations: list[dict] = []
+        downloaded_automations: list[bytes] = []
         logger.info(
             f"Fetching system automations from server ({self.client.api_client.configuration.host})..."
         )
 
-        for script in content_items:
-            endpoint = f"automation/load/{script}"
-            api_response = demisto_client.generic_request_func(
-                self.client,
-                endpoint,
-                "POST",
-                response_type="object",
-            )[0]
+        for automation in content_items:
+            try:
+                # This is required due to a server issue where the '/' character
+                # is considered a path separator for the endpoint.
+                if "/" in automation:
+                    raise ValueError(
+                        f"Automation name '{automation}' is invalid. "
+                        f"Automation names cannot contain the '/' character."
+                    )
 
-            if isinstance(api_response, dict):
-                downloaded_automations.append(api_response)
+                endpoint = f"automation/load/{automation}"
+                api_response = demisto_client.generic_request_func(
+                    self.client,
+                    endpoint,
+                    "POST",
+                    _preload_content=False,
+                )[0]
 
-            else:
-                # If there are API issues, it might return HTML data (represented by a string).
-                raise ApiException(
-                    f"Unexpected server response:\n" f"'{api_response}'."
-                )
+                downloaded_automations.append(api_response.data)
+
+            except Exception as e:
+                logger.error(f"Failed to fetch system automation '{automation}': {e}")
 
         logger.info(
             f"Successfully downloaded {len(downloaded_automations)} system automations."
         )
-        return downloaded_automations
 
-    def get_system_playbook(self, content_items: list[str]) -> list[dict]:
+        content_objects: dict[str, dict] = {}
+
+        for downloaded_automation in downloaded_automations:
+            automation_bytes_data = StringIO(safe_read_unicode(downloaded_automation))
+            automation_data = json.load(automation_bytes_data)
+
+            file_name = self.generate_system_content_file_name(
+                content_item=automation_data,
+                content_item_type=ContentItemType.AUTOMATION,
+            )
+            content_object = self.create_content_item_object(
+                file_name=file_name,
+                file_data=automation_bytes_data,
+                _loaded_data=automation_data,
+            )
+            content_objects[file_name] = content_object
+
+        return content_objects
+
+    def get_system_playbooks(self, content_items: list[str]) -> dict[str, dict]:
         """
         Fetch system playbooks from server.
 
@@ -544,63 +570,92 @@ class Downloader:
             content_items (list[str]): A list of names of system playbook to fetch.
 
         Returns:
-            list[dict]: A list of downloaded system playbooks represented as dictionaries.
+            dict[str, dict]: A dictionary mapping downloaded playbooks file names,
+                to corresponding dictionaries containing metadata and content.
         """
-        downloaded_playbooks: list[dict] = []
+        downloaded_playbooks: list[bytes] = []
         logger.info(
             f"Fetching system playbooks from server ({self.client.api_client.configuration.host})..."
         )
 
         for playbook in content_items:
-            endpoint = f"/playbook/{playbook}/yaml"
             try:
-                api_response: dict = demisto_client.generic_request_func(
-                    self.client,
-                    endpoint,
-                    "GET",
-                    response_type="object",
-                )[0]
+                # This is required due to a server issue where the '/' character
+                # is considered a path separator for the endpoint.
+                if "/" in playbook:
+                    raise ValueError(
+                        f"Playbook name '{playbook}' is invalid. "
+                        f"Playbook names cannot contain the '/' character."
+                    )
 
-            except ApiException as err:
-                # handling in case the id and name are not the same,
-                # trying to get the id by the name through a different api call
-                logger.debug(
-                    f"API call using playbook's name failed:\n{err}\n"
-                    f"Attempting to fetch using playbook's ID..."
-                )
+                endpoint = f"/playbook/{playbook}/yaml"
+                try:
+                    api_response = demisto_client.generic_request_func(
+                        self.client,
+                        endpoint,
+                        "GET",
+                        _preload_content=False,
+                    )[0]
 
-                playbook_id = self.get_playbook_id_by_playbook_name(playbook)
+                except ApiException as err:
+                    # handling in case the id and name are not the same,
+                    # trying to get the id by the name through a different api call
+                    logger.debug(
+                        f"API call using playbook's name failed:\n{err}\n"
+                        f"Attempting to fetch using playbook's ID..."
+                    )
 
-                if not playbook_id:
-                    raise
+                    playbook_id = self.get_playbook_id_by_playbook_name(playbook)
 
-                logger.debug(
-                    f"Found matching ID for '{playbook}' - {playbook_id}.\n"
-                    f"Attempting to fetch playbook's YAML file using the ID."
-                )
+                    if not playbook_id:
+                        logger.debug(f"No matching ID found for playbook '{playbook}'.")
+                        raise
 
-                endpoint = f"/playbook/{playbook_id}/yaml"
-                api_response = demisto_client.generic_request_func(
-                    self.client,
-                    endpoint,
-                    "GET",
-                    response_type="object",
-                )[0]
+                    logger.debug(
+                        f"Found matching ID for '{playbook}' - {playbook_id}.\n"
+                        f"Attempting to fetch playbook's YAML file using the ID."
+                    )
 
-            if not isinstance(api_response, dict):
-                # If there are API issues, it might return HTML, which is returned as a string.
-                raise ApiException(
-                    f"Unexpected server response:\n" f"'{api_response}'."
-                )
+                    endpoint = f"/playbook/{playbook_id}/yaml"
+                    api_response = demisto_client.generic_request_func(
+                        self.client,
+                        endpoint,
+                        "GET",
+                        _preload_content=False,
+                    )[0]
 
-            downloaded_playbooks.append(api_response)
+                downloaded_playbooks.append(api_response.data)
 
-        logger.info(
-            f"Successfully downloaded {len(downloaded_playbooks)} system playbooks."
-        )
-        return downloaded_playbooks
+            except Exception as e:
+                logger.error(f"Failed to fetch system playbook '{playbook}': {e}")
 
-    def generate_content_file_name(
+        if len(downloaded_playbooks):
+            logger.info(
+                f"Successfully downloaded {len(downloaded_playbooks)} system playbooks."
+            )
+
+        else:
+            logger.info("No system playbooks were downloaded.")
+
+        content_objects: dict[str, dict] = {}
+
+        for downloaded_playbook in downloaded_playbooks:
+            playbook_bytes_data = StringIO(safe_read_unicode(downloaded_playbook))
+            playbook_data = yaml.load(playbook_bytes_data)
+
+            file_name = self.generate_system_content_file_name(
+                content_item=playbook_data, content_item_type=ContentItemType.PLAYBOOK
+            )
+            content_object = self.create_content_item_object(
+                file_name=file_name,
+                file_data=playbook_bytes_data,
+                _loaded_data=playbook_data,
+            )
+            content_objects[file_name] = content_object
+
+        return content_objects
+
+    def generate_system_content_file_name(
         self, content_item: dict, content_item_type: ContentItemType
     ) -> str:
         item_name: str = content_item.get("name") or content_item["id"]
@@ -617,30 +672,35 @@ class Downloader:
         return re.sub(r"_{2,}", "_", result)
 
     def fetch_system_content(
-        self, content_item_type: ContentItemType
+        self,
+        content_item_type: ContentItemType,
+        content_item_names: list[str],
     ) -> dict[str, dict]:
         """
         Fetch system content from the server.
 
         Args:
             content_item_type (ContentItemType): The type of system content to fetch.
+            content_item_names (list[str]): A list of names of system content to fetch.
 
         Returns:
             dict[str, dict]: A dictionary mapping content item's file names, to dictionaries containing metadata
                 and content of the item.
         """
         endpoint, req_type, req_body = self.build_req_params(
-            content_item_type=content_item_type
+            content_item_type=content_item_type,
+            content_item_names=content_item_names,
         )
-        downloaded_items: list[dict]
 
         if content_item_type == ContentItemType.AUTOMATION:
-            downloaded_items = self.get_system_automation(
-                content_items=self.input_files
+            downloaded_content_objects = self.get_system_automations(
+                content_items=content_item_names
             )
 
         elif content_item_type == ContentItemType.PLAYBOOK:
-            downloaded_items = self.get_system_playbook(content_items=self.input_files)
+            downloaded_content_objects = self.get_system_playbooks(
+                content_items=content_item_names
+            )
 
         else:
             logger.info(
@@ -666,33 +726,40 @@ class Downloader:
                         "Could not find expected 'classifiers' key in API response.\n"
                         f"API response:\n{json.dumps(api_response)}"
                     )
-                    downloaded_items = []
+                    downloaded_items = {}
 
-            else:
+            else:  # content_item_type (ContentItemType) is one of FIELD, INCIDENT_TYPE, INDICATOR_TYPE, LAYOUT:
+                # These are system content items that can't be fetched individually,
+                # so we fetch & parse all of them, and then filter according to the input.
                 downloaded_items = api_response
                 logger.info(
-                    f"Successfully downloaded {len(downloaded_items)} system content items."
+                    f"Successfully downloaded {len(downloaded_items)} {content_item_type.value} content items."
                 )
 
-        content_objects: dict[str, dict] = {}
+            downloaded_content_objects = {}
 
-        for content_item in downloaded_items:
-            file_name = self.generate_content_file_name(
-                content_item=content_item, content_item_type=content_item_type
-            )
-            file_data = StringIO(json.dumps(content_item))
-            content_object = self.create_content_item_object(
-                file_name=file_name, file_data=file_data, _loaded_data=content_item
-            )
-            content_objects[file_name] = content_object
+            for content_item in downloaded_items:
+                file_data = StringIO(json.dumps(content_item))
+
+                file_name = self.generate_system_content_file_name(
+                    content_item=content_item, content_item_type=content_item_type
+                )
+                content_object = self.create_content_item_object(
+                    file_name=file_name,
+                    file_data=file_data,
+                    _loaded_data=content_item,
+                )
+
+                if content_object["name"] in content_item_names:
+                    downloaded_content_objects[file_name] = content_object
 
         downloaded_content_names = [
-            f"{item['name']}" for item in content_objects.values()
+            f"{item['name']}" for item in downloaded_content_objects.values()
         ]
         logger.debug(
             f"Downloaded system content items: {', '.join(downloaded_content_names)}"
         )
-        return content_objects
+        return downloaded_content_objects
 
     def parse_custom_content_data(
         self, custom_content_data: dict[str, StringIO]

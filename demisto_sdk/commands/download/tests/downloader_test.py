@@ -369,11 +369,11 @@ class TestFlags:
         Then: Ensure downloader returns a '1' error code and logs the error
         """
         downloader = Downloader(input=("test",))
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         assert downloader.download() == 1
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             "Error: Missing required parameter '-o' / '--output'.",
         )
 
@@ -980,10 +980,11 @@ def test_build_req_params(
     monkeypatch,
 ):
     downloader = Downloader(
-        input=input_content, system=True, item_type=item_type, insecure=insecure
+        system=True, input=input_content, item_type=item_type, insecure=insecure
     )
     res_endpoint, res_req_type, res_req_body = downloader.build_req_params(
-        content_item_type=ContentItemType(item_type)
+        content_item_type=ContentItemType(item_type),
+        content_item_names=list(input_content),
     )
     assert res_endpoint == endpoint
     assert res_req_type == req_type
@@ -1003,13 +1004,13 @@ def test_build_req_params(
         ({"id": "id 1"}, ContentItemType.FIELD, "id_1.json"),
     ],
 )
-def test_build_file_name(
+def test_generate_system_content_file_name(
     content_item: dict, content_type: ContentItemType, expected_result: str
 ):
     downloader = Downloader()
 
     downloader.system_item_type = content_type
-    file_name = downloader.generate_content_file_name(
+    file_name = downloader.generate_system_content_file_name(
         content_item=content_item, content_item_type=content_type
     )
 
@@ -1142,7 +1143,7 @@ def test_uuids_replacement_in_content_items(mocker):
     assert changed_uuids_count == 7
 
 
-def test_get_system_playbook(mocker):
+def test_get_system_playbooks(mocker):
     """
     Given:
         A name of a playbook to download.
@@ -1152,19 +1153,29 @@ def test_get_system_playbook(mocker):
         Ensure the function works as expected and returns the playbook.
     """
     playbook_path = TESTS_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
-    playbook_data = get_yaml(playbook_path)
     mocker.patch.object(
-        demisto_client, "generic_request_func", return_value=[playbook_data]
+        demisto_client,
+        "generic_request_func",
+        return_value=(
+            HTTPResponse(body=playbook_path.read_bytes(), status=200),
+            200,
+            None,
+        ),
     )
 
-    downloader = Downloader(input=("test",), output="test")
-    playbooks = downloader.get_system_playbook(content_items=["DummyPlaybook"])
-    assert isinstance(playbooks, list)
-    assert playbooks[0] == playbook_data
-    assert len(playbooks) == 1
+    downloader = Downloader(
+        system=True, input=("DummyPlaybook",), item_type="Playbook", output="test"
+    )
+
+    downloaded_playbooks = downloader.fetch_system_content(
+        content_item_type=ContentItemType.PLAYBOOK, content_item_names=["DummyPlaybook"]
+    )
+    assert isinstance(downloaded_playbooks, dict)
+    assert len(downloaded_playbooks) == 1
+    assert downloaded_playbooks["DummyPlaybook.yml"]["data"] == get_yaml(playbook_path)
 
 
-def test_get_system_playbook_item_does_not_exist_by_name(mocker):
+def test_get_system_playbooks_item_does_not_exist_by_name(mocker):
     """
     Given:
         A name of a playbook to download using the API.
@@ -1175,44 +1186,95 @@ def test_get_system_playbook_item_does_not_exist_by_name(mocker):
     """
     playbook_path = TESTS_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
 
-    playbook = get_yaml(playbook_path)
-    playbook["id"] = "dummy_-_playbook"
+    generic_request_func_mock = mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        side_effect=(
+            ApiException(),
+            (HTTPResponse(body=playbook_path.read_bytes(), status=200), 200, None),
+        ),
+    )
+
+    downloader = Downloader(
+        input=("DummyPlaybook-DifferentNameThanID",), output="DummyPlaybook"
+    )
+
+    get_playbook_id_by_playbook_name_mock = mocker.patch.object(
+        downloader, "get_playbook_id_by_playbook_name", return_value="DummyPlaybook"
+    )
+    downloaded_playbooks = downloader.fetch_system_content(
+        content_item_type=ContentItemType.PLAYBOOK,
+        content_item_names=["DummyPlaybook-DifferentNameThanID"],
+    )
+
+    assert get_playbook_id_by_playbook_name_mock.call_count == 1
+    assert generic_request_func_mock.call_count == 2
+    assert (
+        generic_request_func_mock.call_args_list[0][0][1]
+        == "/playbook/DummyPlaybook-DifferentNameThanID/yaml"
+    )
+    assert (
+        generic_request_func_mock.call_args_list[1][0][1]
+        == "/playbook/DummyPlaybook/yaml"
+    )
+
+    assert isinstance(downloaded_playbooks, dict)
+    assert len(downloaded_playbooks) == 1
+    assert downloaded_playbooks["DummyPlaybook.yml"]["data"] == get_yaml(playbook_path)
+
+
+def test_get_system_playbooks_non_api_failure(mocker):
+    """
+    Given: a mock exception
+    When: calling get_system_playbooks function.
+    Then: Ensure that when the API call throws a non-ApiException error,
+          a second attempt is not made to retrieve the playbook by the ID.
+    """
+    mocker.patch.object(demisto_client, "generic_request_func", side_effect=Exception())
+    downloader = Downloader(input=("Test",))
+
+    get_playbook_id_by_playbook_name_spy = mocker.spy(
+        downloader, "get_playbook_id_by_playbook_name"
+    )
+    results = downloader.get_system_playbooks(content_items=["Test"])
+
+    assert get_playbook_id_by_playbook_name_spy.call_count == 0
+    assert results == {}
+
+
+def test_get_system_playbooks_api_failure(mocker):
+    """
+    Given: a mock exception
+    When: calling get_system_playbooks function.
+    Then: Ensure that when the API call throws an ApiException error and the id extraction fails,
+          the function raises the same error.
+    """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     mocker.patch.object(
         demisto_client,
         "generic_request_func",
-        side_effect=(ApiException("Item not found"), [playbook]),
+        side_effect=ApiException(status="403", reason="Test Error Message"),
     )
-    mocker.patch.object(
-        Downloader, "get_playbook_id_by_playbook_name", return_value="test"
-    )
-    downloader = Downloader(input=("DummyPlaybook",), output="test")
-    playbooks = downloader.get_system_playbook(content_items=["DummyPlaybook"])
-    assert isinstance(playbooks, list)
-    assert len(playbooks) == 1
+    downloader = Downloader(input=("Test",))
 
-
-@pytest.mark.parametrize(
-    "exception, mock_value, expected_call",
-    [(Exception, "test", 0), (ApiException, None, 1)],
-)
-def test_get_system_playbook_failure(mocker, exception, mock_value, expected_call):
-    """
-    Given: a mock exception
-    When: calling get_system_playbook function.
-    Then:
-        - Ensure that when the API call throws a non-ApiException error,
-          a second attempt is not made to retrieve the playbook by the ID.
-        - Ensure that when the API call throws an ApiException error and the id extraction fails,
-          the function raises the same error.
-    """
-    mocker.patch.object(demisto_client, "generic_request_func", side_effect=exception())
-    get_id_by_name_mock = mocker.patch.object(
-        Downloader, "get_playbook_id_by_playbook_name", return_value=mock_value
+    get_playbook_id_by_playbook_name_spy = mocker.patch.object(
+        downloader, "get_playbook_id_by_playbook_name", return_value=None
     )
-    downloader = Downloader(input=("DummyPlaybook",), output="test")
-    with pytest.raises(exception):
-        downloader.get_system_playbook(content_items=["DummyPlaybook"])
-    assert get_id_by_name_mock.call_count == expected_call
+
+    results = downloader.get_system_playbooks(content_items=["Test"])
+
+    assert get_playbook_id_by_playbook_name_spy.call_count == 1
+    assert str_in_call_args_list(
+        call_args_list=logger_error.call_args_list,
+        required_str="Failed to fetch system playbook 'Test': (403)\nReason: Test Error Message\n",
+    )
+    assert str_in_call_args_list(
+        call_args_list=logger_info.call_args_list,
+        required_str="No system playbooks were downloaded.",
+    )
+    assert results == {}
 
 
 def test_list_files_flag(mocker):

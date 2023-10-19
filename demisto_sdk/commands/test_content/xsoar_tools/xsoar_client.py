@@ -175,7 +175,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/indicators/create",
+            path="/xsoar/indicator/create",
             body={
                 "indicator": {
                     "value": value,
@@ -199,7 +199,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/indicator/batchDelete",
+            path="/xsoar/indicators/batchDelete",
             body=body,
         )
         return ast.literal_eval(raw_response)

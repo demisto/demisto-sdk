@@ -2845,7 +2845,7 @@ def openapi_codegen(ctx, **kwargs):
 @click.help_option("-h", "--help")
 @click.option(
     "-a",
-    "--artifacts_path",
+    "--artifacts-path",
     help="Destination directory to create the artifacts.",
     type=click.Path(file_okay=False, resolve_path=True),
     default=Path("./Tests"),

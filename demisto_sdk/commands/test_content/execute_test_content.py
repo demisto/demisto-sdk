@@ -108,7 +108,7 @@ def execute_test_content(**kwargs):
         or not build_context.mockable_tests_to_run.empty()
     ):
         logging_manager.critical(
-            "Not all tests have been executed. Not destroying instances.",
+            "Not all tests have been executed. Not destroying instances. Exiting",
             real_time=True,
         )
         sys.exit(1)

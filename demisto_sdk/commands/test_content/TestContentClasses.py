@@ -403,7 +403,7 @@ class TestPlaybook:
             ):
                 # The playbook should be run but has a skipped integration.
                 self.log_debug(
-                    f"Skipping {self} because it has a skipped integrations:{','.join(skipped_integrations)}"
+                    f"Skipping {self} because it has skipped integrations:{','.join(skipped_integrations)}"
                 )
                 results: List[Result] = []
                 for integration in skipped_integrations:
@@ -564,9 +564,9 @@ class TestPlaybook:
         """
         Creates an incident with the current playbook ID
         Args:
-            sleep_interval: The interval to sleep between each poll.
-            timeout: The timeout to wait for the incident to be created.
             client: The demisto_client to use.
+            timeout: The timeout to wait for the incident to be created, in seconds.
+            sleep_interval: The interval to sleep between each poll, in seconds.
 
         Returns:
             - The created incident or None
@@ -597,7 +597,7 @@ class TestPlaybook:
             self.log_error(
                 f"Failed to create incident for playbookID: {self}."
                 "Possible reasons are:\nMismatch between playbookID in conf.json and "
-                "the id of the real playbook you were trying to use,"
+                "the id of the real playbook you were trying to use, "
                 "or schema problems in the TestPlaybook."
             )
             return None
@@ -782,7 +782,7 @@ class BuildContext:
     def _get_all_integration_config(self, instances_ips: list) -> Optional[list]:
         """
         Gets all integration configuration as it exists on the demisto server
-        Since in all packs are installed the data returned from this request is very heavy, and we want to avoid
+        because if all packs are installed the data returned from this request is very heavy, and we want to avoid
         running it in multiple threads.
         Args:
             instances_ips: the instances urls
@@ -801,9 +801,9 @@ class BuildContext:
         """
         Gets all integration configuration as it exists on the demisto server
         Args:
-            sleep_interval: The interval to sleep between each poll.
-            timeout: The timeout to wait for the incident to be created.
             server_url: The url of the server to create integration in.
+            timeout: The timeout to wait for the incident to be created.
+            sleep_interval: The interval to sleep between each poll.
 
         Returns:
             A dict containing the configuration for the integration if found else empty list
@@ -835,7 +835,7 @@ class BuildContext:
                 self.logging_module.exception(
                     "failed to get all integrations configuration"
                 )
-            if time.time() > end_time:
+            if time.time() > end_time:  # FIXME! log response
                 self.logging_module.error(
                     "Timeout - failed to get all integration configuration."
                 )
@@ -1122,7 +1122,7 @@ class TestResults:
             self.empty_files.append(playbook_id)
 
     def create_result_files(self):
-        with open(
+        with open(  # FIXME! extract method: write_artifact_file
             self.artifacts_path / "succeeded_tests.txt", "w"
         ) as succeeded_tests_file:
             succeeded_tests_file.write("\n".join(self.succeeded_playbooks))
@@ -1271,7 +1271,7 @@ class Integration:
             build_context: The context of the build
             integration_name: The name of the integration
             potential_integration_instance_names: A list of instance names, one of those names should be the actual reason,
-            but we won't know for sure until we will try to filter it with conf.json from content-test-conf repo.
+            but we won't know for sure until we will try to filter it with conf.json.
             playbook: The playbook that triggered the integration configuration.
         """
         self.playbook = playbook
@@ -1377,7 +1377,7 @@ class Integration:
                 self.configuration = integration_params[0]
 
         if is_mockable:
-            self.playbook.log_debug(f"configuring {self} with proxy params")
+            self.playbook.log_debug(f"Configuring {self} with proxy params")
             for param in ("proxy", "useProxy", "useproxy", "insecure", "unsecure"):
                 self.configuration.params[param] = True  # type: ignore
         return True
@@ -1408,7 +1408,7 @@ class Integration:
             ]
 
         if not match_configurations:
-            self.playbook.log_error("integration was not found")
+            self.playbook.log_error("Integration was not found")
             return None
 
         return deepcopy(match_configurations[0])
@@ -1462,7 +1462,7 @@ class Integration:
                 self.delete_integration_instance(client, instance.get("id"))
 
     def _set_server_keys(self, client: DefaultApi, server_context: "ServerContext"):
-        """In case the params of the test in the content-test-conf repo has 'server_keys' key:
+        """In case the params of the test has 'server_keys' key:
             Resets containers
             Adds server configuration keys using the demisto_client.
 
@@ -1635,7 +1635,7 @@ class Integration:
             )
             return False
 
-        if status_code != requests.codes.ok:
+        if status_code != requests.codes.ok:  # FIXME! check for 204
             self.playbook.log_error(
                 f"create instance failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
             )
@@ -1666,8 +1666,8 @@ class Integration:
             "id"
         )
         if not instance_id:
-            self.playbook.log_debug(
-                f"no instance ID for integration {self} was supplied"
+            self.playbook.log_info(
+                f"No instance ID for integration {self} was supplied, not deleting any instances."
             )
             return True
         try:
@@ -1678,7 +1678,7 @@ class Integration:
             )
         except ApiException:
             self.playbook.log_exception(
-                "Failed to delete integration instance, error trying to communicate with demisto."
+                "Failed to delete integration instance, error trying to communicate with the server."
             )
             return False
         if int(res[1]) != requests.codes.ok:
@@ -1791,7 +1791,7 @@ class Integration:
             self.playbook.log_exception("Failed to disable integration instance")
             return
 
-        if status_code != requests.codes.ok:
+        if status_code != requests.codes.ok:  # FIXME! check for 204
             self.playbook.log_error(
                 f"disable instance failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
             )
@@ -2011,7 +2011,7 @@ class TestContext:
 
         inputs = response.get("inputs", [])
         if not inputs:
-            raise Exception("External Playbook was not found or has no inputs.")
+            raise Exception(f"External Playbook {external_playbook_id} was not found or has no inputs.")
 
         # Save current for default Configuration.
         inputs_default = deepcopy(inputs)
@@ -2036,7 +2036,7 @@ class TestContext:
                 # If no value (simple or complex) was found, It is a typo
                 if complex_parameter is None and simple is None:
                     raise Exception(
-                        f"Could not found neither a `simple` nor `complex` value for field: {input_}. "
+                        f"Could not find neither a `simple` nor `complex` value for {external_playbook_id}, field: {input_}. "
                         "A valid configuration should be of the following format: "
                         '{<param name>: {"simple", <required value>}}'
                     )
@@ -2050,10 +2050,10 @@ class TestContext:
 
         if failed_keys:
             raise Exception(
-                f'Some input keys was not found in playbook: {",".join(failed_keys)}.'
+                f'Some input keys was not found in playbook {external_playbook_id}: {",".join(failed_keys)}.'
             )
 
-        self.playbook.log_info(f"Changing keys: {changed_keys}.")
+        self.playbook.log_info(f"Changing keys in {external_playbook_id}: {changed_keys}.")
         saving_inputs_path = f"/playbook/inputs/{external_playbook_id}"
 
         try:
@@ -2064,7 +2064,7 @@ class TestContext:
 
         except Exception as e:
             raise Exception(
-                f"Could not change inputs in playbook configuration. Error: {e}"
+                f"Could not change inputs in playbook {external_playbook_id} configuration. Error: {e}"
             ) from e
 
         self.playbook.log_info(
@@ -3005,7 +3005,7 @@ class ServerContext:
                 body=manual_integration,
                 response_type="object",
             )
-            if status_code != requests.codes.ok:
+            if status_code != requests.codes.ok:  # FIXME check 204
                 self.build_context.logging_module.error(
                     f"Failed to get integrations configuration - response:{pformat(response)}, "
                     f"status code:{status_code} headers:{headers}"

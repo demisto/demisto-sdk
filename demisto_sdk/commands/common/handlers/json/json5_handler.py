@@ -24,13 +24,13 @@ class JSON5_Handler(XSOAR_Handler):
         try:
             return self.json.loads(s)
         except ValueError as e:
-            raise JSONDecodeError(f"input: {s!r}, error: {e}") from e
+            raise JSONDecodeError(f"input: {s!r}") from e
 
     def load(self, fp: IO[str]):
         try:
             return self.json.load(fp)
         except ValueError as e:
-            raise JSONDecodeError(e)
+            raise JSONDecodeError from e
 
     def dump(
         self,
@@ -51,7 +51,7 @@ class JSON5_Handler(XSOAR_Handler):
                 ensure_ascii=kwargs.get("ensure_ascii", False),
             )
         except ValueError as e:
-            raise JSONDecodeError(e)
+            raise JSONDecodeError from e
 
     def dumps(self, obj: Any, indent=0, sort_keys=False, **kwargs):
         try:

@@ -3525,7 +3525,7 @@ def run_unit_tests(
     type=PathsParamType(
         exists=True, resolve_path=True
     ),  # PathsParamType allows passing a list of paths
-    help="The path of the content pack/file to validate specifically.",
+    help="A list of content packs/files to validate.",
 )
 @click.option(
     "--create-virtualenv",
@@ -3537,17 +3537,17 @@ def run_unit_tests(
     "--overwrite-virtualenv",
     is_flag=True,
     default=False,
-    help="Overwrite the virtualenv if it already exists. To use with `create-virtualenv` flag",
+    help="Overwrite existing virtualenvs. Use with the create-virtualenv flag",
 )
 @click.option(
     "--secret-id",
-    help="Select a secret key from Google Secret Manager. Use only if you have access to Google Secret Manager",
+    help="Secret ID, to use with PANW's Google Secret Manager instance. (internal use only)",
     required=False,
 )
 @click.option(
     "--instance-name",
     required=False,
-    help="The name of the instance to configure in XSOAR/XSIAM",
+    help="What to call the Integration instance created by the command",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(

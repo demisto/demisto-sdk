@@ -4,9 +4,9 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 import demisto_client
-from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
+from pydantic import BaseModel, Field, SecretStr, validator
+
 from demisto_sdk.utils.utils import retry_http_request
-from demisto_sdk.commands.common.logger import logger
 
 
 class XsoarApiClientConfig(BaseModel):
@@ -24,7 +24,7 @@ class XsoarApiClientConfig(BaseModel):
     def get_base_url(cls, v: str) -> str:
         xsoar_suffix = "xsoar"
         if not v.endswith(xsoar_suffix):
-            return f'{v}/{xsoar_suffix}'
+            return f"{v}/{xsoar_suffix}"
         return v
 
 
@@ -95,7 +95,6 @@ class XsoarApiInterface(ABC):
 
 
 class XsoarNGApiClient(XsoarApiInterface):
-
     @property
     def external_base_url(self):
         return self.base_url.replace("api", "ext")  # url for long-running integrations

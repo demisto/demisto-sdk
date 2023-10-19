@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 import demisto_client
 from pydantic import BaseModel, Field, HttpUrl, SecretStr
 from demisto_sdk.utils.utils import retry_http_request
+from demisto_sdk.commands.common.logger import logger
 
 
 class XsoarApiClientConfig(BaseModel):
@@ -27,7 +28,6 @@ class XsoarApiInterface(ABC):
             base_url=self.base_url,
             api_key=xsoar_client_config.api_key.get_secret_value(),
             auth_id=xsoar_client_config.auth_id,
-            verify_ssl=False,
         )
 
     @abstractmethod
@@ -215,7 +215,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         score: int = 0,
         response_type: str = "object",
     ):
-        raw_response, _, _ = demisto_client.generic_request_func(
+        raw_response, status_code, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/xsoar/indicator/create",
@@ -228,6 +228,7 @@ class XsoarNGApiClient(XsoarApiInterface):
             },
             response_type=response_type,
         )
+        logger.info(f'create_indicator, {status_code=}, {raw_response=}')
         return raw_response
 
     @retry_http_request()

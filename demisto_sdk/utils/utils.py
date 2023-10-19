@@ -81,6 +81,7 @@ def retry_http_request(times: int = 3, delay: int = 1):
                     response = func(*args, **kwargs)
                     if isinstance(response, Response):
                         response.raise_for_status()
+                    logger.info(f'{response=}')
                     return response
                 except Exception as e:
                     logger.debug(

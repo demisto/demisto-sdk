@@ -99,14 +99,6 @@ class XsoarApiInterface(ABC):
 
 class XsoarNGApiClient(XsoarApiInterface):
 
-    def __init__(self, xsoar_client_config: XsoarApiClientConfig):
-        base_url = xsoar_client_config.base_url
-        if 'xsoar' in base_url:
-            self.base_url = base_url
-        else:
-            self.base_url = f'{base_url}/xsoar'
-        super().__init__(xsoar_client_config)
-
     @property
     def external_base_url(self):
         return self.base_url.replace("api", "ext")  # url for long-running integrations

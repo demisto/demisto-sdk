@@ -28,6 +28,7 @@ class XsoarApiInterface(ABC):
             base_url=self.base_url,
             api_key=xsoar_client_config.api_key.get_secret_value(),
             auth_id=xsoar_client_config.auth_id,
+            verify_ssl=False
         )
 
     @abstractmethod

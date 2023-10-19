@@ -236,8 +236,8 @@ class XsoarNGApiClient(XsoarApiInterface):
             },
             response_type=response_type,
         )
-        if status_code != 200:
-            raise Exception(f"status code is {status_code}")
+        if not raw_response:
+            raise Exception(f"{status_code=} and {raw_response=}")
         return raw_response
 
     @retry_http_request()

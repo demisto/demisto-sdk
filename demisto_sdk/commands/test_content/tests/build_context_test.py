@@ -299,7 +299,7 @@ def test_build_creation(mocker, tmp_path):
         - All xsiam build  parameters created as expected
     """
     build_contex = create_xsiam_build(mocker, tmp_path)
-    assert build_contex.is_xsiam
+    assert build_contex.is_saas_server_type
     assert build_contex.auth_id == 1
 
 

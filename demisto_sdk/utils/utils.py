@@ -1,6 +1,10 @@
+import time
 from configparser import ConfigParser, MissingSectionHeaderError
+from functools import wraps
 from pathlib import Path
-from typing import Union
+from typing import Callable, Union
+
+from requests import Response
 
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
@@ -12,6 +16,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentUnifiedObject,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.logger import logger
 
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
 
@@ -61,3 +66,30 @@ def check_configuration_file(command, args):
 
         except MissingSectionHeaderError:
             pass
+
+
+def retry_http_request(times: int = 3, delay: int = 1):
+    def _retry_http_request(func: Callable):
+
+        func_name = func.__name__
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(1, times + 1):
+                logger.debug(f"trying to run func {func_name}, try number {i}")
+                try:
+                    response = func(*args, **kwargs)
+                    if isinstance(response, Response):
+                        response.raise_for_status()
+                    return response
+                except Exception as e:
+                    logger.debug(
+                        f"error when executing func {func_name}, error: {e}, try number {i}"
+                    )
+                    if i == times:
+                        raise
+                    time.sleep(delay)
+
+        return wrapper
+
+    return _retry_http_request

@@ -3005,7 +3005,7 @@ class ServerContext:
                 body=manual_integration,
                 response_type="object",
             )
-            if status_code != requests.codes.ok:  # FIXME check 204
+            if status_code != requests.codes.ok:  # FIXME! check 204
                 self.build_context.logging_module.error(
                     f"Failed to get integrations configuration - response:{pformat(response)}, "
                     f"status code:{status_code} headers:{headers}"

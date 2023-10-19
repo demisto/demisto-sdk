@@ -139,7 +139,7 @@ class XsoarNGApiClient(XsoarApiInterface):
     def delete_integration_instance(self, instance_id: str):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
-            method="DELETE",    
+            method="DELETE",
             path=f"/xsoar/settings/integration/{urllib.parse.quote(instance_id)}",
         )
         return ast.literal_eval(raw_response)
@@ -166,7 +166,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/incident/batchDelete",
+            path="/xsoar/incidents/batchDelete",
             body=body,
         )
         return ast.literal_eval(raw_response)
@@ -175,7 +175,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/xsoar/indicator/create",
+            path="/xsoar/indicators/create",
             body={
                 "indicator": {
                     "value": value,

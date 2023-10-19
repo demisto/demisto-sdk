@@ -112,13 +112,13 @@ class Downloader:
         regex (str): A RegEx pattern to use for filtering the custom content files to download.
         force (bool): Whether to overwrite files that already exist in the output pack.
         client (Demisto client): Demisto client objecgt to use for API calls.
-        list_files (bool): Whether to list all downloadable files or not (if True, all other flags are ignored).
+        should_list_files (bool): Whether to list all downloadable files or not (if True, all other flags are ignored).
         download_all_custom_content (bool): Whether to download all available custom content.
         run_format (bool): Whether to run 'format' on downloaded files.
         download_system_items (bool): Whether the current download is for system items.
         system_item_type (ContentItemType): The items type to download (relevant only for system items).
-        init (bool): Whether to initialize a new Pack structure in the output path and download the items to it.
-        keep_empty_folders (bool): Whether to keep empty folders when using init.
+        should_init_new_pack (bool): Whether to initialize a new Pack structure in the output path and download the items to it.
+        keep_empty_folders (bool): Whether to keep empty folders when using the 'init' flag.
         auto_replace_uuids (bool):  Whether to replace the UUIDs.
     """
 
@@ -145,15 +145,15 @@ class Downloader:
         self.force = force
         self.download_system_items = system
         self.system_item_type = ContentItemType(item_type) if item_type else None
-        self.list_files = list_files
+        self.should_list_files = list_files
         self.download_all_custom_content = all_custom_content
-        self.run_format = run_format
+        self.should_run_format = run_format
         self.client = demisto_client.configure(verify_ssl=not insecure)
-        self.init = init
+        self.should_init_new_pack = init
         self.keep_empty_folders = keep_empty_folders
         self.auto_replace_uuids = auto_replace_uuids
-        if is_sdk_defined_working_offline() and self.run_format:
-            self.run_format = False
+        if is_sdk_defined_working_offline() and self.should_run_format:
+            self.should_run_format = False
             logger.warning(
                 "Formatting is not supported when 'DEMISTO_SDK_OFFLINE_ENV' environment variable is set.\n"
                 "Downloaded files will not be formatted."
@@ -169,7 +169,7 @@ class Downloader:
         input_files_missing = False  # Used for returning an exit code of 1 if one of the inputs is missing.
 
         try:
-            if self.list_files:
+            if self.should_list_files:
                 # No flag validations are needed, since only the '-lf' flag is used.
                 self.list_all_custom_content()
                 return 0
@@ -183,7 +183,7 @@ class Downloader:
             if not self.verify_output_path(output_path=output_path):
                 return 1
 
-            if self.init:
+            if self.should_init_new_pack:
                 output_path = self.initialize_output_path(root_folder=output_path)
 
             if self.download_system_items:
@@ -226,12 +226,12 @@ class Downloader:
                 )
 
                 if self.input_files:
-                    downloaded_content_names = [
+                    downloaded_content_item_names = [
                         item["name"] for item in downloaded_content_objects.values()
                     ]
 
                     for content_item in self.input_files:
-                        if content_item not in downloaded_content_names:
+                        if content_item not in downloaded_content_item_names:
                             logger.warning(
                                 f"Custom content item '{content_item}' provided as an input "
                                 f"could not be found / parsed."
@@ -481,24 +481,34 @@ class Downloader:
             return True
         return False
 
-    def build_req_params(
+    def build_request_params(
         self,
         content_item_type: ContentItemType,
         content_item_names: list[str],
     ) -> tuple[str, str, dict]:
-        endpoint = ITEM_TYPE_TO_ENDPOINT[content_item_type]
-        req_type = ITEM_TYPE_TO_REQUEST_TYPE[content_item_type]
+        """
+        Build request parameters for fetching system content of different types from server.
 
-        req_body: dict = {}
+        Args:
+            content_item_type (ContentItemType): The type of system content to fetch.
+            content_item_names (list[str]): A list of names of system content to fetch.
+
+        Returns:
+            tuple[str, str, dict]: A tuple containing the expected_endpoint, request method, and body for the API call.
+        """
+        endpoint = ITEM_TYPE_TO_ENDPOINT[content_item_type]
+        request_type = ITEM_TYPE_TO_REQUEST_TYPE[content_item_type]
+
+        request_body: dict = {}
         if content_item_type in [
             ContentItemType.CLASSIFIER,
             ContentItemType.MAPPER,
             ContentItemType.PLAYBOOK,
         ]:
             filter_by_names = " or ".join(content_item_names)
-            req_body = {"query": f"name:{filter_by_names}"}
+            request_body = {"query": f"name:{filter_by_names}"}
 
-        return endpoint, req_type, req_body
+        return endpoint, request_type, request_body
 
     def get_system_automations(self, content_items: list[str]) -> dict[str, dict]:
         """
@@ -519,7 +529,7 @@ class Downloader:
         for automation in content_items:
             try:
                 # This is required due to a server issue where the '/' character
-                # is considered a path separator for the endpoint.
+                # is considered a path separator for the expected_endpoint.
                 if "/" in automation:
                     raise ValueError(
                         f"Automation name '{automation}' is invalid. "
@@ -543,24 +553,24 @@ class Downloader:
             f"Successfully downloaded {len(downloaded_automations)} system automations."
         )
 
-        content_objects: dict[str, dict] = {}
+        content_items_objects: dict[str, dict] = {}
 
         for downloaded_automation in downloaded_automations:
             automation_bytes_data = StringIO(safe_read_unicode(downloaded_automation))
             automation_data = json.load(automation_bytes_data)
 
             file_name = self.generate_system_content_file_name(
-                content_item=automation_data,
                 content_item_type=ContentItemType.AUTOMATION,
+                content_item=automation_data,
             )
             content_object = self.create_content_item_object(
                 file_name=file_name,
                 file_data=automation_bytes_data,
                 _loaded_data=automation_data,
             )
-            content_objects[file_name] = content_object
+            content_items_objects[file_name] = content_object
 
-        return content_objects
+        return content_items_objects
 
     def get_system_playbooks(self, content_items: list[str]) -> dict[str, dict]:
         """
@@ -581,7 +591,7 @@ class Downloader:
         for playbook in content_items:
             try:
                 # This is required due to a server issue where the '/' character
-                # is considered a path separator for the endpoint.
+                # is considered a path separator for the expected_endpoint.
                 if "/" in playbook:
                     raise ValueError(
                         f"Playbook name '{playbook}' is invalid. "
@@ -644,7 +654,8 @@ class Downloader:
             playbook_data = yaml.load(playbook_bytes_data)
 
             file_name = self.generate_system_content_file_name(
-                content_item=playbook_data, content_item_type=ContentItemType.PLAYBOOK
+                content_item_type=ContentItemType.PLAYBOOK,
+                content_item=playbook_data,
             )
             content_object = self.create_content_item_object(
                 file_name=file_name,
@@ -656,8 +667,18 @@ class Downloader:
         return content_objects
 
     def generate_system_content_file_name(
-        self, content_item: dict, content_item_type: ContentItemType
+        self, content_item_type: ContentItemType, content_item: dict
     ) -> str:
+        """
+        Generate a file name for a download system content item.
+
+        Args:
+            content_item_type (ContentItemType): The type of system content item to generate a file name for.
+            content_item (dict): The system content item to generate a file name for.
+
+        Returns:
+            str: The generated file name.
+        """
         item_name: str = content_item.get("name") or content_item["id"]
         suffix = (
             ".yml"
@@ -687,7 +708,7 @@ class Downloader:
             dict[str, dict]: A dictionary mapping content item's file names, to dictionaries containing metadata
                 and content of the item.
         """
-        endpoint, req_type, req_body = self.build_req_params(
+        endpoint, request_method, request_body = self.build_request_params(
             content_item_type=content_item_type,
             content_item_names=content_item_names,
         )
@@ -709,8 +730,8 @@ class Downloader:
             api_response = demisto_client.generic_request_func(
                 self.client,
                 endpoint,
-                req_type,
-                body=req_body,
+                request_method,
+                body=request_body,
                 response_type="object",
             )[0]
 
@@ -742,7 +763,8 @@ class Downloader:
                 file_data = StringIO(json.dumps(content_item))
 
                 file_name = self.generate_system_content_file_name(
-                    content_item=content_item, content_item_type=content_item_type
+                    content_item_type=content_item_type,
+                    content_item=content_item,
                 )
                 content_object = self.create_content_item_object(
                     file_name=file_name,
@@ -828,13 +850,14 @@ class Downloader:
         self, custom_content_objects: dict[str, dict]
     ) -> str:
         """
-        Return a printable list of all custom content that's available to download from the configured XSOAR instance.
+        Create a printable list of all custom content that's available to download
+        from the configured XSOAR / XSIAM instance.
 
         Args:
             custom_content_objects (dict[str, dict]): A dictionary mapping custom content's file names to objects.
 
         Returns:
-            str: A printable list of all custom content that's available to download from the configured XSOAR instance.
+            str: A printable list of all custom content that's available to download from the configured instance.
         """
         tabulate_data: list[list[str]] = []
 
@@ -955,15 +978,15 @@ class Downloader:
 
                 if directory_name in (INTEGRATIONS_DIR, SCRIPTS_DIR):
                     # If entity is of type integration/script it will have dirs, otherwise files
-                    entity_instances_paths = [
+                    directory_items = [
                         p for p in content_entity_path.iterdir() if p.is_dir()
                     ]
                 else:
-                    entity_instances_paths = [
+                    directory_items = [
                         p for p in content_entity_path.iterdir() if p.is_file()
                     ]
 
-                for entity_instance_path in entity_instances_paths:
+                for entity_instance_path in directory_items:
                     content_data = self.build_pack_content_object(
                         content_entity=directory_name,
                         entity_instance_path=entity_instance_path,
@@ -996,7 +1019,9 @@ class Downloader:
             str(entity_instance_path), CONTENT_FILE_ENDINGS, recursive=False
         )
 
-        metadata = self.get_metadata_file(content_type=content_entity, content_item_path=entity_instance_path)
+        metadata = self.get_metadata_file(
+            content_type=content_entity, content_item_path=entity_instance_path
+        )
 
         if not metadata:
             logger.warning(
@@ -1239,7 +1264,7 @@ class Downloader:
                         content_object=content_object,
                         existing_pack_structure=existing_pack_structure,
                         output_path=output_path,
-                        overwrite_existing=self.force,
+                        should_overwrite_existing=self.force,
                     )
 
                 else:
@@ -1247,7 +1272,7 @@ class Downloader:
                         content_object=content_object,
                         existing_pack_structure=existing_pack_structure,
                         output_path=output_path,
-                        overwrite_existing=self.force,
+                        should_overwrite_existing=self.force,
                     )
 
                 # If even one file was skipped, we mark the file as skipped for the logs
@@ -1296,11 +1321,11 @@ class Downloader:
         content_object: dict,
         existing_pack_structure: dict[str, dict[str, list[dict]]],
         output_path: Path,
-        overwrite_existing: bool = False,
+        should_overwrite_existing: bool = False,
     ) -> bool:
         """
         Download unified content items.
-        Existing content items will be skipped if 'overwrite_existing' is False.
+        Existing content items will be skipped if 'should_overwrite_existing' is False.
         A "smart" merge will be done for pre-existing YAML files, adding fields that exist in existing file,
         but were omitted by the server.
 
@@ -1308,7 +1333,7 @@ class Downloader:
             content_object (dict): The content object to download
             existing_pack_structure (list[dict]): A list of existing content item files in the output pack.
             output_path (Path): The output path to write the files to.
-            overwrite_existing (bool): Whether to overwrite existing files or not.
+            should_overwrite_existing (bool): Whether to overwrite existing files or not.
 
         Returns:
             bool: True if the content item was downloaded successfully, False otherwise.
@@ -1325,7 +1350,7 @@ class Downloader:
 
         if content_item_exists:
             if (
-                not overwrite_existing
+                not should_overwrite_existing
             ):  # If file exists, and we don't want to overwrite it, skip it.
                 logger.debug(
                     f"Content item '{content_item_name}' will be skipped as it already exists in output pack."
@@ -1413,7 +1438,11 @@ class Downloader:
             else:
                 final_path = extracted_file_path
 
-            if self.run_format and final_path.suffix in (".yml", ".yaml", ".json"):
+            if self.should_run_format and final_path.suffix in (
+                ".yml",
+                ".yaml",
+                ".json",
+            ):
                 format_manager(
                     input=str(final_path),
                     no_validate=False,
@@ -1436,11 +1465,11 @@ class Downloader:
         content_object: dict,
         existing_pack_structure: dict[str, dict[str, list[dict]]],
         output_path: Path,
-        overwrite_existing: bool = False,
+        should_overwrite_existing: bool = False,
     ) -> bool:
         """
         Download non-unified content items.
-        Existing content items will be skipped if 'overwrite_existing' is False.
+        Existing content items will be skipped if 'should_overwrite_existing' is False.
         A "smart" merge will be done for pre-existing YAML files, adding fields that exist in existing file,
         but were omitted by the server.
 
@@ -1448,7 +1477,7 @@ class Downloader:
             content_object (dict): The content object to download
             existing_pack_structure (list[dict]): A list of existing content item files in the output pack.
             output_path (Path): The output path to write the files to.
-            overwrite_existing (bool): Whether to overwrite existing files or not.
+            should_overwrite_existing (bool): Whether to overwrite existing files or not.
 
         Returns:
             bool: True if the content item was downloaded successfully, False otherwise.
@@ -1462,7 +1491,7 @@ class Downloader:
         )
 
         # If file exists, and we don't want to overwrite it, skip it.
-        if content_item_exists and not overwrite_existing:
+        if content_item_exists and not should_overwrite_existing:
             logger.debug(
                 f"File '{content_item_name}' will be skipped as it already exists in output pack."
             )
@@ -1508,7 +1537,7 @@ class Downloader:
             logger.warning(f"Failed to remove temp dir '{temp_dir}': {e}")
             logger.debug(traceback.format_exc())
 
-        if self.run_format:
+        if self.should_run_format:
             format_manager(
                 input=str(content_item_output_path),
                 no_validate=False,

@@ -575,7 +575,9 @@ class TestBuildPackContent:
         ]
         downloader = Downloader()
         for param in parameters:
-            data = downloader.get_metadata_file(content_type=param["entity"], content_item_path=param["path"])
+            data = downloader.get_metadata_file(
+                content_type=param["entity"], content_item_path=param["path"]
+            )
             assert param["main_id"] == get_id(file_content=data)
             assert param["main_name"] == get_display_name(
                 file_path=param["path"], file_data=data
@@ -637,7 +639,7 @@ class TestDownloadExistingFile:
             content_object=env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
-            overwrite_existing=True,
+            should_overwrite_existing=True,
         )
 
         expected_paths = [
@@ -683,7 +685,7 @@ class TestDownloadExistingFile:
             content_object=env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
-            overwrite_existing=False,
+            should_overwrite_existing=False,
         )
 
     def test_download_existing_file_playbook(self, tmp_path):
@@ -711,7 +713,7 @@ class TestDownloadExistingFile:
             content_object=env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
-            overwrite_existing=True,
+            should_overwrite_existing=True,
         )
         assert file_path.is_file()
         data = get_yaml(file_path)
@@ -743,7 +745,7 @@ class TestDownloadExistingFile:
             content_object=env.LAYOUT_CUSTOM_CONTENT_OBJECT,
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
-            overwrite_existing=True,
+            should_overwrite_existing=True,
         )
         assert file_path.is_file()
         data = get_yaml(file_path)
@@ -889,7 +891,7 @@ class TestDownloadNewFile:
             content_object=env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
             existing_pack_structure={},
             output_path=output_path,
-            overwrite_existing=False,
+            should_overwrite_existing=False,
         )
         expected_file_path = (
             output_path
@@ -910,7 +912,7 @@ class TestDownloadNewFile:
             content_object=env.LAYOUT_CUSTOM_CONTENT_OBJECT,
             existing_pack_structure={},
             output_path=output_path,
-            overwrite_existing=False,
+            should_overwrite_existing=False,
         )
         expected_file_path = (
             output_path
@@ -941,7 +943,7 @@ class TestVerifyPackPath:
 
 
 @pytest.mark.parametrize(
-    "input_content, item_type, insecure, endpoint, req_type, req_body",
+    "input_content, item_type, insecure, expected_endpoint, expected_request_method, expected_request_body",
     [
         (
             ("PB1", "PB2"),
@@ -972,23 +974,23 @@ class TestVerifyPackPath:
 )
 def test_build_req_params(
     input_content: tuple[str],
-    item_type,
-    insecure,
-    endpoint,
-    req_type,
-    req_body,
+    item_type: str,
+    insecure: bool,
+    expected_endpoint: str,
+    expected_request_method: str,
+    expected_request_body: dict,
     monkeypatch,
 ):
     downloader = Downloader(
         system=True, input=input_content, item_type=item_type, insecure=insecure
     )
-    res_endpoint, res_req_type, res_req_body = downloader.build_req_params(
+    endpoint, request_type, request_body = downloader.build_request_params(
         content_item_type=ContentItemType(item_type),
         content_item_names=list(input_content),
     )
-    assert res_endpoint == endpoint
-    assert res_req_type == req_type
-    assert res_req_body == req_body
+    assert endpoint == expected_endpoint
+    assert request_type == expected_request_method
+    assert request_body == expected_request_body
 
 
 @pytest.mark.parametrize(
@@ -1011,7 +1013,8 @@ def test_generate_system_content_file_name(
 
     downloader.system_item_type = content_type
     file_name = downloader.generate_system_content_file_name(
-        content_item=content_item, content_item_type=content_type
+        content_item_type=content_type,
+        content_item=content_item,
     )
 
     assert file_name == expected_result

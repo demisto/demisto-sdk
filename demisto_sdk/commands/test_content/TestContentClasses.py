@@ -12,7 +12,7 @@ from math import ceil
 from pathlib import Path
 from pprint import pformat
 from queue import Empty, Queue
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import demisto_client
 import prettytable
@@ -835,7 +835,7 @@ class BuildContext:
                 self.logging_module.exception(
                     "failed to get all integrations configuration"
                 )
-            if time.time() > end_time:  # FIXME! log response
+            if time.time() > end_time:
                 self.logging_module.error(
                     "Timeout - failed to get all integration configuration."
                 )
@@ -1121,19 +1121,15 @@ class TestResults:
         for playbook_id in proxy.empty_files:
             self.empty_files.append(playbook_id)
 
+    def write_artifacts_file(self, file_name: str, content: Iterable[str]):
+        with open(self.artifacts_path / file_name, "w") as file:
+            file.write("\n".join(content))
+
     def create_result_files(self):
-        with open(  # FIXME! extract method: write_artifact_file
-            self.artifacts_path / "succeeded_tests.txt", "w"
-        ) as succeeded_tests_file:
-            succeeded_tests_file.write("\n".join(self.succeeded_playbooks))
-        with open(self.artifacts_path / "failed_tests.txt", "w") as failed_tests_file:
-            failed_tests_file.write("\n".join(self.failed_playbooks))
-        with open(self.artifacts_path / "skipped_tests.txt", "w") as skipped_tests_file:
-            skipped_tests_file.write("\n".join(self.skipped_tests))
-        with open(
-            self.artifacts_path / "skipped_integrations.txt", "w"
-        ) as skipped_integrations_file:
-            skipped_integrations_file.write("\n".join(self.skipped_integrations))
+        self.write_artifacts_file("succeeded_tests.txt", self.succeeded_playbooks)
+        self.write_artifacts_file("failed_tests.txt", self.failed_playbooks)
+        self.write_artifacts_file("skipped_tests.txt", self.skipped_tests)
+        self.write_artifacts_file("skipped_integrations.txt", self.skipped_integrations)
         with open(
             self.artifacts_path / "test_playbooks_report.json", "w"
         ) as test_playbooks_report_file:
@@ -1635,7 +1631,7 @@ class Integration:
             )
             return False
 
-        if status_code != requests.codes.ok:  # FIXME! check for 204
+        if status_code not in {requests.codes.ok, requests.codes.no_content}:
             self.playbook.log_error(
                 f"create instance failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
             )
@@ -1791,7 +1787,7 @@ class Integration:
             self.playbook.log_exception("Failed to disable integration instance")
             return
 
-        if status_code != requests.codes.ok:  # FIXME! check for 204
+        if status_code not in {requests.codes.ok, requests.codes.no_content}:
             self.playbook.log_error(
                 f"disable instance failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
             )
@@ -2011,7 +2007,9 @@ class TestContext:
 
         inputs = response.get("inputs", [])
         if not inputs:
-            raise Exception(f"External Playbook {external_playbook_id} was not found or has no inputs.")
+            raise Exception(
+                f"External Playbook {external_playbook_id} was not found or has no inputs."
+            )
 
         # Save current for default Configuration.
         inputs_default = deepcopy(inputs)
@@ -2053,7 +2051,9 @@ class TestContext:
                 f'Some input keys was not found in playbook {external_playbook_id}: {",".join(failed_keys)}.'
             )
 
-        self.playbook.log_info(f"Changing keys in {external_playbook_id}: {changed_keys}.")
+        self.playbook.log_info(
+            f"Changing keys in {external_playbook_id}: {changed_keys}."
+        )
         saving_inputs_path = f"/playbook/inputs/{external_playbook_id}"
 
         try:
@@ -3005,7 +3005,7 @@ class ServerContext:
                 body=manual_integration,
                 response_type="object",
             )
-            if status_code != requests.codes.ok:  # FIXME! check 204
+            if status_code not in {requests.codes.ok, requests.codes.no_content}:
                 self.build_context.logging_module.error(
                     f"Failed to get integrations configuration - response:{pformat(response)}, "
                     f"status code:{status_code} headers:{headers}"

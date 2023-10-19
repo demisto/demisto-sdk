@@ -1006,7 +1006,7 @@ BAD_CASES_BUILD_FAIL = [
             },
         },
         "6.2.0",
-        "External Playbook was not found or has no inputs.",
+        "External Playbook pb_test was not found or has no inputs.",
     ),
     (  # case configuration was found but wrong input key given.
         {
@@ -1049,7 +1049,7 @@ BAD_CASES_BUILD_FAIL = [
             },
         },
         "6.2.0",
-        "Some input keys was not found in playbook: Endpoint_hostnames.",
+        "Some input keys was not found in playbook pb_test: Endpoint_hostnames.",
     ),
 ]
 

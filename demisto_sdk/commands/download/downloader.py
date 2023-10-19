@@ -996,7 +996,7 @@ class Downloader:
             str(entity_instance_path), CONTENT_FILE_ENDINGS, recursive=False
         )
 
-        metadata = self.get_metadata_file(content_entity, entity_instance_path)
+        metadata = self.get_metadata_file(content_type=content_entity, content_item_path=entity_instance_path)
 
         if not metadata:
             logger.warning(
@@ -1058,14 +1058,14 @@ class Downloader:
         return playbook_id
 
     @staticmethod
-    def get_metadata_file(content_type: str, content_path: Path) -> dict | None:
+    def get_metadata_file(content_type: str, content_item_path: Path) -> dict | None:
         """
         Returns the data of the "main" file containing metadata for a content item's path.
         For example, YAML file for integrations / scripts, playbook file for playbooks, etc.
 
         Args:
             content_type (str): The type of the content item.
-            content_path (Path): The path to the content item.
+            content_item_path (Path): The path to the content item.
 
         Returns:
             dict | None: The data of the "main" file. None if the file could not be found / parsed.
@@ -1076,20 +1076,20 @@ class Downloader:
             PLAYBOOKS_DIR,
             TEST_PLAYBOOKS_DIR,
         ):
-            if content_path.is_dir():
-                main_file_path = get_yml_paths_in_dir(content_path)[1]
+            if content_item_path.is_dir():
+                main_file_path = get_yml_paths_in_dir(content_item_path)[1]
 
                 if not main_file_path:
                     return None
 
                 return get_yaml(main_file_path)
 
-            elif content_path.is_file():
-                return get_yaml(content_path)
+            elif content_item_path.is_file():
+                return get_yaml(content_item_path)
 
         else:
-            if content_path.is_file() and content_path.suffix == ".json":
-                return get_json(content_path)
+            if content_item_path.is_file() and content_item_path.suffix == ".json":
+                return get_json(content_item_path)
 
         return None
 

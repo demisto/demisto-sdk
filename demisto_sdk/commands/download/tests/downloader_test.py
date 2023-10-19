@@ -575,7 +575,7 @@ class TestBuildPackContent:
         ]
         downloader = Downloader()
         for param in parameters:
-            data = downloader.get_metadata_file(param["entity"], Path(param["path"]))
+            data = downloader.get_metadata_file(content_type=param["entity"], content_item_path=param["path"])
             assert param["main_id"] == get_id(file_content=data)
             assert param["main_name"] == get_display_name(
                 file_path=param["path"], file_data=data

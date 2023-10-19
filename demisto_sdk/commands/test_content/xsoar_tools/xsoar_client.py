@@ -283,5 +283,5 @@ class XsoarNGApiClient(XsoarApiInterface):
                 return config
 
         raise ValueError(
-            f"Could not find module configuration for integration ID {_id}"
+            f"Could not find module configuration for integration ID '{_id}'"
         )

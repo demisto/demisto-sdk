@@ -29,12 +29,13 @@ class XsoarApiClientConfig(BaseModel):
 
 
 class XsoarApiInterface(ABC):
-    def __init__(self, xsoar_client_config: XsoarApiClientConfig):
+    def __init__(self, xsoar_client_config: XsoarApiClientConfig, verify_ssl: bool = False):
         self.base_url = xsoar_client_config.base_url
         self.client = demisto_client.configure(
             base_url=self.base_url,
             api_key=xsoar_client_config.api_key.get_secret_value(),
             auth_id=xsoar_client_config.auth_id,
+            verify_ssl=verify_sslg
         )
 
     @abstractmethod

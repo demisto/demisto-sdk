@@ -2889,12 +2889,12 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.option(
     "--server-type",
-    help="Which server runs the tests? XSIAM or XSOAR or XSOAR SAAS",
+    help="On which server type runs the tests:XSIAM, XSOAR, XSOAR SAAS",
     default="XSOAR",
 )
 @click.option(
     "--product-type",
-    help="Which server runs the tests? XSIAM or XSOAR",
+    help="On which product type runs the tests:XSIAM, XSOAR",
     default="XSOAR",
 )
 @click.option(

@@ -256,7 +256,9 @@ class TestPlaybook:
         self.test_suite.add_property("build_number", self.build_context.build_number)
         self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
-        self.test_suite.add_property("is_xsiam", self.build_context.is_xsiam)
+        self.test_suite.add_property(
+            "is_saas_server_type", self.build_context.is_saas_server_type
+        )
         self.test_suite.add_property("server_type", self.build_context.server_type)
         self.test_suite.add_property("product_type", self.build_context.product_type)
         self.test_suite.add_property("memCheck", self.build_context.memCheck)
@@ -509,7 +511,7 @@ class TestPlaybook:
         for integration in self.integrations:
             integration.disable_integration_instance(client)
         updated_keys = False
-        if not self.build_context.is_xsiam:
+        if not self.build_context.is_saas_server_type:
             updated_keys = self._set_prev_server_keys(client, server_context)
         if updated_keys:
             server_context.reset_containers()
@@ -607,8 +609,8 @@ class TestPlaybook:
         inc_filter = demisto_client.demisto_api.IncidentFilter()
         if inc_id:
             inc_filter.query = f"id: {inc_id}"
-        if self.build_context.is_xsiam:
-            # in xsiam `create_incident` response don`t return created incident id.
+        if self.build_context.is_saas_server_type:
+            # In XSIAM or XSOAR SAAS - `create_incident` response don`t return created incident id.
             inc_filter.name = [incident_name]
         # inc_filter.query
         search_filter.filter = inc_filter
@@ -621,14 +623,14 @@ class TestPlaybook:
                 if len(incidents.data):
                     return incidents.data[0]
             except ApiException:
-                if self.build_context.is_xsiam:
+                if self.build_context.is_saas_server_type:
                     self.log_exception(
                         f"Searching incident with name {incident_name} failed"
                     )
                 else:
                     self.log_exception(f"Searching incident with id {inc_id} failed")
             if time.time() > end_time:
-                if self.build_context.is_xsiam:
+                if self.build_context.is_saas_server_type:
                     self.log_error(
                         f"Got timeout for searching incident with name "
                         f"{incident_name}"
@@ -730,7 +732,10 @@ class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
         self.server_type = kwargs["server_type"]
         self.product_type = kwargs["product_type"]
-        self.is_xsiam = self.server_type in [XSIAM_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE]
+        self.is_saas_server_type = self.server_type in [
+            XSIAM_SERVER_TYPE,
+            XSOAR_SAAS_SERVER_TYPE,
+        ]
         self.logging_module: ParallelLoggingManager = logging_module
         self.server = kwargs["server"]
         self.xsiam_machine = kwargs.get("xsiam_machine")
@@ -738,7 +743,7 @@ class BuildContext:
         self.conf, self.secret_conf = self._load_conf_files(
             kwargs["conf"], kwargs["secret"]
         )
-        if self.is_xsiam:
+        if self.is_saas_server_type:
             with open(kwargs.get("xsiam_servers_api_keys_path")) as json_file:  # type: ignore[arg-type]
                 xsiam_servers_api_keys = json.loads(json_file.read())
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
@@ -757,7 +762,7 @@ class BuildContext:
         self.circleci_token = kwargs["circleci"]
         self.build_number = kwargs["build_number"]
         self.build_name = kwargs["branch_name"]
-        self.isAMI = False if self.is_xsiam else kwargs["is_ami"]
+        self.isAMI = False if self.is_saas_server_type else kwargs["is_ami"]
         self.memCheck = kwargs["mem_check"]
         self.server_version = kwargs["server_version"]  # AMI Role
         self.is_local_run = self.server is not None
@@ -792,7 +797,7 @@ class BuildContext:
         if not self.is_nightly:
             return []
         url = instances_ips[0]
-        server_url = url if self.is_xsiam else f"https://{url}"
+        server_url = url if self.is_saas_server_type else f"https://{url}"
         return self.get_all_installed_integrations_configurations(server_url)
 
     def get_all_installed_integrations_configurations(
@@ -808,8 +813,8 @@ class BuildContext:
         Returns:
             A dict containing the configuration for the integration if found else empty list
         """
-        if self.is_xsiam:
-            # in xsiam we don't use demisto username
+        if self.is_saas_server_type:
+            # In XSIAM or XSOAR SAAS - We don't use demisto username
             os.environ.pop("DEMISTO_USERNAME", None)
         tmp_client = demisto_client.configure(
             base_url=server_url,
@@ -864,9 +869,9 @@ class BuildContext:
             - A queue with unmockable TestPlaybook instances to run in the current build
         """
         all_tests = self._get_all_tests()
-        # for xsiam, set all tests to unmockable.
+        # In XSIAM or XSOAR SAAS - Set all tests to unmockable.
         unmockable_tests = []
-        if self.server or not self.isAMI or self.is_xsiam:
+        if self.server or not self.isAMI or self.is_saas_server_type:
             unmockable_tests = all_tests
             self.unmockable_test_ids = {test.playbook_id for test in all_tests}
         elif self.isAMI:
@@ -964,7 +969,7 @@ class BuildContext:
         """
         if self.server:
             return [self.server]
-        if self.is_xsiam:
+        if self.is_saas_server_type:
             return [env.get("base_url") for env in self.env_json]
         return [
             env.get("InstanceDNS")
@@ -1335,11 +1340,11 @@ class Integration:
         if self.name == "Core REST API":
             self.configuration.params = {  # type: ignore
                 "url": server_url
-                if self.build_context.is_xsiam
+                if self.build_context.is_saas_server_type
                 else "https://localhost",
                 "creds_apikey": {
                     "identifier": str(self.build_context.auth_id)
-                    if self.build_context.is_xsiam
+                    if self.build_context.is_saas_server_type
                     else "",
                     "password": self.build_context.api_key,
                 },
@@ -1491,7 +1496,7 @@ class Integration:
         instance_name: str,
         configuration: dict,
         incident_configuration: dict = None,
-    ):
+    ) -> Dict[str, Any]:
         module_configuration = configuration["configuration"]
 
         # If incident_type is given in Test Playbook configuration on test-conf, we change the default configuration.
@@ -1588,7 +1593,7 @@ class Integration:
         )
 
         # set server keys
-        if not self.build_context.is_xsiam:
+        if not self.build_context.is_saas_server_type:
             self._set_server_keys(client, server_context)
 
         # set module params
@@ -1878,7 +1883,7 @@ class TestContext:
             # Because `investigation_playbook` returned empty if xsiam investigation is still in progress.
             return (
                 PB_Status.IN_PROGRESS
-                if self.build_context.is_xsiam
+                if self.build_context.is_saas_server_type
                 else PB_Status.NOT_SUPPORTED_VERSION
             )
 
@@ -2126,7 +2131,7 @@ class TestContext:
 
             self.incident_id = (
                 incident.id
-                if self.build_context.is_xsiam
+                if self.build_context.is_saas_server_type
                 else incident.investigation_id
             )
             investigation_id = self.incident_id
@@ -2142,7 +2147,7 @@ class TestContext:
             )
 
             server_url = get_ui_url(self.client.api_client.configuration.host)
-            if self.build_context.is_xsiam:
+            if self.build_context.is_saas_server_type:
                 self.playbook.log_info(
                     f"Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId="
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
@@ -2185,7 +2190,7 @@ class TestContext:
         )
         # batchDelete is not supported in XSIAM, only close.
         # in XSIAM we are closing both successful and failed incidents
-        if self.build_context.is_xsiam and self.incident_id:
+        if self.build_context.server_type == XSIAM_SERVER_TYPE and self.incident_id:
             self.playbook.close_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
         elif self.incident_id and test_passed:
@@ -2399,8 +2404,8 @@ class TestContext:
         if (
             playbook_state == PB_Status.COMPLETED
             and self.server_context.is_instance_using_docker
-        ) and not self.build_context.is_xsiam:
-            #  currently not supported on XSIAM (etc/#47908)
+        ) and not self.build_context.is_saas_server_type:
+            #  currently not supported on XSIAM (CIAC-508)
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
@@ -2743,7 +2748,7 @@ class ServerContext:
     ):
         self.build_context = build_context
         self.server_ip = server_private_ip
-        if self.build_context.is_xsiam:
+        if self.build_context.is_saas_server_type:
             self.server_url = server_private_ip
             # we use client without demisto username
             os.environ.pop("DEMISTO_USERNAME", None)
@@ -2751,9 +2756,9 @@ class ServerContext:
             self.server_url = f"https://{self.server_ip}"
         self.client: Optional[DefaultApi] = None
         self.configure_new_client()
-        # currently not supported on XSIAM (etc/#47851)
-        if self.build_context.is_xsiam:
-            # we're running XSIAM without proxy. This code won't be executed on xsiam servers
+        # currently not supported on XSIAM (CIAC-514)
+        if self.build_context.is_saas_server_type:
+            # In XSIAM or XSOAR SAAS - We're running without proxy. This code won't be executed on SaaS servers.
             self.proxy = None
         else:
             self.proxy = MITMProxy(
@@ -2767,7 +2772,7 @@ class ServerContext:
         self.executed_in_current_round: Set[str] = set()
         self.prev_system_conf: dict = {}
         self.use_retries_mechanism: bool = use_retries_mechanism
-        if self.build_context.is_xsiam:
+        if self.build_context.is_saas_server_type:
             self.check_if_can_create_manual_alerts()
 
     def _execute_unmockable_tests(self):
@@ -2867,7 +2872,7 @@ class ServerContext:
         )
 
     def reset_containers(self):
-        if self.build_context.is_xsiam:
+        if self.build_context.is_saas_server_type:
             self.build_context.logging_module.info(
                 "Skip reset containers - this API is not supported.", real_time=True
             )
@@ -2908,8 +2913,8 @@ class ServerContext:
                 f"Finished tests with server url - " f"{get_ui_url(self.server_url)}",
                 real_time=True,
             )
-            # no need in xsiam, no proxy
-            if not self.build_context.is_xsiam:
+            # no need in SaaS server type, no proxy.
+            if not self.build_context.is_saas_server_type:
                 self.build_context.tests_data_keeper.add_proxy_related_test_data(
                     self.proxy
                 )

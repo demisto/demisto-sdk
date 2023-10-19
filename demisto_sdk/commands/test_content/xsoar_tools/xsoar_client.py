@@ -92,7 +92,7 @@ class XsoarNGApiClient(XsoarApiInterface):
     def external_base_url(self):
         return self.base_url.replace("api", "ext")  # url for long-running integrations
 
-    @retry_http_request
+    @retry_http_request()
     def create_integration_instance(
         self,
         _id: str,
@@ -163,7 +163,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
-    @retry_http_request
+    @retry_http_request()
     def delete_integration_instance(
         self, instance_id: str, response_type: str = "object"
     ):
@@ -175,7 +175,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
-    @retry_http_request
+    @retry_http_request()
     def get_incident(self, incident_id: str, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
@@ -186,7 +186,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
-    @retry_http_request
+    @retry_http_request()
     def delete_incidents(
         self,
         incident_ids: Union[str, List[str]],
@@ -207,7 +207,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
-    @retry_http_request
+    @retry_http_request()
     def create_indicator(
         self,
         value: str,
@@ -230,7 +230,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
-    @retry_http_request
+    @retry_http_request()
     def delete_indicators(
         self,
         indicator_ids: Union[str, List[str]],
@@ -256,7 +256,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
-    @retry_http_request
+    @retry_http_request()
     def get_integrations_module_configuration(
         self, _id: Optional[str] = None, response_type: str = "object"
     ) -> Union[List, Dict[str, Any]]:

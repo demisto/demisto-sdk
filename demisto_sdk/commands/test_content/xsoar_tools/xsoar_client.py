@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import demisto_client
 from pydantic import BaseModel, Field, SecretStr, validator
+from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.utils.utils import retry_http_request
 
@@ -86,6 +87,14 @@ class XsoarApiInterface(ABC):
         _all: bool = False,
         response_type: str = "object",
     ):
+        pass
+
+    @abstractmethod
+    def list_indicators(self, page: int = 0, size: int = 50, query: str = "", response_type: str = "object"):
+        pass
+
+    @abstractmethod
+    def get_indicators_whitelist(self, response_type: str = "object"):
         pass
 
     @abstractmethod
@@ -223,6 +232,16 @@ class XsoarNGApiClient(XsoarApiInterface):
         score: int = 0,
         response_type: str = "object",
     ):
+
+        whitelisted_indicators_raw_response = self.get_indicators_whitelist()
+        for indicator in whitelisted_indicators_raw_response:
+            if indicator.get("value") == value:
+                raise ApiException(
+                    status=400,
+                    reason=f'Cannot create the indicator={value} type={indicator_type} because it is in the exclusion list'
+                )
+
+        # if raw_response = None and status_code = 200, it means the indicator is in the exclusion list
         raw_response, status_code, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
@@ -236,8 +255,7 @@ class XsoarNGApiClient(XsoarApiInterface):
             },
             response_type=response_type,
         )
-        if not raw_response:
-            raise Exception(f"{status_code=} and {raw_response=}")
+
         return raw_response
 
     @retry_http_request()
@@ -262,6 +280,32 @@ class XsoarNGApiClient(XsoarApiInterface):
             method="POST",
             path="/indicators/batchDelete",
             body=body,
+            response_type=response_type,
+        )
+        return raw_response
+
+    @retry_http_request()
+    def list_indicators(self, page: int = 0, size: int = 50, query: str = "", response_type: str = "object"):
+        body = {
+            "page": page,
+            "size": size,
+            "query": query
+        }
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/indicators/search",
+            body=body,
+            response_type=response_type,
+        )
+        return raw_response
+
+    @retry_http_request()
+    def get_indicators_whitelist(self, response_type: str = "object"):
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="GET",
+            path="/indicators/whitelisted",
             response_type=response_type,
         )
         return raw_response

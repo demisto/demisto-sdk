@@ -1,42 +1,68 @@
 import os
 import urllib.parse
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import demisto_client
-from pydantic import BaseModel, Field, SecretStr, validator
 from demisto_client.demisto_api.rest import ApiException
+from pydantic import BaseModel, Field, SecretStr, validator
+from pydantic.fields import ModelField
 
 from demisto_sdk.utils.utils import retry_http_request
 
 
 class XsoarApiClientConfig(BaseModel):
     base_url: str = Field(
-        default=os.getenv("DEMISTO_BASE_URL"), description="XSIAM Tenant Base URL"
+        default=os.getenv("DEMISTO_BASE_URL"), description="XSOAR Tenant Base API URL"
     )
     api_key: SecretStr = Field(
-        default=SecretStr(os.getenv("DEMISTO_API_KEY", "")), description="XSIAM API Key"
+        default=SecretStr(os.getenv("DEMISTO_API_KEY", "")), description="XSOAR API Key"
     )
+
+    @validator("base_url", "api_key", always=True)
+    def validate_client_config(cls, v, field: ModelField):
+        if not v:
+            raise ValueError(
+                f"XSOAR client configuration is not complete: value was not passed for {field.name} and"
+                f" the associated environment variable for {field.name} is not set"
+            )
+        return v
+
+
+class XsoarNGApiClientConfig(XsoarApiClientConfig):
     auth_id: Optional[str] = Field(
-        default=os.getenv("XSIAM_AUTH_ID"), description="XSIAM Auth ID"
+        default=os.getenv("XSIAM_AUTH_ID"), description="XSOAR-NG Auth ID"
     )
+
+    @validator("base_url", "api_key, auth_id", always=True)
+    def validate_client_config(cls, v, field: ModelField):
+        if not v:
+            raise ValueError(
+                f"XSOAR NG client configuration is not complete: value was not passed for {field.name} and"
+                f" the associated environment variable for {field.name} is not set"
+            )
+        return v
 
     @validator("base_url", always=True)
     def get_base_url(cls, v: str) -> str:
         xsoar_suffix = "xsoar"
         if not v.endswith(xsoar_suffix):
-            v = f'{v}/{xsoar_suffix}'
+            v = f"{v}/{xsoar_suffix}"
         return v
 
 
 class XsoarApiInterface(ABC):
-    def __init__(self, xsoar_client_config: XsoarApiClientConfig, verify_ssl: bool = False):
-        self.base_url = xsoar_client_config.base_url
+    def __init__(
+        self, xsoar_client_config: Type[XsoarApiClientConfig], verify_ssl: bool = False
+    ):
+        self.base_api_url = xsoar_client_config.base_url
         self.client = demisto_client.configure(
-            base_url=self.base_url,
+            base_url=self.base_api_url,
             api_key=xsoar_client_config.api_key.get_secret_value(),
-            auth_id=xsoar_client_config.auth_id,
-            verify_ssl=verify_ssl
+            auth_id=xsoar_client_config.auth_id  # type: ignore[attr-defined]
+            if hasattr(xsoar_client_config, "auth_id")
+            else None,
+            verify_ssl=verify_ssl,
         )
 
     @abstractmethod
@@ -90,7 +116,13 @@ class XsoarApiInterface(ABC):
         pass
 
     @abstractmethod
-    def list_indicators(self, page: int = 0, size: int = 50, query: str = "", response_type: str = "object"):
+    def list_indicators(
+        self,
+        page: int = 0,
+        size: int = 50,
+        query: str = "",
+        response_type: str = "object",
+    ):
         pass
 
     @abstractmethod
@@ -107,7 +139,9 @@ class XsoarApiInterface(ABC):
 class XsoarNGApiClient(XsoarApiInterface):
     @property
     def external_base_url(self):
-        return self.base_url.replace("api", "ext")  # url for long-running integrations
+        return self.base_api_url.replace(
+            "api", "ext"
+        )  # url for long-running integrations
 
     @retry_http_request()
     def create_integration_instance(
@@ -121,7 +155,7 @@ class XsoarNGApiClient(XsoarApiInterface):
             str, Any
         ] = self.get_integrations_module_configuration(_id)
 
-        module_instance = {
+        integration_instance_body_request = {
             "brand": integrations_metadata["name"],
             "category": integrations_metadata["category"],
             "configuration": integrations_metadata,
@@ -142,17 +176,15 @@ class XsoarNGApiClient(XsoarApiInterface):
             "configuration"
         ]
 
+        # update the integration configuration according to the module configuration in xsoar DB
         for param_conf in module_configuration:
-            if (
-                param_conf["display"] in integration_instance_config
-                or param_conf["name"] in integration_instance_config
+            display = param_conf["display"]
+            name = param_conf["name"]
+            default_value = param_conf["defaultValue"]
+
+            if (key := integration_instance_config.get(display)) or (
+                key := integration_instance_config.get(name)
             ):
-                # param defined in conf
-                key = (
-                    param_conf["display"]
-                    if param_conf["display"] in integration_instance_config
-                    else param_conf["name"]
-                )
                 if key in {"credentials", "creds_apikey"}:
                     credentials = integration_instance_config[key]
                     param_value = {
@@ -166,16 +198,16 @@ class XsoarNGApiClient(XsoarApiInterface):
 
                 param_conf["value"] = param_value
                 param_conf["hasvalue"] = True
-            elif param_conf["defaultValue"]:
-                # param is required - take default value
-                param_conf["value"] = param_conf["defaultValue"]
-            module_instance["data"].append(param_conf)
+            elif default_value:
+                param_conf["value"] = default_value
+
+            integration_instance_body_request["data"].append(param_conf)
 
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="PUT",
             path="/settings/integration",
-            body=module_instance,
+            body=integration_instance_body_request,
             response_type=response_type,
         )
         return raw_response
@@ -238,7 +270,7 @@ class XsoarNGApiClient(XsoarApiInterface):
             if indicator.get("value") == value:
                 raise ApiException(
                     status=400,
-                    reason=f'Cannot create the indicator={value} type={indicator_type} because it is in the exclusion list'
+                    reason=f"Cannot create the indicator={value} type={indicator_type} because it is in the exclusion list",
                 )
 
         # if raw_response = None and status_code = 200, it means the indicator is in the exclusion list
@@ -285,12 +317,14 @@ class XsoarNGApiClient(XsoarApiInterface):
         return raw_response
 
     @retry_http_request()
-    def list_indicators(self, page: int = 0, size: int = 50, query: str = "", response_type: str = "object"):
-        body = {
-            "page": page,
-            "size": size,
-            "query": query
-        }
+    def list_indicators(
+        self,
+        page: int = 0,
+        size: int = 50,
+        query: str = "",
+        response_type: str = "object",
+    ):
+        body = {"page": page, "size": size, "query": query}
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",

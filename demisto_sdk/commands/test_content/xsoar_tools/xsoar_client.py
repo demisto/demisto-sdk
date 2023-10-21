@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -53,7 +53,7 @@ class XsoarNGApiClientConfig(XsoarApiClientConfig):
 
 class XsoarApiInterface(ABC):
     def __init__(
-        self, xsoar_client_config: Type[XsoarApiClientConfig], verify_ssl: bool = False
+        self, xsoar_client_config: XsoarApiClientConfig, verify_ssl: bool = False
     ):
         self.base_api_url = xsoar_client_config.base_url
         self.client = demisto_client.configure(

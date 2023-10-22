@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.20.8
 * Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.
 * Internal: Fixed an issue where the `tools.get_display_name` function would return incorrect values for "Indicator Type" content items.
 * Changed the error code of the **validate** check for deprecated display names from `IN157` (duplicated a code used by a `nativeimage` check) to `IN160` (new code).

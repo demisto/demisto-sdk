@@ -2399,7 +2399,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    @error_codes("IN159")
+    @error_codes("IN162")
     def is_partner_collector_has_xsoar_support_level_header(self) -> bool:
         """
         Validates that event collectors under partner supported packs always has the supportlevelheader = xsoar key:value.

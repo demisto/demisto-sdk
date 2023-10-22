@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
+* Added a new validation (`IN159`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.
 
 ## 1.20.8
 * Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.
@@ -11,8 +13,6 @@
 * Updated the `validate` pre-commit hook to run before the `run-unit-tests` hook. This will prevent `validate` from falling on errors about temporary files that are sometimes created when running unit-tests.
 * Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
 * Added a new key **supportlevelheader** to the integration schema.
-* Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
-* Added a new validation (`IN159`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.
 * **format** command will run without the content graph if graph creation fails.
 * Updated the `GENERAL_DEFAULT_FROMVERSION` variable from **6.9.0** to **6.10.0**.
 * Internal: Replaced the `tools._read_file` function with a more generic `tools.safe_read_unicode` function.

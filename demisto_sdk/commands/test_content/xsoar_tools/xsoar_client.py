@@ -363,13 +363,3 @@ class XsoarNGApiClient(XsoarApiInterface):
         raise ValueError(
             f"Could not find module configuration for integration ID '{_id}'"
         )
-
-
-a = XsoarNGApiClient(XsoarNGApiClientConfig())
-instance_config = {"credentials": {"identifier": "admin", "password": "12345"}, "cache_refresh_rate": "5 minutes", "edl_size": "100000", "indicators_query": "*", "key": "", "longRunning": True, "integrationInstanceName": "edl", "server_keys": {"instance.execute.external.edl": "true"}}
-b = a.create_integration_instance(
-        _id="EDL",
-        name="edl",
-        integration_instance_config=instance_config
-    )
-print()

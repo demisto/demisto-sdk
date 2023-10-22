@@ -183,15 +183,13 @@ class XsoarNGApiClient(XsoarApiInterface):
             "configuration"
         ]
 
-        # update the integration configuration according to the module configuration in xsoar DB
         for param_conf in module_configuration:
             display = param_conf["display"]
             name = param_conf["name"]
             default_value = param_conf["defaultValue"]
 
-            if (key := integration_instance_config.get(display)) or (
-                key := integration_instance_config.get(name)
-            ):
+            if display in integration_instance_config or name in integration_instance_config:
+                key = display if display in integration_instance_config else name
                 if key in {"credentials", "creds_apikey"}:
                     credentials = integration_instance_config[key]
                     param_value = {

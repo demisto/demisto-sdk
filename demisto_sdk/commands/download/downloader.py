@@ -335,13 +335,15 @@ class Downloader:
         original_count = len(custom_content_objects)
         logger.debug(f"Filtering {original_count} custom content items...")
 
+        compiled_regex = re.compile(self.regex) if self.regex else None
+
         for file_name, content_item_data in custom_content_objects.items():
             content_item_name = file_name_to_content_name_map[file_name]
 
             # Filter according input / regex flags
             if (
                 self.download_all_custom_content
-                or (self.regex and re.match(self.regex, content_item_name))
+                or (compiled_regex and re.match(compiled_regex, content_item_name))
                 or content_item_name in self.input_files
             ):
                 filtered_custom_content_objects[file_name] = content_item_data

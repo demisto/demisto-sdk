@@ -8,6 +8,7 @@ from demisto_client.demisto_api.rest import ApiException
 from pydantic import BaseModel, Field, SecretStr, validator
 from pydantic.fields import ModelField
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.utils.utils import retry_http_request
 
 
@@ -127,6 +128,12 @@ class XsoarApiInterface(ABC):
 
     @abstractmethod
     def get_indicators_whitelist(self, response_type: str = "object"):
+        pass
+
+    @abstractmethod
+    def delete_indicators_from_whitelist(
+        self, indicator_ids: List[str], response_type: str = "object"
+    ):
         pass
 
     @abstractmethod
@@ -342,6 +349,25 @@ class XsoarNGApiClient(XsoarApiInterface):
             path="/indicators/whitelisted",
             response_type=response_type,
         )
+        return raw_response
+
+    @retry_http_request()
+    def delete_indicators_from_whitelist(
+        self, indicator_ids: List[str], response_type: str = "object"
+    ):
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/indicators/whitelist/remove",
+            response_type=response_type,
+        )
+        indicator_ids = set(indicator_ids)
+        raw_response = set(raw_response)
+
+        if not indicator_ids.issubset(raw_response):
+            logger.warning(
+                f"Could not delete indicators with the following IDs: {indicator_ids.difference(raw_response)}"
+            )
         return raw_response
 
     @retry_http_request()

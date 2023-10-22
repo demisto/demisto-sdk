@@ -104,7 +104,7 @@ class GenericDocker(Hook):
             new_hook["id"] = f"{self.base_hook['id']}-{image}"
             new_hook["name"] = f"{self.base_hook['name']}-{image}"
             new_hook["language"] = "docker_image"
-            new_hook.pop('docker-image', None)
+            new_hook.pop('docker_image', None)
             new_hook[
                 "entry"
             ] = f'--entrypoint {self.base_hook["entry"]} {get_environment_flag()} {dev_image}'

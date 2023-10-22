@@ -27,7 +27,7 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
     return native_image.replace("native:", "")
 
 
-@functools.cache
+@functools.lru_cache
 def get_dev_native_image() -> Union[str, None]:
     """
     Gets the development (dev) native image, which is the latest tag of the native image from Docker Hub.
@@ -38,10 +38,8 @@ def get_dev_native_image() -> Union[str, None]:
     logger.info(f"{log_prompt} - Started")
 
     # Get the latest tag of the native image from Docker Hub
-    latest_native_image_tag = (
-        DockerImageValidator.get_docker_image_latest_tag_request(
-            NATIVE_IMAGE_DOCKER_NAME
-        )
+    latest_native_image_tag = DockerImageValidator.get_docker_image_latest_tag_request(
+        NATIVE_IMAGE_DOCKER_NAME
     )
 
     if latest_native_image_tag:
@@ -91,8 +89,8 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
         for native_image_name, native_image_obj in self.native_images.items():
             for supported_docker_image in native_image_obj.supported_docker_images:
                 if (
-                        supported_docker_image
-                        not in self.docker_images_to_native_images_mapping
+                    supported_docker_image
+                    not in self.docker_images_to_native_images_mapping
                 ):
                     self.docker_images_to_native_images_mapping[
                         supported_docker_image
@@ -101,7 +99,9 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
                     supported_docker_image
                 ].append(native_image_name)
 
-    def get_native_image_reference(self, native_image, include_dev=False) -> Optional[str]:
+    def get_native_image_reference(
+        self, native_image, include_dev=False
+    ) -> Optional[str]:
         """
         Gets the docker reference of the given native image
 
@@ -110,11 +110,11 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
 
         Returns: The docker ref
         """
-        if include_dev and native_image == 'native:dev':
+        if include_dev and native_image == "native:dev":
             return get_dev_native_image()
         if native_image_obj := self.native_images.get(native_image):
             return native_image_obj.docker_ref
-        
+
         return None
 
 
@@ -134,10 +134,10 @@ class ScriptIntegrationSupportedNativeImages:
     NATIVE_CANDIDATE = "native:candidate"
 
     def __init__(
-            self,
-            _id: str,
-            native_image_config: NativeImageConfig,
-            docker_image: Optional[str] = None,
+        self,
+        _id: str,
+        native_image_config: NativeImageConfig,
+        docker_image: Optional[str] = None,
     ):
         self.id = _id
         self.docker_image = (
@@ -158,15 +158,19 @@ class ScriptIntegrationSupportedNativeImages:
             or []
         )
 
-    def get_supported_native_docker_tags(self, native_image_tags: set) -> set[str]:
+    def get_supported_native_docker_tags(self, native_image_tags: set) -> set:
         tags = self.get_supported_native_image_versions(only_production_tags=False)
 
-        tags_to_return = {final_tag for named_tag, final_tag
-                          in self.native_image_config.flags_versions_mapping.items()
-                          if (named_tag in native_image_tags or 'all' in native_image_tags)
-                          and final_tag in tags}
-        return {self.native_image_config.get_native_image_reference(tag, include_dev=True) for tag in tags_to_return}
-        
+        tags_to_return = {
+            final_tag
+            for named_tag, final_tag in self.native_image_config.flags_versions_mapping.items()
+            if (named_tag in native_image_tags or "all" in native_image_tags)
+            and final_tag in tags
+        }
+        return {
+            self.native_image_config.get_native_image_reference(tag, include_dev=True)
+            for tag in tags_to_return
+        }
 
     def __get_ignored_native_images(self):
         """
@@ -185,7 +189,7 @@ class ScriptIntegrationSupportedNativeImages:
         return []
 
     def get_supported_native_image_versions(
-            self, get_raw_version: bool = False, only_production_tags: bool = True
+        self, get_raw_version: bool = False, only_production_tags: bool = True
     ) -> List[str]:
         """
         Get the native-images that the integration/script supports. Disregards native-images that should be ignored.

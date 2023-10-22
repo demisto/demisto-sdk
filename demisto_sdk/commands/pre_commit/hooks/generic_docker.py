@@ -18,17 +18,17 @@ from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
 
-@functools.cache
+@functools.lru_cache
 def get_docker_python_path() -> str:
     path_to_replace = str(Path(CONTENT_PATH))
-    docker_path = [str(path).replace(path_to_replace, '/src') for path in PYTHONPATH]
+    docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
     path = ":".join(sorted(docker_path))
-    logger.debug(f'pythonpath in docker being set to {path}')
+    logger.debug(f"pythonpath in docker being set to {path}")
     return path
 
 
-def with_native_tags(tags_to_files: dict[str, list], docker_image_flag: str) -> dict[str, set]:
-    docker_flags = set(docker_image_flag.split(','))
+def with_native_tags(tags_to_files: dict, docker_image_flag: str) -> dict:
+    docker_flags = set(docker_image_flag.split(","))
     all_tags_to_files = defaultdict(set)
     native_image_config = NativeImageConfig.get_instance()
 
@@ -42,29 +42,33 @@ def with_native_tags(tags_to_files: dict[str, list], docker_image_flag: str) -> 
             ).get_supported_native_docker_tags(docker_flags)
             for native_image in supported_native_images:
                 all_tags_to_files[native_image].add(file)
-            if {DockerImageFlagOption.FROM_YML.value, DockerImageFlagOption.ALL_IMAGES.value} & docker_flags:
+            if {
+                DockerImageFlagOption.FROM_YML.value,
+                DockerImageFlagOption.ALL_IMAGES.value,
+            } & docker_flags:
                 all_tags_to_files[image].add(file)
     return all_tags_to_files
-            
-            
-@functools.cache
+
+
+@functools.lru_cache
 def get_yml_for_file(code_file) -> Optional[dict]:
     yml_in_directory = [f for f in os.listdir(code_file.parent) if f.endswith(".yml")]
     if (
-            len(yml_in_directory) == 1
-            and (yml_file := code_file.parent / yml_in_directory[0]).is_file()
+        len(yml_in_directory) == 1
+        and (yml_file := code_file.parent / yml_in_directory[0]).is_file()
     ):
         try:
             return get_yaml(yml_file)
         except Exception:
-            logger.debug(f'Could not parse file {code_file}')
+            logger.debug(f"Could not parse file {code_file}")
     return None
-            # could be reasonable cant parse. We have some non-parsable ymls for tests
-            
-def docker_tag_to_python_files(files_to_run: Iterable, docker_image_flag) -> dict[str, set]:
+    # could be reasonable cant parse. We have some non-parsable ymls for tests
+
+
+def docker_tag_to_python_files(files_to_run: Iterable, docker_image_flag) -> dict:
     tags_to_files = defaultdict(list)
     for file in files_to_run:
-        yml: dict = get_yml_for_file(file)
+        yml: Optional[dict] = get_yml_for_file(file)
         if not yml:
             continue
         if docker_image := docker_image_for_file(yml):
@@ -76,8 +80,7 @@ def docker_image_for_file(yml: dict) -> str:
     return yml.get("dockerimage") or yml.get("script", {}).get("dockerimage", "")
 
 
-
-@functools.cache
+@functools.lru_cache
 def devtest_image(param):
     image, errors = get_docker().pull_or_create_test_image(param)
     if errors:
@@ -91,21 +94,22 @@ def get_environment_flag() -> str:
 
 
 class GenericDocker(Hook):
-
     def __int__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def prepare_hook(self, files_to_run: Iterable):
 
         all_hooks = []
-        tag_to_files = docker_tag_to_python_files(files_to_run, self.base_hook.get('docker_image', 'from-yml'))
+        tag_to_files = docker_tag_to_python_files(
+            files_to_run, self.base_hook.get("docker_image", "from-yml")
+        )
         for image, files in tag_to_files.items():
             dev_image = devtest_image(image)
             new_hook = deepcopy(self.base_hook)
             new_hook["id"] = f"{self.base_hook['id']}-{image}"
             new_hook["name"] = f"{self.base_hook['name']}-{image}"
             new_hook["language"] = "docker_image"
-            new_hook.pop('docker_image', None)
+            new_hook.pop("docker_image", None)
             new_hook[
                 "entry"
             ] = f'--entrypoint {self.base_hook["entry"]} {get_environment_flag()} {dev_image}'

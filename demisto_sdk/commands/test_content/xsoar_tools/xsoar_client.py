@@ -34,7 +34,7 @@ class XsoarNGApiClientConfig(XsoarApiClientConfig):
         default=os.getenv("XSIAM_AUTH_ID"), description="XSOAR-NG Auth ID"
     )
 
-    @validator("base_url", "api_key, auth_id", always=True)
+    @validator("auth_id", always=True)
     def validate_client_config(cls, v, field: ModelField):
         if not v:
             raise ValueError(
@@ -363,3 +363,13 @@ class XsoarNGApiClient(XsoarApiInterface):
         raise ValueError(
             f"Could not find module configuration for integration ID '{_id}'"
         )
+
+
+a = XsoarNGApiClient(XsoarNGApiClientConfig())
+instance_config = {"credentials": {"identifier": "admin", "password": "12345"}, "cache_refresh_rate": "5 minutes", "edl_size": "100000", "indicators_query": "*", "key": "", "longRunning": True, "integrationInstanceName": "edl", "server_keys": {"instance.execute.external.edl": "true"}}
+b = a.create_integration_instance(
+        _id="EDL",
+        name="edl",
+        integration_instance_config=instance_config
+    )
+print()

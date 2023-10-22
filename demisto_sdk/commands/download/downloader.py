@@ -215,6 +215,17 @@ class Downloader:
                     )
                     return 1
 
+                elif self.regex:
+                    # Assure regex is valid
+                    try:
+                        re.compile(self.regex)
+
+                    except re.error:
+                        logger.error(
+                            f"Error: Invalid regex pattern provided: '{self.regex}'."
+                        )
+                        return 1
+
                 all_custom_content_data = self.download_custom_content()
                 all_custom_content_objects = self.parse_custom_content_data(
                     custom_content_data=all_custom_content_data

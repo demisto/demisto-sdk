@@ -1365,3 +1365,20 @@ def test_auto_replace_uuids_flag(mocker, auto_replace_uuids: bool):
 
     else:
         assert not mock_replace_uuids.called
+
+
+def test_invalid_regex_error(mocker):
+    """
+    Given: A regex that is not valid
+    When: Calling the download command for custom content
+    Then: Ensure that the command fails with an appropriate error message.
+    """
+    downloader = Downloader(regex="*invalid-regex*", output="fake_output_dir")
+    mocker.patch.object(downloader, "verify_output_path", return_value=True)
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+    assert downloader.download() == 1
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "Error: Invalid regex pattern provided: '*invalid-regex*'.",
+    )

@@ -17,7 +17,6 @@ from demisto_sdk.commands.common.tools import get_yaml, logger
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
-native_image_config = NativeImageConfig.get_instance()
 
 @functools.cache
 def get_docker_python_path() -> str:
@@ -31,6 +30,8 @@ def get_docker_python_path() -> str:
 def with_native_tags(tags_to_files: dict[str, list], docker_image_flag: str) -> dict[str, set]:
     docker_flags = set(docker_image_flag.split(','))
     all_tags_to_files = defaultdict(set)
+    native_image_config = NativeImageConfig.get_instance()
+
     for image, scripts in tags_to_files.items():
         for file, yml in scripts:
 

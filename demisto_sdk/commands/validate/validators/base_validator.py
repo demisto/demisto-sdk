@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, List, Tuple, Type
+from typing import ClassVar, List, Optional, Tuple, Type
 
 from pydantic import BaseModel
 
@@ -25,12 +25,31 @@ class ValidationResult(BaseModel):
             "error code": self.error_code,
             "message": self.message,
         }
+        
+class FixingResult(BaseModel):
+    error_code: str
+    message: str
+    file_path: Path
+
+    @property
+    def format_readable_message(self):
+        return f"Fixing {str(self.file_path)}: {self.error_code} - {self.message}"
+
+    @property
+    def format_json_message(self):
+        return {
+            "file path": self.file_path,
+            "error code": self.error_code,
+            "message": self.message,
+        }
+
 
 
 class BaseValidator(ABC, BaseModel):
     error_code: ClassVar[str]
     description: ClassVar[str]
     error_message: ClassVar[str]
+    fixing_message: ClassVar[Optional[str]] = None
     is_auto_fixable: ClassVar[bool]
     related_field: ClassVar[str]
     content_types: ClassVar[Tuple[Type[BaseContent], ...]]
@@ -66,7 +85,7 @@ class BaseValidator(ABC, BaseModel):
         raise NotImplementedError
 
     @classmethod
-    def fix(cls, content_item: BaseContent) -> None:
+    def fix(cls, content_item: BaseContent) -> FixingResult:
         raise NotImplementedError
 
 

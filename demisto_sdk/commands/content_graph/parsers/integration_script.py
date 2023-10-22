@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -13,17 +14,21 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
+    INTEGRATIONSCRIPTPARSER_MAPPING = {
+        "object_id": "commonfields.id"
+    }
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
         super().__init__(path, pack_marketplaces)
+        self.add_to_mapping(self.INTEGRATIONSCRIPTPARSER_MAPPING)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.connect_to_api_modules()
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.yml_data.get("commonfields", {}).get("id")
+        return get(self.yml_data, self.MAPPING.get("object_id", ""))
 
     @property
     @abstractmethod

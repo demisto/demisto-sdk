@@ -746,7 +746,7 @@ def zip_packs(ctx, **kwargs) -> int:
 @logging_setup_decorator
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
-    from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    # from demisto_sdk.commands.validate.validate_manager import ValidateManager
     from demisto_sdk.commands.validate.validate_manager_v2 import (
         ValidateManager as ValidateManagerV2,
     )

@@ -72,7 +72,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     Attributes:
         relationships (Relationships): The relationships collections of the content item.
     """
-
+    MAPPING: dict = {}
     content_type_to_parser: Dict[ContentType, Type["ContentItemParser"]] = {}
 
     def __init__(
@@ -83,6 +83,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
         self.relationships: Relationships = Relationships()
+        
+    @classmethod
+    def add_to_mapping(self, mapping):
+        self.MAPPING.update(mapping)
 
     @staticmethod
     def from_path(

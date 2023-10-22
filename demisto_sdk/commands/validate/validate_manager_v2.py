@@ -1,5 +1,6 @@
 from typing import List, Set
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -77,9 +78,11 @@ class ValidateManager:
                     validation_result = validator.is_valid(content_object)
                     try:
                         if not validation_result.is_valid:
-                            self.validation_results.append(validation_result)
                             if self.allow_autofix:
-                                validator.fix(content_object)
+                                logger.info(f"fixing {content_object.path}")
+                                self.validation_results.append_fixing_results(validator.fix(content_object))
+                            else:
+                                self.validation_results.append(validation_result)
                     except NotImplementedError:
                         continue
 

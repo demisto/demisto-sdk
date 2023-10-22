@@ -607,10 +607,6 @@ ERROR_CODE: Dict = {
         "code": "IN127",
         "related_field": "display",
     },
-    "invalid_integration_deprecation__only_display_name_suffix": {
-        "code": "IN160",
-        "related_field": "deprecated",
-    },
     "invalid_deprecated_integration_description": {
         "code": "IN128",
         "related_field": "",
@@ -703,10 +699,6 @@ ERROR_CODE: Dict = {
         "code": "IN150",
         "related_field": "display",
     },
-    "invalid_siem_marketplaces_entry": {
-        "code": "IN161",
-        "related_field": "display",
-    },
     "empty_command_arguments": {
         "code": "IN151",
         "related_field": "arguments",
@@ -742,6 +734,14 @@ ERROR_CODE: Dict = {
     "command_reputation_output_capitalization_incorrect": {
         "code": "IN159",
         "related_field": "outputs",
+    },
+    "invalid_integration_deprecation__only_display_name_suffix": {
+        "code": "IN160",
+        "related_field": "deprecated",
+    },
+    "invalid_siem_marketplaces_entry": {
+        "code": "IN161",
+        "related_field": "display",
     },
     # IT - Incident Types
     "incident_type_integer_field": {

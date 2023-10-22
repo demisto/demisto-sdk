@@ -4132,3 +4132,33 @@ def get_file_by_status(
         filtered_added_files,
         filtered_old_format_or_renamed_files,
     )
+
+
+def get(obj, field, defaultParam=None):
+    """Extracts field value from nested object
+
+    Args:
+      obj (dict): The object to extract the field from
+      field (str): The field to extract from the object, given in dot notation
+      defaultParam (object): The default value to return in case the field doesn't exist in obj
+
+    Returns:
+      str: The value of the extracted field
+
+    """
+    parts = field.split(".")
+    for part in parts:
+        if obj and part in obj:
+            obj = obj[part]
+        else:
+            return defaultParam
+    return obj
+
+
+def set_val(data, key, value):
+    keys = key.split(".")
+    dic = data
+    for k in keys[:-1]:
+        dic = dic.get(k, {})
+
+    dic[keys[-1]] = value

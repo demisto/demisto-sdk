@@ -3,7 +3,10 @@ from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
+from demisto_sdk.commands.validate.validators.base_validator import (
+    FixingResult,
+    ValidationResult,
+)
 
 
 class ValidationResults:
@@ -20,6 +23,7 @@ class ValidationResults:
         """
         self.only_throw_warning = only_throw_warnings
         self.results: List[ValidationResult] = []
+        self.fixing_results: List[FixingResult] = []
         if json_file_path:
             self.json_file_path = (
                 os.path.join(json_file_path, "validate_outputs.json")
@@ -38,7 +42,7 @@ class ValidationResults:
         Returns:
             int: The exit code number - 1 if the validations failed, otherwise return 0
         """
-        exit_code = 0
+        exit_code = 0 if not self.fixing_results else 1
         if self.json_file_path:
             self.write_validation_results()
         for result in self.results:
@@ -51,6 +55,8 @@ class ValidationResults:
                 else:
                     logger.error(f"[red]{result.format_readable_message}[/red]")
                     exit_code = 1
+        for fixing_result in self.fixing_results:
+            logger.warning(f"[yellow]{fixing_result.format_readable_message}[/yellow]")
         return exit_code
 
     def write_validation_results(self):
@@ -59,8 +65,13 @@ class ValidationResults:
         Writing all the results into a json file located in the given path.
         """
         json_validations_list = [result.format_json_message for result in self.results]
+        json_fixing_list = [fixing_result.format_json_message for fixing_result in self.fixing_results]
+        results = {
+            "validations": json_validations_list,
+            "fixed validations": json_fixing_list
+        }
 
-        json_object = json.dumps(json_validations_list, indent=4)
+        json_object = json.dumps(results, indent=4)
 
         # Writing to sample.json
         with open(self.json_file_path, "w") as outfile:
@@ -68,3 +79,6 @@ class ValidationResults:
 
     def append(self, validation_result: ValidationResult):
         self.results.append(validation_result)
+    
+    def append_fixing_results(self, fixing_result: FixingResult):
+        self.fixing_results.append(fixing_result)

@@ -160,7 +160,6 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
-
         return json_dct
 
     @abstractmethod
@@ -191,6 +190,7 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
 
 class BaseContent(BaseContentModel):
+    MAPPING: dict = {}
     path: Path
     git_status: Optional[str]
     old_file_path: Optional[Path]
@@ -254,7 +254,6 @@ class BaseContent(BaseContentModel):
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
             )
             return None
-
 
 class UnknownContent(BaseContent):
     """A model for non-existing content items used by existing content items."""

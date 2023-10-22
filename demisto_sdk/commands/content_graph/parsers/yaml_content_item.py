@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
+from demisto_sdk.commands.common.tools import get, get_yaml, get_yml_paths_in_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
@@ -17,10 +17,14 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 
 class YAMLContentItemParser(ContentItemParser):
+    YAMLCONTENTPARSER_MAPPING = {
+        "name": "name"
+    }
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
+        self.add_to_mapping(self.YAMLCONTENTPARSER_MAPPING)
         self.yml_data: Dict[str, Any] = self.get_yaml()
 
         if not isinstance(self.yml_data, dict):
@@ -33,7 +37,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def name(self) -> Optional[str]:
-        return self.yml_data.get("name")
+        return get(self.yml_data, self.MAPPING.get("name", ""))
 
     @property
     def display_name(self) -> Optional[str]:

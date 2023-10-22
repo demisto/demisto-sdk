@@ -10,9 +10,8 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 
 class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TEMPLATE):
-    XDRCTEMPLATEPARSER_MAPPING = {
-        "object_id": "content_global_id"
-    }
+    XDRCTEMPLATEPARSER_MAPPING = {"object_id": "content_global_id"}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

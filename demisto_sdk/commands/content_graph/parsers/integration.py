@@ -23,8 +23,9 @@ class CommandParser:
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     INTEGRATIONPARSER_MAPPING = {
         "display_name": "display",
-        "docker_image": "dockerimage"
+        "docker_image": "dockerimage",
     }
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

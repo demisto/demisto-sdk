@@ -12,9 +12,8 @@ IGNORED_INCIDENT_TYPES = ["dbot_classification_incident_type_all"]
 
 
 class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
-    MAPPERPARSER_MAPPING = {
-        "name": ["name", "brandName"]
-    }
+    MAPPERPARSER_MAPPING = {"name": ["name", "brandName"]}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

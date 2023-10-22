@@ -10,9 +10,8 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 
 class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
-    JOBPARSER_MAPPING = {
-        "description": "details"
-    }
+    JOBPARSER_MAPPING = {"description": "details"}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

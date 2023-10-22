@@ -26,9 +26,8 @@ IGNORED_FIELDS = [
 
 
 class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
-    PLAYBOOKPARSER_MAPPING = {
-        "object_id": "id"
-    }
+    PLAYBOOKPARSER_MAPPING = {"object_id": "id"}
+
     def __init__(
         self,
         path: Path,

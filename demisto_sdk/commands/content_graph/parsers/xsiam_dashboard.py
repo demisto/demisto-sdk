@@ -19,9 +19,9 @@ class XSIAMDashboardParser(
     XSIAMDASHBOARDPARSER_MAPPING = {
         "object_id": "global_id",
         "fromversion": "fromVersion",
-        "toVersion": "toVersion"
+        "toVersion": "toVersion",
     }
-    
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
@@ -39,8 +39,16 @@ class XSIAMDashboardParser(
 
     @property
     def fromversion(self) -> str:
-        return get(self.json_data, self.MAPPING.get("fromversion", ""), DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        return get(
+            self.json_data,
+            self.MAPPING.get("fromversion", ""),
+            DEFAULT_CONTENT_ITEM_FROM_VERSION,
+        )
 
     @property
     def toversion(self) -> str:
-        return get(self.json_data, self.MAPPING.get("toversion", ""), DEFAULT_CONTENT_ITEM_TO_VERSION)
+        return get(
+            self.json_data,
+            self.MAPPING.get("toversion", ""),
+            DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )

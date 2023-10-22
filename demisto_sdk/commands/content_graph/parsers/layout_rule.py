@@ -13,8 +13,9 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
     LAYOUTRULEPARSER_MAPPING = {
         "object_id": "rule_id",
         "name": "rule_name",
-        "layout_id": "layout_id"
+        "layout_id": "layout_id",
     }
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

@@ -22,7 +22,7 @@ class YAMLContentItemParser(ContentItemParser):
         "deprecated": "deprecated",
         "description": "description",
         "fromversion": "fromversion",
-        "toversion": "toversion"
+        "toversion": "toversion",
     }
 
     def __init__(
@@ -64,11 +64,19 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return get(self.yml_data, self.MAPPING.get("fromversion", ""), DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        return get(
+            self.yml_data,
+            self.MAPPING.get("fromversion", ""),
+            DEFAULT_CONTENT_ITEM_FROM_VERSION,
+        )
 
     @property
     def toversion(self) -> str:
-        return get(self.yml_data, self.MAPPING.get("toversion", ""), DEFAULT_CONTENT_ITEM_TO_VERSION)
+        return get(
+            self.yml_data,
+            self.MAPPING.get("toversion", ""),
+            DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:

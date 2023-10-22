@@ -18,10 +18,8 @@ EXECUTE_CMD_PATTERN = re.compile(
 
 
 class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
-    SCRIPTPARSER_MAPPING = {
-        "docker_image": "dockerimage",
-        "description": "comment"
-    }
+    SCRIPTPARSER_MAPPING = {"docker_image": "dockerimage", "description": "comment"}
+
     def __init__(
         self,
         path: Path,

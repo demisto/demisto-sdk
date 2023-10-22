@@ -12,10 +12,8 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 class IndicatorTypeParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_TYPE
 ):
-    INDICATORTYPEPARSER_MAPPING = {
-        "name": "details",
-        "description": "details"
-    }
+    INDICATORTYPEPARSER_MAPPING = {"name": "details", "description": "details"}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

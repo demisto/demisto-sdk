@@ -14,9 +14,8 @@ from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
 
 class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIER):
-    CLASSIFIERPARSER_MAPPING = {
-        "name": ["name", "brandName"]
-    }
+    CLASSIFIERPARSER_MAPPING = {"name": ["name", "brandName"]}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

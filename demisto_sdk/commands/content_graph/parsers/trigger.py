@@ -10,10 +10,8 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 
 class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
-    TRIGGERPARSER_MAPPING = {
-        "object_id": "trigger_id",
-        "name": "trigger_name"
-    }
+    TRIGGERPARSER_MAPPING = {"object_id": "trigger_id", "name": "trigger_name"}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

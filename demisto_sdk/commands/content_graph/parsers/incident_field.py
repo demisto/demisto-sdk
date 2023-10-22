@@ -11,9 +11,8 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 class IncidentFieldParser(
     JSONContentItemParser, content_type=ContentType.INCIDENT_FIELD
 ):
-    INCIDENTFIELDPARSER_MAPPING = {
-        "object_id": "cliName"
-    }
+    INCIDENTFIELDPARSER_MAPPING = {"object_id": "cliName"}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

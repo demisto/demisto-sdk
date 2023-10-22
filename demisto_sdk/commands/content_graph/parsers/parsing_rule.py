@@ -10,9 +10,8 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 
 
 class ParsingRuleParser(YAMLContentItemParser, content_type=ContentType.PARSING_RULE):
-    PARSINGRULEPARSER_MAPPING = {
-        "object_id": "id"
-    }
+    PARSINGRULEPARSER_MAPPING = {"object_id": "id"}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

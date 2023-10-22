@@ -13,6 +13,7 @@ class CorrelationRuleParser(
     YAMLContentItemParser, content_type=ContentType.CORRELATION_RULE
 ):
     CORRELATIONRULEPARSER_MAPPING = {"object_id": "global_rule_id"}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

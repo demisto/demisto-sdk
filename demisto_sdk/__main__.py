@@ -2844,6 +2844,14 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.help_option("-h", "--help")
 @click.option(
+    "-a",
+    "--artifacts-path",
+    help="Destination directory to create the artifacts.",
+    type=click.Path(file_okay=False, resolve_path=True),
+    default=Path("./Tests"),
+    required=True,
+)
+@click.option(
     "-k", "--api-key", help="The Demisto API key for the server", required=True
 )
 @click.option("-s", "--server", help="The server URL to connect to")
@@ -2880,7 +2888,14 @@ def openapi_codegen(ctx, **kwargs):
     default=False,
 )
 @click.option(
-    "--server-type", help="Which server runs the tests? XSIAM or XSOAR", default="XSOAR"
+    "--server-type",
+    help="On which server type runs the tests:XSIAM, XSOAR, XSOAR SAAS",
+    default="XSOAR",
+)
+@click.option(
+    "--product-type",
+    help="On which product type runs the tests:XSIAM, XSOAR",
+    default="XSOAR",
 )
 @click.option(
     "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."

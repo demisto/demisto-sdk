@@ -882,7 +882,7 @@ class TestDeprecatedIntegration:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert str_in_call_args_list(logger_info.call_args_list, "IN157")
+        assert str_in_call_args_list(logger_info.call_args_list, "IN160")
         assert result.exit_code == 1
 
     @pytest.mark.parametrize(

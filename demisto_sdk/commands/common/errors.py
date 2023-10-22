@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    XSOAR_CONTEXT_AND_OUTPUTS_URL,
     SUPPORT_LEVEL_HEADER,
     XSOAR_SUPPORT,
     FileType,
@@ -588,11 +589,7 @@ ERROR_CODE: Dict = {
         "related_field": "display",
     },
     "invalid_integration_deprecation__only_display_name_suffix": {
-        "code": "IN157",
-        "related_field": "deprecated",
-    },
-    "invalid_deprecation__only_description_deprecated": {
-        "code": "IN158",
+        "code": "IN160",
         "related_field": "deprecated",
     },
     "partner_collector_does_not_have_xsoar_support_level": {
@@ -692,7 +689,7 @@ ERROR_CODE: Dict = {
         "related_field": "display",
     },
     "invalid_siem_marketplaces_entry": {
-        "code": "IN151",
+        "code": "IN161",
         "related_field": "display",
     },
     "empty_command_arguments": {
@@ -722,6 +719,14 @@ ERROR_CODE: Dict = {
     "nativeimage_exist_in_integration_yml": {
         "code": "IN157",
         "related_field": "script",
+    },
+    "invalid_deprecation__only_description_deprecated": {
+        "code": "IN158",
+        "related_field": "deprecated",
+    },
+    "command_reputation_output_capitalization_incorrect": {
+        "code": "IN159",
+        "related_field": "outputs",
     },
     # IT - Incident Types
     "incident_type_integer_field": {
@@ -4405,3 +4410,13 @@ class Errors:
     @error_code_decorator
     def correlation_rules_missing_search_window():
         return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
+
+    @staticmethod
+    @error_code_decorator
+    def command_reputation_output_capitalization_incorrect(
+        command_name: str,
+        invalid_output: str,
+        reputation_name: str,
+    ):
+        return f"The {command_name} command returns the following reputation output:\n{invalid_output} for reputation: {reputation_name}.\
+The capitalization is incorrect. For further information refer to {XSOAR_CONTEXT_AND_OUTPUTS_URL}"

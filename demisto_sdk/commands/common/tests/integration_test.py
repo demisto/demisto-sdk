@@ -2960,3 +2960,123 @@ class TestisContextChanged:
             structure_validator, json_file_path=integration.yml.path, using_git=use_git
         )
         assert integration_validator.is_line_ends_with_dot() is expected_results
+
+    VALID_COMMAND_OUTPUTS = {
+        "name": "url",
+        "outputs": [
+            {
+                "contextPath": "URL.Data",
+                "description": "test description.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    INVALID_COMMAND_OUTPUTS = {
+        "name": "url",
+        "outputs": [
+            {
+                "contextPath": "Url.Data",
+                "description": "data.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    MISSING_COMMAND_OUTPUTS = {
+        "name": "endpoint",
+        "outputs": [
+            {
+                "contextPath": "Endpoint.Critical",
+                "description": "The percentage of critical findings on the host.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    IS_OUTPUT_FOR_REPUTATION_INPUTS = [
+        (VALID_COMMAND_OUTPUTS, True),
+        (INVALID_COMMAND_OUTPUTS, False),
+        (MISSING_COMMAND_OUTPUTS, False),
+    ]
+
+    @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
+    def test_is_valid_spelling_command_custom_outputs(
+        self, outputs: List[Dict[str, Any]], result: bool
+    ):
+        """
+        Cover IN159 validation which validates the spelling of command output paths for reputation commands.
+        Given
+        The outputs and command_name of a command context.
+            - Case 1: A valid command output, URL is spelled correctly, all DBotScore outputs are present.
+            - Case 2: An invalid command output, URL is not spelled correctly (Url), all DBotScore outputs are present.
+            - Case 3: An invalid command output, Endpoint is missing one of the mandatory output paths (ID, IPAddress, Hostname), all DBotScore outputs are present.
+        When
+        - Calling the is_outputs_for_reputations_commands_valid validation.
+        Then
+            - Case 1: Make sure validation pass.
+            - Case 2: Make sure validation fails.
+            - Case 3: Make sure validation fails.
+        """
+        content = {"script": {"commands": [outputs]}}
+        structure = mock_structure("", content)
+        validator = IntegrationValidator(structure)
+        validator.current_file = content
+        assert validator.is_outputs_for_reputations_commands_valid() == result

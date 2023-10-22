@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
@@ -20,10 +21,15 @@ class CommandParser:
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
+    INTEGRATIONPARSER_MAPPING = {
+        "display_name": "display",
+        "docker_image": "dockerimage"
+    }
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
+        self.add_to_mapping(self.INTEGRATIONPARSER_MAPPING)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_fetch = self.script_info.get("isfetch", False)
@@ -40,11 +46,11 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     @property
     def display_name(self) -> Optional[str]:
-        return self.yml_data.get("display")
+        return get(self.yml_data, self.MAPPING.get("display_name", ""))
 
     @property
     def docker_image(self) -> str:
-        return self.script_info.get("dockerimage", "")
+        return get(self.yml_data, self.MAPPING.get("docker_image", ""))
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

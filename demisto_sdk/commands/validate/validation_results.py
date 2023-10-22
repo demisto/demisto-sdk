@@ -65,10 +65,12 @@ class ValidationResults:
         Writing all the results into a json file located in the given path.
         """
         json_validations_list = [result.format_json_message for result in self.results]
-        json_fixing_list = [fixing_result.format_json_message for fixing_result in self.fixing_results]
+        json_fixing_list = [
+            fixing_result.format_json_message for fixing_result in self.fixing_results
+        ]
         results = {
             "validations": json_validations_list,
-            "fixed validations": json_fixing_list
+            "fixed validations": json_fixing_list,
         }
 
         json_object = json.dumps(results, indent=4)
@@ -79,6 +81,6 @@ class ValidationResults:
 
     def append(self, validation_result: ValidationResult):
         self.results.append(validation_result)
-    
+
     def append_fixing_results(self, fixing_result: FixingResult):
         self.fixing_results.append(fixing_result)

@@ -25,7 +25,8 @@ class ValidationResult(BaseModel):
             "error code": self.error_code,
             "message": self.message,
         }
-        
+
+
 class FixingResult(BaseModel):
     error_code: str
     message: str
@@ -42,7 +43,6 @@ class FixingResult(BaseModel):
             "error code": self.error_code,
             "message": self.message,
         }
-
 
 
 class BaseValidator(ABC, BaseModel):

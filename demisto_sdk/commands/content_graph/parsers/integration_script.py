@@ -14,9 +14,8 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
-    INTEGRATIONSCRIPTPARSER_MAPPING = {
-        "object_id": "commonfields.id"
-    }
+    INTEGRATIONSCRIPTPARSER_MAPPING = {"object_id": "commonfields.id"}
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

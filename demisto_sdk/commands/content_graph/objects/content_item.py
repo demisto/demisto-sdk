@@ -393,7 +393,7 @@ class ContentItem(BaseContent):
         ):
             raise IncompatibleUploadVersionException(self, target_demisto_version)
         self._upload(client, marketplace)
-        
+
     def save(self):
         data = self.original_data
         for key, val in self.MAPPING.items():

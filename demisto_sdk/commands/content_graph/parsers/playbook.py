@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Set
 import networkx
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     build_tasks_graph,
@@ -25,6 +26,9 @@ IGNORED_FIELDS = [
 
 
 class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
+    PLAYBOOKPARSER_MAPPING = {
+        "object_id": "id"
+    }
     def __init__(
         self,
         path: Path,
@@ -38,6 +42,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             is_test_playbook (bool, optional): Whether this is a test playbook or not. Defaults to False.
         """
         super().__init__(path, pack_marketplaces)
+        self.add_to_mapping(self.PLAYBOOKPARSER_MAPPING)
         self.is_test: bool = is_test_playbook
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()
@@ -45,7 +50,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.yml_data.get("id")
+        return get(self.yml_data, self.MAPPING.get("object_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

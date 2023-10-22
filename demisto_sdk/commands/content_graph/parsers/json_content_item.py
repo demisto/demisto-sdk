@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_files_in_dir, get_json
+from demisto_sdk.commands.common.tools import get, get_files_in_dir, get_json
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -15,10 +15,19 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 
 class JSONContentItemParser(ContentItemParser):
+    JSONCONTENTITEMPARSER_MAPPING = {
+        "name": "name",
+        "deprecated": "deprecated",
+        "object_id": "id",
+        "description": "description",
+        "fromversion": "fromVersion",
+        "toVersion": "toVersion"
+    }
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
+        self.add_to_mapping(self.JSONCONTENTITEMPARSER_MAPPING)
         self.json_data: Dict[str, Any] = self.get_json()
         self.original_json_data: Dict[str, Any] = self.get_json()
         if not isinstance(self.json_data, dict):
@@ -31,11 +40,11 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.json_data.get("id")
+        return get(self.json_data, self.MAPPING.get("object_id", ""))
 
     @property
     def name(self) -> Optional[str]:
-        return self.json_data.get("name")
+        return get(self.json_data, self.MAPPING.get("name", ""))
 
     @property
     def display_name(self) -> Optional[str]:
@@ -43,19 +52,19 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def deprecated(self) -> bool:
-        return self.json_data.get("deprecated", False)
+        return get(self.json_data, self.MAPPING.get("name", ""), False)
 
     @property
     def description(self) -> Optional[str]:
-        return self.json_data.get("description") or ""
+        return get(self.json_data, self.MAPPING.get("description", ""), "")
 
     @property
     def fromversion(self) -> str:
-        return self.json_data.get("fromVersion") or DEFAULT_CONTENT_ITEM_FROM_VERSION
+        return get(self.json_data, self.MAPPING.get("fromversion", ""), DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def toversion(self) -> str:
-        return self.json_data.get("toVersion") or DEFAULT_CONTENT_ITEM_TO_VERSION
+        return get(self.json_data, self.MAPPING.get("toversion", ""), DEFAULT_CONTENT_ITEM_TO_VERSION)
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:

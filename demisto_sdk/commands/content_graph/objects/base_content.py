@@ -255,6 +255,7 @@ class BaseContent(BaseContentModel):
             )
             return None
 
+
 class UnknownContent(BaseContent):
     """A model for non-existing content items used by existing content items."""
 

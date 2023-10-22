@@ -18,8 +18,13 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 class YAMLContentItemParser(ContentItemParser):
     YAMLCONTENTPARSER_MAPPING = {
-        "name": "name"
+        "name": "name",
+        "deprecated": "deprecated",
+        "description": "description",
+        "fromversion": "fromversion",
+        "toversion": "toversion"
     }
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
@@ -45,11 +50,11 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def deprecated(self) -> bool:
-        return self.yml_data.get("deprecated", False)
+        return get(self.yml_data, self.MAPPING.get("deprecated", ""), False)
 
     @property
     def description(self) -> Optional[str]:
-        description = self.yml_data.get("description") or ""
+        description = get(self.yml_data, self.MAPPING.get("description", ""), "")
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
         description = re.sub(
@@ -59,11 +64,11 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return self.yml_data.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION
+        return get(self.yml_data, self.MAPPING.get("fromversion", ""), DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def toversion(self) -> str:
-        return self.yml_data.get("toversion") or DEFAULT_CONTENT_ITEM_TO_VERSION
+        return get(self.yml_data, self.MAPPING.get("toversion", ""), DEFAULT_CONTENT_ITEM_TO_VERSION)
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:

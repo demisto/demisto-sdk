@@ -1,6 +1,5 @@
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -23,19 +22,43 @@ class IDNameValidator(BaseValidator):
     fixing_message = "Changing name to be equal to id ({0})."
     is_auto_fixable = True
     related_field = "name"
-    content_types = (Integration, Classifier, Dashboard, IncidentType, Layout, Mapper, Playbook, Script, Wizard)
+    content_types = (
+        Integration,
+        Classifier,
+        Dashboard,
+        IncidentType,
+        Layout,
+        Mapper,
+        Playbook,
+        Script,
+        Wizard,
+    )
 
     @classmethod
     def is_valid(cls, content_item: BaseContent) -> ValidationResult:
         assert self.should_run()
         if content_item.object_id != content_item.name:
             return ValidationResult(
-                error_code=cls.error_code, is_valid=False, message=cls.error_message.format(content_item.object_id, content_item.name), file_path=content_item.path
+                error_code=cls.error_code,
+                is_valid=False,
+                message=cls.error_message.format(
+                    content_item.object_id, content_item.name
+                ),
+                file_path=content_item.path,
             )
-        return ValidationResult(error_code=cls.error_code, is_valid=True, message="", file_path=content_item.path)
+        return ValidationResult(
+            error_code=cls.error_code,
+            is_valid=True,
+            message="",
+            file_path=content_item.path,
+        )
 
     @classmethod
     def fix(cls, content_item: BaseContent) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()
-        return FixingResult(error_code=cls.error_code, message=cls.fixing_message.format(content_item.object_id), file_path=content_item.path)
+        return FixingResult(
+            error_code=cls.error_code,
+            message=cls.fixing_message.format(content_item.object_id),
+            file_path=content_item.path,
+        )

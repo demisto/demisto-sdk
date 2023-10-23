@@ -9,7 +9,6 @@ from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import (
     ValidationResults,
 )
-# from demisto_sdk.commands.validate.validators.base_validator import *
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
 )

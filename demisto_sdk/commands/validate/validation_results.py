@@ -57,6 +57,8 @@ class ValidationResults:
                     exit_code = 1
         for fixing_result in self.fixing_results:
             logger.warning(f"[yellow]{fixing_result.format_readable_message}[/yellow]")
+        if not exit_code:
+            logger.warning("[green]All validations passed.[/green]")
         return exit_code
 
     def write_validation_results(self):

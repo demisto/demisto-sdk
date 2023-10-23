@@ -97,7 +97,6 @@ def mock_pack(
         contentItems=[],
         excluded_dependencies=[],
         deprecated=False,
-        ignored_errors = {}
     )
     if repository:
         repository.packs.append(pack)

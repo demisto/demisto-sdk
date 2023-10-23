@@ -105,7 +105,7 @@ def merge_coverage_report():
 def unit_test_runner(
     file_paths: List[Path], verbose: bool = False, mount_files: bool = True
 ) -> int:
-    logger.warning("\n\n\nThis is a test\n\n\n")
+    logger.info("\n\n\nThis is a test\n\n\n")
     docker_client = docker_helper.init_global_docker_client()
     docker_base = docker_helper.get_docker()
     exit_code = 0

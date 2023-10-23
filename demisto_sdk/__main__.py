@@ -3526,17 +3526,28 @@ def pre_commit(
 @click.option(
     "-v", "--verbose", is_flag=True, default=False, help="Verbose output of unit tests"
 )
+@click.option(
+    "--mount_files/--no_mount_files",
+    is_flag=True,
+    default=True,
+    help="Mount local files in the Docker container",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
 @logging_setup_decorator
 def run_unit_tests(
-    ctx, input: str, file_paths: Tuple[str, ...], verbose: bool, **kwargs
+    ctx,
+    input: str,
+    file_paths: Tuple[str, ...],
+    verbose: bool,
+    mount_files: bool,
+    **kwargs,
 ):
     if input:
         file_paths = tuple(input.split(","))
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
 
-    sys.exit(unit_test_runner(file_paths, verbose))
+    sys.exit(unit_test_runner(file_paths, verbose, mount_files))
 
 
 @main.result_callback()

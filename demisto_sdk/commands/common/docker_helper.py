@@ -225,6 +225,7 @@ class DockerBase:
         install_packages: Optional[List[str]] = None,
         push: bool = False,
         log_prompt: str = "",
+        mount_files: bool = True,
     ) -> docker.models.images.Image:
         """
         this function is used to create a new image of devtestsdemisto docker images.
@@ -249,6 +250,7 @@ class DockerBase:
             image=base_image,
             files_to_push=self.installation_files(container_type),
             command="/install.sh",
+            mount_files=mount_files,
         )
         container.start()
         if container.wait().get("StatusCode") != 0:
@@ -279,6 +281,7 @@ class DockerBase:
         additional_requirements: Optional[List[str]] = None,
         push: bool = False,
         log_prompt: str = "",
+        mount_files: bool = True,
     ) -> Tuple[str, str]:
         """This will generate the test image for the given base image.
 
@@ -333,6 +336,7 @@ class DockerBase:
                     container_type,
                     pip_requirements,
                     push=push,
+                    mount_files=mount_files,
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)

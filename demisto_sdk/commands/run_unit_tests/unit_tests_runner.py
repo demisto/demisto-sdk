@@ -102,7 +102,9 @@ def merge_coverage_report():
     logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
 
 
-def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
+def unit_test_runner(
+    file_paths: List[Path], verbose: bool = False, mount_files: bool = True
+) -> int:
     docker_client = docker_helper.init_global_docker_client()
     docker_base = docker_helper.get_docker()
     exit_code = 0
@@ -139,6 +141,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     docker_image,
                     integration_script.type,
                     log_prompt=f"Unit test {integration_script.name}",
+                    mount_files=mount_files,
                 )
                 if errors:
                     raise RuntimeError(f"Creating docker failed due to {errors}")
@@ -170,7 +173,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     command=PWSH_COMMAND
                     if integration_script.type == "powershell"
                     else [PYTEST_COMMAND],
-                    user=f"{os.getuid()}:{os.getgid()}",
+                    user=f"{os.getuid()}:4000",
                     working_dir=working_dir,
                     detach=True,
                 )

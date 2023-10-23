@@ -11,6 +11,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
+from demisto_sdk.commands.pre_commit.hooks.coverage_analyze import CoverageAnalyzeHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     PYTHON2_SUPPORTED_HOOKS,
     GitUtil,
@@ -129,6 +130,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
+        tests_we_should_skip.add("coverage-analyze")
     for m in mock_subprocess.call_args_list:
         assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
 

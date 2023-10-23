@@ -1,7 +1,6 @@
 import functools
 import os
 from collections import defaultdict
-from copy import deepcopy
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -101,18 +100,56 @@ class GenericDocker(Hook):
 
         all_hooks = []
         tag_to_files = docker_tag_to_python_files(
-            files_to_run, self.base_hook.get("docker_image", "from-yml")
+            files_to_run, self._get_property("docker_image", "from-yml")
         )
         for image, files in tag_to_files.items():
             dev_image = devtest_image(image)
-            new_hook = deepcopy(self.base_hook)
-            new_hook["id"] = f"{self.base_hook['id']}-{image}"
-            new_hook["name"] = f"{self.base_hook['name']}-{image}"
-            new_hook["language"] = "docker_image"
-            new_hook.pop("docker_image", None)
-            new_hook[
-                "entry"
-            ] = f'--entrypoint {self.base_hook["entry"]} {get_environment_flag()} {dev_image}'
+            new_hook = {
+                "id": f"{self._get_property('id')}-{image}",
+                "name": f"{self._get_property('name')}-{image}",
+                "language": "docker_image",
+                "entry": f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}',
+            }
+            self._set_properties(new_hook, to_delete=[])
             if self.set_files_on_hook(new_hook, files):
                 all_hooks.append(new_hook)
+
         self.hooks.extend(all_hooks)
+
+    def _set_properties(self, hook, to_delete=()):
+        """
+        Will alter the new hook, setting the properties that don't need unique behavior
+        For any propery x, if x isn't already defined, x will be set according to the mode provided.
+
+        For example, given an input
+
+        args: 123
+        args:nightly 456
+
+        if the mode provided is nightly, args will be set to 456. Otherwise, the default (key with no :) will be taken
+
+        Args:
+            hook: the hook to modify
+            to_delete: keys on the demisto config that we dont want to pass to precommit
+
+        """
+        for full_key, val in self.base_hook.items():
+            key = full_key.split(":")[0]
+            if hook.get(key) or key in to_delete:
+                continue
+            if prop := self._get_property(key):
+                hook[key] = prop
+
+    def _get_property(self, name, default=None):
+        """
+        Will get the given property from the base hook, taking mode into account
+        Args:
+            name: the key to get from the config
+            default: the default value to return
+
+        Returns: The value from the base hook
+        """
+        ret = None
+        if self.mode:
+            ret = self.base_hook.get(f"{name}:{self.mode.value}")
+        return ret or self.base_hook.get(name, default)

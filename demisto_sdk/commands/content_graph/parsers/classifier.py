@@ -14,7 +14,6 @@ from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
 
 class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIER):
-    CLASSIFIERPARSER_MAPPING = {"name": ["name", "brandName"]}
 
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
@@ -28,17 +27,20 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             IncorrectParserException: When detecting this content item is a mapper.
         """
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.CLASSIFIERPARSER_MAPPING)
         self.type = self.json_data.get("type")
         if self.type != "classification":
             raise IncorrectParserException(correct_parser=MapperParser)
 
         self.definition_id = self.json_data.get("definitionId")
         self.connect_to_dependencies()
+    
+    @property
+    def mapping(self):
+        return super().mapping | {"name": ["name", "brandName"]}
 
     @property
     def name(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("name", ""))
+        return get(self.json_data, self.mapping.get("name", ""))
 
     def get_filters_and_transformers_from_complex_value(
         self, complex_value: dict

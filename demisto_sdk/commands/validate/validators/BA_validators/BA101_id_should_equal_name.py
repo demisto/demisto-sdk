@@ -36,7 +36,6 @@ class IDNameValidator(BaseValidator):
 
     @classmethod
     def is_valid(cls, content_item: BaseContent) -> ValidationResult:
-        assert self.should_run()
         if content_item.object_id != content_item.name:
             return ValidationResult(
                 error_code=cls.error_code,

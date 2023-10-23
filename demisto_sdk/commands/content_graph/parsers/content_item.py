@@ -73,9 +73,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         relationships (Relationships): The relationships collections of the content item.
     """
 
-    MAPPING: dict = {}
     content_type_to_parser: Dict[ContentType, Type["ContentItemParser"]] = {}
-
     def __init__(
         self,
         path: Path,
@@ -85,9 +83,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         super().__init__(path)
         self.relationships: Relationships = Relationships()
 
-    @classmethod
-    def add_to_mapping(self, mapping):
-        self.MAPPING.update(mapping)
+    @property
+    def mapping(self):
+        return {}
 
     @staticmethod
     def from_path(

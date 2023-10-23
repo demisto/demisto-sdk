@@ -12,21 +12,23 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 class IndicatorTypeParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_TYPE
 ):
-    INDICATORTYPEPARSER_MAPPING = {"name": "details", "description": "details"}
 
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.INDICATORTYPEPARSER_MAPPING)
         self.connect_to_dependencies()
         self.regex = self.json_data.get("regex")
         self.reputation_script_name = self.json_data.get("reputationScriptName") or ""
         self.enhancement_script_names = self.json_data.get("enhancementScriptNames")
+    
+    @property
+    def mapping(self):
+        return super().mapping | {"name": "details", "description": "details"}
 
     @property
     def name(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("name", ""))
+        return get(self.json_data, self.mapping.get("name", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
@@ -39,7 +41,7 @@ class IndicatorTypeParser(
 
     @property
     def description(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("description", ""))
+        return get(self.json_data, self.mapping.get("description", ""))
 
     def connect_to_dependencies(self) -> None:
         """Collects scripts and the reputation command used as optional dependencies,

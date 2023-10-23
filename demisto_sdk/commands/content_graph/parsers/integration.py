@@ -21,16 +21,10 @@ class CommandParser:
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
-    INTEGRATIONPARSER_MAPPING = {
-        "display_name": "display",
-        "docker_image": "dockerimage",
-    }
-
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.INTEGRATIONPARSER_MAPPING)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_fetch = self.script_info.get("isfetch", False)
@@ -44,14 +38,21 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_tests()
+    
+    @property
+    def mapping(self):
+        return super().mapping | {
+        "display_name": "display",
+        "docker_image": "script.dockerimage",
+    }
 
     @property
     def display_name(self) -> Optional[str]:
-        return get(self.yml_data, self.MAPPING.get("display_name", ""))
+        return get(self.yml_data, self.mapping.get("display_name", ""))
 
     @property
     def docker_image(self) -> str:
-        return get(self.yml_data, self.MAPPING.get("docker_image", ""))
+        return get(self.yml_data, self.mapping.get("docker_image", ""))
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

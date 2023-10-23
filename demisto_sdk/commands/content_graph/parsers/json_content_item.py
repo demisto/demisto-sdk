@@ -15,20 +15,12 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 
 class JSONContentItemParser(ContentItemParser):
-    JSONCONTENTITEMPARSER_MAPPING = {
-        "name": "name",
-        "deprecated": "deprecated",
-        "object_id": "id",
-        "description": "description",
-        "fromversion": "fromVersion",
-        "toVersion": "toVersion",
-    }
+
 
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.JSONCONTENTITEMPARSER_MAPPING)
         self.json_data: Dict[str, Any] = self.get_json()
         self.original_json_data: Dict[str, Any] = self.get_json()
         if not isinstance(self.json_data, dict):
@@ -38,14 +30,25 @@ class JSONContentItemParser(ContentItemParser):
 
         if self.should_skip_parsing():
             raise NotAContentItemException
+    
+    @property
+    def mapping(self):
+        return super().mapping | {
+        "name": "name",
+        "deprecated": "deprecated",
+        "object_id": "id",
+        "description": "description",
+        "fromversion": "fromVersion",
+        "toVersion": "toVersion",
+    }
 
     @property
     def object_id(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("object_id", ""))
+        return get(self.json_data, self.mapping.get("object_id", ""))
 
     @property
     def name(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("name", ""))
+        return get(self.json_data, self.mapping.get("name", ""))
 
     @property
     def display_name(self) -> Optional[str]:
@@ -53,17 +56,17 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def deprecated(self) -> bool:
-        return get(self.json_data, self.MAPPING.get("name", ""), False)
+        return get(self.json_data, self.mapping.get("name", ""), False)
 
     @property
     def description(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("description", ""), "")
+        return get(self.json_data, self.mapping.get("description", ""), "")
 
     @property
     def fromversion(self) -> str:
         return get(
             self.json_data,
-            self.MAPPING.get("fromversion", ""),
+            self.mapping.get("fromversion", ""),
             DEFAULT_CONTENT_ITEM_FROM_VERSION,
         )
 
@@ -71,7 +74,7 @@ class JSONContentItemParser(ContentItemParser):
     def toversion(self) -> str:
         return get(
             self.json_data,
-            self.MAPPING.get("toversion", ""),
+            self.mapping.get("toversion", ""),
             DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 

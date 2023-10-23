@@ -10,30 +10,32 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 
 class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RULE):
-    LAYOUTRULEPARSER_MAPPING = {
-        "object_id": "rule_id",
-        "name": "rule_name",
-        "layout_id": "layout_id",
-    }
 
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.LAYOUTRULEPARSER_MAPPING)
         self.connect_to_dependencies()
+    
+    @property
+    def mapping(self):
+        return super().mapping | {
+        "object_id": "rule_id",
+        "name": "rule_name",
+        "layout_id": "layout_id",
+    }
 
     @property
     def object_id(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("object_id", ""))
+        return get(self.json_data, self.mapping.get("object_id", ""))
 
     @property
     def name(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("name", ""))
+        return get(self.json_data, self.mapping.get("name", ""))
 
     @property
     def layout_id(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("layout_id", ""))
+        return get(self.json_data, self.mapping.get("layout_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

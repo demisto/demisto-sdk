@@ -46,7 +46,7 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer 
 
 
 class ContentItem(BaseContent):
-    MAPPING: ClassVar[dict] = Field({}, exclude=True)
+    mapping: dict = Field({}, exclude=True)
     path: Path
     marketplaces: List[MarketplaceVersions]
     name: str
@@ -396,7 +396,7 @@ class ContentItem(BaseContent):
 
     def save(self):
         data = self.original_data
-        for key, val in self.MAPPING.items():
+        for key, val in self.mapping.items():
             attr = getattr(self, key)
             set_val(data, val, attr)
         with open(self.path, "w") as f:

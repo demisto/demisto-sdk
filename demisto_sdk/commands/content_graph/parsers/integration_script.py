@@ -14,20 +14,22 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
-    INTEGRATIONSCRIPTPARSER_MAPPING = {"object_id": "commonfields.id"}
 
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.INTEGRATIONSCRIPTPARSER_MAPPING)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.connect_to_api_modules()
+        
+    @property
+    def mapping(self):
+        return super().mapping | {"object_id": "commonfields.id"}
 
     @property
     def object_id(self) -> Optional[str]:
-        return get(self.yml_data, self.MAPPING.get("object_id", ""))
+        return get(self.yml_data, self.mapping.get("object_id", ""))
 
     @property
     @abstractmethod

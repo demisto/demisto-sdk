@@ -26,8 +26,6 @@ IGNORED_FIELDS = [
 
 
 class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
-    PLAYBOOKPARSER_MAPPING = {"object_id": "id"}
-
     def __init__(
         self,
         path: Path,
@@ -41,15 +39,18 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             is_test_playbook (bool, optional): Whether this is a test playbook or not. Defaults to False.
         """
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.PLAYBOOKPARSER_MAPPING)
         self.is_test: bool = is_test_playbook
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()
         self.connect_to_tests()
+    
+    @property
+    def mapping(self):
+        return super().mapping | {"object_id": "id"}
 
     @property
     def object_id(self) -> Optional[str]:
-        return get(self.yml_data, self.MAPPING.get("object_id", ""))
+        return get(self.yml_data, self.mapping.get("object_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

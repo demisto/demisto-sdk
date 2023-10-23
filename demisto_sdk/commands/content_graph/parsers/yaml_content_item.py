@@ -17,19 +17,10 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 
 class YAMLContentItemParser(ContentItemParser):
-    YAMLCONTENTPARSER_MAPPING = {
-        "name": "name",
-        "deprecated": "deprecated",
-        "description": "description",
-        "fromversion": "fromversion",
-        "toversion": "toversion",
-    }
-
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.YAMLCONTENTPARSER_MAPPING)
         self.yml_data: Dict[str, Any] = self.get_yaml()
 
         if not isinstance(self.yml_data, dict):
@@ -41,8 +32,18 @@ class YAMLContentItemParser(ContentItemParser):
             raise NotAContentItemException
 
     @property
+    def mapping(self):
+        return super().mapping | {
+        "name": "name",
+        "deprecated": "deprecated",
+        "description": "description",
+        "fromversion": "fromversion",
+        "toversion": "toversion",
+    }
+
+    @property
     def name(self) -> Optional[str]:
-        return get(self.yml_data, self.MAPPING.get("name", ""))
+        return get(self.yml_data, self.mapping.get("name", ""))
 
     @property
     def display_name(self) -> Optional[str]:
@@ -50,11 +51,11 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def deprecated(self) -> bool:
-        return get(self.yml_data, self.MAPPING.get("deprecated", ""), False)
+        return get(self.yml_data, self.mapping.get("deprecated", ""), False)
 
     @property
     def description(self) -> Optional[str]:
-        description = get(self.yml_data, self.MAPPING.get("description", ""), "")
+        description = get(self.yml_data, self.mapping.get("description", ""), "")
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
         description = re.sub(
@@ -66,7 +67,7 @@ class YAMLContentItemParser(ContentItemParser):
     def fromversion(self) -> str:
         return get(
             self.yml_data,
-            self.MAPPING.get("fromversion", ""),
+            self.mapping.get("fromversion", ""),
             DEFAULT_CONTENT_ITEM_FROM_VERSION,
         )
 
@@ -74,7 +75,7 @@ class YAMLContentItemParser(ContentItemParser):
     def toversion(self) -> str:
         return get(
             self.yml_data,
-            self.MAPPING.get("toversion", ""),
+            self.mapping.get("toversion", ""),
             DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 

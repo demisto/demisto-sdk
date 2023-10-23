@@ -12,22 +12,23 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 class IndicatorFieldParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_FIELD
 ):
-    INDICATORFIELDPARSER_MAPPING = {"object_id": "cliName"}
-
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.INDICATORFIELDPARSER_MAPPING)
         self.cli_name = self.json_data.get("cliName")
         self.type = self.json_data.get("type")
         self.associated_to_all = self.json_data.get("associatedToAll")
 
         self.connect_to_dependencies()
+    
+    @property
+    def mapping(self):
+        return super().mapping | {"object_id": "cliName"}
 
     @property
     def object_id(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("object_id", ""))
+        return get(self.json_data, self.mapping.get("object_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

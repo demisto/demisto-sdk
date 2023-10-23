@@ -10,14 +10,15 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 
 class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
-    JOBPARSER_MAPPING = {"description": "details"}
-
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.add_to_mapping(self.JOBPARSER_MAPPING)
         self.connect_to_dependencies()
+    
+    @property
+    def mapping(self):
+        return super().mapping | {"description": "details"}
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
@@ -29,7 +30,7 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
 
     @property
     def description(self) -> Optional[str]:
-        return get(self.json_data, self.MAPPING.get("description", ""))
+        return get(self.json_data, self.mapping.get("description", ""))
 
     def connect_to_dependencies(self) -> None:
         if playbook := self.json_data.get("selectedFeeds"):

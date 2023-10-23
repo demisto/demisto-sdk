@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Set, Type
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -9,6 +9,7 @@ from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import (
     ValidationResults,
 )
+# from demisto_sdk.commands.validate.validators.base_validator import *
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
 )
@@ -90,7 +91,7 @@ class ValidateManager:
 
         return self.validation_results.post_results()
 
-    def filter_validators(self) -> List[BaseValidator]:
+    def filter_validators(self) -> List[Type[BaseValidator]]:
         """
         Filter the validations by their error code
         according to the validations supported by the given flags according to the config file.
@@ -99,8 +100,8 @@ class ValidateManager:
             List[BaseValidator]: the list of the filtered validators
         """
         # gather validator from validate package
-        validators: List[BaseValidator] = BaseValidator.__subclasses__()
-        filtered_validators: List[BaseValidator] = []
+        validators: List[Type[BaseValidator]] = BaseValidator.__subclasses__()
+        filtered_validators: List[Type[BaseValidator]] = []
         for validator in validators:
             run_validation = not self.validations_to_run
             if not run_validation:

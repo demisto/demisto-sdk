@@ -92,9 +92,12 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == relative_paths
 
-    python_version_to_files, _ = group_by_python_version(files_to_run)
+    git_util = mocker.MagicMock()
+    python_version_to_files, _ = group_by_python_version(
+        files_to_run, git_util=git_util
+    )
     pre_commit = pre_commit_command.PreCommitRunner(
-        None, None, None, python_version_to_files, ""
+        None, None, None, python_version_to_files, "", git_util
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)
@@ -309,7 +312,7 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
     pre_commit_runner = pre_commit_command.PreCommitRunner(
-        None, None, None, python_version_to_files, ""
+        None, None, None, python_version_to_files, "", mocker.MagicMock()
     )
 
     pre_commit_runner.exclude_python2_of_non_supported_hooks()

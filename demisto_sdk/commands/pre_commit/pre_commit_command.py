@@ -19,7 +19,6 @@ from demisto_sdk.commands.common.constants import (
     PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -61,6 +60,7 @@ PYTHON2_SUPPORTED_HOOKS = {
     "validate",
     "format",
 }
+
 
 @dataclass
 class PreCommitRunner:
@@ -164,9 +164,11 @@ class PreCommitRunner:
             self.files_to_run
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
-        [GenericDocker(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
-         for hook_id, hook in hooks.items() if hook_id.endswith('in-docker')]
-
+        [
+            GenericDocker(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
+            for hook_id, hook in hooks.items()
+            if hook_id.endswith("in-docker")
+        ]
 
     def run(
         self,
@@ -321,8 +323,6 @@ def group_by_python_version(
                 integration_script.path.relative_to(CONTENT_PATH)
             )
             continue
-        python_version = get_python_version(integration_script.docker_image)
-        python_version_string = f"{python_version.major}.{python_version.minor}"
         code_files_to_include = code_files_to_include_for_path(
             integration_script, git_util
         )
@@ -331,9 +331,7 @@ def group_by_python_version(
         ].update(
             integrations_scripts_mapping[code_file_path],
             {integration_script.path.relative_to(CONTENT_PATH)},
-            integrations_scripts_mapping[code_file_path]
-            | code_files_to_include
-            | {integration_script.path}  # add the python including files here
+            code_files_to_include,
         )
 
     if infra_files:
@@ -347,7 +345,11 @@ def group_by_python_version(
 
 
 def code_files_to_include_for_path(content: BaseContent, git_util: GitUtil) -> set:
-    parent = content.path.parent
+    """
+    If a change was made to a yml file
+    We need to run the hooks on the python and powershell files
+    """
+    parent = content.path.parent  # type: ignore
     return {
         path.relative_to(CONTENT_PATH)
         for path in {
@@ -399,7 +401,9 @@ def pre_commit_manager(
         logger.info("No arguments were given, running on staged files and git changes.")
         git_diff = True
     git_util = GitUtil()
-    files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files, git_util)
+    files_to_run = preprocess_files(
+        input_files, staged_only, git_diff, all_files, git_util
+    )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
         return None
@@ -413,7 +417,9 @@ def pre_commit_manager(
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files, exclude_files = group_by_python_version(files_to_run, git_util)
+    python_version_to_files, exclude_files = group_by_python_version(
+        files_to_run, git_util
+    )
     pre_commit_runner = PreCommitRunner(
         bool(input_files), all_files, mode, python_version_to_files, sdk_ref, git_util
     )

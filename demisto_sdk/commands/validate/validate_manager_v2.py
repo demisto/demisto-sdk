@@ -99,8 +99,8 @@ class ValidateManager:
             List[BaseValidator]: the list of the filtered validators
         """
         # gather validator from validate package
-        validators = BaseValidator.__subclasses__()
-        filtered_validators = []
+        validators: List[BaseValidator] = BaseValidator.__subclasses__()
+        filtered_validators: List[BaseValidator] = []
         for validator in validators:
             run_validation = not self.validations_to_run
             if not run_validation:

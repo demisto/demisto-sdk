@@ -1,5 +1,6 @@
 import functools
 import os
+import time
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Optional
@@ -76,7 +77,12 @@ def docker_tag_to_python_files(files_to_run: Iterable, docker_image_flag) -> dic
 
 
 def docker_image_for_file(yml: dict) -> str:
-    return yml.get("dockerimage") or yml.get("script", {}).get("dockerimage", "")
+    if image := yml.get("dockerimage"):
+        return image
+    script = yml.get("script", {})
+    if isinstance(script, dict):
+        return script.get("dockerimage", "")
+    return ""
 
 
 @functools.lru_cache
@@ -99,9 +105,13 @@ class GenericDocker(Hook):
     def prepare_hook(self, files_to_run: Iterable):
 
         all_hooks = []
+        start_time = time.time()
         tag_to_files = docker_tag_to_python_files(
-            files_to_run, self._get_property("docker_image", "from-yml")
+            self.files_to_matching_hook_config(files_to_run),
+            self._get_property("docker_image", "from-yml"),
         )
+        end_time = time.time()
+        logger.info(f"Elapsed time: {end_time - start_time} seconds")
         for image, files in tag_to_files.items():
             dev_image = devtest_image(image)
             new_hook = {
@@ -110,7 +120,7 @@ class GenericDocker(Hook):
                 "language": "docker_image",
                 "entry": f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}',
             }
-            self._set_properties(new_hook, to_delete=[])
+            self._set_properties(new_hook, to_delete=["docker_image"])
             if self.set_files_on_hook(new_hook, files):
                 all_hooks.append(new_hook)
 
@@ -133,7 +143,7 @@ class GenericDocker(Hook):
             to_delete: keys on the demisto config that we dont want to pass to precommit
 
         """
-        for full_key, val in self.base_hook.items():
+        for full_key in self.base_hook:
             key = full_key.split(":")[0]
             if hook.get(key) or key in to_delete:
                 continue

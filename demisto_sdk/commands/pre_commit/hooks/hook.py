@@ -10,12 +10,12 @@ from demisto_sdk.commands.common.logger import logger
 
 class Hook(ABC):
     def __init__(
-            self,
-            hook: dict,
-            repo: dict,
-            mode: Optional[PreCommitModes] = None,
-            all_files: bool = False,
-            input_mode: bool = False,
+        self,
+        hook: dict,
+        repo: dict,
+        mode: Optional[PreCommitModes] = None,
+        all_files: bool = False,
+        input_mode: bool = False,
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
@@ -45,26 +45,32 @@ class Hook(ABC):
         Returns:
             The number of files set
         """
-        include_pattern = None
-        exclude_pattern = None
-        try:
-
-            if files_reg := hook.get("files"):
-                include_pattern = re.compile(files_reg)
-            if exclude_reg := hook.get("exclude"):
-                exclude_pattern = re.compile(exclude_reg)
-        except re.error:
-            logger.info('regex not set correctly on hook. Ignoring')
-
-        files_to_run_on_hook = {
-            file
-            for file in [str(file) for file in files]  # todo had a check that file is git file. needed?
-            if (not include_pattern or re.search(include_pattern, file))  # include all if not defined
-               and (not exclude_pattern or not re.search(exclude_pattern, file))}  # only exclude if defined
+        files_to_run_on_hook = self.files_to_matching_hook_config(files)
         hook["files"] = join_files(files_to_run_on_hook)
 
         # hook.pop("exclude", None)
         return len(files_to_run_on_hook)
+
+    def files_to_matching_hook_config(self, files):
+        include_pattern = None
+        exclude_pattern = None
+        try:
+
+            if files_reg := self.base_hook.get("files"):
+                include_pattern = re.compile(files_reg)
+            if exclude_reg := self.base_hook.get("exclude"):
+                exclude_pattern = re.compile(exclude_reg)
+        except re.error:
+            logger.info("regex not set correctly on hook. Ignoring")
+
+        return {
+            file
+            for file in files
+            if (
+                not include_pattern or re.search(include_pattern, str(file))
+            )  # include all if not defined
+            and (not exclude_pattern or not re.search(exclude_pattern, str(file)))
+        }  # only exclude if defined
 
 
 def join_files(files: Set[Path], separator: str = "|") -> str:

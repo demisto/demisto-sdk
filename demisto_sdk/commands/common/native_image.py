@@ -132,6 +132,7 @@ class ScriptIntegrationSupportedNativeImages:
 
     NATIVE_DEV = "native:dev"
     NATIVE_CANDIDATE = "native:candidate"
+    ALL = "all"
 
     def __init__(
         self,
@@ -158,19 +159,33 @@ class ScriptIntegrationSupportedNativeImages:
             or []
         )
 
-    def get_supported_native_docker_tags(self, native_image_tags: set) -> set:
+    def get_supported_native_docker_tags(
+        self, native_image_tags: set, include_candidate=False
+    ) -> set:
         tags = self.get_supported_native_image_versions(only_production_tags=False)
 
         tags_to_return = {
             final_tag
             for named_tag, final_tag in self.native_image_config.flags_versions_mapping.items()
-            if (named_tag in native_image_tags or "all" in native_image_tags)
+            if (self.tag_in_cli_arg(named_tag, native_image_tags))
+            and (
+                named_tag != self.NATIVE_CANDIDATE or include_candidate
+            )  # exclude candidate
             and final_tag in tags
         }
         return {
-            self.native_image_config.get_native_image_reference(tag, include_dev=True)
-            for tag in tags_to_return
+            i
+            for i in {
+                self.native_image_config.get_native_image_reference(
+                    tag, include_dev=True
+                )
+                for tag in tags_to_return
+            }
+            if i
         }
+
+    def tag_in_cli_arg(self, named_tag, native_image_tags):
+        return named_tag in native_image_tags or self.ALL in native_image_tags
 
     def __get_ignored_native_images(self):
         """

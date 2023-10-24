@@ -38,6 +38,7 @@
   entry: demisto-sdk coverage-analyze
   description: Running demisto-sdk coverage-analyze and showing a coverage report.
   language: python
+  pass_filenames: false
   args: ["-i", ".coverage"]
 
 - id: no-implicit-optional

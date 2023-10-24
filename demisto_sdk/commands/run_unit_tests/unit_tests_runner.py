@@ -99,7 +99,7 @@ def merge_coverage_report():
         logger.warning("No coverage files found, skipping coverage report.")
         return
     fixed_files = [file for file in files if fix_coverage_report_path(Path(file))]
-    cov.combine(fixed_files, keep=True)
+    cov.combine(fixed_files)
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
     logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
 

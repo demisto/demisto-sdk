@@ -326,3 +326,19 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
             assert hook["hook"].get("exclude") is None
         else:
             assert "file1.py" in hook["hook"]["exclude"]
+
+
+def test_coverage_analyze_hook():
+    """
+    Testing coverage-analyze hook created successfully
+    """
+    coverage_analyze_hook = create_hook({"args": []})
+
+    kwargs = {'mode': None, 'all_files': False, 'input_mode': True}
+    expected_hook_args = ['--previous-coverage-report-url',
+                          'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json']
+    CoverageAnalyzeHook(**coverage_analyze_hook).prepare_hook(**kwargs)
+
+    hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
+
+    assert expected_hook_args == hook_args

@@ -333,7 +333,7 @@ class TestHelperMethods:
         downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
         custom_content_data = downloader.download_custom_content()
         custom_content_objects = downloader.parse_custom_content_data(
-            custom_content_data=custom_content_data
+            file_name_to_content_item_data=custom_content_data
         )
 
         for item in custom_content_objects.values():
@@ -456,7 +456,7 @@ class TestFlags:
 
         custom_content_data = downloader.download_custom_content()
         custom_content_objects = downloader.parse_custom_content_data(
-            custom_content_data=custom_content_data
+            file_name_to_content_item_data=custom_content_data
         )
         filtered_custom_content_objects = downloader.filter_custom_content(
             custom_content_objects=custom_content_objects
@@ -1142,7 +1142,7 @@ def test_uuids_replacement_in_content_items(mocker):
 
     all_custom_content_data = downloader.download_custom_content()
     all_custom_content_objects = downloader.parse_custom_content_data(
-        custom_content_data=all_custom_content_data
+        file_name_to_content_item_data=all_custom_content_data
     )
 
     uuid_mapping = downloader.create_uuid_to_name_mapping(

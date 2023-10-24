@@ -103,7 +103,7 @@ KEEP_EXISTING_YAML_FIELDS = [
 
 class Downloader:
     """
-    A class for downloading content from an XSOAR server locally
+    A class for downloading content from an XSOAR / XSIAM server.
 
     Attributes:
         output_pack_path (str): A path to a pack to save the downloaded content to.
@@ -227,7 +227,7 @@ class Downloader:
 
                 all_custom_content_data = self.download_custom_content()
                 all_custom_content_objects = self.parse_custom_content_data(
-                    custom_content_data=all_custom_content_data
+                    file_name_to_content_item_data=all_custom_content_data
                 )
 
                 # Filter custom content so that we'll process only downloaded content
@@ -301,17 +301,17 @@ class Downloader:
         """
         all_custom_content_data = self.download_custom_content()
         all_custom_content_objects = self.parse_custom_content_data(
-            custom_content_data=all_custom_content_data
+            file_name_to_content_item_data=all_custom_content_data
         )
 
         logger.info(
             f"List of custom content files available to download ({len(all_custom_content_objects)}):\n"
         )
-        table_str = self.create_custom_content_table(
+        custom_content_table = self.create_custom_content_table(
             custom_content_objects=all_custom_content_objects
         )
 
-        logger.info(table_str)
+        logger.info(custom_content_table)
 
     def filter_custom_content(
         self, custom_content_objects: dict[str, dict]
@@ -466,8 +466,8 @@ class Downloader:
         Returns:
             bool: True if the object was updated, False otherwise.
         """
-        content_item_file_str = custom_content_object["file"].getvalue()
-        uuid_matches = re.findall(UUID_REGEX, content_item_file_str)
+        content_item_file_content = custom_content_object["file"].getvalue()
+        uuid_matches = re.findall(UUID_REGEX, content_item_file_content)
 
         if uuid_matches:
             for uuid in set(uuid_matches).intersection(uuid_mapping):
@@ -475,7 +475,7 @@ class Downloader:
                     f"Replacing UUID '{uuid}' with '{uuid_mapping[uuid]}' in "
                     f"'{custom_content_object['name']}'"
                 )
-                content_item_file_str = content_item_file_str.replace(
+                content_item_file_content = content_item_file_content.replace(
                     uuid, uuid_mapping[uuid]
                 )
 
@@ -484,9 +484,10 @@ class Downloader:
                 custom_content_object["id"] = uuid_mapping[custom_content_object["id"]]
 
             # Update custom content object
-            custom_content_object["file"] = StringIO(content_item_file_str)
+            custom_content_object["file"] = StringIO(content_item_file_content)
             loaded_file_data = get_file_details(
-                content_item_file_str, full_file_path=custom_content_object["file_name"]
+                content_item_file_content,
+                full_file_path=custom_content_object["file_name"],
             )
             custom_content_object["data"] = loaded_file_data
 
@@ -796,7 +797,7 @@ class Downloader:
         return downloaded_content_objects
 
     def parse_custom_content_data(
-        self, custom_content_data: dict[str, StringIO]
+        self, file_name_to_content_item_data: dict[str, StringIO]
     ) -> dict[str, dict]:
         """
         Converts a mapping of file names to raw file data (StringIO),
@@ -806,7 +807,7 @@ class Downloader:
             Custom content items with an empty 'type' key are not supported and will be omitted.
 
         Args:
-            custom_content_data (dict[str, StringIO]): A dictionary mapping file names to their content.
+            file_name_to_content_item_data (dict[str, StringIO]): A dictionary mapping file names to their content.
 
         Returns:
             dict[str, dict]: A dictionary mapping content item's file names, to dictionaries containing metadata
@@ -815,7 +816,7 @@ class Downloader:
         logger.info("Parsing downloaded custom content data...")
         custom_content_objects: dict[str, dict] = {}
 
-        for file_name, file_data in custom_content_data.items():
+        for file_name, file_data in file_name_to_content_item_data.items():
             try:
                 logger.debug(f"Parsing '{file_name}'...")
                 custom_content_object: Dict = self.create_content_item_object(

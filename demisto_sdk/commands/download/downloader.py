@@ -1274,7 +1274,6 @@ class Downloader:
             for file_name, content_object in downloaded_content_objects.items():
                 content_item_name: str = content_object["name"]
                 content_item_entity: str = content_object["entity"]
-                content_item_skipped = False
 
                 content_item_exists = (  # Content item already exists in output pack
                     content_item_name
@@ -1285,6 +1284,7 @@ class Downloader:
                     logger.debug(
                         f"File '{content_item_name}' will be skipped as it already exists in output pack."
                     )
+                    existing_files_skipped_count += 1
                     continue
 
                 downloaded_files: list[Path] = []
@@ -1309,10 +1309,6 @@ class Downloader:
                         f"Failed to download content item '{content_item_name}': {e}"
                     )
                     logger.debug(traceback.format_exc())
-                    continue
-
-                if content_item_skipped:
-                    existing_files_skipped_count += 1
                     continue
 
                 successful_downloads_count += 1

@@ -1472,7 +1472,7 @@ def upload(ctx, **kwargs):
 @click.option(
     "-lf",
     "--list-files",
-    help="List all custom content items available for download and exit.",
+    help="List all custom content items available to download and exit.",
     is_flag=True,
 )
 @click.option(
@@ -1520,7 +1520,7 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--auto-replace-uuids/--no-auto-replace-uuids",
-    help="Whether to replace the uuids.",
+    help="Whether to replace UUID IDs (generated automatically by the server) for downloaded custom content.",
     default=True,
 )
 @click.pass_context

@@ -7,6 +7,7 @@ from typing import Iterable, Optional
 
 from docker.errors import DockerException
 
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.docker_helper import get_docker
 from demisto_sdk.commands.common.native_image import (
@@ -29,7 +30,7 @@ def get_docker_python_path() -> str:
 
 def with_native_tags(tags_to_files: dict, docker_image_flag: str) -> dict:
     docker_flags = set(docker_image_flag.split(","))
-    all_tags_to_files = defaultdict(set)
+    all_tags_to_files = defaultdict(list)
     native_image_config = NativeImageConfig.get_instance()
 
     for image, scripts in tags_to_files.items():
@@ -41,12 +42,12 @@ def with_native_tags(tags_to_files: dict, docker_image_flag: str) -> dict:
                 docker_image=image,
             ).get_supported_native_docker_tags(docker_flags)
             for native_image in supported_native_images:
-                all_tags_to_files[native_image].add(file)
+                all_tags_to_files[native_image].append(file)
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
             } & docker_flags:
-                all_tags_to_files[image].add(file)
+                all_tags_to_files[image].append((file, yml))
     return all_tags_to_files
 
 
@@ -65,7 +66,7 @@ def get_yml_for_file(code_file) -> Optional[dict]:
     # could be reasonable cant parse. We have some non-parsable ymls for tests
 
 
-def docker_tag_to_python_files(files_to_run: Iterable, docker_image_flag) -> dict:
+def docker_tag_to_runfiles(files_to_run: Iterable, docker_image_flag) -> dict:
     tags_to_files = defaultdict(list)
     for file in files_to_run:
         yml: Optional[dict] = get_yml_for_file(file)
@@ -86,8 +87,10 @@ def docker_image_for_file(yml: dict) -> str:
 
 
 @functools.lru_cache
-def devtest_image(param):
-    image, errors = get_docker().pull_or_create_test_image(param)
+def devtest_image(image_tag, is_powershell):
+    image, errors = get_docker().pull_or_create_test_image(
+        image_tag, TYPE_PWSH if is_powershell else TYPE_PYTHON
+    )
     if errors:
         raise DockerException(errors)
     else:
@@ -98,7 +101,7 @@ def get_environment_flag() -> str:
     return f'--env "PYTHONPATH={get_docker_python_path()}"'
 
 
-class GenericDocker(Hook):
+class DockerHook(Hook):
     def __int__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -106,14 +109,19 @@ class GenericDocker(Hook):
 
         all_hooks = []
         start_time = time.time()
-        tag_to_files = docker_tag_to_python_files(
-            self.files_to_matching_hook_config(files_to_run),
+        tag_to_files = docker_tag_to_runfiles(
+            self.filter_files_matching_hook_config(files_to_run),
             self._get_property("docker_image", "from-yml"),
         )
         end_time = time.time()
-        logger.info(f"Elapsed time: {end_time - start_time} seconds")
-        for image, files in tag_to_files.items():
-            dev_image = devtest_image(image)
+        logger.info(
+            f"Elapsed time to gather tags to files: {end_time - start_time} seconds"
+        )
+        for image, file_ymls in tag_to_files.items():
+            image_is_powershell = any(
+                f[1].get("type") == "powershell" for f in file_ymls
+            )
+            dev_image = devtest_image(image, image_is_powershell)
             new_hook = {
                 "id": f"{self._get_property('id')}-{image}",
                 "name": f"{self._get_property('name')}-{image}",
@@ -121,7 +129,7 @@ class GenericDocker(Hook):
                 "entry": f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}',
             }
             self._set_properties(new_hook, to_delete=["docker_image"])
-            if self.set_files_on_hook(new_hook, files):
+            if self.set_files_on_hook(new_hook, {f[0] for f in file_ymls}):
                 all_hooks.append(new_hook)
 
         self.hooks.extend(all_hooks)

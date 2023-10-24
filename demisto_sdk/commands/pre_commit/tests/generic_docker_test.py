@@ -4,11 +4,18 @@ import pytest
 
 from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.native_image import NativeImageConfig
-from demisto_sdk.commands.pre_commit.hooks.generic_docker import (
-    GenericDocker,
-    docker_tag_to_python_files,
+from demisto_sdk.commands.pre_commit.hooks.docker import (
+    DockerHook,
+    docker_tag_to_runfiles,
 )
 from demisto_sdk.commands.pre_commit.tests.pre_commit_test import create_hook
+
+
+def assert_lists_have_same_elements(list1, list2):
+    assert len(list1) == len(list2), "Lists have different lengths"
+    for item1 in list1:
+        if item1 not in list2:
+            assert False, "Lists do not have the same elements"
 
 
 @pytest.fixture(autouse=True)
@@ -32,7 +39,7 @@ def test_no_files(repo):
         There are no raw hooks added to the config
     """
     raw_hook = create_hook({"args": []})
-    GenericDocker(**raw_hook).prepare_hook([])
+    DockerHook(**raw_hook).prepare_hook([])
 
     hooks = raw_hook["repo"]["hooks"]
     assert len(hooks) == 0
@@ -56,13 +63,14 @@ def test_moded_properties(mocker, mode, expected_text):
         The value is properly returned
 
     """
-    file = Path("SomeFile.py")
+    file_path = Path("SomeFile.py")
+    file = (file_path, {"commonfields": {"id": "id1"}})
     mocker.patch(
-        "demisto_sdk.commands.pre_commit.hooks.generic_docker.docker_tag_to_python_files",
+        "demisto_sdk.commands.pre_commit.hooks.docker.docker_tag_to_runfiles",
         return_value={"sometag": [file]},
     )
     mocker.patch(
-        "demisto_sdk.commands.pre_commit.hooks.generic_docker.devtest_image",
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
         return_value="devtestimg",
     )
     raw_hook = create_hook({"args": []})
@@ -71,7 +79,7 @@ def test_moded_properties(mocker, mode, expected_text):
     raw_hook["hook"]["args:nightly"] = ["i am the nightly args"]
     raw_hook["hook"]["args:other"] = ["i am some other argument"]
 
-    GenericDocker(**raw_hook, mode=mode).prepare_hook([file])
+    DockerHook(**raw_hook, mode=mode).prepare_hook([file_path])
 
     hook = raw_hook["repo"]["hooks"][0]
     assert hook["args"] == expected_text
@@ -85,7 +93,7 @@ def test_get_property():
 
     def assert_get_prop_successful(mode, prop, expected_value):
         assert (
-            GenericDocker(
+            DockerHook(
                 **create_hook(
                     {
                         "prop1": value1,
@@ -102,7 +110,7 @@ def test_get_property():
     assert_get_prop_successful(None, "prop1", value1)
 
 
-def test_docker_tag_to_python_files(mocker, native_image_config):
+def test_docker_tag_to_runfiles(mocker, native_image_config):
     mocked_responses = [
         {
             "yml": {"commonfields": {"id": "id1"}},
@@ -120,7 +128,7 @@ def test_docker_tag_to_python_files(mocker, native_image_config):
             "path": Path("file3.py"),
         },
         {
-            "yml": {"commonfields": {"id": "id1"}},
+            "yml": {"commonfields": {"id": "id4"}},
             "docker_image": None,
             "path": Path("file4.md"),
         },
@@ -128,13 +136,25 @@ def test_docker_tag_to_python_files(mocker, native_image_config):
     native_latest_tag = "nativelatesttag"
 
     def set_mocks():
+        def mock_yml_for_file(x):
+            return [res.get("yml") for res in mocked_responses if res.get("path") == x][
+                0
+            ]
+
+        def mock_docker_for_file(x):
+            return [
+                res.get("docker_image")
+                for res in mocked_responses
+                if res.get("yml") == x
+            ][0]
+
         mocker.patch(
-            "demisto_sdk.commands.pre_commit.hooks.generic_docker.get_yml_for_file",
-            side_effect=[r.get("yml") for r in mocked_responses],
+            "demisto_sdk.commands.pre_commit.hooks.docker.get_yml_for_file",
+            side_effect=mock_yml_for_file,
         )
         mocker.patch(
-            "demisto_sdk.commands.pre_commit.hooks.generic_docker.docker_image_for_file",
-            side_effect=[r.get("docker_image") for r in mocked_responses],
+            "demisto_sdk.commands.pre_commit.hooks.docker.docker_image_for_file",
+            side_effect=mock_docker_for_file,
         )
         mocker.patch(
             "demisto_sdk.commands.common.native_image.get_dev_native_image",
@@ -142,19 +162,23 @@ def test_docker_tag_to_python_files(mocker, native_image_config):
         )
 
     set_mocks()
-    tag_to_files = docker_tag_to_python_files(
+    tag_to_files = docker_tag_to_runfiles(
         [r.get("path") for r in mocked_responses], "from-yml"
     )
 
-    assert len(tag_to_files) == 2
-    assert tag_to_files["demisto/python3:123.123.123.123"] == {
+    assert {
+        f[0] for f in tag_to_files["demisto/python3:123.123.123.123"]
+    } == {  # its ok this came back with duplicates
         Path("file3.py"),
         Path("file1.py"),
     }
-    assert tag_to_files["image2"] == {Path("file2.py")}
+    assert tag_to_files["image2"][0] == (
+        Path("file2.py"),
+        {"commonfields": {"id": "id2"}},
+    )
 
     set_mocks()
-    tag_to_files = docker_tag_to_python_files(
+    tag_to_files = docker_tag_to_runfiles(
         [r.get("path") for r in mocked_responses], "native:dev,from-yml"
     )
     assert len(tag_to_files) == 3

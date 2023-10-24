@@ -32,7 +32,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.pre_commit.hooks.generic_docker import GenericDocker
+from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
@@ -165,7 +165,7 @@ class PreCommitRunner:
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
         [
-            GenericDocker(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
+            DockerHook(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
             for hook_id, hook in hooks.items()
             if hook_id.endswith("in-docker")
         ]

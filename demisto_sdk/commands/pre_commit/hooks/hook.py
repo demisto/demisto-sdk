@@ -45,13 +45,13 @@ class Hook(ABC):
         Returns:
             The number of files set
         """
-        files_to_run_on_hook = self.files_to_matching_hook_config(files)
+        files_to_run_on_hook = self.filter_files_matching_hook_config(files)
         hook["files"] = join_files(files_to_run_on_hook)
 
         # hook.pop("exclude", None)
         return len(files_to_run_on_hook)
 
-    def files_to_matching_hook_config(self, files):
+    def filter_files_matching_hook_config(self, files):
         include_pattern = None
         exclude_pattern = None
         try:

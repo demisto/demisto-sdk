@@ -136,6 +136,7 @@ class Downloader:
         init: bool = False,
         keep_empty_folders: bool = False,
         auto_replace_uuids: bool = True,
+        **kwargs,
     ):
         self.output_pack_path = output
         self.input_files = [input] if isinstance(input, str) else list(input)

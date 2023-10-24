@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
+from demisto_sdk.commands.common.tools import get_child_files
 from demisto_sdk.commands.download.downloader import *
 from TestSuite.test_tools import str_in_call_args_list
 
@@ -442,7 +443,9 @@ class TestFlags:
         Then: Ensure all content items are downloaded
         """
         env = Environment(tmp_path)
-        downloader = Downloader(all_custom_content=True, output=env.CONTENT_BASE_PATH)
+        downloader = Downloader(
+            all_custom_content=True, output=str(env.CONTENT_BASE_PATH)
+        )
 
         mock_bundle_data = (
             TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"

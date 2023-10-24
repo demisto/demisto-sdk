@@ -113,10 +113,10 @@ class Downloader:
         client (Demisto client): Demisto client objecgt to use for API calls.
         should_list_files (bool): Whether to list all downloadable files or not (if True, all other flags are ignored).
         download_all_custom_content (bool): Whether to download all available custom content.
-        run_format (bool): Whether to run 'format' on downloaded files.
+        should_run_format (bool): Whether to run 'format' on downloaded files.
         download_system_items (bool): Whether the current download is for system items.
         system_item_type (ContentItemType): The items type to download (relevant only for system items).
-        should_init_new_pack (bool): Whether to initialize a new Pack structure in the output path and download the items to it.
+        should_init_new_pack (bool): Whether to initialize a new pack structure in the output path.
         keep_empty_folders (bool): Whether to keep empty folders when using the 'init' flag.
         auto_replace_uuids (bool):  Whether to replace the UUIDs.
     """
@@ -136,7 +136,6 @@ class Downloader:
         init: bool = False,
         keep_empty_folders: bool = False,
         auto_replace_uuids: bool = True,
-        **kwargs,
     ):
         self.output_pack_path = output
         self.input_files = [input] if isinstance(input, str) else list(input)

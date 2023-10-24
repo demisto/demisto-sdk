@@ -230,6 +230,7 @@ class PreCommitRunner:
                         "-m",
                         "pre_commit",
                         "run",
+                        "run-unit-tests",
                         "-a",
                         "-c",
                         str(PRECOMMIT_PATH),

@@ -8,7 +8,7 @@ from collections import defaultdict
 from enum import Enum
 from io import BytesIO, StringIO
 from pathlib import Path
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 from typing import DefaultDict, Dict
 
 import demisto_client.demisto_api
@@ -36,7 +36,6 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
-    get_child_files,
     get_code_lang,
     get_dict_from_file,
     get_display_name,
@@ -1055,12 +1054,14 @@ class Downloader:
         content_item_files = []
 
         for file_path in file_paths:
+            file_path_obj = Path(file_path)
+
             content_item_files.append(
                 {
                     "name": content_item_name,
                     "id": content_item_id,
-                    "path": file_path,
-                    "file_extension": Path(file_path).suffix.lstrip("."),
+                    "path": file_path_obj,
+                    "file_extension": file_path_obj.suffix.lstrip("."),
                 }
             )
 
@@ -1266,45 +1267,62 @@ class Downloader:
         existing_files_skipped_count = 0
         failed_downloads_count = 0
 
-        for file_name, content_object in downloaded_content_objects.items():
-            content_item_name: str = content_object["name"]
-            content_item_entity: str = content_object["entity"]
-            content_item_skipped = False
+        with TemporaryDirectory() as temp_dir_str:
+            temp_dir = Path(temp_dir_str)
 
-            try:
-                if content_item_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-                    file_downloaded = self.download_unified_content(
-                        content_object=content_object,
-                        existing_pack_structure=existing_pack_structure,
-                        output_path=output_path,
-                        should_overwrite_existing=self.force,
-                    )
+            for file_name, content_object in downloaded_content_objects.items():
+                content_item_name: str = content_object["name"]
+                content_item_entity: str = content_object["entity"]
+                content_item_skipped = False
 
-                else:
-                    file_downloaded = self.download_non_unified_content(
-                        content_object=content_object,
-                        existing_pack_structure=existing_pack_structure,
-                        output_path=output_path,
-                        should_overwrite_existing=self.force,
-                    )
-
-                # If even one file was skipped, we mark the file as skipped for the logs
-                if not file_downloaded:
-                    content_item_skipped = True
-
-            except Exception as e:
-                failed_downloads_count += 1
-                logger.error(
-                    f"Failed to download content item '{content_item_name}': {e}"
+                content_item_exists = (  # Content item already exists in output pack
+                    content_item_name
+                    in existing_pack_structure.get(content_item_entity, {})
                 )
-                logger.debug(traceback.format_exc())
-                continue
 
-            if content_item_skipped:
-                existing_files_skipped_count += 1
+                if content_item_exists and not self.force:
+                    logger.debug(
+                        f"File '{content_item_name}' will be skipped as it already exists in output pack."
+                    )
+                    continue
 
-            else:
+                downloaded_files: list[Path] = []
+
+                try:
+                    if content_item_exists:
+                        downloaded_files = self.download_existing_content_items(
+                            content_object=content_object,
+                            existing_pack_structure=existing_pack_structure,
+                            output_path=output_path,
+                            temp_dir=temp_dir,
+                        )
+
+                    else:
+                        downloaded_files = self.download_new_content_items(
+                            content_object=content_object,
+                            output_path=output_path,
+                        )
+                except Exception as e:
+                    failed_downloads_count += 1
+                    logger.error(
+                        f"Failed to download content item '{content_item_name}': {e}"
+                    )
+                    logger.debug(traceback.format_exc())
+                    continue
+
+                if content_item_skipped:
+                    existing_files_skipped_count += 1
+                    continue
+
                 successful_downloads_count += 1
+
+                if self.should_run_format:
+                    for downloaded_file in downloaded_files:
+                        format_manager(
+                            input=str(downloaded_file),
+                            no_validate=False,
+                            assume_answer=False,
+                        )
 
         summary_log = ""
 
@@ -1329,236 +1347,166 @@ class Downloader:
             not failed_downloads_count
         )  # Return True if no downloads failed, False otherwise.
 
-    def download_unified_content(
+    def download_new_content_items(
         self,
         content_object: dict,
-        existing_pack_structure: dict[str, dict[str, list[dict]]],
         output_path: Path,
-        should_overwrite_existing: bool = False,
-    ) -> bool:
+    ) -> list[Path]:
         """
-        Download unified content items.
-        Existing content items will be skipped if 'should_overwrite_existing' is False.
-        A "smart" merge will be done for pre-existing YAML files, adding fields that exist in existing file,
-        but were omitted by the server.
+        Download new content items to disk. Unified content items will be split into separate files.
 
         Args:
             content_object (dict): The content object to download
-            existing_pack_structure (list[dict]): A list of existing content item files in the output pack.
             output_path (Path): The output path to write the files to.
-            should_overwrite_existing (bool): Whether to overwrite existing files or not.
 
         Returns:
-            bool: True if the content item was downloaded successfully, False otherwise.
+            list[Path]: List of paths to the downloaded content items.
         """
-        temp_dir: str | None = None
         content_item_name: str = content_object["name"]
+        content_item_file_name: str = content_object["file_name"]
+        content_item_entity_directory: str = content_object["entity"]
         content_item_type: FileType = content_object["type"]
-        content_item_entity: str = content_object["entity"]
-        content_directory_name = self.create_directory_name(content_item_name)
+        content_item_file_data: StringIO = content_object["file"]
 
-        content_item_exists = (  # Content item already exists in output pack
-            content_item_name in existing_pack_structure.get(content_item_entity, {})
-        )
+        downloaded_files: list[Path] = []
 
-        if content_item_exists:
-            if (
-                not should_overwrite_existing
-            ):  # If file exists, and we don't want to overwrite it, skip it.
-                logger.debug(
-                    f"Content item '{content_item_name}' will be skipped as it already exists in output pack."
-                )
-                return False
+        # If content item is an integration / script, split the unified content item into separate files
+        if content_item_entity_directory in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+            content_item_directory_name = self.create_directory_name(content_item_name)
+            download_path = (
+                output_path
+                / content_item_entity_directory
+                / content_item_directory_name
+            )
+            download_path.mkdir(parents=True, exist_ok=True)
 
-            # If we overwrite existing files, we need to extract the existing files to a temp directory
-            # for a "smart" merge.
-            temp_dir = mkdtemp()
-            content_item_output_path = Path(temp_dir)
+            extractor = YmlSplitter(
+                input=content_item_file_name,
+                output=str(download_path),
+                input_file_data=content_object["data"],
+                file_type=content_item_type.value,
+                base_name=content_item_directory_name,
+                no_readme=False,
+                no_auto_create_dir=True,
+            )
+            extractor.extract_to_package_format()
+
+            # Add items to downloaded_files
+            for file_path in download_path.iterdir():
+                if file_path.is_file():
+                    downloaded_files.append(file_path)
 
         else:
-            content_item_output_path = (
-                output_path / content_item_entity / content_directory_name
+            content_item_download_path = (
+                output_path / content_item_entity_directory / content_item_file_name
             )
-            content_item_output_path.mkdir(
-                parents=True, exist_ok=True
-            )  # Create path if it doesn't exist
-            content_item_output_path = content_item_output_path
+            content_item_download_path.parent.mkdir(parents=True, exist_ok=True)
+            content_item_download_path.write_text(content_item_file_data.getvalue())
 
-        extractor = YmlSplitter(
-            input=content_object["file_name"],
-            output=str(content_item_output_path),
-            input_file_data=content_object["data"],
-            file_type=content_item_type.value,
-            base_name=content_directory_name,
-            no_readme=content_item_exists,
-            no_auto_create_dir=True,
-        )
-        extractor.extract_to_package_format()
-        extracted_file_paths: list[str] = get_child_files(
-            directory=str(content_item_output_path)
-        )
+            downloaded_files.append(content_item_download_path)
 
-        for extracted_file_path_str in extracted_file_paths:
-            extracted_file_path = Path(extracted_file_path_str)
+        return downloaded_files
 
-            if content_item_exists:
-                extracted_file_extension = extracted_file_path.suffix
-
-                # Get the file name to search for in the existing output pack
-                expected_filename: str = self.get_split_item_expected_filename(
-                    content_item_name=content_item_name,
-                    file_extension=extracted_file_extension,
-                )
-
-                # Find extracted file's matching existing file
-                corresponding_pack_file_object: dict | None = None
-
-                for file_object in existing_pack_structure[content_item_entity][
-                    content_item_name
-                ]:
-                    if Path(file_object["path"]).name == expected_filename:
-                        corresponding_pack_file_object = file_object
-                        break
-
-                if corresponding_pack_file_object:
-                    corresponding_pack_file_path = Path(
-                        corresponding_pack_file_object["path"]
-                    )
-
-                else:
-                    corresponding_pack_file_path = (
-                        output_path
-                        / content_item_entity
-                        / self.create_directory_name(content_item_name)
-                        / expected_filename
-                    )
-
-                if (
-                    extracted_file_extension == ".yml"
-                ):  # "smart" merge is relevant only for YAML files
-                    self.preserve_fields(  # Add existing fields that were removed by the server to the new file
-                        file_to_update=extracted_file_path,
-                        original_file=corresponding_pack_file_path,
-                        is_yaml=(extracted_file_extension == ".yml"),
-                    )
-
-                shutil.move(
-                    src=str(extracted_file_path), dst=str(corresponding_pack_file_path)
-                )
-                final_path = corresponding_pack_file_path
-
-            # If the file doesn't exist in the pack, the files were extracted to the output path
-            else:
-                final_path = extracted_file_path
-
-            if self.should_run_format and final_path.suffix in (
-                ".yml",
-                ".yaml",
-                ".json",
-            ):
-                format_manager(
-                    input=str(final_path),
-                    no_validate=False,
-                    assume_answer=False,
-                )
-
-        if temp_dir:
-            try:  # Clean up temp dir
-                shutil.rmtree(temp_dir, ignore_errors=True)
-
-            except shutil.Error as e:
-                logger.warning(f"Failed to remove temp dir '{temp_dir}': {e}")
-                logger.debug(traceback.format_exc())
-
-        logger.debug(f"Content item '{content_item_name}' was successfully downloaded.")
-        return True
-
-    def download_non_unified_content(
+    def download_existing_content_items(
         self,
         content_object: dict,
         existing_pack_structure: dict[str, dict[str, list[dict]]],
         output_path: Path,
-        should_overwrite_existing: bool = False,
-    ) -> bool:
+        temp_dir: Path,
+    ) -> list[Path]:
         """
-        Download non-unified content items.
+        Download existing content items to disk.
+        Unified content items will be split into separate files.
         Existing content items will be skipped if 'should_overwrite_existing' is False.
-        A "smart" merge will be done for pre-existing YAML files, adding fields that exist in existing file,
+        A "smart" merge will be done for pre-existing YAML & JSON files, adding fields that exist in existing file,
         but were omitted by the server.
 
         Args:
             content_object (dict): The content object to download
             existing_pack_structure (list[dict]): A list of existing content item files in the output pack.
             output_path (Path): The output path to write the files to.
-            should_overwrite_existing (bool): Whether to overwrite existing files or not.
+            temp_dir (Path): A temporary directory to use for downloading the content item.
 
         Returns:
-            bool: True if the content item was downloaded successfully, False otherwise.
+            list[Path]: List of paths to the downloaded content items.
         """
         content_item_name: str = content_object["name"]
-        content_item_entity: str = content_object["entity"]
-        content_item_extension: str = content_object["file_extension"]
+        content_item_file_name: str = content_object["file_name"]
+        content_item_entity_directory: str = content_object["entity"]
+        content_item_type: FileType = content_object["type"]
+        content_item_file_data: StringIO = content_object["file"]
+        source_to_destination_mapping: dict[
+            Path, Path
+        ] = {}  # A mapping of temp file paths to target final paths
+        is_unified = content_item_entity_directory in (INTEGRATIONS_DIR, SCRIPTS_DIR)
 
-        content_item_exists = (  # Content item already exists in output pack
-            content_item_name in existing_pack_structure.get(content_item_entity, {})
-        )
-
-        # If file exists, and we don't want to overwrite it, skip it.
-        if content_item_exists and not should_overwrite_existing:
-            logger.debug(
-                f"File '{content_item_name}' will be skipped as it already exists in output pack."
+        # If content item is an integration / script, split the unified content item into separate files
+        if is_unified:
+            content_item_directory_name = self.create_directory_name(content_item_name)
+            temp_download_path = (
+                temp_dir / content_item_entity_directory / content_item_directory_name
             )
-            return False
+            temp_download_path.mkdir(parents=True, exist_ok=True)
 
-        # Write downloaded file to temp directory
-        temp_dir = Path(mkdtemp())
+            extractor = YmlSplitter(
+                input=content_item_file_name,
+                output=str(temp_download_path),
+                input_file_data=content_object["data"],
+                file_type=content_item_type.value,
+                base_name=content_item_directory_name,
+                no_readme=True,
+                no_auto_create_dir=True,
+            )
+            extractor.extract_to_package_format()
 
-        file_name: str = content_object["file_name"]
-        file_path = temp_dir / file_name
-        file_data: StringIO = content_object["file"]
-        file_path.write_text(file_data.getvalue())
+            for file_path in temp_download_path.iterdir():
+                if file_path.is_file():
+                    extracted_item_expected_filename = Path(
+                        self.get_split_item_expected_filename(
+                            content_item_name=content_item_name,
+                            file_extension=file_path.suffix,
+                        )
+                    )
 
-        if content_item_exists:
-            # The corresponding_pack_object will have a list of length 1 as value if it's an old file which isn't
-            # integration or script
-            corresponding_pack_file_object: dict = existing_pack_structure[
-                content_item_entity
-            ][content_item_name][0]
-            corresponding_pack_file_path = Path(corresponding_pack_file_object["path"])
+                    source_to_destination_mapping[file_path] = (
+                        output_path
+                        / content_item_entity_directory
+                        / content_item_directory_name
+                        / extracted_item_expected_filename
+                    )
 
-            self.preserve_fields(
-                file_to_update=file_path,
-                original_file=corresponding_pack_file_path,
-                is_yaml=(content_item_extension in ("yml", "yaml")),
+        else:  # Non-unified content item
+            temp_download_path = (
+                temp_dir / content_item_entity_directory / content_item_file_name
+            )
+            temp_download_path.parent.mkdir(parents=True, exist_ok=True)
+            temp_download_path.write_text(content_item_file_data.getvalue())
+
+            source_to_destination_mapping[temp_download_path] = (
+                output_path / content_item_entity_directory / content_item_file_name
             )
 
-            content_item_output_path = corresponding_pack_file_path
+        for source_path, destination_path in source_to_destination_mapping.items():
+            source_path_suffix = source_path.suffix.lstrip(".")
+            if source_path_suffix in ("json", "yml", "yaml"):
+                for existing_file_object in existing_pack_structure[
+                    content_item_entity_directory
+                ][content_item_name]:
+                    existing_file_path: Path = existing_file_object["path"]
 
-        else:  # If the content item doesn't exist in the output pack, create a new directory for it
-            content_item_output_path = output_path / content_item_entity
-            content_item_output_path.mkdir(
-                parents=True, exist_ok=True
-            )  # Create path if it doesn't exist
-            content_item_output_path = content_item_output_path / file_name
-
-        shutil.move(src=str(file_path), dst=str(content_item_output_path))
-
-        try:  # Clean up temp dir
-            shutil.rmtree(temp_dir, ignore_errors=True)
-
-        except shutil.Error as e:
-            logger.warning(f"Failed to remove temp dir '{temp_dir}': {e}")
-            logger.debug(traceback.format_exc())
-
-        if self.should_run_format:
-            format_manager(
-                input=str(content_item_output_path),
-                no_validate=False,
-                assume_answer=False,
+                    if existing_file_object["path"].name == destination_path.name:
+                        self.preserve_fields(
+                            file_to_update=source_path,
+                            original_file=existing_file_path,
+                            is_yaml=source_path_suffix in ("yml", "yaml"),
+                        )
+            shutil.move(
+                src=str(source_path),
+                dst=str(destination_path),
             )
 
         logger.debug(f"Content item '{content_item_name}' was successfully downloaded.")
-        return True
+        return list(source_to_destination_mapping.values())
 
     @staticmethod
     def preserve_fields(
@@ -1572,22 +1520,24 @@ class Downloader:
             original_file (Path): Path to the original file to merge into 'file_to_update'.
             is_yaml (bool): True if the file is a yml file, False if it's a json file.
         """
-        pack_obj_data = get_dict_from_file(str(original_file))[0]
-        fields = KEEP_EXISTING_YAML_FIELDS if is_yaml else KEEP_EXISTING_JSON_FIELDS
+        original_file_data = get_dict_from_file(str(original_file))[0]
+        fields_to_preserve = (
+            KEEP_EXISTING_YAML_FIELDS if is_yaml else KEEP_EXISTING_JSON_FIELDS
+        )
         # Creates a nested-complex dict of all fields to be deleted by the server.
         # We need the dict to be nested, to easily merge it later to the file data.
         preserved_data: dict = unflatten(
             {
-                field: dictor(pack_obj_data, field)
-                for field in fields
-                if dictor(pack_obj_data, field)
+                field: dictor(original_file_data, field)
+                for field in fields_to_preserve
+                if dictor(original_file_data, field)
             },
             splitter="dot",
         )
 
         file_data = get_file(file_to_update)
 
-        if pack_obj_data:
+        if original_file_data:
             mergedeep.merge(file_data, preserved_data)
 
         if is_yaml:

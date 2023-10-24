@@ -113,43 +113,45 @@ class Environment:
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration.py",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "TestIntegration.py",
                     "file_extension": "py",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration_testt.py",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "TestIntegration_testt.py",
                     "file_extension": "py",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "TestIntegration.yml",
                     "file_extension": "yml",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration_image.png",
+                    "path": self.INTEGRATION_INSTANCE_PATH
+                    / "TestIntegration_image.png",
                     "file_extension": "png",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/CHANGELOG.md",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "CHANGELOG.md",
                     "file_extension": "md",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration_description.md",
+                    "path": self.INTEGRATION_INSTANCE_PATH
+                    / "TestIntegration_description.md",
                     "file_extension": "md",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/README.md",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "README.md",
                     "file_extension": "md",
                 },
             ]
@@ -159,25 +161,25 @@ class Environment:
                 {
                     "name": "TestScript",
                     "id": "TestScript",
-                    "path": f"{self.SCRIPT_INSTANCE_PATH}/TestScript.py",
+                    "path": self.SCRIPT_INSTANCE_PATH / "TestScript.py",
                     "file_extension": "py",
                 },
                 {
                     "name": "TestScript",
                     "id": "TestScript",
-                    "path": f"{self.SCRIPT_INSTANCE_PATH}/TestScript.yml",
+                    "path": self.SCRIPT_INSTANCE_PATH / "TestScript.yml",
                     "file_extension": "yml",
                 },
                 {
                     "name": "TestScript",
                     "id": "TestScript",
-                    "path": f"{self.SCRIPT_INSTANCE_PATH}/CHANGELOG.md",
+                    "path": self.SCRIPT_INSTANCE_PATH / "CHANGELOG.md",
                     "file_extension": "md",
                 },
                 {
                     "name": "TestScript",
                     "id": "TestScript",
-                    "path": f"{self.SCRIPT_INSTANCE_PATH}/README.md",
+                    "path": self.SCRIPT_INSTANCE_PATH / "README.md",
                     "file_extension": "md",
                 },
             ]
@@ -187,7 +189,7 @@ class Environment:
                 {
                     "name": "DummyPlaybook",
                     "id": "DummyPlaybook",
-                    "path": str(self.PLAYBOOK_INSTANCE_PATH),
+                    "path": self.PLAYBOOK_INSTANCE_PATH,
                     "file_extension": "yml",
                 }
             ]
@@ -197,7 +199,7 @@ class Environment:
                 {
                     "name": "Hello World Alert",
                     "id": "Hello World Alert",
-                    "path": str(self.LAYOUT_INSTANCE_PATH),
+                    "path": self.LAYOUT_INSTANCE_PATH,
                     "file_extension": "json",
                 }
             ]
@@ -207,7 +209,7 @@ class Environment:
                 {
                     "name": "mylayout",
                     "id": "mylayout",
-                    "path": str(self.LAYOUTSCONTAINER_INSTANCE_PATH),
+                    "path": self.LAYOUTSCONTAINER_INSTANCE_PATH,
                     "file_extension": "json",
                 }
             ]
@@ -217,7 +219,7 @@ class Environment:
                 {
                     "name": "DummyPreProcessRule",
                     "id": "DummyPreProcessRule",
-                    "path": str(self.PRE_PROCESS_RULES_INSTANCE_PATH),
+                    "path": self.PRE_PROCESS_RULES_INSTANCE_PATH,
                     "file_extension": "json",
                 }
             ]
@@ -227,7 +229,7 @@ class Environment:
                 {
                     "name": "DummyList",
                     "id": "DummyList",
-                    "path": str(self.LISTS_INSTANCE_PATH),
+                    "path": self.LISTS_INSTANCE_PATH,
                     "file_extension": "json",
                 }
             ]
@@ -237,7 +239,7 @@ class Environment:
                 {
                     "name": "DummyJob",
                     "id": "DummyJob",
-                    "path": str(self.JOBS_INSTANCE_PATH),
+                    "path": self.JOBS_INSTANCE_PATH,
                     "file_extension": "json",
                 }
             ]
@@ -628,18 +630,21 @@ class TestBuildCustomContent:
 class TestDownloadExistingFile:
     def test_download_and_extract_existing_file(self, tmp_path):
         env = Environment(tmp_path)
-        downloader = Downloader()
+        downloader = Downloader(force=True)
+
+        file_name = env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file_name"]
 
         env.INTEGRATION_CUSTOM_CONTENT_OBJECT["data"] = get_file_details(
             file_content=env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file"].getvalue(),
             full_file_path=str(env.CUSTOM_CONTENT_INTEGRATION_PATH),
         )
 
-        assert downloader.download_unified_content(
-            content_object=env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={
+                file_name: env.INTEGRATION_CUSTOM_CONTENT_OBJECT
+            },
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
-            should_overwrite_existing=True,
         )
 
         expected_paths = [
@@ -681,11 +686,14 @@ class TestDownloadExistingFile:
         env = Environment(tmp_path)
         downloader = Downloader(force=True)
 
-        assert not downloader.download_non_unified_content(
-            content_object=env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
+        file_name = env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file_name"]
+
+        assert not downloader.write_files_into_output_path(
+            downloaded_content_objects={
+                file_name: env.INTEGRATION_CUSTOM_CONTENT_OBJECT
+            },
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
-            should_overwrite_existing=False,
         )
 
     def test_download_existing_file_playbook(self, tmp_path):
@@ -697,6 +705,7 @@ class TestDownloadExistingFile:
         """
         env = Environment(tmp_path)
         downloader = Downloader()
+        file_name = env.PLAYBOOK_CUSTOM_CONTENT_OBJECT["file_name"]
         file_path = env.PLAYBOOK_INSTANCE_PATH
 
         playbook_data = get_file_details(
@@ -709,11 +718,10 @@ class TestDownloadExistingFile:
 
         env.PLAYBOOK_CUSTOM_CONTENT_OBJECT["file"] = StringIO(yaml.dumps(playbook_data))
 
-        assert downloader.download_non_unified_content(
-            content_object=env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.PLAYBOOK_CUSTOM_CONTENT_OBJECT},
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
-            should_overwrite_existing=True,
         )
         assert file_path.is_file()
         data = get_yaml(file_path)
@@ -728,7 +736,8 @@ class TestDownloadExistingFile:
             from the existing file are kept (even though they are not in the new file).
         """
         env = Environment(tmp_path)
-        downloader = Downloader()
+        downloader = Downloader(force=True)
+        file_name = env.LAYOUT_CUSTOM_CONTENT_OBJECT["file_name"]
         file_path = env.LAYOUT_INSTANCE_PATH
 
         layout_data = get_file_details(
@@ -741,11 +750,10 @@ class TestDownloadExistingFile:
 
         env.LAYOUT_CUSTOM_CONTENT_OBJECT["file"] = StringIO(json.dumps(layout_data))
 
-        assert downloader.download_non_unified_content(
-            content_object=env.LAYOUT_CUSTOM_CONTENT_OBJECT,
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.LAYOUT_CUSTOM_CONTENT_OBJECT},
             existing_pack_structure=env.PACK_CONTENT,
             output_path=env.PACK_INSTANCE_PATH,
-            should_overwrite_existing=True,
         )
         assert file_path.is_file()
         data = get_yaml(file_path)
@@ -819,6 +827,7 @@ class TestDownloadNewFile:
         )
 
         downloader = Downloader(output=str(temp_dir))
+        file_name = env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file_name"]
         basename = downloader.create_directory_name(
             env.INTEGRATION_CUSTOM_CONTENT_OBJECT["name"]
         )
@@ -834,8 +843,10 @@ class TestDownloadNewFile:
             for file in raw_files
         ]
 
-        assert downloader.download_unified_content(
-            content_object=env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={
+                file_name: env.INTEGRATION_CUSTOM_CONTENT_OBJECT
+            },
             existing_pack_structure={},
             output_path=temp_dir,
         )
@@ -858,6 +869,7 @@ class TestDownloadNewFile:
         )
 
         downloader = Downloader(output=str(temp_dir))
+        file_name = env.SCRIPT_CUSTOM_CONTENT_OBJECT["file_name"]
         basename = downloader.create_directory_name(
             env.SCRIPT_CUSTOM_CONTENT_OBJECT["name"]
         )
@@ -873,8 +885,8 @@ class TestDownloadNewFile:
             for file in raw_files
         ]
 
-        assert downloader.download_unified_content(
-            content_object=env.SCRIPT_CUSTOM_CONTENT_OBJECT,
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.SCRIPT_CUSTOM_CONTENT_OBJECT},
             existing_pack_structure={},
             output_path=temp_dir,
         )
@@ -887,11 +899,12 @@ class TestDownloadNewFile:
         output_path = env.tmp_path / "test_download_new_file_playbook"
 
         downloader = Downloader(output=str(output_path))
-        assert downloader.download_non_unified_content(
-            content_object=env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
+        file_name = env.PLAYBOOK_CUSTOM_CONTENT_OBJECT["file_name"]
+
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.PLAYBOOK_CUSTOM_CONTENT_OBJECT},
             existing_pack_structure={},
             output_path=output_path,
-            should_overwrite_existing=False,
         )
         expected_file_path = (
             output_path
@@ -907,12 +920,13 @@ class TestDownloadNewFile:
         env = Environment(tmp_path)
         output_path = env.tmp_path / "test_download_new_file_layout"
 
+        file_name = env.LAYOUT_CUSTOM_CONTENT_OBJECT["file_name"]
+
         downloader = Downloader(output=str(output_path))
-        assert downloader.download_non_unified_content(
-            content_object=env.LAYOUT_CUSTOM_CONTENT_OBJECT,
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.LAYOUT_CUSTOM_CONTENT_OBJECT},
             existing_pack_structure={},
             output_path=output_path,
-            should_overwrite_existing=False,
         )
         expected_file_path = (
             output_path

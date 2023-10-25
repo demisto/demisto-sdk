@@ -35,19 +35,18 @@ jobs:
       - name: Install Python Dependencies
         run: |
           poetry install
-      - name: Get the contribution TL github username
+      - name: Add assignee and a Contribution label
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          PR_URL: ${{github.event.pull_request.html_url}}
         run: |
           echo "Getting the contribution TL"
           cd Utils/github_workflow_scripts
           poetry run python ./handle_new_contribution.py
           contrib_tl=$( cat contrib_tl.txt )
-          echo $(contrib_tl)
+          echo $contrib_tl
+          echo "$contrib_tl"
           find . -name "contrib_tl.txt" -type f -delete
           echo "Finished retrieving the contribution TL username"
-      - name: Add assignee
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          PR_URL: ${{github.event.pull_request.html_url}}
-        run: |
           echo "Add an assignee and a Contribution label"
-          gh pr edit --add-assignee "$CONTRIB_TL" --add-label Contribution "$PR_URL"
+          gh pr edit --add-assignee "$contrib_tl" --add-label Contribution "$PR_URL"

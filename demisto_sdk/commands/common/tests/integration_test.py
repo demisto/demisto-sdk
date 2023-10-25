@@ -13,6 +13,9 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     MAX_FETCH_PARAM,
+    PARTNER_SUPPORT,
+    SUPPORT_LEVEL_HEADER,
+    XSOAR_SUPPORT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
@@ -1948,6 +1951,59 @@ class TestIntegrationValidator:
             == is_valid
         )
 
+    @pytest.mark.parametrize(
+        "support_level_header, is_valid",
+        [
+            (XSOAR_SUPPORT, True),
+            (PARTNER_SUPPORT, False),
+        ],
+    )
+    def test_is_partner_collector_has_xsoar_support_level_header(
+        self, mocker, pack, support_level_header: str, is_valid: bool
+    ):
+        """
+        Given
+        - Case A: support_level_header = xsoar
+        - Case B: support_level_header = partner
+
+        When
+        - run is_partner_collector_has_xsoar_support_level_header
+
+        Then
+        - Case A: make sure the validation succeed
+        - Case B: make sure the validation fails
+        """
+        name = "test"
+        yml = {
+            "commonfields": {"id": name, "version": -1},
+            "name": name,
+            "display": name,
+            "description": name,
+            "category": "category",
+            "script": {
+                "type": "python",
+                "subtype": "python3",
+                "script": "",
+                "isfetchevents": True,
+                "commands": [],
+            },
+            "configuration": [],
+            SUPPORT_LEVEL_HEADER: support_level_header,
+        }
+
+        integration = pack.create_integration(name, yml=yml)
+        validator = IntegrationValidator(
+            mock_structure(integration.path, current_file=integration.yml.read_dict())
+        )
+        mocker.patch.object(
+            IntegrationValidator,
+            "get_metadata_file_content",
+            return_value={"support": PARTNER_SUPPORT},
+        )
+        assert (
+            validator.is_partner_collector_has_xsoar_support_level_header() == is_valid
+        )
+
 
 class TestIsFetchParamsExist:
     def setup_method(self):
@@ -2904,3 +2960,123 @@ class TestisContextChanged:
             structure_validator, json_file_path=integration.yml.path, using_git=use_git
         )
         assert integration_validator.is_line_ends_with_dot() is expected_results
+
+    VALID_COMMAND_OUTPUTS = {
+        "name": "url",
+        "outputs": [
+            {
+                "contextPath": "URL.Data",
+                "description": "test description.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    INVALID_COMMAND_OUTPUTS = {
+        "name": "url",
+        "outputs": [
+            {
+                "contextPath": "Url.Data",
+                "description": "data.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    MISSING_COMMAND_OUTPUTS = {
+        "name": "endpoint",
+        "outputs": [
+            {
+                "contextPath": "Endpoint.Critical",
+                "description": "The percentage of critical findings on the host.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    IS_OUTPUT_FOR_REPUTATION_INPUTS = [
+        (VALID_COMMAND_OUTPUTS, True),
+        (INVALID_COMMAND_OUTPUTS, False),
+        (MISSING_COMMAND_OUTPUTS, False),
+    ]
+
+    @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
+    def test_is_valid_spelling_command_custom_outputs(
+        self, outputs: List[Dict[str, Any]], result: bool
+    ):
+        """
+        Cover IN159 validation which validates the spelling of command output paths for reputation commands.
+        Given
+        The outputs and command_name of a command context.
+            - Case 1: A valid command output, URL is spelled correctly, all DBotScore outputs are present.
+            - Case 2: An invalid command output, URL is not spelled correctly (Url), all DBotScore outputs are present.
+            - Case 3: An invalid command output, Endpoint is missing one of the mandatory output paths (ID, IPAddress, Hostname), all DBotScore outputs are present.
+        When
+        - Calling the is_outputs_for_reputations_commands_valid validation.
+        Then
+            - Case 1: Make sure validation pass.
+            - Case 2: Make sure validation fails.
+            - Case 3: Make sure validation fails.
+        """
+        content = {"script": {"commands": [outputs]}}
+        structure = mock_structure("", content)
+        validator = IntegrationValidator(structure)
+        validator.current_file = content
+        assert validator.is_outputs_for_reputations_commands_valid() == result

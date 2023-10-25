@@ -23,6 +23,11 @@ def get_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo
     return Repo(tmp_dir)
 
 
+def get_git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
+    tmp_dir = _mk_tmp(request, tmp_path_factory)
+    return Repo(tmp_dir, init_git=True)
+
+
 def get_pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack:
     """Mocking tmp_path"""
     return get_repo(request, tmp_path_factory).create_pack()
@@ -76,8 +81,18 @@ def integration(
 
 @pytest.fixture
 def repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
-    """Mocking tmp_path"""
+    """
+    Initializes a repo without git.
+    """
     return get_repo(request, tmp_path_factory)
+
+
+@pytest.fixture
+def git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory):
+    """
+    Initializes a repo with git.
+    """
+    return get_git_repo(request, tmp_path_factory)
 
 
 @pytest.fixture(scope="module")

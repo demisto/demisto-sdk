@@ -29,8 +29,8 @@ def load_json(file_path: Path) -> dict:
 
 
 def main():
-    content_roles_path = get_remote_file(f"{CONTENT_PATH}/.github/content_roles.json")
-    print(content_roles_path)
+    content_roles_path = get_remote_file(".github/content_roles.json")
+    print(f'{content_roles_path=}')
     content_roles = load_json(content_roles_path)
     print(f'{content_roles=}')
     contrib_tl_username = content_roles["CONTRIBUTION_TL"]

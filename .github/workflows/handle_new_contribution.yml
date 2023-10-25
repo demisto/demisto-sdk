@@ -41,7 +41,7 @@ jobs:
           cd Utils/github_workflow_scripts
           poetry run python ./handle_new_contribution.py
           contrib_tl=$( cat contrib_tl.txt )
-          echo contrib_tl
+          echo $(contrib_tl)
           find . -name "contrib_tl.txt" -type f -delete
           echo "Finished retrieving the contribution TL username"
       - name: Add assignee

@@ -37,13 +37,12 @@ def main():
             git_provider=GitProvider.GitHub,
         ),
     )
-    print(f'{content_roles=}')
     contrib_tl_username = content_roles["CONTRIBUTION_TL"]
     if not contrib_tl_username:
         print("No contribution TL")  # noqa: T201
         sys.exit(1)
-    # save the contrib_tl username to an environment variable to later use in the workflow
-    print(f'{contrib_tl_username=}')
+    # save the contrib_tl username to a file for a later use in the workflow
+    print(f'{contrib_tl_username=}')  # noqa: T201
     with open("contrib_tl.txt", "w") as f:
         f.write(contrib_tl_username)
 

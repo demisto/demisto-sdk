@@ -41,7 +41,9 @@ class BCSubtypeValidator(BaseValidator):
         )
 
     @classmethod
-    def fix(cls, content_item: ContentTypes,  old_content_item: ContentTypes = None) -> FixingResult:
+    def fix(
+        cls, content_item: ContentTypes, old_content_item: ContentTypes = None
+    ) -> FixingResult:
         if old_content_item:
             content_item.type = old_content_item.type
             content_item.save()

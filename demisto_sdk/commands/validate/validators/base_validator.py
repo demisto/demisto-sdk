@@ -72,7 +72,9 @@ class BaseValidator(ABC, BaseModel):
         return all(
             [
                 should_run_according_to_type(content_item, cls.ContentTypes),
-                should_run_according_to_status(content_item.git_status, cls.expected_git_statuses),
+                should_run_according_to_status(
+                    content_item.git_status, cls.expected_git_statuses
+                ),
                 not is_error_ignored(
                     cls.error_code, content_item.ignored_errors, ignorable_errors
                 ),
@@ -89,7 +91,7 @@ class BaseValidator(ABC, BaseModel):
         raise NotImplementedError
 
     @classmethod
-    def fix(cls, content_item: Any,  old_content_item: Any = None) -> FixingResult:
+    def fix(cls, content_item: Any, old_content_item: Any = None) -> FixingResult:
         raise NotImplementedError
 
     class Config:
@@ -132,14 +134,16 @@ def is_support_level_support_validation(
     return err_code in support_level_dict.get(item_support_level, {}).get("ignore", [])
 
 
-def should_run_according_to_status(content_item_git_status: Optional[str], expected_git_statuses: Optional[List[str]]) -> bool:
+def should_run_according_to_status(
+    content_item_git_status: Optional[str], expected_git_statuses: Optional[List[str]]
+) -> bool:
     """
     Check if the given content item git status is in the given expected git statuses for the specific validation.
 
     Args:
         content_item_git_status (Optional[str]): The content item git status (Added, Modified, Renamed, Deleted or None if file was created via -i/-a)
         expected_git_statuses (Optional[List[str]]): The validation's expected git statuses, if None then validation should run on all cases.
-    
+
     Returns:
         bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
     """
@@ -157,4 +161,15 @@ def should_run_according_to_type(content_item: BaseContent, content_types) -> bo
     Returns:
         bool: True if the given content item type matches the validation's expected types. Otherwise, return False.
     """
-    return any([isinstance(content_item, constraint) for constraint in content_types.__constraints__]) if content_types.__constraints__ else isinstance(content_item, content_types.__bound__) if content_types.__bound__ else isinstance(content_item, content_types)
+    return (
+        any(
+            [
+                isinstance(content_item, constraint)
+                for constraint in content_types.__constraints__
+            ]
+        )
+        if content_types.__constraints__
+        else isinstance(content_item, content_types.__bound__)
+        if content_types.__bound__
+        else isinstance(content_item, content_types)
+    )

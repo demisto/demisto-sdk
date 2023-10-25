@@ -57,7 +57,9 @@ class IDNameValidator(BaseValidator):
         )
 
     @classmethod
-    def fix(cls, content_item: ContentTypes,  old_content_item: ContentTypes = None) -> FixingResult:
+    def fix(
+        cls, content_item: ContentTypes, old_content_item: ContentTypes = None
+    ) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()
         return FixingResult(

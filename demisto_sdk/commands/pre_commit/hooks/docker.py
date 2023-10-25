@@ -129,7 +129,9 @@ class DockerHook(Hook):
             image_is_powershell = any(
                 f[1].get("type") == "powershell" for f in file_ymls
             )
-            dev_image = devtest_image(image, image_is_powershell)
+            dev_image = devtest_image(
+                image, image_is_powershell
+            )  # consider moving to before loop and threading.
 
             new_hook = {
                 "id": f"{self._get_property('id')}-{image}",
@@ -212,6 +214,7 @@ class DockerHook(Hook):
                 )  # type:ignore
                 hook["args"] = args
                 hook["id"] = f"{hook['id']}-{counter}"
+                hook["name"] = f"{hook['name']}-{counter}"
                 counter += 1
             if self.set_files_on_hook(hook, files):
                 ret_hooks.append(hook)

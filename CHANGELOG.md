@@ -1,11 +1,41 @@
 # Changelog
 ## Unreleased
+* Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
+* Added a new validation (`IN162`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.
+
+## 1.20.8
+* Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.
+* Internal: Fixed an issue where the `tools.get_display_name` function would return incorrect values for "Indicator Type" content items.
+* Changed the error code of the **validate** check for deprecated display names from `IN157` (duplicated a code used by a `nativeimage` check) to `IN160` (new code).
+* Changed the error code of the **validate** check for invalid SIEM marketplace values from `IN151` (duplicated a code used by a check for empty command arguments) to `IN161` (new code).
+* Added JUnit XML output support for **test-content** command.
+* Updated the **run-unit-tests** command to not fail on JavaScript items, but skip them instead.
+* Updated the `validate` pre-commit hook to run before the `run-unit-tests` hook. This will prevent `validate` from falling on errors about temporary files that are sometimes created when running unit-tests.
+* Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
+* Added a new key **supportlevelheader** to the integration schema.
+* **format** command will run without the content graph if graph creation fails.
+* Updated the `GENERAL_DEFAULT_FROMVERSION` variable from **6.9.0** to **6.10.0**.
+* Internal: Replaced the `tools._read_file` function with a more generic `tools.safe_read_unicode` function.
+* Internal: Added `pathlib.Path` support to the `tools.get_yml_paths_in_dir` and `tools.get_child_directories` functions.
+* Fixed an issue in the **test-modeling-rule** command, where possible exceptions were not caught.
+* Added the *--delete_existing_dataset/-dd* flag to the **modeling-rules test** command to delete an existing dataset in the tenant.
+* Added a new validation (`IN159`) which validates that reputation commands context outputs are spelled according to standards.
+* Internal: Added a `loaded_data` parameter to `YmlSplitter` to allow passing preloaded YAML data.
+
+## 1.20.7
+* Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
+* Fixed an issue where the documentation was out of date with the current structure of **demisto-sdk** which does not support command auto-completion.
+* Improved logging for **lint** and **prepare-content** commands.
+* Internal: Added the `CI_SERVER_HOST`, `CI_PROJECT_ID` environment variables.
+
+## 1.20.6
 * Added the *--mode* argument to the **pre-commit** command, to run pre-commit with special mode (to run with different settings), supported mode are: 'nightly'.
 * Modified the `validate` and `format` pre-commit hooks to run with the `--all` flag only when the `--mode=nightly` argument and `--all` flag were given.
 * Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` argument when running **pre-commit** command wite the `--mode=nightly` argument.
 * Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
 * Fixed an issue where kebab-case arguments were not parsed correctly.
 * Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with new lines followed by square/curly brackets.
 * Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
 * Fixed an issue where an error log message changed the terminal color.
 

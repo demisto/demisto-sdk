@@ -3,12 +3,8 @@ import os
 import sys
 from pathlib import Path
 
-CONTENT_ROOT_PATH = os.path.abspath(
-    os.path.join(__file__, "../../../..")
-)  # full path to content root repo
-CONTENT_ROLES_PATH = Path(
-    os.path.join(CONTENT_ROOT_PATH, ".github", "content_roles.json")
-)
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.tools import get_remote_file
 
 
 def load_json(file_path: Path) -> dict:
@@ -33,7 +29,8 @@ def load_json(file_path: Path) -> dict:
 
 
 def main():
-    content_roles = load_json(CONTENT_ROLES_PATH)
+    content_roles_path = get_remote_file(f"{CONTENT_PATH}/.github/content_roles.json")
+    content_roles = load_json(content_roles_path)
     print(f'{content_roles=}')
     contrib_tl_username = content_roles["CONTRIBUTION_TL"]
     if not contrib_tl_username:

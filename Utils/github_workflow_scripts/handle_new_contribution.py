@@ -34,6 +34,7 @@ def load_json(file_path: Path) -> dict:
 
 def main():
     content_roles = load_json(CONTENT_ROLES_PATH)
+    print(f'{content_roles=}')
     contrib_tl_username = content_roles["CONTRIBUTION_TL"]
     if not contrib_tl_username:
         print("No contribution TL")  # noqa: T201

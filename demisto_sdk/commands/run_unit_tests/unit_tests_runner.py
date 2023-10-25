@@ -91,19 +91,6 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
         return False
 
 
-def merge_coverage_report():
-    coverage_path = CONTENT_PATH / ".coverage"
-    coverage_path.unlink(missing_ok=True)
-    cov = coverage.Coverage(data_file=coverage_path)
-    if not (files := coverage_files()):
-        logger.warning("No coverage files found, skipping coverage report.")
-        return
-    fixed_files = [file for file in files if fix_coverage_report_path(Path(file))]
-    cov.combine(fixed_files)
-    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
-    logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
-
-
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
     docker_base = docker_helper.get_docker()
@@ -214,8 +201,4 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 )
                 traceback.print_exc()
                 exit_code = 1
-    try:
-        merge_coverage_report()
-    except Exception as e:
-        logger.warning(f"Failed to merge coverage report: {e}")
     return exit_code

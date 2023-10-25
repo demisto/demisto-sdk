@@ -64,3 +64,10 @@
   files: poetry.lock
   require_serial: true
   pass_filenames: false
+
+- id: merge-coverage-report
+  name: merge-coverage-report
+  entry: merge-coverage-report
+  language: python
+  require_serial: true
+  pass_filenames: false

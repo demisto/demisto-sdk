@@ -6,7 +6,6 @@ import traceback
 from pathlib import Path
 from typing import List
 
-import coverage
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
@@ -17,7 +16,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 DOCKER_PYTHONPATH = [
@@ -60,7 +58,7 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
                 cursor = sql_connection.cursor()
                 files = cursor.execute("SELECT * FROM file").fetchall()
                 for id_, file in files:
-                    if 'conftest' in file:
+                    if "conftest" in file:
                         cursor.execute(
                             "DELETE FROM file WHERE id = ?", (id_,)
                         )  # delete the file from the coverage report, as it is not relevant.
@@ -70,7 +68,8 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
                     file = Path(file).relative_to("/content")
                     if (
                         not (CONTENT_PATH / file).exists()
-                        or file.parent.name != file.stem  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
+                        or file.parent.name
+                        != file.stem  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
                     ):
                         logger.debug(f"Removing {file} from coverage report")
                         cursor.execute(

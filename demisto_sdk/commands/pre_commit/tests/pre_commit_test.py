@@ -7,11 +7,11 @@ import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.pre_commit.hooks.coverage_analyze import CoverageAnalyzeHook
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
-from demisto_sdk.commands.pre_commit.hooks.coverage_analyze import CoverageAnalyzeHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     PYTHON2_SUPPORTED_HOOKS,
     GitUtil,
@@ -334,11 +334,13 @@ def test_coverage_analyze_hook():
     """
     coverage_analyze_hook = create_hook({"args": []})
 
-    kwargs = {'mode': None, 'all_files': False, 'input_mode': True}
+    kwargs = {"mode": None, "all_files": False, "input_mode": True}
     CoverageAnalyzeHook(**coverage_analyze_hook, **kwargs).prepare_hook()
 
-    expected_hook_args = ['--previous-coverage-report-url',
-                          'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json']
+    expected_hook_args = [
+        "--previous-coverage-report-url",
+        "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+    ]
     hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
 
     assert expected_hook_args == hook_args
@@ -350,10 +352,10 @@ def test_coverage_analyze_hook_nightly():
     """
     coverage_analyze_hook = create_hook({"args": []})
 
-    kwargs = {'mode': PreCommitModes.NIGHTLY, 'input_mode': True}
+    kwargs = {"mode": PreCommitModes.NIGHTLY, "input_mode": True}
     CoverageAnalyzeHook(**coverage_analyze_hook, **kwargs).prepare_hook()
 
-    expected_hook_args = ['--allowed-coverage-degradation-percentage', '100']
+    expected_hook_args = ["--allowed-coverage-degradation-percentage", "100"]
     hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
 
     assert expected_hook_args == hook_args

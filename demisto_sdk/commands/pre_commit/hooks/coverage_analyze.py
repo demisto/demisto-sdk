@@ -1,8 +1,5 @@
-from pathlib import Path
-from typing import Iterable, Optional
-
 from demisto_sdk.commands.common.constants import PreCommitModes
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
 
 class CoverageAnalyzeHook(Hook):
@@ -17,6 +14,8 @@ class CoverageAnalyzeHook(Hook):
             self.base_hook["args"].append("100")
         else:
             self.base_hook["args"].append("--previous-coverage-report-url")
-            self.base_hook["args"].append("https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json")
+            self.base_hook["args"].append(
+                "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+            )
 
         self.hooks.append(self.base_hook)

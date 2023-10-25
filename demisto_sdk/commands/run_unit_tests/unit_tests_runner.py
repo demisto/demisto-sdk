@@ -34,63 +34,6 @@ TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 NO_TESTS_COLLECTED = 5
 
 
-def fix_coverage_report_path(coverage_file: Path) -> bool:
-    """
-
-    Args:
-        coverage_file: The coverage file to to fix (absolute file).
-
-    Returns:
-        True if the file was fixed, False otherwise.
-
-    Notes:
-        the .coverage files contain all the files list with their absolute path.
-        but our tests (pytest step) are running inside a docker container.
-        so we have to change the path to the correct one.
-
-    """
-    try:
-        logger.debug(f"Editing coverage report for {coverage_file}")
-        with tempfile.NamedTemporaryFile() as temp_file:
-            # we use a tempfile because the original file could be readonly, this way we assure we can edit it.
-            shutil.copy(coverage_file, temp_file.name)
-            with sqlite3.connect(temp_file.name) as sql_connection:
-                cursor = sql_connection.cursor()
-                files = cursor.execute("SELECT * FROM file").fetchall()
-                for id_, file in files:
-                    if "conftest" in file:
-                        cursor.execute(
-                            "DELETE FROM file WHERE id = ?", (id_,)
-                        )  # delete the file from the coverage report, as it is not relevant.
-                    if not file.startswith("/content"):
-                        # means that the .coverage file is already fixed
-                        continue
-                    file = Path(file).relative_to("/content")
-                    if (
-                        not (CONTENT_PATH / file).exists()
-                        or file.parent.name
-                        != file.stem  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
-                    ):
-                        logger.debug(f"Removing {file} from coverage report")
-                        cursor.execute(
-                            "DELETE FROM file WHERE id = ?", (id_,)
-                        )  # delete the file from the coverage report, as it is not relevant.
-                    else:
-                        cursor.execute(
-                            "UPDATE file SET path = ? WHERE id = ?",
-                            (str(CONTENT_PATH / file), id_),
-                        )
-                sql_connection.commit()
-                logger.debug("Done editing coverage report")
-            coverage_file.unlink()
-            shutil.copy(temp_file.name, coverage_file)
-            return True
-    except Exception:
-        logger.warning(f"Broken .coverage file found: {file}, deleting it")
-        file.unlink(missing_ok=True)
-        return False
-
-
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
     docker_base = docker_helper.get_docker()

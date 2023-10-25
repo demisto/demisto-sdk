@@ -813,7 +813,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             staged=kwargs["staged"],
             json_file_path=kwargs.get("json_file"),
             multiprocessing=run_with_mp,
-            config_file_category_to_run=not kwargs.get("category_to_run"),
+            config_file_category_to_run=kwargs.get("category_to_run"),
             allow_autofix=kwargs.get("allow_fix"),
             config_file_path=kwargs.get("config_path"),
         )

@@ -851,7 +851,7 @@ def get_file(
     if git_sha:
         if file_path.is_absolute():
             file_path = file_path.relative_to(get_content_path())
-        return get_remote_file(file_path, tag=git_sha)
+        return get_remote_file(str(file_path), tag=git_sha)
 
     type_of_file = file_path.suffix.lower()
 
@@ -4204,9 +4204,10 @@ def set_val(data: dict, keys: Union[str, List[str]], value) -> None:
     """
     if isinstance(keys, list):
         keys = find_correct_key(data, keys)
-    keys = keys.split(".")
-    dic = data
-    for k in keys[:-1]:
-        dic = dic.get(k, {})
+    if get(data, keys, None):
+        keys = keys.split(".")
+        dic = data
+        for k in keys[:-1]:
+            dic = dic.get(k, {})
 
-    dic[keys[-1]] = value
+        dic[keys[-1]] = value

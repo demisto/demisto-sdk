@@ -19,14 +19,14 @@ class BCSubtypeValidator(BaseValidator):
     is_auto_fixable = True
     related_field = "subtype"
     ContentTypes = TypeVar("ContentTypes", Integration, Script)
-    fixing_message = "Changing subtype of new item to be equal to the old one ({0})."
+    fixing_message = "Changing subtype back to the old one ({0})."
     expected_git_statuses = [ADDED, MODIFIED]
 
     @classmethod
     def is_valid(
         cls, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None
     ) -> ValidationResult:
-        if old_content_item and not content_item.type != old_content_item.type:
+        if old_content_item and content_item.type != old_content_item.type:
             return ValidationResult(
                 error_code=cls.error_code,
                 is_valid=False,
@@ -45,8 +45,8 @@ class BCSubtypeValidator(BaseValidator):
         if old_content_item:
             content_item.type = old_content_item.type
             content_item.save()
-        return FixingResult(
-            error_code=cls.error_code,
-            message=cls.fixing_message.format(content_item.object_id),
-            file_path=content_item.path,
-        )
+            return FixingResult(
+                error_code=cls.error_code,
+                message=cls.fixing_message.format(old_content_item.type),
+                file_path=content_item.path,
+            )

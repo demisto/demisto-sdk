@@ -79,7 +79,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
-        git_sha: Optional[str] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
@@ -138,7 +137,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         git_sha: Optional[str] = None,
         **kwargs,
     ) -> "ContentItemParser":
-        parser = parser_cls(path, pack_marketplaces, git_sha, **kwargs)
+        parser = parser_cls(path, pack_marketplaces, git_sha=git_sha, **kwargs)
         logger.debug(f"Parsed {parser.node_id}")
         return parser
 

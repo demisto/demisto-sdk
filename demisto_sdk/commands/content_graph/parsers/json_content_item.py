@@ -22,7 +22,7 @@ class JSONContentItemParser(ContentItemParser):
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.json_data: Dict[str, Any] = self.get_json(git_sha)
+        self.json_data: Dict[str, Any] = self.get_json(git_sha=git_sha)
         self.original_json_data: Dict[str, Any] = self.json_data
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(

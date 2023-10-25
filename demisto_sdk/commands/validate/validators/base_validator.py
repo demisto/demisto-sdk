@@ -157,4 +157,4 @@ def should_run_according_to_type(content_item: BaseContent, content_types) -> bo
     Returns:
         bool: True if the given content item type matches the validation's expected types. Otherwise, return False.
     """
-    return any([isinstance(content_item, constraint) for constraint in content_types.__constraints__]) if content_types.__constraints__ else isinstance(content_item, content_types)
+    return any([isinstance(content_item, constraint) for constraint in content_types.__constraints__]) if content_types.__constraints__ else isinstance(content_item, content_types.__bound__) if content_types.__bound__ else isinstance(content_item, content_types)

@@ -80,7 +80,7 @@ class ValidateManager:
                         if not validation_result.is_valid:
                             if self.allow_autofix:
                                 self.validation_results.append_fixing_results(
-                                    validator.fix(content_object[0])
+                                    validator.fix(*content_object)
                                 )
                             else:
                                 self.validation_results.append(validation_result)

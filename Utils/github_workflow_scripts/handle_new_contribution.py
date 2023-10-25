@@ -1,32 +1,7 @@
-import json
-import os
 import sys
-from pathlib import Path
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.tools import get_remote_file
-
-
-def load_json(file_path: Path) -> dict:
-    """Reads and loads json file.
-
-    Args:
-        file_path (str): full path to json file.
-
-    Returns:
-        dict: loaded json file.
-
-    """
-    try:
-        if file_path and Path.exists(file_path):
-            with open(file_path) as json_file:
-                result = json.load(json_file)
-        else:
-            result = {}
-        return result
-    except json.decoder.JSONDecodeError:
-        return {}
 
 
 def main():
@@ -42,7 +17,7 @@ def main():
         print("No contribution TL")  # noqa: T201
         sys.exit(1)
     # save the contrib_tl username to a file for a later use in the workflow
-    print(f'{contrib_tl_username=}')  # noqa: T201
+    print(f"{contrib_tl_username=}")  # noqa: T201
     with open("contrib_tl.txt", "w") as f:
         f.write(contrib_tl_username)
 

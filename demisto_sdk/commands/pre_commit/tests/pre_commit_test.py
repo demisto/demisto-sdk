@@ -335,10 +335,25 @@ def test_coverage_analyze_hook():
     coverage_analyze_hook = create_hook({"args": []})
 
     kwargs = {'mode': None, 'all_files': False, 'input_mode': True}
+    CoverageAnalyzeHook(**coverage_analyze_hook, **kwargs).prepare_hook()
+
     expected_hook_args = ['--previous-coverage-report-url',
                           'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json']
-    CoverageAnalyzeHook(**coverage_analyze_hook).prepare_hook(**kwargs)
+    hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
 
+    assert expected_hook_args == hook_args
+
+
+def test_coverage_analyze_hook_nightly():
+    """
+    Testing coverage-analyze hook created successfully in a nightly mode
+    """
+    coverage_analyze_hook = create_hook({"args": []})
+
+    kwargs = {'mode': PreCommitModes.NIGHTLY, 'input_mode': True}
+    CoverageAnalyzeHook(**coverage_analyze_hook, **kwargs).prepare_hook()
+
+    expected_hook_args = ['--allowed-coverage-degradation-percentage', '100']
     hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
 
     assert expected_hook_args == hook_args

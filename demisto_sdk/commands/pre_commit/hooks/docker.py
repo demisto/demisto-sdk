@@ -2,8 +2,9 @@ import functools
 import os
 import time
 from collections import defaultdict
+from copy import deepcopy
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Tuple
 
 from docker.errors import DockerException
 
@@ -42,7 +43,7 @@ def with_native_tags(tags_to_files: dict, docker_image_flag: str) -> dict:
                 docker_image=image,
             ).get_supported_native_docker_tags(docker_flags)
             for native_image in supported_native_images:
-                all_tags_to_files[native_image].append(file)
+                all_tags_to_files[native_image].append((file, yml))
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
@@ -72,22 +73,28 @@ def docker_tag_to_runfiles(files_to_run: Iterable, docker_image_flag) -> dict:
         yml: Optional[dict] = get_yml_for_file(file)
         if not yml:
             continue
-        if docker_image := docker_image_for_file(yml):
+        for docker_image in docker_images_for_file(yml):
             tags_to_files[docker_image].append((file, yml))
     return with_native_tags(tags_to_files, docker_image_flag)
 
 
-def docker_image_for_file(yml: dict) -> str:
+def docker_images_for_file(yml: dict) -> set:
+    ret = set()
     if image := yml.get("dockerimage"):
-        return image
+        ret.add(image)
     script = yml.get("script", {})
     if isinstance(script, dict):
-        return script.get("dockerimage", "")
-    return ""
+        image = script.get("dockerimage", "")
+        if image:
+            ret.add(image)
+    if images := yml.get("alt_dockerimages"):
+        ret.update(images)
+    return ret
 
 
-@functools.lru_cache
+@functools.lru_cache(maxsize=256)
 def devtest_image(image_tag, is_powershell):
+    logger.debug(f"getting devimage for {image_tag}, {is_powershell=}")
     image, errors = get_docker().pull_or_create_test_image(
         image_tag, TYPE_PWSH if is_powershell else TYPE_PYTHON
     )
@@ -107,7 +114,6 @@ class DockerHook(Hook):
 
     def prepare_hook(self, files_to_run: Iterable):
 
-        all_hooks = []
         start_time = time.time()
         tag_to_files = docker_tag_to_runfiles(
             self.filter_files_matching_hook_config(files_to_run),
@@ -117,22 +123,32 @@ class DockerHook(Hook):
         logger.info(
             f"Elapsed time to gather tags to files: {end_time - start_time} seconds"
         )
+        start_time = time.time()
+
         for image, file_ymls in tag_to_files.items():
             image_is_powershell = any(
                 f[1].get("type") == "powershell" for f in file_ymls
             )
             dev_image = devtest_image(image, image_is_powershell)
+
             new_hook = {
                 "id": f"{self._get_property('id')}-{image}",
                 "name": f"{self._get_property('name')}-{image}",
                 "language": "docker_image",
                 "entry": f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}',
             }
-            self._set_properties(new_hook, to_delete=["docker_image"])
-            if self.set_files_on_hook(new_hook, {f[0] for f in file_ymls}):
-                all_hooks.append(new_hook)
 
-        self.hooks.extend(all_hooks)
+            hooks = self._split_by_config_file(new_hook, file_ymls)
+            for hook in hooks:
+                self._set_properties(
+                    hook, to_delete=["docker_image", "config_file_arg"]
+                )
+
+            self.hooks.extend(hooks)
+        end_time = time.time()
+        logger.info(
+            f"Elapsed time to prep all the images: {end_time - start_time} seconds"
+        )
 
     def _set_properties(self, hook, to_delete=()):
         """
@@ -171,3 +187,55 @@ class DockerHook(Hook):
         if self.mode:
             ret = self.base_hook.get(f"{name}:{self.mode.value}")
         return ret or self.base_hook.get(name, default)
+
+    def _split_by_config_file(self, new_hook, file_ymls):
+        folder_to_files = {}
+        if config_arg := self._get_config_file_arg():
+
+            folder_to_files = self._get_folder_to_ymls_by_config(
+                file_ymls, config_arg[1]
+            )
+        else:
+            folder_to_files = {None: file_ymls}
+
+        ret_hooks = []
+        counter = 0
+        for folder, files in folder_to_files.items():
+            hook = deepcopy(new_hook)
+            if folder is not None:
+                args = deepcopy(self._get_property("args", []))
+                args.extend(
+                    [
+                        config_arg[0],  # type:ignore
+                        str(list(files)[0].parent / config_arg[1]),  # type:ignore
+                    ]  # type:ignore
+                )  # type:ignore
+                hook["args"] = args
+                hook["id"] = f"{hook['id']}-{counter}"
+                counter += 1
+            if self.set_files_on_hook(hook, files):
+                ret_hooks.append(hook)
+        return ret_hooks
+
+    def _get_config_file_arg(self) -> Optional[Tuple]:
+        if config_arg := self._get_property("config_file_arg"):
+            arg_name = config_arg.get("arg_name")
+            file_name = config_arg.get("file_name")
+            if not arg_name or not file_name:
+                raise ValueError(
+                    "config_file_arg was provided in pre-commit configuration file"
+                    " but not properly formed. Must have arg_name and file_name keys"
+                )
+            return arg_name, file_name
+        return None
+
+    def _get_folder_to_ymls_by_config(self, file_ymls, file_name):
+        folder_to_files = defaultdict(set)
+
+        for file, _ in file_ymls:
+            if (file.parent / file_name).exists():
+                folder_to_files[str(file.parent)].add(file)
+            else:
+                folder_to_files[None].add(file)  # type:ignore
+
+        return folder_to_files

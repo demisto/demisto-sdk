@@ -40,8 +40,10 @@ jobs:
           echo "Getting the contribution TL"
           cd Utils/github_workflow_scripts
           poetry run python ./handle_new_contribution.py
-          echo "Finished retrieving the contribution TL username"
           echo "$CONTRIB_TL"
+          echo "Finished retrieving the contribution TL username"
+        env:
+          CONTRIB_TL: test
       - name: Add assignee
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

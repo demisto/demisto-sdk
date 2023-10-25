@@ -431,7 +431,7 @@ class Downloader:
 
             raise HandledError from e
 
-        logger.info("Custom content bundle fetched successfully.")
+        logger.debug("Custom content bundle fetched successfully.")
         logger.debug(
             f"Downloaded content bundle size (bytes): {len(api_response.data)}"
         )
@@ -562,8 +562,8 @@ class Downloader:
             except Exception as e:
                 logger.error(f"Failed to fetch system automation '{automation}': {e}")
 
-        logger.info(
-            f"Successfully downloaded {len(downloaded_automations)} system automations."
+        logger.debug(
+            f"Successfully fetched {len(downloaded_automations)} system automations."
         )
 
         content_items_objects: dict[str, dict] = {}
@@ -653,8 +653,8 @@ class Downloader:
                 logger.error(f"Failed to fetch system playbook '{playbook}': {e}")
 
         if len(downloaded_playbooks):
-            logger.info(
-                f"Successfully downloaded {len(downloaded_playbooks)} system playbooks."
+            logger.debug(
+                f"Successfully fetched {len(downloaded_playbooks)} system playbooks."
             )
 
         else:
@@ -766,8 +766,8 @@ class Downloader:
                 # These are system content items that can't be fetched individually,
                 # so we fetch & parse all of them, and then filter according to the input.
                 downloaded_items = api_response
-                logger.info(
-                    f"Successfully downloaded {len(downloaded_items)} {content_item_type.value} content items."
+                logger.debug(
+                    f"Successfully fetched {len(downloaded_items)} {content_item_type.value} content items."
                 )
 
             downloaded_content_objects = {}
@@ -891,7 +891,7 @@ class Downloader:
         Returns:
             Path: Path to the initialized output path.
         """
-        logger.info("Initiating pack structure...")
+        logger.debug("Initiating pack structure...")
 
         if root_folder.name != "Packs":
             root_folder = root_folder / "Packs"

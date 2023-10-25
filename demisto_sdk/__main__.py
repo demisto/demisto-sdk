@@ -1520,7 +1520,7 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--auto-replace-uuids/--no-auto-replace-uuids",
-    help="Whether to replace UUID IDs (generated automatically by the server) for downloaded custom content.",
+    help="Whether to replace UUID IDs (automatically assigned to custom content by the server) for downloaded custom content.",
     default=True,
 )
 @click.pass_context

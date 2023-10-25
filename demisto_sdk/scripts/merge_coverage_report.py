@@ -1,7 +1,7 @@
 import shutil
+import sqlite3
 import tempfile
 from pathlib import Path
-import sqlite3
 
 import coverage
 

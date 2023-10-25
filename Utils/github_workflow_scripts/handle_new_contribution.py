@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.tools import get_remote_file
 
 
@@ -29,7 +30,13 @@ def load_json(file_path: Path) -> dict:
 
 
 def main():
-    content_roles_path = get_remote_file(".github/content_roles.json")
+    content_roles_path = get_remote_file(
+        ".github/content_roles.json",
+        git_content_config=GitContentConfig(
+            repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+            git_provider=GitProvider.GitHub,
+        ),
+    )
     print(f'{content_roles_path=}')
     content_roles = load_json(content_roles_path)
     print(f'{content_roles=}')

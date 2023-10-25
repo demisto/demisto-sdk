@@ -39,8 +39,9 @@ def main():
         print("No contribution TL")  # noqa: T201
         sys.exit(1)
     # save the contrib_tl username to an environment variable to later use in the workflow
+    print(f'{contrib_tl_username=}')
     return contrib_tl_username
 
 
 if __name__ == "__main__":
-    print(main())
+    main()

@@ -13,7 +13,10 @@ class IndicatorFieldParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_FIELD
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.cli_name = self.json_data.get("cliName")
@@ -21,7 +24,7 @@ class IndicatorFieldParser(
         self.associated_to_all = self.json_data.get("associatedToAll")
 
         self.connect_to_dependencies()
-    
+
     @property
     def mapping(self):
         return super().mapping | {"object_id": "cliName"}

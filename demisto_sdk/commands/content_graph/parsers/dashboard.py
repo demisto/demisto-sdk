@@ -10,7 +10,10 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
 

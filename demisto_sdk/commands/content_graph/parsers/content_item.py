@@ -74,10 +74,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     """
 
     content_type_to_parser: Dict[ContentType, Type["ContentItemParser"]] = {}
+
     def __init__(
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        git_sha: Optional[str] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
@@ -91,7 +93,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def from_path(
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
-        git_sha: Optional[str]=None,
+        git_sha: Optional[str] = None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
@@ -113,10 +115,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
-                    parser_cls,
-                    path,
-                    pack_marketplaces,
-                    git_sha
+                    parser_cls, path, pack_marketplaces, git_sha
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(

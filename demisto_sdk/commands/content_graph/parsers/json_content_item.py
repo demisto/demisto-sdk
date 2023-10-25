@@ -15,10 +15,11 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 
 class JSONContentItemParser(ContentItemParser):
-
-
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.json_data: Dict[str, Any] = self.get_json(git_sha)
@@ -30,17 +31,17 @@ class JSONContentItemParser(ContentItemParser):
 
         if self.should_skip_parsing():
             raise NotAContentItemException
-    
+
     @property
     def mapping(self):
         return super().mapping | {
-        "name": "name",
-        "deprecated": "deprecated",
-        "object_id": "id",
-        "description": "description",
-        "fromversion": "fromVersion",
-        "toVersion": "toVersion",
-    }
+            "name": "name",
+            "deprecated": "deprecated",
+            "object_id": "id",
+            "description": "description",
+            "fromversion": "fromVersion",
+            "toVersion": "toVersion",
+        }
 
     @property
     def object_id(self) -> Optional[str]:

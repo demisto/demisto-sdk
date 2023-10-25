@@ -18,7 +18,6 @@ EXECUTE_CMD_PATTERN = re.compile(
 
 
 class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
-
     def __init__(
         self,
         path: Path,
@@ -36,10 +35,13 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
 
         self.connect_to_dependencies()
         self.connect_to_tests()
-    
+
     @property
     def mapping(self):
-        return super().mapping | {"docker_image": "dockerimage", "description": "comment"}
+        return super().mapping | {
+            "docker_image": "dockerimage",
+            "description": "comment",
+        }
 
     @property
     def description(self) -> Optional[str]:

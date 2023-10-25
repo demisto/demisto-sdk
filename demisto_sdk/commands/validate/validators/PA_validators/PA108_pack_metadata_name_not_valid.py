@@ -7,23 +7,25 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 
-class IDNameValidator(BaseValidator):
+class PackMetadataNameValidator(BaseValidator):
     error_code = "PA108"
-    description = "Validate that the pack name field exist and is different from the default one."
+    description = (
+        "Validate that the pack name field exist and is different from the default one."
+    )
     error_message = "Pack metadata name field ({}) is missing or invalid. Please fill valid pack name."
     is_auto_fixable = False
     related_field = "pack name"
     ContentTypes = TypeVar("ContentTypes", bound=Pack)
 
     @classmethod
-    def is_valid(cls, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None) -> ValidationResult:
+    def is_valid(
+        cls, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None
+    ) -> ValidationResult:
         if not content_item.name or "fill mandatory field" in content_item.name:
             return ValidationResult(
                 error_code=cls.error_code,
                 is_valid=False,
-                message=cls.error_message.format(
-                    content_item.name
-                ),
+                message=cls.error_message.format(content_item.name),
                 file_path=content_item.path,
             )
         return ValidationResult(

@@ -204,7 +204,7 @@ class BaseContent(BaseContentModel):
         path: Path,
         git_status: Optional[str] = None,
         old_file_path: Optional[Path] = None,
-        git_sha: Optional[str] = None
+        git_sha: Optional[str] = None,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (

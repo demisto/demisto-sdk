@@ -838,7 +838,7 @@ def get_file(
     return_content: bool = False,
     keep_order: bool = False,
     raise_on_error: bool = False,
-    git_sha: Optional[str] = None
+    git_sha: Optional[str] = None,
 ):
     """
     Get file contents.
@@ -917,10 +917,17 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path: str | Path, cache_clear=False, keep_order: bool = False, git_sha: Optional[str] = None):
+def get_yaml(
+    file_path: str | Path,
+    cache_clear=False,
+    keep_order: bool = False,
+    git_sha: Optional[str] = None,
+):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha)
+    return get_file(
+        file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
+    )
 
 
 def get_json(file_path: str | Path, cache_clear=False, git_sha: Optional[str] = None):

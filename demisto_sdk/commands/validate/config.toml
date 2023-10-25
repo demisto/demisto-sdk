@@ -1,5 +1,5 @@
 [use_git]
-select = ["BA101", "PA108"]
+select = ["BA101", "PA108", "BC100"]
 warning = []
 ignorable_errors = []
 

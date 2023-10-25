@@ -243,7 +243,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.relationships: Relationships = Relationships()
         self.connect_pack_dependencies(metadata)
         try:
-            self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME, git_sha=git_sha)
+            self.contributors: List[str] = get_json(
+                path / PACK_CONTRIBUTORS_FILENAME, git_sha=git_sha
+            )
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")

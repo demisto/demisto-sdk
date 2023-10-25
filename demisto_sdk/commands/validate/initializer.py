@@ -270,7 +270,6 @@ class Initializer:
 
         return filtered_modified_files, filtered_added_files, filtered_renamed_files
 
-    
     def gather_objects_to_run(self) -> Set[Tuple[BaseContent, Optional[BaseContent]]]:
         """
         Filter the file that should run according to the given flag (-i/-g/-a).
@@ -304,15 +303,19 @@ class Initializer:
                     if content_item not in content_objects_to_run:
                         content_objects_to_run_with_packs.add(content_item)
             content_objects_to_run_with_packs.add(content_object)
-        
+
         for content_object in content_objects_to_run_with_packs:
             old_content_item = None
             if content_object.git_status == MODIFIED:
-                old_content_item = BaseContent.from_path(content_object.path, git_sha=self.prev_ver)
+                old_content_item = BaseContent.from_path(
+                    content_object.path, git_sha=self.prev_ver
+                )
             elif content_object.git_status == RENAMED:
-                old_content_item = BaseContent.from_path(content_object.old_file_path, git_sha=self.prev_ver)
+                old_content_item = BaseContent.from_path(
+                    content_object.old_file_path, git_sha=self.prev_ver
+                )
             final_objects_to_run_set.add((content_object, old_content_item))
-            
+
         return final_objects_to_run_set
 
     def get_files_from_git(self) -> Set[BaseContent]:
@@ -362,7 +365,11 @@ class Initializer:
         basecontent_set: Set[BaseContent] = set()
         for file_path in files_set:
             if git_status == RENAMED:
-                temp_obj: Optional[BaseContent] = BaseContent.from_path(Path(file_path[0]), git_status=git_status, old_file_path=Path(file_path[1]))
+                temp_obj: Optional[BaseContent] = BaseContent.from_path(
+                    Path(file_path[0]),
+                    git_status=git_status,
+                    old_file_path=Path(file_path[1]),
+                )
             else:
                 temp_obj = BaseContent.from_path(Path(file_path), git_status)
             if temp_obj is None:

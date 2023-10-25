@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import Any, ClassVar, List, Optional, Type, TypeVar
+from typing import Any, ClassVar, List, Optional, TypeVar
 
 from pydantic import BaseModel
 
@@ -52,7 +52,8 @@ class BaseValidator(ABC, BaseModel):
     fixing_message: ClassVar[Optional[str]] = None
     is_auto_fixable: ClassVar[bool]
     related_field: ClassVar[str]
-    ContentTypes: ClassVar[Any] = TypeVar("ContentTypes", bound=BaseContent)
+    expected_git_statuses: ClassVar[Optional[List[str]]] = None
+    ContentTypes: ClassVar[Any] = TypeVar("ContentTypes", bound=BaseContent)  # type: ignore
 
     @classmethod
     def should_run(
@@ -70,7 +71,8 @@ class BaseValidator(ABC, BaseModel):
         """
         return all(
             [
-                any([isinstance(content_item, constraint) for constraint in cls.ContentTypes.__constraints__]) if cls.ContentTypes.__constraints__ else isinstance(content_item, cls.ContentTypes),
+                should_run_according_to_type(content_item, cls.ContentTypes),
+                should_run_according_to_status(content_item.git_status, cls.expected_git_statuses),
                 not is_error_ignored(
                     cls.error_code, content_item.ignored_errors, ignorable_errors
                 ),
@@ -81,13 +83,15 @@ class BaseValidator(ABC, BaseModel):
         )
 
     @classmethod
-    def is_valid(cls, content_item: Any, old_content_item: Any = None) -> ValidationResult:
+    def is_valid(
+        cls, content_item: Any, old_content_item: Any = None
+    ) -> ValidationResult:
         raise NotImplementedError
 
     @classmethod
-    def fix(cls, content_item: Any) -> FixingResult:
+    def fix(cls, content_item: Any,  old_content_item: Any = None) -> FixingResult:
         raise NotImplementedError
-    
+
     class Config:
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
@@ -106,7 +110,7 @@ def is_error_ignored(
         ignorable_errors (list): The list of the ignorable errors.
 
     Returns:
-        bool: True if the given error code should and allow to be ignored by the given item, otherwise return False.
+        bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
     return err_code in ignored_errors and err_code in ignorable_errors
 
@@ -128,4 +132,29 @@ def is_support_level_support_validation(
     return err_code in support_level_dict.get(item_support_level, {}).get("ignore", [])
 
 
+def should_run_according_to_status(content_item_git_status: Optional[str], expected_git_statuses: Optional[List[str]]) -> bool:
+    """
+    Check if the given content item git status is in the given expected git statuses for the specific validation.
 
+    Args:
+        content_item_git_status (Optional[str]): The content item git status (Added, Modified, Renamed, Deleted or None if file was created via -i/-a)
+        expected_git_statuses (Optional[List[str]]): The validation's expected git statuses, if None then validation should run on all cases.
+    
+    Returns:
+        bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
+    """
+    return not expected_git_statuses or content_item_git_status in expected_git_statuses
+
+
+def should_run_according_to_type(content_item: BaseContent, content_types) -> bool:
+    """
+    Check if the given content item type matches the validation's expected types.
+
+    Args:
+        content_item (BaseContent): the content item we wish to check if we should run the validation on.
+        content_types: The validation's expected content types.
+
+    Returns:
+        bool: True if the given content item type matches the validation's expected types. Otherwise, return False.
+    """
+    return any([isinstance(content_item, constraint) for constraint in content_types.__constraints__]) if content_types.__constraints__ else isinstance(content_item, content_types)

@@ -18,7 +18,10 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 class YAMLContentItemParser(ContentItemParser):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.yml_data: Dict[str, Any] = self.get_yaml(git_sha)
@@ -34,12 +37,12 @@ class YAMLContentItemParser(ContentItemParser):
     @property
     def mapping(self):
         return super().mapping | {
-        "name": "name",
-        "deprecated": "deprecated",
-        "description": "description",
-        "fromversion": "fromversion",
-        "toversion": "toversion",
-    }
+            "name": "name",
+            "deprecated": "deprecated",
+            "description": "description",
+            "fromversion": "fromversion",
+            "toversion": "toversion",
+        }
 
     @property
     def name(self) -> Optional[str]:
@@ -96,7 +99,9 @@ class YAMLContentItemParser(ContentItemParser):
                     target_type=ContentType.TEST_PLAYBOOK,
                 )
 
-    def get_yaml(self, git_sha: Optional[str] = None) -> Dict[str, Union[str, List[str]]]:
+    def get_yaml(
+        self, git_sha: Optional[str] = None
+    ) -> Dict[str, Union[str, List[str]]]:
         if not self.path.is_dir():
             yaml_path = self.path.as_posix()
         else:

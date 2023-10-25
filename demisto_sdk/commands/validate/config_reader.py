@@ -23,9 +23,7 @@ class ConfigReader:
             self.config_file_content = DEFAULT_MANDATORY_VALIDATIONS
             self.category_to_run = "default_mandatory_validations"
 
-    def gather_validations_to_run(
-        self, use_git: bool
-    ) -> Tuple[List, List, List, dict]:
+    def gather_validations_to_run(self, use_git: bool) -> Tuple[List, List, List, dict]:
         """Extract the relevant information from the relevant category in the config file.
 
         Args:

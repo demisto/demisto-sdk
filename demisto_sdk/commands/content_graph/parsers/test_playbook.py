@@ -15,7 +15,10 @@ NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
 class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         """Parses the test playbook.
 
@@ -29,7 +32,9 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK)
         if NON_CIRCLE_TESTS_DIRECTORY in path.name:
             raise NotAContentItemException
 
-        super().__init__(path, pack_marketplaces, is_test_playbook=True, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, is_test_playbook=True, git_sha=git_sha
+        )
 
         if self.yml_data.get("script"):
             raise IncorrectParserException(

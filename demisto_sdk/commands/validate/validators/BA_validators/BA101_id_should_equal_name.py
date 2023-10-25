@@ -23,10 +23,23 @@ class IDNameValidator(BaseValidator):
     fixing_message = "Changing name to be equal to id ({0})."
     is_auto_fixable = True
     related_field = "name"
-    ContentTypes = TypeVar("ContentTypes", Integration, Dashboard, IncidentType, Layout, Mapper, Playbook, Script, Wizard, Classifier)
-    
+    ContentTypes = TypeVar(
+        "ContentTypes",
+        Integration,
+        Dashboard,
+        IncidentType,
+        Layout,
+        Mapper,
+        Playbook,
+        Script,
+        Wizard,
+        Classifier,
+    )
+
     @classmethod
-    def is_valid(cls, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None) -> ValidationResult:
+    def is_valid(
+        cls, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None
+    ) -> ValidationResult:
         if content_item.object_id != content_item.name:
             return ValidationResult(
                 error_code=cls.error_code,
@@ -42,8 +55,9 @@ class IDNameValidator(BaseValidator):
             message="",
             file_path=content_item.path,
         )
+
     @classmethod
-    def fix(cls, content_item: ContentTypes) -> FixingResult:
+    def fix(cls, content_item: ContentTypes,  old_content_item: ContentTypes = None) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()
         return FixingResult(

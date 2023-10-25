@@ -44,7 +44,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()
         self.connect_to_tests()
-    
+
     @property
     def mapping(self):
         return super().mapping | {"object_id": "id"}

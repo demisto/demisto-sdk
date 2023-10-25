@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Callable, ClassVar, List, Optional, Set
+from typing import TYPE_CHECKING, Callable, List, Optional, Set
 
 import demisto_client
 from packaging.version import Version

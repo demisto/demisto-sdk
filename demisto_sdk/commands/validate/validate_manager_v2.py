@@ -49,7 +49,9 @@ class ValidateManager:
             file_path=self.file_path,
             all_files=self.validate_all,
         )
-        self.objects_to_run: Set[Tuple[BaseContent, Optional[BaseContent]]] = self.initializer.gather_objects_to_run()
+        self.objects_to_run: Set[
+            Tuple[BaseContent, Optional[BaseContent]]
+        ] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         (
@@ -96,4 +98,8 @@ class ValidateManager:
             List[BaseValidator]: the list of the filtered validators
         """
         # gather validator from validate package
-        return [validator for validator in BaseValidator.__subclasses__() if validator.error_code in self.validations_to_run]
+        return [
+            validator
+            for validator in BaseValidator.__subclasses__()
+            if validator.error_code in self.validations_to_run
+        ]

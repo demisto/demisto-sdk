@@ -22,7 +22,10 @@ class CommandParser:
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
@@ -38,13 +41,13 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_tests()
-    
+
     @property
     def mapping(self):
         return super().mapping | {
-        "display_name": "display",
-        "docker_image": "script.dockerimage",
-    }
+            "display_name": "display",
+            "docker_image": "script.dockerimage",
+        }
 
     @property
     def display_name(self) -> Optional[str]:

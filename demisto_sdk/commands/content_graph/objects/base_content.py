@@ -204,6 +204,7 @@ class BaseContent(BaseContentModel):
         path: Path,
         git_status: Optional[str] = None,
         old_file_path: Optional[Path] = None,
+        git_sha: Optional[str] = None
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
@@ -211,20 +212,20 @@ class BaseContent(BaseContentModel):
         ):  # if the path given is a pack
             try:
                 return content_type_to_model[ContentType.PACK].from_orm(
-                    PackParser(path)
+                    PackParser(path, git_sha)
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {str(path)}")
                 return None
         try:
-            content_item_parser = ContentItemParser.from_path(path)
+            content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
         except NotAContentItemException:
             # This is a workaround because `create-content-artifacts` still creates deprecated content items
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
                 "0.0.0"
             )
             try:
-                content_item_parser = ContentItemParser.from_path(path)
+                content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
             except NotAContentItemException:
                 logger.error(
                     f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."

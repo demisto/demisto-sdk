@@ -1,17 +1,14 @@
 [use_git]
-ignore = []
-select = []
-warning = []
-ignorable_errors = ["RM101"]
-
-[validate_all]
-ignore = []
-select = ["BA101"]
+select = ["BA101", "PA108"]
 warning = []
 ignorable_errors = []
 
-[yuval_Categories]
-ignore = ["RM101, RM102"]
+[validate_all]
+select = ["BA101", "PA108"]
+warning = []
+ignorable_errors = []
+
+[Custom_Categories]
 select = []
 warning = []
 ignorable_errors = []
@@ -23,7 +20,4 @@ ignorable_errors = []
 ignore = []
 
 [support_level.partner]
-ignore = []
-
-[support_level.xsoar]
 ignore = []

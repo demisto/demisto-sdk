@@ -1,4 +1,5 @@
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from typing import Optional, TypeVar
+
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
@@ -22,20 +23,10 @@ class IDNameValidator(BaseValidator):
     fixing_message = "Changing name to be equal to id ({0})."
     is_auto_fixable = True
     related_field = "name"
-    content_types = (
-        Integration,
-        Classifier,
-        Dashboard,
-        IncidentType,
-        Layout,
-        Mapper,
-        Playbook,
-        Script,
-        Wizard,
-    )
-
+    ContentTypes = TypeVar("ContentTypes", Integration, Dashboard, IncidentType, Layout, Mapper, Playbook, Script, Wizard, Classifier)
+    
     @classmethod
-    def is_valid(cls, content_item: BaseContent) -> ValidationResult:
+    def is_valid(cls, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None) -> ValidationResult:
         if content_item.object_id != content_item.name:
             return ValidationResult(
                 error_code=cls.error_code,
@@ -51,9 +42,8 @@ class IDNameValidator(BaseValidator):
             message="",
             file_path=content_item.path,
         )
-
     @classmethod
-    def fix(cls, content_item: BaseContent) -> FixingResult:
+    def fix(cls, content_item: ContentTypes) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()
         return FixingResult(

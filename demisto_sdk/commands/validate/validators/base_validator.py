@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, List, Optional, Tuple, Type
+from typing import Any, ClassVar, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 
@@ -52,7 +52,7 @@ class BaseValidator(ABC, BaseModel):
     fixing_message: ClassVar[Optional[str]] = None
     is_auto_fixable: ClassVar[bool]
     related_field: ClassVar[str]
-    content_types: ClassVar[Tuple[Type[BaseContent], ...]]
+    ContentTypes: ClassVar[Any] = TypeVar("ContentTypes", bound=BaseContent)
 
     @classmethod
     def should_run(
@@ -70,7 +70,7 @@ class BaseValidator(ABC, BaseModel):
         """
         return all(
             [
-                isinstance(content_item, cls.content_types),
+                any([isinstance(content_item, constraint) for constraint in cls.ContentTypes.__constraints__]) if cls.ContentTypes.__constraints__ else isinstance(content_item, cls.ContentTypes),
                 not is_error_ignored(
                     cls.error_code, content_item.ignored_errors, ignorable_errors
                 ),
@@ -81,12 +81,17 @@ class BaseValidator(ABC, BaseModel):
         )
 
     @classmethod
-    def is_valid(cls, content_item: BaseContent) -> ValidationResult:
+    def is_valid(cls, content_item: Any, old_content_item: Any = None) -> ValidationResult:
         raise NotImplementedError
 
     @classmethod
-    def fix(cls, content_item: BaseContent) -> FixingResult:
+    def fix(cls, content_item: Any) -> FixingResult:
         raise NotImplementedError
+    
+    class Config:
+        arbitrary_types_allowed = (
+            True  # allows having custom classes for properties in model
+        )
 
 
 def is_error_ignored(
@@ -121,3 +126,6 @@ def is_support_level_support_validation(
         bool: True if the given error code is in the ignored section of the support level dict corresponding to the item's support level, otherwise return False.
     """
     return err_code in support_level_dict.get(item_support_level, {}).get("ignore", [])
+
+
+

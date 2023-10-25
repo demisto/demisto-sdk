@@ -1,6 +1,5 @@
-from typing import List, Set, Type
+from typing import List, Optional, Set, Tuple, Type
 
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -50,12 +49,11 @@ class ValidateManager:
             file_path=self.file_path,
             all_files=self.validate_all,
         )
-        self.objects_to_run: Set[BaseContent] = self.initializer.gather_objects_to_run()
+        self.objects_to_run: Set[Tuple[BaseContent, Optional[BaseContent]]] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         (
             self.validations_to_run,
-            self.validations_to_ignore,
             self.warnings,
             self.ignorable_errors,
             self.support_level_dict,
@@ -73,14 +71,14 @@ class ValidateManager:
         for validator in self.validators:
             for content_object in self.objects_to_run:
                 if validator.should_run(
-                    content_object, self.ignorable_errors, self.support_level_dict
+                    content_object[0], self.ignorable_errors, self.support_level_dict
                 ):
-                    validation_result = validator.is_valid(content_object)
+                    validation_result = validator.is_valid(*content_object)
                     try:
                         if not validation_result.is_valid:
                             if self.allow_autofix:
                                 self.validation_results.append_fixing_results(
-                                    validator.fix(content_object)
+                                    validator.fix(content_object[0])
                                 )
                             else:
                                 self.validation_results.append(validation_result)
@@ -98,20 +96,4 @@ class ValidateManager:
             List[BaseValidator]: the list of the filtered validators
         """
         # gather validator from validate package
-        validators: List[Type[BaseValidator]] = BaseValidator.__subclasses__()
-        filtered_validators: List[Type[BaseValidator]] = []
-        for validator in validators:
-            run_validation = not self.validations_to_run
-            if not run_validation:
-                for validation_to_run in self.validations_to_run:
-                    if validator.error_code.startswith(validation_to_run):
-                        run_validation = True
-                        break
-            if run_validation:
-                for error_to_ignore in self.validations_to_ignore:
-                    if validator.error_code.startswith(error_to_ignore):
-                        run_validation = False
-                        break
-                if run_validation:
-                    filtered_validators.append(validator)
-        return filtered_validators
+        return [validator for validator in BaseValidator.__subclasses__() if validator.error_code in self.validations_to_run]

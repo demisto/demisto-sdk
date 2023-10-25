@@ -24,8 +24,9 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
         is_test_script: bool = False,
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.is_test: bool = is_test_script
         self.type = self.yml_data.get("subtype") or self.yml_data.get("type")
         self.tags: List[str] = self.yml_data.get("tags", [])

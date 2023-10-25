@@ -18,10 +18,10 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 class YAMLContentItemParser(ContentItemParser):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.yml_data: Dict[str, Any] = self.get_yaml()
+        self.yml_data: Dict[str, Any] = self.get_yaml(git_sha)
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(
@@ -96,7 +96,7 @@ class YAMLContentItemParser(ContentItemParser):
                     target_type=ContentType.TEST_PLAYBOOK,
                 )
 
-    def get_yaml(self) -> Dict[str, Union[str, List[str]]]:
+    def get_yaml(self, git_sha: Optional[str] = None) -> Dict[str, Union[str, List[str]]]:
         if not self.path.is_dir():
             yaml_path = self.path.as_posix()
         else:
@@ -105,4 +105,4 @@ class YAMLContentItemParser(ContentItemParser):
             raise NotAContentItemException
 
         self.path = Path(yaml_path)
-        return get_yaml(self.path.as_posix(), keep_order=False)
+        return get_yaml(self.path.as_posix(), keep_order=False, git_sha=git_sha)

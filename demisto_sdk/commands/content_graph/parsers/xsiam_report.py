@@ -15,9 +15,9 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_REPORT):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.json_data: Dict[str, Any] = self.json_data.get("templates_data", [{}])[0]
     
     @property

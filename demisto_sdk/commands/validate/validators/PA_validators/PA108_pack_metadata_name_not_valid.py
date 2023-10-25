@@ -1,5 +1,6 @@
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.pack import PackMetadata
+from typing import Optional, TypeVar
+
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -12,12 +13,10 @@ class IDNameValidator(BaseValidator):
     error_message = "Pack metadata name field ({}) is missing or invalid. Please fill valid pack name."
     is_auto_fixable = False
     related_field = "pack name"
-    content_types = (
-        PackMetadata,
-    )
+    ContentTypes = TypeVar("ContentTypes", bound=Pack)
 
     @classmethod
-    def is_valid(cls, content_item: BaseContent) -> ValidationResult:
+    def is_valid(cls, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None) -> ValidationResult:
         if not content_item.name or "fill mandatory field" in content_item.name:
             return ValidationResult(
                 error_code=cls.error_code,

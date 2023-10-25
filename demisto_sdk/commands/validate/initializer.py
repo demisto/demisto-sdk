@@ -270,15 +270,18 @@ class Initializer:
 
         return filtered_modified_files, filtered_added_files, filtered_renamed_files
 
-    def gather_objects_to_run(self) -> Set[BaseContent]:
+    
+    def gather_objects_to_run(self) -> Set[Tuple[BaseContent, Optional[BaseContent]]]:
         """
         Filter the file that should run according to the given flag (-i/-g/-a).
 
         Returns:
-            set: the set of files that should run.
+            Set[Tuple[BaseContent, Optional[BaseContent]]]: the set of tuples of files that should run,
+            where index 0 holds the new item and index 1 holds the old one (Before the rename/modification).
         """
-        content_objects_to_run = set()
-        final_content_objects_to_run: Set[BaseContent] = set()
+        content_objects_to_run: Set[BaseContent] = set()
+        content_objects_to_run_with_packs: Set[BaseContent] = set()
+        final_objects_to_run_set: Set[Tuple[BaseContent, Optional[BaseContent]]] = set()
         if self.use_git:
             content_objects_to_run = self.get_files_from_git()
         elif self.file_path:
@@ -295,11 +298,22 @@ class Initializer:
             self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
         for content_object in content_objects_to_run:
+            # old_content_item = None
             if isinstance(content_object, Pack):
                 for content_item in content_object.content_items:
-                    final_content_objects_to_run.add(content_item)
-            final_content_objects_to_run.add(content_object)
-        return final_content_objects_to_run
+                    if content_item not in content_objects_to_run:
+                        content_objects_to_run_with_packs.add(content_item)
+            content_objects_to_run_with_packs.add(content_object)
+        
+        for content_object in content_objects_to_run_with_packs:
+            old_content_item = None
+            if content_object.git_status == MODIFIED:
+                old_content_item = BaseContent.from_path(content_object.path, git_sha=self.prev_ver)
+            elif content_object.git_status == RENAMED:
+                old_content_item = BaseContent.from_path(content_object.old_file_path, git_sha=self.prev_ver)
+            final_objects_to_run_set.add((content_object, old_content_item))
+            
+        return final_objects_to_run_set
 
     def get_files_from_git(self) -> Set[BaseContent]:
         """Return all files added/changed/deleted.
@@ -348,11 +362,9 @@ class Initializer:
         basecontent_set: Set[BaseContent] = set()
         for file_path in files_set:
             if git_status == RENAMED:
-                temp_obj = BaseContent.from_path(
-                    Path(file_path[0]), git_status, Path(file_path[1])
-                )
+                temp_obj: Optional[BaseContent] = BaseContent.from_path(Path(file_path[0]), git_status=git_status, old_file_path=Path(file_path[1]))
             else:
-                temp_obj = BaseContent.from_path(Path(file_path), git_status, None)
+                temp_obj = BaseContent.from_path(Path(file_path), git_status)
             if temp_obj is None:
                 raise Exception(f"no content found in {file_path}")
             else:

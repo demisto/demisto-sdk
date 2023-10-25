@@ -838,6 +838,7 @@ def get_file(
     return_content: bool = False,
     keep_order: bool = False,
     raise_on_error: bool = False,
+    git_sha: Optional[str] = None
 ):
     """
     Get file contents.
@@ -847,6 +848,10 @@ def get_file(
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
+    if git_sha:
+        if file_path.is_absolute():
+            file_path = file_path.relative_to(get_content_path())
+        return get_remote_file(file_path, tag=git_sha)
 
     type_of_file = file_path.suffix.lower()
 
@@ -912,16 +917,17 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path: str | Path, cache_clear=False, keep_order: bool = False):
+def get_yaml(file_path: str | Path, cache_clear=False, keep_order: bool = False, git_sha: Optional[str] = None):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
+    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha)
 
 
-def get_json(file_path: str | Path, cache_clear=False):
+def get_json(file_path: str | Path, cache_clear=False, git_sha: Optional[str] = None):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear)
+    else:
+        return get_file(file_path, clear_cache=cache_clear, git_sha=git_sha)
 
 
 def get_script_or_integration_id(file_path):

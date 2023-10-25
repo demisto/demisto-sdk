@@ -18,11 +18,11 @@ class JSONContentItemParser(ContentItemParser):
 
 
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.json_data: Dict[str, Any] = self.get_json()
-        self.original_json_data: Dict[str, Any] = self.get_json()
+        self.json_data: Dict[str, Any] = self.get_json(git_sha)
+        self.original_json_data: Dict[str, Any] = self.json_data
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(
                 f"The content of {self.path} must be in a JSON dictionary format"
@@ -82,7 +82,7 @@ class JSONContentItemParser(ContentItemParser):
     def marketplaces(self) -> List[MarketplaceVersions]:
         return self.get_marketplaces(self.json_data)
 
-    def get_json(self) -> Dict[str, Any]:
+    def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
             if len(json_files_in_dir) != 1:
@@ -90,4 +90,4 @@ class JSONContentItemParser(ContentItemParser):
                     f"Directory {self.path} must have a single JSON file."
                 )
             self.path = Path(json_files_in_dir[0])
-        return get_json(self.path.as_posix())
+        return get_json(self.path.as_posix(), git_sha=git_sha)

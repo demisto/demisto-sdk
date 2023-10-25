@@ -12,9 +12,9 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RULE):
 
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.connect_to_dependencies()
     
     @property

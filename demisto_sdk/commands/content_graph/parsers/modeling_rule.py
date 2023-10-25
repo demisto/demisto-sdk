@@ -12,9 +12,9 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELING_RULE):
 
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
     
     @property
     def mapping(self):

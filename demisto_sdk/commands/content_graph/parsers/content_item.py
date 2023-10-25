@@ -91,6 +91,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def from_path(
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        git_sha: Optional[str]=None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
@@ -115,6 +116,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                     parser_cls,
                     path,
                     pack_marketplaces,
+                    git_sha
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(
@@ -134,9 +136,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         parser_cls: Type["ContentItemParser"],
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
         **kwargs,
     ) -> "ContentItemParser":
-        parser = parser_cls(path, pack_marketplaces, **kwargs)
+        parser = parser_cls(path, pack_marketplaces, git_sha, **kwargs)
         logger.debug(f"Parsed {parser.node_id}")
         return parser
 

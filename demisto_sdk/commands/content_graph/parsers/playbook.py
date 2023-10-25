@@ -31,6 +31,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
         is_test_playbook: bool = False,
+        git_sha: Optional[str] = None,
     ) -> None:
         """Builds a directed graph representing the playbook and parses it.
 
@@ -38,7 +39,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             path (Path): The playbook path.
             is_test_playbook (bool, optional): Whether this is a test playbook or not. Defaults to False.
         """
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.is_test: bool = is_test_playbook
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()

@@ -222,7 +222,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     content_type = ContentType.PACK
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, git_sha: Optional[str] = None) -> None:
         """Parses a pack and its content items.
 
         Args:
@@ -231,7 +231,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         BaseContentParser.__init__(self, path)
 
         try:
-            metadata = get_json(path / PACK_METADATA_FILENAME)
+            metadata = get_json(path / PACK_METADATA_FILENAME, git_sha=git_sha)
         except FileNotFoundError:
             raise NotAContentItemException(
                 f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
@@ -243,7 +243,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.relationships: Relationships = Relationships()
         self.connect_pack_dependencies(metadata)
         try:
-            self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
+            self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME, git_sha=git_sha)
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")

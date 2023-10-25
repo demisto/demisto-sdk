@@ -14,9 +14,9 @@ class IndicatorTypeParser(
 ):
 
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], git_sha: Optional[str] = None
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.connect_to_dependencies()
         self.regex = self.json_data.get("regex")
         self.reputation_script_name = self.json_data.get("reputationScriptName") or ""

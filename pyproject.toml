@@ -104,7 +104,6 @@ packaging = "^23.1"
 orjson = "^3.8.3"
 more-itertools = "^9.0.0"
 junitparser = "^3.1.0"
-ruff = "^0.1.2"
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"
@@ -118,6 +117,7 @@ pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 black = "^22.10.0"
 ipykernel = "^6.16.1"
+ruff = "^0.1.2"
 
 [tool.poetry.extras]
 build = ["gsutil"]

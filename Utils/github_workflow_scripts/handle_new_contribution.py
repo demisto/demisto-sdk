@@ -44,9 +44,8 @@ def main():
         sys.exit(1)
     # save the contrib_tl username to an environment variable to later use in the workflow
     print(f'{contrib_tl_username=}')
-    # return contrib_tl_username
-    with open(os.environ['$CONTRIB_TL'], 'a') as fh:
-        print(f'{contrib_tl_username}', file=fh)
+    with open("contrib_tl.txt", "w") as f:
+        f.write(contrib_tl_username)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,8 @@
 ## Unreleased
 * Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
 * Added a new validation (`IN162`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.
+* Added the command demisto-sdk coverage-analyze to the pre-commit hooks.
+* Updated merge_coverage_report to be a hook in the pre-commit.
 
 ## 1.20.8
 * Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.

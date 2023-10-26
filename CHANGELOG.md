@@ -2,7 +2,7 @@
 ## Unreleased
 
 ## 1.20.9
-* Fixed an issue where playbook_unreachable_condition validation failed falsely.
+* Fixed an issue where **validate** falsely failed with error `PB101` and `PB123` due to condition names discrepancy 
 
 ## 1.20.8
 * Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.

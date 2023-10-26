@@ -324,13 +324,13 @@ class PlaybookValidator(ContentEntityValidator):
 
         # Remove all nexttasks from unhandled_reply_options (UPPER)
         for next_task_branch, next_task_id in next_tasks_upper.items():
-            temp = None
+            key_to_remove = None
             if next_task_id and next_task_branch != "#DEFAULT#":
                 for mapping in mapper_dict.get(next_task_branch, [next_task_branch]):
                     if mapping in unhandled_reply_options:
-                        temp = mapping
-                if temp:
-                    unhandled_reply_options.remove(temp)
+                        key_to_remove = mapping
+                if key_to_remove:
+                    unhandled_reply_options.remove(key_to_remove)
                 else:
                     error_message, error_code = Errors.playbook_unreachable_condition(
                         task.get("id"), next_task_branch

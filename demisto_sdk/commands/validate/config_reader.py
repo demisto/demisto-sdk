@@ -12,7 +12,7 @@ VALIDATE_ALL = "validate_all"
 
 
 class ConfigReader:
-    def __init__(self, config_file_path, category_to_run):
+    def __init__(self, config_file_path=None, category_to_run=None):
         if not config_file_path:
             config_file_path = CONFIG_FILE_PATH
         self.config_file_path = config_file_path

@@ -16,6 +16,7 @@
   * Fixed an issue where integrations / automations with a dot in their name would be saved with an incorrect file name (For example: `Test v1.1.py` would be named `Test v1.py`)
 
 **Note:** Due to the optimization changes made to the **download** command, playbooks might be formatted a bit differently than before when downloaded from the server using the new version. The playbooks should however function and work the same.
+* Added a GitHub action that will assign the contribution TL and add a Contribution label in Contributions PRs.
 
 ## 1.20.8
 * Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.

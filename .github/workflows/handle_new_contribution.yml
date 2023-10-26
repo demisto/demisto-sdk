@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  assign:
+  assign_and_label:
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.fork == true
     steps:
@@ -35,7 +35,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           poetry install
-      - name: Add assignee and a Contribution label
+      - name: Add an assignee and a Contribution label
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           PR_URL: ${{github.event.pull_request.html_url}}

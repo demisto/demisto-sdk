@@ -171,6 +171,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         integration_instance_body_request = {
             "brand": integrations_metadata["name"],
             "category": integrations_metadata["category"],
+            "canSample": True,
             "configuration": integrations_metadata,
             "data": [],
             "enabled": should_enable,

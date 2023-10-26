@@ -1,74 +1,57 @@
+from __future__ import annotations
+
 import builtins
-import io
 import logging
 import os
 import shutil
-import tarfile
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Callable, Tuple
-from unittest.mock import patch
 
 import demisto_client
 import pytest
-from demisto_client.demisto_api.rest import ApiException
+from urllib3.response import HTTPResponse
 
 from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
-    CONTENT_ENTITIES_DIRS,
-    CORRELATION_RULES_DIR,
-    DASHBOARDS_DIR,
-    DELETED_JSON_FIELDS_BY_DEMISTO,
-    DELETED_YML_FIELDS_BY_DEMISTO,
-    GENERIC_DEFINITIONS_DIR,
-    GENERIC_FIELDS_DIR,
-    GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR,
-    INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR,
     JOBS_DIR,
-    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
-    MODELING_RULES_DIR,
-    PARSING_RULES_DIR,
-    PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR,
-    REPORTS_DIR,
-    SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR,
-    TRIGGER_DIR,
-    WIDGETS_DIR,
-    WIZARDS_DIR,
-    XDRC_TEMPLATE_DIR,
-    XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
-from demisto_sdk.commands.common.tools import (
-    get_child_files,
-    get_file,
-    get_json,
-    get_yaml,
-)
-from demisto_sdk.commands.download.downloader import Downloader
+from demisto_sdk.commands.common.tools import get_child_files
+from demisto_sdk.commands.download.downloader import *
 from TestSuite.test_tools import str_in_call_args_list
 
+TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
+TESTS_ENV_FOLDER = Path(__file__).parent / "tests_env"
 
-def ordered(obj):
-    if isinstance(obj, dict):
-        return sorted((k, ordered(v)) for k, v in obj.items())
-    if isinstance(obj, list):
-        return sorted(ordered(x) for x in obj)
+# Avoid missing environment variables errors
+os.environ["DEMISTO_BASE_URL"] = "https://fake-xsoar-server.com"
+os.environ["DEMISTO_API_KEY"] = "fake_api_key"
+
+
+def load_test_data(file_name: str, folder: str | None = None) -> dict:
+    """
+    A function for loading and returning data from json files within the "test_data" folder.
+
+    Args:
+        file_name (str): Name of a json file to load data from.
+        folder (str | None, optional): Name of the parent folder of the file within `test_data`. Defaults to None.
+
+    Returns:
+        dict: Dictionary data loaded from the json file.
+    """
+    if folder:
+        path = TESTS_DATA_FOLDER / folder / f"{file_name}.json"
+
     else:
-        return obj
+        path = TESTS_DATA_FOLDER / f"{file_name}.json"
+
+    with open(path, "r") as f:
+        return json.load(f)
 
 
 class Environment:
@@ -78,135 +61,99 @@ class Environment:
     """
 
     def __init__(self, tmp_path):
-        self.CONTENT_BASE_PATH = None
-        self.CUSTOM_CONTENT_BASE_PATH = None
-        self.PACK_INSTANCE_PATH = None
-        self.INTEGRATION_INSTANCE_PATH = None
-        self.SCRIPT_INSTANCE_PATH = None
-        self.PLAYBOOK_INSTANCE_PATH = None
-        self.LAYOUT_INSTANCE_PATH = None
-        self.LAYOUTSCONTAINER_INSTANCE_PATH = None
-        self.PRE_PROCESS_RULES_INSTANCE_PATH = None
-        self.LISTS_INSTANCE_PATH = None
-        self.CUSTOM_CONTENT_SCRIPT_PATH = None
-        self.CUSTOM_CONTENT_INTEGRATION_PATH = None
-        self.CUSTOM_CONTENT_LAYOUT_PATH = None
-        self.CUSTOM_CONTENT_PLAYBOOK_PATH = None
-        self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = None
-        self.INTEGRATION_PACK_OBJECT = None
-        self.SCRIPT_PACK_OBJECT = None
-        self.PLAYBOOK_PACK_OBJECT = None
-        self.LAYOUT_PACK_OBJECT = None
-        self.LAYOUTSCONTAINER_PACK_OBJECT = None
-        self.LISTS_PACK_OBJECT = None
-        self.JOBS_PACK_OBJECT = None
-        self.JOBS_INSTANCE_PATH = None
-        self.PACK_CONTENT = None
-        self.INTEGRATION_CUSTOM_CONTENT_OBJECT = None
-        self.SCRIPT_CUSTOM_CONTENT_OBJECT = None
-        self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = None
-        self.LAYOUT_CUSTOM_CONTENT_OBJECT = None
-        self.FAKE_CUSTOM_CONTENT_OBJECT = None
-        self.JS_INTEGRATION_CUSTOM_CONTENT_OBJECT = None
-        self.CUSTOM_CONTENT = None
         self.tmp_path = Path(tmp_path)
-        self.setup()
-
-    def setup(self):
-        tests_path = self.tmp_path / "tests"
-        tests_env_path = tests_path / "tests_env"
-        tests_data_path = tests_path / "tests_data"
+        tests_path: Path = self.tmp_path / "tests"
+        tests_env_path: Path = tests_path / "tests_env"
+        tests_data_path: Path = tests_path / "tests_data"
+        shutil.copytree(src=str(TESTS_ENV_FOLDER), dst=str(tests_env_path))
         shutil.copytree(
-            src="demisto_sdk/commands/download/tests/tests_env", dst=str(tests_env_path)
-        )
-        shutil.copytree(
-            src="demisto_sdk/commands/download/tests/tests_data",
+            src=str(TESTS_DATA_FOLDER),
             dst=str(tests_data_path),
         )
 
-        self.CONTENT_BASE_PATH = f"{tests_path}/tests_env/content"
-        self.CUSTOM_CONTENT_BASE_PATH = f"{tests_path}/tests_data/custom_content"
-        self.PACK_INSTANCE_PATH = f"{self.CONTENT_BASE_PATH}/Packs/TestPack"
-
+        self.CONTENT_BASE_PATH = tests_path / "tests_env" / "content"
+        self.CUSTOM_CONTENT_BASE_PATH = tests_path / "tests_data" / "custom_content"
+        self.PACK_INSTANCE_PATH = self.CONTENT_BASE_PATH / "Packs" / "TestPack"
         self.INTEGRATION_INSTANCE_PATH = (
-            f"{self.PACK_INSTANCE_PATH}/Integrations/TestIntegration"
+            self.PACK_INSTANCE_PATH / "Integrations" / "TestIntegration"
         )
-        self.SCRIPT_INSTANCE_PATH = f"{self.PACK_INSTANCE_PATH}/Scripts/TestScript"
+        self.SCRIPT_INSTANCE_PATH = self.PACK_INSTANCE_PATH / "Scripts" / "TestScript"
         self.PLAYBOOK_INSTANCE_PATH = (
-            f"{self.PACK_INSTANCE_PATH}/Playbooks/playbook-DummyPlaybook.yml"
+            self.PACK_INSTANCE_PATH / "Playbooks" / "playbook-DummyPlaybook.yml"
         )
         self.LAYOUT_INSTANCE_PATH = (
-            f"{self.PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json"
+            self.PACK_INSTANCE_PATH / "Layouts" / "layout-details-TestLayout.json"
         )
         self.LAYOUTSCONTAINER_INSTANCE_PATH = (
-            f"{self.PACK_INSTANCE_PATH}/Layouts/layoutscontainer-mytestlayout.json"
+            self.PACK_INSTANCE_PATH / "Layouts" / "layoutscontainer-mytestlayout.json"
         )
         self.PRE_PROCESS_RULES_INSTANCE_PATH = (
-            f"{self.PACK_INSTANCE_PATH}/PreProcessRules/preprocessrule-dummy.json"
+            self.PACK_INSTANCE_PATH / "PreProcessRules/preprocessrule-dummy.json"
         )
-        self.LISTS_INSTANCE_PATH = f"{self.PACK_INSTANCE_PATH}/Lists/list-dummy.json"
-        self.JOBS_INSTANCE_PATH = f"{self.PACK_INSTANCE_PATH}/Jobs/job-sample.json"
-
+        self.LISTS_INSTANCE_PATH = self.PACK_INSTANCE_PATH / "Lists" / "list-dummy.json"
+        self.JOBS_INSTANCE_PATH = self.PACK_INSTANCE_PATH / "Jobs" / "job-sample.json"
         self.CUSTOM_CONTENT_SCRIPT_PATH = (
-            f"{self.CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml"
+            self.CUSTOM_CONTENT_BASE_PATH / "automation-TestScript.yml"
         )
         self.CUSTOM_CONTENT_INTEGRATION_PATH = (
-            f"{self.CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml"
+            self.CUSTOM_CONTENT_BASE_PATH / "integration-Test_Integration.yml"
         )
         self.CUSTOM_CONTENT_LAYOUT_PATH = (
-            f"{self.CUSTOM_CONTENT_BASE_PATH}/layout-details-TestLayout.json"
+            self.CUSTOM_CONTENT_BASE_PATH / "layout-details-TestLayout.json"
         )
         self.CUSTOM_CONTENT_PLAYBOOK_PATH = (
-            f"{self.CUSTOM_CONTENT_BASE_PATH}/playbook-DummyPlaybook.yml"
+            self.CUSTOM_CONTENT_BASE_PATH / "playbook-DummyPlaybook.yml"
         )
         self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = (
-            f"{self.CUSTOM_CONTENT_BASE_PATH}/integration-DummyJSIntegration.yml"
+            self.CUSTOM_CONTENT_BASE_PATH / "integration-DummyJSIntegration.yml"
         )
-        self.CUSTOM_API_RESPONSE = f"{self.CUSTOM_CONTENT_BASE_PATH}/api-response"
+        self.CUSTOM_API_RESPONSE = self.CUSTOM_CONTENT_BASE_PATH / "api-response"
 
         self.INTEGRATION_PACK_OBJECT = {
             "Test Integration": [
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration.py",
-                    "file_ending": "py",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "TestIntegration.py",
+                    "file_extension": "py",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration_testt.py",
-                    "file_ending": "py",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "TestIntegration_testt.py",
+                    "file_extension": "py",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml",
-                    "file_ending": "yml",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "TestIntegration.yml",
+                    "file_extension": "yml",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration_image.png",
-                    "file_ending": "png",
+                    "path": self.INTEGRATION_INSTANCE_PATH
+                    / "TestIntegration_image.png",
+                    "file_extension": "png",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/CHANGELOG.md",
-                    "file_ending": "md",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "CHANGELOG.md",
+                    "file_extension": "md",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/TestIntegration_description.md",
-                    "file_ending": "md",
+                    "path": self.INTEGRATION_INSTANCE_PATH
+                    / "TestIntegration_description.md",
+                    "file_extension": "md",
                 },
                 {
                     "name": "Test Integration",
                     "id": "Test Integration",
-                    "path": f"{self.INTEGRATION_INSTANCE_PATH}/README.md",
-                    "file_ending": "md",
+                    "path": self.INTEGRATION_INSTANCE_PATH / "README.md",
+                    "file_extension": "md",
                 },
             ]
         }
@@ -215,26 +162,26 @@ class Environment:
                 {
                     "name": "TestScript",
                     "id": "TestScript",
-                    "path": f"{self.SCRIPT_INSTANCE_PATH}/TestScript.py",
-                    "file_ending": "py",
+                    "path": self.SCRIPT_INSTANCE_PATH / "TestScript.py",
+                    "file_extension": "py",
                 },
                 {
                     "name": "TestScript",
                     "id": "TestScript",
-                    "path": f"{self.SCRIPT_INSTANCE_PATH}/TestScript.yml",
-                    "file_ending": "yml",
+                    "path": self.SCRIPT_INSTANCE_PATH / "TestScript.yml",
+                    "file_extension": "yml",
                 },
                 {
                     "name": "TestScript",
                     "id": "TestScript",
-                    "path": f"{self.SCRIPT_INSTANCE_PATH}/CHANGELOG.md",
-                    "file_ending": "md",
+                    "path": self.SCRIPT_INSTANCE_PATH / "CHANGELOG.md",
+                    "file_extension": "md",
                 },
                 {
                     "name": "TestScript",
                     "id": "TestScript",
-                    "path": f"{self.SCRIPT_INSTANCE_PATH}/README.md",
-                    "file_ending": "md",
+                    "path": self.SCRIPT_INSTANCE_PATH / "README.md",
+                    "file_extension": "md",
                 },
             ]
         }
@@ -244,7 +191,7 @@ class Environment:
                     "name": "DummyPlaybook",
                     "id": "DummyPlaybook",
                     "path": self.PLAYBOOK_INSTANCE_PATH,
-                    "file_ending": "yml",
+                    "file_extension": "yml",
                 }
             ]
         }
@@ -254,7 +201,7 @@ class Environment:
                     "name": "Hello World Alert",
                     "id": "Hello World Alert",
                     "path": self.LAYOUT_INSTANCE_PATH,
-                    "file_ending": "json",
+                    "file_extension": "json",
                 }
             ]
         }
@@ -264,7 +211,7 @@ class Environment:
                     "name": "mylayout",
                     "id": "mylayout",
                     "path": self.LAYOUTSCONTAINER_INSTANCE_PATH,
-                    "file_ending": "json",
+                    "file_extension": "json",
                 }
             ]
         }
@@ -274,7 +221,7 @@ class Environment:
                     "name": "DummyPreProcessRule",
                     "id": "DummyPreProcessRule",
                     "path": self.PRE_PROCESS_RULES_INSTANCE_PATH,
-                    "file_ending": "json",
+                    "file_extension": "json",
                 }
             ]
         }
@@ -284,7 +231,7 @@ class Environment:
                     "name": "DummyList",
                     "id": "DummyList",
                     "path": self.LISTS_INSTANCE_PATH,
-                    "file_ending": "json",
+                    "file_extension": "json",
                 }
             ]
         }
@@ -294,94 +241,67 @@ class Environment:
                     "name": "DummyJob",
                     "id": "DummyJob",
                     "path": self.JOBS_INSTANCE_PATH,
-                    "file_ending": "json",
+                    "file_extension": "json",
                 }
             ]
         }
 
         self.PACK_CONTENT = {
-            INTEGRATIONS_DIR: [self.INTEGRATION_PACK_OBJECT],
-            SCRIPTS_DIR: [self.SCRIPT_PACK_OBJECT],
-            PLAYBOOKS_DIR: [self.PLAYBOOK_PACK_OBJECT],
-            LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT, self.LAYOUTSCONTAINER_PACK_OBJECT],
-            PRE_PROCESS_RULES_DIR: [],
-            LISTS_DIR: [],
-            JOBS_DIR: [],
-            WIZARDS_DIR: [],
-            TEST_PLAYBOOKS_DIR: [],
-            REPORTS_DIR: [],
-            DASHBOARDS_DIR: [],
-            WIDGETS_DIR: [],
-            INCIDENT_FIELDS_DIR: [],
-            INDICATOR_FIELDS_DIR: [],
-            INCIDENT_TYPES_DIR: [],
-            CLASSIFIERS_DIR: [],
-            CONNECTIONS_DIR: [],
-            INDICATOR_TYPES_DIR: [],
-            GENERIC_TYPES_DIR: [],
-            GENERIC_FIELDS_DIR: [],
-            GENERIC_MODULES_DIR: [],
-            GENERIC_DEFINITIONS_DIR: [],
-            MODELING_RULES_DIR: [],
-            XDRC_TEMPLATE_DIR: [],
-            PARSING_RULES_DIR: [],
-            CORRELATION_RULES_DIR: [],
-            XSIAM_DASHBOARDS_DIR: [],
-            XSIAM_REPORTS_DIR: [],
-            TRIGGER_DIR: [],
-            LAYOUT_RULES_DIR: [],
+            INTEGRATIONS_DIR: self.INTEGRATION_PACK_OBJECT,
+            SCRIPTS_DIR: self.SCRIPT_PACK_OBJECT,
+            PLAYBOOKS_DIR: self.PLAYBOOK_PACK_OBJECT,
+            LAYOUTS_DIR: {
+                **self.LAYOUT_PACK_OBJECT,
+                **self.LAYOUTSCONTAINER_PACK_OBJECT,
+            },
         }
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {
             "id": "Test Integration",
+            "file_name": "integration-Test_Integration.yml",
             "name": "Test Integration",
-            "path": self.CUSTOM_CONTENT_INTEGRATION_PATH,
             "entity": "Integrations",
-            "type": "integration",
-            "file_ending": "yml",
+            "type": FileType.INTEGRATION,
+            "file_extension": "yml",
             "code_lang": "python",
+            "file": StringIO(self.CUSTOM_CONTENT_INTEGRATION_PATH.read_text()),
         }
         self.SCRIPT_CUSTOM_CONTENT_OBJECT = {
             "id": "f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            "file_name": "script-TestScript.yml",
             "name": "TestScript",
-            "path": self.CUSTOM_CONTENT_SCRIPT_PATH,
             "entity": "Scripts",
-            "type": "script",
-            "file_ending": "yml",
+            "type": FileType.SCRIPT,
+            "file_extension": "yml",
             "code_lang": "python",
+            "file": StringIO(self.CUSTOM_CONTENT_SCRIPT_PATH.read_text()),
         }
         self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = {
             "id": "DummyPlaybook",
+            "file_name": "DummyPlaybook.yml",
             "name": "DummyPlaybook",
-            "path": self.CUSTOM_CONTENT_PLAYBOOK_PATH,
             "entity": "Playbooks",
-            "type": "playbook",
-            "file_ending": "yml",
+            "type": FileType.PLAYBOOK,
+            "file_extension": "yml",
+            "file": StringIO(self.CUSTOM_CONTENT_PLAYBOOK_PATH.read_text()),
         }
         self.LAYOUT_CUSTOM_CONTENT_OBJECT = {
             "id": "Hello World Alert",
+            "file_name": "layout-details-TestLayout.json",
             "name": "Hello World Alert",
-            "path": self.CUSTOM_CONTENT_LAYOUT_PATH,
             "entity": "Layouts",
-            "type": "layout",
-            "file_ending": "json",
-        }
-        self.FAKE_CUSTOM_CONTENT_OBJECT = {
-            "id": "DEMISTO",
-            "name": "DEMISTO",
-            "path": f"{self.CUSTOM_CONTENT_BASE_PATH}/DEMISTO.json",
-            "entity": "Layouts",
-            "type": "layout",
-            "file_ending": "json",
+            "type": FileType.LAYOUT,
+            "file_extension": "json",
+            "file": StringIO(self.CUSTOM_CONTENT_LAYOUT_PATH.read_text()),
         }
         self.JS_INTEGRATION_CUSTOM_CONTENT_OBJECT = {
             "id": "SumoLogic",
             "name": "SumoLogic",
-            "path": self.CUSTOM_CONTENT_JS_INTEGRATION_PATH,
             "entity": "Integrations",
-            "type": "integration",
-            "file_ending": "yml",
+            "type": FileType.INTEGRATION,
+            "file_extension": "yml",
             "code_lang": "javascript",
+            "file": StringIO(self.CUSTOM_CONTENT_JS_INTEGRATION_PATH.read_text()),
         }
 
         self.CUSTOM_CONTENT = [
@@ -394,105 +314,45 @@ class Environment:
 
 
 class TestHelperMethods:
-    @pytest.mark.parametrize(
-        "code_lang, file_type, file_name, err_msg, output",
-        [
-            (
-                "javascript",
-                "integration",
-                "file name",
-                "Downloading an integration written in JavaScript is not supported.",
-                False,
-            ),
-            (
-                "javascript",
-                "script",
-                "file name",
-                "Downloading a script written in JavaScript is not supported.",
-                False,
-            ),
-            ("python", "integration", "file name", "", True),
-        ],
-    )
-    def test_verify_code_lang(self, code_lang, file_type, file_name, err_msg, output):
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.files_not_downloaded = []
-            assert (
-                downloader.verify_code_lang(code_lang, file_type, file_name) is output
-            )
-            if not output:
-                assert [file_name, err_msg] in downloader.files_not_downloaded
-
-    @pytest.mark.parametrize(
-        "data, file_type, entity",
-        [
-            ({"name": "test-pb"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbook_testing"}, "playbook", PLAYBOOKS_DIR),
-            ({"name": "playbook_test"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbookTest"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "Testplaybook"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "Test-playbook"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbook_Test"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbook-test"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbook-Test"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "Test123"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "test_123"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "test-123"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "Test_123"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({}, "integration", INTEGRATIONS_DIR),
-        ],
-    )
-    def test_file_type_to_entity(self, data, file_type, entity):
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            assert downloader.file_type_to_entity(data, file_type) == entity
-
-    def test_get_custom_content_objects(self, tmp_path):
+    def test_get_custom_content_objects(self, tmp_path, mocker):
+        expected_results = load_test_data(
+            file_name="tar_custom_content_objects", folder="expected_results"
+        )
         env = Environment(tmp_path)
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
-            custom_content_objects = downloader.get_custom_content_objects()
-            assert ordered(custom_content_objects) == ordered(env.CUSTOM_CONTENT)
+        downloader = Downloader()
 
-    @pytest.mark.parametrize(
-        "name, ending, detail, output",
-        [
-            ("G S M", "py", "python", "GSM.py"),
-            ("G S M", "yml", "yaml", "GSM.yml"),
-            ("G S M", "png", "image", "GSM_image.png"),
-            ("G S M", "md", "description", "GSM_description.md"),
-        ],
-    )
-    def test_get_searched_basename(self, name, ending, detail, output):
-        downloader = Downloader(output="", input="", regex="")
-        assert downloader.get_searched_basename(name, ending, detail) == output
+        mock_bundle_data = (
+            TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+        ).read_bytes()
+        mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
+        mocker.patch.object(
+            demisto_client,
+            "generic_request_func",
+            return_value=(mock_bundle_response, None, None),
+        )
 
-    @pytest.mark.parametrize(
-        "ending, output",
-        [
-            ("py", "python"),
-            ("md", "description"),
-            ("yml", "yaml"),
-            ("png", "image"),
-            ("", ""),
-        ],
-    )
-    def test_get_extracted_file_detail(self, ending, output):
-        downloader = Downloader(output="", input="", regex="")
-        assert downloader.get_extracted_file_detail(ending) == output
+        downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
+        custom_content_data = downloader.download_custom_content()
+        custom_content_objects = downloader.parse_custom_content_data(
+            file_name_to_content_item_data=custom_content_data
+        )
+
+        for item in custom_content_objects.values():
+            item.pop("file")
+            item["type"] = item["type"].value
+
+        assert custom_content_objects == expected_results
 
     @pytest.mark.parametrize(
         "name, output",
         [
+            ("test", "test"),
             ("automation-demisto", "script-demisto"),
-            ("wow", "wow"),
             ("playbook-demisto", "demisto"),
         ],
     )
     def test_update_file_prefix(self, name, output):
-        downloader = Downloader(output="", input="", regex="")
+        downloader = Downloader()
         assert downloader.update_file_prefix(name) == output
         assert not downloader.update_file_prefix(name).startswith("playbook-")
 
@@ -500,157 +360,155 @@ class TestHelperMethods:
         "name", ["GSM", "G S M", "G_S_M", "G-S-M", "G S_M", "G_S-M"]
     )
     def test_create_dir_name(self, name):
-        downloader = Downloader(output="", input="", regex="")
-        assert downloader.create_dir_name(name) == "GSM"
+        downloader = Downloader()
+        assert downloader.create_directory_name(name) == "GSM"
 
 
-class TestFlagHandlers:
-    @pytest.mark.parametrize(
-        "system, it, lf, a, o, i, r, res, err",
-        [
-            (True, True, False, False, True, True, None, True, ""),
-            (
-                False,
-                True,
-                False,
-                False,
-                True,
-                True,
-                None,
-                False,
-                "The item type option is just for downloading system " "items.",
-            ),
-            (
-                True,
-                False,
-                False,
-                False,
-                True,
-                True,
-                None,
-                False,
-                "Error: Missing option '-it' / '--item-type', "
-                "you should specify the system item type to download.",
-            ),
-            (False, False, True, True, True, True, None, True, ""),
-            (
-                False,
-                False,
-                False,
-                False,
-                False,
-                True,
-                None,
-                False,
-                "Error: Missing option '-o' / '--output'.",
-            ),
-            (
-                False,
-                False,
-                False,
-                False,
-                True,
-                False,
-                None,
-                False,
-                "Error: Missing option '-i' / '--input'.",
-            ),
-            (False, False, False, True, True, False, None, True, ""),
-            (False, False, False, True, True, True, None, True, ""),
-            (False, False, False, False, True, False, "Some Regex", True, ""),
-        ],
-    )
-    def test_verify_flags(self, system, it, lf, a, o, i, r, res, err, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        with patch.object(Downloader, "__init__", lambda x, y, z: None):
-            downloader = Downloader("", "")
-            downloader.list_files = lf
-            downloader.all_custom_content = a
-            downloader.output_pack_path = o
-            downloader.input_files = i
-            downloader.regex = r
-            downloader.download_system_item = system
-            downloader.system_item_type = it
-            answer = downloader.verify_flags()
-            if err:
-                assert str_in_call_args_list(logger_info.call_args_list, err)
-            assert answer is res
+class TestFlags:
+    def test_missing_output_flag(self, mocker):
+        """
+        Given: A downloader object
+        When: The user tries to download a system item without specifying the output flag
+        Then: Ensure downloader returns a '1' error code and logs the error
+        """
+        downloader = Downloader(input=("test",))
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
-    def test_handle_all_custom_content_flag(self, tmp_path):
+        assert downloader.download() == 1
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "Error: Missing required parameter '-o' / '--output'.",
+        )
+
+    def test_missing_input_flag_system(self, mocker):
+        """
+        Given: A downloader object
+        When: The user tries to download a system item without specifying any input flag
+        Then: Ensure downloader returns a '1' error code and logs the error
+        """
+        downloader = Downloader(output="Output", input=tuple(), system=True)
+        mocker.patch.object(Downloader, "verify_output_path", return_value=True)
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+        assert downloader.download() == 1
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            "Error: Missing required parameter for downloading system items: '-i' / '--input'.",
+        )
+
+    def test_missing_input_flag_custom(self, mocker):
+        """
+        Given: A downloader object
+        When: The user tries to download a custom content item without specifying any input flag
+        Then: Ensure downloader returns a '1' error code and logs the error
+        """
+        downloader = Downloader(
+            output="Output",
+            input=tuple(),
+            regex=None,
+            all_custom_content=False,
+            system=False,
+        )
+        mocker.patch.object(Downloader, "verify_output_path", return_value=True)
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+        assert downloader.download() == 1
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            "Error: No input parameter has been provided ('-i' / '--input', '-r' / '--regex', '-a' / '--all).",
+        )
+
+    def test_missing_item_type(self, mocker):
+        """
+        Given: A downloader object
+        When: The user tries to download a system item without specifying the item type
+        Then: Ensure downloader.verify_flags() returns False and logs the error
+        """
+        downloader = Downloader(
+            output="Output", input=("My Playbook",), system=True, item_type=None
+        )
+        mocker.patch.object(Downloader, "verify_output_path", return_value=True)
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+        assert downloader.download() == 1
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            "Error: Missing required parameter for downloading system items: '-it' / '--item-type'.",
+        )
+
+    def test_all_flag(self, tmp_path, mocker):
+        """
+        Given: A downloader object
+        When: The user tries to download all content items
+        Then: Ensure all content items are downloaded
+        """
         env = Environment(tmp_path)
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
-            downloader.all_custom_content = True
-            downloader.handle_all_custom_content_flag()
-            custom_content_names = [cco["name"] for cco in env.CUSTOM_CONTENT]
-            assert ordered(custom_content_names) == ordered(downloader.input_files)
+        downloader = Downloader(
+            all_custom_content=True, output=str(env.CONTENT_BASE_PATH)
+        )
 
-    def test_handle_init_flag(self, tmp_path, mocker):
+        mock_bundle_data = (
+            TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+        ).read_bytes()
+        mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
+        mocker.patch.object(
+            demisto_client,
+            "generic_request_func",
+            return_value=(mock_bundle_response, None, None),
+        )
+
+        custom_content_data = downloader.download_custom_content()
+        custom_content_objects = downloader.parse_custom_content_data(
+            file_name_to_content_item_data=custom_content_data
+        )
+        filtered_custom_content_objects = downloader.filter_custom_content(
+            custom_content_objects=custom_content_objects
+        )
+
+        # We subtract one since there is one JS script in the testing content bundle that is skipped during filtration.
+        assert len(custom_content_data) - 1 == len(filtered_custom_content_objects)
+
+    def test_init_flag(self, tmp_path, mocker):
+        """
+        Given: A downloader object
+        When: The user uses the init flag in order to initialize a new pack
+        Then: Ensure the pack is properly initialized
+        """
         env = Environment(tmp_path)
         mock = mocker.patch.object(
             builtins, "input", side_effect=("test_pack_name", "n", "n")
         )
 
-        downloader = Downloader(env.CONTENT_BASE_PATH, "")
-        downloader.init = True
-        downloader.handle_init_flag()
+        downloader = Downloader(output=str(env.CONTENT_BASE_PATH), init=True)
+        initialized_path = downloader.initialize_output_path(
+            root_folder=env.CONTENT_BASE_PATH
+        )
 
         assert mock.call_count == 3
-        assert downloader.output_pack_path == str(
-            Path(env.CONTENT_BASE_PATH) / "Packs" / "test_pack_name"
-        )
-        assert Path(downloader.output_pack_path, "pack_metadata.json").exists()
-        assert not Path(downloader.output_pack_path, "Integrations").exists()
-        for file in Path(downloader.output_pack_path).iterdir():
+        assert initialized_path == env.CONTENT_BASE_PATH / "Packs" / "test_pack_name"
+        assert (initialized_path / "pack_metadata.json").exists()
+        assert not (initialized_path / "Integrations").exists()
+        for file in initialized_path.iterdir():
             assert not file.is_dir()
-
-    def test_handle_list_files_flag(self, tmp_path, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        env = Environment(tmp_path)
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
-            downloader.list_files = True
-            answer = downloader.handle_list_files_flag()
-            list_files = [[cco["name"], cco["type"]] for cco in env.CUSTOM_CONTENT]
-            for file in list_files:
-                assert all(
-                    [
-                        str_in_call_args_list(logger_info.call_args_list, file[0]),
-                        str_in_call_args_list(logger_info.call_args_list, file[1]),
-                    ]
-                )
-            assert answer
-
-    def test_handle_list_files_flag_error(self, mocker, tmp_path):
-        """
-        GIVEN a file contained in custom content of not supported type
-        WHEN the user runs demisto-sdk download -lf
-        THEN the handle_list_files_flag method should ignore the file
-        """
-        env = Environment(tmp_path)
-        mocker.patch(
-            "demisto_sdk.commands.download.downloader.get_dict_from_file",
-            return_value=({}, "json"),
-        )
-        mocker.patch(
-            "demisto_sdk.commands.download.downloader.get_child_files",
-            return_value=["path"],
-        )
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.custom_content_temp_dir = env.INTEGRATION_INSTANCE_PATH
-            downloader.list_files = True
-            assert downloader.handle_list_files_flag()
 
 
 class TestBuildPackContent:
-    def test_build_pack_content(self, tmp_path):
+    def test_build_existing_pack_structure(self, tmp_path):
         env = Environment(tmp_path)
-        downloader = Downloader(output=env.PACK_INSTANCE_PATH, input="", regex="")
-        downloader.build_pack_content()
-        assert ordered(downloader.pack_content) == ordered(env.PACK_CONTENT)
+        test_path = Path(env.PACK_INSTANCE_PATH)
+        downloader = Downloader(output=str(test_path))
+        result = downloader.build_existing_pack_structure(existing_pack_path=test_path)
+        expected_result = env.PACK_CONTENT
+        assert len(result) == len(expected_result)
+
+        for entity, items in expected_result.items():
+            assert len(result[entity]) == len(items)
+
+            for content_item_name, content_item_data in items.items():
+                assert content_item_name in result[entity]
+                assert sorted(content_item_data, key=lambda x: x["path"]) == sorted(
+                    result[entity][content_item_name], key=lambda x: x["path"]
+                )
 
     def test_build_pack_content_object(self, tmp_path):
         env = Environment(tmp_path)
@@ -677,11 +535,6 @@ class TestBuildPackContent:
             },
             {
                 "entity": LAYOUTS_DIR,
-                "path": "demisto_sdk/commands/download/tests/downloader_test.py",
-                "out": {},
-            },
-            {
-                "entity": LAYOUTS_DIR,
                 "path": env.LAYOUTSCONTAINER_INSTANCE_PATH,
                 "out": env.LAYOUTSCONTAINER_PACK_OBJECT,
             },
@@ -693,12 +546,21 @@ class TestBuildPackContent:
             {"entity": LISTS_DIR, "path": env.LISTS_INSTANCE_PATH, "out": []},
             {"entity": JOBS_DIR, "path": env.JOBS_INSTANCE_PATH, "out": []},
         ]
-        downloader = Downloader(output="", input="", regex="")
+        downloader = Downloader()
         for param in parameters:
-            pack_content_object = downloader.build_pack_content_object(
-                param["entity"], param["path"]
+            result = downloader.build_pack_content_object(
+                content_entity=param["entity"],
+                entity_instance_path=Path(param["path"]),
             )
-            assert ordered(pack_content_object) == ordered(param["out"])
+
+            if result is None:
+                assert param["out"] == []
+
+            else:
+                file_name, pack_content_object = result
+                assert sorted(pack_content_object, key=lambda x: x["path"]) == sorted(
+                    list(param["out"].values())[0], key=lambda x: x["path"]
+                )
 
     def test_get_main_file_details(self, tmp_path):
         env = Environment(tmp_path)
@@ -715,56 +577,19 @@ class TestBuildPackContent:
                 "main_id": "Hello World Alert",
                 "main_name": "Hello World Alert",
             },
-            {
-                "entity": LAYOUTS_DIR,
-                "path": "demisto_sdk/commands/download/tests/downloader_test.py",
-                "main_id": "",
-                "main_name": "",
-            },
         ]
-        downloader = Downloader(output="", input="", regex="")
+        downloader = Downloader()
         for param in parameters:
-            op_id, op_name = downloader.get_main_file_details(
-                param["entity"], os.path.abspath(param["path"])
+            data = downloader.get_metadata_file(
+                content_type=param["entity"], content_item_path=param["path"]
             )
-            assert op_id == param["main_id"]
-            assert op_name == param["main_name"]
+            assert param["main_id"] == get_id(file_content=data)
+            assert param["main_name"] == get_display_name(
+                file_path=param["path"], file_data=data
+            )
 
 
 class TestBuildCustomContent:
-    def test_exist_in_pack_content(self, tmp_path):
-        env = Environment(tmp_path)
-        parameters = [
-            {
-                "custom_content_object": env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": True,
-            },
-            {
-                "custom_content_object": env.SCRIPT_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": True,
-            },
-            {
-                "custom_content_object": env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": True,
-            },
-            {
-                "custom_content_object": env.LAYOUT_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": True,
-            },
-            {
-                "custom_content_object": env.FAKE_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": False,
-            },
-        ]
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.pack_content = env.PACK_CONTENT
-            for param in parameters:
-                assert (
-                    downloader.exist_in_pack_content(param["custom_content_object"])
-                    is param["exist_in_pack"]
-                )
-
     def test_build_custom_content_object(self, tmp_path):
         env = Environment(tmp_path)
         parameters = [
@@ -785,371 +610,339 @@ class TestBuildCustomContent:
                 "output_custom_content_object": env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
             },
         ]
-        downloader = Downloader(output="", input="", regex="")
+        downloader = Downloader()
         for param in parameters:
-            assert (
-                downloader.build_custom_content_object(param["path"])
-                == param["output_custom_content_object"]
+            with open(param["path"], "rb") as file:
+                loaded_file = StringIO(safe_read_unicode(file.read()))
+
+            result = downloader.create_content_item_object(
+                file_name=param["path"].name, file_data=loaded_file
             )
 
+            # Assure these keys exist, and skip testing them
+            # ('file' is StringIO bytes representation, and 'data' is the parsed file in dictionary format)
+            assert "data" in result
+            result.pop("data")
+            assert "file" in result
+            result.pop("file")
+            param["output_custom_content_object"].pop("file")
 
-class TestPackHierarchy:
-    def test_update_pack_hierarchy(self, tmp_path):
+            assert result == param["output_custom_content_object"]
+
+
+class TestDownloadExistingFile:
+    def test_download_and_extract_existing_file(self, tmp_path):
         env = Environment(tmp_path)
-        script_dir_path = os.path.dirname(env.SCRIPT_INSTANCE_PATH)
-        shutil.rmtree(env.INTEGRATION_INSTANCE_PATH)
-        shutil.rmtree(script_dir_path)
+        downloader = Downloader(force=True)
 
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.output_pack_path = env.PACK_INSTANCE_PATH
-            downloader.custom_content = env.CUSTOM_CONTENT
-            downloader.update_pack_hierarchy()
-            assert os.path.isdir(env.INTEGRATION_INSTANCE_PATH)
-            assert os.path.isdir(env.SCRIPT_INSTANCE_PATH)
+        file_name = env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file_name"]
 
-
-class TestMergeExistingFile:
-    def test_merge_and_extract_existing_file_corrupted_dir(self, tmp_path, mocker):
-        """
-        Given
-            - The integration exist in output pack, the directory is corrupted
-            (i.e. a file is missing, for example: the image file)
-
-        When
-            - An integration about to be downloaded
-
-        Then
-            - Ensure integration is downloaded successfully
-        """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        env = Environment(tmp_path)
-        mocker.patch.object(
-            Downloader, "get_corresponding_pack_file_object", return_value={}
+        env.INTEGRATION_CUSTOM_CONTENT_OBJECT["data"] = get_file_details(
+            file_content=env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file"].getvalue(),
+            full_file_path=str(env.CUSTOM_CONTENT_INTEGRATION_PATH),
         )
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.output_pack_path = env.PACK_INSTANCE_PATH
-            downloader.pack_content = env.PACK_CONTENT
-            downloader.run_format = False
-            downloader.num_merged_files = 0
-            downloader.num_added_files = 0
-            downloader.merge_and_extract_existing_file(
-                env.INTEGRATION_CUSTOM_CONTENT_OBJECT
-            )
-            assert str_in_call_args_list(logger_info.call_args_list, "Merged")
 
-    def test_merge_and_extract_existing_file_js(self, tmp_path):
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.num_merged_files = 0
-            downloader.num_added_files = 0
-            downloader.files_not_downloaded = []
-            downloader.pack_content = {
-                entity: list() for entity in CONTENT_ENTITIES_DIRS
-            }
-            js_custom_content_object = {
-                "id": "SumoLogic",
-                "name": "SumoLogic",
-                "path": "demisto_sdk/commands/download/tests/tests_data/custom_content/integration-DummyJSIntegration"
-                ".yml",
-                "entity": "Integrations",
-                "type": "integration",
-                "file_ending": "yml",
-                "exist_in_pack": True,
-                "code_lang": "javascript",
-            }
-            downloader.merge_and_extract_existing_file(js_custom_content_object)
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={
+                file_name: env.INTEGRATION_CUSTOM_CONTENT_OBJECT
+            },
+            existing_pack_structure=env.PACK_CONTENT,
+            output_path=env.PACK_INSTANCE_PATH,
+        )
 
-    def test_merge_and_extract_existing_file(self, tmp_path):
-        env = Environment(tmp_path)
-
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.pack_content = env.PACK_CONTENT
-            downloader.run_format = False
-            downloader.num_merged_files = 0
-            downloader.num_added_files = 0
-            downloader.merge_and_extract_existing_file(
-                env.INTEGRATION_CUSTOM_CONTENT_OBJECT
-            )
-            paths = [
-                file["path"] for file in env.INTEGRATION_PACK_OBJECT["Test Integration"]
+        expected_paths = [
+            file["path"]
+            for file in env.INTEGRATION_PACK_OBJECT[
+                env.INTEGRATION_CUSTOM_CONTENT_OBJECT["name"]
             ]
-            for path in paths:
-                assert Path(path).is_file()
-            yml_data = get_yaml(
-                env.INTEGRATION_PACK_OBJECT["Test Integration"][2]["path"]
-            )
-            for field in DELETED_YML_FIELDS_BY_DEMISTO:
-                obj = yml_data
-                dotted_path_list = field.split(".")
-                for path_part in dotted_path_list:
-                    if path_part != dotted_path_list[-1]:
-                        obj = obj.get(path_part)
-                    else:
-                        if obj.get(path_part):
-                            assert True
-                        else:
-                            assert False
-            with open(
-                env.INTEGRATION_PACK_OBJECT["Test Integration"][5]["path"]
-            ) as description_file:
-                description_data = description_file.read()
-            assert "Test Integration Long Description TEST" in description_data
-            with open(
-                env.INTEGRATION_PACK_OBJECT["Test Integration"][0]["path"]
-            ) as code_file:
-                code_data = code_file.read()
-            assert "TEST" in code_data
-
-    def test_merge_existing_file(self, tmp_path):
-        env = Environment(tmp_path)
-        parameters = [
-            {
-                "custom_content_object": env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
-                "ending": "yml",
-                "method": get_yaml,
-                "instance_path": env.PLAYBOOK_INSTANCE_PATH,
-                "fields": ["fromversion", "toversion"],
-            },
-            {
-                "custom_content_object": env.LAYOUT_CUSTOM_CONTENT_OBJECT,
-                "ending": "json",
-                "method": get_json,
-                "instance_path": env.LAYOUT_INSTANCE_PATH,
-                "fields": ["fromVersion", "toVersion"],
-            },
         ]
 
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.pack_content = env.PACK_CONTENT
-            downloader.run_format = False
-            downloader.num_merged_files = 0
-            downloader.num_added_files = 0
-            for param in parameters:
-                downloader.merge_existing_file(
-                    param["custom_content_object"], param["ending"]
-                )
-                assert Path(param["instance_path"]).is_file()
-                file_data = param["method"](param["instance_path"], cache_clear=True)
-                for field in param["fields"]:
-                    if file_data.get(field):
-                        assert True
-                    else:
-                        assert False
-                if param["ending"] == "yml":
-                    task_4_name = file_data["tasks"]["4"]["task"]["name"]
-                    assert task_4_name == "Done TEST"
+        for path in expected_paths:
+            assert Path(path).is_file()
 
-    def test_get_corresponding_pack_content_object(self, tmp_path):
-        env = Environment(tmp_path)
-        parameters = [
-            {
-                "custom_content_obj": env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
-                "pack_content_obj": env.INTEGRATION_PACK_OBJECT,
-            },
-            {
-                "custom_content_obj": env.SCRIPT_CUSTOM_CONTENT_OBJECT,
-                "pack_content_obj": env.SCRIPT_PACK_OBJECT,
-            },
-            {
-                "custom_content_obj": env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
-                "pack_content_obj": env.PLAYBOOK_PACK_OBJECT,
-            },
-            {
-                "custom_content_obj": env.LAYOUT_CUSTOM_CONTENT_OBJECT,
-                "pack_content_obj": env.LAYOUT_PACK_OBJECT,
-            },
-            {
-                "custom_content_obj": env.FAKE_CUSTOM_CONTENT_OBJECT,
-                "pack_content_obj": {},
-            },
-        ]
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.pack_content = env.PACK_CONTENT
-            for param in parameters:
-                corr_obj = downloader.get_corresponding_pack_content_object(
-                    param["custom_content_obj"]
-                )
-                assert ordered(corr_obj) == ordered(param["pack_content_obj"])
+        yml_data = get_yaml(env.INTEGRATION_PACK_OBJECT["Test Integration"][2]["path"])
+        for field in KEEP_EXISTING_YAML_FIELDS:
+            obj = yml_data
+            dotted_path_list = field.split(".")
+            for path_part in dotted_path_list:
+                if path_part != dotted_path_list[-1]:
+                    obj = obj.get(path_part)
+                else:
+                    assert obj.get(path_part)
+        with open(
+            env.INTEGRATION_PACK_OBJECT["Test Integration"][5]["path"]
+        ) as description_file:
+            description_data = description_file.read()
+        assert "Test Integration Long Description TEST" in description_data
+        with open(
+            env.INTEGRATION_PACK_OBJECT["Test Integration"][0]["path"]
+        ) as code_file:
+            code_data = code_file.read()
+        assert "# TEST" in code_data
 
-    def test_get_corresponding_pack_file_object(self, tmp_path):
+    def test_download_existing_no_force_skip(self, tmp_path):
+        """
+        Given: A Downloader object
+        When: The user tries to download a file that already exists in the pack, without using the 'force' flag.
+        Then: Ensure the download of the file is skipped
+        """
         env = Environment(tmp_path)
-        parameters = [
-            {
-                "file_name": "Test Integration",
-                "ex_file_ending": "yml",
-                "ex_file_detail": "yaml",
-                "corr_pack_object": env.INTEGRATION_PACK_OBJECT,
-                "pack_file_object": env.INTEGRATION_PACK_OBJECT["Test Integration"][2],
+        downloader = Downloader(force=True)
+
+        file_name = env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file_name"]
+
+        assert not downloader.write_files_into_output_path(
+            downloaded_content_objects={
+                file_name: env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             },
-            {
-                "file_name": "Test Integration",
-                "ex_file_ending": "py",
-                "ex_file_detail": "python",
-                "corr_pack_object": env.INTEGRATION_PACK_OBJECT,
-                "pack_file_object": env.INTEGRATION_PACK_OBJECT["Test Integration"][0],
-            },
-            {
-                "file_name": "Test Integration",
-                "ex_file_ending": "png",
-                "ex_file_detail": "image",
-                "corr_pack_object": env.INTEGRATION_PACK_OBJECT,
-                "pack_file_object": env.INTEGRATION_PACK_OBJECT["Test Integration"][3],
-            },
-            {
-                "file_name": "Test Integration",
-                "ex_file_ending": "md",
-                "ex_file_detail": "description",
-                "corr_pack_object": env.INTEGRATION_PACK_OBJECT,
-                "pack_file_object": env.INTEGRATION_PACK_OBJECT["Test Integration"][5],
-            },
-            {
-                "file_name": "TestScript",
-                "ex_file_ending": "yml",
-                "ex_file_detail": "yaml",
-                "corr_pack_object": env.SCRIPT_PACK_OBJECT,
-                "pack_file_object": env.SCRIPT_PACK_OBJECT["TestScript"][1],
-            },
-            {
-                "file_name": "TestScript",
-                "ex_file_ending": "py",
-                "ex_file_detail": "python",
-                "corr_pack_object": env.SCRIPT_PACK_OBJECT,
-                "pack_file_object": env.SCRIPT_PACK_OBJECT["TestScript"][0],
-            },
-            {
-                "file_name": "Fake Name",
-                "ex_file_ending": "py",
-                "ex_file_detail": "python",
-                "corr_pack_object": env.SCRIPT_PACK_OBJECT,
-                "pack_file_object": {},
-            },
-        ]
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.pack_content = env.PACK_CONTENT
-            for param in parameters:
-                file_name = param["file_name"]
-                ex_file_ending = param["ex_file_ending"]
-                ex_file_detail = param["ex_file_detail"]
-                corr_pack_object = param["corr_pack_object"]
-                pack_file_object = param["pack_file_object"]
-                searched_basename = downloader.get_searched_basename(
-                    file_name, ex_file_ending, ex_file_detail
-                )
-                corr_file = downloader.get_corresponding_pack_file_object(
-                    searched_basename, corr_pack_object
-                )
-                assert ordered(corr_file) == ordered(pack_file_object)
+            existing_pack_structure=env.PACK_CONTENT,
+            output_path=env.PACK_INSTANCE_PATH,
+        )
+
+    def test_download_existing_file_playbook(self, tmp_path):
+        """
+        Given: A Downloader object
+        When: Downloading a playbook that already exists in the pack, using the 'force' flag.
+        Then: Ensure the download of the file is successful, and that the 'fromversion' and 'toversion' fields
+            from the existing file are kept (even though they are not in the new file).
+        """
+        env = Environment(tmp_path)
+        downloader = Downloader()
+        file_name = env.PLAYBOOK_CUSTOM_CONTENT_OBJECT["file_name"]
+        file_path = env.PLAYBOOK_INSTANCE_PATH
+
+        playbook_data = get_file_details(
+            file_content=env.PLAYBOOK_CUSTOM_CONTENT_OBJECT["file"],
+            full_file_path=str(file_path),
+        )
+
+        playbook_data.pop("fromversion")
+        playbook_data.pop("toversion")
+
+        env.PLAYBOOK_CUSTOM_CONTENT_OBJECT["file"] = StringIO(yaml.dumps(playbook_data))
+
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.PLAYBOOK_CUSTOM_CONTENT_OBJECT},
+            existing_pack_structure=env.PACK_CONTENT,
+            output_path=env.PACK_INSTANCE_PATH,
+        )
+        assert file_path.is_file()
+        data = get_yaml(file_path)
+        assert "fromversion" in data and data["fromversion"] == "TEST"
+        assert "toversion" in data and data["toversion"] == "TEST"
+
+    def test_download_existing_file_layout(self, tmp_path):
+        """
+        Given: A Downloader object
+        When: Downloading a layout that already exists in the pack, using the 'force' flag.
+        Then: Ensure the download of the file is successful, and that the 'fromversion' and 'toversion' fields
+            from the existing file are kept (even though they are not in the new file).
+        """
+        env = Environment(tmp_path)
+        downloader = Downloader(force=True)
+        file_name = env.LAYOUT_CUSTOM_CONTENT_OBJECT["file_name"]
+        file_path = env.LAYOUT_INSTANCE_PATH
+
+        layout_data = get_file_details(
+            file_content=env.LAYOUT_CUSTOM_CONTENT_OBJECT["file"].getvalue(),
+            full_file_path=str(file_path),
+        )
+
+        layout_data.pop("fromVersion")
+        layout_data.pop("toVersion")
+
+        env.LAYOUT_CUSTOM_CONTENT_OBJECT["file"] = StringIO(json.dumps(layout_data))
+
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.LAYOUT_CUSTOM_CONTENT_OBJECT},
+            existing_pack_structure=env.PACK_CONTENT,
+            output_path=env.PACK_INSTANCE_PATH,
+        )
+        assert file_path.is_file()
+        data = get_yaml(file_path)
+        assert "fromVersion" in data and data["fromVersion"] == "5.0.0"
+        assert "toVersion" in data and data["toVersion"] == "5.9.9"
 
     def test_update_data_yml(self, tmp_path):
         env = Environment(tmp_path)
-        downloader = Downloader(output="", input="", regex="")
-        downloader.update_data(
-            env.CUSTOM_CONTENT_INTEGRATION_PATH,
-            f"{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml",
-            "yml",
+        downloader = Downloader()
+        downloader.preserve_fields(
+            file_to_update=env.CUSTOM_CONTENT_INTEGRATION_PATH,
+            original_file=env.INTEGRATION_INSTANCE_PATH / "TestIntegration.yml",
+            is_yaml=True,
         )
+        file_data = get_yaml(env.CUSTOM_CONTENT_INTEGRATION_PATH)
 
-        file_yaml_object = get_yaml(env.CUSTOM_CONTENT_INTEGRATION_PATH)
-        for field in DELETED_YML_FIELDS_BY_DEMISTO:
-            obj = file_yaml_object
-            dotted_path_list = field.split(".")
-            for path_part in dotted_path_list:
-                if path_part != dotted_path_list[-1]:
-                    obj = obj.get(path_part)
-                else:
-                    if obj.get(path_part):
-                        assert True
-                    else:
-                        assert False
+        for field in KEEP_EXISTING_YAML_FIELDS:
+            nested_keys = field.split(".")
+
+            if len(nested_keys) > 1:
+                iterated_value = file_data.get(nested_keys[0])
+
+                for key in nested_keys[1:]:
+                    assert iterated_value.get(key)
+                    iterated_value = file_data[key]
+
+            else:
+                assert file_data.get(field)
 
     def test_update_data_json(self, tmp_path):
         env = Environment(tmp_path)
-        downloader = Downloader(output="", input="", regex="")
-        downloader.update_data(
-            env.CUSTOM_CONTENT_LAYOUT_PATH, env.LAYOUT_INSTANCE_PATH, "json"
+        downloader = Downloader()
+        downloader.preserve_fields(
+            file_to_update=env.CUSTOM_CONTENT_LAYOUT_PATH,
+            original_file=env.LAYOUT_INSTANCE_PATH,
+            is_yaml=False,
         )
         file_data: dict = get_json(env.CUSTOM_CONTENT_LAYOUT_PATH)
-        for field in DELETED_JSON_FIELDS_BY_DEMISTO:
-            obj = file_data
-            dotted_path_list = field.split(".")
-            for path_part in dotted_path_list:
-                if path_part != dotted_path_list[-1]:
-                    obj = obj.get(path_part)
-                else:
-                    if obj.get(path_part):
-                        assert True
-                    else:
-                        assert False
+
+        for field in KEEP_EXISTING_JSON_FIELDS:
+            nested_keys = field.split(".")
+
+            if len(nested_keys) > 1:
+                iterated_value = file_data.get(nested_keys[0])
+
+                for key in nested_keys[1:]:
+                    assert iterated_value.get(key)
+                    iterated_value = file_data[key]
+
+            else:
+                assert file_data.get(field)
 
 
-class TestMergeNewFile:
-    def test_merge_and_extract_new_file(self, tmp_path):
+class TestDownloadNewFile:
+    def test_download_and_extract_new_integration_file(self, tmp_path):
         env = Environment(tmp_path)
-        parameters = [
-            {
-                "custom_content_object": env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
-                "raw_files": [
-                    "odp/bn.py",
-                    "odp/bn.yml",
-                    "odp/bn_image.png",
-                    "odp/bn_description.md",
-                    "odp/README.md",
-                ],
-            },
-            {
-                "custom_content_object": env.SCRIPT_CUSTOM_CONTENT_OBJECT,
-                "raw_files": ["odp/bn.py", "odp/bn.yml", "odp/README.md"],
-            },
+        raw_files = [
+            "output_path/basename.py",
+            "output_path/basename.yml",
+            "output_path/basename_image.png",
+            "output_path/basename_description.md",
+            "output_path/README.md",
         ]
-        for param in parameters:
-            temp_dir = env.tmp_path / f"temp_dir_{parameters.index(param)}"
-            os.mkdir(temp_dir)
-            entity = param["custom_content_object"]["entity"]
-            downloader = Downloader(output=str(temp_dir), input="", regex="")
-            basename = downloader.create_dir_name(
-                param["custom_content_object"]["name"]
+
+        temp_dir = (
+            env.tmp_path / "temp_dir_test_download_and_extract_new_integration_file"
+        )
+        env.INTEGRATION_CUSTOM_CONTENT_OBJECT["data"] = get_file_details(
+            file_content=env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file"].getvalue(),
+            full_file_path=str(env.CUSTOM_CONTENT_INTEGRATION_PATH),
+        )
+
+        downloader = Downloader(output=str(temp_dir))
+        file_name = env.INTEGRATION_CUSTOM_CONTENT_OBJECT["file_name"]
+        basename = downloader.create_directory_name(
+            env.INTEGRATION_CUSTOM_CONTENT_OBJECT["name"]
+        )
+        output_dir_path = (
+            temp_dir / env.INTEGRATION_CUSTOM_CONTENT_OBJECT["entity"] / basename
+        )
+        output_dir_path.mkdir(parents=True)
+
+        files = [
+            file.replace("output_path", str(output_dir_path)).replace(
+                "basename", basename
             )
-            output_entity_dir_path = f"{temp_dir}/{entity}"
-            os.mkdir(output_entity_dir_path)
-            output_dir_path = f"{output_entity_dir_path}/{basename}"
-            os.mkdir(output_dir_path)
-            files = [
-                file.replace("odp", output_dir_path).replace("bn", basename)
-                for file in param["raw_files"]
-            ]
-
-            downloader.merge_and_extract_new_file(param["custom_content_object"])
-            output_files = get_child_files(output_dir_path)
-            assert sorted(output_files) == sorted(files)
-
-    def test_merge_new_file(self, tmp_path):
-        env = Environment(tmp_path)
-        parameters = [
-            {"custom_content_object": env.PLAYBOOK_CUSTOM_CONTENT_OBJECT},
-            {"custom_content_object": env.LAYOUT_CUSTOM_CONTENT_OBJECT},
+            for file in raw_files
         ]
-        for param in parameters:
-            temp_dir = env.tmp_path / f"temp_dir_{parameters.index(param)}"
-            os.mkdir(temp_dir)
-            entity = param["custom_content_object"]["entity"]
-            output_dir_path = f"{temp_dir}/{entity}"
-            os.mkdir(output_dir_path)
-            old_file_path = param["custom_content_object"]["path"]
-            new_file_path = f"{output_dir_path}/{Path(old_file_path).name}"
-            downloader = Downloader(output=temp_dir, input="", regex="")
-            downloader.merge_new_file(param["custom_content_object"])
-            assert Path(new_file_path).is_file()
+
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={
+                file_name: env.INTEGRATION_CUSTOM_CONTENT_OBJECT
+            },
+            existing_pack_structure={},
+            output_path=temp_dir,
+        )
+
+        output_files = get_child_files(output_dir_path)
+        assert sorted(output_files) == sorted(files)
+
+    def test_download_and_extract_new_script_file(self, tmp_path):
+        env = Environment(tmp_path)
+        raw_files = [
+            "output_path/basename.py",
+            "output_path/basename.yml",
+            "output_path/README.md",
+        ]
+
+        temp_dir = env.tmp_path / "temp_dir_test_download_and_extract_new_script_file"
+        env.SCRIPT_CUSTOM_CONTENT_OBJECT["data"] = get_file_details(
+            file_content=env.SCRIPT_CUSTOM_CONTENT_OBJECT["file"].getvalue(),
+            full_file_path=str(env.CUSTOM_CONTENT_INTEGRATION_PATH),
+        )
+
+        downloader = Downloader(output=str(temp_dir))
+        file_name = env.SCRIPT_CUSTOM_CONTENT_OBJECT["file_name"]
+        basename = downloader.create_directory_name(
+            env.SCRIPT_CUSTOM_CONTENT_OBJECT["name"]
+        )
+        output_dir_path = (
+            temp_dir / env.SCRIPT_CUSTOM_CONTENT_OBJECT["entity"] / basename
+        )
+        output_dir_path.mkdir(parents=True)
+
+        files = [
+            file.replace("output_path", str(output_dir_path)).replace(
+                "basename", basename
+            )
+            for file in raw_files
+        ]
+
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.SCRIPT_CUSTOM_CONTENT_OBJECT},
+            existing_pack_structure={},
+            output_path=temp_dir,
+        )
+
+        output_files = get_child_files(output_dir_path)
+        assert sorted(output_files) == sorted(files)
+
+    def test_download_new_file_playbook(self, tmp_path):
+        env = Environment(tmp_path)
+        output_path = env.tmp_path / "test_download_new_file_playbook"
+
+        downloader = Downloader(output=str(output_path))
+        file_name = env.PLAYBOOK_CUSTOM_CONTENT_OBJECT["file_name"]
+
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.PLAYBOOK_CUSTOM_CONTENT_OBJECT},
+            existing_pack_structure={},
+            output_path=output_path,
+        )
+        expected_file_path = (
+            output_path
+            / env.PLAYBOOK_CUSTOM_CONTENT_OBJECT["entity"]
+            / "DummyPlaybook.yml"
+        )
+        assert expected_file_path.is_file()
+        assert get_yaml(env.CUSTOM_CONTENT_PLAYBOOK_PATH) == get_yaml(
+            expected_file_path
+        )
+
+    def test_download_new_file_layout(self, tmp_path):
+        env = Environment(tmp_path)
+        output_path = env.tmp_path / "test_download_new_file_layout"
+
+        file_name = env.LAYOUT_CUSTOM_CONTENT_OBJECT["file_name"]
+
+        downloader = Downloader(output=str(output_path))
+        assert downloader.write_files_into_output_path(
+            downloaded_content_objects={file_name: env.LAYOUT_CUSTOM_CONTENT_OBJECT},
+            existing_pack_structure={},
+            output_path=output_path,
+        )
+        expected_file_path = (
+            output_path
+            / env.LAYOUT_CUSTOM_CONTENT_OBJECT["entity"]
+            / "layout-details-TestLayout.json"
+        )
+        assert expected_file_path.is_file()
+        assert get_json(env.CUSTOM_CONTENT_LAYOUT_PATH) == get_json(expected_file_path)
 
 
 class TestVerifyPackPath:
     @pytest.mark.parametrize(
-        "output_path, valid_ans",
+        "output_path, expected_result",
         [
             ("Integrations", False),
             ("Packs/TestPack/", True),
@@ -1158,20 +951,19 @@ class TestVerifyPackPath:
             ("Packs/TestPack", True),
         ],
     )
-    def test_verify_output_path_is_pack(self, tmp_path, output_path, valid_ans):
+    def test_verify_output_path_is_pack(self, tmp_path, output_path, expected_result):
         env = Environment(tmp_path)
-        downloader = Downloader(
-            output=f"{env.CONTENT_BASE_PATH}/{output_path}", input="", regex=""
+        output_path = Path(f"{env.CONTENT_BASE_PATH}/{output_path}")
+        assert (
+            Downloader().verify_output_path(output_path=output_path) == expected_result
         )
-        assert downloader.verify_output_pack_is_pack() is valid_ans
 
 
 @pytest.mark.parametrize(
-    "input, system, it, insecure, endpoint, req_type, req_body",
+    "input_content, item_type, insecure, expected_endpoint, expected_request_method, expected_request_body",
     [
         (
-            ["PB1", "PB2"],
-            True,
+            ("PB1", "PB2"),
             "Playbook",
             False,
             "/playbook/search",
@@ -1179,18 +971,16 @@ class TestVerifyPackPath:
             {"query": "name:PB1 or PB2"},
         ),
         (
-            ["Mapper1", "Mapper2"],
-            True,
+            ("Mapper1", "Mapper2"),
             "Mapper",
             True,
             "/classifier/search",
             "POST",
             {"query": "name:Mapper1 or Mapper2"},
         ),
-        (["Field1", "Field2"], True, "Field", True, "/incidentfields", "GET", {}),
+        (("Field1", "Field2"), "Field", True, "/incidentfields", "GET", {}),
         (
-            ["Classifier1", "Classifier2"],
-            True,
+            ("Classifier1", "Classifier2"),
             "Classifier",
             False,
             "/classifier/search",
@@ -1200,112 +990,51 @@ class TestVerifyPackPath:
     ],
 )
 def test_build_req_params(
-    input, system, it, insecure, endpoint, req_type, req_body, monkeypatch
+    input_content: tuple[str],
+    item_type: str,
+    insecure: bool,
+    expected_endpoint: str,
+    expected_request_method: str,
+    expected_request_body: dict,
+    monkeypatch,
 ):
-    with patch.object(Downloader, "__init__", lambda x, y, z: None):
-        monkeypatch.setenv("DEMISTO_BASE_URL", "http://demisto.instance.com:8080/")
-        monkeypatch.setenv("DEMISTO_API_KEY", "API_KEY")
-        downloader = Downloader("", "")
-        downloader.system_item_type = it
-        downloader.insecure = insecure
-        downloader.input_files = input
-        res_endpoint, res_req_type, res_req_body = downloader.build_req_params()
-        assert endpoint == res_endpoint
-        assert req_type == res_req_type
-        assert req_body == res_req_body
-
-
-def test_arrange_response():
-    with patch.object(Downloader, "__init__", lambda x, y, z: None):
-        downloader = Downloader("", "")
-
-        downloader.system_item_type = "Playbook"
-        system_items_list = downloader.arrange_response([])
-        assert system_items_list == []
-
-        downloader.system_item_type = "Classifier"
-        system_items_list = downloader.arrange_response({"classifiers": []})
-        assert system_items_list == []
-
-        downloader.system_item_type = "Automation"
-        system_items_list = downloader.arrange_response([])
-        assert system_items_list == []
-
-
-def test_build_file_name():
-    with patch.object(Downloader, "__init__", lambda x, y, z: None):
-        downloader = Downloader("", "")
-
-        downloader.system_item_type = "Playbook"
-        file_name = downloader.build_file_name({"name": "name 1", "id": "id"})
-        assert file_name == "name_1.yml"
-
-        downloader.system_item_type = "Field"
-        file_name = downloader.build_file_name({"name": "name 1", "id": "id"})
-        assert file_name == "name_1.json"
-
-        downloader.system_item_type = "Field"
-        file_name = downloader.build_file_name({"id": "id 1"})
-        assert file_name == "id_1.json"
-
-
-@pytest.mark.parametrize(
-    "original_string, object_name, expected_string, should_download_expected_res",
-    [
-        (
-            "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            "automation-Testing.yml",
-            "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            False,
-        ),
-        (
-            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            "playbook-Testing.yml",
-            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            True,
-        ),
-    ],
-)
-def test_download_playbook(
-    original_string, object_name, expected_string, should_download_expected_res
-):
-    downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    should_download_playbook = downloader.should_download_playbook(object_name)
-    final_string = downloader.download_playbook_yaml(original_string)
-    assert should_download_playbook == should_download_expected_res
-    assert final_string == expected_string
-
-
-@pytest.mark.parametrize(
-    "original_string, uuids_to_name_map, expected_string",
-    [
-        (
-            "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            {},
-            "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-        ),
-        (
-            '{"name":"TestingField","script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"}',
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{"name":"TestingField","script":"TestingScript"}',
-        ),
-        (
-            '{"name":"TestingLayout","detailsV2":{"tabs":[{"sections":[{'
-            '"items":[{"scriptId":"f1e4c6e5-0d44-48a0-8020-a9711243e918"'
-            "}]}]}]}}",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{"name":"TestingLayout","detailsV2":{"tabs":[{"sections":[{'
-            '"items":[{"scriptId":"TestingScript"'
-            "}]}]}]}}",
-        ),
-    ],
-)
-def test_replace_uuids(original_string, uuids_to_name_map, expected_string):
-    downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.replace_uuids(
-        original_string, uuids_to_name_map, "file_name"
+    downloader = Downloader(
+        system=True, input=input_content, item_type=item_type, insecure=insecure
     )
-    assert final_string == expected_string
+    endpoint, request_type, request_body = downloader.build_request_params(
+        content_item_type=ContentItemType(item_type),
+        content_item_names=list(input_content),
+    )
+    assert endpoint == expected_endpoint
+    assert request_type == expected_request_method
+    assert request_body == expected_request_body
+
+
+@pytest.mark.parametrize(
+    "content_item, content_type, expected_result",
+    [
+        ({"name": "name 1"}, ContentItemType.PLAYBOOK, "name_1.yml"),
+        ({"name": "name 1"}, ContentItemType.FIELD, "name_1.json"),
+        (
+            {"name": "name with / slash in it"},
+            ContentItemType.PLAYBOOK,
+            "name_with_slash_in_it.yml",
+        ),
+        ({"id": "id 1"}, ContentItemType.FIELD, "id_1.json"),
+    ],
+)
+def test_generate_system_content_file_name(
+    content_item: dict, content_type: ContentItemType, expected_result: str
+):
+    downloader = Downloader()
+
+    downloader.system_item_type = content_type
+    file_name = downloader.generate_system_content_file_name(
+        content_item_type=content_type,
+        content_item=content_item,
+    )
+
+    assert file_name == expected_result
 
 
 @pytest.mark.parametrize("source_is_unicode", (True, False))
@@ -1340,8 +1069,8 @@ def test_safe_write_unicode_to_non_unicode(
     Given: A format to check (yaml/json), with its writing method
     When: Calling Downloader.update_data
     Then:
-        1. Make sure that dowloading unicode content into a non-unicode file works (result should be all unicode)
-        2. Make sure that dowloading non-unicode content into a unicode file works (result should be all unicode)
+        1. Make sure that downloading unicode content into a non-unicode file works (result should be all unicode)
+        2. Make sure that downloading non-unicode content into a unicode file works (result should be all unicode)
     """
     from demisto_sdk.commands.download.downloader import Downloader
 
@@ -1372,8 +1101,8 @@ def test_safe_write_unicode_to_non_unicode(
         )
     )
 
-    Downloader.update_data(
-        output_path=str(dest), file_path_to_read=str(source), file_ending=suffix[1:]
+    Downloader.preserve_fields(
+        file_to_update=dest, original_file=source, is_yaml=(suffix == ".yml")
     )
 
     # make sure the two files were merged correctly
@@ -1382,143 +1111,291 @@ def test_safe_write_unicode_to_non_unicode(
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
 
 
-def test_find_uuids_in_content_item():
+def test_uuids_replacement_in_content_items(mocker):
     """
-    Given: a mock tar file download_tar.tar
-    When: calling find_uuids_in_content_item on the mock tar
-    Then: Find all UUIDs in different content items:
-          playbook, automation, layout, incident
-          and replaces these UUIDs with the corresponding names in strings_to_write
+    Given:
+        A mock tar file download_tar.tar
+    When:
+        Running the download command with "auto_replace_uuids" set to true
+    Then:
+        Assure UUIDs are properly mapped and replaced.
     """
-    expected_UUIDs = {
-        "a53a2f17-2f05-486d-867f-a36c9f5b88d4",
-        "e4c2306d-5d4b-4b19-8320-6fdad94595d4",
-        "de57b1f7-b754-43d2-8a8c-379d12bdddcd",
-        "84731e69-0e55-40f9-806a-6452f97a01a0",
-        "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61",
+    expected_mapping = {
+        "e4c2306d-5d4b-4b19-8320-6fdad94595d4": "custom_automation",
+        "de57b1f7-b754-43d2-8a8c-379d12bdddcd": "custom_script",
+        "84731e69-0e55-40f9-806a-6452f97a01a0": "Custom Layout",
+        "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61": "ExampleType",
+        "a53a2f17-2f05-486d-867f-a36c9f5b88d4": "custom_playbook",
     }
-    io_bytes = io.BytesIO(
-        Path(
-            f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/\
-download_tar.tar"
-        ).read_bytes()
-    )
-    downloader = Downloader(
-        output="",
-        input="",
-        regex="",
-        all_custom_content=True,
-    )
-    with tarfile.open(fileobj=io_bytes, mode="r") as tar:
-        strings_to_write, scripts_id_name = downloader.find_uuids_in_content_item(tar)
-    ids = set(scripts_id_name.keys())
-    assert ids.issubset(expected_UUIDs)
-    assert ids.isdisjoint(strings_to_write)
 
-
-def test_get_system_playbook(mocker):
-    """
-    Given: a mock file raw_playbook.txt
-    When: calling get_system_playbook function.
-    Then:
-        - Ensure the playbook returns as valid json as expected
-        - Ensure a list is returned from the function
-    """
-
-    playbook_path = Path(
-        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
-    )
-
-    raw_playbook = playbook_path.read_bytes()
-
-    expected_pb = get_yaml(playbook_path)
-    mocker.patch.object(
-        demisto_client, "generic_request_func", return_value=[raw_playbook]
-    )
-
-    downloader = Downloader(input=["test"], output="test")
-    playbooks = downloader.get_system_playbook(req_type="GET")
-    assert isinstance(playbooks, list)
-    assert playbooks[0] == expected_pb
-    assert len(playbooks) == 1
-
-
-def test_get_system_playbook_item_does_not_exist_by_name(mocker):
-    """
-    Given: a mock file raw_playbook.txt
-    When: calling get_system_playbook function.
-    Then:
-        - Ensure the playbook returns as valid json as expected
-        - Ensure a list is returned from the function
-    """
-    playbook_path = Path(
-        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
-    )
-
-    playbook = get_yaml(playbook_path)
-    playbook["id"] = "dummy_-_playbook"
+    mock_bundle_data = (
+        TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+    ).read_bytes()
+    mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
     mocker.patch.object(
         demisto_client,
         "generic_request_func",
-        side_effect=(ApiException("Item not found"), [playbook_path.read_bytes()]),
+        return_value=(mock_bundle_response, None, None),
     )
+
+    downloader = Downloader(
+        all_custom_content=True,
+        auto_replace_uuids=True,
+    )
+
+    all_custom_content_data = downloader.download_custom_content()
+    all_custom_content_objects = downloader.parse_custom_content_data(
+        file_name_to_content_item_data=all_custom_content_data
+    )
+
+    uuid_mapping = downloader.create_uuid_to_name_mapping(
+        custom_content_objects=all_custom_content_objects
+    )
+    assert uuid_mapping == expected_mapping
+
+    changed_uuids_count = 0
+    for file_object in all_custom_content_objects.values():
+        if downloader.replace_uuid_ids(
+            custom_content_object=file_object, uuid_mapping=uuid_mapping
+        ):
+            changed_uuids_count += 1
+
+    assert changed_uuids_count == 7
+
+
+def test_get_system_playbooks(mocker):
+    """
+    Given:
+        A name of a playbook to download.
+    When:
+        Using the download command.
+    Then:
+        Ensure the function works as expected and returns the playbook.
+    """
+    playbook_path = TESTS_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
     mocker.patch.object(
-        Downloader, "get_playbook_id_by_playbook_name", return_value="test"
+        demisto_client,
+        "generic_request_func",
+        return_value=(
+            HTTPResponse(body=playbook_path.read_bytes(), status=200),
+            200,
+            None,
+        ),
     )
-    downloader = Downloader(input=["DummyPlaybook"], output="test")
-    playbooks = downloader.get_system_playbook(req_type="GET")
-    assert isinstance(playbooks, list)
-    assert len(playbooks) == 1
+
+    downloader = Downloader(
+        system=True, input=("DummyPlaybook",), item_type="Playbook", output="test"
+    )
+
+    downloaded_playbooks = downloader.fetch_system_content(
+        content_item_type=ContentItemType.PLAYBOOK, content_item_names=["DummyPlaybook"]
+    )
+    assert isinstance(downloaded_playbooks, dict)
+    assert len(downloaded_playbooks) == 1
+    assert downloaded_playbooks["DummyPlaybook.yml"]["data"] == get_yaml(playbook_path)
 
 
-@pytest.mark.parametrize(
-    "exception, mock_value, expected_call",
-    [(Exception, "test", 0), (ApiException, None, 1)],
-)
-def test_get_system_playbook_failure(mocker, exception, mock_value, expected_call):
+def test_get_system_playbooks_item_does_not_exist_by_name(mocker):
+    """
+    Given:
+        A name of a playbook to download using the API.
+    When:
+        Using the download command, but the API call returns "Item not found" error for the playbook.
+    Then:
+        Ensure that the function tries to retrieve the playbook its ID instead.
+    """
+    playbook_path = TESTS_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
+
+    generic_request_func_mock = mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        side_effect=(
+            ApiException(),
+            (HTTPResponse(body=playbook_path.read_bytes(), status=200), 200, None),
+        ),
+    )
+
+    downloader = Downloader(
+        input=("DummyPlaybook-DifferentNameThanID",), output="DummyPlaybook"
+    )
+
+    get_playbook_id_by_playbook_name_mock = mocker.patch.object(
+        downloader, "get_playbook_id_by_playbook_name", return_value="DummyPlaybook"
+    )
+    downloaded_playbooks = downloader.fetch_system_content(
+        content_item_type=ContentItemType.PLAYBOOK,
+        content_item_names=["DummyPlaybook-DifferentNameThanID"],
+    )
+
+    assert get_playbook_id_by_playbook_name_mock.call_count == 1
+    assert generic_request_func_mock.call_count == 2
+    assert (
+        generic_request_func_mock.call_args_list[0][0][1]
+        == "/playbook/DummyPlaybook-DifferentNameThanID/yaml"
+    )
+    assert (
+        generic_request_func_mock.call_args_list[1][0][1]
+        == "/playbook/DummyPlaybook/yaml"
+    )
+
+    assert isinstance(downloaded_playbooks, dict)
+    assert len(downloaded_playbooks) == 1
+    assert downloaded_playbooks["DummyPlaybook.yml"]["data"] == get_yaml(playbook_path)
+
+
+def test_get_system_playbooks_non_api_failure(mocker):
     """
     Given: a mock exception
-    When: calling get_system_playbook function.
-    Then:
-        - Ensure that when the API call throws a non-ApiException error,
+    When: calling get_system_playbooks function.
+    Then: Ensure that when the API call throws a non-ApiException error,
           a second attempt is not made to retrieve the playbook by the ID.
-        - Ensure that when the API call throws an ApiException error and the id extraction fails,
+    """
+    mocker.patch.object(demisto_client, "generic_request_func", side_effect=Exception())
+    downloader = Downloader(input=("Test",))
+
+    get_playbook_id_by_playbook_name_spy = mocker.spy(
+        downloader, "get_playbook_id_by_playbook_name"
+    )
+    results = downloader.get_system_playbooks(content_items=["Test"])
+
+    assert get_playbook_id_by_playbook_name_spy.call_count == 0
+    assert results == {}
+
+
+def test_get_system_playbooks_api_failure(mocker):
+    """
+    Given: a mock exception
+    When: calling get_system_playbooks function.
+    Then: Ensure that when the API call throws an ApiException error and the id extraction fails,
           the function raises the same error.
     """
-    mocker.patch.object(demisto_client, "generic_request_func", side_effect=exception())
-    get_id_by_name_mock = mocker.patch.object(
-        Downloader, "get_playbook_id_by_playbook_name", return_value=mock_value
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
+    mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        side_effect=ApiException(status="403", reason="Test Error Message"),
     )
-    downloader = Downloader(input=["DummyPlaybook"], output="test")
-    with pytest.raises(exception):
-        downloader.get_system_playbook(req_type="GET")
-    assert get_id_by_name_mock.call_count == expected_call
+    downloader = Downloader(input=("Test",))
+
+    get_playbook_id_by_playbook_name_spy = mocker.patch.object(
+        downloader, "get_playbook_id_by_playbook_name", return_value=None
+    )
+
+    results = downloader.get_system_playbooks(content_items=["Test"])
+
+    assert get_playbook_id_by_playbook_name_spy.call_count == 1
+    assert str_in_call_args_list(
+        call_args_list=logger_error.call_args_list,
+        required_str="Failed to fetch system playbook 'Test': (403)\nReason: Test Error Message\n",
+    )
+    assert str_in_call_args_list(
+        call_args_list=logger_info.call_args_list,
+        required_str="No system playbooks were downloaded.",
+    )
+    assert results == {}
+
+
+def test_list_files_flag(mocker):
+    """
+    Given:
+        list_files flag (-lf / --list-files) is set to True (and only that. Other flags are not required)
+    When:
+        Running the Download command
+    Then:
+        Ensure the command list all files available for download properly.
+    """
+    downloader = Downloader(list_files=True)
+    mock_bundle_data = (
+        TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+    ).read_bytes()
+    mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
+
+    mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        return_value=(mock_bundle_response, None, None),
+    )
+
+    list_file_method_mock = mocker.spy(downloader, "list_all_custom_content")
+    content_table_mock = mocker.spy(downloader, "create_custom_content_table")
+    assert downloader.download() == 0
+
+    expected_table = (
+        "Content Name                Content Type\n"
+        "--------------------------  ----------------\n"
+        "CommonServerUserPowerShell  script\n"
+        "CommonServerUserPython      script\n"
+        "custom_automation           script\n"
+        "custom_script               script\n"
+        "custom_incident             incidentfield\n"
+        "Custom_Layout               incidenttype\n"
+        "custom_integration          integration\n"
+        "Custom Layout               layoutscontainer\n"
+        "ExampleType                 layoutscontainer\n"
+        "custom_playbook             playbook"
+    )
+
+    assert list_file_method_mock.call_count == 1
+    assert content_table_mock.call_count == 1
+    assert expected_table in content_table_mock.spy_return
 
 
 @pytest.mark.parametrize(
     "auto_replace_uuids",
     [True, False],
 )
-def test_write_custom_content(mocker, auto_replace_uuids):
+def test_auto_replace_uuids_flag(mocker, auto_replace_uuids: bool):
     """
     Given: auto_replace_uuids value.
-    When: calling write_custom_content function.
+    When: Downloading custom content items
     Then:
-        - Ensure that when it sets to false replace_uuids isn't running.
-        - Ensure that when it sets to true replace_uuids is running.
+        - Ensure that when 'auto_replace_uuids' is set to true, the 'replace_uuid_ids' method is called.
+        - Ensure that when 'auto_replace_uuids' is set to false, the 'replace_uuid_ids' method is not called.
     """
+    mock_bundle_data = (
+        TESTS_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+    ).read_bytes()
+    mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
+    mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        return_value=(mock_bundle_response, None, None),
+    )
+
     downloader = Downloader(
-        output="",
-        input="",
-        regex="",
+        all_custom_content=True,
         auto_replace_uuids=auto_replace_uuids,
+        output="fake_output_dir",
     )
-    mock_replace_uuids = mocker.patch.object(
-        Downloader, "replace_uuids", return_value="mocked"
-    )
-    downloader.write_custom_content([("content", "file.yml")], {"uuid1": "script1"})
-    assert (
-        mock_replace_uuids.called
-        if auto_replace_uuids
-        else not (mock_replace_uuids.called)
+
+    mocker.patch.object(downloader, "verify_output_path", return_value=True)
+    mocker.patch.object(downloader, "build_existing_pack_structure", return_value={})
+    mocker.patch.object(downloader, "write_files_into_output_path", return_value=True)
+    mock_replace_uuids = mocker.spy(downloader, "replace_uuid_ids")
+
+    downloader.download()
+
+    if auto_replace_uuids:
+        assert mock_replace_uuids.called
+
+    else:
+        assert not mock_replace_uuids.called
+
+
+def test_invalid_regex_error(mocker):
+    """
+    Given: A regex that is not valid
+    When: Calling the download command for custom content
+    Then: Ensure that the command fails with an appropriate error message.
+    """
+    downloader = Downloader(regex="*invalid-regex*", output="fake_output_dir")
+    mocker.patch.object(downloader, "verify_output_path", return_value=True)
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+    assert downloader.download() == 1
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "Error: Invalid regex pattern provided: '*invalid-regex*'.",
     )

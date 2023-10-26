@@ -74,7 +74,8 @@ class XsoarApiInterface(ABC):
         integration_instance_config: Dict,
         response_type: str = "object",
         integration_log_level: Optional[str] = None,
-        is_long_running: bool = False
+        is_long_running: bool = False,
+        should_enable: str = "true"
     ):
         pass
 
@@ -160,7 +161,8 @@ class XsoarNGApiClient(XsoarApiInterface):
         integration_instance_config: Dict,
         response_type: str = "object",
         integration_log_level: Optional[str] = None,
-        is_long_running: bool = False
+        is_long_running: bool = False,
+        should_enable: str = "true"
     ):
         integrations_metadata: Dict[
             str, Any
@@ -171,7 +173,7 @@ class XsoarNGApiClient(XsoarApiInterface):
             "category": integrations_metadata["category"],
             "configuration": integrations_metadata,
             "data": [],
-            "enabled": "true",
+            "enabled": should_enable,
             "engine": "",
             "id": "",
             "isIntegrationScript": True,  # type: ignore

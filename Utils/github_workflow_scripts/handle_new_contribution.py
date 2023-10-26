@@ -12,12 +12,10 @@ def main():
             git_provider=GitProvider.GitHub,
         ),
     )
-    contrib_tl_username = content_roles["CONTRIBUTION_TL"]
+    contrib_tl_username = content_roles.get("CONTRIBUTION_TL")
     if not contrib_tl_username:
-        print("No contribution TL")  # noqa: T201
-        sys.exit(1)
+        raise Exception("There isn't a contribution TL in .github/content_roles.json")
     # save the contrib_tl username to a file for a later use in the workflow
-    print(f"{contrib_tl_username=}")  # noqa: T201
     with open("contrib_tl.txt", "w") as f:
         f.write(contrib_tl_username)
 

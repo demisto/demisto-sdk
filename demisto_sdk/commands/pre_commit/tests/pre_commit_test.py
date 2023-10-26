@@ -249,6 +249,13 @@ class TestPreprocessFiles:
         output = preprocess_files(input_files=input_files)
         assert output == expected_output
 
+    def test_preprocess_files_with_input_yml_files(self, mocker):
+        input_files = [Path("file1.yml")]
+        expected_output = set([Path("file1.yml"), Path("file1.py")])
+        mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
+        output = preprocess_files(input_files=input_files)
+        assert output == expected_output
+
     def test_preprocess_files_with_staged_only(self, mocker):
         expected_output = set([Path("file1.txt"), Path("file2.txt")])
         mocker.patch.object(GitUtil, "_get_staged_files", return_value=expected_output)

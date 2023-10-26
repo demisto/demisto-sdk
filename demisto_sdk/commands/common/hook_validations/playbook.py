@@ -316,12 +316,12 @@ class PlaybookValidator(ContentEntityValidator):
         next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
 
         # Rename the dictionary keys from 'True Positive\False Positive' to 'YES\NO'
-        next_tasks_upper["YES"] = next_tasks_upper.pop(
-            "TRUE POSITIVE", next_tasks_upper.get("YES")
-        )
-        next_tasks_upper["NO"] = next_tasks_upper.pop(
-            "FALSE POSITIVE", next_tasks_upper.get("NO")
-        )
+        # next_tasks_upper["YES"] = next_tasks_upper.pop(
+        #     "TRUE POSITIVE", next_tasks_upper.get("YES")
+        # )
+        # next_tasks_upper["NO"] = next_tasks_upper.pop(
+        #     "FALSE POSITIVE", next_tasks_upper.get("NO")
+        # )
 
         # Remove all nexttasks from unhandled_reply_options (UPPER)
         for next_task_branch, next_task_id in next_tasks_upper.items():

@@ -89,7 +89,7 @@ class ValidateManager:
 
         return self.validation_results.post_results()
 
-    def filter_validators(self) -> List[Type[BaseValidator]]:
+    def filter_validators(self) -> List[BaseValidator]:
         """
         Filter the validations by their error code
         according to the validations supported by the given flags according to the config file.
@@ -99,7 +99,7 @@ class ValidateManager:
         """
         # gather validator from validate package
         return [
-            validator
+            validator()
             for validator in BaseValidator.__subclasses__()
             if validator.error_code in self.validations_to_run
         ]

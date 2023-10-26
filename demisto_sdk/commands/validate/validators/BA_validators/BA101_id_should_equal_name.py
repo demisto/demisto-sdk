@@ -1,4 +1,5 @@
-from typing import Optional, TypeVar
+from __future__ import annotations
+from typing import Generic, Optional, TypeVar
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -15,15 +16,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-
-class IDNameValidator(BaseValidator):
-    error_code = "BA101"
-    description = "Validate that the file id and name fields are identical."
-    error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
-    fixing_message = "Changing name to be equal to id ({0})."
-    is_auto_fixable = True
-    related_field = "name"
-    ContentTypes = TypeVar(
+ContentTypes = TypeVar(
         "ContentTypes",
         Integration,
         Dashboard,
@@ -36,34 +29,41 @@ class IDNameValidator(BaseValidator):
         Classifier,
     )
 
-    @classmethod
+class IDNameValidator(BaseValidator[ContentTypes]):
+    error_code = "BA101"
+    description = "Validate that the file id and name fields are identical."
+    error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
+    fixing_message = "Changing name to be equal to id ({0})."
+    is_auto_fixable = True
+    related_field = "name"
+    content_types = ContentTypes
+
     def is_valid(
-        cls, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None
+        self, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None
     ) -> ValidationResult:
         if content_item.object_id != content_item.name:
             return ValidationResult(
-                error_code=cls.error_code,
+                error_code=self.error_code,
                 is_valid=False,
-                message=cls.error_message.format(
+                message=self.error_message.format(
                     content_item.object_id, content_item.name
                 ),
                 file_path=content_item.path,
             )
         return ValidationResult(
-            error_code=cls.error_code,
+            error_code=self.error_code,
             is_valid=True,
             message="",
             file_path=content_item.path,
         )
 
-    @classmethod
     def fix(
-        cls, content_item: ContentTypes, old_content_item: ContentTypes = None
+        self, content_item: ContentTypes, old_content_item: ContentTypes = None
     ) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()
         return FixingResult(
-            error_code=cls.error_code,
-            message=cls.fixing_message.format(content_item.object_id),
+            error_code=self.error_code,
+            message=self.fixing_message.format(content_item.object_id),
             file_path=content_item.path,
         )

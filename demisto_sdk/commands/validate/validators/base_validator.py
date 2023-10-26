@@ -1,9 +1,9 @@
 from abc import ABC
 from pathlib import Path
-from typing import Any, ClassVar, List, Optional, TypeVar
+from typing import Any, ClassVar, List, Optional, TypeVar, Generic, Type
 
 from pydantic import BaseModel
-
+import typing
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 
@@ -44,8 +44,10 @@ class FixingResult(BaseModel):
             "message": self.message,
         }
 
+ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
-class BaseValidator(ABC, BaseModel):
+class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
+    content_types: TypeVar
     error_code: ClassVar[str]
     description: ClassVar[str]
     error_message: ClassVar[str]
@@ -53,11 +55,10 @@ class BaseValidator(ABC, BaseModel):
     is_auto_fixable: ClassVar[bool]
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[str]]] = None
-    ContentTypes: ClassVar[Any] = TypeVar("ContentTypes", bound=BaseContent)  # type: ignore
 
-    @classmethod
+    
     def should_run(
-        cls, content_item: BaseContent, ignorable_errors: list, support_level_dict: dict
+        self, content_item: ContentTypes, ignorable_errors: list, support_level_dict: dict
     ) -> bool:
         """check wether to run validation on the given content item or not.
 
@@ -71,27 +72,25 @@ class BaseValidator(ABC, BaseModel):
         """
         return all(
             [
-                should_run_according_to_type(content_item, cls.ContentTypes),
+                should_run_according_to_type(content_item, self.content_types),
                 should_run_according_to_status(
-                    content_item.git_status, cls.expected_git_statuses
+                    content_item.git_status, self.expected_git_statuses
                 ),
                 not is_error_ignored(
-                    cls.error_code, content_item.ignored_errors, ignorable_errors
+                    self.error_code, content_item.ignored_errors, ignorable_errors
                 ),
                 not is_support_level_support_validation(
-                    cls.error_code, support_level_dict, content_item.support
+                    self.error_code, support_level_dict, content_item.support
                 ),
             ]
         )
 
-    @classmethod
     def is_valid(
-        cls, content_item: Any, old_content_item: Any = None
+        self, content_item: Any, old_content_item: Any = None
     ) -> ValidationResult:
         raise NotImplementedError
 
-    @classmethod
-    def fix(cls, content_item: Any, old_content_item: Any = None) -> FixingResult:
+    def fix(self, content_item: Any, old_content_item: Any = None) -> FixingResult:
         raise NotImplementedError
 
     class Config:

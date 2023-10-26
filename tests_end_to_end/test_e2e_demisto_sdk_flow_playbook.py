@@ -45,7 +45,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_testsuite",
-        input=[playbook_name],
+        input=(playbook_name,),
         insecure=True,
     ).download()
     dest_playbook_path = Path(
@@ -129,7 +129,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_client",
-        input=[playbook_name],
+        input=(playbook_name,),
         insecure=True,
     ).download()
     dest_playbook_path = Path(

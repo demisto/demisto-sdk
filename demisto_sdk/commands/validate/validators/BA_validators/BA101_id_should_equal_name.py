@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Generic, Optional, TypeVar
+
+from typing import TypeVar
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard

@@ -1,6 +1,9 @@
 # Changelog
 ## Unreleased
 
+## 1.20.9
+* Fixed an issue where playbook_unreachable_condition validation failed falsely.
+
 ## 1.20.8
 * Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.
 * Internal: Fixed an issue where the `tools.get_display_name` function would return incorrect values for "Indicator Type" content items.

@@ -24,7 +24,7 @@ class BCSubtypeValidator(BaseValidator[ContentTypes]):
     content_types = ContentTypes
 
     def is_valid(
-        self, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None
+        self, content_item: ContentTypes, old_content_item: ContentTypes,
     ) -> ValidationResult:
         if old_content_item and content_item.type != old_content_item.type:
             return ValidationResult(
@@ -41,13 +41,12 @@ class BCSubtypeValidator(BaseValidator[ContentTypes]):
         )
 
     def fix(
-        self, content_item: ContentTypes, old_content_item: ContentTypes = None
+        self, content_item: ContentTypes, old_content_item: ContentTypes
     ) -> FixingResult:
-        if old_content_item:
-            content_item.type = old_content_item.type
-            content_item.save()
-            return FixingResult(
-                error_code=self.error_code,
-                message=self.fixing_message.format(old_content_item.type),
-                file_path=content_item.path,
-            )
+        content_item.type = old_content_item.type
+        content_item.save()
+        return FixingResult(
+            error_code=self.error_code,
+            message=self.fixing_message.format(old_content_item.type),
+            file_path=content_item.path,
+        )

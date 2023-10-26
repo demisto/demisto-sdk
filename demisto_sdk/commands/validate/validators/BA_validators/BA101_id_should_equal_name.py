@@ -37,9 +37,8 @@ class IDNameValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     related_field = "name"
     content_types = ContentTypes
-
     def is_valid(
-        self, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None
+        self, content_item: ContentTypes, **kwargs
     ) -> ValidationResult:
         if content_item.object_id != content_item.name:
             return ValidationResult(
@@ -58,7 +57,7 @@ class IDNameValidator(BaseValidator[ContentTypes]):
         )
 
     def fix(
-        self, content_item: ContentTypes, old_content_item: ContentTypes = None
+        self, content_item: ContentTypes, **kwargs
     ) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()

@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import Any, ClassVar, List, Optional, TypeVar, Generic, Type
+from typing import Any, ClassVar, List, Optional, Tuple, TypeVar, Generic, Type
 
 from pydantic import BaseModel
 import typing
@@ -56,7 +56,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[str]]] = None
 
-    
+    def get_content_types(self) -> Tuple[Type[BaseContent]]:
+        return self.content_types.__constraints__ or (self.content_types.__bound__,)
+
     def should_run(
         self, content_item: ContentTypes, ignorable_errors: list, support_level_dict: dict
     ) -> bool:
@@ -72,7 +74,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         """
         return all(
             [
-                should_run_according_to_type(content_item, self.content_types),
+                isinstance(content_item, self.get_content_types()),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),
@@ -86,11 +88,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         )
 
     def is_valid(
-        self, content_item: Any, old_content_item: Any = None
+        self, content_item: ContentTypes, **kwargs
     ) -> ValidationResult:
         raise NotImplementedError
 
-    def fix(self, content_item: Any, old_content_item: Any = None) -> FixingResult:
+    def fix(self, content_item: ContentTypes, **kwargs) -> FixingResult:
         raise NotImplementedError
 
     class Config:
@@ -149,26 +151,3 @@ def should_run_according_to_status(
     return not expected_git_statuses or content_item_git_status in expected_git_statuses
 
 
-def should_run_according_to_type(content_item: BaseContent, content_types) -> bool:
-    """
-    Check if the given content item type matches the validation's expected types.
-
-    Args:
-        content_item (BaseContent): the content item we wish to check if we should run the validation on.
-        content_types: The validation's expected content types.
-
-    Returns:
-        bool: True if the given content item type matches the validation's expected types. Otherwise, return False.
-    """
-    return (
-        any(
-            [
-                isinstance(content_item, constraint)
-                for constraint in content_types.__constraints__
-            ]
-        )
-        if content_types.__constraints__
-        else isinstance(content_item, content_types.__bound__)
-        if content_types.__bound__
-        else isinstance(content_item, content_types)
-    )

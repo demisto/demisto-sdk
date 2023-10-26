@@ -5,7 +5,7 @@ import toml
 from demisto_sdk.commands.common.constants import DEFAULT_MANDATORY_VALIDATIONS
 
 CONFIG_FILE_PATH = (
-    "/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate/config.toml"
+    "/Users/ierukhimovic/dev/demisto/demisto-sdk/demisto_sdk/commands/validate/config.toml"
 )
 USE_GIT = "use_git"
 VALIDATE_ALL = "validate_all"

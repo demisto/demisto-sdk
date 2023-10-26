@@ -73,6 +73,8 @@ class XsoarApiInterface(ABC):
         name: str,
         integration_instance_config: Dict,
         response_type: str = "object",
+        integration_log_level: Optional[str] = None,
+        is_long_running: bool = False
     ):
         pass
 
@@ -157,6 +159,8 @@ class XsoarNGApiClient(XsoarApiInterface):
         name: str,
         integration_instance_config: Dict,
         response_type: str = "object",
+        integration_log_level: Optional[str] = None,
+        is_long_running: bool = False
     ):
         integrations_metadata: Dict[
             str, Any
@@ -178,6 +182,13 @@ class XsoarNGApiClient(XsoarApiInterface):
             "mappingId": integrations_metadata.get("defaultClassifier", ""),
             "outgoingMapperId": integrations_metadata.get("defaultMapperOut", ""),
         }
+        if integration_log_level:
+            if integration_log_level not in {"Debug", "Verbose"}:
+                raise ValueError(f'integrationLogLevel must be either Debug/Verbose and not {integration_log_level}')
+            integration_instance_body_request["integrationLogLevel"] = integration_log_level
+
+        if is_long_running:
+            integration_instance_body_request["isLongRunning"] = is_long_running
 
         module_configuration: List[Dict[str, Any]] = integrations_metadata[
             "configuration"

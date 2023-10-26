@@ -1,5 +1,3 @@
-import sys
-
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.tools import get_remote_file
 

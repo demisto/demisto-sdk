@@ -18,17 +18,18 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = TypeVar(
-        "ContentTypes",
-        Integration,
-        Dashboard,
-        IncidentType,
-        Layout,
-        Mapper,
-        Playbook,
-        Script,
-        Wizard,
-        Classifier,
-    )
+    "ContentTypes",
+    Integration,
+    Dashboard,
+    IncidentType,
+    Layout,
+    Mapper,
+    Playbook,
+    Script,
+    Wizard,
+    Classifier,
+)
+
 
 class IDNameValidator(BaseValidator[ContentTypes]):
     error_code = "BA101"
@@ -38,9 +39,8 @@ class IDNameValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     related_field = "name"
     content_types = ContentTypes
-    def is_valid(
-        self, content_item: ContentTypes, **kwargs
-    ) -> ValidationResult:
+
+    def is_valid(self, content_item: ContentTypes, **kwargs) -> ValidationResult:
         if content_item.object_id != content_item.name:
             return ValidationResult(
                 error_code=self.error_code,
@@ -57,9 +57,7 @@ class IDNameValidator(BaseValidator[ContentTypes]):
             file_path=content_item.path,
         )
 
-    def fix(
-        self, content_item: ContentTypes, **kwargs
-    ) -> FixingResult:
+    def fix(self, content_item: ContentTypes, **kwargs) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()
         return FixingResult(

@@ -9,6 +9,7 @@ CONFIG_FILE_PATH = (
 )
 USE_GIT = "use_git"
 VALIDATE_ALL = "validate_all"
+DEFAULT_CAREGORY = "default_mandatory_validations"
 
 
 class ConfigReader:
@@ -21,7 +22,7 @@ class ConfigReader:
             self.category_to_run = category_to_run
         except FileNotFoundError:
             self.config_file_content = DEFAULT_MANDATORY_VALIDATIONS
-            self.category_to_run = "default_mandatory_validations"
+            self.category_to_run = DEFAULT_CAREGORY
 
     def gather_validations_to_run(self, use_git: bool) -> Tuple[List, List, List, dict]:
         """Extract the relevant information from the relevant category in the config file.

@@ -8,6 +8,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = TypeVar("ContentTypes", bound=Pack)
 
+
 class PackMetadataNameValidator(BaseValidator[ContentTypes]):
     error_code = "PA108"
     description = (
@@ -19,7 +20,9 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
     content_types = ContentTypes
 
     def is_valid(
-        self, content_item: ContentTypes, old_content_item: Optional[ContentTypes] = None
+        self,
+        content_item: ContentTypes,
+        old_content_item: Optional[ContentTypes] = None,
     ) -> ValidationResult:
         if not content_item.name or "fill mandatory field" in content_item.name:
             return ValidationResult(

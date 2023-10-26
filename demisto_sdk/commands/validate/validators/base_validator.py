@@ -1,9 +1,9 @@
 from abc import ABC
 from pathlib import Path
-from typing import Any, ClassVar, List, Optional, Tuple, TypeVar, Generic, Type
+from typing import ClassVar, Generic, List, Optional, Tuple, Type, TypeVar
 
 from pydantic import BaseModel
-import typing
+
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 
@@ -20,7 +20,7 @@ class ValidationResult(BaseModel):
     @property
     def format_json_message(self):
         return {
-            "file path": self.file_path,
+            "file path": str(self.file_path),
             "is_valid": self.is_valid,
             "error code": self.error_code,
             "message": self.message,
@@ -39,12 +39,14 @@ class FixingResult(BaseModel):
     @property
     def format_json_message(self):
         return {
-            "file path": self.file_path,
+            "file path": str(self.file_path),
             "error code": self.error_code,
             "message": self.message,
         }
 
+
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
+
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     content_types: TypeVar
@@ -60,7 +62,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return self.content_types.__constraints__ or (self.content_types.__bound__,)
 
     def should_run(
-        self, content_item: ContentTypes, ignorable_errors: list, support_level_dict: dict
+        self,
+        content_item: ContentTypes,
+        ignorable_errors: list,
+        support_level_dict: dict,
     ) -> bool:
         """check wether to run validation on the given content item or not.
 
@@ -87,9 +92,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             ]
         )
 
-    def is_valid(
-        self, content_item: ContentTypes, **kwargs
-    ) -> ValidationResult:
+    def is_valid(self, content_item: ContentTypes, **kwargs) -> ValidationResult:
         raise NotImplementedError
 
     def fix(self, content_item: ContentTypes, **kwargs) -> FixingResult:
@@ -149,5 +152,3 @@ def should_run_according_to_status(
         bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
     """
     return not expected_git_statuses or content_item_git_status in expected_git_statuses
-
-

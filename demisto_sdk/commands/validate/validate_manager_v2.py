@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple, Type
+from typing import List, Optional, Set, Tuple
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (

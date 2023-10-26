@@ -12,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 class ValidationResults:
     def __init__(
         self,
-        json_file_path: Optional[str],
+        json_file_path: Optional[str] = None,
         only_throw_warnings: Optional[List[str]] = None,
     ):
         """

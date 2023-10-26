@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 from demisto_sdk.commands.common.constants import ADDED, MODIFIED
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -10,6 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = TypeVar("ContentTypes", Integration, Script)
+
 
 class BCSubtypeValidator(BaseValidator[ContentTypes]):
     error_code = "BC100"
@@ -24,7 +25,9 @@ class BCSubtypeValidator(BaseValidator[ContentTypes]):
     content_types = ContentTypes
 
     def is_valid(
-        self, content_item: ContentTypes, old_content_item: ContentTypes,
+        self,
+        content_item: ContentTypes,
+        old_content_item: ContentTypes,
     ) -> ValidationResult:
         if old_content_item and content_item.type != old_content_item.type:
             return ValidationResult(

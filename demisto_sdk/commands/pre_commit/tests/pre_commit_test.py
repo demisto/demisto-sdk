@@ -330,7 +330,12 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
 
 def test_coverage_analyze_hook():
     """
-    Testing coverage-analyze hook created successfully
+    Given:
+        - A hook and kwargs.
+    When:
+        - The coverage-analyze hook is running.
+    Then:
+        - Make sure that the coverage-analyze hook was created successfully.
     """
     coverage_analyze_hook = create_hook({"args": []})
 
@@ -348,7 +353,12 @@ def test_coverage_analyze_hook():
 
 def test_coverage_analyze_hook_nightly():
     """
-    Testing coverage-analyze hook created successfully in a nightly mode
+    Given:
+        - A hook and kwargs (with a nightly mode).
+    When:
+        - The coverage-analyze hook is running with a nightly mode.
+    Then:
+        - Make sure that the coverage-analyze hook was created successfully.
     """
     coverage_analyze_hook = create_hook({"args": []})
 

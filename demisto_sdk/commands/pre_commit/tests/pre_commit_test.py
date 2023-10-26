@@ -250,6 +250,14 @@ class TestPreprocessFiles:
         assert output == expected_output
 
     def test_preprocess_files_with_input_yml_files(self, mocker):
+        """
+        Given:
+            - A yml file.
+        When:
+            - Running demisto-sdk pre-commit -i file1.yml.
+        Then:
+            - Check that the associated python file was gathered correctly.
+        """
         input_files = [Path("file1.yml")]
         expected_output = set([Path("file1.yml"), Path("file1.py")])
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)

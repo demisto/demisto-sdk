@@ -145,6 +145,10 @@ class XsoarApiInterface(ABC):
     ):
         pass
 
+    @abstractmethod
+    def get_installed_packs(self, response_type: str = "object"):
+        pass
+
 
 class XsoarNGApiClient(XsoarApiInterface):
     @property
@@ -401,3 +405,13 @@ class XsoarNGApiClient(XsoarApiInterface):
         raise ValueError(
             f"Could not find module configuration for integration ID '{_id}'"
         )
+
+    @retry_http_request()
+    def get_installed_packs(self, response_type: str = "object"):
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="GET",
+            path='/contentpacks/metadata/installed',
+            response_type=response_type,
+        )
+        return raw_response

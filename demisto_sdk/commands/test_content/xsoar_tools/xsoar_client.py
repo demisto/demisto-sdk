@@ -210,7 +210,7 @@ class XsoarNGApiClient(XsoarApiInterface):
                         "credential": "",
                         "identifier": credentials.get("identifier", ""),
                         "password": credentials["password"],
-                        "passwordChanged": False,
+                        "passwordChanged": True if is_long_running else False,
                     }
                 else:
                     param_value = integration_instance_config[key]

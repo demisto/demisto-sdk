@@ -4,9 +4,11 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 import demisto_client
+import requests
 from demisto_client.demisto_api.rest import ApiException
 from pydantic import BaseModel, Field, SecretStr, validator
 from pydantic.fields import ModelField
+from requests.auth import HTTPBasicAuth
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.utils.utils import retry_http_request
@@ -75,7 +77,7 @@ class XsoarApiInterface(ABC):
         response_type: str = "object",
         integration_log_level: Optional[str] = None,
         is_long_running: bool = False,
-        should_enable: str = "true"
+        should_enable: str = "true",
     ):
         pass
 
@@ -149,6 +151,17 @@ class XsoarApiInterface(ABC):
     def get_installed_packs(self, response_type: str = "object"):
         pass
 
+    @abstractmethod
+    def do_long_running_instance_request(
+        self,
+        instance_name: str,
+        url_suffix: str = "",
+        headers: Optional[Dict[str, Any]] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+    ):
+        pass
+
 
 class XsoarNGApiClient(XsoarApiInterface):
     @property
@@ -166,7 +179,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         response_type: str = "object",
         integration_log_level: Optional[str] = None,
         is_long_running: bool = False,
-        should_enable: str = "true"
+        should_enable: str = "true",
     ):
         integrations_metadata: Dict[
             str, Any
@@ -191,8 +204,12 @@ class XsoarNGApiClient(XsoarApiInterface):
         }
         if integration_log_level:
             if integration_log_level not in {"Debug", "Verbose"}:
-                raise ValueError(f'integrationLogLevel must be either Debug/Verbose and not {integration_log_level}')
-            integration_instance_body_request["integrationLogLevel"] = integration_log_level
+                raise ValueError(
+                    f"integrationLogLevel must be either Debug/Verbose and not {integration_log_level}"
+                )
+            integration_instance_body_request[
+                "integrationLogLevel"
+            ] = integration_log_level
 
         if is_long_running:
             integration_instance_body_request["isLongRunning"] = is_long_running
@@ -206,7 +223,10 @@ class XsoarNGApiClient(XsoarApiInterface):
             name = param_conf["name"]
             default_value = param_conf["defaultValue"]
 
-            if display in integration_instance_config or name in integration_instance_config:
+            if (
+                display in integration_instance_config
+                or name in integration_instance_config
+            ):
                 key = display if display in integration_instance_config else name
                 if key in {"credentials", "creds_apikey"}:
                     credentials = integration_instance_config[key]
@@ -411,7 +431,20 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="GET",
-            path='/contentpacks/metadata/installed',
+            path="/contentpacks/metadata/installed",
             response_type=response_type,
         )
         return raw_response
+
+    @retry_http_request(times=20)
+    def do_long_running_instance_request(
+        self,
+        instance_name: str,
+        url_suffix: str = "",
+        headers: Optional[Dict[str, Any]] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+    ):
+        url = f"{self.external_base_url}/instance/execute/{instance_name}/{url_suffix}"
+        auth = HTTPBasicAuth(username, password) if username and password else None
+        return requests.get(url, auth=auth, headers=headers)

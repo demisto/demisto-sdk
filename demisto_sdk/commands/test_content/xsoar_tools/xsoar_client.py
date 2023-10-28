@@ -169,10 +169,14 @@ class XsoarApiInterface(ABC):
 
 class XsoarNGApiClient(XsoarApiInterface):
     @property
-    def external_base_url(self):
+    def external_base_url(self) -> str:
         return self.base_api_url.replace(
             "api", "ext"
         )  # url for long-running integrations
+
+    @property
+    def base_url(self) -> str:
+        return self.base_api_url.replace("api-", "").replace("/xsoar", "")
 
     @retry_http_request()
     def create_integration_instance(
@@ -444,7 +448,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         for pack_info in self.get_installed_packs():
             if pack_info.get("id") == pack_id:
                 return pack_info
-        raise ValueError(f"pack ID {pack_id} does not exist in {self.base_api_url}")
+        raise ValueError(f"pack ID {pack_id} does not exist in {self.base_url}")
 
     @retry_http_request(times=20)
     def do_long_running_instance_request(

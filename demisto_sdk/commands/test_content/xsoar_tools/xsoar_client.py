@@ -152,6 +152,10 @@ class XsoarApiInterface(ABC):
         pass
 
     @abstractmethod
+    def get_installed_pack(self, pack_id: str):
+        pass
+
+    @abstractmethod
     def do_long_running_instance_request(
         self,
         instance_name: str,
@@ -436,6 +440,12 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
+    def get_installed_pack(self, pack_id: str):
+        for pack_info in self.get_installed_packs():
+            if pack_info.get("id") == pack_id:
+                return pack_info
+        raise ValueError(f"pack ID {pack_id} does not exist in {self.base_api_url}")
+
     @retry_http_request(times=20)
     def do_long_running_instance_request(
         self,
@@ -445,8 +455,8 @@ class XsoarNGApiClient(XsoarApiInterface):
         username: Optional[str] = None,
         password: Optional[str] = None,
     ):
-        if url_suffix and not url_suffix.startswith('/'):
-            url_suffix = f'/{url_suffix}'
+        if url_suffix and not url_suffix.startswith("/"):
+            url_suffix = f"/{url_suffix}"
         url = f"{self.external_base_url}/instance/execute/{instance_name}{url_suffix}"
         auth = HTTPBasicAuth(username, password) if username and password else None
         return requests.get(url, auth=auth, headers=headers)

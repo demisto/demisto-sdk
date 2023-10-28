@@ -445,6 +445,8 @@ class XsoarNGApiClient(XsoarApiInterface):
         username: Optional[str] = None,
         password: Optional[str] = None,
     ):
-        url = f"{self.external_base_url}/instance/execute/{instance_name}/{url_suffix}"
+        if url_suffix and not url_suffix.startswith('/'):
+            url_suffix = f'/{url_suffix}'
+        url = f"{self.external_base_url}/instance/execute/{instance_name}{url_suffix}"
         auth = HTTPBasicAuth(username, password) if username and password else None
         return requests.get(url, auth=auth, headers=headers)

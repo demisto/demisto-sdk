@@ -580,6 +580,6 @@ class XsoarNGApiClient(XsoarApiInterface):
     @retry_http_request(times=20, delay=3)
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client, method="GET", path=f"/inv-playbook/{incident_id}"
+            self=self.client, method="GET", path=f"/inv-playbook/{incident_id}", response_type=response_type
         )
         return raw_response

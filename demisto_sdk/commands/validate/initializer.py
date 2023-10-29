@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     DELETED,
     DEMISTO_GIT_UPSTREAM,
     MODIFIED,
+    PACKS_PACK_META_FILE_NAME,
     RENAMED,
     PathLevel,
 )
@@ -23,7 +24,7 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO, RepositoryParser
 
 
 class Initializer:
@@ -363,8 +364,12 @@ class Initializer:
             Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
         """
         basecontent_set: Set[BaseContent] = set()
+        packs_ls = []
         for file_path in files_set:
-            if git_status == RENAMED:
+            if file_path.endswith(PACKS_PACK_META_FILE_NAME):
+                packs_ls.append(Path(file_path[:-(len(PACKS_PACK_META_FILE_NAME) + 1)]))
+                continue
+            elif git_status == RENAMED:
                 temp_obj: Optional[BaseContent] = BaseContent.from_path(
                     Path(file_path[0]),
                     git_status=git_status,
@@ -376,4 +381,11 @@ class Initializer:
                 raise Exception(f"no content found in {file_path}")
             else:
                 basecontent_set.add(temp_obj)
+        if packs_ls:
+            repo_parser = RepositoryParser(CONTENT_PATH)
+            repo_parser.parse(packs_to_parse = packs_ls)
+            content_dto = ContentDTO.from_orm(repo_parser)
+            if not isinstance(content_dto, ContentDTO):
+                raise Exception("no content found")
+            basecontent_set = basecontent_set.union(set(content_dto.packs))
         return basecontent_set

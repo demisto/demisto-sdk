@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC
-from pathlib import Path
 from typing import ClassVar, Generic, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from pydantic import BaseModel

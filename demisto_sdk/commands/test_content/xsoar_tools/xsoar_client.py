@@ -202,6 +202,10 @@ class XsoarApiInterface(ABC):
     ):
         pass
 
+    @abstractmethod
+    def get_playbook_state(self, incident_id: str, response_type: str = "object"):
+        pass
+
 
 class XsoarNGApiClient(XsoarApiInterface):
     @property
@@ -569,5 +573,11 @@ class XsoarNGApiClient(XsoarApiInterface):
             path="/playbook/delete",
             response_type=response_type,
             body={"id": _id, "name": name},
+        )
+        return raw_response
+
+    def get_playbook_state(self, incident_id: str, response_type: str = "object"):
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client, method="GET", path=f"/inv-playbook/{incident_id}"
         )
         return raw_response

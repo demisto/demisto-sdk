@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar
+from typing import Iterable, List, Optional, TypeVar
 
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -21,19 +21,22 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
 
     def is_valid(
         self,
-        content_item: ContentTypes,
-        old_content_item: Optional[ContentTypes] = None,
-    ) -> ValidationResult:
-        if not content_item.name or "fill mandatory field" in content_item.name:
-            return ValidationResult(
+        content_items: Iterable[ContentTypes],
+        _,
+    ) -> List[ValidationResult]:
+        validation_results = []
+        for content_item in content_items:
+            if not content_item.name or "fill mandatory field" in content_item.name:
+                validation_results.append(ValidationResult(
+                    error_code=self.error_code,
+                    is_valid=False,
+                    message=self.error_message.format(content_item.name),
+                    file_path=content_item.path,
+                ))
+            validation_results.append(ValidationResult(
                 error_code=self.error_code,
-                is_valid=False,
-                message=self.error_message.format(content_item.name),
+                is_valid=True,
+                message="",
                 file_path=content_item.path,
-            )
-        return ValidationResult(
-            error_code=self.error_code,
-            is_valid=True,
-            message="",
-            file_path=content_item.path,
-        )
+            ))
+        return validation_results

@@ -1,5 +1,9 @@
 from typing import List, Optional, Set, Tuple
 
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -10,6 +14,7 @@ from demisto_sdk.commands.validate.validation_results import (
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    ValidationResult,
 )
 
 
@@ -61,6 +66,8 @@ class ValidateManager:
             self.support_level_dict,
         ) = self.config_reader.gather_validations_to_run(use_git=self.use_git)
         self.validators = self.filter_validators()
+        if self.validate_graph:
+            self.init_graph()
 
     def run_validation(self) -> int:
         """
@@ -71,21 +78,23 @@ class ValidateManager:
             int: the exit code to obtained from the calculations of post_results.
         """
         for validator in self.validators:
-            for content_object in self.objects_to_run:
-                if validator.should_run(
+            filtered_content_objects_for_validator = filter(lambda content_object: validator.should_run(
                     content_object[0], self.ignorable_errors, self.support_level_dict
-                ):
-                    validation_result = validator.is_valid(*content_object)
+                ), self.objects_to_run)
+            validation_results: List[ValidationResult] = validator.is_valid(zip(*filtered_content_objects_for_validator))  # type: ignore
+            for validation_result in validation_results:
+                if not validation_result.is_valid:
                     try:
-                        if not validation_result.is_valid:
-                            if self.allow_autofix:
-                                self.validation_results.append_fixing_results(
-                                    validator.fix(*content_object)
-                                )
-                            else:
-                                self.validation_results.append(validation_result)
+                        if self.allow_autofix:
+                            self.validation_results.append_fixing_results(
+                                validator.fix(validation_result.content_object)  # type: ignore
+                            )
+                        else:
+                            self.validation_results.append(validation_result)
                     except NotImplementedError:
                         continue
+                else:
+                    self.validation_results.append(validation_result)
 
         return self.validation_results.post_results()
 
@@ -98,8 +107,19 @@ class ValidateManager:
             List[BaseValidator]: the list of the filtered validators
         """
         # gather validator from validate package
-        return [
-            validator()
-            for validator in BaseValidator.__subclasses__()
-            if validator.error_code in self.validations_to_run
-        ]
+        validators: List[BaseValidator] = []
+        for validator in BaseValidator.__subclasses__():
+            if validator.error_code in self.validations_to_run:
+                validators.append(validator())
+                if validator.graph:
+                    self.validate_graph = True
+        return validators
+
+    def init_graph(self):
+        # include_optional_deps=True
+        graph = ContentGraphInterface()
+        update_content_graph(
+            graph,
+            use_git=True,
+            output_path=graph.output_path,
+        )

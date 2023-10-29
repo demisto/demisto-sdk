@@ -1,4 +1,4 @@
-from typing import TypeVar
+from typing import Iterable, List, Optional, TypeVar
 
 from demisto_sdk.commands.common.constants import ADDED, MODIFIED
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -26,26 +26,31 @@ class BCSubtypeValidator(BaseValidator[ContentTypes]):
 
     def is_valid(
         self,
-        content_item: ContentTypes,
-        old_content_item: ContentTypes,
-    ) -> ValidationResult:
-        if old_content_item and content_item.type != old_content_item.type:
-            return ValidationResult(
-                error_code=self.error_code,
-                is_valid=False,
-                message=self.error_message.format(content_item.name),
-                file_path=content_item.path,
-            )
-        return ValidationResult(
-            error_code=self.error_code,
-            is_valid=True,
-            message="",
-            file_path=content_item.path,
-        )
+        content_items: Iterable[ContentTypes],
+        old_content_items: Iterable[ContentTypes],
+    ) -> List[ValidationResult]:
+        validation_results = []
+        for content_item, old_content_item in zip(content_items, old_content_items):
+            if old_content_item and content_item.type != old_content_item.type:
+                validation_results.append(ValidationResult(
+                    content_object=content_item,
+                    old_content_object=old_content_item,
+                    is_valid=False,
+                    message=self.error_message.format(content_item.name),
+                    validator=self,
+                ))
+            validation_results.append(ValidationResult(
+                validator=self,
+                is_valid=True,
+                message="",
+                content_object=content_item,
+            ))
+        return validation_results
 
     def fix(
-        self, content_item: ContentTypes, old_content_item: ContentTypes
+        self, content_item: ContentTypes, old_content_item: Optional[ContentTypes]
     ) -> FixingResult:
+        assert old_content_item
         content_item.type = old_content_item.type
         content_item.save()
         return FixingResult(

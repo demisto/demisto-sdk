@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Iterable, List, TypeVar
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -40,24 +40,28 @@ class IDNameValidator(BaseValidator[ContentTypes]):
     related_field = "name"
     content_types = ContentTypes
 
-    def is_valid(self, content_item: ContentTypes, **kwargs) -> ValidationResult:
-        if content_item.object_id != content_item.name:
-            return ValidationResult(
-                error_code=self.error_code,
-                is_valid=False,
-                message=self.error_message.format(
-                    content_item.object_id, content_item.name
-                ),
-                file_path=content_item.path,
-            )
-        return ValidationResult(
-            error_code=self.error_code,
-            is_valid=True,
-            message="",
-            file_path=content_item.path,
-        )
+    def is_valid(self, content_items: Iterable[ContentTypes], _) -> List[ValidationResult]:
+        validation_results = []
+        for content_item in content_items:
+            if content_item.object_id != content_item.name:
+                validation_results.append(ValidationResult(
+                    validator=self,
+                    is_valid=False,
+                    message=self.error_message.format(
+                        content_item.object_id, content_item.name
+                    ),
+                    content_object=content_item,
+                ))
+            else:
+                validation_results.append(ValidationResult(
+                    validator=self,
+                    is_valid=True,
+                    message="",
+                    content_object=content_item,
+                ))
+        return validation_results
 
-    def fix(self, content_item: ContentTypes, **kwargs) -> FixingResult:
+    def fix(self, content_item: ContentTypes, _) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()
         return FixingResult(

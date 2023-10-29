@@ -1,49 +1,12 @@
+from __future__ import annotations
+
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import ClassVar, Generic, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-
-
-class ValidationResult(BaseModel):
-    error_code: str
-    message: str
-    file_path: Path
-    is_valid: bool
-
-    @property
-    def format_readable_message(self):
-        return f"{str(self.file_path)}: {self.error_code} - {self.message}"
-
-    @property
-    def format_json_message(self):
-        return {
-            "file path": str(self.file_path),
-            "is_valid": self.is_valid,
-            "error code": self.error_code,
-            "message": self.message,
-        }
-
-
-class FixingResult(BaseModel):
-    error_code: str
-    message: str
-    file_path: Path
-
-    @property
-    def format_readable_message(self):
-        return f"Fixing {str(self.file_path)}: {self.error_code} - {self.message}"
-
-    @property
-    def format_json_message(self):
-        return {
-            "file path": str(self.file_path),
-            "error code": self.error_code,
-            "message": self.message,
-        }
-
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
@@ -57,6 +20,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool]
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[str]]] = None
+    graph: ClassVar[bool] = False
 
     def get_content_types(self) -> Tuple[Type[BaseContent]]:
         return self.content_types.__constraints__ or (self.content_types.__bound__,)
@@ -92,16 +56,54 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             ]
         )
 
-    def is_valid(self, content_item: ContentTypes, **kwargs) -> ValidationResult:
+    def is_valid(self, content_items: Iterable[ContentTypes], old_content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         raise NotImplementedError
 
-    def fix(self, content_item: ContentTypes, **kwargs) -> FixingResult:
+    def fix(self, content_item: ContentTypes, old_content_item: Optional[ContentTypes]) -> FixingResult:
         raise NotImplementedError
 
     class Config:
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
         )
+
+class ValidationResult(BaseModel):
+    validator: BaseValidator
+    message: str
+    content_object: BaseContent
+    old_content_object: Optional[BaseContent] = None
+    is_valid: bool
+
+    @property
+    def format_readable_message(self):
+        return f"{str(self.content_object.path)}: {self.validator.error_code} - {self.message}"
+
+    @property
+    def format_json_message(self):
+        return {
+            "file path": str(self.content_object.path),
+            "is_valid": self.is_valid,
+            "error code": self.validator.error_code,
+            "message": self.message,
+        }
+
+
+class FixingResult(BaseModel):
+    validator: BaseValidator
+    message: str
+    content_object: BaseContent
+
+    @property
+    def format_readable_message(self):
+        return f"Fixing {str(self.content_object.path)}: {self.validator.error_code} - {self.message}"
+
+    @property
+    def format_json_message(self):
+        return {
+            "file path": str(self.content_object.path),
+            "error code": self.validator.error_code,
+            "message": self.message,
+        }
 
 
 def is_error_ignored(

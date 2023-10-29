@@ -566,6 +566,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
+    @retry_http_request()
     def delete_playbook(self, name: str, _id: str, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
@@ -576,6 +577,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
+    @retry_http_request(times=20, delay=3)
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client, method="GET", path=f"/inv-playbook/{incident_id}"

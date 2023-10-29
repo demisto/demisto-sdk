@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, TypeVar
+from typing import Iterable, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import ADDED, MODIFIED
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -9,7 +9,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = TypeVar("ContentTypes", Integration, Script)
+ContentTypes = Union[Integration, Script]
 
 
 class BCSubtypeValidator(BaseValidator[ContentTypes]):
@@ -22,12 +22,12 @@ class BCSubtypeValidator(BaseValidator[ContentTypes]):
     related_field = "subtype"
     fixing_message = "Changing subtype back to the old one ({0})."
     expected_git_statuses = [ADDED, MODIFIED]
-    content_types = ContentTypes
 
+    
     def is_valid(
         self,
         content_items: Iterable[ContentTypes],
-        old_content_items: Iterable[ContentTypes],
+        old_content_items: Iterable[Optional[ContentTypes]],
     ) -> List[ValidationResult]:
         validation_results = []
         for content_item, old_content_item in zip(content_items, old_content_items):
@@ -46,11 +46,10 @@ class BCSubtypeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             ))
         return validation_results
-
+    
     def fix(
-        self, content_item: ContentTypes, old_content_item: Optional[ContentTypes]
+        self, content_item: ContentTypes, old_content_item: ContentTypes
     ) -> FixingResult:
-        assert old_content_item
         content_item.type = old_content_item.type
         content_item.save()
         return FixingResult(

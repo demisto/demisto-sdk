@@ -114,9 +114,8 @@ class ValidateManager:
         # gather validator from validate package
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
-            validator = validator()
             if validator.error_code in self.validations_to_run:
-                validators.append(validator)
+                validators.append(validator())
                 if validator.graph:
                     self.validate_graph = True
         return validators

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, TypeVar
+from typing import Iterable, List
 
 from demisto_sdk.commands.common.tools import replace_incident_to_alert
 from demisto_sdk.commands.content_graph.interface import (
@@ -53,3 +53,4 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
             message="",
             content_object=co
         ))
+        return validation_results

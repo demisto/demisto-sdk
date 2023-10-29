@@ -76,8 +76,8 @@ class ContentItem(BaseContent):
     @property
     def ignored_errors(self) -> list:
         return (
-            self.in_pack.ignored_errors.get(self.path.name, [])
-            if self.in_pack and self.in_pack.ignored_errors
+            self.in_pack.ignored_errors_dict.get(self.path.name, [])
+            if self.in_pack and self.in_pack.ignored_errors_dict
             else []
         )
 

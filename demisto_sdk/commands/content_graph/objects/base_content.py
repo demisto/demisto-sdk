@@ -23,6 +23,7 @@ import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
+    PACKS_PACK_META_FILE_NAME,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -197,6 +198,14 @@ class BaseContent(BaseContentModel):
 
     def __hash__(self):
         return hash(self.path)
+    
+    @property
+    def ignored_errors(self) -> list:
+        raise NotImplementedError
+    
+    @property
+    def support(self) -> str:
+        raise NotImplementedError
 
     @staticmethod
     @lru_cache
@@ -208,7 +217,7 @@ class BaseContent(BaseContentModel):
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
-            path.is_dir() and path.parent.name == PACKS_FOLDER
+            path.is_dir() and path.parent.name == PACKS_FOLDER or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
                 return content_type_to_model[ContentType.PACK].from_orm(

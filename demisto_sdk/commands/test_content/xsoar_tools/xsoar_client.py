@@ -182,6 +182,9 @@ class XsoarApiInterface(ABC):
     def create_playground(self, response_type: str = "object"):
         pass
 
+    @abstractmethod
+    def delete_playbook(self, name: str, _id: str, response_type: str = "object"):
+        pass
 
 class XsoarNGApiClient(XsoarApiInterface):
     @property
@@ -292,11 +295,11 @@ class XsoarNGApiClient(XsoarApiInterface):
         return raw_response
 
     @retry_http_request()
-    def create_incident(self, name: str, should_create_investigation: bool = True, attached_playbook_id: Optional[str] = None):
+    def create_incident(self, name: str, should_create_investigation: bool = False, attached_playbook_id: Optional[str] = None):
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
         create_incident_request.create_investigation = should_create_investigation
-        if attached_playbook_id:
-            create_incident_request.playbook_id = attached_playbook_id
+        create_incident_request.playbook_id = attached_playbook_id
+
         create_incident_request.name = name
 
         return self.client.create_incident(
@@ -329,7 +332,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/incidents/batchDelete",
+            path="/incident/batchDelete",
             body=body,
             response_type=response_type,
         )
@@ -523,8 +526,18 @@ class XsoarNGApiClient(XsoarApiInterface):
     def create_playground(self, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
-            method="GET",
+            method="POST",
             path="/entry",
             response_type=response_type,
+        )
+        return raw_response
+
+    def delete_playbook(self, name: str, _id: str, response_type: str = "object"):
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/playbook/delete",
+            response_type=response_type,
+            body={"id": _id, "name": name}
         )
         return raw_response

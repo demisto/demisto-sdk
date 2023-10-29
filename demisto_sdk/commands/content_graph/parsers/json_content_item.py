@@ -40,7 +40,7 @@ class JSONContentItemParser(ContentItemParser):
             "object_id": "id",
             "description": "description",
             "fromversion": "fromVersion",
-            "toVersion": "toVersion",
+            "toversion": "toVersion",
         }
 
     @property

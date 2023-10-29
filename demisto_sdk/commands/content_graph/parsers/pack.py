@@ -228,6 +228,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
         Args:
             path (Path): The pack path.
         """
+        if path.name == PACK_METADATA_FILENAME:
+            path = path.parent
         BaseContentParser.__init__(self, path)
 
         try:
@@ -315,4 +317,4 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors = get_pack_ignore_content(get_pack_name(self.path))
+        self.ignored_errors_dict = get_pack_ignore_content(self.name)

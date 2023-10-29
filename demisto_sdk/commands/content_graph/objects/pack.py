@@ -113,7 +113,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
-    ignored_errors: dict
+    ignored_errors_dict: dict
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
@@ -133,6 +133,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @property
     def pack_id(self) -> str:
         return self.object_id
+    
+    @property
+    def ignored_errors(self) -> list:
+        return (
+            self.ignored_errors_dict.get(PACK_METADATA_FILENAME, [])
+        )
 
     @property
     def pack_name(self) -> str:

@@ -740,6 +740,13 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Path for a config file to run, if not given - will run the default path at: ...",
     is_flag=False,
 )
+@click.option(
+    "--ignore-support-level",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to skip validations based on their support level or not.",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
@@ -816,6 +823,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             config_file_category_to_run=kwargs.get("category_to_run"),
             allow_autofix=kwargs.get("allow_fix"),
             config_file_path=kwargs.get("config_path"),
+            ignore_support_level=kwargs.get("ignore_support_level"),
         )
         # return validator.run_validation() + validator_v2.run_validation()
         return validator_v2.run_validation()

@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 from git import InvalidGitRepositoryError
 
@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     DELETED,
     DEMISTO_GIT_UPSTREAM,
     MODIFIED,
+    PACKS_PACK_META_FILE_NAME,
     RENAMED,
     PathLevel,
 )
@@ -23,7 +24,8 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO, RepositoryParser
+from demisto_sdk.commands.content_graph.parsers.content_item import InvalidContentItemException
 
 
 class Initializer:
@@ -363,17 +365,21 @@ class Initializer:
             Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
         """
         basecontent_set: Set[BaseContent] = set()
+        invalid_content_items: List[str] = []
         for file_path in files_set:
-            if git_status == RENAMED:
-                temp_obj: Optional[BaseContent] = BaseContent.from_path(
-                    Path(file_path[0]),
-                    git_status=git_status,
-                    old_file_path=Path(file_path[1]),
-                )
-            else:
-                temp_obj = BaseContent.from_path(Path(file_path), git_status)
-            if temp_obj is None:
-                raise Exception(f"no content found in {file_path}")
-            else:
-                basecontent_set.add(temp_obj)
+            try:
+                if git_status == RENAMED:
+                    temp_obj: Optional[BaseContent] = BaseContent.from_path(
+                        Path(file_path[0]),
+                        git_status=git_status,
+                        old_file_path=Path(file_path[1]),
+                    )
+                else:
+                    temp_obj = BaseContent.from_path(Path(file_path), git_status)
+                if temp_obj is None:
+                    invalid_content_items.append(file_path)
+                else:
+                    basecontent_set.add(temp_obj)
+            except InvalidContentItemException:
+                invalid_content_items.append(file_path)
         return basecontent_set

@@ -2,19 +2,6 @@
 
 Makes sure your content repository files are in order and have valid file scheme.
 
-**Notes**
-
-In order to run the README validator:
-- Node should be installed on you machine
-- The modules '@mdx-js/mdx', 'fs-extra', 'commander' should be installed in node-modules folder.
-    If not installed, the validator will print a warning with the relevant module that is missing.
-    please install it using "npm install *missing_module_name*"
-- 'DEMISTO_README_VALIDATION' environment variable should be set to True.
-    To set the environment variables, run the following shell commands:
-    export DEMISTO_README_VALIDATION=True
-
-In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' or 'DEMISTO_SDK_GITLAB_TOKEN' validation of version bumps in files will be done with the local remote git branch.
-
 **Use Cases**
 This command is used to make sure that the content repo files are valid and are able to be processed by Demisto.
 This is used in our validation process both locally and in Circle CI.
@@ -72,8 +59,7 @@ This will validate all files under the content pack `HelloWorld`
 
 
 ### Error Codes and Ignoring Them
-Starting in version 1.0.9 of Demisto-SDK, each error found by validate (excluding `pykwalify` errors) has an error
-code attached to it - the code can be found in brackets preceding the error itself.
+Each error found by validate  has an error code attached to it - the code can be found in brackets preceding the error itself.
 For example: `path/to/file: [IN103] - The type field of the proxy parameter should be 8`
 
 The first 2 letters indicate the error type and can be used to easily identify the cause of the error.
@@ -106,27 +92,23 @@ The first 2 letters indicate the error type and can be used to easily identify t
 Each user will have a personal config files which he can edit however he wants.
 The config file will have few sections: validate_all, use_git, and sections provided by the user.
 Each section will have the following options:
-**ignore**: Validations not to run at all.
 **select**: The only validation to run.
 **warning**: Validations to only throw warning (shouldn't fail the flow).
 **ignorable_errors**: Validations that can be ignored using the pack-ignore.
 If **category-to-run** is provided, the validations that will run will be according to the configuration in the particular section.
 
-**Note**: that an error prefix can be given as well and will count as all the errors with the given prefix.
 For example: if the following configurations are given
 [custom_category]
-select = [BA]
-ignore = [BA101]
-then validate will run all the validation with error code BA except for BA101.
+select = ["BA101"]
+then validate will run only BA101 validation.
 
 In addition, each config file will have a **support_level** section which will be divided into xsoar, partner, and community each have ignore, select, warning, and ignorable_errors options. If the ignore-support-level flag is not given, the validations that will run will be according to both the given section (user custom section / use_git / validate_all) and the relevant support level.
 For example: if the following configurations are given:
 [custom_category]
-select = [BA]
-ignore = [BA101]
-[support_level.xsoar]
-ignore = [BA102]
-then validate will run all the validation with error code BA except for BA101 and in case of xsoar supported files, the validation with error code BA102 will be skipped as well.
+select = ["BA100", "BA101", "BA102"]
+[support_level.community]
+ignore = ["BA102"]
+then validate will run all the validations with error codes "BA100", "BA101", "BA102" except for BA102 in case of community supported files
 
 If you wish to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.
 ```buildoutcfg

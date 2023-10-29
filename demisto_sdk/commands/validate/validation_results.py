@@ -49,7 +49,7 @@ class ValidationResults:
             if not result.is_valid:
                 if (
                     self.only_throw_warning
-                    and result.error_code in self.only_throw_warning
+                    and result.content_object.path in self.only_throw_warning
                 ):
                     logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
                 else:

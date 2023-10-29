@@ -32,7 +32,9 @@ class ValidateManager:
         allow_autofix=False,
         config_file_path=None,
         only_committed_files=None,
+        ignore_support_level=False,
     ):
+        self.ignore_support_level = ignore_support_level
         self.validate_all = validate_all
         self.file_path = file_path
         self.staged = staged
@@ -42,6 +44,7 @@ class ValidateManager:
         self.category_to_run = config_file_category_to_run
         self.json_file_path = json_file_path
         self.validation_results = ValidationResults(json_file_path=self.json_file_path)
+        self.validate_graph = False
         self.config_reader = ConfigReader(
             config_file_path=self.config_file_path,
             category_to_run=self.category_to_run,
@@ -64,7 +67,7 @@ class ValidateManager:
             self.warnings,
             self.ignorable_errors,
             self.support_level_dict,
-        ) = self.config_reader.gather_validations_to_run(use_git=self.use_git)
+        ) = self.config_reader.gather_validations_to_run(use_git=self.use_git, ignore_support_level=self.ignore_support_level)
         self.validate_graph = False
         self.validators = self.filter_validators()
         if self.validate_graph:
@@ -111,9 +114,8 @@ class ValidateManager:
         # gather validator from validate package
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
-            validator = validator()
             if validator.error_code in self.validations_to_run:
-                validators.append(validator)
+                validators.append(validator())
                 if validator.graph:
                     self.validate_graph = True
         return validators

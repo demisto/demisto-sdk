@@ -21,7 +21,9 @@ from demisto_sdk.commands.common.constants import (
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    SUPPORT_LEVEL_HEADER,
     XSOAR_CONTEXT_AND_OUTPUTS_URL,
+    XSOAR_SUPPORT,
     FileType,
     MarketplaceVersions,
 )
@@ -721,6 +723,10 @@ ERROR_CODE: Dict = {
     "invalid_siem_marketplaces_entry": {
         "code": "IN161",
         "related_field": "display",
+    },
+    "partner_collector_does_not_have_xsoar_support_level": {
+        "code": "IN162",
+        "related_field": "",
     },
     # IT - Incident Types
     "incident_type_integer_field": {
@@ -2220,6 +2226,11 @@ class Errors:
             "All integrations whose description states are deprecated, must have `deprecated:true`."
             f"Please run demisto-sdk format --deprecate -i {path}"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def partner_collector_does_not_have_xsoar_support_level(path: str):
+        return f"the integration {path} should have the key {SUPPORT_LEVEL_HEADER} = {XSOAR_SUPPORT} in its yml"
 
     @staticmethod
     @error_code_decorator

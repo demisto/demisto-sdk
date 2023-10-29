@@ -1309,20 +1309,6 @@ DIR_TO_PREFIX = {
 }
 
 ENTITY_NAME_SEPARATORS = [" ", "_", "-"]
-
-DELETED_YML_FIELDS_BY_DEMISTO = [
-    "fromversion",
-    "toversion",
-    "alt_dockerimages",
-    "script.dockerimage45",
-    "tests",
-    "defaultclassifier",
-    "defaultmapperin",
-    "defaultmapperout",
-]
-
-DELETED_JSON_FIELDS_BY_DEMISTO = ["fromVersion", "toVersion"]
-
 FILE_EXIST_REASON = "File already exist"
 FILE_NOT_IN_CC_REASON = "File does not exist in Demisto instance"
 
@@ -1395,6 +1381,7 @@ IOC_OUTPUTS_DICT = {
     "endpoint": {"Endpoint.Hostname", "Endpoint.IPAddress", "Endpoint.ID"},
 }
 XSOAR_SUPPORT = "xsoar"
+PARTNER_SUPPORT = "partner"
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"
 PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
@@ -1407,6 +1394,7 @@ MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoa
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
+SUPPORT_LEVEL_HEADER = "supportlevelheader"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {

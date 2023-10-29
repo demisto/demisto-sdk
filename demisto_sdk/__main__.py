@@ -1479,52 +1479,53 @@ def upload(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="The path of a package directory to download custom content to",
+    help="A path to a pack directory to download content to.",
     required=False,
     multiple=False,
 )
 @click.option(
     "-i",
     "--input",
-    help="Custom content file name to be downloaded. Can be provided multiple times",
+    help="Name of a custom content item to download. The flag can be used multiple times to download multiple files.",
     required=False,
     multiple=True,
 )
 @click.option(
     "-r",
     "--regex",
-    help="Regex Pattern, download all the custom content files that match this regex pattern.",
+    help="Download all custom content items matching this RegEx pattern.",
     required=False,
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
-    "-f", "--force", help="Whether to override existing files or not", is_flag=True
+    "-f",
+    "--force",
+    help="If downloaded content already exists in the output directory, overwrite it. ",
+    is_flag=True,
 )
 @click.option(
     "-lf",
     "--list-files",
-    help="Prints a list of all custom content files available to be downloaded",
+    help="List all custom content items available to download and exit.",
     is_flag=True,
 )
 @click.option(
     "-a",
     "--all-custom-content",
-    help="Download all available custom content files",
+    help="Download all available custom content items.",
     is_flag=True,
 )
 @click.option(
     "-fmt",
     "--run-format",
-    help="Whether to run demisto-sdk format on downloaded files or not",
+    help="Format downloaded files.",
     is_flag=True,
 )
 @click.option("--system", help="Download system items", is_flag=True, default=False)
 @click.option(
     "-it",
     "--item-type",
-    help="The items type to download, use just when downloading system items, should be one "
-    "form the following list: [IncidentType, IndicatorType, Field, Layout, Playbook, "
-    "Automation, Classifier, Mapper]",
+    help="Type of the content item to download. Required and used only when downloading system items.",
     type=click.Choice(
         [
             "IncidentType",
@@ -1541,33 +1542,32 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--init",
-    help="Create a directory structure and download the items to it",
+    help="Initialize the output directory with a pack structure.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "--keep-empty-folders",
-    help="Keep empty folders when using the --init flag",
+    help="Keep empty folders when a pack structure is initialized.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "--auto-replace-uuids/--no-auto-replace-uuids",
-    help="Whether to replace the uuids.",
+    help="Whether to replace UUID IDs (automatically assigned to custom content by the server) for downloaded custom content.",
     default=True,
 )
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):
-    """Download custom content from Demisto instance.
-    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
-    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """Download custom content from a Cortex XSOAR / XSIAM instance.
+    DEMISTO_BASE_URL environment variable should contain the server base URL.
+    DEMISTO_API_KEY environment variable should contain a valid API Key for the server.
     """
     from demisto_sdk.commands.download.downloader import Downloader
 
     check_configuration_file("download", kwargs)
-    downloader: Downloader = Downloader(**kwargs)
-    return downloader.download()
+    return Downloader(**kwargs).download()
 
 
 # ====================== update-xsoar-config-file ====================== #

@@ -166,6 +166,18 @@ class XsoarApiInterface(ABC):
     ):
         pass
 
+    @abstractmethod
+    def run_cli_command(self, command: str, investigation_id: Optional[str] = None, response_type: str = "object"):
+        pass
+
+    @abstractmethod
+    def get_playground_investigation_id(self):
+        pass
+
+    @abstractmethod
+    def create_playground(self, response_type: str = "object"):
+        pass
+
 
 class XsoarNGApiClient(XsoarApiInterface):
     @property
@@ -464,3 +476,54 @@ class XsoarNGApiClient(XsoarApiInterface):
         url = f"{self.external_base_url}/instance/execute/{instance_name}{url_suffix}"
         auth = HTTPBasicAuth(username, password) if username and password else None
         return requests.get(url, auth=auth, headers=headers)
+
+    @retry_http_request()
+    def run_cli_command(self, command: str, investigation_id: Optional[str] = None, response_type: str = "object"):
+        playground_id = investigation_id or self.get_playground_investigation_id()
+
+        update_entry = {
+            "investigationId": playground_id,
+            "data": "!DeleteContext all=yes",
+        }
+
+        self.client.investigation_add_entries_sync(update_entry=update_entry)
+
+        update_entry = {
+            "investigationId": playground_id,
+            "data": command
+        }
+        response = self.client.investigation_add_entries_sync(update_entry=update_entry)
+
+        context, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path=f"/investigation/{playground_id}/context",
+            response_type=response_type,
+            body={"query": "${.}"}
+        )
+
+        return response, context
+
+    @retry_http_request()
+    def get_playground_investigation_id(self):
+        def playground_filter(page: int = 0):
+            return {"filter": {"type": [9], "page": page}}
+
+        answer = self.client.search_investigations(filter=playground_filter())
+
+        if answer.total == 0 and (playground_response := self.create_playground()):
+            if playground_id := playground_response.get("playgroundId"):
+                return playground_id
+            raise RuntimeError(f'Could not create playground for {self.base_url}')
+        elif answer.total == 1:
+            return answer.data[0].id
+
+    @retry_http_request()
+    def create_playground(self, response_type: str = "object"):
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="GET",
+            path="/entry",
+            response_type=response_type,
+        )
+        return raw_response

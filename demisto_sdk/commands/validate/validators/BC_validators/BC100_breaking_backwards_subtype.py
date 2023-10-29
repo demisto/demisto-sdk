@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union, cast
 
 from demisto_sdk.commands.common.constants import ADDED, MODIFIED
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -23,37 +23,33 @@ class BCSubtypeValidator(BaseValidator[ContentTypes]):
     fixing_message = "Changing subtype back to the old one ({0})."
     expected_git_statuses = [ADDED, MODIFIED]
 
-    
     def is_valid(
         self,
         content_items: Iterable[ContentTypes],
         old_content_items: Iterable[Optional[ContentTypes]],
     ) -> List[ValidationResult]:
+        old_content_items = cast(Iterable[ContentTypes], old_content_items)
         validation_results = []
         for content_item, old_content_item in zip(content_items, old_content_items):
-            if old_content_item and content_item.type != old_content_item.type:
-                validation_results.append(ValidationResult(
-                    content_object=content_item,
-                    old_content_object=old_content_item,
-                    is_valid=False,
-                    message=self.error_message.format(content_item.name),
-                    validator=self,
-                ))
-            validation_results.append(ValidationResult(
-                validator=self,
-                is_valid=True,
-                message="",
-                content_object=content_item,
-            ))
+            if content_item.type != old_content_item.type:
+                validation_results.append(
+                    ValidationResult(
+                        content_object=content_item,
+                        old_content_object=old_content_item,
+                        is_valid=False,
+                        message=self.error_message.format(content_item.name),
+                        validator=self,
+                    )
+                )
         return validation_results
-    
+
     def fix(
         self, content_item: ContentTypes, old_content_item: ContentTypes
     ) -> FixingResult:
         content_item.type = old_content_item.type
         content_item.save()
         return FixingResult(
-            error_code=self.error_code,
+            validator=self,
             message=self.fixing_message.format(old_content_item.type),
-            file_path=content_item.path,
+            content_object=content_item,
         )

@@ -22,7 +22,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     error_code: ClassVar[str]
     description: ClassVar[str]
     error_message: ClassVar[str]
-    fixing_message: ClassVar[Optional[str]] = None
+    fixing_message: ClassVar[str] = ""
     is_auto_fixable: ClassVar[bool]
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[str]]] = None
@@ -62,11 +62,16 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             ]
         )
 
-    def is_valid(self, content_items: Iterable[ContentTypes], old_content_items: Iterable[Optional[ContentTypes]]) -> List[ValidationResult]:
+    def is_valid(
+        self,
+        content_items: Iterable[ContentTypes],
+        old_content_items: Iterable[Optional[ContentTypes]],
+    ) -> List[ValidationResult]:
         raise NotImplementedError
 
-
-    def fix(self, content_item: ContentTypes, old_content_item: ContentTypes) -> FixingResult:
+    def fix(
+        self, content_item: ContentTypes, old_content_item: ContentTypes
+    ) -> FixingResult:
         raise NotImplementedError
 
     class Config:
@@ -74,9 +79,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             True  # allows having custom classes for properties in model
         )
 
+
 class ValidationResult(BaseModel):
     validator: BaseValidator
-    message: str
+    message: str = ""
     content_object: BaseContent
     old_content_object: Optional[BaseContent] = None
     is_valid: bool

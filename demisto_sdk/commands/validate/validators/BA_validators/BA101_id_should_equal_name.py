@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, TypeVar, Union
+from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -26,7 +26,7 @@ ContentTypes = Union[
     Playbook,
     Script,
     Wizard,
-    Classifier
+    Classifier,
 ]
 
 
@@ -38,32 +38,27 @@ class IDNameValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     related_field = "name"
 
-    def is_valid(self, content_items: Iterable[ContentTypes], _) -> List[ValidationResult]:
-        validation_results = []
-        for content_item in content_items:
-            if content_item.object_id != content_item.name:
-                validation_results.append(ValidationResult(
-                    validator=self,
-                    is_valid=False,
-                    message=self.error_message.format(
-                        content_item.object_id, content_item.name
-                    ),
-                    content_object=content_item,
-                ))
-            else:
-                validation_results.append(ValidationResult(
-                    validator=self,
-                    is_valid=True,
-                    message="",
-                    content_object=content_item,
-                ))
-        return validation_results
+    def is_valid(
+        self, content_items: Iterable[ContentTypes], _
+    ) -> List[ValidationResult]:
+        return [
+            ValidationResult(
+                validator=self,
+                is_valid=False,
+                message=self.error_message.format(
+                    content_item.object_id, content_item.name
+                ),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if content_item.object_id != content_item.name
+        ]
 
     def fix(self, content_item: ContentTypes, _) -> FixingResult:
         content_item.name = content_item.object_id
         content_item.save()
         return FixingResult(
-            error_code=self.error_code,
+            validator=self,
             message=self.fixing_message.format(content_item.object_id),
-            file_path=content_item.path,
+            content_object=content_item,
         )

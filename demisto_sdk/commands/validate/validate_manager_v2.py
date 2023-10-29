@@ -67,11 +67,39 @@ class ValidateManager:
             self.warnings,
             self.ignorable_errors,
             self.support_level_dict,
-        ) = self.config_reader.gather_validations_to_run(use_git=self.use_git, ignore_support_level=self.ignore_support_level)
+        ) = self.config_reader.gather_validations_to_run(
+            use_git=self.use_git, ignore_support_level=self.ignore_support_level
+        )
         self.validate_graph = False
         self.validators = self.filter_validators()
         if self.validate_graph:
             self.init_graph()
+
+    def add_passed_validations(
+        self,
+        validator: BaseValidator,
+        filtered_content_objects_for_validator: List[
+            Tuple[BaseContent, Optional[BaseContent]]
+        ],
+        validation_results: List[ValidationResult],
+    ):
+        # this is to gather the validations that was passed, consider to delete:
+
+        all_objects_for_validation = {
+            content_object
+            for content_object, _ in filtered_content_objects_for_validator
+        }
+        objects_failed_validation = {v.content_object for v in validation_results}
+        validation_results.extend(
+            ValidationResult(
+                validator=validator,
+                content_object=content_object,
+                is_valid=True,
+            )
+            for content_object in (
+                all_objects_for_validation - objects_failed_validation
+            )
+        )
 
     def run_validation(self) -> int:
         """
@@ -82,11 +110,22 @@ class ValidateManager:
             int: the exit code to obtained from the calculations of post_results.
         """
         for validator in self.validators:
-            filtered_content_objects_for_validator = list(filter(lambda content_object: validator.should_run(
-                    content_object[0], self.ignorable_errors, self.support_level_dict
-                ), self.objects_to_run))
-            if filtered_content_objects_for_validator:
+            if filtered_content_objects_for_validator := list(
+                filter(
+                    lambda content_object: validator.should_run(
+                        content_object[0],
+                        self.ignorable_errors,
+                        self.support_level_dict,
+                    ),
+                    self.objects_to_run,
+                )
+            ):
                 validation_results: List[ValidationResult] = validator.is_valid(*zip(*filtered_content_objects_for_validator))  # type: ignore
+                self.add_passed_validations(
+                    validator,
+                    filtered_content_objects_for_validator,
+                    validation_results,
+                )
                 for validation_result in validation_results:
                     if not validation_result.is_valid:
                         try:

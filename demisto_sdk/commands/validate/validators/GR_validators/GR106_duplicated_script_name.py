@@ -37,7 +37,6 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         Validate that there are no duplicate names of scripts
         when the script name included `alert`.
         """
-        validation_results = []
         file_paths_to_objects = {
             str(content_item.path): content_item for content_item in content_items
         }
@@ -46,27 +45,15 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
                 list(file_paths_to_objects)
             )
 
-        for script_name, file_path in query_results.items():
-            if file_path in file_paths_to_objects:
-                validation_results.append(
-                    ValidationResult(
-                        validator=self,
-                        is_valid=False,
-                        message=self.error_message.format(
-                            replace_incident_to_alert(script_name), script_name
-                        ),
-                        content_object=file_paths_to_objects[file_path],
-                    )
-                )
-        valid_paths = set(file_paths_to_objects) - set(query_results.values())
-        for valid_path in valid_paths:
-            validation_results.append(
-                ValidationResult(
-                    validator=self,
-                    is_valid=True,
-                    message="",
-                    content_object=file_paths_to_objects[valid_path],
-                )
+        return [
+            ValidationResult(
+                validator=self,
+                is_valid=False,
+                message=self.error_message.format(
+                    replace_incident_to_alert(script_name), script_name
+                ),
+                content_object=file_paths_to_objects[file_path],
             )
-
-        return validation_results
+            for script_name, file_path in query_results.items()
+            if file_path in file_paths_to_objects
+        ]

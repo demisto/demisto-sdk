@@ -88,6 +88,10 @@ class XsoarApiInterface(ABC):
         pass
 
     @abstractmethod
+    def create_incident(self, name: str, should_create_investigation: bool = True, attached_playbook_id: Optional[str] = None):
+        pass
+
+    @abstractmethod
     def get_incident(self, incident_id: str, response_type: str = "object"):
         pass
 
@@ -170,9 +174,9 @@ class XsoarApiInterface(ABC):
     def run_cli_command(self, command: str, investigation_id: Optional[str] = None, response_type: str = "object"):
         pass
 
-    @abstractmethod
-    def get_playground_investigation_id(self):
-        pass
+    # @abstractmethod
+    # def get_playground_investigation_id(self):
+    #     pass
 
     @abstractmethod
     def create_playground(self, response_type: str = "object"):
@@ -286,6 +290,18 @@ class XsoarNGApiClient(XsoarApiInterface):
             response_type=response_type,
         )
         return raw_response
+
+    @retry_http_request()
+    def create_incident(self, name: str, should_create_investigation: bool = True, attached_playbook_id: Optional[str] = None):
+        create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
+        create_incident_request.create_investigation = should_create_investigation
+        if attached_playbook_id:
+            create_incident_request.playbook_id = attached_playbook_id
+        create_incident_request.name = name
+
+        return self.client.create_incident(
+            create_incident_request=create_incident_request
+        )
 
     @retry_http_request()
     def get_incident(self, incident_id: str, response_type: str = "object"):
@@ -479,17 +495,16 @@ class XsoarNGApiClient(XsoarApiInterface):
 
     @retry_http_request()
     def run_cli_command(self, command: str, investigation_id: Optional[str] = None, response_type: str = "object"):
-        playground_id = investigation_id or self.get_playground_investigation_id()
 
         update_entry = {
-            "investigationId": playground_id,
+            "investigationId": investigation_id,
             "data": "!DeleteContext all=yes",
         }
 
         self.client.investigation_add_entries_sync(update_entry=update_entry)
 
         update_entry = {
-            "investigationId": playground_id,
+            "investigationId": investigation_id,
             "data": command
         }
         response = self.client.investigation_add_entries_sync(update_entry=update_entry)
@@ -497,26 +512,12 @@ class XsoarNGApiClient(XsoarApiInterface):
         context, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path=f"/investigation/{playground_id}/context",
+            path=f"/investigation/{investigation_id}/context",
             response_type=response_type,
             body={"query": "${.}"}
         )
 
         return response, context
-
-    @retry_http_request()
-    def get_playground_investigation_id(self):
-        def playground_filter(page: int = 0):
-            return {"filter": {"type": [9], "page": page}}
-
-        answer = self.client.search_investigations(filter=playground_filter())
-
-        if answer.total == 0 and (playground_response := self.create_playground()):
-            if playground_id := playground_response.get("playgroundId"):
-                return playground_id
-            raise RuntimeError(f'Could not create playground for {self.base_url}')
-        elif answer.total == 1:
-            return answer.data[0].id
 
     @retry_http_request()
     def create_playground(self, response_type: str = "object"):

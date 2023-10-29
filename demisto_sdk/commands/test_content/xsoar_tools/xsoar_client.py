@@ -295,7 +295,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         return raw_response
 
     @retry_http_request()
-    def create_incident(self, name: str, should_create_investigation: bool = False, attached_playbook_id: Optional[str] = None):
+    def create_incident(self, name: str, should_create_investigation: bool = True, attached_playbook_id: Optional[str] = None):
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
         create_incident_request.create_investigation = should_create_investigation
         create_incident_request.playbook_id = attached_playbook_id

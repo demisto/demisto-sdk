@@ -6,7 +6,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = TypeVar("ContentTypes", bound=Pack)
+ContentTypes = Pack
 
 
 class PackMetadataNameValidator(BaseValidator[ContentTypes]):
@@ -17,7 +17,6 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
     error_message = "Pack metadata name field ({}) is missing or invalid. Please fill valid pack name."
     is_auto_fixable = False
     related_field = "pack name"
-    content_types = ContentTypes
 
     def is_valid(
         self,

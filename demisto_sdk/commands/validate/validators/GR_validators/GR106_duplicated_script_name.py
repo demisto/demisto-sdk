@@ -12,10 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = TypeVar(
-    "ContentTypes",
-    bound=Integration
-)
+ContentTypes = Integration
 
 
 class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):

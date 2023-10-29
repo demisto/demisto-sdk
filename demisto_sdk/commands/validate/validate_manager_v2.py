@@ -65,6 +65,7 @@ class ValidateManager:
             self.ignorable_errors,
             self.support_level_dict,
         ) = self.config_reader.gather_validations_to_run(use_git=self.use_git)
+        self.validate_graph = False
         self.validators = self.filter_validators()
         if self.validate_graph:
             self.init_graph()
@@ -78,23 +79,24 @@ class ValidateManager:
             int: the exit code to obtained from the calculations of post_results.
         """
         for validator in self.validators:
-            filtered_content_objects_for_validator = filter(lambda content_object: validator.should_run(
+            filtered_content_objects_for_validator = list(filter(lambda content_object: validator.should_run(
                     content_object[0], self.ignorable_errors, self.support_level_dict
-                ), self.objects_to_run)
-            validation_results: List[ValidationResult] = validator.is_valid(zip(*filtered_content_objects_for_validator))  # type: ignore
-            for validation_result in validation_results:
-                if not validation_result.is_valid:
-                    try:
-                        if self.allow_autofix:
-                            self.validation_results.append_fixing_results(
-                                validator.fix(validation_result.content_object)  # type: ignore
-                            )
-                        else:
-                            self.validation_results.append(validation_result)
-                    except NotImplementedError:
-                        continue
-                else:
-                    self.validation_results.append(validation_result)
+                ), self.objects_to_run))
+            if filtered_content_objects_for_validator:
+                validation_results: List[ValidationResult] = validator.is_valid(*zip(*filtered_content_objects_for_validator))  # type: ignore
+                for validation_result in validation_results:
+                    if not validation_result.is_valid:
+                        try:
+                            if self.allow_autofix:
+                                self.validation_results.append_fixing_results(
+                                    validator.fix(validation_result.content_object)  # type: ignore
+                                )
+                            else:
+                                self.validation_results.append(validation_result)
+                        except NotImplementedError:
+                            continue
+                    else:
+                        self.validation_results.append(validation_result)
 
         return self.validation_results.post_results()
 
@@ -109,8 +111,9 @@ class ValidateManager:
         # gather validator from validate package
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
+            validator = validator()
             if validator.error_code in self.validations_to_run:
-                validators.append(validator())
+                validators.append(validator)
                 if validator.graph:
                     self.validate_graph = True
         return validators

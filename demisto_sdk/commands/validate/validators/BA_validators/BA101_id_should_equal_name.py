@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, TypeVar
+from typing import Iterable, List, TypeVar, Union
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -17,8 +17,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = TypeVar(
-    "ContentTypes",
+ContentTypes = Union[
     Integration,
     Dashboard,
     IncidentType,
@@ -27,8 +26,8 @@ ContentTypes = TypeVar(
     Playbook,
     Script,
     Wizard,
-    Classifier,
-)
+    Classifier
+]
 
 
 class IDNameValidator(BaseValidator[ContentTypes]):
@@ -38,7 +37,6 @@ class IDNameValidator(BaseValidator[ContentTypes]):
     fixing_message = "Changing name to be equal to id ({0})."
     is_auto_fixable = True
     related_field = "name"
-    content_types = ContentTypes
 
     def is_valid(self, content_items: Iterable[ContentTypes], _) -> List[ValidationResult]:
         validation_results = []

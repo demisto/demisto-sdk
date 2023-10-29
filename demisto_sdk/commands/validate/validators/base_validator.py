@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, Generic, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import Any, ClassVar, Generic, Iterable, List, Optional, Tuple, Type, TypeVar, Union, get_args, overload
 
 from pydantic import BaseModel
 
@@ -12,7 +12,6 @@ ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
-    content_types: TypeVar
     error_code: ClassVar[str]
     description: ClassVar[str]
     error_message: ClassVar[str]
@@ -22,8 +21,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: ClassVar[Optional[List[str]]] = None
     graph: ClassVar[bool] = False
 
-    def get_content_types(self) -> Tuple[Type[BaseContent]]:
-        return self.content_types.__constraints__ or (self.content_types.__bound__,)
+    def get_content_types(self):
+        return get_args(self.__orig_bases__[0])
 
     def should_run(
         self,
@@ -56,10 +55,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             ]
         )
 
-    def is_valid(self, content_items: Iterable[ContentTypes], old_content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def is_valid(self, content_items: Iterable[ContentTypes], old_content_items: Iterable[Optional[ContentTypes]]) -> List[ValidationResult]:
         raise NotImplementedError
 
-    def fix(self, content_item: ContentTypes, old_content_item: Optional[ContentTypes]) -> FixingResult:
+
+    def fix(self, content_item: ContentTypes, old_content_item: ContentTypes) -> FixingResult:
         raise NotImplementedError
 
     class Config:

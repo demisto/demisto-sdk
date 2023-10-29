@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, TypeVar
+from typing import Iterable, List
 
 from demisto_sdk.commands.common.tools import replace_incident_to_alert
 from demisto_sdk.commands.content_graph.interface import (
@@ -18,38 +18,55 @@ ContentTypes = Integration
 class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     error_code = "GR106"
     description = "Validate that there are no 2 content items with the same type and the same name."
-    error_message = "Cannot create a script with the name {0}, because a script with the name {1} already exists.\n" \
-            "(it will not be possible to create a new script whose name includes the word Alert/Alerts " \
-            "if there is already a script with a similar name and only the word Alert/Alerts " \
-            "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'" \
-            "it will not be possible to create a script with the name `getAlert`)"
+    error_message = (
+        "Cannot create a script with the name {0}, because a script with the name {1} already exists.\n"
+        "(it will not be possible to create a new script whose name includes the word Alert/Alerts "
+        "if there is already a script with a similar name and only the word Alert/Alerts "
+        "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
+        "it will not be possible to create a script with the name `getAlert`)"
+    )
     is_auto_fixable = False
     related_field = "name"
     content_types = ContentTypes
     graph = True
 
-    def is_valid(self, content_items: Iterable[ContentTypes], _) -> List[ValidationResult]:
+    def is_valid(
+        self, content_items: Iterable[ContentTypes], _
+    ) -> List[ValidationResult]:
         """
         Validate that there are no duplicate names of scripts
         when the script name included `alert`.
         """
         validation_results = []
+        file_paths_to_objects = {
+            str(content_item.path): content_item for content_item in content_items
+        }
         with ContentGraphInterface() as graph:
             query_results = graph.get_duplicate_script_name_included_incident(
-                content_items
+                list(file_paths_to_objects)
             )
 
-        if query_results:
-            for script_name, file_path in query_results.items():
-                validation_results.append(ValidationResult(
-                validator=self,
-                is_valid=False,
-                message=self.error_message.format(replace_incident_to_alert(script_name), script_name),
-                content_object=file_path,
-            ))
-        validation_results.append(ValidationResult(
-            validator=self,
-            is_valid=True,
-            message="",
-            content_object=co
-        ))
+        for script_name, file_path in query_results.items():
+            if file_path in file_paths_to_objects:
+                validation_results.append(
+                    ValidationResult(
+                        validator=self,
+                        is_valid=False,
+                        message=self.error_message.format(
+                            replace_incident_to_alert(script_name), script_name
+                        ),
+                        content_object=file_paths_to_objects[file_path],
+                    )
+                )
+        valid_paths = set(file_paths_to_objects) - set(query_results.values())
+        for valid_path in valid_paths:
+            validation_results.append(
+                ValidationResult(
+                    validator=self,
+                    is_valid=True,
+                    message="",
+                    content_object=file_paths_to_objects[valid_path],
+                )
+            )
+
+        return validation_results

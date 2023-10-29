@@ -17,7 +17,6 @@ from demisto_sdk.commands.common.tools import (
     capital_case,
     get_json,
     get_pack_ignore_content,
-    get_pack_name,
 )
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
@@ -317,4 +316,4 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = get_pack_ignore_content(self.name)
+        self.ignored_errors_dict = get_pack_ignore_content(self.path.name)

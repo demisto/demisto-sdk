@@ -470,7 +470,7 @@ class MetadataToDict:
                         arg_name=input_arg.name,
                         description=description.strip() if description else "",
                         default_value=default,
-                        is_array=type(arg_type) is list
+                        is_array=isinstance(arg_type, list)
                         or arg_type in [list, Union[list, dict]],
                         secret=secret,
                         options=options,

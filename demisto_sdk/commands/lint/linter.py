@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
+    PARTNER_SUPPORT,
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -1275,7 +1276,7 @@ class Linter:
 
         logger.debug(f"After reading content of {pack_metadata_file}")
         self._facts["support_level"] = pack_meta_content.get("support")
-        if self._facts["support_level"] == "partner" and pack_meta_content.get(
+        if self._facts["support_level"] == PARTNER_SUPPORT and pack_meta_content.get(
             "Certification"
         ):
             self._facts["support_level"] = "certified partner"

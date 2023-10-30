@@ -37,17 +37,21 @@ app = typer.Typer()
 
 def should_update_graph(
     content_graph_interface: ContentGraphInterface,
+    use_git: bool,
     git_util: GitUtil,
     imported_path: Optional[Path] = None,
+    packs_to_update: Optional[List[str]] = None,
 ):
     return any(
         (
             imported_path,
-            content_graph_interface.commit
-            and not git_util.get_all_changed_pack_ids(content_graph_interface.commit),
+            packs_to_update,
+            use_git
+            and content_graph_interface.commit
+            and git_util.get_all_changed_pack_ids(content_graph_interface.commit),
             content_graph_interface.commit != git_util.get_current_commit_hash(),
             content_graph_interface.content_parser_latest_hash
-            == content_graph_interface._get_latest_content_parser_hash(),
+            != content_graph_interface._get_latest_content_parser_hash(),  # no-fmt
         )
     )
 
@@ -84,7 +88,7 @@ def update_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
     is_graph_alive = neo4j_service.is_alive()
     if is_graph_alive and not should_update_graph(
-        content_graph_interface, git_util, imported_path
+        content_graph_interface, use_git, git_util, imported_path, packs_to_update
     ):
         logger.info(
             f"Content graph is up to date, no need to update. Make sure to add/commit your changes. UI representation is available at {NEO4J_DATABASE_HTTP} "

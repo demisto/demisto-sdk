@@ -51,7 +51,7 @@ def should_update_graph(
             and git_util.get_all_changed_pack_ids(content_graph_interface.commit),
             content_graph_interface.commit != git_util.get_current_commit_hash(),
             content_graph_interface.content_parser_latest_hash
-            != content_graph_interface._get_latest_content_parser_hash(),  # no-fmt
+            != content_graph_interface._get_latest_content_parser_hash(),
         )
     )
 

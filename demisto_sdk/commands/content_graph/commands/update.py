@@ -39,12 +39,10 @@ def should_update_graph(
     content_graph_interface: ContentGraphInterface,
     git_util: GitUtil,
     imported_path: Optional[Path] = None,
-    use_local_import: bool = False,
 ):
     return any(
         (
             imported_path,
-            use_local_import,
             content_graph_interface.commit != git_util.get_current_commit_hash(),
             content_graph_interface.content_parser_latest_hash
             == content_graph_interface._get_latest_content_parser_hash(),
@@ -58,7 +56,6 @@ def update_content_graph(
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     use_git: bool = False,
     imported_path: Optional[Path] = None,
-    use_local_import: bool = False,
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
@@ -69,12 +66,11 @@ def update_content_graph(
         marketplace (MarketplaceVersions): The marketplace to update.
         use_git (bool): Whether to use git to get the packs to update.
         imported_path (Path): The path to the imported graph.
-        use_local_import (bool): Whether to use the current import folder to import graph.
         packs_to_update (List[str]): The packs to update.
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    if not use_local_import and not imported_path and not use_git:
+    if not imported_path and not use_git:
         logger.info("No arguments were given, using git")
         use_git = True
     git_util = GitUtil()
@@ -86,7 +82,7 @@ def update_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
     is_graph_alive = neo4j_service.is_alive()
     if is_graph_alive and not should_update_graph(
-        content_graph_interface, git_util, imported_path, use_local_import
+        content_graph_interface, git_util, imported_path
     ):
         logger.info(
             f"Content graph is up to date, no need to update. UI representation is available at {NEO4J_DATABASE_HTTP} "
@@ -160,13 +156,6 @@ def update(
         "-mp",
         "--marketplace",
         help="The marketplace to generate the graph for.",
-    ),
-    use_local_import: bool = typer.Option(
-        False,
-        "-uli",
-        "--use-local-import",
-        is_flag=True,
-        help="Whether to use the current import folder to import graph.",
     ),
     imported_path: Path = typer.Option(
         None,
@@ -247,7 +236,6 @@ def update(
             marketplace=marketplace,
             use_git=use_git,
             imported_path=imported_path,
-            use_local_import=use_local_import,
             packs_to_update=list(packs_to_update) if packs_to_update else [],
             dependencies=not no_dependencies,
             output_path=output_path,

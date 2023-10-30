@@ -8,13 +8,12 @@ import tarfile
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Dict, Generator, List, Optional, Union
+from typing import Callable, Dict, Generator, List, Union
 
 # Third party packages
 import coverage
 import docker
 import docker.errors
-import git
 import requests
 from docker.models.containers import Container
 from packaging.version import parse
@@ -111,7 +110,7 @@ def build_skipped_exit_code(
 
 
 def get_test_modules(
-    content_repo: Optional[git.Repo], is_external_repo: bool = is_external_repository()  # noqa: TID251
+    content_repo, is_external_repo: bool = is_external_repository()
 ) -> Dict[Path, bytes]:
     """Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py

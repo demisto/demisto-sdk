@@ -123,7 +123,7 @@ class DockerHook(Hook):
     def prepare_hook(self, files_to_run: Iterable):
 
         start_time = time.time()
-        tag_to_files = docker_tag_to_runfiles(
+        tag_to_files_ymls = docker_tag_to_runfiles(
             self.filter_files_matching_hook_config(files_to_run),
             self._get_property("docker_image", "from-yml"),
         )
@@ -133,7 +133,9 @@ class DockerHook(Hook):
         )
         start_time = time.time()
 
-        for image, file_ymls in sorted(tag_to_files.items(), key=lambda item: item[0]):
+        for image, file_ymls in sorted(
+            tag_to_files_ymls.items(), key=lambda item: item[0]
+        ):
             image_is_powershell = any(
                 f[1].get("type") == "powershell" for f in file_ymls
             )
@@ -141,12 +143,7 @@ class DockerHook(Hook):
                 image, image_is_powershell
             )  # consider moving to before loop and threading.
 
-            new_hook = {
-                "id": f"{self._get_property('id')}-{image}",
-                "name": f"{self._get_property('name')}-{image}",
-                "language": "docker_image",
-                "entry": f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}',
-            }
+            new_hook = self.get_new_hook(dev_image, image)
 
             hooks = self._split_by_config_file(new_hook, file_ymls)
             for hook in hooks:
@@ -160,11 +157,19 @@ class DockerHook(Hook):
             f"DockerHook - Elapsed time to prep all the images: {end_time - start_time} seconds"
         )
 
+    def get_new_hook(self, dev_image, image):
+        return {
+            "id": f"{self._get_property('id')}-{image}",
+            "name": f"{self._get_property('name')}-{image}",
+            "language": "docker_image",
+            "entry": f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}',
+        }
+
     def _split_by_config_file(self, new_hook, file_ymls):
         folder_to_files = {}
         if config_arg := self._get_config_file_arg():
 
-            folder_to_files = self._get_folder_to_ymls_by_config(
+            folder_to_files = self._get_folder_to_files_by_config(
                 file_ymls, config_arg[1]
             )
         else:
@@ -202,7 +207,7 @@ class DockerHook(Hook):
             return arg_name, file_name
         return None
 
-    def _get_folder_to_ymls_by_config(self, file_ymls, file_name):
+    def _get_folder_to_files_by_config(self, file_ymls, file_name):
         folder_to_files = defaultdict(set)
 
         for file, _ in file_ymls:

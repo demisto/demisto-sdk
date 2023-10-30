@@ -10,7 +10,7 @@ from docker.errors import DockerException
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.docker_helper import get_docker
+from demisto_sdk.commands.common.docker_helper import docker_login, get_docker
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
@@ -94,9 +94,9 @@ def docker_images_for_file(yml: dict) -> set:
 
 @functools.lru_cache(maxsize=256)
 def devtest_image(image_tag, is_powershell):
-    logger.debug(f"getting devimage for {image_tag}, {is_powershell=}")
+    logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
     image, errors = get_docker().pull_or_create_test_image(
-        image_tag, TYPE_PWSH if is_powershell else TYPE_PYTHON
+        image_tag, TYPE_PWSH if is_powershell else TYPE_PYTHON, push=docker_login()
     )
     if errors:
         raise DockerException(errors)
@@ -149,7 +149,7 @@ class DockerHook(Hook):
             self.hooks.extend(hooks)
         end_time = time.time()
         logger.info(
-            f"Elapsed time to prep all the images: {end_time - start_time} seconds"
+            f"DockerHook - Elapsed time to prep all the images: {end_time - start_time} seconds"
         )
 
     def _set_properties(self, hook, to_delete=()):

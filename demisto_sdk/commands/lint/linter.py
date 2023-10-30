@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
 )
 from demisto_sdk.commands.common.docker_helper import (
+    docker_login,
     get_docker,
     get_python_version,
     init_global_docker_client,
@@ -126,7 +127,7 @@ class Linter:
         self.docker_image_target = docker_image_target
         # Docker client init
         if docker_engine:
-            self._docker_client: docker.DockerClient = init_global_docker_client(
+            self._docker_client: docker.DockerClient = init_global_docker_client(  # type: ignore
                 timeout=docker_timeout, log_prompt="Linter"
             )
             self._docker_hub_login = self._docker_login()
@@ -914,19 +915,7 @@ class Linter:
         Returns:
             bool: True if logged in successfully.
         """
-        docker_user = os.getenv("DOCKERHUB_USER")
-        docker_pass = os.getenv("DOCKERHUB_PASSWORD")
-        if docker_user and docker_pass:
-            try:
-                self._docker_client.login(
-                    username=docker_user,
-                    password=docker_pass,
-                    registry="https://index.docker.io/v1",
-                )
-                return self._docker_client.ping()
-            except docker.errors.APIError:
-                return False
-        return False
+        return docker_login(self._docker_client)
 
     @timer(group_name="lint")
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:

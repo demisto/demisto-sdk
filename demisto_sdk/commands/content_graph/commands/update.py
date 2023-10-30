@@ -96,13 +96,16 @@ def update_content_graph(
         )
         return
     builder.init_database()
+    use_local_import = True
     try:
         logger.info("Importing graph locally or from `imported_path`")
         is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
+        if not any([imported_path, is_graph_up_to_date]):
+            use_local_import = False
     except Exception:
-        is_graph_up_to_date = False
+        use_local_import = False
 
-    if not imported_path or not is_graph_up_to_date:
+    if use_local_import:
         logger.info("Importing graph from bucket")
 
         content_graph_interface.clean_import_dir()
@@ -120,7 +123,7 @@ def update_content_graph(
             )
             return
         is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
-        if not any([imported_path, is_graph_up_to_date, is_external_repo]):
+        if not any([is_graph_up_to_date, is_external_repo]):
             # if we import a graph from a specific path, it make no sense to create a new graph
             logger.warning(
                 "Failed to import the content graph, will create a new graph"

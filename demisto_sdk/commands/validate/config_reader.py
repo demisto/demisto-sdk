@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import toml
 
@@ -23,7 +23,7 @@ class ConfigReader:
             self.category_to_run = DEFAULT_CAREGORY
 
     def gather_validations_to_run(
-        self, use_git: bool, ignore_support_level: False
+        self, use_git: bool, ignore_support_level: Optional[bool] = False
     ) -> Tuple[List, List, List, dict]:
         """Extract the relevant information from the relevant category in the config file.
 
@@ -37,9 +37,9 @@ class ConfigReader:
         flag = self.category_to_run or USE_GIT if use_git else VALIDATE_ALL
         section = self.config_file_content.get(flag, {})
         return (
-            section.get("select"),
-            section.get("warning"),
-            section.get("ignorable_errors"),
+            section.get("select", []),
+            section.get("warning", []),
+            section.get("ignorable_errors", []),
             self.config_file_content.get("support_level", {})
             if not ignore_support_level
             else {},

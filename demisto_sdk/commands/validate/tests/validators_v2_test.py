@@ -1,12 +1,16 @@
 import json
 import logging
 import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import toml
-from TestSuite.test_tools import str_in_call_args_list
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
+from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validate_manager_v2 import ValidateManager
@@ -16,6 +20,8 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     FixingResult,
     ValidationResult,
 )
+from TestSuite.pack import Pack
+from TestSuite.test_tools import str_in_call_args_list
 
 
 def get_validate_manager(mocker):
@@ -34,6 +40,9 @@ class ValidatorNoTwo(BaseValidator):
 class ValidatorNoThree(BaseValidator):
     error_code = "TE102"
 
+parser = IntegrationParser(Path("demisto_sdk/commands/validate/tests/test_data/integration.yml"), list(MarketplaceVersions))
+TEST_INTEGRATION = Integration.from_orm(parser)
+
 
 @pytest.mark.parametrize(
     "validations_to_run, sub_classes, expected_results",
@@ -42,13 +51,13 @@ class ValidatorNoThree(BaseValidator):
         (
             ["TE100", "TE101"],
             [ValidatorNoOne, ValidatorNoTwo, ValidatorNoThree],
-            [ValidatorNoOne, ValidatorNoTwo],
+            [ValidatorNoOne(), ValidatorNoTwo()],
         ),
         (["TE"], [ValidatorNoOne, ValidatorNoTwo, ValidatorNoThree], []),
         (
             ["TE100", "TE103"],
             [ValidatorNoOne, ValidatorNoTwo, ValidatorNoThree],
-            [ValidatorNoOne],
+            [ValidatorNoOne()],
         ),
     ],
 )
@@ -76,13 +85,14 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
 
 
 @pytest.mark.parametrize(
-    "category_to_run, use_git, config_file_content, expected_results",
+    "category_to_run, use_git, config_file_content, expected_results, ignore_support_level",
     [
         (
             None,
             True,
             {"use_git": {"select": ["TE100", "TE101", "TE102"]}},
-            (["TE100", "TE101", "TE102"], None, None, {}),
+            (["TE100", "TE101", "TE102"], [], [], {}),
+            False,
         ),
         (
             "custom_category",
@@ -94,13 +104,15 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
                 },
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},
             },
-            (["TE100", "TE101", "TE102"], None, ["TE100"], {}),
+            (["TE100", "TE101", "TE102"], [], ["TE100"], {}),
+            False,
         ),
         (
             None,
             False,
             {"validate_all": {"select": ["TE100", "TE101", "TE102"]}},
-            (["TE100", "TE101", "TE102"], None, None, {}),
+            (["TE100", "TE101", "TE102"], [], [], {}),
+            False,
         ),
         (
             None,
@@ -111,23 +123,40 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
             },
             (
                 ["TE105", "TE106", "TE107"],
-                None,
-                None,
+                [],
+                [],
                 {"community": {"ignore": ["TE100", "TE101", "TE102"]}},
             ),
+            False,
+        ),
+        (
+            None,
+            True,
+            {
+                "support_level": {"community": {"ignore": ["TE100", "TE101", "TE102"]}},
+                "use_git": {"select": ["TE105", "TE106", "TE107"]},
+            },
+            (
+                ["TE105", "TE106", "TE107"],
+                [],
+                [],
+                {},
+            ),
+            True,
         ),
     ],
 )
 def test_gather_validations_to_run(
-    mocker, category_to_run, use_git, config_file_content, expected_results
+    mocker, category_to_run, use_git, config_file_content, expected_results, ignore_support_level
 ):
     """
     Given
-    a category_to_run, a use_git flag, and a config file content.
-        - Case 1: No category to run, use_git flag set to True, config file content with only use_git.select section.
-        - Case 2: A custom category to run, use_git flag set to True, config file content with use_git.select, and custom_category with both ignorable_errors and select sections.
-        - Case 3: No category to run, use_git flag set to False, config file content with validate_all.select section.
-        - Case 4: No category to run, use_git flag set to True, config file content with use_git.select, and support_level.community.ignore section.
+    a category_to_run, a use_git flag, a config file content, and a ignore_support_level flag.
+        - Case 1: No category to run, use_git flag set to True, config file content with only use_git.select section, and ignore_support_level set to False.
+        - Case 2: A custom category to run, use_git flag set to True, config file content with use_git.select, and custom_category with both ignorable_errors and select sections, and ignore_support_level set to False.
+        - Case 3: No category to run, use_git flag set to False, config file content with validate_all.select section, and ignore_support_level set to False.
+        - Case 4: No category to run, use_git flag set to True, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to False.
+        - Case 5: No category to run, use_git flag set to True, config file content with use_git.select, and support_level.community.ignore section, and ignore_support_level set to True.
     When
     - Calling the gather_validations_to_run function.
     Then
@@ -135,23 +164,25 @@ def test_gather_validations_to_run(
         - Case 2: Make sure the retrieved results contains the custom category results and ignored the use_git results.
         - Case 3: Make sure the retrieved results contains the validate_all results.
         - Case 4: Make sure the retrieved results contains both the support level and the use_git sections.
+        - Case 5: Make sure the retrieved results contains only the use_git section.
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
     config_reader = ConfigReader(category_to_run=category_to_run)
-    results = config_reader.gather_validations_to_run(use_git=use_git)
+    results = config_reader.gather_validations_to_run(use_git=use_git, ignore_support_level=ignore_support_level)
     assert results == expected_results
+
 
 @pytest.mark.parametrize(
     "results, fixing_results, expected_results",
     [
         (
-            [ValidationResult(error_code="TE100", is_valid=True, message="", file_path="some_path")], [], {"validations": [{'file path': 'some_path', 'is_valid': True, 'error code': 'TE100', 'message': ''}], "fixed validations": []},
+            [ValidationResult(validator=ValidatorNoOne(), is_valid=False, message="", content_object=TEST_INTEGRATION, old_content_object=None)], [], {"validations": [{'file path': str(TEST_INTEGRATION.path), 'is_valid': False, 'error code': 'TE100', 'message': ''}], "fixed validations": []},
         ),
         (
             [], [], {"validations": [], "fixed validations": []}
         ),
         (
-            [ValidationResult(error_code="TE100", is_valid=False, message="", file_path="some_path")], [FixingResult(error_code="TE100", message="Fixed this issue", file_path="some_path")], {"validations": [{'file path': 'some_path', 'is_valid': False, 'error code': 'TE100', 'message': ''}], "fixed validations": [{'file path': 'some_path', 'error code': 'TE100', 'message': 'Fixed this issue'}]}
+            [ValidationResult(validator=ValidatorNoOne(), is_valid=False, message="", content_object=TEST_INTEGRATION, old_content_object=None)], [FixingResult(validator=ValidatorNoOne(), message="Fixed this issue", content_object=TEST_INTEGRATION)], {"validations": [{'file path': str(TEST_INTEGRATION.path), 'is_valid': False, 'error code': 'TE100', 'message': ''}], "fixed validations": [{'file path': str(TEST_INTEGRATION.path), 'error code': 'TE100', 'message': 'Fixed this issue'}]}
         ),
     ],
 )
@@ -159,7 +190,7 @@ def test_write_validation_results(results, fixing_results, expected_results):
     """
     Given
     results and fixing_results lists.
-        - Case 1: One valid result.
+        - Case 1: One validation result.
         - Case 2: Both lists are empty.
         - Case 3: Both lists has one item.
     When
@@ -183,16 +214,13 @@ def test_write_validation_results(results, fixing_results, expected_results):
     "only_throw_warnings, results, expected_exit_code, expected_warnings_call_count, expected_error_call_count, expected_error_code_in_warnings, expected_error_code_in_errors",
     [
         (
-            ["TE100"], [ValidationResult(error_code="TE100", is_valid=False, message="", file_path="some_path")], 0, 1, 0, ["TE100"], []
+            ["TE100"], [ValidationResult(validator=ValidatorNoOne(), is_valid=False, message="", content_object=TEST_INTEGRATION)], 0, 1, 0, ["TE100"], []
         ),
         (
-            [], [ValidationResult(error_code="TE100", is_valid=False, message="", file_path="some_path")], 1, 0, 1, [], ["TE100"]
+            [], [ValidationResult(validator=ValidatorNoOne(), is_valid=False, message="", content_object=TEST_INTEGRATION)], 1, 0, 1, [], ["TE100"]
         ),
         (
-            ["TE101"], [ValidationResult(error_code="TE100", is_valid=False, message="", file_path="some_path"), ValidationResult(error_code="TE101", is_valid=False, message="", file_path="some_path")], 1, 1, 1, ["TE101"], ["TE100"]
-        ),
-        (
-            ["TE100"], [ValidationResult(error_code="TE100", is_valid=True, message="", file_path="some_path")], 0, 0, 0, [], []
+            ["TE101"], [ValidationResult(validator=ValidatorNoOne(), is_valid=False, message="", content_object=TEST_INTEGRATION), ValidationResult(validator=ValidatorNoTwo(), is_valid=False, message="", content_object=TEST_INTEGRATION)], 1, 1, 1, ["TE101"], ["TE100"]
         ),
     ],
 )
@@ -203,7 +231,6 @@ def test_post_results(mocker, only_throw_warnings, results, expected_exit_code, 
         - Case 1: One failed validation with its error_code in the only_throw_warnings list.
         - Case 2: One failed validation with its error_code not in the only_throw_warnings list.
         - Case 3: One failed validation with its error_code in the only_throw_warnings list and one failed validation with its error_code not in the only_throw_warnings list.
-        - Case 1: One success validation with its error_code in the only_throw_warnings list.
     When
     - Calling the post_results function.
     Then
@@ -211,7 +238,6 @@ def test_post_results(mocker, only_throw_warnings, results, expected_exit_code, 
         - Case 1: Make sure the exit_code is 0 (success), and that the warning logger was called once with 'TE100' and the error logger wasn't called.
         - Case 2: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'TE100' and the warning logger wasn't called.
         - Case 3: Make sure the exit_code is 1 (failure), and that the error logger was called once with 'TE100' and the warning logger was called once with 'TE101'
-        - Case 4: Make sure the exit_code is 0 (success), and that both loggers wasn't called.
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")

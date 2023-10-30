@@ -42,20 +42,22 @@ class ValidationResults:
         Returns:
             int: The exit code number - 1 if the validations failed, otherwise return 0
         """
-        exit_code = 0 if not self.fixing_results else 1
+        exit_code = 0
         if self.json_file_path:
             self.write_validation_results()
         for result in self.results:
             if not result.is_valid:
                 if (
                     self.only_throw_warning
-                    and result.content_object.path in self.only_throw_warning
+                    and result.validator.error_code in self.only_throw_warning
                 ):
                     logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
                 else:
                     logger.error(f"[red]{result.format_readable_message}[/red]")
                     exit_code = 1
         for fixing_result in self.fixing_results:
+            if not self.only_throw_warning or fixing_result.validator.error_code not in self.only_throw_warning:
+                exit_code = 1
             logger.warning(f"[yellow]{fixing_result.format_readable_message}[/yellow]")
         if not exit_code:
             logger.info("[green]All validations passed.[/green]")

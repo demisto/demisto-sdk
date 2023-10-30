@@ -39,10 +39,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           PR_URL: ${{github.event.pull_request.html_url}}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          echo "Getting the contribution TL"
-          cd Utils/github_workflow_scripts
-          pip3 install github
-          poetry run python ./handle_new_contribution.py
+          echo "get content_roles.json using curl"
+          contrib_tl=$( curl https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json | jq .CONTRIBUTION_TL -r )
+          echo "$contrib_tl"
           echo "Finished retrieving the contribution TL username"
+          
+          echo "Add an assignee and a Contribution label"
+          gh pr edit --add-assignee "$contrib_tl" --add-label Contribution "$PR_URL"

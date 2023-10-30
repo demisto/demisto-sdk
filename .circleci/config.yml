@@ -420,7 +420,8 @@ jobs:
             while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
             # create content graph from scratch
             demisto-sdk create-content-graph
-
+            # clean import folder
+            sudo rm -rf /var/lib/neo4j/import
             # Update content graph from the bucket
             demisto-sdk update-content-graph -g -o ./tmp/content_graph
 

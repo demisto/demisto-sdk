@@ -18,9 +18,6 @@ def main():
     contrib_tl_username = content_roles.get("CONTRIBUTION_TL")
     if not contrib_tl_username:
         raise Exception("contribution TL does not exist in .github/content_roles.json")
-    # save the contrib_tl username to a file for a later use in the workflow
-    with open("contrib_tl.txt", "w") as f:
-        f.write(contrib_tl_username)
 
     org_name = 'demisto'
     repo_name = 'demisto-sdk'

@@ -43,9 +43,6 @@ jobs:
         run: |
           echo "Getting the contribution TL"
           cd Utils/github_workflow_scripts
-          pip install github
+          pip3 install github
           poetry run python ./handle_new_contribution.py
-          contrib_tl=$( cat contrib_tl.txt )
-          echo "$contrib_tl"
-          find . -name "contrib_tl.txt" -type f -delete
           echo "Finished retrieving the contribution TL username"

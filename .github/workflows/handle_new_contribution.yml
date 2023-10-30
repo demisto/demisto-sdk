@@ -39,6 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           PR_URL: ${{github.event.pull_request.html_url}}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           echo "Getting the contribution TL"
           cd Utils/github_workflow_scripts
@@ -47,5 +48,3 @@ jobs:
           echo "$contrib_tl"
           find . -name "contrib_tl.txt" -type f -delete
           echo "Finished retrieving the contribution TL username"
-          echo "Add an assignee and a Contribution label"
-          gh pr edit --add-assignee "$contrib_tl" --add-label Contribution "$PR_URL"

@@ -84,7 +84,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 
 @functools.lru_cache
-def docker_login(docker_client=init_global_docker_client()) -> bool:
+def docker_login(docker_client) -> bool:
     """Login to docker-hub using environment variables:
             1. DOCKERHUB_USER - User for docker hub.
             2. DOCKERHUB_PASSWORD - Password for docker-hub.

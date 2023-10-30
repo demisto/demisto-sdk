@@ -10,7 +10,11 @@ from docker.errors import DockerException
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.docker_helper import docker_login, get_docker
+from demisto_sdk.commands.common.docker_helper import (
+    docker_login,
+    get_docker,
+    init_global_docker_client,
+)
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
@@ -97,9 +101,10 @@ def devtest_image(image_tag, is_powershell):
     all_errors: list = []
     for _ in range(2):
         logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
-        return image_tag
         image, errors = get_docker().pull_or_create_test_image(
-            image_tag, TYPE_PWSH if is_powershell else TYPE_PYTHON, push=docker_login()
+            image_tag,
+            TYPE_PWSH if is_powershell else TYPE_PYTHON,
+            push=docker_login(docker_client=init_global_docker_client()),
         )
         if not errors:
             return image

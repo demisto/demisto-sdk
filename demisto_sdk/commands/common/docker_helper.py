@@ -83,6 +83,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     return DOCKER_CLIENT
 
 
+@functools.lru_cache
 def docker_login(docker_client=init_global_docker_client()) -> bool:
     """Login to docker-hub using environment variables:
             1. DOCKERHUB_USER - User for docker hub.
@@ -101,9 +102,14 @@ def docker_login(docker_client=init_global_docker_client()) -> bool:
                 password=docker_pass,
                 registry="https://index.docker.io/v1",
             )
-            return docker_client.ping()
+            ping = docker_client.ping()
+            logger.info(f"dockerhub login {ping=}")
+            return ping
         except docker.errors.APIError:
+            logger.info("Did not successfully log in to dockerhub")
             return False
+
+    logger.info("Did not log in to dockerhub")
     return False
 
 

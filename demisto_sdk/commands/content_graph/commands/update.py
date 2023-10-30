@@ -91,12 +91,14 @@ def update_content_graph(
         return
     builder.init_database()
     try:
+        logger.info("Importing graph locally or from `imported_path`")
         is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
     except Exception:
-        logger.info("Graph local import folder is broken")
         is_graph_up_to_date = False
 
-    if not imported_path and not is_graph_up_to_date:
+    if not imported_path or not is_graph_up_to_date:
+        logger.info("Importing graph from bucket")
+
         content_graph_interface.clean_import_dir()
         try:
             extract_remote_import_files(content_graph_interface)

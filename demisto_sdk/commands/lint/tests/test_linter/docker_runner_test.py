@@ -216,6 +216,47 @@ class TestRunLintInContainer:
             linter_obj._docker_run_pwsh_test.assert_called_once()
 
     @pytest.mark.parametrize(
+        argnames="image_name, expected_container_name",
+        argvalues=[
+            # Full image path.
+            (
+                "docker-io.art.code.pan.run/devtestdemisto/py3-native:8.2.0.123-abcd12345",
+                "some_pack-pylint-py3-native_8.2.0.123-abcd12345",
+            ),
+            # Name and tag only.
+            (
+                "py3-native:8.2.0.123-abcd12345",
+                "some_pack-pylint-py3-native_8.2.0.123-abcd12345",
+            ),
+            # Starts with invalid character.
+            (
+                "_py3-native:8.2.0.123-abcd12345",
+                "some_pack-pylint-py3-native_8.2.0.123-abcd12345",
+            ),
+            # Name only.
+            ("py3-native-no-tag", "some_pack-pylint-py3-native-no-tag"),
+            # Name and tag using an invalid char.
+            ("py3-native@some-tag", "some_pack-pylint-py3-native_some-tag"),
+        ],
+    )
+    def test_container_names(
+        self, linter_obj: Linter, image_name: str, expected_container_name: str
+    ):
+        """
+        Given: A docker image name
+        When: Running lint using docker
+        Then: Ensure the container name is valid and as expected.
+        """
+        linter_obj._linter_to_commands()
+        linter_obj._pack_name = "some_pack"
+
+        container_name = linter_obj.get_container_name(
+            run_type="pylint", image_name=image_name
+        )
+
+        assert container_name == expected_container_name
+
+    @pytest.mark.parametrize(
         argnames="lint_check, lint_check_kwargs",
         argvalues=[
             ("_docker_run_linter", {"linter": "pylint", "keep_container": False}),

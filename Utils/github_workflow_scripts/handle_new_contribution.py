@@ -16,6 +16,7 @@ def main():
         ),
     )
     contrib_tl_username = content_roles.get("CONTRIBUTION_TL")
+    print(f'{contrib_tl_username=}')
     if not contrib_tl_username:
         raise Exception("contribution TL does not exist in .github/content_roles.json")
 

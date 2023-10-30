@@ -41,9 +41,9 @@ jobs:
           PR_URL: ${{github.event.pull_request.html_url}}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          pip3 install PyGithub
           echo "Getting the contribution TL"
           cd Utils/github_workflow_scripts
+          pip3 install PyGithub
           poetry run python ./handle_new_contribution.py
           contrib_tl=$( cat contrib_tl.txt )
           echo "$contrib_tl"

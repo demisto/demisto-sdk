@@ -6,7 +6,7 @@ def recover_if_fails(func):
     def func_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except Exception:
+        except Exception as e:
             if not neo4j_service.is_running_on_docker():
 
                 logger.error(
@@ -15,8 +15,9 @@ def recover_if_fails(func):
                 )
                 raise
             logger.warning(
-                "Failed to build content graph, retrying with a clean environment.",
+                f"Failed to build content graph, retrying with a clean environment. Error: {e}",
             )
+            logger.debug("Failed to builde content graph", exc_info=True)
             neo4j_service.stop(force=True, clean=True)
             neo4j_service.start()
             return func(*args, **kwargs)

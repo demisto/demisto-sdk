@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -32,7 +33,7 @@ class JSONContentItemParser(ContentItemParser):
         if self.should_skip_parsing():
             raise NotAContentItemException
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {
             "name": "name",

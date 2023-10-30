@@ -1,4 +1,5 @@
 import re
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -34,7 +35,7 @@ class YAMLContentItemParser(ContentItemParser):
         if self.should_skip_parsing():
             raise NotAContentItemException
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {
             "name": "name",

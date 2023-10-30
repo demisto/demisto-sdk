@@ -57,7 +57,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     self.error_code, content_item.ignored_errors, ignorable_errors
                 ),
                 not is_support_level_support_validation(
-                    self.error_code, support_level_dict, content_item.support
+                    self.error_code, support_level_dict, content_item.support_level
                 ),
             ]
         )

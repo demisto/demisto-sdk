@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -45,7 +46,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         self.connect_to_dependencies()
         self.connect_to_tests()
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"object_id": "id"}
 

@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -19,7 +20,7 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.connect_to_dependencies()
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"description": "details"}
 

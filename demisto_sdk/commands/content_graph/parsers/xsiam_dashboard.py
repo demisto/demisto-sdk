@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -25,7 +26,7 @@ class XSIAMDashboardParser(
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.json_data: Dict[str, Any] = self.json_data.get("dashboards_data", [{}])[0]
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {
             "object_id": "global_id",

@@ -1,3 +1,4 @@
+from functools import cached_property
 from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
@@ -25,7 +26,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.connect_to_api_modules()
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"object_id": "commonfields.id"}
 

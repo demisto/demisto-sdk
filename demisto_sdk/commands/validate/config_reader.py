@@ -4,9 +4,7 @@ import toml
 
 from demisto_sdk.commands.common.constants import DEFAULT_MANDATORY_VALIDATIONS
 
-CONFIG_FILE_PATH = (
-    "/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate/config.toml"
-)
+CONFIG_FILE_PATH = "/Users/ierukhimovic/dev/demisto/demisto-sdk/demisto_sdk/commands/validate/config.toml"
 USE_GIT = "use_git"
 VALIDATE_ALL = "validate_all"
 DEFAULT_CAREGORY = "default_mandatory_validations"
@@ -24,7 +22,9 @@ class ConfigReader:
             self.config_file_content = DEFAULT_MANDATORY_VALIDATIONS
             self.category_to_run = DEFAULT_CAREGORY
 
-    def gather_validations_to_run(self, use_git: bool, ignore_support_level: False) -> Tuple[List, List, List, dict]:
+    def gather_validations_to_run(
+        self, use_git: bool, ignore_support_level: False
+    ) -> Tuple[List, List, List, dict]:
         """Extract the relevant information from the relevant category in the config file.
 
         Args:
@@ -40,5 +40,7 @@ class ConfigReader:
             section.get("select"),
             section.get("warning"),
             section.get("ignorable_errors"),
-            self.config_file_content.get("support_level", {}) if not ignore_support_level else {},
+            self.config_file_content.get("support_level", {})
+            if not ignore_support_level
+            else {},
         )

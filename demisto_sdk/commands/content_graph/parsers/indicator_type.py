@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -24,7 +25,7 @@ class IndicatorTypeParser(
         self.reputation_script_name = self.json_data.get("reputationScriptName") or ""
         self.enhancement_script_names = self.json_data.get("enhancementScriptNames")
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"name": "details", "description": "details"}
 

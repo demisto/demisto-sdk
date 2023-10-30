@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -21,7 +22,7 @@ class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TE
         self.os_type = self.json_data.get("os_type")
         self.profile_type = self.json_data.get("profile_type")
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"object_id": "content_global_id"}
 

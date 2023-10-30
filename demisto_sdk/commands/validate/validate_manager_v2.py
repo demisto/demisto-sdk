@@ -1,5 +1,6 @@
 from typing import List, Optional, Set, Tuple
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -73,6 +74,7 @@ class ValidateManager:
         self.validate_graph = False
         self.validators = self.filter_validators()
         if self.validate_graph:
+            logger.info("Graph validations were selected, will init graph")
             self.init_graph()
 
     def add_passed_validations(

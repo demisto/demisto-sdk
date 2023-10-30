@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -18,7 +19,7 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"object_id": "id"}
 

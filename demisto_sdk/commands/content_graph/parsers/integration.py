@@ -1,3 +1,4 @@
+from functools import cached_property
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -42,7 +43,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_dependencies()
         self.connect_to_tests()
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {
             "display_name": "display",

@@ -254,6 +254,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.parse_ignored_errors()
         logger.debug(f"Successfully parsed {self.node_id}")
 
+        logger.debug(f"Successfully parsed {self.node_id}")
+
     @property
     def object_id(self) -> Optional[str]:
         return self.path.name

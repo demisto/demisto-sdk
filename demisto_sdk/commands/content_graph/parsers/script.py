@@ -1,4 +1,5 @@
 import re
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -36,7 +37,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         self.connect_to_dependencies()
         self.connect_to_tests()
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {
             "docker_image": "dockerimage",

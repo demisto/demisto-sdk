@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -25,7 +26,7 @@ class IndicatorFieldParser(
 
         self.connect_to_dependencies()
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"object_id": "cliName"}
 

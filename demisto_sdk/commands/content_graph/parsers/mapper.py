@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -23,7 +24,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         self.definition_id = self.json_data.get("definitionId")
         self.connect_to_dependencies()
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"name": ["name", "brandName"]}
 

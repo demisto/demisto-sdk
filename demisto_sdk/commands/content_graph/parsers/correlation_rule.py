@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -20,7 +21,7 @@ class CorrelationRuleParser(
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
 
-    @property
+    @cached_property
     def mapping(self):
         return super().mapping | {"object_id": "global_rule_id"}
 

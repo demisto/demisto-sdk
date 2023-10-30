@@ -191,20 +191,19 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
 
 class BaseContent(BaseContentModel):
-    MAPPING: dict = {}
     path: Path
     git_status: Optional[str]
     old_file_path: Optional[Path]
 
     def __hash__(self):
         return hash(self.path)
-    
+
     @property
     def ignored_errors(self) -> list:
         raise NotImplementedError
-    
+
     @property
-    def support(self) -> str:
+    def support_level(self) -> str:
         raise NotImplementedError
 
     @staticmethod
@@ -217,7 +216,9 @@ class BaseContent(BaseContentModel):
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
-            path.is_dir() and path.parent.name == PACKS_FOLDER or path.name == PACKS_PACK_META_FILE_NAME
+            path.is_dir()
+            and path.parent.name == PACKS_FOLDER
+            or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
                 return content_type_to_model[ContentType.PACK].from_orm(

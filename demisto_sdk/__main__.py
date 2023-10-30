@@ -3313,13 +3313,6 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uli",
-    "--use-local-import",
-    is_flag=True,
-    help="Whether to use the current import files to import the graph.",
-    default=False,
-)
-@click.option(
     "-p",
     "--packs",
     help="A comma-separated list of packs to update",

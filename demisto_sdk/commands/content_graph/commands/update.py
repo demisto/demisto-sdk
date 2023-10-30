@@ -105,7 +105,7 @@ def update_content_graph(
     except Exception:
         use_local_import = False
 
-    if use_local_import:
+    if not use_local_import:
         logger.info("Importing graph from bucket")
 
         content_graph_interface.clean_import_dir()

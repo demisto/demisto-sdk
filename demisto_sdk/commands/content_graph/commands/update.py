@@ -99,6 +99,8 @@ def update_content_graph(
     use_local_import = True
     try:
         logger.info("Importing graph locally or from `imported_path`")
+        if imported_path:
+            content_graph_interface.clean_import_dir()
         is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
         if not any([imported_path, is_graph_up_to_date]):
             use_local_import = False

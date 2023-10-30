@@ -103,6 +103,8 @@ def update_content_graph(
         try:
             extract_remote_import_files(content_graph_interface)
         except RuntimeError as e:
+            if is_external_repo:
+                raise
             logger.warning(
                 "Failed to download the content graph, recreating it instead"
             )

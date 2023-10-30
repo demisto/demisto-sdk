@@ -34,7 +34,7 @@ class Hook(ABC):
         """
         ...
 
-    def set_files_on_hook(self, hook: dict, files) -> int:
+    def _set_files_on_hook(self, hook: dict, files) -> int:
         """
         Mutates a hook, setting a regex for file exact match on the hook
         Note, we could easily support glob syntax here too in the future.
@@ -71,6 +71,44 @@ class Hook(ABC):
             )  # include all if not defined
             and (not exclude_pattern or not re.search(exclude_pattern, str(file)))
         }  # only exclude if defined
+
+    def _get_property(self, name, default=None):
+        """
+        Will get the given property from the base hook, taking mode into account
+        Args:
+            name: the key to get from the config
+            default: the default value to return
+
+        Returns: The value from the base hook
+        """
+        ret = None
+        if self.mode:
+            ret = self.base_hook.get(f"{name}:{self.mode.value}")
+        return ret or self.base_hook.get(name, default)
+
+    def _set_properties(self, hook, to_delete=()):
+        """
+        Will alter the new hook, setting the properties that don't need unique behavior
+        For any propery x, if x isn't already defined, x will be set according to the mode provided.
+
+        For example, given an input
+
+        args: 123
+        args:nightly 456
+
+        if the mode provided is nightly, args will be set to 456. Otherwise, the default (key with no :) will be taken
+
+        Args:
+            hook: the hook to modify
+            to_delete: keys on the demisto config that we dont want to pass to precommit
+
+        """
+        for full_key in self.base_hook:
+            key = full_key.split(":")[0]
+            if hook.get(key) or key in to_delete:
+                continue
+            if prop := self._get_property(key):
+                hook[key] = prop
 
 
 def join_files(files: Set[Path], separator: str = "|") -> str:

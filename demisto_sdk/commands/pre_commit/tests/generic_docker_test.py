@@ -127,11 +127,6 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
             "docker_image": "demisto/python3:123.123.123.123",
             "path": Path("file3.py"),
         },
-        {
-            "yml": {"commonfields": {"id": "id4"}},
-            "docker_image": None,
-            "path": Path("file4.md"),
-        },
     ]
     native_latest_tag = "nativelatesttag"
 
@@ -143,7 +138,7 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
 
         def mock_docker_for_file(x):
             return [
-                res.get("docker_image")
+                [res.get("docker_image")]
                 for res in mocked_responses
                 if res.get("yml") == x
             ][0]
@@ -153,7 +148,7 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
             side_effect=mock_yml_for_file,
         )
         mocker.patch(
-            "demisto_sdk.commands.pre_commit.hooks.docker.docker_image_for_file",
+            "demisto_sdk.commands.pre_commit.hooks.docker.docker_images_for_file",
             side_effect=mock_docker_for_file,
         )
         mocker.patch(

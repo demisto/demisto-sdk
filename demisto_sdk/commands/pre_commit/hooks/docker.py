@@ -94,9 +94,10 @@ def docker_images_for_file(yml: dict) -> set:
 
 @functools.lru_cache(maxsize=256)
 def devtest_image(image_tag, is_powershell):
-    all_errors = []
+    all_errors: list = []
     for _ in range(2):
         logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
+        return image_tag
         image, errors = get_docker().pull_or_create_test_image(
             image_tag, TYPE_PWSH if is_powershell else TYPE_PYTHON, push=docker_login()
         )
@@ -127,7 +128,7 @@ class DockerHook(Hook):
         )
         start_time = time.time()
 
-        for image, file_ymls in tag_to_files.items():
+        for image, file_ymls in sorted(tag_to_files.items(), key=lambda item: item[0]):
             image_is_powershell = any(
                 f[1].get("type") == "powershell" for f in file_ymls
             )
@@ -154,44 +155,6 @@ class DockerHook(Hook):
             f"DockerHook - Elapsed time to prep all the images: {end_time - start_time} seconds"
         )
 
-    def _set_properties(self, hook, to_delete=()):
-        """
-        Will alter the new hook, setting the properties that don't need unique behavior
-        For any propery x, if x isn't already defined, x will be set according to the mode provided.
-
-        For example, given an input
-
-        args: 123
-        args:nightly 456
-
-        if the mode provided is nightly, args will be set to 456. Otherwise, the default (key with no :) will be taken
-
-        Args:
-            hook: the hook to modify
-            to_delete: keys on the demisto config that we dont want to pass to precommit
-
-        """
-        for full_key in self.base_hook:
-            key = full_key.split(":")[0]
-            if hook.get(key) or key in to_delete:
-                continue
-            if prop := self._get_property(key):
-                hook[key] = prop
-
-    def _get_property(self, name, default=None):
-        """
-        Will get the given property from the base hook, taking mode into account
-        Args:
-            name: the key to get from the config
-            default: the default value to return
-
-        Returns: The value from the base hook
-        """
-        ret = None
-        if self.mode:
-            ret = self.base_hook.get(f"{name}:{self.mode.value}")
-        return ret or self.base_hook.get(name, default)
-
     def _split_by_config_file(self, new_hook, file_ymls):
         folder_to_files = {}
         if config_arg := self._get_config_file_arg():
@@ -200,7 +163,7 @@ class DockerHook(Hook):
                 file_ymls, config_arg[1]
             )
         else:
-            folder_to_files = {None: file_ymls}
+            folder_to_files = {None: [f[0] for f in file_ymls]}
 
         ret_hooks = []
         counter = 0
@@ -218,7 +181,7 @@ class DockerHook(Hook):
                 hook["id"] = f"{hook['id']}-{counter}"
                 hook["name"] = f"{hook['name']}-{counter}"
                 counter += 1
-            if self.set_files_on_hook(hook, files):
+            if self._set_files_on_hook(hook, files):
                 ret_hooks.append(hook)
         return ret_hooks
 

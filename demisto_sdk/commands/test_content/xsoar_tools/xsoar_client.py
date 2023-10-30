@@ -1,9 +1,11 @@
 import os
+import re
 import urllib.parse
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 import demisto_client
+from demisto_client.demisto_api.models import IncidentWrapper, IncidentSearchResponseWrapper
 import requests
 from demisto_client.demisto_api.rest import ApiException
 from pydantic import BaseModel, Field, SecretStr, validator
@@ -179,17 +181,9 @@ class XsoarApiInterface(ABC):
     def run_cli_command(
         self,
         command: str,
-        investigation_id: Optional[str] = None,
+        investigation_id: str,
         response_type: str = "object",
     ):
-        pass
-
-    # @abstractmethod
-    # def get_playground_investigation_id(self):
-    #     pass
-
-    @abstractmethod
-    def create_playground(self, response_type: str = "object"):
         pass
 
     @abstractmethod
@@ -216,7 +210,7 @@ class XsoarNGApiClient(XsoarApiInterface):
 
     @property
     def base_url(self) -> str:
-        return self.base_api_url.replace("api-", "").replace("/xsoar", "")
+        return re.sub(r"api-|/xsoar", "", self.base_api_url)
 
     @retry_http_request()
     def create_integration_instance(
@@ -321,7 +315,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         name: str,
         should_create_investigation: bool = True,
         attached_playbook_id: Optional[str] = None,
-    ):
+    ) -> IncidentWrapper:
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
         create_incident_request.create_investigation = should_create_investigation
         create_incident_request.playbook_id = attached_playbook_id
@@ -382,7 +376,7 @@ class XsoarNGApiClient(XsoarApiInterface):
                 )
 
         # if raw_response = None and status_code = 200, it means the indicator is in the exclusion list
-        raw_response, status_code, _ = demisto_client.generic_request_func(
+        raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/indicator/create",
@@ -474,7 +468,7 @@ class XsoarNGApiClient(XsoarApiInterface):
     @retry_http_request()
     def get_integrations_module_configuration(
         self, _id: Optional[str] = None, response_type: str = "object"
-    ) -> Union[List, Dict[str, Any]]:
+    ):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
@@ -501,7 +495,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
-    def get_installed_pack(self, pack_id: str):
+    def get_installed_pack(self, pack_id: str) -> Dict[str, Any]:
         for pack_info in self.get_installed_packs():
             if pack_info.get("id") == pack_id:
                 return pack_info
@@ -515,7 +509,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         headers: Optional[Dict[str, Any]] = None,
         username: Optional[str] = None,
         password: Optional[str] = None,
-    ):
+    ) -> requests.Response:
         if url_suffix and not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
         url = f"{self.external_base_url}/instance/execute/{instance_name}{url_suffix}"
@@ -526,7 +520,7 @@ class XsoarNGApiClient(XsoarApiInterface):
     def run_cli_command(
         self,
         command: str,
-        investigation_id: Optional[str] = None,
+        investigation_id: str,
         response_type: str = "object",
     ):
 
@@ -557,16 +551,6 @@ class XsoarNGApiClient(XsoarApiInterface):
         return raw_response
 
     @retry_http_request()
-    def create_playground(self, response_type: str = "object"):
-        raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
-            method="POST",
-            path="/entry",
-            response_type=response_type,
-        )
-        return raw_response
-
-    @retry_http_request()
     def delete_playbook(self, name: str, _id: str, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
@@ -580,6 +564,9 @@ class XsoarNGApiClient(XsoarApiInterface):
     @retry_http_request(times=20, delay=3)
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client, method="GET", path=f"/inv-playbook/{incident_id}", response_type=response_type
+            self=self.client,
+            method="GET",
+            path=f"/inv-playbook/{incident_id}",
+            response_type=response_type,
         )
         return raw_response

@@ -94,14 +94,16 @@ def docker_images_for_file(yml: dict) -> set:
 
 @functools.lru_cache(maxsize=256)
 def devtest_image(image_tag, is_powershell):
-    logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
-    image, errors = get_docker().pull_or_create_test_image(
-        image_tag, TYPE_PWSH if is_powershell else TYPE_PYTHON, push=docker_login()
-    )
-    if errors:
-        raise DockerException(errors)
-    else:
-        return image
+    all_errors = []
+    for _ in range(2):
+        logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
+        image, errors = get_docker().pull_or_create_test_image(
+            image_tag, TYPE_PWSH if is_powershell else TYPE_PYTHON, push=docker_login()
+        )
+        if not errors:
+            return image
+        all_errors.append(errors)
+    raise DockerException(all_errors)
 
 
 def get_environment_flag() -> str:

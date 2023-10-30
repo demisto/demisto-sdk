@@ -2,6 +2,7 @@
 import copy
 import os
 import platform
+import re
 import traceback
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -991,7 +992,14 @@ class Linter:
     ) -> Tuple[int, str]:
         log_prompt = f"{self._pack_name} - {linter} - Image {test_image}"
         logger.info(f"{log_prompt} - Start")
-        container_name = f"{self._pack_name}-{linter}"
+
+        # Get rid of chars that are not suitable for container names
+        test_image_cont_name = re.sub(
+            r"[^a-zA-Z0-9_.-]", "_", test_image.split("/")[-1]
+        )
+        test_image_cont_name = re.sub(r"^[^a-zA-Z0-9]", "", test_image_cont_name)
+
+        container_name = f"{self._pack_name}-{linter}-{test_image_cont_name}"
         # Check if previous run left container a live if it do, we remove it
         self._docker_remove_container(container_name)
 

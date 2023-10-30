@@ -43,7 +43,7 @@ jobs:
         run: |
           echo "Getting the contribution TL"
           cd Utils/github_workflow_scripts
-          sudo pip3 install pygithub
+          pip install --upgrade PyGitHub
           poetry run python ./handle_new_contribution.py
           contrib_tl=$( cat contrib_tl.txt )
           echo "$contrib_tl"

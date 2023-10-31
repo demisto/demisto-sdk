@@ -623,6 +623,8 @@ SERVER_CONTENT_ITEMS: dict = {
         "relatedAlerts",
         "associateIndicatorsToAlert",
         "unAssociateIndicatorsFromAlert",
+        "generateOTP",
+        "revokeOTP",
     ],
     ContentType.COMMAND: [
         # activedir-login integration commands

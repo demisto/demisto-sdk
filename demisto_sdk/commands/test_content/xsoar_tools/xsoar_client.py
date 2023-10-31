@@ -3,6 +3,7 @@ import re
 import urllib.parse
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
+import dateparser
 
 import demisto_client
 import requests

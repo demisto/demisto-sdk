@@ -253,11 +253,12 @@ def get_outputs(playbook):
     :return: list of outputs and list of errors.
     """
     errors = []
+    outputs = []
 
-    if not (outputs := get_playbook_outputs(playbook)):
+    if not (playbook_outputs := get_playbook_outputs(playbook)):
         return {}, []
 
-    for output in outputs:
+    for output in playbook_outputs:
         if not output.get("description"):
             errors.append(
                 "Error! You are missing description in playbook output {}".format(

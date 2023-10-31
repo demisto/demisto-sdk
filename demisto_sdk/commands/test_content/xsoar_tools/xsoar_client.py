@@ -3,8 +3,8 @@ import re
 import urllib.parse
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
-import dateparser
 
+import dateparser
 import demisto_client
 import requests
 from demisto_client.demisto_api.models import (
@@ -192,7 +192,7 @@ class XsoarApiInterface(ABC):
     def run_cli_command(
         self,
         command: str,
-        investigation_id: str,
+        investigation_id: Optional[str] = None,
         response_type: str = "object",
     ):
         pass
@@ -209,6 +209,10 @@ class XsoarApiInterface(ABC):
 
     @abstractmethod
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):
+        pass
+
+    @abstractmethod
+    def get_playground_investigation_id(self):
         pass
 
 
@@ -557,9 +561,12 @@ class XsoarNGApiClient(XsoarApiInterface):
     def run_cli_command(
         self,
         command: str,
-        investigation_id: str,
+        investigation_id: Optional[str] = None,
         response_type: str = "object",
     ):
+
+        if not investigation_id:
+            investigation_id = self.get_playground_investigation_id()
 
         update_entry = {
             "investigationId": investigation_id,
@@ -607,3 +614,13 @@ class XsoarNGApiClient(XsoarApiInterface):
             response_type=response_type,
         )
         return raw_response
+
+    @retry_http_request()
+    def get_playground_investigation_id(self):
+
+        response = self.client.search_investigations(filter=playground_filter())
+        for entry in response.data:
+            if entry.name == "Playground":
+                return entry.id
+
+        raise ValueError("Could not find any playground.")

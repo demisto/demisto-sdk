@@ -23,7 +23,7 @@ class CorrelationRuleParser(
 
     @cached_property
     def mapping(self):
-        return super().mapping.union({"object_id": "global_rule_id"})
+        return super().mapping.update({"object_id": "global_rule_id"})
 
     @property
     def object_id(self) -> str:

@@ -22,7 +22,7 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
 
     @cached_property
     def mapping(self):
-        return super().mapping.union({
+        return super().mapping.update({
             "object_id": "rule_id",
             "name": "rule_name",
             "layout_id": "layout_id",

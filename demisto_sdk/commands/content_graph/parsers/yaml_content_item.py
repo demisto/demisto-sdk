@@ -37,7 +37,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @cached_property
     def mapping(self):
-        return super().mapping.union({
+        return super().mapping.update({
             "name": "name",
             "deprecated": "deprecated",
             "description": "description",

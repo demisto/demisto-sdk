@@ -28,7 +28,7 @@ class XSIAMDashboardParser(
 
     @cached_property
     def mapping(self):
-        return super().mapping.union({
+        return super().mapping.update({
             "object_id": "global_id",
             "fromversion": "fromVersion",
             "toVersion": "toVersion",

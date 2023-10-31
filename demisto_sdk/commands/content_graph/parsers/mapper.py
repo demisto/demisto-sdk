@@ -26,7 +26,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
 
     @cached_property
     def mapping(self):
-        return super().mapping.union({"name": ["name", "brandName"]})
+        return super().mapping.update({"name": ["name", "brandName"]})
 
     @property
     def name(self) -> Optional[str]:

@@ -39,7 +39,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
 
     @cached_property
     def mapping(self):
-        return super().mapping.union({
+        return super().mapping.update({
             "docker_image": "dockerimage",
             "description": "comment",
         })

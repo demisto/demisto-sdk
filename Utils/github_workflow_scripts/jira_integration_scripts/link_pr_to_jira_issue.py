@@ -70,7 +70,7 @@ def trigger_generic_webhook(options):
     pr_num = options.pr_num
     username = options.username
     password = options.password
-    instance_url = options.url
+    gold_server_url = options.url
     instance_url = f"{gold_server_url}/instance/execute/{GENERIC_WEBHOOK_NAME}"
 
     logger.info(f"Detected Pr: {pr_title=}, {pr_link=}, {pr_body=}")

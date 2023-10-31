@@ -1063,3 +1063,58 @@ class TestReleaseNotes:
         )
         rn_per_content_item = contrib_converter.format_user_input()
         assert expected_rn_per_content_item == rn_per_content_item
+
+
+def test_process_existing_pack_script(tmp_path, mocker):
+
+    REPO_DIR_NAME = "content_repo"
+    SCRIPT_NAME = "script0"
+
+    mocker.patch.object(GitUtil, "added_files", return_value=set())
+    mocker.patch.object(GitUtil, "modified_files", return_value=set())
+    # Create all Necessary Temporary directories
+    # create temp directory for the repo
+    repo_dir = tmp_path / REPO_DIR_NAME
+    repo_dir.mkdir()
+    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
+    # that will be deleted after
+    target_dir = repo_dir / "target_dir"
+    target_dir.mkdir()
+    # create temp directory in which the contribution zip will reside
+    contribution_zip_dir = tmp_path / "contrib_zip"
+    contribution_zip_dir.mkdir()
+    # Create fake content repo and contribution zip
+    repo = Repo(repo_dir)
+    mocker.patch(
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH",
+        repo.path
+    )
+    # Create Pack
+    pack = repo.create_pack("TestPack")
+
+    # Create Script and it's README
+    script = pack.create_script(SCRIPT_NAME)
+    script.create_default_script()
+    expected_readme_text = "Script before contribution"
+    script.readme.write(expected_readme_text)
+
+    # Create Contribution
+    contrib_zip = Contribution(target_dir, "ContribTestPack", repo)
+    contrib_zip.create_zip(contribution_zip_dir)
+
+    contrib_converter = ContributionConverter(
+        name="Test Pack",
+        author="Kobbi Gal",
+        description="Test contrib-management process_pack",
+        contribution=contrib_zip.created_zip_filepath,
+        gh_user="kgal-pan",
+        create_new=False
+    )
+
+    # Convert the contribution to a pack
+    contrib_converter.convert_contribution_to_pack()
+
+    converted_pack_path = repo_dir / "Packs" / "TestPack"
+    with open(converted_pack_path / "Scripts" / f"script-{SCRIPT_NAME}_README.md", "r") as actual_readme:
+        actual_readme_text = actual_readme.read()
+        assert actual_readme_text == "Script before contribution"

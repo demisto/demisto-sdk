@@ -1128,3 +1128,61 @@ def test_process_existing_pack_script(tmp_path, mocker):
     with open(converted_script_readme_path, "r") as actual_readme:
         actual_readme_text = actual_readme.read()
         assert actual_readme_text == expected_readme_text
+
+
+def test_process_existing_pack_integration(tmp_path, mocker):
+
+    REPO_DIR_NAME = "content_repo"
+    INTEGRATION_NAME = "integration0"
+    TEST_PACK_NAME = "TestPack"
+
+    mocker.patch.object(GitUtil, "added_files", return_value=set())
+    mocker.patch.object(GitUtil, "modified_files", return_value=set())
+    # Create all Necessary Temporary directories
+    # create temp directory for the repo
+    repo_dir = tmp_path / REPO_DIR_NAME
+    repo_dir.mkdir()
+    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
+    # that will be deleted after
+    target_dir = repo_dir / "target_dir"
+    target_dir.mkdir()
+    # create temp directory in which the contribution zip will reside
+    contribution_zip_dir = tmp_path / "contrib_zip"
+    contribution_zip_dir.mkdir()
+    # Create fake content repo and contribution zip
+    repo = Repo(repo_dir)
+    mocker.patch(
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH",
+        repo.path
+    )
+    # Create Pack
+    pack = repo.create_pack(TEST_PACK_NAME)
+
+    # Create Integration and it's README
+    integration = pack.create_integration(INTEGRATION_NAME)
+    integration.create_default_integration()
+    expected_readme_text = "Integration readme before contribution"
+    integration.readme.write(expected_readme_text)
+
+    # Create Contribution
+    contrib_zip = Contribution(target_dir, TEST_PACK_NAME, repo)
+    contrib_zip.create_zip(contribution_zip_dir)
+
+    contrib_converter = ContributionConverter(
+        name=TEST_PACK_NAME,
+        author="Kobbi Gal",
+        description="Test contrib-management process_pack",
+        contribution=contrib_zip.created_zip_filepath,
+        gh_user="kgal-pan",
+        create_new=False
+    )
+
+    # Convert the contribution to a pack
+    contrib_converter.convert_contribution_to_pack()
+
+    converted_pack_path = repo_dir / PACKS_DIR / TEST_PACK_NAME
+    converted_integration_readme_path = converted_pack_path / SCRIPTS_DIR /\
+        f"{SCRIPT_PREFIX}-{INTEGRATION_NAME}_{PACKS_README_FILE_NAME}"
+    with open(converted_integration_readme_path, "r") as actual_readme:
+        actual_readme_text = actual_readme.read()
+        assert actual_readme_text == expected_readme_text

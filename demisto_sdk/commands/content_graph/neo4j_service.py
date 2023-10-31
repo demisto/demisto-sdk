@@ -33,7 +33,7 @@ class Neo4jServiceException(Exception):
     pass
 
 
-def _stop_neo4j_service_docker(docker_client: docker.DockerClient):  # type: ignore
+def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
     """Helper function to stop the neo4j service docker container
 
     Args:

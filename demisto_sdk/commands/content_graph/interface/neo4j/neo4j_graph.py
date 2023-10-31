@@ -1,4 +1,3 @@
-import os
 from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
@@ -122,10 +121,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
-        self.output_path = None
-        if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
-            self.output_path = Path(artifacts_folder) / "content_graph"
-            self.output_path.mkdir(parents=True, exist_ok=True)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self
@@ -663,10 +658,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             **properties,
         )
 
-    def create_pack_dependencies(self):
+    def create_pack_dependencies(self, output_path: Optional[Path] = None):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
-            session.execute_write(create_pack_dependencies)
+            session.execute_write(create_pack_dependencies, output_path=output_path)
 
     def get_schema(self) -> dict:
         with self.driver.session() as session:

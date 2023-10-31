@@ -127,9 +127,8 @@ def update_content_graph(
     builder.update_graph(packs_to_update)
 
     if dependencies:
-        content_graph_interface.create_pack_dependencies()
-    if output_path:
-        output_path = output_path / marketplace.value
+        content_graph_interface.create_pack_dependencies(output_path)
+
     content_graph_interface.export_graph(output_path, override_commit=use_git)
     logger.info(
         f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "

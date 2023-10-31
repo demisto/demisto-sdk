@@ -1,6 +1,5 @@
-import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from neo4j import Transaction
 
@@ -68,11 +67,13 @@ def get_all_level_packs_relationships(
     }
 
 
-def create_pack_dependencies(tx: Transaction) -> None:
+def create_pack_dependencies(
+    tx: Transaction, output_path: Optional[Path] = None
+) -> None:
     remove_existing_depends_on_relationships(tx)
     update_uses_for_integration_commands(tx)
     delete_deprecatedcontent_relationship(tx)  # TODO decide what to do with this
-    create_depends_on_relationships(tx)
+    create_depends_on_relationships(tx, output_path)
 
 
 def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
@@ -138,7 +139,9 @@ RETURN
     run_query(tx, query)
 
 
-def create_depends_on_relationships(tx: Transaction) -> None:
+def create_depends_on_relationships(
+    tx: Transaction, output_path: Optional[Path] = None
+) -> None:
     query = f"""// Creates DEPENDS_ON relationships
 MATCH (pack_a:{ContentType.BASE_CONTENT})<-[:{RelationshipType.IN_PACK}]-(a)
     -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})
@@ -174,8 +177,6 @@ RETURN
         pack_b = row["pack_b"]
         outputs.setdefault(pack_a, {}).setdefault(pack_b, []).extend(row["reasons"])
 
-    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
-        artifacts_folder
-    ).exists():
-        with open(f"{artifacts_folder}/depends_on.json", "w") as fp:
+    if output_path and Path(output_path).exists():
+        with open(output_path / "depends_on.json", "w") as fp:
             json.dump(outputs, fp, indent=4)

@@ -44,9 +44,7 @@ def create_content_graph(
     builder.init_database()
     builder.create_graph()
     if dependencies:
-        content_graph_interface.create_pack_dependencies()
-    if output_path:
-        output_path = output_path / marketplace.value
+        content_graph_interface.create_pack_dependencies(output_path)
     content_graph_interface.export_graph(output_path)
     logger.info(
         f"Successfully created the content graph. UI representation "

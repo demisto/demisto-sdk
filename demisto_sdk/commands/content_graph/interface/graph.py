@@ -270,7 +270,7 @@ class ContentGraphInterface(ABC):
         return ContentDTO(packs=packs)
 
     @abstractmethod
-    def create_pack_dependencies(self):
+    def create_pack_dependencies(self, output_path: Optional[Path] = None):
         ...
 
     @abstractmethod

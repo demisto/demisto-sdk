@@ -4009,3 +4009,25 @@ def parse_int_or_default(value: Any, default: int) -> int:
 
 def get_all_repo_pack_ids() -> list:
     return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]
+
+
+def get_playbook_inputs(playbook: dict) -> list:
+    inputs = playbook.get("inputs", [])
+    if not inputs:
+        inputs = [
+            item
+            for section in playbook.get("inputsSections", [])
+            for item in section.get("inputs", [])
+        ]
+    return inputs
+
+
+def get_playbook_outputs(playbook: dict) -> list:
+    outputs = playbook.get("outputs", [])
+    if not outputs:
+        outputs = [
+            item
+            for section in playbook.get("outputsSections", [])
+            for item in section.get("outputs", [])
+        ]
+    return outputs

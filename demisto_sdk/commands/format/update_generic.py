@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_dict_from_file,
     get_max_version,
+    get_playbook_outputs,
     get_remote_file,
     get_yaml,
     is_file_from_content_repo,
@@ -488,7 +489,7 @@ class BaseUpdate:
         for arg in self.data.get("args", ()):
             if description := arg.get("description"):
                 arg["description"] = _add_period(description)
-        for output in self.data.get("outputs", ()):
+        for output in self.data.get("outputs", ()) or get_playbook_outputs(self.data):
             if description := output.get("description"):
                 output["description"] = _add_period(description)
 

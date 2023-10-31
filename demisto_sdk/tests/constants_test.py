@@ -225,6 +225,12 @@ INVALID_PLAYBOOK_INPUTS_USE = (
 VALID_PLAYBOOK_INPUTS_USE = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook_valid_inputs.yml"
 )
+INVALID_PLAYBOOK_INPUTS_SECTIONS_USE = (
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook_inputs_sections_not_in_use.yml"
+)
+VALID_PLAYBOOK_INPUTS_SECTIONS_USE = (
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook_valid_inputs_sections.yml"
+)
 MODELING_RULES_SCHEMA_FILE = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/modeling_rules_schema.json"
 )

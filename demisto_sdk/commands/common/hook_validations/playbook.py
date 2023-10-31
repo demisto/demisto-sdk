@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator,
 )
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import is_string_uuid
+from demisto_sdk.commands.common.tools import get_playbook_inputs, is_string_uuid
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -128,7 +128,7 @@ class PlaybookValidator(ContentEntityValidator):
         Returns: A set of all inputs defined in the 'inputs' section of playbook.
 
         """
-        inputs: Dict = self.current_file.get("inputs", {})
+        inputs: list = get_playbook_inputs(self.current_file)
         inputs_keys = []
         for input in inputs:
             if input["key"]:
@@ -736,7 +736,9 @@ class PlaybookValidator(ContentEntityValidator):
             ]
             answers.extend(tasks_check)
 
-        answers.append(self.handle_playbook_inputs(self.current_file.get("inputs", [])))
+        answers.append(
+            self.handle_playbook_inputs(get_playbook_inputs(self.current_file))
+        )
         return all(answers)
 
     def handle_condition_task(self, task, task_id, task_name):
@@ -1044,20 +1046,24 @@ class PlaybookValidator(ContentEntityValidator):
         return True
 
     def is_valid_with_indicators_input(self):
-        input_data = self.current_file.get("inputs", [])
-        for item in input_data:
-            entity = (
-                item["playbookInputQuery"].get("queryEntity", "")
-                if item.get("playbookInputQuery", None)
-                else None
-            )
-            if entity == "indicators":
-                answer = [
+        if not (indicators_input := self.current_file.get("inputQuery", {})):
+            for item in self.current_file.get("inputs", []):
+                if item.get("playbookInputQuery"):
+                    indicators_input = item
+                    break
+
+        if (
+            indicators_input
+            and indicators_input["playbookInputQuery"].get("queryEntity")
+            == "indicators"
+        ):
+            return all(
+                [
                     self.is_playbook_quiet_mode(),
                     self.is_tasks_quiet_mode(),
                     self.is_stopping_on_error(),
                 ]
-                return all(answer)
+            )
         return True
 
     @error_codes("PB114")

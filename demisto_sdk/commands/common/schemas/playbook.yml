@@ -55,18 +55,21 @@ mapping:
       type: seq
       sequence:
         - include: output_schema
-  outputsections:
+  outputsSections:
     type: seq
     sequence:
-      - include: outputsections_schema
+      - include: outputsSection_schema
   inputs:
     type: seq
     sequence:
       - include: input_schema
-  inputsections:
+  inputQuery:
+    type: map
+    allowempty: true
+  inputsSections:
     type: seq
     sequence:
-      - include: inputsections_schema
+      - include: inputsSection_schema
   tags:
     type: seq
     sequence:
@@ -321,7 +324,7 @@ schema;input_schema:
       type: any
 
 # playbook->inputSections
-schema;inputsections_schema:
+schema;inputsSection_schema:
   type: map
   mapping:
     name:
@@ -355,7 +358,7 @@ schema;output_schema:
       type: str
 
 # playbook->outputsSections
-schema;outputsections_schema:
+schema;outputsSection_schema:
   type: map
   mapping:
     name:

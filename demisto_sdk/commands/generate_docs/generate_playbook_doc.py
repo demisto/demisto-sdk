@@ -3,7 +3,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import (
+    get_playbook_inputs,
+    get_playbook_outputs,
+    get_yaml,
+)
 from demisto_sdk.commands.generate_docs.common import (
     HEADER_TYPE,
     generate_list_section,
@@ -205,10 +209,9 @@ def get_inputs(playbook: Dict[str, List[Dict]]) -> Tuple[List[Dict], List[str]]:
     errors = []
     inputs = []
 
-    if not playbook.get("inputs"):
+    if not (playbook_inputs := get_playbook_inputs(playbook)):
         return [], []
 
-    playbook_inputs: List = playbook.get("inputs", [])
     for _input in playbook_inputs:
         name = _input.get("key")
         description = string_escape_md(_input.get("description", ""), escape_html=False)
@@ -250,12 +253,11 @@ def get_outputs(playbook):
     :return: list of outputs and list of errors.
     """
     errors = []
-    outputs = []
 
-    if not playbook.get("outputs"):
+    if not (outputs := get_playbook_outputs(playbook)):
         return {}, []
 
-    for output in playbook.get("outputs"):
+    for output in outputs:
         if not output.get("description"):
             errors.append(
                 "Error! You are missing description in playbook output {}".format(

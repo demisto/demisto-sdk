@@ -95,6 +95,8 @@ from demisto_sdk.commands.common.tools import (
     get_marketplace_to_core_packs,
     get_pack_metadata,
     get_pack_names_from_files,
+    get_playbook_inputs,
+    get_playbook_outputs,
     get_relative_path_from_packs_dir,
     get_release_note_entries,
     get_release_notes_file_path,
@@ -3253,3 +3255,43 @@ def test_is_epoch_datetime(string: str, expected_result: bool):
     from demisto_sdk.commands.common.tools import is_epoch_datetime
 
     assert is_epoch_datetime(string) == expected_result
+
+
+@pytest.mark.parametrize(
+    "playbook, expected",
+    [
+        ({"inputs": ["hello1"]}, ["hello1"]),
+        ({"inputsSections": [{"inputs": ["hello2"]}]}, ["hello2"]),
+        ({}, []),
+    ],
+)
+def test_get_playbook_inputs(playbook: dict, expected: list):
+    """
+    Given:
+    - A playbook dict representation
+    When:
+    - Calling get_playbook_inputs()
+    Then:
+    - Ensure the expected inputs are returned.
+    """
+    assert get_playbook_inputs(playbook) == expected
+
+
+@pytest.mark.parametrize(
+    "playbook, expected",
+    [
+        ({"outputs": ["hello1"]}, ["hello1"]),
+        ({"outputsSections": [{"outputs": ["hello2"]}]}, ["hello2"]),
+        ({}, []),
+    ],
+)
+def test_get_playbook_outputs(playbook: dict, expected: list):
+    """
+    Given:
+    - A playbook dict representation
+    When:
+    - Calling get_playbook_outputs()
+    Then:
+    - Ensure the expected outputs are returned.
+    """
+    assert get_playbook_outputs(playbook) == expected

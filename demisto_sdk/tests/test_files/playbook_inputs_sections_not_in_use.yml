@@ -1,0 +1,40 @@
+id: Inputs Test
+version: -1
+contentitemexportablefields:
+  contentitemfields: {}
+name: Inputs Test
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    task:
+    condition:
+    - - operator: isEqualString
+        left:
+          value:
+            simple: inputs.TestInputElse
+          iscontext: true
+        right:
+          value:
+            simple: 'True'
+        ignorecase: true
+inputsSections:
+  - name: TestInputsSection1
+    description: ""
+    id: 16eaa132-f160-4fc8-9788-16387d940a58
+    inputs:
+    - key: TestInput
+      value:
+        simple: Administrator
+      required: true
+      description: ''
+      playbookInputQuery:
+    - key: SecondTestInput
+      value:
+        simple: Administrator
+      required: true
+      description: ''
+      playbookInputQuery:
+    outputs: []
+    tests: []
+    fromversion: 6.1.0

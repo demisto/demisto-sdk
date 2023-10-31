@@ -10,7 +10,14 @@ import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
-from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
+from demisto_sdk.commands.common.constants import (
+    LAYOUT,
+    LAYOUTS_CONTAINER,
+    PACKS_DIR,
+    PACKS_README_FILE_NAME,
+    SCRIPTS_DIR,
+    SCRIPT_PREFIX
+)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -1069,6 +1076,7 @@ def test_process_existing_pack_script(tmp_path, mocker):
 
     REPO_DIR_NAME = "content_repo"
     SCRIPT_NAME = "script0"
+    TEST_PACK_NAME = "TestPack"
 
     mocker.patch.object(GitUtil, "added_files", return_value=set())
     mocker.patch.object(GitUtil, "modified_files", return_value=set())
@@ -1090,7 +1098,7 @@ def test_process_existing_pack_script(tmp_path, mocker):
         repo.path
     )
     # Create Pack
-    pack = repo.create_pack("TestPack")
+    pack = repo.create_pack(TEST_PACK_NAME)
 
     # Create Script and it's README
     script = pack.create_script(SCRIPT_NAME)
@@ -1099,11 +1107,11 @@ def test_process_existing_pack_script(tmp_path, mocker):
     script.readme.write(expected_readme_text)
 
     # Create Contribution
-    contrib_zip = Contribution(target_dir, "ContribTestPack", repo)
+    contrib_zip = Contribution(target_dir, TEST_PACK_NAME, repo)
     contrib_zip.create_zip(contribution_zip_dir)
 
     contrib_converter = ContributionConverter(
-        name="Test Pack",
+        name=TEST_PACK_NAME,
         author="Kobbi Gal",
         description="Test contrib-management process_pack",
         contribution=contrib_zip.created_zip_filepath,
@@ -1114,7 +1122,9 @@ def test_process_existing_pack_script(tmp_path, mocker):
     # Convert the contribution to a pack
     contrib_converter.convert_contribution_to_pack()
 
-    converted_pack_path = repo_dir / "Packs" / "TestPack"
-    with open(converted_pack_path / "Scripts" / f"script-{SCRIPT_NAME}_README.md", "r") as actual_readme:
+    converted_pack_path = repo_dir / PACKS_DIR / TEST_PACK_NAME
+    converted_script_readme_path = converted_pack_path / SCRIPTS_DIR /\
+        f"{SCRIPT_PREFIX}-{SCRIPT_NAME}_{PACKS_README_FILE_NAME}"
+    with open(converted_script_readme_path, "r") as actual_readme:
         actual_readme_text = actual_readme.read()
-        assert actual_readme_text == "Script before contribution"
+        assert actual_readme_text == expected_readme_text

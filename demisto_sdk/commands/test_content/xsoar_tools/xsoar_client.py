@@ -369,7 +369,7 @@ class XsoarNGApiClient(XsoarApiInterface):
             self=self.client,
             method="POST",
             path="/incidents/search",
-            body={"filters": filters},
+            body={"filter": filters},
             response_type=response_type,
         )
         return raw_response

@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md
+* Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks
 * Fixed an issue where **validate** falsely failed with error `PB101` and `PB123` due to condition names discrepancy
 * Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
 * Added a new validation (`IN162`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.

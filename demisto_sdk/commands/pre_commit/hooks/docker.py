@@ -126,7 +126,7 @@ def docker_images_for_file(yml: dict) -> set:
     if isinstance(script, dict):
         if image := script.get("dockerimage", ""):
             ret.add(image)
-    if images := yml.get("alt_dockerimages"):  # todo test
+    if images := yml.get("alt_dockerimages"):
         ret.update(images)
     return ret
 

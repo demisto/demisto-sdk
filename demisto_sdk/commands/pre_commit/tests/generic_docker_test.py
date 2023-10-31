@@ -11,13 +11,6 @@ from demisto_sdk.commands.pre_commit.hooks.docker import (
 from demisto_sdk.commands.pre_commit.tests.pre_commit_test import create_hook
 
 
-def assert_lists_have_same_elements(list1, list2):
-    assert len(list1) == len(list2), "Lists have different lengths"
-    for item1 in list1:
-        if item1 not in list2:
-            assert False, "Lists do not have the same elements"
-
-
 @pytest.fixture(autouse=True)
 def native_image_config(mocker, repo) -> NativeImageConfig:
     native_image_config = NativeImageConfig.from_path(
@@ -87,6 +80,15 @@ def test_moded_properties(mocker, mode, expected_text):
 
 
 def test_get_property():
+    """
+    Given:
+        A config file
+    When:
+        Calling on same config with different modes
+    Then:
+        The proper config is returned
+
+    """
     nightly_val = "nightlyval"
 
     value1 = "value1"
@@ -172,7 +174,6 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
         {"commonfields": {"id": "id2"}},
     )
 
-    set_mocks()
     tag_to_files = docker_tag_to_runfiles(
         [r.get("path") for r in mocked_responses], "native:dev,from-yml"
     )
@@ -180,6 +181,39 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
     assert native_latest_tag in tag_to_files
 
 
-# def test__split_by_config_file():
-#     file_ymls = [("file.py", {})]
-#     _split_by_config_file()
+def test__set_properties():
+    """
+    Given:
+        A config file
+    When:
+        Calling on same config with different modes
+    Then:
+        The proper config is returned
+    """
+    nightly_val = "nightlyval"
+
+    value1 = "value1"
+
+    def assert_get_prop_successful(mode, expected_value, remove_props):
+        res = {}
+        hook = create_hook(
+            {
+                "prop1": value1,
+                "prop1:nightly": nightly_val,
+                "prop1:othermode": "someval",
+                "other_prop": "whatever",
+                "remove_me": True,
+                "nonused:mode": "isignored",
+            }
+        )
+        DockerHook(**hook, mode=mode)._set_properties(res, to_delete=remove_props)
+        assert res == expected_value
+
+    assert_get_prop_successful(
+        PreCommitModes.NIGHTLY,
+        {"prop1": nightly_val, "other_prop": "whatever"},
+        ["remove_me"],
+    )
+    assert_get_prop_successful(
+        None, {"prop1": value1, "other_prop": "whatever"}, ["remove_me"]
+    )

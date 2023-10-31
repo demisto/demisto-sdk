@@ -1,6 +1,6 @@
 import functools
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -28,7 +28,7 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
 
 
 @functools.lru_cache
-def get_dev_native_image() -> Union[str, None]:
+def get_dev_native_image() -> Optional[str]:
     """
     Gets the development (dev) native image, which is the latest tag of the native image from Docker Hub.
     Args:

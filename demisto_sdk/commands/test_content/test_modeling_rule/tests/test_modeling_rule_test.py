@@ -343,6 +343,11 @@ class TestTheTestModelingRuleCommandSingleRule:
                         f"{fake_env_vars.demisto_base_url}/logs/v1/xsiam",
                         status_code=500,
                     )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
+                        json={},
+                        status_code=500,
+                    )
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
@@ -690,7 +695,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
         event_id_1 = str(fake_test_data.data[0].test_data_event_id)
         event_id_2 = str(fake_test_data.data[1].test_data_event_id)
-
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            side_effect=[event_id_1, event_id_2] * 3,
+        )
         try:
             with requests_mock.Mocker() as m:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -719,6 +727,15 @@ class TestTheTestModelingRuleCommandSingleRule:
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {
@@ -836,9 +853,22 @@ class TestTheTestModelingRuleCommandSingleRule:
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
                     event_id_1 = str(fake_test_data.data[0].test_data_event_id)
                     event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    mocker.patch(
+                        "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+                        side_effect=[event_id_1, event_id_2] * 6,
+                    )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {
@@ -969,9 +999,22 @@ class TestTheTestModelingRuleCommandSingleRule:
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
                     event_id_1 = str(fake_test_data.data[0].test_data_event_id)
                     event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    mocker.patch(
+                        "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+                        side_effect=[event_id_1, event_id_2] * 3,
+                    )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {
@@ -1177,11 +1220,24 @@ class TestTheTestModelingRuleCommandSingleRule:
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
                     event_id_1 = str(fake_test_data.data[0].test_data_event_id)
                     event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    mocker.patch(
+                        "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+                        side_effect=[event_id_1, event_id_1] * 3,
+                    )
                     query_results_1 = fake_test_data.data[0].expected_values.copy()
                     query_results_1["xdm.event.outcome_reason"] = "DisAllowed"
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {
@@ -1455,9 +1511,22 @@ class TestTheTestModelingRuleCommandMultipleRules:
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
                     event_id_1 = str(fake_test_data.data[0].test_data_event_id)
                     event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    mocker.patch(
+                        "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+                        side_effect=[event_id_1, event_id_2] * 6,
+                    )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {
@@ -1922,10 +1991,8 @@ class TestValidateSchemaAlignedWithTestData:
             - running validate_schema_aligned_with_test_data.
 
         Then:
-            - verify 'Typer.exception' is raised.
-            - verify that there was not warning raised
-            - verify that error was raised indicating that the testdata contains events that has the same key with
-              different types.
+            - verify no exception is raised.
+            - verify that the correct message is printed to logger info.
         """
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             validate_schema_aligned_with_test_data,
@@ -1974,3 +2041,154 @@ class TestValidateSchemaAlignedWithTestData:
             in logger_error_mocker.call_args_list[0].args[0]
         )
         assert not logger_warning_mocker.called
+
+
+class TestDeleteExistingDataset:
+    def test_delete_data_set(self, pack, monkeypatch, mocker):
+        """
+        Given:
+            - An existing dataset on the tenant.
+
+        When:
+            - The command is run with 'delete_existing_dataset' flag.
+
+        Then:
+            - Verify no exception is raised.
+            - Verify we get a message saying the dataset was deleted.
+
+        """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            app as test_modeling_rule_cmd,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
+
+        # Create Test Data File
+        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+        modeling_rule_directory = Path(
+            pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME
+        )
+        test_data_file = (
+            modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
+        )
+        path_to_fake_test_data_file = (
+            Path(__file__).parent / "test_data/fake_test_data_file.json"
+        )
+        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
+        # mocking Variables
+        id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
+        event_id_1 = str(fake_test_data.data[0].test_data_event_id)
+        event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            side_effect=[event_id_1, event_id_2] * 6,
+        )
+        try:
+            with requests_mock.Mocker() as m:
+                with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
+                    # installed_packs mock request
+                    m.get(
+                        f"{fake_env_vars.demisto_base_url}/xsoar/contentpacks/metadata/installed",
+                        json=[{"name": pack.name, "id": pack.name}],
+                    )
+                    # push_to_dataset mock request
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/logs/v1/xsiam",
+                        json={},
+                        status_code=200,
+                    )
+                    # delete_dataset mock request
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/delete_dataset",
+                        json={},
+                        status_code=200,
+                    )
+                    # start_xql_query mocked request
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
+                        [
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            }
+                        ],
+                    )
+                    # get_xql_query_result mocked request
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
+                        [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": ["fake_results"]},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {
+                                            "data": [
+                                                {
+                                                    id_key: event_id_1,
+                                                    **fake_test_data.data[
+                                                        0
+                                                    ].expected_values,
+                                                },
+                                                {
+                                                    id_key: event_id_2,
+                                                    **fake_test_data.data[
+                                                        1
+                                                    ].expected_values,
+                                                },
+                                            ]
+                                        },
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                        ],
+                    )
+                    # Act
+                    result = runner.invoke(
+                        test_modeling_rule_cmd,
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                            "--delete_existing_dataset",
+                        ],
+                    )
+                    # Assert
+                    assert result.exit_code == 0
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list,
+                        "Deleting existing fake_fakerson_raw dataset",
+                    )
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list,
+                        "Dataset fake_fakerson_raw deleted successfully",
+                    )
+        except typer.Exit:
+            assert False, "No exception should be raised in this scenario."

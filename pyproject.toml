@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.20.4"
+version = "1.20.8"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -58,7 +58,7 @@ ujson = "^5.1.0"
 urllib3 = "^1.26.9"
 wcmatch = "^8.3"
 yamlordereddictloader = "^0.4.0"
-GitPython = "^3.1.32"
+GitPython = "^3.1.37"
 Pebble = ">=4.6.3,<6.0.0"
 PyPDF2 = "^1.28.6"
 giturlparse = "^0.10.0"
@@ -117,6 +117,7 @@ pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 black = "^22.10.0"
 ipykernel = "^6.16.1"
+ruff = "^0.1.2"
 
 [tool.poetry.extras]
 build = ["gsutil"]

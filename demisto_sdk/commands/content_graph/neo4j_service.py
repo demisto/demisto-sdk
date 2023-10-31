@@ -110,6 +110,7 @@ def _docker_start():
             "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             "NEO4J_dbms_connector_http_advertised__address": "127.0.0.1:7474",
             "NEO4J_dbms_connector_bolt_advertised__address": "127.0.0.1:7687",
+            "NEO4J_dbms_memory_transaction_total_max": "600m",
         },
         healthcheck={
             "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
@@ -160,6 +161,9 @@ def stop(force: bool = False, clean: bool = False):
     _stop_neo4j_service_docker(docker_client)
     if clean:
         shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
+        shutil.rmtree(
+            REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER, ignore_errors=True
+        )
 
 
 def is_alive():

@@ -1,9 +1,68 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **validate** falsely failed with error `PB101` and `PB123` due to condition names discrepancy
+* Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
+* Added a new validation (`IN162`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.
+* A rewrite for the **download** command, with many improvements and fixes, including:
+  * Large optimizations: reducing the runtime and CPU usage by a significant amount when there's a considerable amount of custom content items on the server.
+  * Improved error handling and messages, logs, and documentation (`demisto-sdk download --help`) for the command.
+  * Fixed an issue where custom PowerShell-based integrations and automations would not download properly.
+  * Fixed an issue where names of the following custom content items would not have their IDs replaced from UUIDs:
+    * Classifiers
+    * Dashboards
+    * Indicator Types
+    * Reports
+    * Widgets
+  * Fixed an issue where the download would fail when using the '-r' / '--regex' flag when there were multiple custom content items on the server matching the pattern, having the same name.
+  * Fixed an issue where integrations / automations with a dot in their name would be saved with an incorrect file name (For example: `Test v1.1.py` would be named `Test v1.py`)
+
+**Note:** Due to the optimization changes made to the **download** command, playbooks might be formatted a bit differently than before when downloaded from the server using the new version. The playbooks should however function and work the same.
+* Fixed an issue where the **pre-commit** command, now correctly gathers the associated python file when a yml file is provided as input.
+
+## 1.20.8
+* Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.
+* Internal: Fixed an issue where the `tools.get_display_name` function would return incorrect values for "Indicator Type" content items.
+* Changed the error code of the **validate** check for deprecated display names from `IN157` (duplicated a code used by a `nativeimage` check) to `IN160` (new code).
+* Changed the error code of the **validate** check for invalid SIEM marketplace values from `IN151` (duplicated a code used by a check for empty command arguments) to `IN161` (new code).
+* Added JUnit XML output support for **test-content** command.
+* Updated the **run-unit-tests** command to not fail on JavaScript items, but skip them instead.
+* Updated the `validate` pre-commit hook to run before the `run-unit-tests` hook. This will prevent `validate` from falling on errors about temporary files that are sometimes created when running unit-tests.
+* Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
+* Added a new key **supportlevelheader** to the integration schema.
+* **format** command will run without the content graph if graph creation fails.
+* Updated the `GENERAL_DEFAULT_FROMVERSION` variable from **6.9.0** to **6.10.0**.
+* Internal: Replaced the `tools._read_file` function with a more generic `tools.safe_read_unicode` function.
+* Internal: Added `pathlib.Path` support to the `tools.get_yml_paths_in_dir` and `tools.get_child_directories` functions.
+* Fixed an issue in the **test-modeling-rule** command, where possible exceptions were not caught.
+* Added the *--delete_existing_dataset/-dd* flag to the **modeling-rules test** command to delete an existing dataset in the tenant.
+* Added a new validation (`IN159`) which validates that reputation commands context outputs are spelled according to standards.
+* Internal: Added a `loaded_data` parameter to `YmlSplitter` to allow passing preloaded YAML data.
+
+## 1.20.7
+* Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
+* Fixed an issue where the documentation was out of date with the current structure of **demisto-sdk** which does not support command auto-completion.
+* Improved logging for **lint** and **prepare-content** commands.
+* Internal: Added the `CI_SERVER_HOST`, `CI_PROJECT_ID` environment variables.
+
+## 1.20.6
+* Added the *--mode* argument to the **pre-commit** command, to run pre-commit with special mode (to run with different settings), supported mode are: 'nightly'.
+* Modified the `validate` and `format` pre-commit hooks to run with the `--all` flag only when the `--mode=nightly` argument and `--all` flag were given.
+* Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` argument when running **pre-commit** command wite the `--mode=nightly` argument.
+* Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
+* Fixed an issue where kebab-case arguments were not parsed correctly.
+* Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with new lines followed by square/curly brackets.
+* Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
+* Fixed an issue where an error log message changed the terminal color.
+
+## 1.20.5
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where **modeling-rule test** command failed to properly render the comparison table when boolean value were printed.
 * Fixed an issue were format added a dot at end of the description that already ends with question mark and exclamation mark.
 * Fixed an issue where **upload** failed when trying to upload an indicator field.
+* Updated the **update-content-graph** command to work with external repositories.
+* Updated the **validate** command to work with external repositories when using the *--graph* flag.
+* added support for `isfetchassets` flag in content graph
 
 ## 1.20.4
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.

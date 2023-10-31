@@ -56,10 +56,12 @@ class ContentItem(BaseContent):
     is_test: bool = False
 
     @validator("path", always=True)
-    def validate_path(cls, v: Path) -> Path:
+    def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
-        return CONTENT_PATH / v
+        if not CONTENT_PATH.name:
+            return CONTENT_PATH / v
+        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
 
     @property
     def pack_id(self) -> str:

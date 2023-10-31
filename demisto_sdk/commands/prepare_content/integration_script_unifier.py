@@ -15,6 +15,8 @@ from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedSc
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
     DEFAULT_IMAGE_PREFIX,
+    PARTNER_SUPPORT,
+    SUPPORT_LEVEL_HEADER,
     TYPE_TO_EXTENSION,
     FileType,
     ImagesFolderNames,
@@ -87,8 +89,8 @@ class IntegrationScriptUnifier(Unifier):
         try:
             IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
-            logger.info(
-                f"[yellow]No code file found for {path}, assuming it is already unified[/yellow]"
+            logger.warning(
+                f"No code file found for '{path}', assuming file is already unified."
             )
             return data
         yml_unified = copy.deepcopy(data)
@@ -202,9 +204,7 @@ class IntegrationScriptUnifier(Unifier):
             image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
             yml_unified["image"] = image_data
         else:
-            logger.warning(
-                f"[yellow]Failed getting image data for {package_path}[/yellow]"
-            )
+            logger.warning(f"Failed getting image data for '{package_path}'.")
 
         return yml_unified, found_img_path
 
@@ -351,18 +351,18 @@ class IntegrationScriptUnifier(Unifier):
 
         if is_script_package:
             if yml_data.get("script", "") not in ("", "-"):
-                logger.info(
-                    f"[yellow]Script section is not empty in package {package_path}."
-                    f"It should be blank or a dash(-).[/yellow]"
+                logger.warning(
+                    f"Script section is not empty in package {package_path}."
+                    f"It should be blank or a dash(-)."
                 )
 
             yml_unified["script"] = FoldedScalarString(clean_code)
 
         else:
             if yml_data["script"].get("script", "") not in ("", "-"):
-                logger.info(
-                    f"[yellow]Script section is not empty in package {package_path}."
-                    f"It should be blank or a dash(-).[/yellow]"
+                logger.warning(
+                    f"Script section is not empty in package {package_path}."
+                    f"It should be blank or a dash(-)."
                 )
 
             yml_unified["script"]["script"] = FoldedScalarString(clean_code)
@@ -372,7 +372,7 @@ class IntegrationScriptUnifier(Unifier):
     @staticmethod
     def get_script_or_integration_package_data(package_path: Path):
         # should be static method
-        _, yml_path = get_yml_paths_in_dir(str(package_path), error_msg="")
+        _, yml_path = get_yml_paths_in_dir(str(package_path))
 
         if not yml_path:
             raise Exception(
@@ -592,9 +592,13 @@ class IntegrationScriptUnifier(Unifier):
                 contributor_type.capitalize()
             )
         existing_detailed_description = unified_yml.get("detaileddescription", "")
+
+        if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
+            contributor_type = support_level_header
+
         if contributor_type == COMMUNITY_CONTRIBUTOR:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
-        else:
+        elif contributor_type == PARTNER_SUPPORT:
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(
                 contributor_type.capitalize(), author
             )
@@ -608,7 +612,10 @@ class IntegrationScriptUnifier(Unifier):
                 contributor_description += (
                     f"\n- **URL**: [{contributor_url}]({contributor_url})"
                 )
-
+        else:  # if support_level_header = xsoar, need to add to description that integration is supported by PANW
+            contributor_description = (
+                "**This integration is supported by Palo Alto Networks.**"
+            )
         contrib_details = re.findall(
             r"### .* Contributed Integration", existing_detailed_description
         )

@@ -8,6 +8,7 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
+    PARTNER_SUPPORT,
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
@@ -23,7 +24,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-PARTNER_SUPPORT = "partner"
 XSOAR_CERTIFIED = "certified"
 XSOAR_EULA_URL = "https://github.com/demisto/content/blob/master/LICENSE"
 

@@ -5,8 +5,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 import demisto_client
-from demisto_client.demisto_api.models import IncidentWrapper, IncidentSearchResponseWrapper
 import requests
+from demisto_client.demisto_api.models import (
+    IncidentWrapper,
+)
 from demisto_client.demisto_api.rest import ApiException
 from pydantic import BaseModel, Field, SecretStr, validator
 from pydantic.fields import ModelField
@@ -99,7 +101,15 @@ class XsoarApiInterface(ABC):
         pass
 
     @abstractmethod
-    def get_incident(self, incident_id: str, response_type: str = "object"):
+    def search_incidents(
+        self,
+        incident_ids: Optional[Union[List, str]] = None,
+        from_date: Optional[str] = None,
+        incident_types: Optional[Union[List, str]] = None,
+        page: int = 0,
+        size: int = 50,
+        response_type: str = "object",
+    ):
         pass
 
     @abstractmethod
@@ -327,12 +337,38 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
 
     @retry_http_request()
-    def get_incident(self, incident_id: str, response_type: str = "object"):
+    def search_incidents(
+        self,
+        incident_ids: Optional[Union[List, str]] = None,
+        from_date: Optional[str] = None,
+        incident_types: Optional[Union[List, str]] = None,
+        page: int = 0,
+        size: int = 50,
+        response_type: str = "object",
+    ):
+
+        filters = {"page": page, "size": size}
+
+        if incident_ids:
+            if isinstance(incident_ids, str):
+                incident_ids = [incident_ids]
+            filters["id"] = incident_ids
+
+        if from_date:
+            filters["fromDate"] = dateparser.parse(from_date).strftime(
+                "%Y-%m-%dT%H:%M:%S.000+00:00"
+            )
+
+        if incident_types:
+            if isinstance(incident_types, str):
+                incident_types = [incident_types]
+            filters["type"] = incident_types
+
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
-            path="/public/v1/incidents/search",
-            body={"filters": {"id": incident_id}},
+            path="/incidents/search",
+            body={"filters": filters},
             response_type=response_type,
         )
         return raw_response

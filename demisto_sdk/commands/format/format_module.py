@@ -208,7 +208,7 @@ def format_manager(
                 update_content_graph(
                     graph,
                     use_git=True,
-                    output_path=graph.output_path,
+                    output_path=output,
                 )
             except Exception as e:
                 logger.warning(

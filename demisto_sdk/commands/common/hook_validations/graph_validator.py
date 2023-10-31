@@ -28,19 +28,22 @@ class GraphValidator(BaseValidator):
     def __init__(
         self,
         specific_validations: list = None,
+        json_file_path: Optional[str] = None,
         git_files: list = None,
         input_files: list = None,
         update_graph: bool = True,
         include_optional_deps: bool = False,
     ):
-        super().__init__(specific_validations=specific_validations)
+        super().__init__(
+            specific_validations=specific_validations, json_file_path=json_file_path
+        )
         self.include_optional = include_optional_deps
         self.graph = ContentGraphInterface()
         if update_graph:
             update_content_graph(
                 self.graph,
                 use_git=True,
-                output_path=self.graph.output_path,
+                output_path=self.json_file_path,
             )
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files

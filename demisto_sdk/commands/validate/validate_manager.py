@@ -481,6 +481,7 @@ class ValidateManager:
             )
             with GraphValidator(
                 specific_validations=self.specific_validations,
+                json_file_path=self.json_file_path,
                 input_files=files_to_validate,
                 include_optional_deps=True,
             ) as graph_validator:
@@ -574,6 +575,7 @@ class ValidateManager:
             )
             with GraphValidator(
                 specific_validations=self.specific_validations,
+                json_file_path=self.json_file_path,
                 include_optional_deps=(
                     True if "GR103" in specific_validations_list else False
                 ),
@@ -1332,6 +1334,7 @@ class ValidateManager:
             if all_files_set:
                 with GraphValidator(
                     specific_validations=self.specific_validations,
+                    json_file_path=self.json_file_path,
                     git_files=all_files_set,
                     include_optional_deps=True,
                 ) as graph_validator:

@@ -78,7 +78,7 @@ def generate_script_doc(
                 update_content_graph(
                     graph,
                     use_git=True,
-                    output_path=graph.output_path,
+                    output_path=output,
                 )
                 result = graph.search(path=get_relative_path_from_packs_dir(input_path))
                 if not isinstance(result, List) or result == []:

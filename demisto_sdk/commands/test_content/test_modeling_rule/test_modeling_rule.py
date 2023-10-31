@@ -1049,7 +1049,7 @@ def validate_modeling_rule(
                 )
             if delete_existing_dataset:
                 delete_existing_dataset_flow(xsiam_client, test_data, retrying_caller)
-            schema_test_case = TestCase(
+            test_data_test_case = TestCase(
                 "Validate Schema",
                 classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
             )
@@ -1062,14 +1062,14 @@ def validate_modeling_rule(
                         f"[red]{err}[/red]",
                         extra={"markup": True},
                     )
-                    schema_test_case.system_err = str(ex)
+                    test_data_test_case.system_err = str(ex)
                     return add_result_to_test_case(
-                        err, schema_test_case, modeling_rule_test_suite
+                        err, test_data_test_case, modeling_rule_test_suite
                     )
             else:
                 err = f"Schema file does not exist in path {get_relative_path_to_content(modeling_rule.schema_path)}"
                 return log_error_to_test_case(
-                    err, schema_test_case, modeling_rule_test_suite
+                    err, test_data_test_case, modeling_rule_test_suite
                 )
             if (
                 Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value
@@ -1084,14 +1084,14 @@ def validate_modeling_rule(
                 success, results = validate_schema_aligned_with_test_data(
                     test_data=test_data, schema=schema
                 )
-                schema_test_case.result += results
+                test_data_test_case.result += results
                 if not success:
                     err = (
                         f"The schema {get_relative_path_to_content(schema_path)} is not aligned with the test data file "
                         f"{get_relative_path_to_content(modeling_rule.testdata_path)}"
                     )
                     return log_error_to_test_case(
-                        err, schema_test_case, modeling_rule_test_suite
+                        err, test_data_test_case, modeling_rule_test_suite
                     )
             else:
                 skipped = (
@@ -1099,8 +1099,8 @@ def validate_modeling_rule(
                     "is aligned with TestData file."
                 )
                 logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
-                schema_test_case.result += [Skipped(skipped)]
-                modeling_rule_test_suite.add_testcase(schema_test_case)
+                test_data_test_case.result += [Skipped(skipped)]
+                modeling_rule_test_suite.add_testcase(test_data_test_case)
 
             if push:
                 event_id_exists_test_case = verify_event_id_does_not_exist_on_tenant(
@@ -1225,11 +1225,21 @@ def validate_modeling_rule(
                     extra={"markup": True},
                 )
         else:
+            err = (
+                f"Please create a test data file for {get_relative_path_to_content(modeling_rule_directory)} "
+                f"and then rerun\n{executed_command}"
+            )
             logger.error(
-                f"[red]Please create a test data file for "
-                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
+                f"[red]{err}[/red]",
                 extra={"markup": True},
             )
+            test_data_test_case = TestCase(
+                "Test data file does not exist",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+            )
+            test_data_test_case.result += [Error(err)]
+            modeling_rule_test_suite.add_testcase(test_data_test_case)
+            return False, modeling_rule_test_suite
         return False, None
 
 

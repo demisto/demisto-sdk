@@ -12,6 +12,7 @@ from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
+    COMMUNITY_SUPPORTED_HOOKS,
     PYTHON2_SUPPORTED_HOOKS,
     GitUtil,
     group_by_python_version,
@@ -321,6 +322,48 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
 
     for hook in pre_commit_runner.hooks.values():
         if hook["hook"]["id"] in PYTHON2_SUPPORTED_HOOKS:
+            assert hook["hook"].get("exclude") is None
+        else:
+            assert "file1.py" in hook["hook"]["exclude"]
+
+
+def test_exclude_community_non_required_hooks_on_nightly(mocker, repo: Repo):
+    """
+    Given:
+        python_version_to_files with python 2.7 and python 3.8 files, and unit_test is True
+    When:
+        Calling handle_python2_files
+    Then:
+        1. python2_files contain the python 2.7 files
+        2. python_version_to_files should contain only python 3.8 files
+        3. The logger should print that it is running pre-commit with python 2.7 on file1.py
+        4. The exclude field of the run-unit-tests hook should be None
+        5. The exclude field of the other hooks should be file1.py
+    """
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_TEMPLATE_PATH",
+        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+    )
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+    mocker.patch.object(pre_commit_command, "logger")
+    mocker.patch.object(
+        pre_commit_command, "is_community_supported_pack", return_value=True
+    )
+    python_version_to_files = {"3.9": {"file1.py"}, "3.10": {"file2.py"}}
+    pre_commit_runner = pre_commit_command.PreCommitRunner(
+        None, None, PreCommitModes.NIGHTLY, python_version_to_files, ""
+    )
+
+    pre_commit_runner.exclude_community_non_required_hooks_on_nightly()
+
+    assert (
+        "Packs with level support of community running"
+        in pre_commit_command.logger.info.call_args[0][0]
+    )
+
+    for hook in pre_commit_runner.hooks.values():
+        if hook["hook"]["id"] in COMMUNITY_SUPPORTED_HOOKS:
             assert hook["hook"].get("exclude") is None
         else:
             assert "file1.py" in hook["hook"]["exclude"]

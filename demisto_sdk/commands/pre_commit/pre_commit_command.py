@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
+    PACK_METADATA_SUPPORT,
     SCRIPTS_DIR,
     PreCommitModes,
 )
@@ -24,6 +25,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
+    get_pack_metadata,
     get_remote_file,
     string_to_bool,
     write_dict,
@@ -58,6 +60,26 @@ PYTHON2_SUPPORTED_HOOKS = {
     "run-unit-tests",
     "validate",
     "format",
+}
+
+COMMUNITY_SUPPORTED_HOOKS = {
+    "check-json",
+    "check-yaml",
+    "check-ast",
+    "check-merge-conflict",
+    "debug-statements",
+    "name-tests-test",
+    "poetry-check",
+    "poetry-lock",
+    "poetry-export",
+    "is-circle-changed",
+    "is-gitlab-changed",
+    "update-additional-dependencies",
+    "format",
+    "validate",
+    "run-unit-tests",
+    "secrets",
+    "no-implicit-optional",
 }
 
 
@@ -141,6 +163,35 @@ class PreCommitRunner:
             else:
                 hook["hook"]["exclude"] = join_files_string
 
+    def exclude_community_non_required_hooks_on_nightly(self) -> None:
+        """
+        This function handles the python2 files.
+        Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
+        """
+        if not self.mode == PreCommitModes.NIGHTLY:
+            return
+
+        community_paths = set()
+        for path in self.files_to_run:
+            if is_community_supported_pack(path):
+                community_paths.add(path)
+
+        if not community_paths:
+            return
+
+        logger.info(
+            f"Packs with level support of community running on '{PreCommitModes.NIGHTLY}' mode only with the following hooks: {', '.join(COMMUNITY_SUPPORTED_HOOKS)}"
+        )
+
+        join_files_string = join_files(community_paths)
+        for hook in self.hooks.values():
+            if hook["hook"]["id"] in COMMUNITY_SUPPORTED_HOOKS:
+                continue
+            elif hook["hook"].get("exclude"):
+                hook["hook"]["exclude"] += f"|{join_files_string}"
+            else:
+                hook["hook"]["exclude"] = join_files_string
+
     def prepare_hooks(
         self,
         hooks: dict,
@@ -196,6 +247,7 @@ class PreCommitRunner:
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
 
         self.exclude_python2_of_non_supported_hooks()
+        self.exclude_community_non_required_hooks_on_nightly()
 
         for (
             python_version,
@@ -438,3 +490,17 @@ def preprocess_files(
     }
     # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files
+
+
+def is_community_supported_pack(file_path: Path) -> bool:
+    """
+    Takes a path to a file and returns a boolean indicating
+    whether this file belongs to an Community-supported Pack.
+
+    Args:
+        - `file_path` (`Path`): The path of the file.
+
+    Returns:
+        - `bool`
+    """
+    return get_pack_metadata(str(file_path)).get(PACK_METADATA_SUPPORT) == "community"

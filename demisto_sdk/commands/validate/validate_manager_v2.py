@@ -77,31 +77,6 @@ class ValidateManager:
             logger.info("Graph validations were selected, will init graph")
             self.init_graph()
 
-    def add_passed_validations(
-        self,
-        validator: BaseValidator,
-        filtered_content_objects_for_validator: List[
-            Tuple[BaseContent, Optional[BaseContent]]
-        ],
-        validation_results: List[ValidationResult],
-    ):
-        # this is to gather the validations that was passed, consider to delete:
-
-        all_objects_for_validation = {
-            content_object
-            for content_object, _ in filtered_content_objects_for_validator
-        }
-        objects_failed_validation = {v.content_object for v in validation_results}
-        validation_results.extend(
-            ValidationResult(
-                validator=validator,
-                content_object=content_object,
-                is_valid=True,
-            )
-            for content_object in (
-                all_objects_for_validation - objects_failed_validation
-            )
-        )
 
     def run_validation(self) -> int:
         """
@@ -123,24 +98,17 @@ class ValidateManager:
                 )
             ):
                 validation_results: List[ValidationResult] = validator.is_valid(*zip(*filtered_content_objects_for_validator))  # type: ignore
-                self.add_passed_validations(
-                    validator,
-                    filtered_content_objects_for_validator,
-                    validation_results,
-                )
-                for validation_result in validation_results:
-                    if not validation_result.is_valid:
+                if self.allow_autofix:
+                    for validation_result in validation_results:
                         try:
-                            if self.allow_autofix:
-                                self.validation_results.append_fixing_results(
-                                    validator.fix(validation_result.content_object)  # type: ignore
+                            self.validation_results.append_fixing_results(
+                                validator.fix(validation_result.content_object)  # type: ignore
                                 )
-                            else:
-                                self.validation_results.append(validation_result)
                         except NotImplementedError:
-                            continue
-                    else:
-                        self.validation_results.append(validation_result)
+                            self.validation_results.extend(validation_results)
+                            break
+                else:
+                    self.validation_results.extend(validation_results)
 
         return self.validation_results.post_results()
 
@@ -162,7 +130,8 @@ class ValidateManager:
         return validators
 
     def init_graph(self):
-        # include_optional_deps=True
+        """Initialize and update the graph in case of existing graph validations.
+        """
         graph = ContentGraphInterface()
         update_content_graph(
             graph,

@@ -44,7 +44,6 @@ class IDNameValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                is_valid=False,
                 message=self.error_message.format(
                     content_item.object_id, content_item.name
                 ),

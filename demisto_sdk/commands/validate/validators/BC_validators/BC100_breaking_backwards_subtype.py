@@ -12,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[Integration, Script]
 
 
-class BCSubtypeValidator(BaseValidator[ContentTypes]):
+class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     error_code = "BC100"
     description = (
         "Validate that the pack name subtype of the new file matches the old one."
@@ -36,7 +36,6 @@ class BCSubtypeValidator(BaseValidator[ContentTypes]):
                     ValidationResult(
                         content_object=content_item,
                         old_content_object=old_content_item,
-                        is_valid=False,
                         message=self.error_message.format(content_item.name),
                         validator=self,
                     )

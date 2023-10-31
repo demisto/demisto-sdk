@@ -46,15 +46,14 @@ class ValidationResults:
         if self.json_file_path:
             self.write_validation_results()
         for result in self.results:
-            if not result.is_valid:
-                if (
-                    self.only_throw_warning
-                    and result.validator.error_code in self.only_throw_warning
-                ):
-                    logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
-                else:
-                    logger.error(f"[red]{result.format_readable_message}[/red]")
-                    exit_code = 1
+            if (
+                self.only_throw_warning
+                and result.validator.error_code in self.only_throw_warning
+            ):
+                logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
+            else:
+                logger.error(f"[red]{result.format_readable_message}[/red]")
+                exit_code = 1
         for fixing_result in self.fixing_results:
             if not self.only_throw_warning or fixing_result.validator.error_code not in self.only_throw_warning:
                 exit_code = 1
@@ -84,7 +83,33 @@ class ValidationResults:
             outfile.write(json_object)
 
     def append(self, validation_result: ValidationResult):
+        """Append an item to the validation results list.
+
+        Args:
+            validation_result (ValidationResult): the validation result to append.
+        """
         self.results.append(validation_result)
 
     def append_fixing_results(self, fixing_result: FixingResult):
+        """Append an item to the fixing results list.
+
+        Args:
+            fixing_result (FixingResult): the fixing result to append.
+        """
         self.fixing_results.append(fixing_result)
+
+    def extend(self, validation_results: List[ValidationResult]):
+        """Extending the list of ValidationResult objects with a given list of validation results.
+
+        Args:
+            validation_results (List[ValidationResult]): The list of ValidationResult objects to add to the existing list.
+        """
+        self.results.extend(validation_results)
+
+    def extend_fixing_results(self, fixing_results: List[FixingResult]):
+        """Extending the list of FixingResult objects with a given list of FixingResult objects.
+
+        Args:
+            fixing_results (List[FixingResult]): The list of FixingResult objects to add to the existing list.
+        """
+        self.fixing_results.extend(fixing_results)

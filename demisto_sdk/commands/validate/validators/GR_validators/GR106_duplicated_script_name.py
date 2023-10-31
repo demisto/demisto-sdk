@@ -48,7 +48,6 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                is_valid=False,
                 message=self.error_message.format(
                     replace_incident_to_alert(script_name), script_name
                 ),

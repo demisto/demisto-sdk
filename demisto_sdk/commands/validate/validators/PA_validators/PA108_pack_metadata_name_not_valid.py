@@ -26,10 +26,9 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                is_valid=False,
                 message=self.error_message.format(content_item.name),
                 content_object=content_item,
             )
             for content_item in content_items
-            if not content_item.name or "fill mandatory field" in content_item.name
+            if not content_item.name or content_item.name.isspace() or "fill mandatory field" in content_item.name
         ]

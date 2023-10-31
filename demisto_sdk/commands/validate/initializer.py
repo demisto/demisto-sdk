@@ -281,8 +281,6 @@ class Initializer:
             where index 0 holds the new item and index 1 holds the old one (Before the rename/modification).
         """
         content_objects_to_run: Set[BaseContent] = set()
-        content_objects_to_run_with_packs: Set[BaseContent] = set()
-        final_objects_to_run_set: Set[Tuple[BaseContent, Optional[BaseContent]]] = set()
         if self.use_git:
             content_objects_to_run = self.get_files_from_git()
         elif self.file_path:
@@ -298,14 +296,20 @@ class Initializer:
             self.use_git = (True,)
             self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
-        for content_object in content_objects_to_run:
-            # old_content_item = None
-            if isinstance(content_object, Pack):
-                for content_item in content_object.content_items:
-                    if content_item not in content_objects_to_run:
-                        content_objects_to_run_with_packs.add(content_item)
-            content_objects_to_run_with_packs.add(content_object)
+        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(content_objects_to_run)
+        final_objects_to_run_set: Set[Tuple[BaseContent, Optional[BaseContent]]] = self.get_final_objects_to_run(content_objects_to_run_with_packs)
+        return final_objects_to_run_set
+    
+    def get_final_objects_to_run(self, content_objects_to_run_with_packs: Set[BaseContent]) -> Set[Tuple[BaseContent, Optional[BaseContent]]]:
+        """Goes through the given set and parse a copy of the modified/renamed items from before the modification/rename.
 
+        Args:
+            content_objects_to_run_with_packs (Set[BaseContent]): The set of BaseContent items to turn to tuples.
+
+        Returns:
+            Set[Tuple[BaseContent, Optional[BaseContent]]]: The set of the given items as a tuple where the second index is the objects before they got modified/renamed.
+        """
+        final_objects_to_run_set: Set[Tuple[BaseContent, Optional[BaseContent]]] = set()
         for content_object in content_objects_to_run_with_packs:
             old_content_item = None
             if content_object.git_status == MODIFIED:
@@ -317,8 +321,25 @@ class Initializer:
                     content_object.old_file_path, git_sha=self.prev_ver
                 )
             final_objects_to_run_set.add((content_object, old_content_item))
-
         return final_objects_to_run_set
+
+    def get_items_from_packs(self, content_objects_to_run: Set[BaseContent]) -> Set[BaseContent]:
+        """Gets the packs content items from the Packs objects in the given set if they weren't there before.
+
+        Args:
+            content_objects_to_run (Set[BaseContent]): The set of BaseContent items to pick the Pack objects from.
+
+        Returns:
+            Set[BaseContent]: The given set unified with the content items from inside the Pack objects.
+        """
+        content_objects_to_run_with_packs: Set[BaseContent] = Set()
+        for content_object in content_objects_to_run:
+            if isinstance(content_object, Pack):
+                for content_item in content_object.content_items:
+                    if content_item not in content_objects_to_run:
+                        content_objects_to_run_with_packs.add(content_item)
+            content_objects_to_run_with_packs.add(content_object)
+        return content_objects_to_run_with_packs
 
     def get_files_from_git(self) -> Set[BaseContent]:
         """Return all files added/changed/deleted.

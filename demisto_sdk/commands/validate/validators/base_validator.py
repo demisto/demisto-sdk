@@ -82,10 +82,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
 class ValidationResult(BaseModel):
     validator: BaseValidator
-    message: str = ""
+    message: str
     content_object: BaseContent
     old_content_object: Optional[BaseContent] = None
-    is_valid: bool
 
     @property
     def format_readable_message(self):
@@ -95,7 +94,6 @@ class ValidationResult(BaseModel):
     def format_json_message(self):
         return {
             "file path": str(self.content_object.path),
-            "is_valid": self.is_valid,
             "error code": self.validator.error_code,
             "message": self.message,
         }

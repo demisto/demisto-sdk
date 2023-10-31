@@ -1,5 +1,5 @@
-from functools import cached_property
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 

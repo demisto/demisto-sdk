@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.constants import (
     DELETED,
     DEMISTO_GIT_UPSTREAM,
     MODIFIED,
-    PACKS_PACK_META_FILE_NAME,
     RENAMED,
     PathLevel,
 )
@@ -24,8 +23,12 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO, RepositoryParser
-from demisto_sdk.commands.content_graph.parsers.content_item import InvalidContentItemException
+from demisto_sdk.commands.content_graph.objects.repository import (
+    ContentDTO,
+)
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    InvalidContentItemException,
+)
 
 
 class Initializer:
@@ -296,11 +299,17 @@ class Initializer:
             self.use_git = (True,)
             self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
-        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(content_objects_to_run)
-        final_objects_to_run_set: Set[Tuple[BaseContent, Optional[BaseContent]]] = self.get_final_objects_to_run(content_objects_to_run_with_packs)
+        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
+            content_objects_to_run
+        )
+        final_objects_to_run_set: Set[
+            Tuple[BaseContent, Optional[BaseContent]]
+        ] = self.get_final_objects_to_run(content_objects_to_run_with_packs)
         return final_objects_to_run_set
-    
-    def get_final_objects_to_run(self, content_objects_to_run_with_packs: Set[BaseContent]) -> Set[Tuple[BaseContent, Optional[BaseContent]]]:
+
+    def get_final_objects_to_run(
+        self, content_objects_to_run_with_packs: Set[BaseContent]
+    ) -> Set[Tuple[BaseContent, Optional[BaseContent]]]:
         """Goes through the given set and parse a copy of the modified/renamed items from before the modification/rename.
 
         Args:
@@ -323,7 +332,9 @@ class Initializer:
             final_objects_to_run_set.add((content_object, old_content_item))
         return final_objects_to_run_set
 
-    def get_items_from_packs(self, content_objects_to_run: Set[BaseContent]) -> Set[BaseContent]:
+    def get_items_from_packs(
+        self, content_objects_to_run: Set[BaseContent]
+    ) -> Set[BaseContent]:
         """Gets the packs content items from the Packs objects in the given set if they weren't there before.
 
         Args:

@@ -71,7 +71,11 @@ class ContentItem(BaseContent):
 
     @property
     def support_level(self) -> str:
-        return self.in_pack.support_level if self.in_pack and self.in_pack.support_level else ""
+        return (
+            self.in_pack.support_level
+            if self.in_pack and self.in_pack.support_level
+            else ""
+        )
 
     @property
     def ignored_errors(self) -> list:

@@ -12,17 +12,46 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 @pytest.mark.parametrize(
     "content_items, old_content_items, expected_number_of_failures",
     [
-        ([create_integration_object(key_path="script.subtype", new_value="python2"), create_integration_object()],
-         [create_integration_object(), create_integration_object()], 1),
-        ([create_integration_object(key_path="script.subtype", new_value="python2"), create_script_object()],
-         [create_integration_object(), create_script_object()], 1),
-        ([create_integration_object(key_path="script.subtype", new_value="python2"), create_script_object(key_path="subtype", new_value="python2")],
-         [create_integration_object(), create_script_object()], 2),
-        ([create_integration_object(), create_script_object()],
-         [create_integration_object(), create_script_object()], 0),
+        (
+            [
+                create_integration_object(
+                    key_path="script.subtype", new_value="python2"
+                ),
+                create_integration_object(),
+            ],
+            [create_integration_object(), create_integration_object()],
+            1,
+        ),
+        (
+            [
+                create_integration_object(
+                    key_path="script.subtype", new_value="python2"
+                ),
+                create_script_object(),
+            ],
+            [create_integration_object(), create_script_object()],
+            1,
+        ),
+        (
+            [
+                create_integration_object(
+                    key_path="script.subtype", new_value="python2"
+                ),
+                create_script_object(key_path="subtype", new_value="python2"),
+            ],
+            [create_integration_object(), create_script_object()],
+            2,
+        ),
+        (
+            [create_integration_object(), create_script_object()],
+            [create_integration_object(), create_script_object()],
+            0,
+        ),
     ],
 )
-def test_BreakingBackwardsSubtypeValidator(content_items, old_content_items, expected_number_of_failures):
+def test_BreakingBackwardsSubtypeValidator(
+    content_items, old_content_items, expected_number_of_failures
+):
     """
     Given
     content_items and old_content_items iterables.
@@ -39,4 +68,11 @@ def test_BreakingBackwardsSubtypeValidator(content_items, old_content_items, exp
         - Case 3: Should fail both the integration and the script
         - Case 4: Shouldn't fail any content item.
     """
-    assert len(BreakingBackwardsSubtypeValidator().is_valid(content_items, old_content_items)) == expected_number_of_failures
+    assert (
+        len(
+            BreakingBackwardsSubtypeValidator().is_valid(
+                content_items, old_content_items
+            )
+        )
+        == expected_number_of_failures
+    )

@@ -9,7 +9,15 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
-        ([create_integration_object(key_path="commonfields.id", new_value="changedName"), create_integration_object()], 1),
+        (
+            [
+                create_integration_object(
+                    key_path="commonfields.id", new_value="changedName"
+                ),
+                create_integration_object(),
+            ],
+            1,
+        ),
     ],
 )
 def test_IDNameValidator(content_items, expected_number_of_failures):
@@ -29,4 +37,7 @@ def test_IDNameValidator(content_items, expected_number_of_failures):
         - Case 3: Should fail both the integration and the script
         - Case 4: Shouldn't fail any content item.
     """
-    assert len(IDNameValidator().is_valid(content_items, None)) == expected_number_of_failures
+    assert (
+        len(IDNameValidator().is_valid(content_items, None))
+        == expected_number_of_failures
+    )

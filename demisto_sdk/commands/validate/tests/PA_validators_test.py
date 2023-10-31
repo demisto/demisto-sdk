@@ -13,11 +13,26 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_
         (1, [create_metadata_object("name", "")]),
         (0, [create_metadata_object("name", "Working pack name")]),
         (1, [create_metadata_object("name", "fill mandatory field")]),
-        (2, [create_metadata_object("name", "fill mandatory field"), create_metadata_object("name", "")]),
-        (2, [create_metadata_object("name", "fill mandatory field"), create_metadata_object("name", " "), create_metadata_object("name", "Working pack name")])
+        (
+            2,
+            [
+                create_metadata_object("name", "fill mandatory field"),
+                create_metadata_object("name", ""),
+            ],
+        ),
+        (
+            2,
+            [
+                create_metadata_object("name", "fill mandatory field"),
+                create_metadata_object("name", " "),
+                create_metadata_object("name", "Working pack name"),
+            ],
+        ),
     ],
 )
-def test_pack_metadata_name_validator(expected_number_of_failures, packmetadatas_objects_list):
+def test_pack_metadata_name_validator(
+    expected_number_of_failures, packmetadatas_objects_list
+):
     """
     Given
     packmetadatas_objects_list.
@@ -38,4 +53,7 @@ def test_pack_metadata_name_validator(expected_number_of_failures, packmetadatas
         - Case 5: Should fail 2 pack metadatas.
         - Case 6: Should fail 2 pack metadatas.
     """
-    assert len(PackMetadataNameValidator().is_valid(packmetadatas_objects_list, None)) == expected_number_of_failures
+    assert (
+        len(PackMetadataNameValidator().is_valid(packmetadatas_objects_list, None))
+        == expected_number_of_failures
+    )

@@ -55,7 +55,10 @@ class ValidationResults:
                 logger.error(f"[red]{result.format_readable_message}[/red]")
                 exit_code = 1
         for fixing_result in self.fixing_results:
-            if not self.only_throw_warning or fixing_result.validator.error_code not in self.only_throw_warning:
+            if (
+                not self.only_throw_warning
+                or fixing_result.validator.error_code not in self.only_throw_warning
+            ):
                 exit_code = 1
             logger.warning(f"[yellow]{fixing_result.format_readable_message}[/yellow]")
         if not exit_code:

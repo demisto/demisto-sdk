@@ -1,4 +1,3 @@
-
 import tempfile
 from pathlib import Path
 from typing import Any, Optional
@@ -11,7 +10,9 @@ from TestSuite.repo import Repo
 REPO = Repo(tmpdir=Path(tempfile.mkdtemp()))
 
 
-def create_integration_object(key_path: Optional[Any]=None, new_value: Optional[Any]=None):
+def create_integration_object(
+    key_path: Optional[Any] = None, new_value: Optional[Any] = None
+):
     yml_content = load_yaml("integration.yml")
     if key_path and new_value:
         set_val(yml_content, key_path, new_value)
@@ -21,7 +22,10 @@ def create_integration_object(key_path: Optional[Any]=None, new_value: Optional[
     integration_object = BaseContent.from_path(Path(integration.path))
     return integration_object
 
-def create_script_object(key_path: Optional[Any]=None, new_value: Optional[Any]=None):
+
+def create_script_object(
+    key_path: Optional[Any] = None, new_value: Optional[Any] = None
+):
     yml_content = load_yaml("script.yml")
     if key_path and new_value:
         set_val(yml_content, key_path, new_value)
@@ -31,7 +35,10 @@ def create_script_object(key_path: Optional[Any]=None, new_value: Optional[Any]=
     script_object = BaseContent.from_path(Path(script.path))
     return script_object
 
-def create_metadata_object(key_path: Optional[Any]=None, new_value: Optional[Any]=None):
+
+def create_metadata_object(
+    key_path: Optional[Any] = None, new_value: Optional[Any] = None
+):
     json_content = load_json("pack_metadata.json")
     if key_path and new_value is not None:
         set_val(json_content, key_path, new_value)

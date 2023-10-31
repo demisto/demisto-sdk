@@ -149,7 +149,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @property
     def support_level(self):
         return self.support
-    
+
     @property
     def depends_on(self) -> List["RelationshipData"]:
         """

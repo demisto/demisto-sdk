@@ -1,5 +1,5 @@
-from functools import cached_property
 from abc import abstractmethod
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 

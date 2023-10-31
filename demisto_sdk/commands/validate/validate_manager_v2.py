@@ -77,7 +77,6 @@ class ValidateManager:
             logger.info("Graph validations were selected, will init graph")
             self.init_graph()
 
-
     def run_validation(self) -> int:
         """
             Running all the relevant validation on all the filtered files based on the should_run calculations,
@@ -103,7 +102,7 @@ class ValidateManager:
                         try:
                             self.validation_results.append_fixing_results(
                                 validator.fix(validation_result.content_object)  # type: ignore
-                                )
+                            )
                         except NotImplementedError:
                             self.validation_results.extend(validation_results)
                             break
@@ -130,8 +129,7 @@ class ValidateManager:
         return validators
 
     def init_graph(self):
-        """Initialize and update the graph in case of existing graph validations.
-        """
+        """Initialize and update the graph in case of existing graph validations."""
         graph = ContentGraphInterface()
         update_content_graph(
             graph,

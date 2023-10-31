@@ -618,7 +618,7 @@ class XsoarNGApiClient(XsoarApiInterface):
     @retry_http_request()
     def get_playground_investigation_id(self):
 
-        response = self.client.search_investigations(filter=playground_filter())
+        response = self.client.search_investigations()
         for entry in response.data:
             if entry.name == "Playground":
                 return entry.id

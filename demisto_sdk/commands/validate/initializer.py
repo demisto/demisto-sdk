@@ -343,7 +343,7 @@ class Initializer:
         Returns:
             Set[BaseContent]: The given set unified with the content items from inside the Pack objects.
         """
-        content_objects_to_run_with_packs: Set[BaseContent] = Set()
+        content_objects_to_run_with_packs: Set[BaseContent] = set()
         for content_object in content_objects_to_run:
             if isinstance(content_object, Pack):
                 for content_item in content_object.content_items:

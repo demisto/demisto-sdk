@@ -34,7 +34,7 @@ def get_validate_manager(mocker):
 
 
 TEST_INTEGRATION = create_integration_object()
-
+print(f"{TEST_INTEGRATION=}")
 
 @pytest.mark.parametrize(
     "validations_to_run, sub_classes, expected_results",

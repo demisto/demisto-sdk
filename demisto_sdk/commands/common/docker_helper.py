@@ -5,6 +5,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import traceback
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -172,9 +173,9 @@ class DockerBase:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {image=} not found locally, pulling")
-            docker_client.images.pull(image)
+            ret = docker_client.images.pull(image)
             logger.debug(f"pulled docker {image=} successfully")
-            return docker_client.images.get(image)
+            return ret
 
     @staticmethod
     def copy_files_container(
@@ -366,7 +367,7 @@ class DockerBase:
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
                 logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
-
+                logger.critical(traceback.format_exc())
         return test_docker_image, errors
 
 

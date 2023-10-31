@@ -23,6 +23,8 @@ from demisto_sdk.commands.common.tools import get_yaml, logger
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
+NO_CONFIG_VALUE = None
+
 
 @functools.lru_cache
 def get_docker_python_path() -> str:
@@ -88,23 +90,24 @@ def docker_images_for_file(yml: dict) -> set:
         ret.add(image)
     script = yml.get("script", {})
     if isinstance(script, dict):
-        image = script.get("dockerimage", "")
-        if image:
+        if image := script.get("dockerimage", ""):
             ret.add(image)
-    if images := yml.get("alt_dockerimages"):
+    if images := yml.get("alt_dockerimages"):  # todo test
         ret.update(images)
     return ret
 
 
 @functools.lru_cache(maxsize=256)
-def devtest_image(image_tag, is_powershell):
+def devtest_image(image_tag, is_powershell) -> str:
+    return image_tag
     all_errors: list = []
     for _ in range(2):
         logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
         image, errors = get_docker().pull_or_create_test_image(
-            image_tag,
-            TYPE_PWSH if is_powershell else TYPE_PYTHON,
+            base_image=image_tag,
+            container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
             push=docker_login(docker_client=init_global_docker_client()),
+            log_prompt="DockerHook",
         )
         if not errors:
             return image
@@ -114,6 +117,20 @@ def devtest_image(image_tag, is_powershell):
 
 def get_environment_flag() -> str:
     return f'--env "PYTHONPATH={get_docker_python_path()}"'
+
+
+def _split_by_config_file(files, config_arg):
+    if not config_arg:
+        return {NO_CONFIG_VALUE: files}
+    folder_to_files = defaultdict(set)
+
+    for file in files:
+        if (file.parent / config_arg[1]).exists():
+            folder_to_files[str(file.parent)].add(file)
+        else:
+            folder_to_files[NO_CONFIG_VALUE].add(file)  # type:ignore
+
+    return folder_to_files
 
 
 class DockerHook(Hook):
@@ -131,8 +148,9 @@ class DockerHook(Hook):
         logger.info(
             f"Elapsed time to gather tags to files: {end_time - start_time} seconds"
         )
-        start_time = time.time()
+        config_arg = self._get_config_file_arg()
 
+        start_time = time.time()
         for image, file_ymls in sorted(
             tag_to_files_ymls.items(), key=lambda item: item[0]
         ):
@@ -142,44 +160,29 @@ class DockerHook(Hook):
             dev_image = devtest_image(
                 image, image_is_powershell
             )  # consider moving to before loop and threading.
-
-            new_hook = self.get_new_hook(dev_image, image)
-
-            hooks = self._split_by_config_file(new_hook, file_ymls)
-            for hook in hooks:
-                self._set_properties(
-                    hook, to_delete=["docker_image", "config_file_arg"]
-                )
-
+            files = {file[0] for file in file_ymls}
+            folder_to_files = _split_by_config_file(files, config_arg)
+            hooks = self.get_new_hooks(dev_image, image, folder_to_files, config_arg)
             self.hooks.extend(hooks)
+
         end_time = time.time()
         logger.info(
             f"DockerHook - Elapsed time to prep all the images: {end_time - start_time} seconds"
         )
 
-    def get_new_hook(self, dev_image, image):
-        return {
+    def get_new_hooks(self, dev_image, image, folder_to_files, config_arg):
+        new_hook = {
             "id": f"{self._get_property('id')}-{image}",
             "name": f"{self._get_property('name')}-{image}",
             "language": "docker_image",
             "entry": f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}',
         }
 
-    def _split_by_config_file(self, new_hook, file_ymls):
-        folder_to_files = {}
-        if config_arg := self._get_config_file_arg():
-
-            folder_to_files = self._get_folder_to_files_by_config(
-                file_ymls, config_arg[1]
-            )
-        else:
-            folder_to_files = {None: [f[0] for f in file_ymls]}
-
         ret_hooks = []
         counter = 0
         for folder, files in folder_to_files.items():
             hook = deepcopy(new_hook)
-            if folder is not None:
+            if config_arg and folder is not NO_CONFIG_VALUE:
                 args = deepcopy(self._get_property("args", []))
                 args.extend(
                     [
@@ -193,6 +196,8 @@ class DockerHook(Hook):
                 counter += 1
             if self._set_files_on_hook(hook, files):
                 ret_hooks.append(hook)
+        for hook in ret_hooks:
+            self._set_properties(hook, to_delete=["docker_image", "config_file_arg"])
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:
@@ -206,14 +211,3 @@ class DockerHook(Hook):
                 )
             return arg_name, file_name
         return None
-
-    def _get_folder_to_files_by_config(self, file_ymls, file_name):
-        folder_to_files = defaultdict(set)
-
-        for file, _ in file_ymls:
-            if (file.parent / file_name).exists():
-                folder_to_files[str(file.parent)].add(file)
-            else:
-                folder_to_files[None].add(file)  # type:ignore
-
-        return folder_to_files

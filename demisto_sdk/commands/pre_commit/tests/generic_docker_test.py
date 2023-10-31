@@ -178,3 +178,8 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
     )
     assert len(tag_to_files) == 3
     assert native_latest_tag in tag_to_files
+
+
+# def test__split_by_config_file():
+#     file_ymls = [("file.py", {})]
+#     _split_by_config_file()

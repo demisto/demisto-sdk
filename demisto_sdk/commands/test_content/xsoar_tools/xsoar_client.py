@@ -215,10 +215,6 @@ class XsoarApiInterface(ABC):
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):
         pass
 
-    @abstractmethod
-    def get_playground_investigation_id(self):
-        pass
-
 
 class XsoarNGApiClient(XsoarApiInterface):
     @property
@@ -581,9 +577,6 @@ class XsoarNGApiClient(XsoarApiInterface):
         response_type: str = "object",
     ):
 
-        if not investigation_id:
-            investigation_id = self.get_playground_investigation_id()
-
         update_entry = {
             "investigationId": investigation_id,
             "data": "!DeleteContext all=yes",
@@ -631,51 +624,3 @@ class XsoarNGApiClient(XsoarApiInterface):
         )
         return raw_response
 
-    @retry_http_request()
-    def get_playground_investigation_id(self):
-
-        def playground_filter(page: int = 0):
-            return {"filter": {"type": [9], "page": page}}
-
-        answer = self.client.search_investigations(filter=playground_filter())
-        if answer.total == 0:
-            raise RuntimeError("No playgrounds were detected in the environment.")
-        elif answer.total == 1:
-            result = answer.data[0].id
-        else:
-            # if found more than one playground, try to filter to results against the current user
-            user_data, response, _ = self.client.generic_request(
-                path="/user",
-                method="GET",
-                content_type="application/json",
-                response_type=object,
-            )
-            if response != 200:
-                raise RuntimeError("Cannot find username")
-            username = user_data.get("username")
-
-            def filter_by_creating_user_id(playground):
-                return playground.creating_user_id == username
-
-            playgrounds = list(filter(filter_by_creating_user_id, answer.data))
-
-            for i in range(int((answer.total - 1) / len(answer.data))):
-                playgrounds.extend(
-                    filter(
-                        filter_by_creating_user_id,
-                        self.client.search_investigations(
-                            filter=playground_filter(i + 1)
-                        ).data,
-                    )
-                )
-
-            if len(playgrounds) != 1:
-                raise RuntimeError(
-                    f"There is more than one playground to the user. "
-                    f"Number of playgrounds is: {len(playgrounds)}"
-                )
-            result = playgrounds[0].id
-
-        logger.debug(f"Playground ID: {result}")
-
-        return result

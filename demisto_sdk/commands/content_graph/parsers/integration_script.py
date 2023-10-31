@@ -28,7 +28,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @cached_property
     def mapping(self):
-        return super().mapping | {"object_id": "commonfields.id"}
+        return super().mapping.union({"object_id": "commonfields.id"})
 
     @property
     def object_id(self) -> Optional[str]:

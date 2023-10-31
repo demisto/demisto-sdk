@@ -22,7 +22,7 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
 
     @cached_property
     def mapping(self):
-        return super().mapping | {"object_id": "trigger_id", "name": "trigger_name"}
+        return super().mapping.union({"object_id": "trigger_id", "name": "trigger_name"})
 
     @property
     def object_id(self) -> Optional[str]:

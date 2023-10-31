@@ -35,14 +35,14 @@ class JSONContentItemParser(ContentItemParser):
 
     @cached_property
     def mapping(self):
-        return super().mapping | {
+        return super().mapping.union({
             "name": "name",
             "deprecated": "deprecated",
             "object_id": "id",
             "description": "description",
             "fromversion": "fromVersion",
             "toversion": "toVersion",
-        }
+        })
 
     @property
     def object_id(self) -> Optional[str]:

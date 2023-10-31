@@ -37,13 +37,13 @@ class YAMLContentItemParser(ContentItemParser):
 
     @cached_property
     def mapping(self):
-        return super().mapping | {
+        return super().mapping.union({
             "name": "name",
             "deprecated": "deprecated",
             "description": "description",
             "fromversion": "fromversion",
             "toversion": "toversion",
-        }
+        })
 
     @property
     def name(self) -> Optional[str]:

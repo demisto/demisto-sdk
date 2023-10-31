@@ -26,13 +26,13 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
 
     @cached_property
     def mapping(self):
-        return super().mapping | {
+        return super().mapping.union({
             "name": "report_name",
             "description": "report_description",
             "object_id": "global_id",
             "fromversion": "fromVersion",
             "toVersion": "toVersion",
-        }
+        })
 
     @property
     def name(self) -> Optional[str]:

@@ -39,10 +39,10 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
 
     @cached_property
     def mapping(self):
-        return super().mapping | {
+        return super().mapping.union({
             "docker_image": "dockerimage",
             "description": "comment",
-        }
+        })
 
     @property
     def description(self) -> Optional[str]:

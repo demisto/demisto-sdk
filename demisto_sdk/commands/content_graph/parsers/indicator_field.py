@@ -28,7 +28,7 @@ class IndicatorFieldParser(
 
     @cached_property
     def mapping(self):
-        return super().mapping | {"object_id": "cliName"}
+        return super().mapping.union({"object_id": "cliName"})
 
     @property
     def object_id(self) -> Optional[str]:

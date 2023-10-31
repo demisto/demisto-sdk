@@ -28,11 +28,11 @@ class XSIAMDashboardParser(
 
     @cached_property
     def mapping(self):
-        return super().mapping | {
+        return super().mapping.union({
             "object_id": "global_id",
             "fromversion": "fromVersion",
             "toVersion": "toVersion",
-        }
+        })
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

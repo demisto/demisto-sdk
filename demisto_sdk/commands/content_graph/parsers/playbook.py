@@ -48,7 +48,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
 
     @cached_property
     def mapping(self):
-        return super().mapping | {"object_id": "id"}
+        return super().mapping.union({"object_id": "id"})
 
     @property
     def object_id(self) -> Optional[str]:

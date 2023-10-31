@@ -15,6 +15,7 @@
     * Widgets
   * Fixed an issue where the download would fail when using the '-r' / '--regex' flag when there were multiple custom content items on the server matching the pattern, having the same name.
   * Fixed an issue where integrations / automations with a dot in their name would be saved with an incorrect file name (For example: `Test v1.1.py` would be named `Test v1.py`)
+  * Fixed the Github-Jira linking after Jira domain's migration.
 
 **Note:** Due to the optimization changes made to the **download** command, playbooks might be formatted a bit differently than before when downloaded from the server using the new version. The playbooks should however function and work the same.
 * Fixed an issue where the **pre-commit** command, now correctly gathers the associated python file when a yml file is provided as input.

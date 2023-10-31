@@ -1,9 +1,11 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 import networkx
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     build_tasks_graph,
@@ -30,6 +32,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
         is_test_playbook: bool = False,
+        git_sha: Optional[str] = None,
     ) -> None:
         """Builds a directed graph representing the playbook and parses it.
 
@@ -37,15 +40,19 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             path (Path): The playbook path.
             is_test_playbook (bool, optional): Whether this is a test playbook or not. Defaults to False.
         """
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.is_test: bool = is_test_playbook
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()
         self.connect_to_tests()
 
+    @cached_property
+    def mapping(self):
+        return super().mapping.union({"object_id": "id"})
+
     @property
     def object_id(self) -> Optional[str]:
-        return self.yml_data.get("id")
+        return get(self.yml_data, self.mapping.get("object_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

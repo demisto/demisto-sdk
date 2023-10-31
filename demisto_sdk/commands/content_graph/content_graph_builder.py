@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInter
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
-PACKS_PER_BATCH = 50
+PACKS_PER_BATCH = 600
 
 
 class ContentGraphBuilder:
@@ -70,9 +70,8 @@ class ContentGraphBuilder:
             leave=True,
         ) as progress_bar:
             for packs_batch in more_itertools.chunked(packs_to_parse, PACKS_PER_BATCH):
-                repository_parser.parse(packs_batch)
+                repository_parser.parse(packs_batch, progress_bar)
                 content_dtos.append(ContentDTO.from_orm(repository_parser))
-                progress_bar.update(len(packs_batch))
 
                 repository_parser.clear()
                 gc.collect()

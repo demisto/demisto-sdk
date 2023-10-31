@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.tools import (
     get_all_repo_pack_ids,
     is_external_repository,
 )
+from demisto_sdk.commands.content_graph import neo4j_service
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.commands.create import (
     create,
@@ -82,7 +83,8 @@ def update_content_graph(
         packs_to_update = get_all_repo_pack_ids()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
-    if not should_update_graph(
+    is_alive = neo4j_service.is_alive()
+    if is_alive and not should_update_graph(
         content_graph_interface, git_util, imported_path, use_local_import
     ):
         logger.info(
@@ -90,22 +92,23 @@ def update_content_graph(
             f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
         )
         return
-    builder.init_database()
-    if not use_local_import:
-        content_graph_interface.clean_import_dir()
-        if not imported_path:
-            # getting the graph from remote, so we need to clean the import dir
-            try:
-                extract_remote_import_files(content_graph_interface)
-            except RuntimeError as e:
-                logger.warning(
-                    "Failed to download the content graph, recreating it instead"
-                )
-                logger.debug(f"Runtime Error: {e}", exc_info=True)
-                create_content_graph(
-                    content_graph_interface, marketplace, dependencies, output_path
-                )
-                return
+    if not is_alive or not imported_path or not use_local_import:
+        builder.init_database()
+        if not use_local_import:
+            content_graph_interface.clean_import_dir()
+            if not imported_path:
+                # getting the graph from remote, so we need to clean the import dir
+                try:
+                    extract_remote_import_files(content_graph_interface)
+                except RuntimeError as e:
+                    logger.warning(
+                        "Failed to download the content graph, recreating it instead"
+                    )
+                    logger.debug(f"Runtime Error: {e}", exc_info=True)
+                    create_content_graph(
+                        content_graph_interface, marketplace, dependencies, output_path
+                    )
+                    return
     is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
     if not any([imported_path, is_graph_up_to_date, is_external_repository()]):
         # if we import a graph from a specific path, it make no sense to create a new graph

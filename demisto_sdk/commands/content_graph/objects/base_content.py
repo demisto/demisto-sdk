@@ -23,6 +23,7 @@ import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
+    PACKS_PACK_META_FILE_NAME,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -86,7 +87,7 @@ class BaseContentMetaclass(ModelMetaclass):
         return model_cls
 
 
-class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
+class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
@@ -160,32 +161,81 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
-
         return json_dct
+
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
+    ) -> None:
+        # Implemented at the ContentItem/Pack level rather than here
+        raise NotImplementedError()
+
+    def add_relationship(
+        self, relationship_type: RelationshipType, relationship: "RelationshipData"
+    ) -> None:
+        if relationship.content_item_to == self:
+            # skip adding circular dependency
+            return
+        self.relationships_data[relationship_type].add(relationship)
+
+
+class BaseContent(BaseContentModel):
+    path: Path
+    git_status: Optional[str]
+    old_file_path: Optional[Path]
+
+    def __hash__(self):
+        return hash(self.path)
+
+    @property
+    def ignored_errors(self) -> list:
+        raise NotImplementedError
+
+    @property
+    def support_level(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
+        pass
 
     @staticmethod
     @lru_cache
-    def from_path(path: Path) -> Optional["BaseContent"]:
+    def from_path(
+        path: Path,
+        git_status: Optional[str] = None,
+        old_file_path: Optional[Path] = None,
+        git_sha: Optional[str] = None,
+    ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
-            path.is_dir() and path.parent.name == PACKS_FOLDER
+            path.is_dir()
+            and path.parent.name == PACKS_FOLDER
+            or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
                 return content_type_to_model[ContentType.PACK].from_orm(
-                    PackParser(path)
+                    PackParser(path, git_sha=git_sha)
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {str(path)}")
                 return None
         try:
-            content_item_parser = ContentItemParser.from_path(path)
+            content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
         except NotAContentItemException:
             # This is a workaround because `create-content-artifacts` still creates deprecated content items
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
                 "0.0.0"
             )
             try:
-                content_item_parser = ContentItemParser.from_path(path)
+                content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
             except NotAContentItemException:
                 logger.error(
                     f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
@@ -206,38 +256,15 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         try:
-            return model.from_orm(content_item_parser)
+            obj = model.from_orm(content_item_parser)
+            obj.git_status = git_status
+            obj.old_file_path = old_file_path
+            return obj
         except Exception as e:
             logger.error(
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
             )
             return None
-
-    @abstractmethod
-    def dump(
-        self,
-        path: DirectoryPath,
-        marketplace: MarketplaceVersions,
-    ) -> None:
-        pass
-
-    def upload(
-        self,
-        client: demisto_client,
-        marketplace: MarketplaceVersions,
-        target_demisto_version: Version,
-        **kwargs,
-    ) -> None:
-        # Implemented at the ContentItem/Pack level rather than here
-        raise NotImplementedError()
-
-    def add_relationship(
-        self, relationship_type: RelationshipType, relationship: "RelationshipData"
-    ) -> None:
-        if relationship.content_item_to == self:
-            # skip adding circular dependency
-            return
-        self.relationships_data[relationship_type].add(relationship)
 
 
 class UnknownContent(BaseContent):

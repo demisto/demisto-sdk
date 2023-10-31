@@ -28,7 +28,8 @@ class IndicatorFieldParser(
 
     @cached_property
     def mapping(self):
-        return super().mapping.update({"object_id": "cliName"})
+        super().mapping.update({"object_id": "cliName"})
+        return super().mapping
 
     @property
     def object_id(self) -> Optional[str]:

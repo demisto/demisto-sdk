@@ -45,3 +45,41 @@ The following SDK commands are automatically run
 - [format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
 - [secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
 - run-unit-tests: Runs the unit tests in an environment matching the content.
+
+### Docker hooks
+To run a command in a script's relevant container you can set up a Docker Hook.
+
+A docker hook must be under the `local` repo and it's `id` must end with `in-docker`.
+
+#### Example
+```yaml
+  - id: simple-in-docker
+    name: simple-in-docker
+    description: my simple description
+    entry: simplelinter
+    args: ['run-all-checks']
+```
+
+The `entry` key should be the command that should be run (eg. pylint, pytest).
+
+#### Modes
+If you need different args set for the different modes, for example some rules should be excluded in the nightly build.
+Any key can be set this way.
+You can set this as follows.
+```yaml
+  - id: simple-in-docker
+    args:nightly: ['--exclude', '123']
+    args: ['This is the default argument']
+    otherkey:nightly: hello
+    otherkey: world
+```
+And call precommit as follows: `demisto-sdk pre-commit -a --mode nightly`
+Note, only "nightly" is currently supported. This will be free text soon.
+#### The config_file_arg key
+Often with commands we run in the docker we have a configuration file that is specified per Integration/Script. To configure this you can set the `config_file_arg` key as follows. The configuration file should be in the same directory as the code file.
+```yaml
+  - id: simple-in-docker
+    config_file_arg:
+      arg_name: '--argname'
+      file_name: '.configfile'
+```

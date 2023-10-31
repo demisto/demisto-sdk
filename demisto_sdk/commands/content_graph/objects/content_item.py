@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
-from pydantic import DirectoryPath, validator
+from pydantic import DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     replace_incident_to_alert,
+    set_val,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -45,6 +46,7 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer 
 
 
 class ContentItem(BaseContent):
+    mapping: dict = Field({}, exclude=True)
     path: Path
     marketplaces: List[MarketplaceVersions]
     name: str
@@ -66,6 +68,18 @@ class ContentItem(BaseContent):
     @property
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
+
+    @property
+    def support_level(self) -> str:
+        return self.in_pack.support_level if self.in_pack and self.in_pack.support_level else ""
+
+    @property
+    def ignored_errors(self) -> list:
+        return (
+            self.in_pack.ignored_errors_dict.get(self.path.name, [])
+            if self.in_pack and self.in_pack.ignored_errors_dict
+            else []
+        )
 
     @property
     def pack_name(self) -> str:
@@ -182,6 +196,10 @@ class ContentItem(BaseContent):
     @property
     def data(self) -> dict:
         return get_file(self.path, keep_order=False)
+
+    @property
+    def original_data(self) -> dict:
+        return get_file(self.path, keep_order=True)
 
     def prepare_for_upload(
         self,
@@ -375,3 +393,11 @@ class ContentItem(BaseContent):
         ):
             raise IncompatibleUploadVersionException(self, target_demisto_version)
         self._upload(client, marketplace)
+
+    def save(self):
+        data = self.original_data
+        for key, val in self.mapping.items():
+            attr = getattr(self, key)
+            set_val(data, val, attr)
+        with open(self.path, "w") as f:
+            self.handler.dump(data, f)

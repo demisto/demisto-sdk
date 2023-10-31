@@ -1,8 +1,10 @@
+from functools import cached_property
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
@@ -21,9 +23,12 @@ class CommandParser:
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_fetch = self.script_info.get("isfetch", False)
@@ -38,13 +43,21 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_dependencies()
         self.connect_to_tests()
 
+    @cached_property
+    def mapping(self):
+        return super().mapping | {
+            "display_name": "display",
+            "docker_image": "script.dockerimage",
+            "type": ["script.subtype", "script.type"],
+        }
+
     @property
     def display_name(self) -> Optional[str]:
-        return self.yml_data.get("display")
+        return get(self.yml_data, self.mapping.get("display_name", ""))
 
     @property
     def docker_image(self) -> str:
-        return self.script_info.get("dockerimage", "")
+        return get(self.yml_data, self.mapping.get("docker_image", ""))
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

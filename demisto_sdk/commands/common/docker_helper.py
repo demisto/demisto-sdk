@@ -173,7 +173,19 @@ class DockerBase:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {image=} not found locally, pulling")
-            ret = docker_client.images.pull(image)
+            try:
+                ret = docker_client.images.pull(image)
+            except Exception:
+                logger.info('hmmm, what happens in shell?')
+                logger.info(traceback.format_exc())
+                logger.info("here we go")
+                import subprocess
+                out = subprocess.check_output(["docker", "pull", image], stderr=subprocess.STDOUT)
+
+                logger.info(f'{out=}')
+                out = subprocess.check_output(["docker", "inspect", image])
+                logger.info(f'{out=}')
+
             logger.debug(f"pulled docker {image=} successfully")
             return ret
 

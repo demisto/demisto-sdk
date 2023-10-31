@@ -124,7 +124,7 @@ class XsoarApiInterface(ABC):
         pass
 
     @abstractmethod
-    def start_incident_investigation(self):
+    def start_incident_investigation(self, incident_id: str, response_type: str = "object"):
         pass
 
     @abstractmethod
@@ -400,7 +400,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         return raw_response
 
     @retry_http_request()
-    def start_incident_investigation(self, incident_id: str):
+    def start_incident_investigation(self, incident_id: str, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",

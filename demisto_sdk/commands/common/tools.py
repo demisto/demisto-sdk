@@ -933,8 +933,7 @@ def get_yaml(
 def get_json(file_path: str | Path, cache_clear=False, git_sha: Optional[str] = None):
     if cache_clear:
         get_file.cache_clear()
-    else:
-        return get_file(file_path, clear_cache=cache_clear, git_sha=git_sha)
+    return get_file(file_path, clear_cache=cache_clear, git_sha=git_sha)
 
 
 def get_script_or_integration_id(file_path):

@@ -1,6 +1,9 @@
 import pytest
 
-from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_classifier_object,
+    create_integration_object,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
@@ -15,6 +18,17 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
                     key_path="commonfields.id", new_value="changedName"
                 ),
                 create_integration_object(),
+            ],
+            1,
+        ),
+        (
+            [
+                create_classifier_object(
+                    key_path="id", new_value="changedName"
+                ),
+                create_classifier_object(
+                    key_path="id", new_value="Github Classifier"
+                ),
             ],
             1,
         ),

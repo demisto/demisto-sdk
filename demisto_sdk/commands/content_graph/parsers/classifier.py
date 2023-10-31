@@ -39,7 +39,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
 
     @cached_property
     def mapping(self):
-        return super().mapping.union({"name": ["name", "brandName"]})
+        return super().mapping.update({"name": ["name", "brandName"]})
 
     @property
     def name(self) -> Optional[str]:

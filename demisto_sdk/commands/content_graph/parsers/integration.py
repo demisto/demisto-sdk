@@ -45,7 +45,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     @cached_property
     def mapping(self):
-        return super().mapping.union({
+        return super().mapping.update({
             "display_name": "display",
             "docker_image": "script.dockerimage",
             "type": ["script.subtype", "script.type"],

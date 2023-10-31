@@ -81,7 +81,6 @@ from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_display_name,
     get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type,
     get_file,
     get_file_displayed_name,
     get_file_version_suffix_if_exists,
@@ -111,7 +110,6 @@ from demisto_sdk.commands.common.tools import (
     is_pack_path,
     is_uuid,
     parse_multiple_path_inputs,
-    retrieve_file_ending,
     run_command_os,
     search_and_delete_from_conf,
     server_version_compare,
@@ -483,10 +481,6 @@ class TestGenericFunctions:
 
         assert files == output
 
-    @pytest.mark.parametrize("path, output", [("demisto.json", "json"), ("wow", "")])
-    def test_retrieve_file_ending(self, path, output):
-        assert retrieve_file_ending(path) == output
-
     @pytest.mark.parametrize(
         "data, entity, output",
         [
@@ -734,17 +728,6 @@ class TestEntityAttributes:
     )
     def test_get_entity_id_by_entity_type(self, data, entity):
         assert get_entity_id_by_entity_type(data, entity) == 1
-
-    @pytest.mark.parametrize(
-        "data, entity",
-        [
-            ({"typeId": "wow"}, LAYOUTS_DIR),
-            ({"name": "wow"}, LAYOUTS_DIR),
-            ({"name": "wow"}, PLAYBOOKS_DIR),
-        ],
-    )
-    def test_get_entity_name_by_entity_type(self, data, entity):
-        assert get_entity_name_by_entity_type(data, entity) == "wow"
 
 
 class TestGetFilesInDir:

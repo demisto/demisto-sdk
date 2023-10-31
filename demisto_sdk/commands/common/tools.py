@@ -4175,3 +4175,63 @@ def set_val(data: dict, keys: Union[str, List[str]], value) -> None:
             dic = dic.get(k, {})
 
         dic[keys[-1]] = value
+
+
+def get(obj: dict, fields: Union[str, List[str]], defaultParam=None):
+    """Extracts field value from nested object
+    Args:
+      obj (dict): The object to extract the field from
+      field (Union[str,List[str]]): The field or a list of possible fields to extract from the object, given in dot notation
+      defaultParam (object): The default value to return in case the field doesn't exist in obj
+    Returns:
+      str: The value of the extracted field
+    """
+    if isinstance(fields, str):
+        fields = [fields]
+    temp_obj = obj
+    for field in fields:
+        parts = field.split(".")
+        temp_obj = obj
+        success = True
+        for part in parts:
+            if temp_obj and part in temp_obj:
+                temp_obj = temp_obj[part]
+            else:
+                success = False
+                continue
+        if success:
+            return temp_obj
+    return defaultParam
+
+
+def find_correct_key(data: dict, keys: List[str]) -> str:
+    """Given a data object and a list of possible paths, finding the path where the object holds a value in that path.
+    Args:
+        data (dict): The object that holds the keys.
+        keys (List[str]) List of possible paths.
+    Returns:
+        str: Either the path where the given data object has a value at or the last option.
+    """
+    for key in keys:
+        if get(data, key, None):
+            return key
+    return keys[-1]
+
+
+def set_val(data: dict, keys: Union[str, List[str]], value) -> None:
+    """Updating a data object with given value in the given key.
+    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    Args:
+        data (dict): the data object to update.
+        keys (Union[str,List[str]]): the path or list of possible paths to update.
+        value (_type_): the value to update.
+    """
+    if isinstance(keys, list):
+        keys = find_correct_key(data, keys)
+    if get(data, keys, None):
+        keys = keys.split(".")
+        dic = data
+        for k in keys[:-1]:
+            dic = dic.get(k, {})
+
+        dic[keys[-1]] = value

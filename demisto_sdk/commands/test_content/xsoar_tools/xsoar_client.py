@@ -61,8 +61,12 @@ class XsoarNGApiClientConfig(XsoarApiClientConfig):
 
 class XsoarApiInterface(ABC):
     def __init__(
-        self, xsoar_client_config: XsoarApiClientConfig, verify_ssl: bool = False
+        self,
+        xsoar_client_config: Optional[XsoarApiClientConfig] = None,
+        verify_ssl: bool = False,
     ):
+        if not xsoar_client_config:
+            xsoar_client_config = XsoarNGApiClientConfig()
         self.base_api_url = xsoar_client_config.base_url
         self.client = demisto_client.configure(
             base_url=self.base_api_url,
@@ -124,7 +128,9 @@ class XsoarApiInterface(ABC):
         pass
 
     @abstractmethod
-    def start_incident_investigation(self, incident_id: str, response_type: str = "object"):
+    def start_incident_investigation(
+        self, incident_id: str, response_type: str = "object"
+    ):
         pass
 
     @abstractmethod
@@ -400,7 +406,9 @@ class XsoarNGApiClient(XsoarApiInterface):
         return raw_response
 
     @retry_http_request()
-    def start_incident_investigation(self, incident_id: str, response_type: str = "object"):
+    def start_incident_investigation(
+        self, incident_id: str, response_type: str = "object"
+    ):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
@@ -409,7 +417,6 @@ class XsoarNGApiClient(XsoarApiInterface):
             response_type=response_type,
         )
         return raw_response
-
 
     @retry_http_request()
     def create_indicator(
@@ -623,4 +630,3 @@ class XsoarNGApiClient(XsoarApiInterface):
             response_type=response_type,
         )
         return raw_response
-

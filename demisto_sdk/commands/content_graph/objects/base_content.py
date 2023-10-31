@@ -163,14 +163,6 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
         json_dct["content_type"] = self.content_type
         return json_dct
 
-    @abstractmethod
-    def dump(
-        self,
-        path: DirectoryPath,
-        marketplace: MarketplaceVersions,
-    ) -> None:
-        pass
-
     def upload(
         self,
         client: demisto_client,
@@ -206,6 +198,14 @@ class BaseContent(BaseContentModel):
     def support_level(self) -> str:
         raise NotImplementedError
 
+    @abstractmethod
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
+        pass
+
     @staticmethod
     @lru_cache
     def from_path(
@@ -226,6 +226,7 @@ class BaseContent(BaseContentModel):
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {str(path)}")
+                raise
                 return None
         try:
             content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
@@ -240,7 +241,7 @@ class BaseContent(BaseContentModel):
                 logger.error(
                     f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
                 )
-                return None
+                raise
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
                 MARKETPLACE_MIN_VERSION
             )
@@ -248,13 +249,13 @@ class BaseContent(BaseContentModel):
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
             )
-            return None
+            raise
 
         model = content_type_to_model.get(content_item_parser.content_type)
         logger.debug(f"Loading content item from path: {path} as {model}")
         if not model:
             logger.error(f"Could not parse content item from path: {path}")
-            return None
+            raise
         try:
             obj = model.from_orm(content_item_parser)
             obj.git_status = git_status
@@ -264,7 +265,7 @@ class BaseContent(BaseContentModel):
             logger.error(
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
             )
-            return None
+            raise
 
 
 class UnknownContent(BaseContent):

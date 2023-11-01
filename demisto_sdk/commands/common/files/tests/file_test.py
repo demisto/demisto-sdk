@@ -9,18 +9,58 @@ from demisto_sdk.commands.common.files.file import File
 
 class TestFile:
     def test_read_from_local_path_error(self):
+        """
+        Given:
+         - path that does not exist
+
+        When:
+         - Running read_from_local_path method from File object
+
+        Then:
+         - make sure ValueError is raised
+        """
         with pytest.raises(ValueError):
             File.read_from_local_path("path_does_not_exist")
 
     def test_read_from_file_content_error(self):
+        """
+        Given:
+         - empty bytes
+
+        When:
+         - Running read_from_file_content method from File object
+
+        Then:
+         - make sure ValueError is raised
+        """
         with pytest.raises(ValueError):
             File.read_from_file_content(b"")
 
     def test_read_from_http_request_error(self):
+        """
+        Given:
+         - invalid URL
+
+        When:
+         - Running read_from_http_request method from File object
+
+        Then:
+         - make sure ValueError is raised
+        """
         with pytest.raises(ValueError):
             File.read_from_http_request("not/valid/url")
 
     def test_write_file_error(self):
+        """
+        Given:
+         - invalid path
+
+        When:
+         - Running write_file method from File object
+
+        Then:
+         - make sure ValueError is raised
+        """
         with pytest.raises(ValueError):
             File.write_file({}, output_path="some/path")
 

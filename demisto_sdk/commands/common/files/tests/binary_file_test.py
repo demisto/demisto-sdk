@@ -7,12 +7,13 @@ from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.binary_file import BinaryFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 
 class TestBinaryFile(FileTesting):
     @pytest.fixture()
-    def input_files(self, git_repo):
+    def input_files(self, git_repo: Repo):
         pack = git_repo.create_pack("test")
         integration = pack.create_integration()
         _bin_file_path = str(Path(git_repo.path) / "file.bin")
@@ -25,7 +26,16 @@ class TestBinaryFile(FileTesting):
         return binary_file_paths, git_repo.path
 
     def test_read_from_local_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid binary files
 
+        When:
+         - Running read_from_local_path method from BinaryFile object
+
+        Then:
+         - make sure reading the binary files from local file system is successful.
+        """
         binary_file_paths, _ = input_files
 
         for path in binary_file_paths:
@@ -36,7 +46,16 @@ class TestBinaryFile(FileTesting):
             ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid binary files
 
+        When:
+         - Running read_from_git_path method from BinaryFile object
+
+        Then:
+         - make sure reading the binary files from the master in git is successful.
+        """
         binary_file_paths, git_repo_path = input_files
 
         with ChangeCWD(git_repo_path):
@@ -50,7 +69,16 @@ class TestBinaryFile(FileTesting):
                 ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid binary files
 
+        When:
+         - Running read_from_github_api method from BinaryFile object
+
+        Then:
+         - make sure reading the binary files from the github api is successful.
+        """
         binary_file_paths, _ = input_files
         for path in binary_file_paths:
             requests_mocker = self.get_requests_mock(mocker, path=path)
@@ -62,6 +90,16 @@ class TestBinaryFile(FileTesting):
             )
 
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid binary files
+
+        When:
+         - Running read_from_gitlab_api method from BinaryFile object
+
+        Then:
+         - make sure reading the binary files from the gitlab api is successful.
+        """
         from urllib.parse import unquote
 
         binary_file_paths, _ = input_files
@@ -85,13 +123,32 @@ class TestBinaryFile(FileTesting):
             }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid binary files
 
+        When:
+         - Running read_from_http_request method from BinaryFile object
+
+        Then:
+         - make sure reading the binary files from http request is successful.
+        """
         binary_file_paths, _ = input_files
         for path in binary_file_paths:
             self.get_requests_mock(mocker, path=path)
             assert BinaryFile.read_from_http_request(path) == Path(path).read_bytes()
 
-    def test_write_file(self, git_repo):
+    def test_write_file(self, git_repo: Repo):
+        """
+        Given:
+         - binary file path to write
+
+        When:
+         - Running write_file method from BinaryFile object
+
+        Then:
+         - make sure writing binary file is successful.
+        """
         _path = Path(git_repo.path) / "file.bin"
         file_content = "text".encode()
         BinaryFile.write_file(file_content, output_path=_path)

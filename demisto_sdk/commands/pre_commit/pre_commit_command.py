@@ -387,6 +387,10 @@ def pre_commit_manager(
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     python_version_to_files, exclude_files = group_by_python_version(files_to_run)
+    if not python_version_to_files:
+        logger.info("No files to run pre-commit on, skipping pre-commit.")
+        return None
+
     pre_commit_runner = PreCommitRunner(
         bool(input_files), all_files, mode, python_version_to_files, sdk_ref
     )

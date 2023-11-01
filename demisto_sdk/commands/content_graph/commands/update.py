@@ -44,7 +44,7 @@ def should_update_graph(
 ):
     return any(
         (
-            not neo4j_service.is_alive(),  # if neo4j service is not alive, we need to update it
+            not neo4j_service.is_alive(),  # if neo4j service is not alive, we need to update
             imported_path,  # if there is an imported path to import from, we need to update
             packs_to_update,  # if there are packs to update, we need to update
             use_git
@@ -56,6 +56,32 @@ def should_update_graph(
             != content_graph_interface._get_latest_content_parser_hash(),  # if the parse hash changed, we need to update
         )
     )
+
+
+def import_from_bucket(
+    content_graph_interface: ContentGraphInterface, is_external_repo: bool
+) -> bool:
+    """
+    This imports the graph from the bucket.
+    It returns True if the import succeeded or if it's an external repo (where import is required), False otherwise.
+    Raises an error if download fails for an external repo since remote import is required in that case.
+
+    Args:
+        content_graph_interface (ContentGraphInterface): The ContentGraphInterface instance
+        is_external_repo (bool): Whether the repository is external
+    """
+    content_graph_interface.clean_import_dir()
+    try:
+        extract_remote_import_files(content_graph_interface)
+    except RuntimeError:
+        if is_external_repo:
+            logger.error(
+                "Remote import is required when using external repository. Exiting"
+            )
+            raise
+        return False
+    is_graph_up_to_date = content_graph_interface.import_graph(None)
+    return bool(is_graph_up_to_date or is_external_repo)
 
 
 @recover_if_fails
@@ -111,30 +137,15 @@ def update_content_graph(
         if not is_graph_up_to_date:
             # Import from remote if local failed
             logger.info("Importing graph from bucket")
-            content_graph_interface.clean_import_dir()
-            try:
-                extract_remote_import_files(content_graph_interface)
-            except RuntimeError:
-                if is_external_repo:
-                    logger.error(
-                        "Remote import is required when using external repository. Exiting"
-                    )
-                    raise
-                logger.warning("Failed download graph, recreating graph")
+            is_import_succeeded = import_from_bucket(
+                content_graph_interface, is_external_repo
+            )
+
+            if not is_import_succeeded:
                 create_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-            is_graph_up_to_date = content_graph_interface.import_graph(None)
-            if not is_graph_up_to_date and not is_external_repo:
-                logger.warning(
-                    "Failed to import the content graph, will create a new graph"
-                )
-            create_content_graph(
-                content_graph_interface, marketplace, dependencies, output_path
-            )
-            return
-
         if (
             use_git
             and (commit := content_graph_interface.commit)

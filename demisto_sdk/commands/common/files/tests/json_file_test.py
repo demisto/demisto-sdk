@@ -9,11 +9,12 @@ from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from TestSuite.test_tools import ChangeCWD
+from TestSuite.repo import Repo
 
 
 class TestJsonFile(FileTesting):
     @pytest.fixture()
-    def input_files(self, git_repo):
+    def input_files(self, git_repo: Repo):
         file_content = {"test": "test"}
         pack = git_repo.create_pack("test")
         indicator_field = pack.create_indicator_field("test", content=file_content)
@@ -37,6 +38,16 @@ class TestJsonFile(FileTesting):
         return json_file_paths, git_repo.path
 
     def test_read_from_local_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid json files
+
+        When:
+         - Running read_from_local_path method from JsonFile object
+
+        Then:
+         - make sure reading the json files from local file system is successful.
+        """
         json_file_paths, _ = input_files
 
         for path in json_file_paths:
@@ -47,6 +58,16 @@ class TestJsonFile(FileTesting):
             ), f"Could not read json file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid json files
+
+        When:
+         - Running read_from_git_path method from JsonFile object
+
+        Then:
+         - make sure reading the json files from the master in git is successful.
+        """
         json_file_paths, git_repo_path = input_files
 
         with ChangeCWD(git_repo_path):
@@ -60,7 +81,16 @@ class TestJsonFile(FileTesting):
                 ), f"Could not read json file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid json files
 
+        When:
+         - Running read_from_github_api method from IniFile object
+
+        Then:
+         - make sure reading the json files from the JsonFile api is successful.
+        """
         json_file_paths, _ = input_files
         for path in json_file_paths:
             requests_mocker = self.get_requests_mock(mocker, path=path)
@@ -74,6 +104,16 @@ class TestJsonFile(FileTesting):
             )
 
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid json files
+
+        When:
+         - Running read_from_gitlab_api method from JsonFile object
+
+        Then:
+         - make sure reading the json files from the gitlab api is successful.
+        """
         from urllib.parse import unquote
 
         json_file_paths, _ = input_files
@@ -94,7 +134,16 @@ class TestJsonFile(FileTesting):
             }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid json files
 
+        When:
+         - Running read_from_http_request method from JsonFile object
+
+        Then:
+         - make sure reading the json files from http request is successful.
+        """
         json_file_paths, _ = input_files
         for path in json_file_paths:
             self.get_requests_mock(mocker, path=path)
@@ -102,8 +151,18 @@ class TestJsonFile(FileTesting):
                 Path(path).read_text()
             )
 
-    def test_write_file(self, git_repo):
-        _path = Path(git_repo.path) / "file.yml"
+    def test_write_file(self, git_repo: Repo):
+        """
+        Given:
+         - json file path to write
+
+        When:
+         - Running write_file method from JsonFile object
+
+        Then:
+         - make sure writing json file is successful.
+        """
+        _path = Path(git_repo.path) / "file.json"
         JsonFile.write_file({"test": "test"}, output_path=_path)
         assert _path.exists()
         assert json.loads(Path(_path).read_text()) == {"test": "test"}

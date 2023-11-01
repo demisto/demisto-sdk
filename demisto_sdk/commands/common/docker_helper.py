@@ -172,13 +172,13 @@ class DockerBase:
         try:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
-            logger.debug(f"docker {image=} not found locally, pulling")
+            logger.info(f"docker {image=} not found locally, pulling")
             try:
                 ret = docker_client.images.pull(image)
-                logger.debug(f"pulled docker {image=} successfully")
+                logger.info(f"pulled docker {image=} successfully")
                 return ret
             except Exception:
-
+                logger.info(f"didnt pull successfully, {try_man=}")
                 import subprocess
 
                 if try_man:
@@ -373,7 +373,6 @@ class DockerBase:
             logger.debug(
                 f"{log_prompt} - Trying to pull existing image {test_docker_image}"
             )
-            raise docker.errors.ImageNotFound("mock image not found")
             self.pull_image(test_docker_image)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(

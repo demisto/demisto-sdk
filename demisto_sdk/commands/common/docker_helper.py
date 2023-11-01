@@ -163,7 +163,7 @@ class DockerBase:
         return files
 
     @staticmethod
-    def pull_image(image: str) -> docker.models.images.Image:
+    def pull_image(image: str, try_man=False) -> docker.models.images.Image:
         """
         Get a local docker image, or pull it when unavailable.
         """
@@ -175,19 +175,28 @@ class DockerBase:
             logger.debug(f"docker {image=} not found locally, pulling")
             try:
                 ret = docker_client.images.pull(image)
+                logger.debug(f"pulled docker {image=} successfully")
+                return ret
             except Exception:
-                logger.info('hmmm, what happens in shell?')
+                logger.info("hmmm, what happens in shell?")
                 logger.info(traceback.format_exc())
                 logger.info("here we go")
                 import subprocess
-                out = subprocess.check_output(["docker", "pull", image], stderr=subprocess.STDOUT)
 
-                logger.info(f'{out=}')
-                out = subprocess.check_output(["docker", "inspect", image])
-                logger.info(f'{out=}')
+                if try_man:
+                    try:
+                        out = subprocess.check_output(
+                            ["docker", "pull", image], stderr=subprocess.STDOUT
+                        )
 
-            logger.debug(f"pulled docker {image=} successfully")
-            return ret
+                        logger.info(f"{out=}")
+                    except subprocess.CalledProcessError as f:
+                        logger.info(f.output)
+                    try:
+                        out = subprocess.check_output(["docker", "inspect", image])
+                        logger.info(f"{out=}")
+                    except subprocess.CalledProcessError as f:
+                        logger.info(f.output)
 
     @staticmethod
     def copy_files_container(
@@ -286,7 +295,7 @@ class DockerBase:
             "\n".join(install_packages) if install_packages else ""
         )
         logger.debug(f"Trying to pull image {base_image}")
-        self.pull_image(base_image)
+        self.pull_image(base_image, try_man=True)
         container = self.create_container(
             image=base_image,
             files_to_push=self.installation_files(container_type),

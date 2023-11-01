@@ -4111,7 +4111,7 @@ def get_file_by_status(
     )
 
 
-def get(obj: dict, fields: Union[str, List[str]], defaultParam=None):
+def get(obj: dict, paths: Union[str, List[str]], defaultParam=None):
     """Extracts field value from nested object
 
     Args:
@@ -4123,17 +4123,22 @@ def get(obj: dict, fields: Union[str, List[str]], defaultParam=None):
       str: The value of the extracted field
 
     """
-    if isinstance(fields, str):
-        fields = [fields]
-    temp_obj = obj
-    for field in fields:
-        parts = field.split(".")
+    if isinstance(paths, str):
+        paths = [paths]
+    for path in paths:
+        keys = path.split(".")
         temp_obj = obj
         success = True
-        for part in parts:
-            if temp_obj and part in temp_obj:
-                temp_obj = temp_obj[part]
-            else:
+        for key in keys:
+            try:
+                if "[" in key and "]" in key:
+                    # Handle list indexing
+                    list_key, index = key.split("[")
+                    index = int(index.strip("]"))  # type: ignore
+                    temp_obj = temp_obj[list_key][index]
+                else:
+                    temp_obj = temp_obj[key]
+            except (AttributeError, KeyError, IndexError):
                 success = False
                 continue
         if success:
@@ -4157,7 +4162,7 @@ def find_correct_key(data: dict, keys: List[str]) -> str:
     return keys[-1]
 
 
-def set_val(data: dict, keys: Union[str, List[str]], value) -> None:
+def set_val(data: dict, paths: Union[str, List[str]], value) -> None:
     """Updating a data object with given value in the given key.
     If a list of keys is given, will find the right path to update based on which path acctually has a value.
 
@@ -4166,12 +4171,27 @@ def set_val(data: dict, keys: Union[str, List[str]], value) -> None:
         keys (Union[str,List[str]]): the path or list of possible paths to update.
         value (_type_): the value to update.
     """
-    if isinstance(keys, list):
-        keys = find_correct_key(data, keys)
-    if get(data, keys, None):
-        keys = keys.split(".")
-        dic = data
-        for k in keys[:-1]:
-            dic = dic.get(k, {})
+    if isinstance(paths, list):
+        paths = find_correct_key(data, paths)
+    else:
+        paths = [paths]
+    for path in paths:
+        keys = path.split(".")
+        current_structure = data
 
-        dic[keys[-1]] = value
+        for key in keys:
+            if "[" in key and "]" in key:
+                # Handle list indexing
+                list_key, index = key.split("[")
+                index = int(index.strip("]"))
+                current_structure = current_structure[list_key][index]
+            else:
+                # Handle dictionary keys
+                if key not in current_structure:
+                    current_structure[
+                        key
+                    ] = {}  # Create a new nested dictionary if the key is not present
+                current_structure = current_structure[key]
+
+        # Set the value in the final structure (either dictionary or list)
+        current_structure = value

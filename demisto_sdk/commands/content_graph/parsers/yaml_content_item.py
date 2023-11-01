@@ -80,10 +80,12 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def toversion(self) -> str:
-        return get(
-            self.yml_data,
-            self.mapping.get("toversion", ""),
-            DEFAULT_CONTENT_ITEM_TO_VERSION,
+        return (
+            get(
+                self.yml_data,
+                self.mapping.get("toversion", ""),
+            )
+            or DEFAULT_CONTENT_ITEM_TO_VERSION
         )
 
     @property

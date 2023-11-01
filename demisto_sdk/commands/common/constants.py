@@ -1621,7 +1621,9 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (
     FileType.PACK_IGNORE,
 )
 
-DEFAULT_MANDATORY_VALIDATIONS = {"default_mandatory_validations": {"select": []}}
+DEFAULT_MANDATORY_VALIDATIONS: Dict[str, Dict] = {
+    "default_mandatory_validations": {"select": []}
+}
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "indicatortype",

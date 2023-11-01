@@ -1,4 +1,3 @@
-import json
 import logging
 import tempfile
 from pathlib import Path
@@ -7,11 +6,10 @@ from unittest.mock import patch
 import pytest
 import toml
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
+from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.validate.validate_manager_v2 import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ValidationResults
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
@@ -30,29 +28,51 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_
 )
 from TestSuite.test_tools import str_in_call_args_list
 
+INTEGRATION = create_integration_object()
+
 
 def get_validate_manager(mocker):
     mocker.patch.object(Initializer, "gather_objects_to_run", return_value={})
     return ValidateManager()
 
 
-parser = IntegrationParser(Path("demisto_sdk/commands/validate/tests/test_data/integration.yml"), list(MarketplaceVersions))
-TEST_INTEGRATION = Integration.from_orm(parser)
-
-
 @pytest.mark.parametrize(
     "validations_to_run, sub_classes, expected_results",
     [
-        ([], [IDNameValidator, BreakingBackwardsSubtypeValidator, PackMetadataNameValidator], []),
+        (
+            [],
+            [
+                IDNameValidator,
+                BreakingBackwardsSubtypeValidator,
+                PackMetadataNameValidator,
+            ],
+            [],
+        ),
         (
             ["BA101", "BC100"],
-            [IDNameValidator, BreakingBackwardsSubtypeValidator, PackMetadataNameValidator],
+            [
+                IDNameValidator,
+                BreakingBackwardsSubtypeValidator,
+                PackMetadataNameValidator,
+            ],
             [IDNameValidator(), BreakingBackwardsSubtypeValidator()],
         ),
-        (["TE"], [IDNameValidator, BreakingBackwardsSubtypeValidator, PackMetadataNameValidator], []),
+        (
+            ["TE"],
+            [
+                IDNameValidator,
+                BreakingBackwardsSubtypeValidator,
+                PackMetadataNameValidator,
+            ],
+            [],
+        ),
         (
             ["BA101", "TE103"],
-            [IDNameValidator, BreakingBackwardsSubtypeValidator, PackMetadataNameValidator],
+            [
+                IDNameValidator,
+                BreakingBackwardsSubtypeValidator,
+                PackMetadataNameValidator,
+            ],
             [IDNameValidator()],
         ),
     ],
@@ -143,7 +163,12 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
     ],
 )
 def test_gather_validations_to_run(
-    mocker, category_to_run, use_git, config_file_content, expected_results, ignore_support_level
+    mocker,
+    category_to_run,
+    use_git,
+    config_file_content,
+    expected_results,
+    ignore_support_level,
 ):
     """
     Given
@@ -164,7 +189,9 @@ def test_gather_validations_to_run(
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
     config_reader = ConfigReader(category_to_run=category_to_run)
-    results = config_reader.gather_validations_to_run(use_git=use_git, ignore_support_level=ignore_support_level)
+    results = config_reader.gather_validations_to_run(
+        use_git=use_git, ignore_support_level=ignore_support_level
+    )
     assert results == expected_results
 
 
@@ -172,13 +199,59 @@ def test_gather_validations_to_run(
     "results, fixing_results, expected_results",
     [
         (
-            [ValidationResult(validator=IDNameValidator(), message="", content_object=TEST_INTEGRATION, old_content_object=None)], [], {"validations": [{'file path': str(TEST_INTEGRATION.path), 'error code': 'BA101', 'message': ''}], "fixed validations": []},
+            [
+                ValidationResult(
+                    validator=IDNameValidator(),
+                    message="",
+                    content_object=INTEGRATION,
+                    old_content_object=None,
+                )
+            ],
+            [],
+            {
+                "validations": [
+                    {
+                        "file path": str(INTEGRATION.path),
+                        "error code": "BA101",
+                        "message": "",
+                    }
+                ],
+                "fixed validations": [],
+            },
         ),
+        ([], [], {"validations": [], "fixed validations": []}),
         (
-            [], [], {"validations": [], "fixed validations": []}
-        ),
-        (
-            [ValidationResult(validator=IDNameValidator(), message="", content_object=TEST_INTEGRATION, old_content_object=None)], [FixingResult(validator=IDNameValidator(), message="Fixed this issue", content_object=TEST_INTEGRATION)], {"validations": [{'file path': str(TEST_INTEGRATION.path), 'error code': 'BA101', 'message': ''}], "fixed validations": [{'file path': str(TEST_INTEGRATION.path), 'error code': 'BA101', 'message': 'Fixed this issue'}]}
+            [
+                ValidationResult(
+                    validator=IDNameValidator(),
+                    message="",
+                    content_object=INTEGRATION,
+                    old_content_object=None,
+                )
+            ],
+            [
+                FixingResult(
+                    validator=IDNameValidator(),
+                    message="Fixed this issue",
+                    content_object=INTEGRATION,
+                )
+            ],
+            {
+                "validations": [
+                    {
+                        "file path": str(INTEGRATION.path),
+                        "error code": "BA101",
+                        "message": "",
+                    }
+                ],
+                "fixed validations": [
+                    {
+                        "file path": str(INTEGRATION.path),
+                        "error code": "BA101",
+                        "message": "Fixed this issue",
+                    }
+                ],
+            },
         ),
     ],
 )
@@ -196,31 +269,84 @@ def test_write_validation_results(results, fixing_results, expected_results):
         - Case 2: Make sure the results hold both list where both are empty.
         - Case 3: Make sure the results hold both list where both hold 1 result each.
     """
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_file:
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".json"
+    ) as temp_file:
         temp_file_path = temp_file.name
         validation_results = ValidationResults(json_file_path=temp_file_path)
         validation_results.results = results
         validation_results.fixing_results = fixing_results
         validation_results.write_validation_results()
-        with open(temp_file_path, 'r') as file:
+        with open(temp_file_path, "r") as file:
             loaded_data = json.load(file)
             assert loaded_data == expected_results
+
 
 @pytest.mark.parametrize(
     "only_throw_warnings, results, expected_exit_code, expected_warnings_call_count, expected_error_call_count, expected_error_code_in_warnings, expected_error_code_in_errors",
     [
         (
-            ["BA101"], [ValidationResult(validator=IDNameValidator(), message="", content_object=TEST_INTEGRATION)], 0, 1, 0, ["BA101"], []
+            ["BA101"],
+            [
+                ValidationResult(
+                    validator=IDNameValidator(),
+                    message="",
+                    content_object=INTEGRATION,
+                )
+            ],
+            0,
+            1,
+            0,
+            ["BA101"],
+            [],
         ),
         (
-            [], [ValidationResult(validator=IDNameValidator(), message="", content_object=TEST_INTEGRATION)], 1, 0, 1, [], ["BA101"]
+            [],
+            [
+                ValidationResult(
+                    validator=IDNameValidator(),
+                    message="",
+                    content_object=INTEGRATION,
+                )
+            ],
+            1,
+            0,
+            1,
+            [],
+            ["BA101"],
         ),
         (
-            ["BC100"], [ValidationResult(validator=IDNameValidator(), message="", content_object=TEST_INTEGRATION), ValidationResult(validator=BreakingBackwardsSubtypeValidator(), message="", content_object=TEST_INTEGRATION)], 1, 1, 1, ["BC100"], ["BA101"]
+            ["BC100"],
+            [
+                ValidationResult(
+                    validator=IDNameValidator(),
+                    message="",
+                    content_object=INTEGRATION,
+                ),
+                ValidationResult(
+                    validator=BreakingBackwardsSubtypeValidator(),
+                    message="",
+                    content_object=INTEGRATION,
+                ),
+            ],
+            1,
+            1,
+            1,
+            ["BC100"],
+            ["BA101"],
         ),
     ],
 )
-def test_post_results(mocker, only_throw_warnings, results, expected_exit_code, expected_warnings_call_count, expected_error_call_count, expected_error_code_in_warnings, expected_error_code_in_errors):
+def test_post_results(
+    mocker,
+    only_throw_warnings,
+    results,
+    expected_exit_code,
+    expected_warnings_call_count,
+    expected_error_call_count,
+    expected_error_code_in_warnings,
+    expected_error_code_in_errors,
+):
     """
     Given
     an only_throw_warnings list, and a list of results.
@@ -244,22 +370,21 @@ def test_post_results(mocker, only_throw_warnings, results, expected_exit_code, 
     assert logger_warning.call_count == expected_warnings_call_count
     assert logger_error.call_count == expected_error_call_count
     for expected_error_code_in_warning in expected_error_code_in_warnings:
-        assert str_in_call_args_list(logger_warning.call_args_list, expected_error_code_in_warning)
+        assert str_in_call_args_list(
+            logger_warning.call_args_list, expected_error_code_in_warning
+        )
     for expected_error_code_in_error in expected_error_code_in_errors:
-        assert str_in_call_args_list(logger_error.call_args_list, expected_error_code_in_error)
+        assert str_in_call_args_list(
+            logger_error.call_args_list, expected_error_code_in_error
+        )
+
 
 @pytest.mark.parametrize(
     "validator, expected_results",
     [
-        (
-            IDNameValidator(), True
-        ),
-        (
-            PackMetadataNameValidator(), False
-        ),
-        (
-            BreakingBackwardsSubtypeValidator(), False
-        ),
+        (IDNameValidator(), True),
+        (PackMetadataNameValidator(), False),
+        (BreakingBackwardsSubtypeValidator(), False),
     ],
 )
 def test_should_run(validator, expected_results):
@@ -277,5 +402,4 @@ def test_should_run(validator, expected_results):
         - Case 2: Should return False.
         - Case 3: Should return False.
     """
-    TEST_INTEGRATION.support_level
-    assert expected_results == validator.should_run(TEST_INTEGRATION, [], {})
+    assert expected_results == validator.should_run(INTEGRATION, [], {})

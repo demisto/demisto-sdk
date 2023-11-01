@@ -4175,4 +4175,3 @@ def set_val(data: dict, keys: Union[str, List[str]], value) -> None:
             dic = dic.get(k, {})
 
         dic[keys[-1]] = value
-

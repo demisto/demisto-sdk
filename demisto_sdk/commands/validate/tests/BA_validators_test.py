@@ -26,12 +26,8 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
         ),
         (
             [
-                create_classifier_object(
-                    key_path="id", new_value="changedName"
-                ),
-                create_classifier_object(
-                    key_path="id", new_value="Github Classifier"
-                ),
+                create_classifier_object(key_path="id", new_value="changedName"),
+                create_classifier_object(key_path="id", new_value="Github Classifier"),
             ],
             1,
         ),
@@ -83,11 +79,13 @@ def test_IDNameValidator_is_valid(content_items, expected_number_of_failures):
         == expected_number_of_failures
     )
 
+
 @pytest.mark.parametrize(
     "content_item, expected_name",
     [
         (
-            create_wizard_object({"id": "should_fix"}), "should_fix",
+            create_wizard_object({"id": "should_fix"}),
+            "should_fix",
         ),
     ],
 )

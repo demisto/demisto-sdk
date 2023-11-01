@@ -130,7 +130,14 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
             "__dict__": dict_copy,
             "__fields_set__": self.__fields_set__,
         }
-
+    @abstractmethod
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
+        pass
+    
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id
@@ -198,13 +205,12 @@ class BaseContent(BaseContentModel):
     def support_level(self) -> str:
         raise NotImplementedError
 
-    @abstractmethod
     def dump(
         self,
         path: DirectoryPath,
         marketplace: MarketplaceVersions,
     ) -> None:
-        pass
+        raise NotImplementedError
 
     @staticmethod
     @lru_cache

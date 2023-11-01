@@ -132,9 +132,7 @@ def create_incident_type_object(
     return BaseContent.from_path(Path(pack.incident_types[0].path))
 
 
-def create_wizard_object(
-    dict_to_update: Optional[Any] = None
-):
+def create_wizard_object(dict_to_update: Optional[Any] = None):
     """Creating a wizard object with altered fields from a default wizard json structure.
 
     Args:

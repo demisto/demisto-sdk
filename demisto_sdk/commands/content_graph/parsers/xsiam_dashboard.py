@@ -28,11 +28,13 @@ class XSIAMDashboardParser(
 
     @cached_property
     def mapping(self):
-        super().mapping.update({
-            "object_id": "global_id",
-            "fromversion": "fromVersion",
-            "toVersion": "toVersion",
-        })
+        super().mapping.update(
+            {
+                "object_id": "global_id",
+                "fromversion": "fromVersion",
+                "toVersion": "toVersion",
+            }
+        )
         return super().mapping
 
     @property

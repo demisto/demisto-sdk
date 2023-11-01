@@ -35,14 +35,16 @@ class JSONContentItemParser(ContentItemParser):
 
     @cached_property
     def mapping(self):
-        super().mapping.update({
-            "name": "name",
-            "deprecated": "deprecated",
-            "object_id": "id",
-            "description": "description",
-            "fromversion": "fromVersion",
-            "toversion": "toVersion",
-        })
+        super().mapping.update(
+            {
+                "name": "name",
+                "deprecated": "deprecated",
+                "object_id": "id",
+                "description": "description",
+                "fromversion": "fromVersion",
+                "toversion": "toVersion",
+            }
+        )
         return super().mapping
 
     @property

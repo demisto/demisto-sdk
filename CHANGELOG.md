@@ -1,7 +1,9 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the **pre-commit** command runs even in the case of deprecated or powershell integrations or scripts.
 * Fixed an issue where **validate** falsely failed with error `PB101` and `PB123` due to condition names discrepancy
 * Fixed an issue where the **modeling-rules test** command failed report and error when test data didn't exist.
+* Changed the table print for **modeling-rules test** command.
 * Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
 * Added a new validation (`IN162`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.
 * A rewrite for the **download** command, with many improvements and fixes, including:
@@ -17,6 +19,7 @@
   * Fixed an issue where the download would fail when using the '-r' / '--regex' flag when there were multiple custom content items on the server matching the pattern, having the same name.
   * Fixed an issue where integrations / automations with a dot in their name would be saved with an incorrect file name (For example: `Test v1.1.py` would be named `Test v1.py`)
   * Started adaption of the validator refactor - for more information, please refer to the readme files.
+  * Fixed the **Link to Jira** Github flow to match the Jira-dc.
 
 **Note:** Due to the optimization changes made to the **download** command, playbooks might be formatted a bit differently than before when downloaded from the server using the new version. The playbooks should however function and work the same.
 * Fixed an issue where the **pre-commit** command, now correctly gathers the associated python file when a yml file is provided as input.

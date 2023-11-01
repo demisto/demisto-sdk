@@ -391,6 +391,10 @@ def pre_commit_manager(
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     python_version_to_files, exclude_files = group_by_python_version(files_to_run)
+    if not python_version_to_files:
+        logger.info("No files to run pre-commit on, skipping pre-commit.")
+        return None
+
     pre_commit_runner = PreCommitRunner(
         bool(input_files), all_files, mode, python_version_to_files, sdk_ref
     )
@@ -437,6 +441,10 @@ def preprocess_files(
             files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
             files_to_run.add(file)
+            # if the current file is a yml file, add the matching python file to files_to_run
+            if str(file).endswith("yml"):
+                str_py_file_path = str(file).replace("yml", "py")
+                files_to_run.add(Path(str_py_file_path))
 
     # convert to relative file to content path
     relative_paths = {

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import os
 import re
@@ -39,6 +41,7 @@ class YmlSplitter:
     Attributes:
         input (str): input yml file path
         output (str): output path
+        input_file_data (dict | None): preloaded YAML data. if not provided, data will be loaded from input
         no_demisto_mock (bool): whether to add an import for demistomock
         no_common_server (bool): whether to add an import for common server
         no_auto_create_dir (bool): whether to create a dir
@@ -54,6 +57,7 @@ class YmlSplitter:
         input: str,
         output: str = "",
         file_type: str = "",
+        input_file_data: dict | None = None,
         no_demisto_mock: bool = False,
         no_common_server: bool = False,
         no_auto_create_dir: bool = False,
@@ -72,7 +76,9 @@ class YmlSplitter:
         self.lines_inserted_at_code_start = 0
         self.config = configuration or Configuration()
         self.auto_create_dir = not no_auto_create_dir
-        self.yml_data = get_yaml(self.input)
+        self.yml_data = (
+            input_file_data if input_file_data is not None else get_yaml(self.input)
+        )
         self.api_module_path: Optional[str] = None
 
     def get_output_path(self):
@@ -105,7 +111,7 @@ class YmlSplitter:
         try:
             output_path = self.get_output_path()
         except ValueError as ex:
-            logger.info(f"[red]{ex}[/red]")
+            logger.error(str(ex))
             return 1
         logger.debug(f"Starting migration of: {self.input} to dir: {output_path}")
         output_path.mkdir(parents=True, exist_ok=True)
@@ -122,7 +128,11 @@ class YmlSplitter:
         self.extract_long_description(f"{output_path}/{base_name}_description.md")
         yaml_out = f"{output_path}/{base_name}.yml"
         logger.debug(f"Creating yml file: {yaml_out} ...")
-        yaml_obj = get_file(self.input, raise_on_error=True)
+        if self.yml_data:
+            yaml_obj = self.yml_data
+        else:
+            yaml_obj = get_file(self.input, raise_on_error=True)
+
         script_obj = yaml_obj
 
         if self.file_type in ("modelingrule", "parsingrule"):
@@ -200,7 +210,10 @@ class YmlSplitter:
         else:
             lang_type = self.yml_data["type"]
         ext = TYPE_TO_EXTENSION[lang_type]
-        code_file_path = code_file_path.with_suffix(ext)
+
+        if code_file_path.suffix != ext:
+            code_file_path = code_file_path.parent / (code_file_path.name + ext)
+
         logger.debug(f"Extracting code to: {code_file_path} ...")
         with open(code_file_path, "w") as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:

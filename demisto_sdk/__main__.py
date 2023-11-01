@@ -747,13 +747,27 @@ def zip_packs(ctx, **kwargs) -> int:
     default=False,
     help="Wether to skip validations based on their support level or not.",
 )
+@click.option(
+    "--skip-old-validate",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to skip validations based on their support level or not.",
+)
+@click.option(
+    "--run-new-validate",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to skip validations based on their support level or not.",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
 @logging_setup_decorator
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
-    # from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    from demisto_sdk.commands.validate.validate_manager import ValidateManager
     from demisto_sdk.commands.validate.validate_manager_v2 import (
         ValidateManager as ValidateManagerV2,
     )
@@ -782,51 +796,55 @@ def validate(ctx, config, file_paths: str, **kwargs):
         if not kwargs.get("validate_all") and not kwargs["use_git"] and not file_path:
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
-        # validator = ValidateManager(
-        #     is_backward_check=not kwargs["no_backward_comp"],
-        #     only_committed_files=kwargs["post_commit"],
-        #     prev_ver=kwargs["prev_ver"],
-        #     skip_conf_json=kwargs["no_conf_json"],
-        #     use_git=kwargs["use_git"],
-        #     file_path=file_path,
-        #     validate_all=kwargs.get("validate_all"),
-        #     validate_id_set=kwargs["id_set"],
-        #     validate_graph=kwargs.get("graph"),
-        #     skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
-        #     print_ignored_errors=kwargs["print_ignored_errors"],
-        #     is_external_repo=is_external_repo,
-        #     print_ignored_files=kwargs["print_ignored_files"],
-        #     no_docker_checks=kwargs["no_docker_checks"],
-        #     silence_init_prints=kwargs["silence_init_prints"],
-        #     skip_dependencies=kwargs["skip_pack_dependencies"],
-        #     id_set_path=kwargs.get("id_set_path"),
-        #     staged=kwargs["staged"],
-        #     create_id_set=kwargs.get("create_id_set"),
-        #     json_file_path=kwargs.get("json_file"),
-        #     skip_schema_check=kwargs.get("skip_schema_check"),
-        #     debug_git=kwargs.get("debug_git"),
-        #     include_untracked=kwargs.get("include_untracked"),
-        #     quiet_bc=kwargs.get("quiet_bc_validation"),
-        #     multiprocessing=run_with_mp,
-        #     check_is_unskipped=not kwargs.get("allow_skipped", False),
-        #     specific_validations=kwargs.get("run_specific_validations"),
-        # )
-        validator_v2 = ValidateManagerV2(
-            only_committed_files=kwargs["post_commit"],
-            prev_ver=kwargs["prev_ver"],
-            use_git=kwargs["use_git"],
-            file_path=file_path,
-            validate_all=kwargs.get("validate_all"),
-            staged=kwargs["staged"],
-            json_file_path=kwargs.get("json_file"),
-            multiprocessing=run_with_mp,
-            config_file_category_to_run=kwargs.get("category_to_run"),
-            allow_autofix=kwargs.get("allow_fix"),
-            config_file_path=kwargs.get("config_path"),
-            ignore_support_level=kwargs.get("ignore_support_level"),
-        )
-        # return validator.run_validation() + validator_v2.run_validation()
-        return validator_v2.run_validation()
+        exit_code = 0
+        if not kwargs["skip_old_validate"]:
+            validator = ValidateManager(
+                is_backward_check=not kwargs["no_backward_comp"],
+                only_committed_files=kwargs["post_commit"],
+                prev_ver=kwargs["prev_ver"],
+                skip_conf_json=kwargs["no_conf_json"],
+                use_git=kwargs["use_git"],
+                file_path=file_path,
+                validate_all=kwargs.get("validate_all"),
+                validate_id_set=kwargs["id_set"],
+                validate_graph=kwargs.get("graph"),
+                skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
+                print_ignored_errors=kwargs["print_ignored_errors"],
+                is_external_repo=is_external_repo,
+                print_ignored_files=kwargs["print_ignored_files"],
+                no_docker_checks=kwargs["no_docker_checks"],
+                silence_init_prints=kwargs["silence_init_prints"],
+                skip_dependencies=kwargs["skip_pack_dependencies"],
+                id_set_path=kwargs.get("id_set_path"),
+                staged=kwargs["staged"],
+                create_id_set=kwargs.get("create_id_set"),
+                json_file_path=kwargs.get("json_file"),
+                skip_schema_check=kwargs.get("skip_schema_check"),
+                debug_git=kwargs.get("debug_git"),
+                include_untracked=kwargs.get("include_untracked"),
+                quiet_bc=kwargs.get("quiet_bc_validation"),
+                multiprocessing=run_with_mp,
+                check_is_unskipped=not kwargs.get("allow_skipped", False),
+                specific_validations=kwargs.get("run_specific_validations"),
+            )
+            exit_code += validator.run_validation()
+        if kwargs["run_new_validate"]:
+            validator_v2 = ValidateManagerV2(
+                only_committed_files=kwargs["post_commit"],
+                prev_ver=kwargs["prev_ver"],
+                use_git=kwargs["use_git"],
+                file_path=file_path,
+                validate_all=kwargs.get("validate_all"),
+                staged=kwargs["staged"],
+                json_file_path=kwargs.get("json_file"),
+                multiprocessing=run_with_mp,
+                config_file_category_to_run=kwargs.get("category_to_run"),
+                allow_autofix=kwargs.get("allow_fix"),
+                config_file_path=kwargs.get("config_path"),
+                ignore_support_level=kwargs.get("ignore_support_level"),
+            )
+            exit_code += validator_v2.run_validation()
+        return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.info(f"[red]{e}[/red]")
         logger.info(

@@ -8,11 +8,12 @@ from demisto_sdk.commands.common.files.ini_file import IniFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from TestSuite.test_tools import ChangeCWD
+from TestSuite.repo import Repo
 
 
 class TestIniFile(FileTesting):
     @pytest.fixture()
-    def input_files(self, git_repo):
+    def input_files(self, git_repo: Repo):
         pack = git_repo.create_pack()
         pack.pack_ignore.write_list(
             [
@@ -38,7 +39,16 @@ class TestIniFile(FileTesting):
         return ini_file_paths, git_repo.path
 
     def test_read_from_local_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid ini files
 
+        When:
+         - Running read_from_local_path method from IniFile object
+
+        Then:
+         - make sure reading the ini files from local file system is successful.
+        """
         ini_file_paths, _ = input_files
 
         for path in ini_file_paths:
@@ -46,7 +56,16 @@ class TestIniFile(FileTesting):
             assert actual_file_content.sections()
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid ini files
 
+        When:
+         - Running read_from_git_path method from IniFile object
+
+        Then:
+         - make sure reading the ini files from the master in git is successful.
+        """
         ini_file_paths, git_repo_path = input_files
 
         with ChangeCWD(git_repo_path):
@@ -57,7 +76,16 @@ class TestIniFile(FileTesting):
                 assert actual_file_content.sections()
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid ini files
 
+        When:
+         - Running read_from_github_api method from IniFile object
+
+        Then:
+         - make sure reading the ini files from the github api is successful.
+        """
         text_file_paths, _ = input_files
         for path in text_file_paths:
             requests_mocker = self.get_requests_mock(mocker, path=path)
@@ -70,6 +98,16 @@ class TestIniFile(FileTesting):
             assert actual_file_content.sections()
 
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid ini files
+
+        When:
+         - Running read_from_gitlab_api method from IniFile object
+
+        Then:
+         - make sure reading the ini files from the gitlab api is successful.
+        """
         from urllib.parse import unquote
 
         text_file_paths, _ = input_files
@@ -92,14 +130,33 @@ class TestIniFile(FileTesting):
             }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid ini files
 
+        When:
+         - Running read_from_http_request method from IniFile object
+
+        Then:
+         - make sure reading the ini files from http request is successful.
+        """
         text_file_paths, _ = input_files
         for path in text_file_paths:
             self.get_requests_mock(mocker, path=path)
             actual_file_content = IniFile.read_from_http_request(path)
             assert actual_file_content.sections()
 
-    def test_write_file(self, git_repo):
+    def test_write_file(self, git_repo: Repo):
+        """
+        Given:
+         - ini file path to write
+
+        When:
+         - Running write_file method from IniFile object
+
+        Then:
+         - make sure writing ini file is successful.
+        """
         _path = Path(git_repo.path) / "file.ini"
         IniFile.write_file(
             {

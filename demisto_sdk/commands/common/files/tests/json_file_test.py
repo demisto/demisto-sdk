@@ -89,7 +89,7 @@ class TestJsonFile(FileTesting):
          - Running read_from_github_api method from IniFile object
 
         Then:
-         - make sure reading the json files from the JsonFile api is successful.
+         - make sure reading the json files from the github api is successful.
         """
         json_file_paths, _ = input_files
         for path in json_file_paths:

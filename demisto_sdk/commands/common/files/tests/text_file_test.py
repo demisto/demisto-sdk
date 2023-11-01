@@ -8,11 +8,12 @@ from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.repo import Repo
 
 
 class TestTextFile(FileTesting):
     @pytest.fixture()
-    def input_files(self, git_repo):
+    def input_files(self, git_repo: Repo):
         pack = git_repo.create_pack("test")
         integration = pack.create_integration(
             commands_txt="hello-world-command",
@@ -38,7 +39,16 @@ class TestTextFile(FileTesting):
         return text_file_paths, git_repo.path
 
     def test_read_from_local_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid text files
 
+        When:
+         - Running read_from_local_path method from TextFile object
+
+        Then:
+         - make sure reading the text files from local file system is successful.
+        """
         text_file_paths, _ = input_files
 
         for path in text_file_paths:
@@ -48,7 +58,17 @@ class TestTextFile(FileTesting):
                 actual_file_content == expected_file_content
             ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
-    def test_read_from_local_path_unicode_error(self, mocker, git_repo):
+    def test_read_from_local_path_unicode_error(self, mocker, git_repo: Repo):
+        """
+        Given:
+         - text file that is not encoded with utf-8
+
+        When:
+         - Running read_from_local_path method from TextFile object
+
+        Then:
+         - make sure reading the text file from local file system is successful even when UnicodeDecodeError is raised
+        """
         from demisto_sdk.commands.common.logger import logger
 
         _path = Path(git_repo.path) / "file"
@@ -62,7 +82,16 @@ class TestTextFile(FileTesting):
         )
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid text files
 
+        When:
+         - Running read_from_git_path method from TextFile object
+
+        Then:
+         - make sure reading the text files from the master in git is successful.
+        """
         text_file_paths, git_repo_path = input_files
 
         with ChangeCWD(git_repo_path):
@@ -76,7 +105,16 @@ class TestTextFile(FileTesting):
                 ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid json files
 
+        When:
+         - Running read_from_github_api method from TextFile object
+
+        Then:
+         - make sure reading the json files from the github api is successful.
+        """
         text_file_paths, _ = input_files
         for path in text_file_paths:
             requests_mocker = self.get_requests_mock(mocker, path=path)
@@ -88,6 +126,16 @@ class TestTextFile(FileTesting):
             )
 
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid text files
+
+        When:
+         - Running read_from_gitlab_api method from TextFile object
+
+        Then:
+         - make sure reading the text files from the gitlab api is successful.
+        """
         from urllib.parse import unquote
 
         text_file_paths, _ = input_files
@@ -111,13 +159,32 @@ class TestTextFile(FileTesting):
             }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid text files
 
+        When:
+         - Running read_from_http_request method from TextFile object
+
+        Then:
+         - make sure reading the text files from http request is successful.
+        """
         text_file_paths, _ = input_files
         for path in text_file_paths:
             self.get_requests_mock(mocker, path=path)
             assert TextFile.read_from_http_request(path) == Path(path).read_text()
 
     def test_write_file(self, git_repo):
+        """
+        Given:
+         - text file path to write
+
+        When:
+         - Running write_file method from TextFile object
+
+        Then:
+         - make sure writing text file is successful.
+        """
         _path = Path(git_repo.path) / "file.txt"
         TextFile.write_file("text", output_path=_path)
         assert _path.exists()

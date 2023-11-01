@@ -373,6 +373,7 @@ class DockerBase:
             logger.debug(
                 f"{log_prompt} - Trying to pull existing image {test_docker_image}"
             )
+            raise docker.errors.ImageNotFound("mock image not found")
             self.pull_image(test_docker_image)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(

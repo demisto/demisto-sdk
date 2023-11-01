@@ -131,7 +131,7 @@ def docker_images_for_file(yml: dict) -> set:
     return ret
 
 
-@functools.lru_cache(maxsize=256)
+@functools.lru_cache(maxsize=512)
 def devtest_image(image_tag, is_powershell) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template

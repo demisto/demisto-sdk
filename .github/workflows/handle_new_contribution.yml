@@ -5,8 +5,9 @@ on:
     types: [opened, ready_for_review]
 
 permissions:
-  pull-requests: write
   contents: write
+  pull-requests: write
+  repository-projects: write
 
 jobs:
   assign_and_label:

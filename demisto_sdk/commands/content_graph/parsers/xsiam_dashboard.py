@@ -32,7 +32,7 @@ class XSIAMDashboardParser(
             {
                 "object_id": "global_id",
                 "fromversion": "fromVersion",
-                "toVersion": "toVersion",
+                "toversion": "toVersion",
             }
         )
         return super().mapping

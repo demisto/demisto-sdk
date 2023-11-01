@@ -274,7 +274,7 @@ class BaseContent(BaseContentModel):
             return None
 
 
-class UnknownContent(BaseContent):
+class UnknownContent(BaseContentModel):
     """A model for non-existing content items used by existing content items."""
 
     not_in_repository: bool = True

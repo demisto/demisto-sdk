@@ -42,7 +42,7 @@ def should_update_graph(
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
-    return neo4j_service.is_alive() and any(
+    return any(
         (
             not neo4j_service.is_alive(),  # if neo4j service is not alive, we need to update it
             imported_path,  # if there is an imported path to import from, we need to update

@@ -23,4 +23,4 @@ class ValidateFormatHook(Hook):
         else:
             self.base_hook["args"].append("-g")
 
-        self.hooks.append(self.base_hook)
+        self.hooks.insert(self.hook_index, self.base_hook)

@@ -74,8 +74,8 @@ class GitUtil:
     def path_from_git_root(self, path: Union[Path, str]) -> Path:
         try:
             return Path(path).relative_to(Path(self.repo.working_dir))
-        except ValueError as e:
-            raise NoSuchPathError(str(e))
+        except ValueError:
+            return Path(os.path.relpath(str(path), self.git_path()))
 
     def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> Commit:
         if from_remote:
@@ -858,7 +858,7 @@ class GitUtil:
         Returns:
             The fetched file content.
         """
-        file_content = self.repo.git.show(git_file_path, binary=True)
+        file_content = self.repo.git.show(git_file_path)
         return file_content
 
     def get_local_remote_file_path(

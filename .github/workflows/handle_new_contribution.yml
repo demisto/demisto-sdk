@@ -23,5 +23,9 @@ jobs:
           echo "$contrib_tl"
           echo "Finished retrieving the contribution TL username"
           
-          echo "Add an assignee and a Contribution label"
-          gh pr edit --add-assignee "$contrib_tl" --add-label Contribution "$PR_URL"
+          if [ $contrib_tl ]; then
+            echo "Add an assignee and a Contribution label"
+            gh pr edit --add-reviewer "$contrib_tl" --add-assignee "$contrib_tl" --add-label Contribution "$PR_URL"
+          else
+            echo "There was a problem with retrieving the GitHub user name of the contribution TL."
+          fi

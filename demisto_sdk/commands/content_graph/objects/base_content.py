@@ -130,6 +130,7 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
             "__dict__": dict_copy,
             "__fields_set__": self.__fields_set__,
         }
+
     @abstractmethod
     def dump(
         self,
@@ -137,7 +138,7 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
         marketplace: MarketplaceVersions,
     ) -> None:
         pass
-    
+
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id

@@ -1,6 +1,8 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where **validate** falsely failed with error `PB101` and `PB123` due to condition names discrepancy
+* Fixed an issue where the **modeling-rules test** command failed report and error when test data didn't exist.
+* Changed the table print for **modeling-rules test** command.
 * Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
 * Added a new validation (`IN162`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.
 * A rewrite for the **download** command, with many improvements and fixes, including:

@@ -218,6 +218,8 @@ class DockerHook(Hook):
         config_arg = self._get_config_file_arg()
 
         start_time = time.time()
+        logger.info(f"{len(tag_to_files_ymls)} images were collected from files")
+        logger.debug(f'collected images: {" ".join(tag_to_files_ymls.keys())}')
         for image, file_ymls in sorted(
             tag_to_files_ymls.items(), key=lambda item: item[0]
         ):

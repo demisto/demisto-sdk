@@ -294,7 +294,7 @@ class DockerBase:
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
-        logger.debug(f"Trying to pull image {base_image}")
+        logger.info(f"Trying to pull image {base_image}")
         self.pull_image(base_image, try_man=True)
         container = self.create_container(
             image=base_image,

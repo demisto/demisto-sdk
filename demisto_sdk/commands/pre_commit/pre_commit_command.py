@@ -353,7 +353,7 @@ def pre_commit_manager(
     Args:
         input_files (Iterable[Path], optional): Input files to run pre-commit on. Defaults to None.
         staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
-        no_staged (bool, optional): Whether to skip collecting staged files. Defaults to False.
+        commited_only (bool, optional): Whether to run on commited files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         mode (PreCommitModes, optional): The mode to run pre-commit in. Defaults to None.

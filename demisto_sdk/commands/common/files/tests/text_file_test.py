@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 class TestTextFile(FileTesting):
@@ -107,13 +107,13 @@ class TestTextFile(FileTesting):
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
         """
         Given:
-         - valid json files
+         - valid text files
 
         When:
          - Running read_from_github_api method from TextFile object
 
         Then:
-         - make sure reading the json files from the github api is successful.
+         - make sure reading the text files from the github api is successful.
         """
         text_file_paths, _ = input_files
         for path in text_file_paths:
@@ -174,7 +174,7 @@ class TestTextFile(FileTesting):
             self.get_requests_mock(mocker, path=path)
             assert TextFile.read_from_http_request(path) == Path(path).read_text()
 
-    def test_write_file(self, git_repo):
+    def test_write_file(self, git_repo: Repo):
         """
         Given:
          - text file path to write

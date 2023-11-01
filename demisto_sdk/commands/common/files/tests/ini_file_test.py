@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.ini_file import IniFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
-from TestSuite.test_tools import ChangeCWD
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestIniFile(FileTesting):

@@ -8,8 +8,8 @@ from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from TestSuite.test_tools import ChangeCWD
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestJsonFile(FileTesting):

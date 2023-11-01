@@ -8,12 +8,13 @@ from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.files.yml_file import YmlFile
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 
 class TestYMLFile(FileTesting):
     @pytest.fixture()
-    def input_files(self, git_repo):
+    def input_files(self, git_repo: Repo):
         file_content = {"test": "test"}
         pack = git_repo.create_pack("test")
         integration = pack.create_integration(yml=file_content)
@@ -37,6 +38,16 @@ class TestYMLFile(FileTesting):
         return yml_file_paths, git_repo.path
 
     def test_read_from_local_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid yml files
+
+        When:
+         - Running read_from_local_path method from YmlFile object
+
+        Then:
+         - make sure reading the yml files from local file system is successful.
+        """
         yml_file_paths, _ = input_files
 
         for path in yml_file_paths:
@@ -47,6 +58,16 @@ class TestYMLFile(FileTesting):
             ), f"Could not read yml file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid yml files
+
+        When:
+         - Running read_from_git_path method from YmlFile object
+
+        Then:
+         - make sure reading the yml files from the master in git is successful.
+        """
         yml_file_paths, git_repo_path = input_files
 
         with ChangeCWD(git_repo_path):
@@ -60,7 +81,16 @@ class TestYMLFile(FileTesting):
                 ), f"Could not read yml file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid yml files
 
+        When:
+         - Running read_from_github_api method from YmlFile object
+
+        Then:
+         - make sure reading the yml files from the github api is successful.
+        """
         yml_file_paths, _ = input_files
         for path in yml_file_paths:
             requests_mocker = self.get_requests_mock(mocker, path=path)
@@ -74,6 +104,16 @@ class TestYMLFile(FileTesting):
             )
 
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid yml files
+
+        When:
+         - Running read_from_gitlab_api method from YmlFile object
+
+        Then:
+         - make sure reading the yml files from the gitlab api is successful.
+        """
         from urllib.parse import unquote
 
         yml_file_paths, _ = input_files
@@ -94,7 +134,16 @@ class TestYMLFile(FileTesting):
             }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
+        """
+        Given:
+         - valid yml files
 
+        When:
+         - Running read_from_http_request method from YmlFile object
+
+        Then:
+         - make sure reading the yml files from http request is successful.
+        """
         yml_file_paths, _ = input_files
         for path in yml_file_paths:
             self.get_requests_mock(mocker, path=path)
@@ -102,7 +151,17 @@ class TestYMLFile(FileTesting):
                 Path(path).read_text()
             )
 
-    def test_write_file(self, git_repo):
+    def test_write_file(self, git_repo: Repo):
+        """
+        Given:
+         - yml file path to write
+
+        When:
+         - Running write_file method from YmlFile object
+
+        Then:
+         - make sure writing yml file is successful.
+        """
         _path = Path(git_repo.path) / "file.yml"
         YmlFile.write_file({"test": "test"}, output_path=_path)
         assert _path.exists()

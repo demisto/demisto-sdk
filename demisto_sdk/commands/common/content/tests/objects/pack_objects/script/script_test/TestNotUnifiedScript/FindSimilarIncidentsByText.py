@@ -13,7 +13,7 @@ def parse_datetime(datetime_str):
 
 def get_similar_texts(text, other_texts):
     vect = TfidfVectorizer(min_df=1, stop_words="english")
-    if type(text) is not list:
+    if not isinstance(text, list):
         text = [text]
     tfidf = vect.fit_transform(text + other_texts)
     similarity_vector = linear_kernel(tfidf[0:1], tfidf).flatten()

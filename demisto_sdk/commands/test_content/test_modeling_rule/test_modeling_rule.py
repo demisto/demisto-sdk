@@ -91,7 +91,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
     data = [(key, str(val), str(received.get(key))) for key, val in expected.items()]
     return tabulate(
         data,
-        tablefmt="fancy_grid",
+        tablefmt="pretty",
         headers=["Model Field", "Expected Value", "Received Value"],
     )
 
@@ -1225,11 +1225,21 @@ def validate_modeling_rule(
                     extra={"markup": True},
                 )
         else:
+            err = (
+                f"Please create a test data file for {get_relative_path_to_content(modeling_rule_directory)} "
+                f"and then rerun\n{executed_command}"
+            )
             logger.error(
-                f"[red]Please create a test data file for "
-                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
+                f"[red]{err}[/red]",
                 extra={"markup": True},
             )
+            test_data_test_case = TestCase(
+                "Test data file does not exist",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+            )
+            test_data_test_case.result += [Error(err)]
+            modeling_rule_test_suite.add_testcase(test_data_test_case)
+            return False, modeling_rule_test_suite
         return False, None
 
 

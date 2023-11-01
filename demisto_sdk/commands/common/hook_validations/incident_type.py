@@ -166,9 +166,9 @@ class IncidentTypeValidator(ContentEntityValidator):
 
                 # General format check.
                 if (
-                    type(extracting_all) != bool
-                    or type(extract_as_is) != str
-                    or type(extracted_indicator_types) != list
+                    not isinstance(extracting_all, bool)
+                    or not isinstance(extract_as_is, str)
+                    or not isinstance(extracted_indicator_types, list)
                 ):
                     invalid_incident_fields.append(incident_field)
 

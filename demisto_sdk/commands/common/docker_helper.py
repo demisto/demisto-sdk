@@ -178,12 +178,13 @@ class DockerBase:
                 logger.debug(f"pulled docker {image=} successfully")
                 return ret
             except Exception:
-                logger.info("hmmm, what happens in shell?")
-                logger.info(traceback.format_exc())
-                logger.info("here we go")
+
                 import subprocess
 
                 if try_man:
+                    logger.info("hmmm, what happens in shell?")
+                    logger.info(traceback.format_exc())
+                    logger.info("here we go")
                     try:
                         out = subprocess.check_output(
                             ["docker", "pull", image], stderr=subprocess.STDOUT

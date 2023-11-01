@@ -42,16 +42,18 @@ def should_update_graph(
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
-    return any(
+    return neo4j_service.is_alive() and any(
         (
-            imported_path,
-            packs_to_update,
+            not neo4j_service.is_alive(),  # if neo4j service is not alive, we need to update it
+            imported_path,  # if there is an imported path to import from, we need to update
+            packs_to_update,  # if there are packs to update, we need to update
             use_git
             and content_graph_interface.commit
-            and git_util.get_all_changed_pack_ids(content_graph_interface.commit),
-            content_graph_interface.commit != git_util.get_current_commit_hash(),
+            and git_util.get_all_changed_pack_ids(
+                content_graph_interface.commit
+            ),  # if there are any changed packs and we are using git, we need to update
             content_graph_interface.content_parser_latest_hash
-            != content_graph_interface._get_latest_content_parser_hash(),
+            != content_graph_interface._get_latest_content_parser_hash(),  # if the parse hash changed, we need to update
         )
     )
 
@@ -86,8 +88,7 @@ def update_content_graph(
         packs_to_update = get_all_repo_pack_ids()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
-    is_graph_alive = neo4j_service.is_alive()
-    if is_graph_alive and not should_update_graph(
+    if not should_update_graph(
         content_graph_interface, use_git, git_util, imported_path, packs_to_update
     ):
         logger.info(
@@ -96,66 +97,64 @@ def update_content_graph(
         )
         return
     builder.init_database()
-    use_local_import = True
-    try:
-        if imported_path:
-            logger.info(f"Importing graph from {imported_path}")
-            content_graph_interface.clean_import_dir()
-        else:
-            logger.info(
-                f"Importing graph from local folder: {str(content_graph_interface.import_path)}"
-            )
-
-        is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
-        if not any([imported_path, is_graph_up_to_date]):
-            use_local_import = False
-    except Exception:
-        use_local_import = False
-
-    if not use_local_import:
-        logger.info("Importing graph from bucket")
-
+    if imported_path:
+        # Import from provided path
+        logger.info(f"Importing graph from {imported_path}")
         content_graph_interface.clean_import_dir()
-        try:
-            extract_remote_import_files(content_graph_interface)
-        except RuntimeError as e:
-            if is_external_repo:
-                raise
-            logger.warning(
-                "Failed to download the content graph, recreating it instead"
-            )
-            logger.debug(f"Runtime Error: {e}", exc_info=True)
-            create_content_graph(
-                content_graph_interface, marketplace, dependencies, output_path
-            )
-            return
         is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
-        if not any([is_graph_up_to_date, is_external_repo]):
-            # if we import a graph from a specific path, it make no sense to create a new graph
-            logger.warning(
-                "Failed to import the content graph, will create a new graph"
-            )
+
+    else:
+        # Try to import from local folder
+        logger.info(f"Importing graph from {content_graph_interface.import_path}")
+        is_graph_up_to_date = content_graph_interface.import_graph(None)
+
+        if not is_graph_up_to_date:
+            # Import from remote if local failed
+            logger.info("Importing graph from bucket")
+            content_graph_interface.clean_import_dir()
+            try:
+                extract_remote_import_files(content_graph_interface)
+            except RuntimeError:
+                if is_external_repo:
+                    logger.error(
+                        "Remote import is required when using external repository. Exiting"
+                    )
+                    raise
+                logger.warning("Failed download graph, recreating graph")
+                create_content_graph(
+                    content_graph_interface, marketplace, dependencies, output_path
+                )
+                return
+            is_graph_up_to_date = content_graph_interface.import_graph(None)
+            if not is_graph_up_to_date and not is_external_repo:
+                logger.warning(
+                    "Failed to import the content graph, will create a new graph"
+                )
             create_content_graph(
                 content_graph_interface, marketplace, dependencies, output_path
             )
             return
 
-    if use_git and (commit := content_graph_interface.commit) and not is_external_repo:
-        packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
+        if (
+            use_git
+            and (commit := content_graph_interface.commit)
+            and not is_external_repo
+        ):
+            packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
-    packs_str = "\n".join([f"- {p}" for p in packs_to_update])
-    logger.info(f"Updating the following packs:\n{packs_str}")
-    builder.update_graph(packs_to_update)
+        packs_str = "\n".join([f"- {p}" for p in packs_to_update])
+        logger.info(f"Updating the following packs:\n{packs_str}")
+        builder.update_graph(packs_to_update)
 
-    if dependencies:
-        content_graph_interface.create_pack_dependencies()
-    if output_path:
-        output_path = output_path / marketplace.value
-    content_graph_interface.export_graph(output_path, override_commit=use_git)
-    logger.info(
-        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
-        f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
-    )
+        if dependencies:
+            content_graph_interface.create_pack_dependencies()
+        if output_path:
+            output_path = output_path / marketplace.value
+        content_graph_interface.export_graph(output_path, override_commit=use_git)
+        logger.info(
+            f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
+            f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
+        )
 
 
 @app.command(

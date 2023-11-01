@@ -43,7 +43,7 @@ class GraphValidator(BaseValidator):
             update_content_graph(
                 self.graph,
                 use_git=True,
-                output_path=self.json_file_path,
+                output_path=self.graph.output_path,
             )
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files

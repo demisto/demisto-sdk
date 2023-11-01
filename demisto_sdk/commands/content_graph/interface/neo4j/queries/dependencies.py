@@ -178,5 +178,5 @@ RETURN
         outputs.setdefault(pack_a, {}).setdefault(pack_b, []).extend(row["reasons"])
 
     if output_path and Path(output_path).exists():
-        with open(output_path / "depends_on.json", "w") as fp:
+        with open(Path(output_path) / "depends_on.json", "w") as fp:
             json.dump(outputs, fp, indent=4)

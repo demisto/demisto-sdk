@@ -363,7 +363,7 @@ schema;outputsSection_schema:
     description:
       type: str
       required: true
-    keys:
+    contextPaths:
       type: seq
       sequence:
         - type: str

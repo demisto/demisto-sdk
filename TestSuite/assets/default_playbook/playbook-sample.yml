@@ -75,8 +75,41 @@ view: |-
       }
     }
   }
-inputs: []
-outputs: []
+inputs:
+- description: Sample description for first input.
+  key: Input1
+  playbookInputQuery:
+  required: false
+  value: {}
+- description: Sample description for second input.
+  key: Input2
+  playbookInputQuery:
+  required: false
+  value: {}
+- description: Sample description for third input.
+  key: Input3
+  playbookInputQuery:
+  required: false
+  value: {}
+inputsSections:
+- name: InputsSection 1
+  description: This is a description for section 1.
+  keys:
+  - Input1
+  - Input2
+- name: InputsSection 2
+  description: This is a description for section 2.
+  keys:
+  - Input3
+outputs:
+- contextPath: DBotScore.Indicator
+  description: The indicator that was tested.
+  type: string
+outputsSections:
+- name: OutputsSection
+  description: This is a description.
+  contextPaths:
+  - DBotScore.Indicator
 fromversion: 5.0.0
 tests:
 - No tests

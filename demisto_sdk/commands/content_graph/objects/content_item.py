@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
-from pydantic import DirectoryPath, Field, validator
+from pydantic import DirectoryPath, validator
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -46,7 +46,6 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer 
 
 
 class ContentItem(BaseContent):
-    mapping: dict = Field({}, exclude=True)
     path: Path
     marketplaces: List[MarketplaceVersions]
     name: str
@@ -204,6 +203,14 @@ class ContentItem(BaseContent):
     @property
     def original_data(self) -> dict:
         return get_file(self.path, keep_order=True)
+
+    def save(self):
+        data = self.original_data
+        for key, val in self.mapping.items():
+            attr = getattr(self, key)
+            set_val(data, val, attr)
+        with open(self.path, "w") as f:
+            self.handler.dump(data, f)
 
     def prepare_for_upload(
         self,
@@ -397,11 +404,3 @@ class ContentItem(BaseContent):
         ):
             raise IncompatibleUploadVersionException(self, target_demisto_version)
         self._upload(client, marketplace)
-
-    def save(self):
-        data = self.original_data
-        for key, val in self.mapping.items():
-            attr = getattr(self, key)
-            set_val(data, val, attr)
-        with open(self.path, "w") as f:
-            self.handler.dump(data, f)

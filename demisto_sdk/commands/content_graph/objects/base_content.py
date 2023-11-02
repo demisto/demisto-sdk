@@ -191,12 +191,16 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
 
 class BaseContent(BaseContentModel):
+    mapping: dict = Field({}, exclude=True)
     path: Path
     git_status: Optional[str]
     old_file_path: Optional[Path]
 
     def __hash__(self):
         return hash(self.path)
+
+    def save(self):
+        raise NotImplementedError
 
     @property
     def ignored_errors(self) -> list:

@@ -114,7 +114,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     ) -> None:
         self._id_to_obj: Dict[str, BaseContent] = {}
 
-        if not neo4j_service.is_alive():
+        if not self.is_alive():
             neo4j_service.start()
         self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
 
@@ -667,6 +667,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
             session.execute_write(create_pack_dependencies)
+
+    def is_alive(self):
+        return neo4j_service.is_alive()
 
     def get_schema(self) -> dict:
         with self.driver.session() as session:

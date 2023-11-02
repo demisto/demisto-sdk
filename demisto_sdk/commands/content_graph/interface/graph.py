@@ -282,3 +282,7 @@ class ContentGraphInterface(ABC):
         self, pack_ids: List[str]
     ) -> List[BaseContent]:
         pass
+
+    @abstractmethod
+    def is_alive(self):
+        ...

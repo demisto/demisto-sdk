@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.tools import (
     get_all_repo_pack_ids,
     is_external_repository,
 )
-from demisto_sdk.commands.content_graph import neo4j_service
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.commands.create import (
     create,
@@ -44,7 +43,7 @@ def should_update_graph(
 ):
     return any(
         (
-            not neo4j_service.is_alive(),  # if neo4j service is not alive, we need to update
+            not content_graph_interface.is_alive(),  # if neo4j service is not alive, we need to update
             imported_path,  # if there is an imported path to import from, we need to update
             packs_to_update,  # if there are packs to update, we need to update
             use_git

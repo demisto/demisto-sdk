@@ -9,6 +9,7 @@ from typing import (
     Optional,
     TypeVar,
     get_args,
+    get_type_hints,
 )
 
 from pydantic import BaseModel
@@ -29,7 +30,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     graph: ClassVar[bool] = False
 
     def get_content_types(self):
-        return get_args(self.__orig_bases__[0])  # type:ignore
+        hints = get_type_hints(self)
+        return get_args(hints[self.__orig_bases__[0]])  # type:ignore
 
     def should_run(
         self,

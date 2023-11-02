@@ -30,8 +30,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     graph: ClassVar[bool] = False
 
     def get_content_types(self):
-        hints = get_type_hints(self)
-        return get_args(hints[self.__orig_bases__[0]])  # type:ignore
+        args = get_args(self.__orig_bases__[0])
+        if isinstance(args[0], BaseContent):
+            return args
+        return get_args(args[0])
 
     def should_run(
         self,

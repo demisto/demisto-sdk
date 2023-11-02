@@ -30,7 +30,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     graph: ClassVar[bool] = False
 
     def get_content_types(self):
-        args = get_args(self.__orig_bases__[0])
+        args = get_args(self.__orig_bases__[0])  # type: ignore
         if isinstance(args[0], BaseContent):
             return args
         return get_args(args[0])

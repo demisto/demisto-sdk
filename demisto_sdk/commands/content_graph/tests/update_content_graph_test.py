@@ -819,7 +819,7 @@ class TestUpdateContentGraph:
                 "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
                 return_value=["ExternalPack"],
             )
-            # first, import from path
+
             update_content_graph(
                 interface,
                 packs_to_update=[],

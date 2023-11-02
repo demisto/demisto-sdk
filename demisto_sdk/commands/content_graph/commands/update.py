@@ -145,26 +145,22 @@ def update_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-        if (
-            use_git
-            and (commit := content_graph_interface.commit)
-            and not is_external_repo
-        ):
-            packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
+    if use_git and (commit := content_graph_interface.commit) and not is_external_repo:
+        packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
-        packs_str = "\n".join([f"- {p}" for p in packs_to_update])
-        logger.info(f"Updating the following packs:\n{packs_str}")
-        builder.update_graph(packs_to_update)
+    packs_str = "\n".join([f"- {p}" for p in packs_to_update])
+    logger.info(f"Updating the following packs:\n{packs_str}")
+    builder.update_graph(packs_to_update)
 
-        if dependencies:
-            content_graph_interface.create_pack_dependencies()
-        if output_path:
-            output_path = output_path / marketplace.value
-        content_graph_interface.export_graph(output_path, override_commit=use_git)
-        logger.info(
-            f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
-            f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
-        )
+    if dependencies:
+        content_graph_interface.create_pack_dependencies()
+    if output_path:
+        output_path = output_path / marketplace.value
+    content_graph_interface.export_graph(output_path, override_commit=use_git)
+    logger.info(
+        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
+        f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
+    )
 
 
 @app.command(

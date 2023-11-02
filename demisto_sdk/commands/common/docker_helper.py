@@ -177,7 +177,7 @@ class DockerBase:
                 ret = docker_client.images.pull(image)
                 logger.info(f"pulled docker {image=} successfully")
                 return ret
-            except Exception:
+            except Exception as e:
                 logger.info(f"didnt pull successfully, {try_man=}")
                 import subprocess
 
@@ -198,7 +198,7 @@ class DockerBase:
                         logger.info(f"{out=}")
                     except subprocess.CalledProcessError as f:
                         logger.info(f.output)
-
+                raise e
     @staticmethod
     def copy_files_container(
         container: docker.models.containers.Container, files: FILES_SRC_TARGET

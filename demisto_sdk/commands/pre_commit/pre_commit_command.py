@@ -441,7 +441,7 @@ def preprocess_files(
             files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
             files_to_run.add(file)
-            # if the current file is a yml file, add the matching python file to files_to_run
+            # If the current file is a yml file, add the matching python file to files_to_run
             if str(file).endswith("yml"):
                 py_file_path = file.with_suffix(".py")
                 if py_file_path.exists():

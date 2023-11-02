@@ -4172,26 +4172,27 @@ def set_val(data: dict, paths: Union[str, List[str]], value) -> None:
         value (_type_): the value to update.
     """
     if isinstance(paths, list):
-        paths = find_correct_key(data, paths)
+        path = find_correct_key(data, paths)
     else:
-        paths = [paths]
-    for path in paths:
-        keys = path.split(".")
-        current_structure = data
+        path = paths
+    current_dict = data
+    keys = path.split(".")
+    for key in keys[:-1]:
+        if '[' in key and ']' in key:
+            # Handle list indexing
+            list_key, index = key.split('[')
+            index = int(index.strip(']'))
+            current_dict = current_dict[list_key]
+            current_dict = current_dict[index]
+        else:
+            # Handle dictionary keys
+            current_dict = current_dict[key]
 
-        for key in keys:
-            if "[" in key and "]" in key:
-                # Handle list indexing
-                list_key, index = key.split("[")
-                index = int(index.strip("]"))
-                current_structure = current_structure[list_key][index]
-            else:
-                # Handle dictionary keys
-                if key not in current_structure:
-                    current_structure[
-                        key
-                    ] = {}  # Create a new nested dictionary if the key is not present
-                current_structure = current_structure[key]
-
-        # Set the value in the final structure (either dictionary or list)
-        current_structure = value
+    # Set the value in the dictionary at the specified path
+    last_key = keys[-1]
+    if '[' in last_key and ']' in last_key:
+        list_key, index = last_key.split('[')  # type: ignore
+        index = int(index.strip(']'))  # type: ignore
+        current_dict[list_key][index] = value
+    else:
+        current_dict[last_key] = value

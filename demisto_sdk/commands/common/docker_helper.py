@@ -5,7 +5,6 @@ import re
 import shutil
 import tarfile
 import tempfile
-import traceback
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -163,7 +162,7 @@ class DockerBase:
         return files
 
     @staticmethod
-    def pull_image(image: str, try_man=False) -> docker.models.images.Image:
+    def pull_image(image: str) -> docker.models.images.Image:
         """
         Get a local docker image, or pull it when unavailable.
         """
@@ -172,33 +171,11 @@ class DockerBase:
         try:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
-            logger.info(f"docker {image=} not found locally, pulling")
-            try:
-                ret = docker_client.images.pull(image)
-                logger.info(f"pulled docker {image=} successfully")
-                return ret
-            except Exception as e:
-                logger.info(f"didnt pull successfully, {try_man=}")
-                import subprocess
+            logger.debug(f"docker {image=} not found locally, pulling")
+            ret = docker_client.images.pull(image)
+            logger.debug(f"pulled docker {image=} successfully")
+            return ret
 
-                if try_man:
-                    logger.info("hmmm, what happens in shell?")
-                    logger.info(traceback.format_exc())
-                    logger.info("here we go")
-                    try:
-                        out = subprocess.check_output(
-                            ["docker", "pull", image], stderr=subprocess.STDOUT
-                        )
-
-                        logger.info(f"{out=}")
-                    except subprocess.CalledProcessError as f:
-                        logger.info(f.output)
-                    try:
-                        out = subprocess.check_output(["docker", "inspect", image])
-                        logger.info(f"{out=}")
-                    except subprocess.CalledProcessError as f:
-                        logger.info(f.output)
-                raise e
     @staticmethod
     def copy_files_container(
         container: docker.models.containers.Container, files: FILES_SRC_TARGET
@@ -295,8 +272,8 @@ class DockerBase:
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
-        logger.info(f"Trying to pull image {base_image}")
-        self.pull_image(base_image, try_man=True)
+        logger.debug(f"Trying to pull image {base_image}")
+        self.pull_image(base_image)
         container = self.create_container(
             image=base_image,
             files_to_push=self.installation_files(container_type),
@@ -389,7 +366,6 @@ class DockerBase:
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
                 logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
-                logger.critical(traceback.format_exc())
         return test_docker_image, errors
 
 

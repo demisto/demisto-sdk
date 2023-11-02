@@ -141,6 +141,7 @@ def update_content_graph(
             )
 
             if not is_import_succeeded:
+                logger.warning("Import from bucket failed, building graph from scratch")
                 create_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )

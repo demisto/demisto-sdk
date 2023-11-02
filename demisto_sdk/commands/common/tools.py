@@ -980,27 +980,6 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
         )
 
 
-def get_entity_name_by_entity_type(data: dict, content_entity: str):
-    """
-    Returns the name of the content entity given its entity type
-    :param data: The data of the file
-    :param content_entity: The content entity type
-    :return: The file name
-    """
-    try:
-        if content_entity == LAYOUTS_DIR:
-            if "typeId" in data:
-                return data.get("typeId", "")
-            return data.get("name", "")  # for layoutscontainer
-        return data.get("name", "")
-
-    except AttributeError:
-        raise ValueError(
-            f"Could not retrieve name from file of type {content_entity} - make sure the file structure is "
-            f"valid"
-        )
-
-
 def collect_ids(file_path):
     """Collect id mentioned in file_path"""
     data_dictionary = get_yaml(file_path)
@@ -1775,7 +1754,7 @@ def find_type(
     clear_cache: bool = False,
 ):
     """
-    returns the content file type
+    Returns the content file type
 
     Arguments:
          path (str): a path to the file.
@@ -1787,7 +1766,7 @@ def find_type(
         clear_cache (bool): whether to clear the cache.
 
     Returns:
-        FileType: Enum representation of the content file type, None otherwise.
+        FileType | None: Enum representation of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -2205,20 +2184,6 @@ def should_file_skip_validation(file_path: str) -> bool:
     if file_path.endswith("_unified.yml"):
         return True
     return False
-
-
-def retrieve_file_ending(file_path: str) -> str:
-    """
-    Retrieves the file ending (without the dot)
-    :param file_path: The file path
-    :return: The file ending
-    """
-    os_split: tuple = os.path.splitext(file_path)
-    if os_split:
-        file_ending: str = os_split[1]
-        if file_ending and "." in file_ending:
-            return file_ending[1:]
-    return ""
 
 
 def is_test_config_match(
@@ -3780,7 +3745,13 @@ def get_id(file_content: Dict) -> Union[str, None]:
     elif "templates_data" in file_content:
         return file_content["templates_data"][0].get("global_id")
 
-    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id"):
+    for key in (
+        "global_rule_id",
+        "trigger_id",
+        "content_global_id",
+        "rule_id",
+        "typeId",
+    ):
         if key in file_content:
             return file_content[key]
 

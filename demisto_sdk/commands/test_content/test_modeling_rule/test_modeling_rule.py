@@ -91,7 +91,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
     data = [(key, str(val), str(received.get(key))) for key, val in expected.items()]
     return tabulate(
         data,
-        tablefmt="fancy_grid",
+        tablefmt="pretty",
         headers=["Model Field", "Expected Value", "Received Value"],
     )
 
@@ -1010,7 +1010,7 @@ def validate_modeling_rule(
         modeling_rule_test_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
     if modeling_rule.testdata_path:
         logger.info(
-            f"[cyan]Test data file found at {modeling_rule.testdata_path}\n"
+            f"[cyan]Test data file found at {get_relative_path_to_content(modeling_rule.testdata_path)}\n"
             f"Checking that event data was added to the test data file[/cyan]",
             extra={"markup": True},
         )
@@ -1225,11 +1225,21 @@ def validate_modeling_rule(
                     extra={"markup": True},
                 )
         else:
+            err = (
+                f"Please create a test data file for {get_relative_path_to_content(modeling_rule_directory)} "
+                f"and then rerun\n{executed_command}"
+            )
             logger.error(
-                f"[red]Please create a test data file for "
-                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
+                f"[red]{err}[/red]",
                 extra={"markup": True},
             )
+            test_data_test_case = TestCase(
+                "Test data file does not exist",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+            )
+            test_data_test_case.result += [Error(err)]
+            modeling_rule_test_suite.add_testcase(test_data_test_case)
+            return False, modeling_rule_test_suite
         return False, None
 
 
@@ -1511,7 +1521,7 @@ def test_modeling_rule(
 
     if output_junit_file:
         logger.info(
-            f"[cyan]Writing JUnit XML to {output_junit_file}[/cyan]",
+            f"[cyan]Writing JUnit XML to {get_relative_path_to_content(output_junit_file)}[/cyan]",
             extra={"markup": True},
         )
         xml.write(output_junit_file.as_posix(), pretty=True)

@@ -23,7 +23,7 @@ jobs:
           contrib_tl=$( curl https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json | jq .CONTRIBUTION_TL -r )
           echo "$contrib_tl"
           echo "Finished retrieving the contribution TL username"
-          
+
           if [ $contrib_tl ]; then
             echo "Add an assignee and a Contribution label"
             gh pr edit --add-assignee "$contrib_tl" --add-label Contribution "$PR_URL"

@@ -350,15 +350,15 @@ class XsoarNGApiClient(XsoarApiInterface):
     @retry_http_request()
     def search_incidents(
         self,
-        incident_ids: Optional[Union[List, str]] = None,
+        incident_ids: Optional[Union[List[str], str]] = None,
         from_date: Optional[str] = None,
-        incident_types: Optional[Union[List, str]] = None,
+        incident_types: Optional[Union[List[str], str]] = None,
         page: int = 0,
         size: int = 50,
         response_type: str = "object",
     ):
 
-        filters = {"page": page, "size": size}
+        filters: Dict[str, Any] = {"page": page, "size": size}
 
         if incident_ids:
             if isinstance(incident_ids, str):
@@ -366,9 +366,14 @@ class XsoarNGApiClient(XsoarApiInterface):
             filters["id"] = incident_ids
 
         if from_date:
-            filters["fromDate"] = dateparser.parse(from_date).strftime(
-                "%Y-%m-%dT%H:%M:%S.000+00:00"
-            )
+            if parsed_date := dateparser.parse(from_date):
+                filters["fromDate"] = parsed_date.strftime(
+                    "%Y-%m-%dT%H:%M:%S.000+00:00"
+                )
+            else:
+                raise ValueError(
+                    f"Could not parse {from_date}, make sure it is a valid date string"
+                )
 
         if incident_types:
             if isinstance(incident_types, str):
@@ -433,7 +438,7 @@ class XsoarNGApiClient(XsoarApiInterface):
                 raise ApiException(
                     status=400,
                     reason=f"Cannot create the indicator={value} type={indicator_type} "
-                           f"because it is in the exclusion list",
+                    f"because it is in the exclusion list",
                 )
 
         # if raw_response = None and status_code = 200, it means the indicator is in the exclusion list
@@ -482,8 +487,8 @@ class XsoarNGApiClient(XsoarApiInterface):
         indicators_ids_to_remove = set(indicator_ids)
         if not indicators_ids_to_remove.issubset(successful_removed_ids):
             logger.warning(
-                f'could not delete the following indicator IDs '
-                f'{indicators_ids_to_remove.difference(successful_removed_ids)}'
+                f"could not delete the following indicator IDs "
+                f"{indicators_ids_to_remove.difference(successful_removed_ids)}"
             )
 
         return raw_response

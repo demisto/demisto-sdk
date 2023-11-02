@@ -1,4 +1,7 @@
 # Changelog
+## 2.33.42
+* Added the **changelog** new command for management the changelog.md file. [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+
 ## Unreleased
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.
 * Fixed an issue where the **pre-commit** command runs even in the case of deprecated or powershell integrations or scripts.

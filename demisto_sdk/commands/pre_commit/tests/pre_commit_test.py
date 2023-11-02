@@ -261,21 +261,18 @@ class TestPreprocessFiles:
         pack1 = repo.create_pack("Pack1")
         mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
 
-        integration = pack1.create_integration(
-            "integration"
-        )
+        integration = pack1.create_integration("integration")
         relative_paths = {
             path.relative_to(repo.path)
             for path in Path(pack1.path).rglob("*")
             if path.is_file()
         }
         input_files = [Path(integration.yml.path)]
-        expected_output = {Path(integration.yml.rel_path), Path(integration.code.rel_path)}
-        mocker.patch.object(
-            GitUtil,
-            "get_all_files",
-            return_value=relative_paths
-        )
+        expected_output = {
+            Path(integration.yml.rel_path),
+            Path(integration.code.rel_path),
+        }
+        mocker.patch.object(GitUtil, "get_all_files", return_value=relative_paths)
         output = preprocess_files(input_files=input_files)
         assert output == expected_output
 

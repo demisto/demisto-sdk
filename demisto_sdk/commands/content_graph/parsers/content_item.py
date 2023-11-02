@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Type, cast
 
@@ -85,10 +84,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
         self.relationships: Relationships = Relationships()
-
-    @cached_property
-    def mapping(self):
-        return {}
 
     @staticmethod
     def from_path(

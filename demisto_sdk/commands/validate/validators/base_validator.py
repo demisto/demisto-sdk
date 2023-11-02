@@ -13,7 +13,10 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    BaseContentMetaclass,
+)
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
@@ -30,7 +33,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     def get_content_types(self):
         args = get_args(self.__orig_bases__[0])  # type: ignore
-        if isinstance(args[0], BaseContent):
+        if isinstance(args[0], (BaseContent, BaseContentMetaclass)):
             return args
         return get_args(args[0])
 

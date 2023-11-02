@@ -1,4 +1,5 @@
 from datetime import datetime
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -17,7 +18,6 @@ from demisto_sdk.commands.common.tools import (
     capital_case,
     get_json,
     get_pack_ignore_content,
-    set_val,
 )
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
@@ -210,14 +210,6 @@ class PackMetadataParser:
             return "content/packs/Base/Author_image.png"
         return ""
 
-    def save(self):
-        data = self.original_data
-        for key, val in self.mapping.items():
-            attr = getattr(self, key)
-            set_val(data, val, attr)
-        with open(self.path, "w") as f:
-            self.handler.dump(data, f)
-
 
 class PackParser(BaseContentParser, PackMetadataParser):
     """A parsed representation of a pack.
@@ -328,3 +320,29 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
         self.ignored_errors_dict = get_pack_ignore_content(self.path.name) or {}  # type: ignore
+
+    @cached_property
+    def mapping(self):
+        return {
+            "name": "name",
+            "description": "description",
+            "created": "created",
+            "support": "support",
+            "email": "email",
+            "price": "price",
+            "hidden": "hidden",
+            "server_min_version": "serverMinVersion",
+            "current_version": "currentVersion",
+            "tags": "tags",
+            "keywords": "keywords",
+            "videos": "videos",
+            "marketplaces": "marketplaces",
+            "vendor_id": "vendorId",
+            "partner_id": "partnerId",
+            "partner_name": "partnerName",
+            "preview_only": "previewOnly",
+            "excluded_dependencies": "excludedDependencies",
+            "modules": "modules",
+            "disable_monthly": "disableMonthly",
+            "content_commit_hash": "contentCommitHash",
+        }

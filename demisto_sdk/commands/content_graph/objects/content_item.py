@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     replace_incident_to_alert,
+    set_val,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -202,6 +203,14 @@ class ContentItem(BaseContent):
     @property
     def original_data(self) -> dict:
         return get_file(self.path, keep_order=True)
+
+    def save(self):
+        data = self.original_data
+        for key, val in self.mapping.items():
+            attr = getattr(self, key)
+            set_val(data, val, attr)
+        with open(self.path, "w") as f:
+            self.handler.dump(data, f)
 
     def prepare_for_upload(
         self,

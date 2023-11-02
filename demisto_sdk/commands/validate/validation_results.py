@@ -1,8 +1,9 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.validators.base_validator import (
     FixingResult,
     ValidationResult,
@@ -42,6 +43,7 @@ class ValidationResults:
         Returns:
             int: The exit code number - 1 if the validations failed, otherwise return 0
         """
+        fixed_objects_set: Set[BaseContent] = set()
         exit_code = 0
         if self.json_file_path:
             self.write_validation_results()
@@ -55,6 +57,7 @@ class ValidationResults:
                 logger.error(f"[red]{result.format_readable_message}[/red]")
                 exit_code = 1
         for fixing_result in self.fixing_results:
+            fixed_objects_set.add(fixing_result.content_object)
             if (
                 not self.only_throw_warning
                 or fixing_result.validator.error_code not in self.only_throw_warning
@@ -63,6 +66,8 @@ class ValidationResults:
             logger.warning(f"[yellow]{fixing_result.format_readable_message}[/yellow]")
         if not exit_code:
             logger.info("[green]All validations passed.[/green]")
+        for fixed_object in fixed_objects_set:
+            fixed_object.save()
         return exit_code
 
     def write_validation_results(self):

@@ -55,7 +55,6 @@ class IDNameValidator(BaseValidator[ContentTypes]):
 
     def fix(self, content_item: ContentTypes, _) -> FixingResult:
         content_item.name = content_item.object_id
-        content_item.save()
         return FixingResult(
             validator=self,
             message=self.fixing_message.format(content_item.object_id),

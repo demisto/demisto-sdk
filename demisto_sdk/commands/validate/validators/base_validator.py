@@ -9,7 +9,6 @@ from typing import (
     Optional,
     TypeVar,
     get_args,
-    get_type_hints,
 )
 
 from pydantic import BaseModel

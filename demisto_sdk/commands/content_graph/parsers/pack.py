@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.tools import (
     capital_case,
     get_json,
     get_pack_ignore_content,
+    set_val,
 )
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
@@ -208,6 +209,14 @@ class PackMetadataParser:
         elif self.support == "xsoar":
             return "content/packs/Base/Author_image.png"
         return ""
+
+    def save(self):
+        data = self.original_data
+        for key, val in self.mapping.items():
+            attr = getattr(self, key)
+            set_val(data, val, attr)
+        with open(self.path, "w") as f:
+            self.handler.dump(data, f)
 
 
 class PackParser(BaseContentParser, PackMetadataParser):

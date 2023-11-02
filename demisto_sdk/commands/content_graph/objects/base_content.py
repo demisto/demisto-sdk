@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import set_val
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     LazyProperty,
@@ -191,6 +192,7 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
 
 class BaseContent(BaseContentModel):
+    mapping: dict = Field({}, exclude=True)
     path: Path
     git_status: Optional[str]
     old_file_path: Optional[Path]
@@ -272,6 +274,14 @@ class BaseContent(BaseContentModel):
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
             )
             return None
+
+    def save(self):
+        data = self.original_data
+        for key, val in self.mapping.items():
+            attr = getattr(self, key)
+            set_val(data, val, attr)
+        with open(self.path, "w") as f:
+            self.handler.dump(data, f)
 
 
 class UnknownContent(BaseContentModel):

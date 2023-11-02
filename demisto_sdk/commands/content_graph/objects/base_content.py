@@ -131,6 +131,14 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
             "__fields_set__": self.__fields_set__,
         }
 
+    @abstractmethod
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
+        pass
+
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id
@@ -198,13 +206,12 @@ class BaseContent(BaseContentModel):
     def support_level(self) -> str:
         raise NotImplementedError
 
-    @abstractmethod
     def dump(
         self,
         path: DirectoryPath,
         marketplace: MarketplaceVersions,
     ) -> None:
-        pass
+        raise NotImplementedError
 
     @staticmethod
     @lru_cache
@@ -267,7 +274,7 @@ class BaseContent(BaseContentModel):
             return None
 
 
-class UnknownContent(BaseContent):
+class UnknownContent(BaseContentModel):
     """A model for non-existing content items used by existing content items."""
 
     not_in_repository: bool = True

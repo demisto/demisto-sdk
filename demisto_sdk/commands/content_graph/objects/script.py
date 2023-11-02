@@ -12,7 +12,9 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContentModel,
+)
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -55,7 +57,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         return data
 
     @property
-    def imported_by(self) -> List[BaseContent]:
+    def imported_by(self) -> List[BaseContentModel]:
         return [
             r.content_item_to
             for r in self.relationships_data[RelationshipType.IMPORTS]

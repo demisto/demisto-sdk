@@ -22,11 +22,14 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
 
     @cached_property
     def mapping(self):
-        return super().mapping.update({
-            "object_id": "rule_id",
-            "name": "rule_name",
-            "layout_id": "layout_id",
-        })
+        super().mapping.update(
+            {
+                "object_id": "rule_id",
+                "name": "rule_name",
+                "layout_id": "layout_id",
+            }
+        )
+        return super().mapping
 
     @property
     def object_id(self) -> Optional[str]:

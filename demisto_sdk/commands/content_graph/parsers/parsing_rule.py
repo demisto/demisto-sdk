@@ -21,7 +21,8 @@ class ParsingRuleParser(YAMLContentItemParser, content_type=ContentType.PARSING_
 
     @cached_property
     def mapping(self):
-        return super().mapping.update({"object_id": "id"})
+        super().mapping.update({"object_id": "id"})
+        return super().mapping
 
     @property
     def object_id(self) -> Optional[str]:

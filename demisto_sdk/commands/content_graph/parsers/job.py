@@ -22,7 +22,8 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
 
     @cached_property
     def mapping(self):
-        return super().mapping.update({"description": "details"})
+        super().mapping.update({"description": "details"})
+        return super().mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

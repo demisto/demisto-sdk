@@ -45,11 +45,14 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     @cached_property
     def mapping(self):
-        return super().mapping.update({
-            "display_name": "display",
-            "docker_image": "script.dockerimage",
-            "type": ["script.subtype", "script.type"],
-        })
+        super().mapping.update(
+            {
+                "display_name": "display",
+                "docker_image": "script.dockerimage",
+                "type": ["script.subtype", "script.type"],
+            }
+        )
+        return super().mapping
 
     @property
     def display_name(self) -> Optional[str]:

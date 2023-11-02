@@ -27,7 +27,8 @@ class IndicatorTypeParser(
 
     @cached_property
     def mapping(self):
-        return super().mapping.update({"name": "details", "description": "details"})
+        super().mapping.update({"name": "details", "description": "details"})
+        return super().mapping
 
     @property
     def name(self) -> Optional[str]:

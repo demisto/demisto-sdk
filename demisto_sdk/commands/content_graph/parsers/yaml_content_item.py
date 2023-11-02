@@ -37,13 +37,16 @@ class YAMLContentItemParser(ContentItemParser):
 
     @cached_property
     def mapping(self):
-        return super().mapping.update({
-            "name": "name",
-            "deprecated": "deprecated",
-            "description": "description",
-            "fromversion": "fromversion",
-            "toversion": "toversion",
-        })
+        super().mapping.update(
+            {
+                "name": "name",
+                "deprecated": "deprecated",
+                "description": "description",
+                "fromversion": "fromversion",
+                "toversion": "toversion",
+            }
+        )
+        return super().mapping
 
     @property
     def name(self) -> Optional[str]:
@@ -77,10 +80,12 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def toversion(self) -> str:
-        return get(
-            self.yml_data,
-            self.mapping.get("toversion", ""),
-            DEFAULT_CONTENT_ITEM_TO_VERSION,
+        return (
+            get(
+                self.yml_data,
+                self.mapping.get("toversion", ""),
+            )
+            or DEFAULT_CONTENT_ITEM_TO_VERSION
         )
 
     @property

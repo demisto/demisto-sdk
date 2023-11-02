@@ -249,7 +249,7 @@ class TestPreprocessFiles:
         output = preprocess_files(input_files=input_files)
         assert output == expected_output
 
-    def test_preprocess_files_with_input_yml_files(self, mocker):
+    def test_preprocess_files_with_input_yml_files(self, mocker, repo):
         """
         Given:
             - A yml file.
@@ -258,8 +258,38 @@ class TestPreprocessFiles:
         Then:
             - Check that the associated python file was gathered correctly.
         """
+        pack1 = repo.create_pack("Pack1")
+        mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+
+        integration = pack1.create_integration(
+            "integration"
+        )
+        relative_paths = {
+            path.relative_to(repo.path)
+            for path in Path(pack1.path).rglob("*")
+            if path.is_file()
+        }
+        input_files = [Path(integration.yml.path)]
+        expected_output = {Path(integration.yml.rel_path), Path(integration.code.rel_path)}
+        mocker.patch.object(
+            GitUtil,
+            "get_all_files",
+            return_value=relative_paths
+        )
+        output = preprocess_files(input_files=input_files)
+        assert output == expected_output
+
+    def test_preprocess_files_with_input_yml_files_not_exists(self, mocker):
+        """
+        Given:
+            - A yml file.
+        When:
+            - Running demisto-sdk pre-commit -i file1.yml.
+        Then:
+            - Check that the associated python file was not gathered because it doesn't exist.
+        """
         input_files = [Path("file1.yml")]
-        expected_output = set([Path("file1.yml"), Path("file1.py")])
+        expected_output = {Path("file1.yml")}
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
         output = preprocess_files(input_files=input_files)
         assert output == expected_output

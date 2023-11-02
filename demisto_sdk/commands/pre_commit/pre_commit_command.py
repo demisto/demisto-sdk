@@ -436,8 +436,9 @@ def preprocess_files(
             files_to_run.add(file)
             # if the current file is a yml file, add the matching python file to files_to_run
             if str(file).endswith("yml"):
-                str_py_file_path = str(file).replace("yml", "py")
-                files_to_run.add(Path(str_py_file_path))
+                py_file_path = Path(str(file).replace("yml", "py"))
+                if py_file_path.exists():
+                    files_to_run.add(py_file_path)
 
     # convert to relative file to content path
     relative_paths = {

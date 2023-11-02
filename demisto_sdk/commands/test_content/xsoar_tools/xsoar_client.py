@@ -432,7 +432,8 @@ class XsoarNGApiClient(XsoarApiInterface):
             if indicator.get("value") == value:
                 raise ApiException(
                     status=400,
-                    reason=f"Cannot create the indicator={value} type={indicator_type} because it is in the exclusion list",
+                    reason=f"Cannot create the indicator={value} type={indicator_type} "
+                           f"because it is in the exclusion list",
                 )
 
         # if raw_response = None and status_code = 200, it means the indicator is in the exclusion list
@@ -476,6 +477,15 @@ class XsoarNGApiClient(XsoarApiInterface):
             body=body,
             response_type=response_type,
         )
+
+        successful_removed_ids = set(raw_response.get("updatedIds") or [])
+        indicators_ids_to_remove = set(indicator_ids)
+        if not indicators_ids_to_remove.issubset(successful_removed_ids):
+            logger.warning(
+                f'could not delete the following indicator IDs '
+                f'{indicators_ids_to_remove.difference(successful_removed_ids)}'
+            )
+
         return raw_response
 
     @retry_http_request()

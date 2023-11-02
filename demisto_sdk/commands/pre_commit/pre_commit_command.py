@@ -443,7 +443,7 @@ def preprocess_files(
             files_to_run.add(file)
             # if the current file is a yml file, add the matching python file to files_to_run
             if str(file).endswith("yml"):
-                py_file_path = file.with_suffix('.py')
+                py_file_path = file.with_suffix(".py")
                 if py_file_path.exists():
                     files_to_run.add(py_file_path)
 

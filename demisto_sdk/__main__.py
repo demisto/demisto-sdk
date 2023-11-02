@@ -3445,6 +3445,12 @@ def update_content_graph(
     default=False,
 )
 @click.option(
+    "--commited-only",
+    help="Whether to run on commited files only",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-g",
     "--git-diff",
     help="Whether to use git to determine which files to run on",
@@ -3523,6 +3529,7 @@ def pre_commit(
     ctx,
     input: str,
     staged_only: bool,
+    commited_only: bool,
     git_diff: bool,
     all_files: bool,
     mode: Optional[str],
@@ -3557,6 +3564,7 @@ def pre_commit(
         pre_commit_manager(
             input_files,
             staged_only,
+            commited_only,
             git_diff,
             all_files,
             mode,

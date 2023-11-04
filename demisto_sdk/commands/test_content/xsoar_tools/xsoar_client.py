@@ -221,8 +221,19 @@ class XsoarApiInterface(ABC):
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):
         pass
 
+    @abstractmethod
+    def get_investigation_status(self, incident_id: str):
+        pass
+
+    @abstractmethod
+    def get_playbook_failure_by_incident(self, incident_id: str):
+        pass
+
 
 class XsoarNGApiClient(XsoarApiInterface):
+
+    ENTRY_TYPE_ERROR = 4
+
     @property
     def external_base_url(self) -> str:
         return self.base_api_url.replace(
@@ -645,3 +656,37 @@ class XsoarNGApiClient(XsoarApiInterface):
             response_type=response_type,
         )
         return raw_response
+
+    @retry_http_request()
+    def get_investigation_status(self, incident_id: str):
+        raw_response, status_code, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path=f"/investigation/{urllib.parse.quote(incident_id)}",
+            body={"pageSize": 1000},
+            response_type="object",
+        )
+        if status_code == 200:
+            return raw_response
+        raise ApiException(
+            status=status_code,
+            reason=f"Failed to get investigation status for {incident_id=}, {raw_response=}",
+        )
+
+    @retry_http_request()
+    def get_playbook_failure_by_incident(self, incident_id: str):
+        investigation_status = self.get_investigation_status(incident_id)
+        entries = investigation_status["entries"]
+        error_entries = {}
+        for entry in entries:
+            if entry["type"] == self.ENTRY_TYPE_ERROR and entry["parentContent"]:
+                # Checks for passwords and replaces them with "******"
+                parent_content = re.sub(
+                    r' ([Pp])assword="[^";]*"',
+                    " password=******",
+                    entry["parentContent"],
+                )
+                error_entries[
+                    f"Command: {parent_content}"
+                ] = f'Body:\n{entries["contents"]}'
+        return error_entries

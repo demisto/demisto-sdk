@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     SCRIPTS_DIR,
-    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -67,7 +66,7 @@ class PreCommitRunner:
 
     input_mode: bool
     all_files: bool
-    mode: Optional[PreCommitModes]
+    mode: str
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -337,7 +336,7 @@ def pre_commit_manager(
     commited_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
-    mode: Optional[PreCommitModes] = None,
+    mode: str = "",
     unit_test: bool = False,
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
@@ -356,7 +355,7 @@ def pre_commit_manager(
         commited_only (bool, optional): Whether to run on commited files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
-        mode (PreCommitModes, optional): The mode to run pre-commit in. Defaults to None.
+        mode (str): The mode to run pre-commit in. Defaults to empty str.
         test (bool, optional): Whether to run unit-tests. Defaults to False.
         skip_hooks (Optional[List[str]], optional): List of hooks to skip. Defaults to None.
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.

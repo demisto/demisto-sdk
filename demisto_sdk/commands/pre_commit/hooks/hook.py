@@ -3,17 +3,16 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from demisto_sdk.commands.common.constants import PreCommitModes
-
 
 class Hook(ABC):
     def __init__(
         self,
         hook: dict,
         repo: dict,
-        mode: Optional[PreCommitModes] = None,
+        mode: str = "",
         all_files: bool = False,
         input_mode: bool = False,
+        to_delete: tuple = (),
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
@@ -22,7 +21,7 @@ class Hook(ABC):
         self.mode = mode
         self.all_files = all_files
         self.input_mode = input_mode
-        self._set_properties(hook=hook, to_delete=())
+        self._set_properties(hook={}, to_delete=to_delete)
 
     @abstractmethod
     def prepare_hook(self, **kwargs):
@@ -31,7 +30,7 @@ class Hook(ABC):
         Since we removed the base hook from the hooks list, we must add it back.
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
-        ...
+        self.hooks.append(deepcopy(self.base_hook))
 
     def _get_property(self, name, default=None):
         """
@@ -64,6 +63,7 @@ class Hook(ABC):
                 continue
             if prop := self._get_property(key):
                 hook[key] = prop
+        self.base_hook = hook
 
 
 def join_files(files: Set[Path], separator: str = "|") -> str:

@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
-from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
@@ -185,7 +184,7 @@ def test_ruff_hook_nightly_mode():
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
     ruff_hook = create_hook({})
-    RuffHook(**ruff_hook, mode=PreCommitModes.NIGHTLY).prepare_hook(
+    RuffHook(**ruff_hook, mode="nightly").prepare_hook(
         PYTHON_VERSION_TO_FILES
     )
 
@@ -202,7 +201,7 @@ def test_validate_format_hook_nightly_mode_and_all_files():
     Testing validate_format hook created successfully (the -a flag is added and the -i arg is not exist)
     """
     validate_format_hook = create_hook({"args": []})
-    kwargs = {"mode": PreCommitModes.NIGHTLY, "all_files": True}
+    kwargs = {"mode": "nightly", "all_files": True}
     ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
         PYTHON_VERSION_TO_FILES
     )
@@ -217,7 +216,7 @@ def test_validate_format_hook_nightly_mode():
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist, even in nightly mode)
     """
     validate_format_hook = create_hook({"args": []})
-    kwargs = {"mode": PreCommitModes.NIGHTLY, "input_mode": True}
+    kwargs = {"mode": "nightly", "input_mode": True}
     ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
         PYTHON_VERSION_TO_FILES
     )

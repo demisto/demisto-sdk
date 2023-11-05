@@ -24,7 +24,6 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
-    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -3407,7 +3406,6 @@ def update_content_graph(
 @click.option(
     "--mode",
     help="Special mode to run the pre-commit with",
-    type=click.Choice([mode.value for mode in list(PreCommitModes)]),
 )
 @click.option(
     "-ut/--no-ut",
@@ -3487,7 +3485,6 @@ def pre_commit(
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
-    mode = PreCommitModes(mode) if mode else None
     if file_paths and input:
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."

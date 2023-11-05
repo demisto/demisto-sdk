@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Iterable, Optional
 
-from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 
 
@@ -13,9 +12,9 @@ class ValidateFormatHook(Hook):
         In case of an input or all files without nightly, runs validate/format on the given files.
         Otherwise runs validate/format with the -g flag.
         Args:
-            input_files (Optional[Iterable[Path]]): The input files to validate. Defaults to None.
+            files_to_run (Optional[Iterable[Path]]): The input files to validate. Defaults to None.
         """
-        if self.mode == PreCommitModes.NIGHTLY and self.all_files:
+        if self.mode.lower() == "nightly" and self.all_files:
             self.base_hook["args"].append("-a")
         elif self.input_mode or self.all_files:
             self.base_hook["args"].append("-i")

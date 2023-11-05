@@ -1089,14 +1089,30 @@ class TestReadmes:
     script_name = "script0"
     author = "Kobbi Gal"
     gh_user = "kgal-pan"
-    source_field_names = {'sourcemoduleid', 'sourcescripid', 'sourceplaybookid', 'sourceClassifierId'}
-            actual_readme_text = actual_readme.read()
-            assert actual_readme_text == expected_readme_text
 
     def test_process_existing_pack_integration_readme(
         self,
         tmp_path: TempPathFactory,
     ):
+        """
+        Test for an existing integration in an existing pack
+        to ensure the README is updated correctly.
+
+        The zip and content mapping JSON used in this test were taken from
+        the GCP bucket.
+
+        Given
+        - A contribution zip file.
+        - A contributed content mapping JSON.
+
+        When
+        - The contribution, a new integration command, was made to an existing pack.
+
+        Then
+        - The integration README should be updated with the new command.
+
+        """
+
         # Read the contribution content mapping
         with open(os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.json"), "r") as j:
             contributed_content_mapping = json.load(j)
@@ -1126,7 +1142,7 @@ class TestReadmes:
 
         for line in difflib.unified_diff(original_readme_text_lines, modified_readme_text_lines, fromfile="existing_pack_add_integration_cmd.md", tofile=PACKS_README_FILE_NAME):
             print(line)
-        
+
         # TODO - currently readmes are different but some of the changes
         # remove existing sections (e.g. command outputs)
         assert original_readme_text_lines != modified_readme_text_lines

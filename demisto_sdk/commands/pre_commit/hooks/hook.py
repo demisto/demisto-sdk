@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Set
 
 
 class Hook(ABC):
@@ -42,7 +42,7 @@ class Hook(ABC):
         """
         ret = None
         if self.mode:
-            ret = self.base_hook.get(f"{name}:{self.mode.value}")
+            ret = self.base_hook.get(f"{name}:{self.mode}")
         return ret or self.base_hook.get(name, default)
 
     def _set_properties(self, hook, to_delete=()):

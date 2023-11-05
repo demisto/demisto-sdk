@@ -184,9 +184,7 @@ def test_ruff_hook_nightly_mode():
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
     ruff_hook = create_hook({})
-    RuffHook(**ruff_hook, mode="nightly").prepare_hook(
-        PYTHON_VERSION_TO_FILES
-    )
+    RuffHook(**ruff_hook, mode="nightly").prepare_hook(PYTHON_VERSION_TO_FILES)
 
     for (hook, _) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()

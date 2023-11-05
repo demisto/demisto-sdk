@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.21.0
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.
 * Fixed an issue where the **pre-commit** command runs even in the case of deprecated or powershell integrations or scripts.
 * Fixed an issue where **validate** falsely failed with error `PB101` and `PB123` due to condition names discrepancy

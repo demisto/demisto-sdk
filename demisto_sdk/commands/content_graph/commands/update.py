@@ -125,23 +125,27 @@ def update_content_graph(
     if imported_path:
         # Import from provided path
         logger.info(f"Importing graph from {imported_path}")
+        # we need to clean the import dir since we import from provided path
         content_graph_interface.clean_import_dir()
-        is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
+        content_graph_interface.import_graph(imported_path)
 
     else:
         # Try to import from local folder
         logger.info(f"Importing graph from {content_graph_interface.import_path}")
+        # no need to clean the import dir, since we are importing from it
         is_graph_up_to_date = content_graph_interface.import_graph(None)
 
         if not is_graph_up_to_date:
             # Import from remote if local failed
             logger.info("Importing graph from bucket")
-            is_import_succeeded = import_from_bucket(
+            import_succeeded = import_from_bucket(
                 content_graph_interface, is_external_repo
             )
 
-            if not is_import_succeeded:
-                logger.warning("Import from bucket failed, building graph from scratch")
+            if not import_succeeded:
+                logger.warning(
+                    "Importing graph from bucket failed. Creating from scratch"
+                )
                 create_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )

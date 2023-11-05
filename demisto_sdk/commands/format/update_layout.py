@@ -81,7 +81,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
+                f"\n[blue]================= Updating file: {self.source_file} =================[/blue]"
             )
             if self.is_container:
                 self.layoutscontainer__run_format()

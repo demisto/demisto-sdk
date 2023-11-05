@@ -106,6 +106,10 @@ def update_content_graph(
     if not imported_path and not use_git:
         logger.info("No arguments were given, using git")
         use_git = True
+    if output_path:
+        output_path = output_path / marketplace.value
+    content_graph_interface.export_graph(output_path, override_commit=use_git)
+
     git_util = GitUtil()
     is_external_repo = is_external_repository()
 
@@ -120,6 +124,8 @@ def update_content_graph(
             f"Content graph is up to date, no need to update. Make sure to add/commit your changes. UI representation is available at {NEO4J_DATABASE_HTTP} "
             f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
         )
+        content_graph_interface.export_graph(output_path, override_commit=use_git)
+
         return
     builder.init_database()
     if imported_path:

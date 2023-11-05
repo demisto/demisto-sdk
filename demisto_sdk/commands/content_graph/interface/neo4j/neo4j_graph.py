@@ -600,14 +600,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._import_handler.extract_files_from_path(imported_path)
         self._import_handler.ensure_data_uniqueness()
         graphml_filenames = self._import_handler.get_graphml_filenames()
-        if graphml_filenames:
-            with self.driver.session() as session:
-                session.execute_write(drop_constraints)
-                session.execute_write(import_graphml, graphml_filenames)
-                session.execute_write(merge_duplicate_commands)
-                session.execute_write(merge_duplicate_content_items)
-                session.execute_write(create_constraints)
-                session.execute_write(remove_empty_properties)
+        if not graphml_filenames:
+            # no ml files found in the import dir, nothing to import
+            return False
+        with self.driver.session() as session:
+            session.execute_write(drop_constraints)
+            session.execute_write(import_graphml, graphml_filenames)
+            session.execute_write(merge_duplicate_commands)
+            session.execute_write(merge_duplicate_content_items)
+            session.execute_write(create_constraints)
+            session.execute_write(remove_empty_properties)
+
         has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
         return not has_infra_graph_been_changed

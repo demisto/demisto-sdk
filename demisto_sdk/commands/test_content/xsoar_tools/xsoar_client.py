@@ -111,6 +111,7 @@ class XsoarApiInterface(ABC):
         incident_ids: Optional[Union[List, str]] = None,
         from_date: Optional[str] = None,
         incident_types: Optional[Union[List, str]] = None,
+        source_instance_name: Optional[str] = None,
         page: int = 0,
         size: int = 50,
         response_type: str = "object",
@@ -364,6 +365,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         incident_ids: Optional[Union[List[str], str]] = None,
         from_date: Optional[str] = None,
         incident_types: Optional[Union[List[str], str]] = None,
+        source_instance_name: Optional[str] = None,
         page: int = 0,
         size: int = 50,
         response_type: str = "object",
@@ -390,6 +392,9 @@ class XsoarNGApiClient(XsoarApiInterface):
             if isinstance(incident_types, str):
                 incident_types = [incident_types]
             filters["type"] = incident_types
+
+        if source_instance_name:
+            filters["sourceInstance"] = source_instance_name
 
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,

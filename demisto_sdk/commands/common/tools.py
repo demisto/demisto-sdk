@@ -449,9 +449,9 @@ def get_local_remote_file(
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
         if file_content:
-            return file_content.encode()
-        return file_content
-    return get_file_details(file_content, full_file_path)
+            return {file_content.encode()}
+        return {file_content}
+    return get_file_details({file_content}, full_file_path)
 
 
 def get_remote_file_from_api(

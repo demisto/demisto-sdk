@@ -28,6 +28,7 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     related_field = "name"
     content_types = ContentTypes
     graph = True
+    is_auto_fixable = False
 
     def is_valid(
         self, content_items: Iterable[ContentTypes], _

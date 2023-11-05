@@ -22,6 +22,17 @@ ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
+    """The generic validator class to inherit from.
+    Class variables:
+    error_code: (ClassVar[str]): The validation's error code.
+    description: (ClassVar[str]): The validation's error description.
+    error_message: (ClassVar[str]): The validation's error message.
+    fixing_message: (ClassVar[str]): The validation's fixing message.
+    related_field: (ClassVar[str]): The validation's related field.
+    expected_git_statuses: (ClassVar[Optional[List[str]]]): The list of git statuses the validation should run on.
+    graph: (ClassVar[bool]): Wether the validation is a graph validation or not.
+    is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
+    """
     error_code: ClassVar[str]
     description: ClassVar[str]
     error_message: ClassVar[str]
@@ -29,6 +40,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[str]]] = None
     graph: ClassVar[bool] = False
+    is_auto_fixable: ClassVar[bool] = False
 
     def get_content_types(self):
         args = get_args(self.__orig_bases__[0])  # type: ignore
@@ -76,7 +88,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     def fix(
         self, content_item: ContentTypes, old_content_item: ContentTypes
-    ) -> FixingResult:
+    ) -> FixResult:
         raise NotImplementedError
 
     class Config:
@@ -104,7 +116,7 @@ class ValidationResult(BaseModel):
         }
 
 
-class FixingResult(BaseModel):
+class FixResult(BaseModel):
     validator: BaseValidator
     message: str
     content_object: BaseContent

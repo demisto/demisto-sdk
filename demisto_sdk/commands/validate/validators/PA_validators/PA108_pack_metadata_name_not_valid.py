@@ -16,6 +16,7 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
     )
     error_message = "Pack metadata name field ({}) is missing or invalid. Please fill valid pack name."
     related_field = "pack name"
+    is_auto_fixable = False
 
     def is_valid(
         self,

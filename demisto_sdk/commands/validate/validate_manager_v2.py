@@ -77,7 +77,7 @@ class ValidateManager:
             logger.info("Graph validations were selected, will init graph")
             self.init_graph()
 
-    def run_validation(self) -> int:
+    def run_validations(self) -> int:
         """
             Running all the relevant validation on all the filtered files based on the should_run calculations,
             calling the fix method if the validation fail, has an autofix, and the allow_autofix flag is given,
@@ -97,15 +97,11 @@ class ValidateManager:
                 )
             ):
                 validation_results: List[ValidationResult] = validator.is_valid(*zip(*filtered_content_objects_for_validator))  # type: ignore
-                if self.allow_autofix:
+                if self.allow_autofix and validator.is_auto_fixable:
                     for validation_result in validation_results:
-                        try:
-                            self.validation_results.append_fixing_results(
-                                validator.fix(validation_result.content_object)  # type: ignore
-                            )
-                        except NotImplementedError:
-                            self.validation_results.extend(validation_results)
-                            break
+                        self.validation_results.append_fixing_results(
+                            validator.fix(validation_result.content_object)  # type: ignore
+                        )
                 else:
                     self.validation_results.extend(validation_results)
 

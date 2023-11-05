@@ -13,7 +13,7 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixingResult,
+    FixResult,
     ValidationResult,
 )
 
@@ -36,6 +36,7 @@ class IDNameValidator(BaseValidator[ContentTypes]):
     error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
     fixing_message = "Changing name to be equal to id ({0})."
     related_field = "name"
+    is_auto_fixable = True
 
     def is_valid(
         self, content_items: Iterable[ContentTypes], _
@@ -52,9 +53,9 @@ class IDNameValidator(BaseValidator[ContentTypes]):
             if content_item.object_id != content_item.name
         ]
 
-    def fix(self, content_item: ContentTypes, _) -> FixingResult:
+    def fix(self, content_item: ContentTypes, _) -> FixResult:
         content_item.name = content_item.object_id
-        return FixingResult(
+        return FixResult(
             validator=self,
             message=self.fixing_message.format(content_item.object_id),
             content_object=content_item,

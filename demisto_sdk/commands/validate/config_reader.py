@@ -9,20 +9,19 @@ CONFIG_FILE_PATH = (
 )
 USE_GIT = "use_git"
 VALIDATE_ALL = "validate_all"
-DEFAULT_CAREGORY = "default_mandatory_validations"
+DEFAULT_CATEGORY = "default_mandatory_validations"
 
 
 class ConfigReader:
     def __init__(self, config_file_path=None, category_to_run=None):
         if not config_file_path:
             config_file_path = CONFIG_FILE_PATH
-        self.config_file_path = config_file_path
         try:
-            self.config_file_content: dict = toml.load(self.config_file_path)
+            self.config_file_content: dict = toml.load(config_file_path)
             self.category_to_run = category_to_run
         except FileNotFoundError:
             self.config_file_content = DEFAULT_MANDATORY_VALIDATIONS
-            self.category_to_run = DEFAULT_CAREGORY
+            self.category_to_run = DEFAULT_CATEGORY
 
     def gather_validations_to_run(
         self, use_git: bool, ignore_support_level: Optional[bool] = False

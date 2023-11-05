@@ -729,8 +729,8 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=False,
 )
 @click.option(
-    "-af",
-    "--allow-fix",
+    "-f",
+    "--fix",
     help="Wether to autofix failing validations with an available auto fix or not.",
     is_flag=True,
     default=False,
@@ -839,11 +839,11 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 json_file_path=kwargs.get("json_file"),
                 multiprocessing=run_with_mp,
                 config_file_category_to_run=kwargs.get("category_to_run"),
-                allow_autofix=kwargs.get("allow_fix"),
+                allow_autofix=kwargs.get("fix"),
                 config_file_path=kwargs.get("config_path"),
                 ignore_support_level=kwargs.get("ignore_support_level"),
             )
-            exit_code += validator_v2.run_validation()
+            exit_code += validator_v2.run_validations()
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.info(f"[red]{e}[/red]")

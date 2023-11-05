@@ -1,3 +1,7 @@
+"""
+import all validation for the validators directory,
+so 'BaseValidator.__subclasses__()' will recognize them when called from filter_validators.
+"""
 import importlib
 import sys
 from pathlib import Path

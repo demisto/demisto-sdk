@@ -16,7 +16,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixingResult,
+    FixResult,
     ValidationResult,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
@@ -229,7 +229,7 @@ def test_gather_validations_to_run(
                 )
             ],
             [
-                FixingResult(
+                FixResult(
                     validator=IDNameValidator(),
                     message="Fixed this issue",
                     content_object=INTEGRATION,

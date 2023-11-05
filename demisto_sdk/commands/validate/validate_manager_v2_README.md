@@ -27,7 +27,7 @@ Run validate all without multiprocessing, for debugging purposes.
 The JSON file path to which to output the command results.
 * **--category-to-run**
 Run specific validations by stating category they're listed under in the config file.
-* **-af, --allow-fix**
+* **-f, --fix**
 Wether to autofix failing validations with an available auto fix or not.
 * **--config-path**
 Path for a config file to run, if not given - will run the default path at: ...
@@ -36,23 +36,18 @@ Path for a config file to run, if not given - will run the default path at: ...
 
 `demisto-sdk validate --prev-ver SHA1-HASH`
 This will validate only changed files from the branch given (SHA1).
-<br><br>
 
 `demisto-sdk validate --post-commit`
 This indicates that the command runs post commit.
-<br><br>
 
 `demisto-sdk validate -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml`
 This will validate the file Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml only.
-<br><br>
 
 `demisto-sdk validate -a`
 This will validate all files under `Packs` directory
-<br><br>
 
 `demisto-sdk validate -i Packs/HelloWorld`
 This will validate all files under the content pack `HelloWorld`
-<br><br>
 
 ### Notes
 * In external repositories (repos which contain the `.private-repo-settings` file in its root) **all** the validations are ignorable.

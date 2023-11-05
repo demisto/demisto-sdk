@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.validators.base_validator import (
-    FixingResult,
+    FixResult,
     ValidationResult,
 )
 
@@ -24,7 +24,7 @@ class ValidationResults:
         """
         self.only_throw_warning = only_throw_warnings
         self.results: List[ValidationResult] = []
-        self.fixing_results: List[FixingResult] = []
+        self.fixing_results: List[FixResult] = []
         if json_file_path:
             self.json_file_path = (
                 os.path.join(json_file_path, "validate_outputs.json")
@@ -98,11 +98,11 @@ class ValidationResults:
         """
         self.results.append(validation_result)
 
-    def append_fixing_results(self, fixing_result: FixingResult):
+    def append_fixing_results(self, fixing_result: FixResult):
         """Append an item to the fixing results list.
 
         Args:
-            fixing_result (FixingResult): the fixing result to append.
+            fixing_result (FixResult): the fixing result to append.
         """
         self.fixing_results.append(fixing_result)
 
@@ -114,10 +114,10 @@ class ValidationResults:
         """
         self.results.extend(validation_results)
 
-    def extend_fixing_results(self, fixing_results: List[FixingResult]):
-        """Extending the list of FixingResult objects with a given list of FixingResult objects.
+    def extend_fixing_results(self, fixing_results: List[FixResult]):
+        """Extending the list of FixResult objects with a given list of FixResult objects.
 
         Args:
-            fixing_results (List[FixingResult]): The list of FixingResult objects to add to the existing list.
+            fixing_results (List[FixResult]): The list of FixResult objects to add to the existing list.
         """
         self.fixing_results.extend(fixing_results)

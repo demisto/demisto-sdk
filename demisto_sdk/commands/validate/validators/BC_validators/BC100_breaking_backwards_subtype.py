@@ -1,11 +1,11 @@
 from typing import Iterable, List, Optional, Union, cast
 
-from demisto_sdk.commands.common.constants import ADDED, MODIFIED
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixingResult,
+    FixResult,
     ValidationResult,
 )
 
@@ -20,7 +20,8 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     error_message = "Possible backwards compatibility break, You've changed the subtype, please undo."
     related_field = "subtype"
     fixing_message = "Changing subtype back to the old one ({0})."
-    expected_git_statuses = [ADDED, MODIFIED]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    is_auto_fixable = True
 
     def is_valid(
         self,
@@ -43,9 +44,9 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
 
     def fix(
         self, content_item: ContentTypes, old_content_item: ContentTypes
-    ) -> FixingResult:
+    ) -> FixResult:
         content_item.type = old_content_item.type
-        return FixingResult(
+        return FixResult(
             validator=self,
             message=self.fixing_message.format(old_content_item.type),
             content_object=content_item,

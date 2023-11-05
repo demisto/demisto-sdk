@@ -5,11 +5,8 @@ from typing import List, Optional, Set, Tuple
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
-    ADDED,
-    DELETED,
     DEMISTO_GIT_UPSTREAM,
-    MODIFIED,
-    RENAMED,
+    GitStatuses,
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
@@ -32,6 +29,9 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 
 class Initializer:
+    """
+    A class for initializing objects to run on based on given flags.
+    """
     def __init__(
         self,
         use_git=False,
@@ -304,10 +304,10 @@ class Initializer:
         )
         final_objects_to_run_set: Set[
             Tuple[BaseContent, Optional[BaseContent]]
-        ] = self.get_final_objects_to_run(content_objects_to_run_with_packs)
+        ] = self.get_objects_with_old_version(content_objects_to_run_with_packs)
         return final_objects_to_run_set
 
-    def get_final_objects_to_run(
+    def get_objects_with_old_version(
         self, content_objects_to_run_with_packs: Set[BaseContent]
     ) -> Set[Tuple[BaseContent, Optional[BaseContent]]]:
         """Goes through the given set and parse a copy of the modified/renamed items from before the modification/rename.
@@ -321,11 +321,11 @@ class Initializer:
         final_objects_to_run_set: Set[Tuple[BaseContent, Optional[BaseContent]]] = set()
         for content_object in content_objects_to_run_with_packs:
             old_content_item = None
-            if content_object.git_status == MODIFIED:
+            if content_object.git_status == GitStatuses.MODIFIED:
                 old_content_item = BaseContent.from_path(
                     content_object.path, git_sha=self.prev_ver
                 )
-            elif content_object.git_status == RENAMED:
+            elif content_object.git_status == GitStatuses.RENAMED:
                 old_content_item = BaseContent.from_path(
                     content_object.old_file_path, git_sha=self.prev_ver
                 )
@@ -371,16 +371,16 @@ class Initializer:
         ) = self.collect_files_to_run(self.file_path)
         basecontent_set: Set[BaseContent] = set()
         basecontent_set = basecontent_set.union(
-            self.paths_to_basecontent_set(modified_files, MODIFIED)
+            self.paths_to_basecontent_set(modified_files, GitStatuses.MODIFIED)
         )
         basecontent_set = basecontent_set.union(
-            self.paths_to_basecontent_set(renamed_files, RENAMED)
+            self.paths_to_basecontent_set(renamed_files, GitStatuses.RENAMED)
         )
         basecontent_set = basecontent_set.union(
-            self.paths_to_basecontent_set(added_files, ADDED)
+            self.paths_to_basecontent_set(added_files, GitStatuses.ADDED)
         )
         basecontent_set = basecontent_set.union(
-            self.paths_to_basecontent_set(deleted_files, DELETED)
+            self.paths_to_basecontent_set(deleted_files, GitStatuses.DELETED)
         )
         return basecontent_set
 
@@ -400,7 +400,7 @@ class Initializer:
         invalid_content_items: List[str] = []
         for file_path in files_set:
             try:
-                if git_status == RENAMED:
+                if git_status == GitStatuses.RENAMED:
                     temp_obj: Optional[BaseContent] = BaseContent.from_path(
                         Path(file_path[0]),
                         git_status=git_status,

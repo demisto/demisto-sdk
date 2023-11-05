@@ -19,6 +19,7 @@ IGNORED_FIELDS = [
     "appendTags",
     "addLabels",
     "appendMultiSelect",
+    "deleteEmptyField",
     "retry-count",
     "retry-interval",
 ]

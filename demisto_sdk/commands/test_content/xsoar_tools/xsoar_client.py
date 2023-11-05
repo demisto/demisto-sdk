@@ -609,7 +609,10 @@ class XsoarNGApiClient(XsoarApiInterface):
             url_suffix = f"/{url_suffix}"
         url = f"{self.external_base_url}/instance/execute/{instance_name}{url_suffix}"
         auth = HTTPBasicAuth(username, password) if username and password else None
-        return requests.get(url, auth=auth, headers=headers)
+
+        response = requests.get(url, auth=auth, headers=headers)
+        response.raise_for_status()
+        return response
 
     @retry(exceptions=ApiException)
     def run_cli_command(

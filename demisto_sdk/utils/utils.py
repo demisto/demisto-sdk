@@ -4,8 +4,6 @@ from functools import wraps
 from pathlib import Path
 from typing import Callable, Tuple, Type, Union
 
-from requests import Response
-
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
 )
@@ -92,15 +90,12 @@ def retry(
         @wraps(func)
         def wrapper(*args, **kwargs):
             for i in range(1, times + 1):
-                logger.debug(f"trying to run func {func_name}, try number {i}")
+                logger.debug(f"trying to run func {func_name} for the {i} time")
                 try:
-                    response = func(*args, **kwargs)
-                    if isinstance(response, Response):
-                        response.raise_for_status()
-                    return response
+                    return func(*args, **kwargs)
                 except exceptions as error:
                     logger.debug(
-                        f"error when executing func {func_name}, error: {error}, try number {i}"
+                        f"error when executing func {func_name}, error: {error}, time {i}"
                     )
                     if i == times:
                         raise

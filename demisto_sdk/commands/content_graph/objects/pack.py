@@ -1,3 +1,4 @@
+import os
 import shutil
 from collections import defaultdict
 from pathlib import Path
@@ -116,6 +117,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+
+    def __hash__(self):
+        return hash(self.path)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -497,3 +501,51 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
+
+    def create_pack_release_notes(
+        self,
+        modified_content,
+        added_content,
+        old_content,
+        existing_rn_version,
+        update_type,
+        pre_release,
+        specific_version,
+        is_force,
+        text,
+        is_bc,
+        total_updated_packs,
+        packs_existing_rn,
+    ):
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        # Checks if update is required
+        update_pack_rn = UpdateRN(
+            pack_path=str(self.path),
+            update_type=update_type,
+            modified_files_in_pack=modified_content + old_content,
+            pre_release=pre_release,
+            added_files=added_content,
+            specific_version=specific_version,
+            text=text,
+            is_force=is_force,
+            existing_rn_version_path=existing_rn_version,
+            is_bc=is_bc,
+        )
+        updated = update_pack_rn.execute_update()
+        # self.rn_path.append(update_pack_rn.rn_path)
+
+        # If new release notes were created add it to the total number of packs that were updated.
+        if updated:
+            total_updated_packs.add(self.pack_name)
+            # If there is an outdated previous release notes, remove it (for example: User updated his version to
+            # 1.0.4 and meanwhile the master version changed to 1.0.4, so we want to remove the user's 1_0_4 file
+            # and add a 1_0_5 file.)
+            if update_pack_rn.should_delete_existing_rn:
+                os.unlink(packs_existing_rn[self.pack_name])
+        else:
+            logger.info(
+                f"[yellow]Either no changes were found in {self.pack_name} pack "
+                f"or the changes found should not be documented in the release notes file.\n"
+                f"If relevant changes were made, please commit the changes and rerun the command.[/yellow]"
+            )

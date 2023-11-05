@@ -55,6 +55,9 @@ class ContentItem(BaseContent):
     description: Optional[str] = ""
     is_test: bool = False
 
+    def __hash__(self):
+        return hash(self.path)
+
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():

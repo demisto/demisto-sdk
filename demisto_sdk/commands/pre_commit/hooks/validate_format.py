@@ -14,7 +14,7 @@ class ValidateFormatHook(Hook):
         Args:
             files_to_run (Optional[Iterable[Path]]): The input files to validate. Defaults to None.
         """
-        if self.mode.lower() == "nightly" and self.all_files:
+        if self.mode and self.mode.lower() == "nightly" and self.all_files:
             self.base_hook["args"].append("-a")
         elif self.input_mode or self.all_files:
             self.base_hook["args"].append("-i")

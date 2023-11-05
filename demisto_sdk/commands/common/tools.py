@@ -48,6 +48,7 @@ from requests.exceptions import HTTPError
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
+    ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
     CONF_JSON_FILE_NAME,
     CORRELATION_RULES_DIR,
@@ -1637,10 +1638,19 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XDRC_TEMPLATE
         elif MODELING_RULES_DIR in path.parts and "testdata" in path.stem.casefold():
             return FileType.MODELING_RULE_TEST_DATA
-        elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith(
-            "_schema"
+        elif any(
+            dir_name in path.parts
+            for dir_name in [MODELING_RULES_DIR, ASSETS_MODELING_RULES_DIR]
         ):
             return FileType.MODELING_RULE_SCHEMA
+        # elif ASSETS_MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith(
+        #     "_schema"
+        # ):
+        #     return FileType.MODELING_RULE_SCHEMA
+        # elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith(
+        #     "_schema"
+        # ):
+        #     return FileType.MODELING_RULE_SCHEMA
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
@@ -1672,8 +1682,13 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         return FileType.JAVASCRIPT_FILE
 
     elif path.suffix == ".xif":
-        if MODELING_RULES_DIR in path.parts:
+        if any(
+            dir_name in path.parts
+            for dir_name in [MODELING_RULES_DIR, ASSETS_MODELING_RULES_DIR]
+        ):
             return FileType.MODELING_RULE_XIF
+        # if MODELING_RULES_DIR in path.parts:
+        #     return FileType.MODELING_RULE_XIF
         elif PARSING_RULES_DIR in path.parts:
             return FileType.PARSING_RULE_XIF
         return FileType.XIF_FILE
@@ -1699,8 +1714,14 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif PARSING_RULES_DIR in path.parts:
             return FileType.PARSING_RULE
 
-        elif MODELING_RULES_DIR in path.parts:
+        elif any(
+            dir_name in path.parts
+            for dir_name in [MODELING_RULES_DIR, ASSETS_MODELING_RULES_DIR]
+        ):
             return FileType.MODELING_RULE
+
+        # elif MODELING_RULES_DIR in path.parts:
+        #     return FileType.MODELING_RULE
 
         elif CORRELATION_RULES_DIR in path.parts:
             return FileType.CORRELATION_RULE

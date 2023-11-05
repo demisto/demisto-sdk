@@ -49,6 +49,7 @@ TRIGGER_DIR = "Triggers"
 WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
+ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
 
 # NAMES OF ENTITIES
 
@@ -194,6 +195,7 @@ class FileType(str, Enum):
     INI = "ini"
     PEM = "pem"
     VULTURE_WHITELIST = "vulture_whitelist"
+    ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -328,6 +330,7 @@ CONTENT_ENTITIES_DIRS = [
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
+    ASSETS_MODELING_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [

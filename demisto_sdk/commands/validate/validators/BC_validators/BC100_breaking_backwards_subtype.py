@@ -18,7 +18,6 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         "Validate that the pack name subtype of the new file matches the old one."
     )
     error_message = "Possible backwards compatibility break, You've changed the subtype, please undo."
-    is_auto_fixable = True
     related_field = "subtype"
     fixing_message = "Changing subtype back to the old one ({0})."
     expected_git_statuses = [ADDED, MODIFIED]

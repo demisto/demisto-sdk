@@ -26,7 +26,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     description: ClassVar[str]
     error_message: ClassVar[str]
     fixing_message: ClassVar[str] = ""
-    is_auto_fixable: ClassVar[bool]
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[str]]] = None
     graph: ClassVar[bool] = False

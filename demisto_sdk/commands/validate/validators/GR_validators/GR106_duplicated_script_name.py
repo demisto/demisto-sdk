@@ -25,7 +25,6 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
         "it will not be possible to create a script with the name `getAlert`)"
     )
-    is_auto_fixable = False
     related_field = "name"
     content_types = ContentTypes
     graph = True

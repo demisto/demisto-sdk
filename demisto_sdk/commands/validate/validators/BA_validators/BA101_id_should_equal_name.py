@@ -35,7 +35,6 @@ class IDNameValidator(BaseValidator[ContentTypes]):
     description = "Validate that the file id and name fields are identical."
     error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
     fixing_message = "Changing name to be equal to id ({0})."
-    is_auto_fixable = True
     related_field = "name"
 
     def is_valid(

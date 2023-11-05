@@ -1,3 +1,4 @@
+import difflib
 import os
 import re
 import shutil
@@ -5,22 +6,18 @@ from os.path import join
 from pathlib import Path
 from typing import Union
 from zipfile import ZipFile
-import difflib
 
 import pytest
 import urllib3
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
-from pytest_mock import MockerFixture
+from demisto_sdk.commands.common.handlers import YAML_Handler
 
 from demisto_sdk.commands.common.constants import (
+    INTEGRATIONS_DIR,
     LAYOUT,
     LAYOUTS_CONTAINER,
-    PACKS_DIR,
     PACKS_README_FILE_NAME,
-    SCRIPT_PREFIX,
-    SCRIPTS_DIR,
-    INTEGRATIONS_DIR
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -31,6 +28,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 )
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
+    fixup_detected_content_items,
     get_previous_nonempty_line,
 )
 from TestSuite.contribution import Contribution
@@ -1146,3 +1144,295 @@ class TestReadmes:
         # TODO - currently readmes are different but some of the changes
         # remove existing sections (e.g. command outputs)
         assert original_readme_text_lines != modified_readme_text_lines
+
+
+@pytest.mark.helper
+class TestFixupDetectedContentItems:
+    def test_fixup_detected_content_items_automation(self, tmp_path):
+        '''
+        Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
+
+        Given
+        - The contribution zip file contains a file under the "automation" directory called "automation-ok.yml"
+        - The contribution zip contains a file "pack_metadata.json"
+
+        When
+        - The id field of "automation-ok.yml" is "ee41bb51-ad90-4740-8824-d364e936200b"
+        - The name field of "automation-ok.yml" is "ok"
+        - The source id of the content item that "automation-ok.yml" is based on is "TotallyAwesome"
+        - The source name of the content item that "automation-ok.yml" is based on is "Totally Awesome"
+        - The source file path of the content item that "automation-ok.yml" is base on is
+          "Packs/AwesomePack/Scripts/TotallyAwesome/TotallyAwesome.yml"
+
+        Then
+        - Ensure that "automation-ok.yml" is renamed to "automation-TotallyAwesome.yml"
+        - Ensure the name field of "automation-TotallyAwesome.yml" has been changed to "Totally Awesome"
+        - Ensure the id field of "automation-TotallyAwesome.yml" has been changed to "TotallyAwesome"
+        '''
+        path_to_test_zip = ('./process_pack_test/contentpack-6a49388d-2cc6-4b09-886c-80211b03b005'
+                            '-ok_Contribution_Pack.zip')
+        tmp_destination = tmp_path / 'ok_contribution_pack.zip'
+        tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
+
+        file_id = 'ee41bb51-ad90-4740-8824-d364e936200b'
+        file_name = 'ok'
+        original_id = 'TotallyAwesome'
+        original_name = 'Totally Awesome'
+        detected_content_items = [
+            {
+                'id': file_id,
+                'name': file_name,
+                'source_id': original_id,
+                'source_name': original_name,
+                'source_file_name': 'Packs/AwesomePack/Scripts/TotallyAwesome/TotallyAwesome.yml'
+            }
+        ]
+        ryaml = YAML_Handler()
+        # verify original zip
+        with ZipFile(tmp_zip, 'r') as test_zip:
+            print(test_zip.infolist())
+            with test_zip.open('automation/automation-ok.yml', 'r') as script_yml:
+                data_obj = ryaml.load(script_yml)
+                assert data_obj.get('commonfields', {}).get('id', '') == file_id
+                assert data_obj.get('name', '') == file_name
+
+        modified_zip_file_path, source_mapping = fixup_detected_content_items(tmp_zip, detected_content_items)
+
+        # verify source mapping
+        expected_base_name = expected_containing_dir_name = 'TotallyAwesome'
+        expected_modified_fn = 'automation-TotallyAwesome.yml'
+        assert expected_modified_fn in source_mapping.keys()
+        assert source_mapping.get(expected_modified_fn, {}).get('base_name', '') == expected_base_name
+        assert source_mapping.get(expected_modified_fn, {}).get(
+            'containing_dir_name', '') == expected_containing_dir_name
+
+        # verify modified zip
+        expected_modified_file_path = 'automation/automation-TotallyAwesome.yml'
+        with ZipFile(modified_zip_file_path, 'r') as modified_zip:
+            with modified_zip.open(expected_modified_file_path, 'r') as script_yml:
+                data_obj = ryaml.load(script_yml)
+                assert data_obj.get('commonfields', {}).get('id', '') == original_id
+                assert data_obj.get('name', '') == original_name
+
+    def test_fixup_detected_content_items_servicenow(self, tmp_path):
+        '''
+        Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
+
+        Given
+        - The contribution zip file contains a json file which caused an error when trying to write the modified
+          version of the file to the modified zip file.
+
+        When
+        - The problematic file is "incidenttype-ServiceNowTicket.json"
+        - The id field (as contributed) of the problematic file is "ServiceNow Ticket_copy"
+        - The name field (as contributed) of "incidenttype-ServiceNowTicket.json" is "ServiceNow Ticket_copy"
+        - The source id of the content item that "incidenttype-ServiceNowTicket.json" is based on is "ServiceNow Ticket"
+        - The source name of the content item that "incidenttype-ServiceNowTicket.json" is based on is "ServiceNow Ticket"
+        - The source file path of the content item that "incidenttype-ServiceNowTicket.json" is based on is
+          "Packs/ServiceNow/IncidentTypes/incidenttype-ServiceNowTicket.json"
+
+        Then
+        - Ensure that no errors occur when running "fixup_detected_content_items" on the contribution zip (which
+          contains the json file that raised errors in the past)
+        - Ensure the name field of "incidenttype-ServiceNowTicket.json" has been changed to "Totally Awesome"
+        - Ensure the id field of "incidenttype-ServiceNowTicket.json" has been changed to "TotallyAwesome"
+        '''
+        path_to_test_zip = ('./process_pack_test/uploads_edb61840-4575-406b-93ed-c20d30200c70_pack.zip')
+        tmp_destination = tmp_path / 'uploads_edb.zip'
+        tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
+
+        detected_content_items = [
+            {
+                "id": "94f6943b-d3dd-4d5a-85ea-f4e72d46d458",
+                "name": "ServiceNowIncidentStatus_copy",
+                "source_id": "ServiceNowIncidentStatus",
+                "source_name": "ServiceNowIncidentStatus",
+                "source_file_name": "Packs/ServiceNow/Scripts/ServiceNowIncidentStatus/ServiceNowIncidentStatus.yml"
+            },
+            {
+                "id": "ServiceNow v2_copy",
+                "name": "ServiceNow v2_copy",
+                "source_id": "ServiceNow v2",
+                "source_name": "ServiceNow v2",
+                "source_file_name": "Packs/ServiceNow/Integrations/ServiceNowv2/ServiceNowv2.yml"
+            },
+            {
+                "id": "ServiceNow Ticket_copy",
+                "name": "ServiceNow Ticket_copy",
+                "source_id": "ServiceNow Ticket",
+                "source_name": "ServiceNow Ticket",
+                "source_file_name": "Packs/ServiceNow/IncidentTypes/incidenttype-ServiceNowTicket.json"
+            }
+        ]
+        contribution_zip_metadata_id = 'f6995816-2013-435f-8121-ca32cc03de52'
+        contribution_zip_metadata_name = 'Servicenow'
+
+        ryaml = YAML_Handler()
+        # verify original zip
+        id_as_contributed = [content_item.get('id', '') for content_item in detected_content_items]
+        names_as_contributed = [content_item.get('name', '') for content_item in detected_content_items]
+        with ZipFile(tmp_zip, 'r') as test_zip:
+            print(test_zip.infolist())
+
+            for item in test_zip.infolist():
+                print(f'{item.filename=}')
+                if item.filename.endswith('.yml'):
+                    data_worker = ryaml
+                elif item.filename.endswith('.json'):
+                    data_worker = json
+                else:
+                    continue
+                with test_zip.open(item, 'r') as df:
+                    data_obj = data_worker.load(df)
+                content_id = data_obj['commonfields'].get(
+                    'id', '') if 'commonfields' in data_obj.keys() else data_obj.get(
+                    'id', '')
+                content_name = data_obj.get('name', '')
+                assert content_id in id_as_contributed or content_id == contribution_zip_metadata_id
+                assert content_name in names_as_contributed or content_name == contribution_zip_metadata_name
+
+        modified_zip_file_path, source_mapping = fixup_detected_content_items(tmp_zip, detected_content_items)
+        # # verify source mapping
+        expected_modified_file_names = [
+            'automation-ServiceNowIncidentStatus.yml',
+            'integration-ServiceNowv2.yml',
+            'incidenttype-ServiceNowTicket.json'
+        ]
+        assert set(expected_modified_file_names) == set(source_mapping.keys())
+
+        expected_data_per_file = {
+            'automation-ServiceNowIncidentStatus.yml': {
+                'base_name': 'ServiceNowIncidentStatus',
+                'containing_dir_name': 'ServiceNowIncidentStatus'
+            },
+            'incidenttype-ServiceNowTicket.json': {
+                'base_name': 'ServiceNowTicket.json',
+                'containing_dir_name': 'IncidentTypes'
+            },
+            'integration-ServiceNowv2.yml': {
+                'base_name': 'ServiceNowv2',
+                'containing_dir_name': 'ServiceNowv2'
+            }
+        }
+        for modified_file_name in expected_modified_file_names:
+            expected_base_name = expected_data_per_file[modified_file_name].get('base_name', '')
+            expected_containing_dir_name = expected_data_per_file[modified_file_name].get('containing_dir_name', '')
+            base_name = source_mapping.get(modified_file_name, {}).get('base_name', '')
+            containing_dir_name = source_mapping.get(modified_file_name, {}).get('containing_dir_name', '')
+            assert base_name == expected_base_name
+            assert containing_dir_name == expected_containing_dir_name
+
+        # # verify modified zip
+        expected_modified_file_paths_to_source_values = {
+            'automation/automation-ServiceNowIncidentStatus.yml': {
+                "source_id": "ServiceNowIncidentStatus",
+                "source_name": "ServiceNowIncidentStatus"
+            },
+            'incidenttype/incidenttype-ServiceNowTicket.json': {
+                "source_id": "ServiceNow Ticket",
+                "source_name": "ServiceNow Ticket"
+            },
+            'integration/integration-ServiceNowv2.yml': {
+                "source_id": "ServiceNow v2",
+                "source_name": "ServiceNow v2"
+            }
+        }
+        with ZipFile(modified_zip_file_path, 'r') as modified_zip:
+            for expected_modified_file_path in expected_modified_file_paths_to_source_values.keys():
+                with modified_zip.open(expected_modified_file_path, 'r') as content_item_file:
+                    expected_source_id = expected_modified_file_paths_to_source_values[
+                        expected_modified_file_path
+                    ].get('source_id', '')
+                    expected_source_name = expected_modified_file_paths_to_source_values[
+                        expected_modified_file_path
+                    ].get('source_name', '')
+                    if os.path.splitext(expected_modified_file_path)[-1].lower() == 'json':
+                        data_obj = json.load(content_item_file)
+                        assert data_obj.get('id', '') == expected_source_id
+                        assert data_obj.get('name', '') == expected_source_name
+                    else:
+                        data_obj = ryaml.load(content_item_file.read())
+                        content_item_id = data_obj.get('commonfields', {}).get('id', '') or data_obj.get('id', '')
+                        assert content_item_id == expected_source_id
+                        assert data_obj.get('name', '') == expected_source_name
+
+    @pytest.mark.parametrize('create_test_packs', ['AbuseDB'], indirect=True)
+    def test_fixup_detected_content_items_integration(self, create_test_packs, tmp_path):
+        '''
+        Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
+
+        Given
+        - The contribution zip file contains a file under the "integration" directory called
+          "integration-AbuseIPDB_copy.yml"
+        - The contribution zip contains a file "pack_metadata.json"
+
+        When
+        - The id field of "integration-AbuseIPDB_copy.yml" is "AbuseIPDB_copy"
+        - The name field of "integration-AbuseIPDB_copy.yml" is "AbuseIPDB_copy"
+        - The source id of the content item that "integration-AbuseIPDB_copy.yml" is based on is "AbuseIPDB"
+        - The source name of the content item that "integration-AbuseIPDB_copy.yml" is based on is "AbuseIPDB"
+        - The source file path of the content item that "integration-AbuseIPDB_copy.yml" is base on is
+          "Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.yml"
+
+        Then
+        - Ensure that "integration-AbuseIPDB_copy.yml" is renamed to "integration-AbuseDB.yml"
+        - Ensure the name field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
+        - Ensure the id field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
+        - Ensure the display field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
+        '''
+        path_to_test_zip = './process_pack_test/contentpack-abuse_Contribution_Pack.zip'
+        tmp_destination = tmp_path / 'abuse_contribution_pack.zip'
+        tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
+
+        tmp_packs_dir = tmp_path / 'Packs'
+        tmp_packs_dir.mkdir()
+        abusedb_pack = create_test_packs
+        abusedb_pack.create_integration(name='AbuseDB', contents='"display": "AbuseIPDB"')
+        # the created pack has a digit appended since the
+        # (side-effect of using the tmp_path_factory the create_test_packs fixture)
+        # move the created pack under the "Packs" dir and rename the pack dir from "AbuseDB0" to "AbuseDB"
+        shutil.move(str(abusedb_pack), tmp_packs_dir / 'AbuseDB')
+        containing_directory = os.path.normpath(os.path.join(tmp_packs_dir, '..'))
+        os.chdir(containing_directory)
+
+        file_id = 'AbuseIPDB_copy'
+        file_name = 'AbuseIPDB_copy'
+        original_id = 'AbuseIPDB'
+        original_name = 'AbuseIPDB'
+        detected_content_items = [
+            {
+                'id': file_id,
+                'name': file_name,
+                'source_id': original_id,
+                'source_name': original_name,
+                'source_file_name': 'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.yml'
+            }
+        ]
+        ryaml = YAML()
+        # verify original zip
+        with ZipFile(tmp_zip, 'r') as test_zip:
+            print(test_zip.infolist())
+            with test_zip.open('integration/integration-AbuseIPDB_copy.yml', 'r') as integration_yml:
+                data_obj = ryaml.load(integration_yml)
+                assert data_obj.get('commonfields', {}).get('id', '') == file_id
+                assert data_obj.get('name', '') == file_name
+                assert data_obj.get('display', '') == file_name
+
+        modified_zip_file_path, source_mapping = fixup_detected_content_items(tmp_zip, detected_content_items)
+
+        # verify source mapping
+        expected_base_name = expected_containing_dir_name = 'AbuseDB'
+        expected_modified_fn = 'integration-AbuseDB.yml'
+        assert expected_modified_fn in source_mapping.keys()
+        assert source_mapping.get(expected_modified_fn, {}).get('base_name', '') == expected_base_name
+        assert source_mapping.get(expected_modified_fn, {}).get(
+            'containing_dir_name', '') == expected_containing_dir_name
+
+        # verify modified zip
+        expected_modified_file_path = 'integration/integration-AbuseDB.yml'
+        with ZipFile(modified_zip_file_path, 'r') as modified_zip:
+            with modified_zip.open(expected_modified_file_path, 'r') as integration_yml:
+                data_obj = ryaml.load(integration_yml)
+                assert data_obj.get('commonfields', {}).get('id', '') == original_id
+                assert data_obj.get('name', '') == original_name
+                assert data_obj.get('display', '') == original_name

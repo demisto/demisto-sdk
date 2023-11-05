@@ -9,7 +9,7 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from string import punctuation
-from typing import AnyStr, Dict, List, Optional, Tuple, Union
+from typing import Any, AnyStr, Dict, List, Optional, Tuple, Union
 from zipfile import ZipFile
 
 from packaging.version import Version
@@ -25,10 +25,10 @@ from demisto_sdk.commands.common.constants import (
     PACK_INITIAL_VERSION,
     SCRIPT,
     SCRIPTS_DIR,
-    PLAYBOOKS_DIR,
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
+    ContentItems,
     FileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -111,11 +111,6 @@ class ContributionConverter:
 
     DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
     SOURCE_FIELD_NAMES = {'sourcemoduleid', 'sourcescripid', 'sourceplaybookid', 'sourceClassifierId'}
-    PREFIXES = (
-    'script-', 'integration-', 'automation-', 'classifier-', 'dashboard-',
-    'incidentfield-', 'incidenttype-', 'reputation-', 'layout-', 'layoutscontainer-',
-    'report-', 'playbook-', 'widget-', 'classifier-mapper-incoming-', 'classifier-mapper-outgoing-'
-)
 
     def __init__(
         self,
@@ -866,7 +861,7 @@ class ContributionConverter:
             rn_file.writelines(lines)
             rn_file.truncate()
 
-    def get_source_integration_display_field(self, src_integration_yml_path: AnyStr) -> Optional[str]:
+    def get_source_integration_display_field(self, src_integration_yml_path: str) -> Optional[str]:
         """Fetch the value of the 'display' field from the source integration yaml
 
         Args:
@@ -875,8 +870,8 @@ class ContributionConverter:
         Returns:
             Optional[str]: The value of the 'display' field if found, otherwise None
         """
-        exists = os.path.exists(src_integration_yml_path)
-        is_file = os.path.isfile(src_integration_yml_path)
+        exists = Path(src_integration_yml_path).exists()
+        is_file = Path(src_integration_yml_path).is_file()
         is_yaml = os.path.splitext(src_integration_yml_path)[1] == '.yml'
         if exists and is_file and is_yaml:
             ryaml = YAML_Handler()
@@ -887,14 +882,14 @@ class ContributionConverter:
         else:
             path_as_string = str(src_integration_yml_path)
             if not exists:
-                print(
-                    f'"{path_as_string}" was not found to exist in the local file system.', end=' ')
+                logger.warn(
+                    f'"{path_as_string}" was not found to exist in the local file system.')
             elif not is_file:
-                print(f'"{path_as_string}" was not found to be a file.', end=' ')
+                logger.warn(f'"{path_as_string}" was not found to be a file.')
             else:
-                print(
-                    f'"{path_as_string}" was not found to be a yaml file.', end=' ')
-            print(
+                logger.warn(
+                    f'"{path_as_string}" was not found to be a yaml file.')
+            logger.warn(
                 'Therefore skipping fetching the "display" field from the source integration.')
             return None
 
@@ -962,8 +957,8 @@ class ContributionConverter:
                         else:
                             del data_obj[source_field]
 
-                    original_file_name = os.path.basename(original_file_path)
-                    if original_file_name.startswith(self.PREFIXES):
+                    original_file_name = Path(original_file_path).name
+                    if original_file_name.startswith(ContentItems.list()):
                         # deal with the prefixes that have '-' in the prefix themselves
                         if original_file_name.startswith(('classifier-mapper-incoming-', 'classifier-mapper-outgoing-')):
                             long_classifier_prefix = len(
@@ -971,11 +966,10 @@ class ContributionConverter:
                             original_file_name = original_file_name[long_classifier_prefix - 1:]
                         else:
                             prefix = f'{original_file_name.split("-")[0]}-'
-                            if prefix.casefold() in PREFIXES:
+                            if prefix.casefold() in ContentItems.list():
                                 original_file_name = original_file_name.replace(
                                     prefix, '')
-                    file_name_prefix = os.path.basename(
-                        item.filename).split('-')[0].casefold()
+                    file_name_prefix = Path(item.filename).name.split('-')[0].casefold()
                     file_dir = os.path.dirname(item.filename)
                     # rename file
                     new_file_name = f'{file_name_prefix}-{original_file_name}'
@@ -983,7 +977,7 @@ class ContributionConverter:
                     # map new file to source basename and source containing directory name
                     filename_to_basename_and_containing_dir[new_file_name] = {
                         'base_name': original_file_name.replace('.yml', ''),
-                        'containing_dir_name': os.path.basename(os.path.dirname(original_file_path))
+                        'containing_dir_name': Path(os.path.dirname(original_file_path)).name
                     }
 
                     formatted_data_dump = StringIO()

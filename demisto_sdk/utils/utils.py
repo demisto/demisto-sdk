@@ -2,7 +2,7 @@ import time
 from configparser import ConfigParser, MissingSectionHeaderError
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, Tuple, Type, Union
 
 from requests import Response
 
@@ -68,8 +68,24 @@ def check_configuration_file(command, args):
             pass
 
 
-def retry_http_request(times: int = 3, delay: int = 1):
-    def _retry_http_request(func: Callable):
+def retry(
+    times: int = 3,
+    delay: int = 1,
+    exceptions: Union[Tuple[Type[Exception]], Type[Exception]] = Exception,
+):
+    """
+    retries to execute a function until an exception isn't raised anymore.
+
+    Args:
+        times: the amount of times to try and execute the function
+        delay: the number of seconds to wait between each time
+        exceptions: the exceptions that should be caught when executing the function
+
+    Returns:
+        Any: the decorated function result
+    """
+
+    def _retry(func: Callable):
 
         func_name = func.__name__
 
@@ -81,11 +97,10 @@ def retry_http_request(times: int = 3, delay: int = 1):
                     response = func(*args, **kwargs)
                     if isinstance(response, Response):
                         response.raise_for_status()
-                    logger.debug(f"{response=}")
                     return response
-                except Exception as e:
+                except exceptions as error:
                     logger.debug(
-                        f"error when executing func {func_name}, error: {e}, try number {i}"
+                        f"error when executing func {func_name}, error: {error}, try number {i}"
                     )
                     if i == times:
                         raise
@@ -93,4 +108,4 @@ def retry_http_request(times: int = 3, delay: int = 1):
 
         return wrapper
 
-    return _retry_http_request
+    return _retry

@@ -30,3 +30,11 @@ jobs:
           else
             echo "There was a problem with retrieving the GitHub user name of the contribution TL."
           fi
+
+      - name: Add a welcome comment
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          PR_URL: ${{github.event.pull_request.html_url}}
+        run: |
+          echo "Add a welcome comment"
+          gh pr comment "$PR_URL" --body "Thank you for your contribution. Your generosity and caring are unrivaled!"

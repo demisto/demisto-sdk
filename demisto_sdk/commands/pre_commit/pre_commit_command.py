@@ -32,7 +32,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.pre_commit.hooks.general_hook import GeneralHook
-from demisto_sdk.commands.pre_commit.hooks.hook import join_files, Hook
+from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
@@ -155,14 +155,18 @@ class PreCommitRunner:
         RuffHook(**hooks.pop("ruff"), **kwargs).prepare_hook(
             self.python_version_to_files, IS_GITHUB_ACTIONS
         )
-        MypyHook(**hooks.pop("mypy"), **kwargs).prepare_hook(self.python_version_to_files)
+        MypyHook(**hooks.pop("mypy"), **kwargs).prepare_hook(
+            self.python_version_to_files
+        )
         SourceryHook(**hooks.pop("sourcery"), **kwargs).prepare_hook(
             self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
         )
         ValidateFormatHook(**hooks.pop("validate"), **kwargs).prepare_hook(
             self.files_to_run
         )
-        ValidateFormatHook(**hooks.pop("format"), **kwargs).prepare_hook(self.files_to_run)
+        ValidateFormatHook(**hooks.pop("format"), **kwargs).prepare_hook(
+            self.files_to_run
+        )
         for value in hooks.values():
             GeneralHook(**value, **kwargs).prepare_hook()
 

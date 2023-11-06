@@ -1,12 +1,8 @@
 import os
-import shutil
-import sqlite3
-import tempfile
 import traceback
 from pathlib import Path
 from typing import List
 
-import coverage
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
@@ -17,7 +13,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 DOCKER_PYTHONPATH = [

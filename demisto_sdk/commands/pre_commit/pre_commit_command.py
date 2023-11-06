@@ -71,7 +71,6 @@ class PreCommitRunner:
     mode: Optional[PreCommitModes]
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
-    git_util: GitUtil
 
     def __post_init__(self):
         """
@@ -256,13 +255,10 @@ class PreCommitRunner:
         return ret_val
 
 
-def group_by_python_version(
-    files: Set[Path], git_util: GitUtil
-) -> Tuple[Dict[str, Set], Set[Path]]:
+def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]]:
     """This function groups the files to run pre-commit on by the python version.
 
     Args:
-        git_util: gitutil. Used to determine if files are added to git
         files (Set[Path]): files to run pre-commit on.
 
     Raises:
@@ -324,15 +320,11 @@ def group_by_python_version(
                 integration_script.path.relative_to(CONTENT_PATH)
             )
             continue
-        code_files_to_include = code_files_to_include_for_path(
-            integration_script, git_util
-        )
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
             integrations_scripts_mapping[code_file_path],
             {integration_script.path.relative_to(CONTENT_PATH)},
-            code_files_to_include,
         )
 
     if infra_files:
@@ -345,34 +337,10 @@ def group_by_python_version(
     return python_versions_to_files, exclude_integration_script
 
 
-def code_files_to_include_for_path(content: BaseContent, git_util: GitUtil) -> set:
-    """
-    If a change was made to a yml file
-    We need to run the hooks on the python and powershell files
-    Args:
-        content: the content that was provided
-        git_util: util for git, used to determine
-
-    Returns: a set Paths of code files for the given content.
-
-    """
-    parent = content.path.parent  # type: ignore
-
-    executable_files = {
-        parent / f
-        for f in os.listdir(parent)
-        if f.endswith(".py") or f.endswith(".ps1")
-    }
-    relative_executable_files = {
-        path.relative_to(CONTENT_PATH) for path in executable_files
-    }
-
-    return relative_executable_files & git_util.get_all_files()
-
-
 def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
+    commited_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
     mode: Optional[PreCommitModes] = None,
@@ -391,6 +359,7 @@ def pre_commit_manager(
     Args:
         input_files (Iterable[Path], optional): Input files to run pre-commit on. Defaults to None.
         staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
+        commited_only (bool, optional): Whether to run on commited files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         mode (PreCommitModes, optional): The mode to run pre-commit in. Defaults to None.
@@ -410,9 +379,9 @@ def pre_commit_manager(
     if not any((input_files, staged_only, git_diff, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")
         git_diff = True
-    git_util = GitUtil()
+
     files_to_run = preprocess_files(
-        input_files, staged_only, git_diff, all_files, git_util
+        input_files, staged_only, commited_only, git_diff, all_files
     )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
@@ -427,11 +396,13 @@ def pre_commit_manager(
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files, exclude_files = group_by_python_version(
-        files_to_run, git_util
-    )
+    python_version_to_files, exclude_files = group_by_python_version(files_to_run)
+    if not python_version_to_files:
+        logger.info("No files to run pre-commit on, skipping pre-commit.")
+        return None
+
     pre_commit_runner = PreCommitRunner(
-        bool(input_files), all_files, mode, python_version_to_files, sdk_ref, git_util
+        bool(input_files), all_files, mode, python_version_to_files, sdk_ref
     )
     return pre_commit_runner.run(
         unit_test,
@@ -449,10 +420,11 @@ def pre_commit_manager(
 def preprocess_files(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
+    commited_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,
-    git_util=GitUtil(),
 ) -> Set[Path]:
+    git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)
     if input_files:
@@ -460,7 +432,9 @@ def preprocess_files(
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files().union(staged_files)
+        raw_files = git_util._get_all_changed_files()
+        if not commited_only:
+            raw_files = raw_files.union(staged_files)
     elif all_files:
         raw_files = all_git_files
     else:
@@ -473,10 +447,11 @@ def preprocess_files(
             files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
             files_to_run.add(file)
-            # if the current file is a yml file, add the matching python file to files_to_run
-            if str(file).endswith("yml"):
-                str_py_file_path = str(file).replace("yml", "py")
-                files_to_run.add(Path(str_py_file_path))
+            # If the current file is a yml file, add the matching python file to files_to_run
+            if file.suffix == ".yml":
+                py_file_path = file.with_suffix(".py")
+                if py_file_path.exists():
+                    files_to_run.add(py_file_path)
 
     # convert to relative file to content path
     relative_paths = {

@@ -103,7 +103,7 @@ def docker_login(docker_client) -> bool:
                 registry="https://index.docker.io/v1",
             )
             ping = docker_client.ping()
-            logger.info(f"dockerhub login {ping=}")
+            logger.debug(f"Successfully connected to dockerhub, login {ping=}")
             return ping
         except docker.errors.APIError:
             logger.info("Did not successfully log in to dockerhub")

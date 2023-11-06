@@ -109,7 +109,7 @@ def docker_login(docker_client) -> bool:
             logger.info("Did not successfully log in to dockerhub")
             return False
 
-    logger.info("Did not log in to dockerhub")
+    logger.debug("Did not log in to dockerhub")
     return False
 
 

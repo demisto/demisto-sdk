@@ -107,6 +107,7 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
 
         Args:
             native_image (str): native image (for example: 'native:8.1')
+            include_dev (bool): whether to get the image reference for native:dev when provided
 
         Returns: The docker ref
         """
@@ -162,6 +163,15 @@ class ScriptIntegrationSupportedNativeImages:
     def get_supported_native_docker_tags(
         self, native_image_tags: set, include_candidate=False
     ) -> set:
+        """
+
+        Args:
+            native_image_tags: a set of tags, eg. native:ga, native:maintenance, native:dev
+            include_candidate: whether to handle native:candidate as an argument
+
+        Returns:
+
+        """
         tags = self.get_supported_native_image_versions(only_production_tags=False)
 
         tags_to_return = {
@@ -173,16 +183,11 @@ class ScriptIntegrationSupportedNativeImages:
             )  # exclude candidate
             and final_tag in tags
         }
-        return {
-            i
-            for i in {
-                self.native_image_config.get_native_image_reference(
-                    tag, include_dev=True
-                )
-                for tag in tags_to_return
-            }
-            if i
+        native_references = {
+            self.native_image_config.get_native_image_reference(tag, include_dev=True)
+            for tag in tags_to_return
         }
+        return {i for i in native_references if i}
 
     def tag_in_cli_arg(self, named_tag, native_image_tags):
         return named_tag in native_image_tags or self.ALL in native_image_tags

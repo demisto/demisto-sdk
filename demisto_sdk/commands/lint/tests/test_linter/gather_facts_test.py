@@ -127,7 +127,9 @@ class TestDockerImagesCollection:
     ):
         exp_image = "test-image:12.0"
         exp_py_num = "2.7"
-        mocker.patch.object(linter.Linter, "_docker_login")
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.docker_login", return_value=False
+        )
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
@@ -144,7 +146,9 @@ class TestDockerImagesCollection:
     ):
         exp_image = "demisto/python:1.3-alpine"
         exp_py_num = "2.7"
-        mocker.patch.object(linter.Linter, "_docker_login")
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.docker_login", return_value=False
+        )
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
@@ -653,7 +657,9 @@ class TestTestsCollection:
     def test_tests_exists(
         self, mocker, demisto_content: Callable, create_integration: Callable
     ):
-        mocker.patch.object(linter.Linter, "_docker_login")
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.docker_login", return_value=False
+        )
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
@@ -666,7 +672,9 @@ class TestTestsCollection:
     def test_tests_not_exists(
         self, mocker, demisto_content: Callable, create_integration: Callable
     ):
-        mocker.patch.object(linter.Linter, "_docker_login")
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.docker_login", return_value=False
+        )
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
@@ -755,7 +763,9 @@ class TestLintFilesCollection:
     def test_lint_files_exists(
         self, mocker, demisto_content: Callable, create_integration: Callable
     ):
-        mocker.patch.object(linter.Linter, "_docker_login")
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.docker_login", return_value=False
+        )
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
@@ -775,7 +785,10 @@ class TestLintFilesCollection:
     def test_lint_files_not_exists(
         self, mocker, demisto_content: Callable, create_integration: Callable
     ):
-        mocker.patch.object(linter.Linter, "_docker_login")
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.docker_login", return_value=False
+        )
+
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
@@ -790,8 +803,9 @@ class TestTestRequirementsCollection:
     def test_test_requirements_exists(
         self, mocker, demisto_content: Callable, create_integration: Callable
     ):
-        mocker.patch.object(linter.Linter, "_docker_login")
-        mocker.patch.object(linter.Linter, "_docker_login")
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.docker_login", return_value=False
+        )
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
@@ -807,7 +821,9 @@ class TestTestRequirementsCollection:
     def test_test_requirements_not_exists(
         self, mocker, demisto_content: Callable, create_integration: Callable
     ):
-        mocker.patch.object(linter.Linter, "_docker_login")
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.docker_login", return_value=False
+        )
         mocker.patch.object(linter.Linter, "_update_support_level")
 
         linter.Linter._docker_login.return_value = False

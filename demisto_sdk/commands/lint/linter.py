@@ -131,7 +131,7 @@ class Linter:
             self._docker_client: docker.DockerClient = init_global_docker_client(  # type: ignore
                 timeout=docker_timeout, log_prompt="Linter"
             )
-            self._docker_hub_login = self._docker_login()
+            self._docker_hub_login = docker_login(self._docker_client)
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {
             "images": [],
@@ -906,17 +906,6 @@ class Linter:
             logger.info(
                 f'{log_prompt} - Finished linting. Number of images={self._facts["images"]}'
             )
-
-    def _docker_login(self) -> bool:
-        """Login to docker-hub using environment variables:
-                1. DOCKERHUB_USER - User for docker hub.
-                2. DOCKERHUB_PASSWORD - Password for docker-hub.
-            Used in Circle-CI for pushing into repo devtestdemisto
-
-        Returns:
-            bool: True if logged in successfully.
-        """
-        return docker_login(self._docker_client)
 
     @timer(group_name="lint")
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:

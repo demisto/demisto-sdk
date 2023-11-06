@@ -76,10 +76,10 @@ You can set this as follows.
 And call precommit as follows: `demisto-sdk pre-commit -a --mode nightly`
 Note, only "nightly" is currently supported. This will be free text soon.
 #### The config_file_arg key
-Often with commands we run in the docker we have a configuration file that is specified per Integration/Script. To configure this you can set the `config_file_arg` key as follows. The configuration file should be in the same directory as the code file.
+Often with commands we run in the docker we have a configuration file that is specified per Integration/Script. To configure this you can set the `config_file_arg` key as follows. The configuration file should be in the same directory as the code file. Here is an example with ruff.
 ```yaml
   - id: simple-in-docker
     config_file_arg:
-      arg_name: '--argname'
-      file_name: '.configfile'
+      arg_name: '--config'
+      file_name: 'ruff.toml'
 ```

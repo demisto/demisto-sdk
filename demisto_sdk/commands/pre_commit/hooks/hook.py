@@ -30,7 +30,7 @@ class Hook(ABC):
         Since we removed the base hook from the hooks list, we must add it back.
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
-        self.hooks.append(deepcopy(self.base_hook))
+        ...
 
     def _get_property(self, name, default=None):
         """

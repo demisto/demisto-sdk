@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added a script to init a validation in the new format, to execute the script, run `python init_validation_script.py` and follow the instructions.
 
 ## 1.21.0
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.

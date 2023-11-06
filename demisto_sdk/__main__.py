@@ -737,7 +737,7 @@ def zip_packs(ctx, **kwargs) -> int:
 )
 @click.option(
     "--config-path",
-    help="Path for a config file to run, if not given - will run the default path at: ...",
+    help="Path for a config file to run, if not given - will run the default path at: demisto_sdk/commands/validate/default_config.toml",
     is_flag=False,
 )
 @click.option(
@@ -752,14 +752,14 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     show_default=True,
     default=False,
-    help="Wether to skip validations based on their support level or not.",
+    help="Wether to skip the old validate flow.",
 )
 @click.option(
     "--run-new-validate",
     is_flag=True,
     show_default=True,
     default=False,
-    help="Wether to skip validations based on their support level or not.",
+    help="Wether to run the new validate flow.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
@@ -767,9 +767,9 @@ def zip_packs(ctx, **kwargs) -> int:
 @logging_setup_decorator
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
-    from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    from demisto_sdk.commands.validate.validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager_v2 import (
-        ValidateManager as ValidateManagerV2,
+        ValidateManager as ValidateManager,
     )
 
     if is_sdk_defined_working_offline():
@@ -798,7 +798,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             kwargs["post_commit"] = True
         exit_code = 0
         if not kwargs["skip_old_validate"]:
-            validator = ValidateManager(
+            validator = OldValidateManager(
                 is_backward_check=not kwargs["no_backward_comp"],
                 only_committed_files=kwargs["post_commit"],
                 prev_ver=kwargs["prev_ver"],
@@ -829,7 +829,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             )
             exit_code += validator.run_validation()
         if kwargs["run_new_validate"]:
-            validator_v2 = ValidateManagerV2(
+            validator_v2 = ValidateManager(
                 only_committed_files=kwargs["post_commit"],
                 prev_ver=kwargs["prev_ver"],
                 use_git=kwargs["use_git"],

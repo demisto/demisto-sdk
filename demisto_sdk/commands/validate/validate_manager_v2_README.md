@@ -84,10 +84,11 @@ The first 2 letters indicate the error type and can be used to easily identify t
 | WD | Widget error |
 
 
-Each user will have a personal config files which he can edit however he wants.
+Each user will have a personal config file which he can edit however he wants.
+A default config file can be found [here](demisto_sdk/commands/validate/default_config.toml)
 The config file will have few sections: validate_all, use_git, and sections provided by the user.
 Each section will have the following options:
-**select**: The only validation to run.
+**select**: The validations to run.
 **warning**: Validations to only throw warning (shouldn't fail the flow).
 **ignorable_errors**: Validations that can be ignored using the pack-ignore.
 If **category-to-run** is provided, the validations that will run will be according to the configuration in the particular section.
@@ -99,10 +100,12 @@ then validate will run only BA101 validation.
 
 In addition, each config file will have a **support_level** section which will be divided into xsoar, partner, and community each have ignore, select, warning, and ignorable_errors options. If the ignore-support-level flag is not given, the validations that will run will be according to both the given section (user custom section / use_git / validate_all) and the relevant support level.
 For example: if the following configurations are given:
+```buildoutcfg
 [custom_category]
 select = ["BA100", "BA101", "BA102"]
 [support_level.community]
 ignore = ["BA102"]
+```
 then validate will run all the validations with error codes "BA100", "BA101", "BA102" except for BA102 in case of community supported files
 
 If you wish to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.

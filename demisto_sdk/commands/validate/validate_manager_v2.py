@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.interface import (
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
+    ConfiguredValidations,
 )
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import (
@@ -44,7 +45,6 @@ class ValidateManager:
         self.config_file_path = config_file_path
         self.category_to_run = config_file_category_to_run
         self.json_file_path = json_file_path
-        self.validation_results = ValidationResults(json_file_path=self.json_file_path)
         self.validate_graph = False
         self.config_reader = ConfigReader(
             config_file_path=self.config_file_path,
@@ -63,14 +63,10 @@ class ValidateManager:
         ] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
-        (
-            self.validations_to_run,
-            self.warnings,
-            self.ignorable_errors,
-            self.support_level_dict,
-        ) = self.config_reader.gather_validations_to_run(
+        self.configured_validations: ConfiguredValidations = self.config_reader.gather_validations_to_run(
             use_git=self.use_git, ignore_support_level=self.ignore_support_level
         )
+        self.validation_results = ValidationResults(json_file_path=self.json_file_path, only_throw_warnings=self.configured_validations.only_throw_warnings)
         self.validate_graph = False
         self.validators = self.filter_validators()
         if self.validate_graph:
@@ -90,8 +86,8 @@ class ValidateManager:
                 filter(
                     lambda content_object: validator.should_run(
                         content_object[0],
-                        self.ignorable_errors,
-                        self.support_level_dict,
+                        self.configured_validations.ignorable_errors,
+                        self.configured_validations.support_level_dict,
                     ),
                     self.objects_to_run,
                 )
@@ -118,7 +114,7 @@ class ValidateManager:
         # gather validator from validate package
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
-            if validator.error_code in self.validations_to_run:
+            if validator.error_code in self.configured_validations.validations_to_run:
                 validators.append(validator())
                 if validator.graph:
                     self.validate_graph = True

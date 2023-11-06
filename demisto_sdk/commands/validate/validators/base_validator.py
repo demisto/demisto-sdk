@@ -38,7 +38,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     error_message: ClassVar[str]
     fixing_message: ClassVar[str] = ""
     related_field: ClassVar[str]
-    expected_git_statuses: ClassVar[Optional[List[str]]] = None
+    expected_git_statuses: ClassVar[Optional[List[str]]] = []
     graph: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
 

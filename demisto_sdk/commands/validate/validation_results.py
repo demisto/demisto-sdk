@@ -11,6 +11,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 
 class ValidationResults:
+    """
+        Handle all the results, this class save all the results during run time and post the results when the whole execution is over.
+        The class can either log the results to the terminal or write the results to a json file in a given path.
+        The class also calculate the final result for the validations executions based on the validation results and list of errors that need to only the warnings.
+    """
     def __init__(
         self,
         json_file_path: Optional[str] = None,

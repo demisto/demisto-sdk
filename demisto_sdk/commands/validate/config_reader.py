@@ -1,15 +1,32 @@
-from typing import List, Optional, Tuple
+from pathlib import Path
+from typing import List, Optional
 
 import toml
 
-from demisto_sdk.commands.common.constants import DEFAULT_MANDATORY_VALIDATIONS
+from demisto_sdk.commands.common.logger import logger
 
-CONFIG_FILE_PATH = (
-    "/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate/config.toml"
-)
 USE_GIT = "use_git"
 VALIDATE_ALL = "validate_all"
 DEFAULT_CATEGORY = "default_mandatory_validations"
+PATH = Path(__file__).parents[0].resolve()
+CONFIG_FILE_PATH = (
+    f"{PATH}/default_config.toml"
+)
+
+class ConfiguredValidations:
+    """
+    class to hold all the sections from the config file as one object
+    """
+    def __init__(self,
+                 select: Optional[List[str]]=[],
+                 warning: Optional[List[str]]=[],
+                 ignorable_errors: Optional[List[str]]=[],
+                 support_level_dict: Optional[dict[str, str]]={}
+        ):
+        self.validations_to_run = select
+        self.only_throw_warnings = warning
+        self.ignorable_errors = ignorable_errors
+        self.support_level_dict = support_level_dict
 
 
 class ConfigReader:
@@ -20,12 +37,12 @@ class ConfigReader:
             self.config_file_content: dict = toml.load(config_file_path)
             self.category_to_run = category_to_run
         except FileNotFoundError:
-            self.config_file_content = DEFAULT_MANDATORY_VALIDATIONS
-            self.category_to_run = DEFAULT_CATEGORY
+            logger.error(f"Failed to find config file at path {config_file_path}")
+            exit(1)
 
     def gather_validations_to_run(
         self, use_git: bool, ignore_support_level: Optional[bool] = False
-    ) -> Tuple[List, List, List, dict]:
+    ) -> ConfiguredValidations:
         """Extract the relevant information from the relevant category in the config file.
 
         Args:
@@ -37,7 +54,7 @@ class ConfigReader:
         """
         flag = self.category_to_run or USE_GIT if use_git else VALIDATE_ALL
         section = self.config_file_content.get(flag, {})
-        return (
+        return ConfiguredValidations(
             section.get("select", []),
             section.get("warning", []),
             section.get("ignorable_errors", []),

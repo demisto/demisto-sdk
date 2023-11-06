@@ -146,7 +146,7 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
             ][0]
 
         mocker.patch(
-            "demisto_sdk.commands.pre_commit.hooks.docker.get_yml_for_file",
+            "demisto_sdk.commands.pre_commit.hooks.docker.get_yml_for_code",
             side_effect=mock_yml_for_file,
         )
         mocker.patch(

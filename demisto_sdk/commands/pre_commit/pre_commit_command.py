@@ -262,6 +262,7 @@ def group_by_python_version(
     """This function groups the files to run pre-commit on by the python version.
 
     Args:
+        git_util: gitutil. Used to determine if files are added to git
         files (Set[Path]): files to run pre-commit on.
 
     Raises:
@@ -348,16 +349,25 @@ def code_files_to_include_for_path(content: BaseContent, git_util: GitUtil) -> s
     """
     If a change was made to a yml file
     We need to run the hooks on the python and powershell files
+    Args:
+        content: the content that was provided
+        git_util: util for git, used to determine
+
+    Returns: a set Paths of code files for the given content.
+
     """
     parent = content.path.parent  # type: ignore
-    return {
-        path.relative_to(CONTENT_PATH)
-        for path in {
-            parent / f
-            for f in os.listdir(parent)
-            if f.endswith(".py") or f.endswith(".ps1")
-        }
-    } & git_util.get_all_files()
+
+    executable_files = {
+        parent / f
+        for f in os.listdir(parent)
+        if f.endswith(".py") or f.endswith(".ps1")
+    }
+    relative_executable_files = {
+        path.relative_to(CONTENT_PATH) for path in executable_files
+    }
+
+    return relative_executable_files & git_util.get_all_files()
 
 
 def pre_commit_manager(

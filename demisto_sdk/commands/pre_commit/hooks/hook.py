@@ -36,22 +36,29 @@ class Hook(ABC):
 
     def _set_files_on_hook(self, hook: dict, files) -> int:
         """
-        Mutates a hook, setting a regex for file exact match on the hook
-        Note, we could easily support glob syntax here too in the future.
-        according to the file's *file* and *exclude* properties
+
         Args:
-            hook: The hook to mutate
-            files: The files to set on the hook
-        Returns:
-            The number of files set
+            hook: mutates the hook with files returned from filter_files_matching_hook_config
+            files: the list of files to set on the hook
+
+        Returns: the number of files that ultimately are set on the hook. Use this to decide if to run the hook at all
+
         """
         files_to_run_on_hook = self.filter_files_matching_hook_config(files)
         hook["files"] = join_files(files_to_run_on_hook)
 
-        # hook.pop("exclude", None)
         return len(files_to_run_on_hook)
 
     def filter_files_matching_hook_config(self, files):
+        """
+        returns files that should be run in this hook according to the provided regexs in files and exclude
+        Note, we could easily support glob syntax here too in the future.
+        (or whatever function precomit uses internally)
+        Args:
+            files: The files to set on the hook
+        Returns:
+            The number of files set
+        """
         include_pattern = None
         exclude_pattern = None
         try:

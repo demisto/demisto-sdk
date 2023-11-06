@@ -370,6 +370,15 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
     ],
 )
 def test_filter_files_matching_hook_config(hook, expected_result):
+    """
+    Given:
+        an exclude regex, an include regex, and a list of files
+    When:
+        running filter_files_matching_hook_config on those files
+    Then:
+        Only get files matching files and not matching exclude
+
+    """
     base_hook = create_hook(hook)
 
     files = [

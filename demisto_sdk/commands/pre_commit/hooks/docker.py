@@ -75,7 +75,7 @@ def with_native_tags(
 
 
 @functools.lru_cache
-def get_yml_for_file(code_file) -> Optional[dict]:
+def get_yml_for_code(code_file) -> Optional[dict]:
     yml_in_directory = [f for f in os.listdir(code_file.parent) if f.endswith(".yml")]
     if (
         len(yml_in_directory) == 1
@@ -103,7 +103,7 @@ def docker_tag_to_runfiles(
     """
     tags_to_files = defaultdict(list)
     for file in files_to_run:
-        yml: Optional[dict] = get_yml_for_file(file)
+        yml: Optional[dict] = get_yml_for_code(file)
         if not yml:
             continue
         for docker_image in docker_images_for_file(yml):
@@ -119,16 +119,16 @@ def docker_images_for_file(yml: dict) -> set:
     Returns: all docker images (without native) that a file should tested on
 
     """
-    ret = set()
+    images_to_return = set()
     if image := yml.get("dockerimage"):
-        ret.add(image)
+        images_to_return.add(image)
     script = yml.get("script", {})
     if isinstance(script, dict):
         if image := script.get("dockerimage", ""):
-            ret.add(image)
+            images_to_return.add(image)
     if images := yml.get("alt_dockerimages"):
-        ret.update(images)
-    return ret
+        images_to_return.update(images)
+    return images_to_return
 
 
 @functools.lru_cache(maxsize=512)
@@ -194,9 +194,6 @@ class DockerHook(Hook):
     This class will make common manipulations on commands that need to run in docker
     """
 
-    def __int__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def prepare_hook(self, files_to_run: Iterable):
         """
         Group all the files by dockerimages
@@ -224,8 +221,8 @@ class DockerHook(Hook):
             tag_to_files_ymls.items(), key=lambda item: item[0]
         ):
 
-            files = {file[0] for file in file_ymls}
-            folder_to_files = _split_by_config_file(files, config_arg)
+            paths = {file[0] for file in file_ymls}
+            folder_to_files = _split_by_config_file(paths, config_arg)
             image_is_powershell = any(
                 f[1].get("type") == "powershell" for f in file_ymls
             )
@@ -301,8 +298,8 @@ class DockerHook(Hook):
             file_name = config_arg.get("file_name")
             if not arg_name or not file_name:
                 raise ValueError(
-                    "config_file_arg was provided in pre-commit configuration file"
-                    " but not properly formed. Must have arg_name and file_name keys"
+                    f"config_file_arg was provided in pre-commit hook with id {self._get_property('id')}"
+                    "  in configuration file but not properly formed. Must have arg_name and file_name keys"
                 )
             return arg_name, file_name
         return None

@@ -131,7 +131,6 @@ class TestDockerImagesCollection:
             "demisto_sdk.commands.lint.linter.docker_login", return_value=False
         )
         mocker.patch.object(linter.Linter, "_update_support_level")
-        linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
             content_path=demisto_content, image=exp_image, image_py_num=exp_py_num
         )
@@ -150,7 +149,6 @@ class TestDockerImagesCollection:
             "demisto_sdk.commands.lint.linter.docker_login", return_value=False
         )
         mocker.patch.object(linter.Linter, "_update_support_level")
-        linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
             content_path=demisto_content, image="", image_py_num=exp_py_num
         )
@@ -661,7 +659,6 @@ class TestTestsCollection:
             "demisto_sdk.commands.lint.linter.docker_login", return_value=False
         )
         mocker.patch.object(linter.Linter, "_update_support_level")
-        linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
             content_path=demisto_content, no_tests=False
         )
@@ -676,7 +673,6 @@ class TestTestsCollection:
             "demisto_sdk.commands.lint.linter.docker_login", return_value=False
         )
         mocker.patch.object(linter.Linter, "_update_support_level")
-        linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
             content_path=demisto_content, no_tests=True
         )
@@ -767,7 +763,6 @@ class TestLintFilesCollection:
             "demisto_sdk.commands.lint.linter.docker_login", return_value=False
         )
         mocker.patch.object(linter.Linter, "_update_support_level")
-        linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
             content_path=demisto_content, no_lint_file=False
         )
@@ -790,7 +785,6 @@ class TestLintFilesCollection:
         )
 
         mocker.patch.object(linter.Linter, "_update_support_level")
-        linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
             content_path=demisto_content, no_lint_file=True
         )
@@ -807,7 +801,6 @@ class TestTestRequirementsCollection:
             "demisto_sdk.commands.lint.linter.docker_login", return_value=False
         )
         mocker.patch.object(linter.Linter, "_update_support_level")
-        linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(
             content_path=demisto_content, test_reqs=True
         )
@@ -826,7 +819,6 @@ class TestTestRequirementsCollection:
         )
         mocker.patch.object(linter.Linter, "_update_support_level")
 
-        linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content)
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})

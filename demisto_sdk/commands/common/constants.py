@@ -1151,14 +1151,6 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     ".secrets-ignore",
 )
 
-
-class GitStatuses(str, Enum):
-    RENAMED = "R"
-    MODIFIED = "M"
-    ADDED = "A"
-    DELETED = "D"
-
-
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
 
 # python subtypes

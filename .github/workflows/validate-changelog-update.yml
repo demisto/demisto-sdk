@@ -11,7 +11,7 @@ jobs:
           fetch-depth: 0
 
       - name: Find changed files that require changelog update
-        uses: tj-actions/changed-files@v37.6.1
+        uses: tj-actions/changed-files@v40.1.0
         id: need-changelog
         with:
           files: |
@@ -19,7 +19,7 @@ jobs:
             pyproject.toml
 
       - name: Check whether CHANGELOG.md has been modified
-        uses: tj-actions/changed-files@v37.6.1
+        uses: tj-actions/changed-files@v40.1.0
         id: changelog-status
         with:
           files: CHANGELOG.md

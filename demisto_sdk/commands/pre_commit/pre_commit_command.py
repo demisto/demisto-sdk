@@ -184,6 +184,8 @@ class PreCommitRunner:
         skipped_hooks.update(set(skip_hooks or ()))
         if not unit_test:
             skipped_hooks.add("run-unit-tests")
+            skipped_hooks.add("coverage-analyze")
+            skipped_hooks.add("merge-coverage-report")
         if validate and "validate" in skipped_hooks:
             skipped_hooks.remove("validate")
         if format and "format" in skipped_hooks:

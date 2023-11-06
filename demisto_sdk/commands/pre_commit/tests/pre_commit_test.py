@@ -128,6 +128,8 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
+        tests_we_should_skip.add("coverage-analyze")
+        tests_we_should_skip.add("merge-coverage-report")
     for m in mock_subprocess.call_args_list:
         assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
 

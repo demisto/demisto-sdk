@@ -209,7 +209,7 @@ class DockerHook(Hook):
             self._get_property("docker_image", "from-yml"),
         )
         end_time = time.time()
-        logger.info(
+        logger.debug(
             f"Elapsed time to gather tags to files: {end_time - start_time} seconds"
         )
         config_arg = self._get_config_file_arg()

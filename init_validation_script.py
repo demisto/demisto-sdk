@@ -130,48 +130,39 @@ $imports
 $content_types
 
 
-class IDNameValidator(BaseValidator[ContentTypes]):
+$class_declaration
     error_code = "$error_code"
     description = "$error_description"
     error_message = "$error_message"
     fixing_message = $fix_message
     related_field = "$related_field"
     $expected_git_statuses
+    $graph
 
-    def is_valid(
-        self, content_items: Iterable[ContentTypes], _
-    ) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message.format(
-                    content_item.object_id, content_item.name
-                ),
-                content_object=content_item,
-            )
-            for content_item in content_items
-            if content_item.object_id != content_item.name
-        ]
+    $is_valid_method
 
     $fix_method
 """
 class ValidationInitializer():
     def init(self):
         self.error_code = None
-        self.description = ""
+        self.error_description = ""
         self.error_message = ""
         self.fix_method = ""
-        self.include_old_format_files = False
+        self.related_field = ""
+        self.error_description = ""
+        self.validate_graph = ""
+        self.fix_result_import = ""
         self.get_error_details()
         self.get_validation_details()
-        # self.get_file_name()
+        self.get_file_name()
         self.get_fix_info()
         self.process_inputs()
         self.generate_new_py_file()
 
     def get_error_details(self):
         self.get_error_code()
-        self.get_description()
+        self.get_error_description()
         self.get_error_message()
         self.get_validator_related_field()
         
@@ -192,21 +183,15 @@ class ValidationInitializer():
                 )
             )
             
-    def get_description(self):
+    def get_error_description(self):
         """Makes sure a name is given for the created object
 
         Args:
             created_object (str): the type of the created object (integration/script/pack)
         """
-        self.description = str(
-            input("Please enter the error's description: ")
+        self.error_description = str(
+            input("Please enter the error's description or press enter to leave black for now: ")
         )
-        while not self.description or self.description.isspace():
-            self.description = str(
-                input(
-                    "The description must be filled, please enter a description again: "
-                )
-            )
             
     def get_validator_related_field(self):
         """Makes sure a name is given for the created object
@@ -215,14 +200,8 @@ class ValidationInitializer():
             created_object (str): the type of the created object (integration/script/pack)
         """
         self.related_field = str(
-            input("Please enter the error's related_field: ")
+            input("Please enter the error's related_field or press enter to leave black for now: ")
         )
-        while not self.related_field or self.related_field.isspace():
-            self.description = str(
-                input(
-                    "The related_field must be filled, please enter a description again: "
-                )
-            )
             
     def get_error_message(self):
         """Makes sure a name is given for the created object
@@ -231,18 +210,11 @@ class ValidationInitializer():
             created_object (str): the type of the created object (integration/script/pack)
         """
         self.error_message = str(
-            input("Please enter the error's message: ")
+            input("Please enter the error's message or press enter to leave black for now: ")
         )
-        while not self.error_message or self.error_message.isspace():
-            self.error_message = str(
-                input(
-                    "the error's message must be filled, please enter an error message again: "
-                )
-            )
     
     def generate_new_py_file(self):
-        file_name = "new_script.py"
-        with open(file_name, "w") as file:
+        with open(self.file_path, "w") as file:
             # Write the content into the file
             new_file_content = Template(VALIDATION_TEMPLATE).safe_substitute(error_code = self.error_code)
             file.write(new_file_content)
@@ -251,22 +223,23 @@ class ValidationInitializer():
         self.get_validator_class_name()
         self.get_git_statuses()
         self.get_content_types()
-        self.is_based_on_previous_versions()
+        self.get_graph_info()
     
     def get_validator_class_name(self):
         """Makes sure a name is given for the created object
         """
-        self.validator_class_name = str(
+        validator_class_name = str(
             input("Please enter the validator's class name in class format (i.e each word with a capital letter): ")
         )
-        while not self.validator_class_name or self.validator_class_name.isspace():
-            self.validator_class_name = str(
+        while not validator_class_name or validator_class_name.isspace():
+            validator_class_name = str(
                 input(
-                    "the error's message must be filled, please enter an error message again: "
+                    "The class name must be filled, please enter a class name in class format (i.e each word with a capital letter): "
                 )
             )
-        if not self.validator_class_name.endswith("Validator"):
-            self.validator_class_name = f"{self.validator_class_name}Validator"
+        if not validator_class_name.endswith("Validator"):
+            validator_class_name = f"{validator_class_name}Validator"
+        self.class_declaration = f"class {validator_class_name}(BaseValidator[ContentTypes]):"
             
     def get_git_statuses(self):
         """Makes sure a name is given for the created object
@@ -309,22 +282,25 @@ class ValidationInitializer():
             self.imports = "from typing import Iterable, List, Union\n\n"
         for content_type in self.content_types:
             self.imports += f"{CONTENT_TYPES_DICT.get(content_type, {}).get('import', "")}\n"
+    
+    def generate_is_valid_function(self):
+        self.is_valid_method = f"""
+    def is_valid(
+        self, content_items: Iterable[ContentTypes]{self.include_old_format_files_is_valid_method}
+    ) -> List[ValidationResult]:
+        # Add your validation right here
+        pass
+    """
             
     def process_fix_result_related_fields(self):
         if self.support_fix:
-            self.imports += """from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        FixingResult,
-        ValidationResult,
-    )"""
             self.fix_method = f"""def fix(self, content_item: ContentTypes{self.include_old_format_files_fix_method}) -> FixResult:
         # Add your fix right here
         pass
             """
-        else:
-            self.imports += """from demisto_sdk.commands.validate.validators.base_validator import (
+        self.imports += f"""from demisto_sdk.commands.validate.validators.base_validator import (
         BaseValidator,
-        ValidationResult,
+        {self.fix_result_import}ValidationResult,
     )"""
 
     def get_fix_info(self):
@@ -335,9 +311,31 @@ class ValidationInitializer():
             support_fix = str(input("Please enter wether the validation support fix or not? (Y/N):"))
         if support_fix in ["Y", "y"]:
             self.support_fix = True
+            self.fix_result_import = "FixingResult,\n"
         else:
             self.support_fix = False
-                    
+
+    def get_graph_info(self):
+        validate_graph = str(
+            input("does the validation support graph? (Y/N):")
+        )
+        while not validate_graph and validate_graph not in ["Y", "N", "y", "n"]:
+            support_fix = str(input("Please enter wether the validation support use validate_graph or not? (Y/N):"))
+        if support_fix in ["Y", "y"]:
+            self.validate_graph = "graph = True"
+            
+    def get_file_name(self):
+        file_name = str(
+            input("Enter a file name in snake_case format:")
+        )
+        while file_name and " " in file_name:
+            file_name = str(input("Please enter a valid file name in snake_case format without spaces:"))
+        if not file_name.startswith(self.error_code):
+            file_name = f"{self.error_code}_{file_name}"
+        if not file_name.endswith(".py"):
+            file_name = f"{file_name}.py"
+        self.file_path = f"demisto_sdk/commands/validate/validators/{self.error_code[:2]}_validators/{file_name}"
+
                 
 def main():
     logger.info("Creating a new validation")

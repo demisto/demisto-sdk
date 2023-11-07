@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import List, Optional
 
 import typer
@@ -12,7 +11,6 @@ from demisto_sdk.commands.common.logger import (
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import (
-    download_content_graph,
     get_all_repo_pack_ids,
     is_external_repository,
 )
@@ -57,32 +55,6 @@ def should_update_graph(
     )
 
 
-def import_from_bucket(
-    content_graph_interface: ContentGraphInterface, is_external_repo: bool
-) -> bool:
-    """
-    This imports the graph from the bucket.
-    It returns True if the import succeeded or if it's an external repo (where import is required), False otherwise.
-    Raises an error if download fails for an external repo since remote import is required in that case.
-
-    Args:
-        content_graph_interface (ContentGraphInterface): The ContentGraphInterface instance
-        is_external_repo (bool): Whether the repository is external
-    """
-    content_graph_interface.clean_import_dir()
-    try:
-        extract_remote_import_files(content_graph_interface)
-    except RuntimeError:
-        if is_external_repo:
-            logger.error(
-                "Remote import is required when using external repository. Exiting"
-            )
-            raise
-        return False
-    is_graph_up_to_date = content_graph_interface.import_graph(None)
-    return bool(is_graph_up_to_date or is_external_repo)
-
-
 @recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
@@ -106,9 +78,6 @@ def update_content_graph(
     if not imported_path and not use_git:
         logger.info("No arguments were given, using git")
         use_git = True
-    if output_path:
-        output_path = output_path / marketplace.value
-    content_graph_interface.export_graph(output_path, override_commit=use_git)
 
     git_util = GitUtil()
     is_external_repo = is_external_repository()
@@ -124,31 +93,28 @@ def update_content_graph(
             f"Content graph is up to date, no need to update. Make sure to add/commit your changes. UI representation is available at {NEO4J_DATABASE_HTTP} "
             f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
         )
-        content_graph_interface.export_graph(output_path, override_commit=use_git)
+        content_graph_interface.export_graph(
+            output_path, override_commit=use_git, marketplace=marketplace
+        )
 
         return
     builder.init_database()
     if imported_path:
         # Import from provided path
-        logger.info(f"Importing graph from {imported_path}")
-        # we need to clean the import dir since we import from provided path
-        content_graph_interface.clean_import_dir()
         content_graph_interface.import_graph(imported_path)
 
     else:
         # Try to import from local folder
-        logger.info(f"Importing graph from {content_graph_interface.import_path}")
-        # no need to clean the import dir, since we are importing from it
-        is_graph_up_to_date = content_graph_interface.import_graph(None)
+        success_local = content_graph_interface.import_graph()
 
-        if not is_graph_up_to_date:
+        if not success_local:
             # Import from remote if local failed
             logger.info("Importing graph from bucket")
-            import_succeeded = import_from_bucket(
-                content_graph_interface, is_external_repo
+            # If the download fails and we are in external repo, we should raise an error
+            success_remote = content_graph_interface.import_graph(
+                download=True, fail_on_error=is_external_repo
             )
-
-            if not import_succeeded:
+            if not success_remote:
                 logger.warning(
                     "Importing graph from bucket failed. Creating from scratch"
                 )
@@ -165,9 +131,9 @@ def update_content_graph(
 
     if dependencies:
         content_graph_interface.create_pack_dependencies()
-    if output_path:
-        output_path = output_path / marketplace.value
-    content_graph_interface.export_graph(output_path, override_commit=use_git)
+    content_graph_interface.export_graph(
+        output_path, override_commit=use_git, marketplace=marketplace
+    )
     logger.info(
         f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
         f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
@@ -276,25 +242,3 @@ def update(
             dependencies=not no_dependencies,
             output_path=output_path,
         )
-
-
-def extract_remote_import_files(
-    content_graph_interface: ContentGraphInterface,
-) -> None:
-    """Get or create a content graph.
-    If the graph is not in the bucket or there are network issues,
-    it will create a new one.
-
-    Args:
-        content_graph_interface (ContentGraphInterface)
-        builder (ContentGraphBuilder)
-
-    """
-    try:
-        with NamedTemporaryFile() as temp_file:
-            official_content_graph = download_content_graph(
-                Path(temp_file.name),
-            )
-            content_graph_interface.move_to_import_dir(official_content_graph)
-    except Exception as e:
-        raise RuntimeError("Failed to download the content graph") from e

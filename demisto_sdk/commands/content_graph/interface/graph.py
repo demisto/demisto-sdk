@@ -115,12 +115,20 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
+    def import_graph(
+        self,
+        imported_path: Optional[Path] = None,
+        download: bool = False,
+        fail_on_error: bool = False,
+    ) -> bool:
         pass
 
     @abstractmethod
     def export_graph(
-        self, output_path: Optional[Path] = None, override_commit: bool = True
+        self,
+        output_path: Optional[Path] = None,
+        override_commit: bool = True,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     ) -> None:
         pass
 

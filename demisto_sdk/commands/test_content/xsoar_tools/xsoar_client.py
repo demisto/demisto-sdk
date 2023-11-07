@@ -83,6 +83,7 @@ class XsoarApiInterface(ABC):
         )
 
     @property
+    @retry(exceptions=ApiException)
     def xsoar_version(self) -> Version:
         """
         Get the XSOAR version.
@@ -259,9 +260,10 @@ class XsoarNGApiClient(XsoarApiInterface):
 
     @property
     def external_base_url(self) -> str:
+        # url for long-running integrations
         return self.base_api_url.replace(
             "api", "ext"
-        )  # url for long-running integrations
+        )
 
     @property
     def base_url(self) -> str:

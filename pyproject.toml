@@ -19,6 +19,8 @@ exclude = ["TestSuite/**", "*/tests/*", "tests"]
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
 update-additional-dependencies = "demisto_sdk.scripts.update_additional_dependencies:main"
+init-validation = "demisto_sdk.scripts.init_validation_script:main"
+
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"

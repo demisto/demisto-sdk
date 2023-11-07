@@ -84,17 +84,23 @@ class XsoarApiInterface(ABC):
 
     @property
     @retry(exceptions=ApiException)
-    def xsoar_version(self) -> Version:
-        """
-        Get the XSOAR version.
-
-        Returns:
-            Version: the xsoar version.
-        """
+    def about(self) -> Dict[str, Any]:
         raw_response, _, _ = self.client.generic_request("/about", "GET", response_type="object")
-        if xsoar_version := raw_response.get("demistoVersion"):
+        return raw_response
+
+    @property
+    def xsoar_version(self) -> Version:
+        about_raw_response = self.about
+        if xsoar_version := about_raw_response.get("demistoVersion"):
             return Version(xsoar_version)
-        raise RuntimeError(f'Could not get version from instance {self.host}, got response: {raw_response}')
+        raise RuntimeError(f'Could not get version from instance {self.host}, got response: {about_raw_response}')
+
+    @property
+    def build_number(self):
+        about_raw_response = self.about
+        if build_number := about_raw_response.get("buildNum"):
+            return build_number
+        raise RuntimeError(f'Could not get build number from instance {self.host}, got response: {about_raw_response}')
 
     @property
     def host(self):

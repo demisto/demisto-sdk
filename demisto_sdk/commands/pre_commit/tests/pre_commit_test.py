@@ -7,6 +7,7 @@ import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
@@ -366,3 +367,56 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
             assert hook["hook"].get("exclude") is None
         else:
             assert "file1.py" in hook["hook"]["exclude"]
+
+
+@pytest.mark.parametrize(
+    "hook, expected_result",
+    [
+        ({"files": r"\.py$", "exclude": r"_test\.py$"}, ["file1.py", "file6.py"]),
+        (
+            {
+                "files": r"\.py$",
+            },
+            ["file1.py", "file6.py", "file2_test.py"],
+        ),
+        (
+            {},
+            [
+                "file1.py",
+                "file2_test.py",
+                "file3.ps1",
+                "file4.md",
+                "file5.md",
+                "file6.py",
+            ],
+        ),
+        ({"files": r"\.ps1$"}, ["file3.ps1"]),
+    ],
+)
+def test_filter_files_matching_hook_config(hook, expected_result):
+    """
+    Given:
+        an exclude regex, an include regex, and a list of files
+    When:
+        running filter_files_matching_hook_config on those files
+    Then:
+        Only get files matching files and not matching exclude
+
+    """
+    base_hook = create_hook(hook)
+
+    files = [
+        Path(x)
+        for x in [
+            "file1.py",
+            "file2_test.py",
+            "file3.ps1",
+            "file4.md",
+            "file5.md",
+            "file6.py",
+        ]
+    ]
+
+    assert {Path(x) for x in expected_result} == set(
+        DockerHook(**base_hook).filter_files_matching_hook_config(files)
+    )

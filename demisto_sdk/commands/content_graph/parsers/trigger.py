@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -24,14 +23,6 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
     def mapping(self):
         super().mapping.update({"object_id": "trigger_id", "name": "trigger_name"})
         return super().mapping
-
-    @property
-    def object_id(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("object_id", ""))
-
-    @property
-    def name(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("name", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     IncorrectParserException,
@@ -41,10 +40,6 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
     def mapping(self):
         super().mapping.update({"name": ["name", "brandName"]})
         return super().mapping
-
-    @property
-    def name(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("name", ""))
 
     def get_filters_and_transformers_from_complex_value(
         self, complex_value: dict

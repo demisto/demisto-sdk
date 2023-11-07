@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -25,10 +24,6 @@ class CorrelationRuleParser(
     def mapping(self):
         super().mapping.update({"object_id": "global_rule_id"})
         return super().mapping
-
-    @property
-    def object_id(self) -> str:
-        return get(self.yml_data, self.mapping.get("object_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

@@ -3984,7 +3984,7 @@ def get_all_repo_pack_ids() -> list:
     return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]
 
 
-def get(obj: dict, paths: Union[str, List[str]], defaultParam=None):
+def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):
     """Extracts field value from nested object
     Args:
       obj (dict): The object to extract the field from
@@ -4025,12 +4025,12 @@ def find_correct_key(data: dict, keys: List[str]) -> str:
         str: Either the path where the given data object has a value at or the last option.
     """
     for key in keys:
-        if get(data, key, None):
+        if get_value(data, key, None):
             return key
     return keys[-1]
 
 
-def set_val(data: dict, paths: Union[str, List[str]], value) -> None:
+def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
     """Updating a data object with given value in the given key.
     If a list of keys is given, will find the right path to update based on which path acctually has a value.
     Args:

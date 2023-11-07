@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 from typing import (
@@ -24,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
+    GitStatuses,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -44,7 +46,7 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
+content_type_to_model: Dict[ContentType, Type["BaseContentWithPath"]] = {}
 json = JSON_Handler()
 
 
@@ -73,7 +75,7 @@ class BaseContentMetaclass(ModelMetaclass):
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
+        model_cls: Type["BaseContentWithPath"] = cast(Type["BaseContent"], super_cls)
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
@@ -87,7 +89,7 @@ class BaseContentMetaclass(ModelMetaclass):
         return model_cls
 
 
-class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
+class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
@@ -131,13 +133,7 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
             "__fields_set__": self.__fields_set__,
         }
 
-    @abstractmethod
-    def dump(
-        self,
-        path: DirectoryPath,
-        marketplace: MarketplaceVersions,
-    ) -> None:
-        pass
+    
 
     @property
     def normalize_name(self) -> str:
@@ -171,16 +167,6 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
         json_dct["content_type"] = self.content_type
         return json_dct
 
-    def upload(
-        self,
-        client: demisto_client,
-        marketplace: MarketplaceVersions,
-        target_demisto_version: Version,
-        **kwargs,
-    ) -> None:
-        # Implemented at the ContentItem/Pack level rather than here
-        raise NotImplementedError()
-
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"
     ) -> None:
@@ -190,11 +176,11 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
         self.relationships_data[relationship_type].add(relationship)
 
 
-class BaseContent(BaseContentModel):
+class BaseContentWithPath(BaseContent):
     mapping: dict = Field({}, exclude=True)
     path: Path
-    git_status: Optional[str]
-    old_file_path: Optional[Path]
+    git_status: Optional[Enum[GitStatuses]]
+    old_path: Optional[Path]
 
     def __hash__(self):
         return hash(self.path)
@@ -217,6 +203,16 @@ class BaseContent(BaseContentModel):
     ) -> None:
         raise NotImplementedError
 
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
+    ) -> None:
+        # Implemented at the ContentItem/Pack level rather than here
+        raise NotImplementedError()
+
     @staticmethod
     @lru_cache
     def from_path(
@@ -224,7 +220,7 @@ class BaseContent(BaseContentModel):
         git_status: Optional[str] = None,
         old_file_path: Optional[Path] = None,
         git_sha: Optional[str] = None,
-    ) -> Optional["BaseContent"]:
+    ) -> Optional["BaseContentWithPath"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
             path.is_dir()
@@ -269,7 +265,7 @@ class BaseContent(BaseContentModel):
         try:
             obj = model.from_orm(content_item_parser)
             obj.git_status = git_status
-            obj.old_file_path = old_file_path
+            obj.old_path = old_file_path
             return obj
         except Exception as e:
             logger.error(
@@ -278,7 +274,7 @@ class BaseContent(BaseContentModel):
             return None
 
 
-class UnknownContent(BaseContentModel):
+class UnknownContent(BaseContent):
     """A model for non-existing content items used by existing content items."""
 
     not_in_repository: bool = True

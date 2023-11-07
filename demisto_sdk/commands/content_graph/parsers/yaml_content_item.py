@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get, get_yaml, get_yml_paths_in_dir
+from demisto_sdk.commands.common.tools import get_value, get_yaml, get_yml_paths_in_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
@@ -49,8 +49,12 @@ class YAMLContentItemParser(ContentItemParser):
         return super().mapping
 
     @property
+    def object_id(self) -> Optional[str]:
+        return get_value(self.yml_data, self.mapping.get("object_id", ""))
+
+    @property
     def name(self) -> Optional[str]:
-        return get(self.yml_data, self.mapping.get("name", ""))
+        return get_value(self.yml_data, self.mapping.get("name", ""))
 
     @property
     def display_name(self) -> Optional[str]:
@@ -58,11 +62,11 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def deprecated(self) -> bool:
-        return get(self.yml_data, self.mapping.get("deprecated", ""), False)
+        return get_value(self.yml_data, self.mapping.get("deprecated", ""), False)
 
     @property
     def description(self) -> Optional[str]:
-        description = get(self.yml_data, self.mapping.get("description", ""), "")
+        description = get_value(self.yml_data, self.mapping.get("description", ""), "")
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
         description = re.sub(
@@ -72,7 +76,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return get(
+        return get_value(
             self.yml_data,
             self.mapping.get("fromversion", ""),
             DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -81,7 +85,7 @@ class YAMLContentItemParser(ContentItemParser):
     @property
     def toversion(self) -> str:
         return (
-            get(
+            get_value(
                 self.yml_data,
                 self.mapping.get("toversion", ""),
             )

@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Set
 import networkx
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     build_tasks_graph,
@@ -50,10 +49,6 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
     def mapping(self):
         super().mapping.update({"object_id": "id"})
         return super().mapping
-
-    @property
-    def object_id(self) -> Optional[str]:
-        return get(self.yml_data, self.mapping.get("object_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

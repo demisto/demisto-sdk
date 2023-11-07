@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -32,16 +32,8 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
         return super().mapping
 
     @property
-    def object_id(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("object_id", ""))
-
-    @property
-    def name(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("name", ""))
-
-    @property
     def layout_id(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("layout_id", ""))
+        return get_value(self.json_data, self.mapping.get("layout_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

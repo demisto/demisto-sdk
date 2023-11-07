@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -31,10 +30,6 @@ class IndicatorTypeParser(
         return super().mapping
 
     @property
-    def name(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("name", ""))
-
-    @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {
             MarketplaceVersions.XSOAR,
@@ -42,10 +37,6 @@ class IndicatorTypeParser(
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
-
-    @property
-    def description(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("description", ""))
 
     def connect_to_dependencies(self) -> None:
         """Collects scripts and the reputation command used as optional dependencies,

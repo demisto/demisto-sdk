@@ -1,3 +1,5 @@
+import os
+
 from neo4j.exceptions import (
     ClientError,
     DatabaseError,
@@ -14,6 +16,11 @@ def recover_if_fails(func):
         try:
             return func(*args, **kwargs)
         except (ServiceUnavailable, ClientError, DatabaseError, TransactionError) as e:
+            if os.getenv("CI"):
+                logger.warning(
+                    "Failed to communicate with Neo4j in CI environment, retrying"
+                )
+                return func(*args, **kwargs)
             if not neo4j_service.is_running_on_docker():
 
                 logger.error(

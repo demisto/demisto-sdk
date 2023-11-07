@@ -649,6 +649,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         override_commit: bool = True,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     ) -> None:
+        self.clean_import_dir()
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata(override_commit)

@@ -1,4 +1,3 @@
-import gc
 import traceback
 from datetime import datetime
 from pathlib import Path
@@ -137,7 +136,6 @@ def run_query(tx: Transaction, query: str, **kwargs) -> Result:
         logger.debug(f"Running query:\n{query}")
         result = tx.run(query, **kwargs)
         logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
-        gc.collect()
         return result
     except Exception as e:
         logger.error(traceback.format_exc())

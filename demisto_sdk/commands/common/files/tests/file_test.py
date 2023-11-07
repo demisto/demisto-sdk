@@ -85,6 +85,12 @@ class FileTesting(ABC):
         pass
 
     @abstractmethod
+    def test_read_from_local_path_from_content_root(
+        self, input_files: Tuple[List[str], str]
+    ):
+        pass
+
+    @abstractmethod
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
         pass
 

@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.binary_file import BinaryFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
+from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -44,6 +45,31 @@ class TestBinaryFile(FileTesting):
             assert (
                 actual_file_content == expected_file_content
             ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
+
+    def test_read_from_local_path_from_content_root(
+        self, input_files: Tuple[List[str], str]
+    ):
+        """
+        Given:
+         - relative valid binary file paths
+
+        When:
+         - Running read_from_local_path method from BinaryFile object and from content root repo
+
+        Then:
+         - make sure reading the binary files from local file system is successful
+        """
+        binary_file_paths, git_repo_path = input_files
+        with ChangeCWD(git_repo_path):
+            for path in binary_file_paths:
+                expected_file_content = Path(path).read_bytes()
+                file_path_from_content_root = GitUtil().path_from_git_root(path)
+                actual_file_content = BinaryFile.read_from_local_path(
+                    file_path_from_content_root
+                )
+                assert (
+                    actual_file_content == expected_file_content
+                ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
         """

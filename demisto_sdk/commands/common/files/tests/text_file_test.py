@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
+from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
@@ -57,6 +58,31 @@ class TestTextFile(FileTesting):
             assert (
                 actual_file_content == expected_file_content
             ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
+
+    def test_read_from_local_path_from_content_root(
+        self, input_files: Tuple[List[str], str]
+    ):
+        """
+        Given:
+         - relative valid text file paths
+
+        When:
+         - Running read_from_local_path method from TextFile object and from content root repo
+
+        Then:
+         - make sure reading the text files from local file system is successful.
+        """
+        text_file_paths, git_repo_path = input_files
+        with ChangeCWD(git_repo_path):
+            for path in text_file_paths:
+                expected_file_content = Path(path).read_text()
+                file_path_from_content_root = GitUtil().path_from_git_root(path)
+                actual_file_content = TextFile.read_from_local_path(
+                    file_path_from_content_root
+                )
+                assert (
+                    actual_file_content == expected_file_content
+                ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_local_path_unicode_error(self, mocker, git_repo: Repo):
         """

@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -56,6 +57,31 @@ class TestJsonFile(FileTesting):
             assert (
                 actual_file_content == expected_file_content
             ), f"Could not read json file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
+
+    def test_read_from_local_path_from_content_root(
+        self, input_files: Tuple[List[str], str]
+    ):
+        """
+        Given:
+         - relative valid json file paths
+
+        When:
+         - Running read_from_local_path method from JsonFile object and from content root repo
+
+        Then:
+         - make sure reading the json files from local file system is successful
+        """
+        json_file_paths, git_repo_path = input_files
+        with ChangeCWD(git_repo_path):
+            for path in json_file_paths:
+                expected_file_content = json.loads(Path(path).read_text())
+                file_path_from_content_root = GitUtil().path_from_git_root(path)
+                actual_file_content = JsonFile.read_from_local_path(
+                    file_path_from_content_root
+                )
+                assert (
+                    actual_file_content == expected_file_content
+                ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
         """

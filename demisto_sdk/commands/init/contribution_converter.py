@@ -115,16 +115,16 @@ class ContributionConverter:
     def __init__(
         self,
         name: str = "",
-        contribution: Union[str] = None,
+        contribution: Optional[str] = None,
         description: str = "",
         author: str = "",
         gh_user: str = "",
         create_new: bool = True,
-        pack_dir_name: Union[str] = None,
+        pack_dir_name: Optional[str] = None,
         update_type: str = "",
         release_notes: str = "",
-        detected_content_items: list = None,
-        base_dir: Union[str] = None,
+        detected_content_items: list = [],
+        base_dir: Optional[str] = None,
         working_dir_path: str = "",
     ):
         """Initializes a ContributionConverter instance
@@ -154,7 +154,7 @@ class ContributionConverter:
         self.author = author
         self.update_type = update_type or "revision"
         self.release_notes = release_notes
-        self.detected_content_items = detected_content_items or []
+        self.detected_content_items = detected_content_items
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
@@ -450,13 +450,15 @@ class ContributionConverter:
                             self.create_metadata_file(metadata)
                 # create base files
                 self.create_pack_base_files()
-            else:
-                # If this is not a new Pack, we need to fix the modified
-                # content items paths and filenames and generate a new zip
-                # and mapping done.
-                # We then set the contribution zip to the modified one.
-                modified_contribution_zip, mapping = self.fixup_detected_content_items()
-                self.contribution = modified_contribution_zip
+
+        
+            # We need to fix the modified
+            # content items paths and filenames and generate a new zip
+            # with a mapping of the changes done.
+            # We then set the contribution zip to the modified one.
+            modified_contribution_zip, mapping = self.fixup_detected_content_items()
+            self.contribution = modified_contribution_zip
+
             # unpack
             self.unpack_contribution_to_dst_pack_directory()
             # convert
@@ -958,7 +960,7 @@ class ContributionConverter:
                             del data_obj[source_field]
 
                     original_file_name = Path(original_file_path).name
-                    if original_file_name.startswith(ContentItems.list()):
+                    if any(original_file_name.startswith(prefix.value) for prefix in ContentItems):
                         # deal with the prefixes that have '-' in the prefix themselves
                         if original_file_name.startswith(('classifier-mapper-incoming-', 'classifier-mapper-outgoing-')):
                             long_classifier_prefix = len(
@@ -966,7 +968,7 @@ class ContributionConverter:
                             original_file_name = original_file_name[long_classifier_prefix - 1:]
                         else:
                             prefix = f'{original_file_name.split("-")[0]}-'
-                            if prefix.casefold() in ContentItems.list():
+                            if any(prefix.casefold().startswith(item.value) for item in ContentItems):
                                 original_file_name = original_file_name.replace(
                                     prefix, '')
                     file_name_prefix = Path(item.filename).name.split('-')[0].casefold()

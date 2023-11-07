@@ -1689,10 +1689,6 @@ class ContentItems(Enum):
     XDRC_TEMPLATE = "xdrctemplate"
     LAYOUT_RULES = "layoutrule"
 
-    @classmethod
-    def list(cls):
-        return list(map(lambda c: c.value, cls))
-
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
     SCRIPTS_DIR,

@@ -4,14 +4,13 @@ import re
 import shutil
 from os.path import join
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 from zipfile import ZipFile
 
 import pytest
 import urllib3
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
-from demisto_sdk.commands.common.handlers import YAML_Handler
 
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
@@ -21,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_child_directories
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
@@ -28,7 +28,6 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 )
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
-    fixup_detected_content_items,
     get_previous_nonempty_line,
 )
 from TestSuite.contribution import Contribution
@@ -84,6 +83,89 @@ def util_open_file(path):
 @pytest.fixture
 def contrib_converter():
     return ContributionConverter("")
+
+
+@pytest.fixture
+def create_test_packs(request, tmp_path_factory):
+    """Create TmpPack objects for each pack name passed in the request.param"""
+    if isinstance(request.param, (list, tuple)):
+        tmp_packs = []
+        for pack_name in request.param:
+            pack_dir = tmp_path_factory.mktemp(pack_name)
+            pack = TmpPack(pack_dir)
+            tmp_packs.append(pack)
+        return tmp_packs
+    # otherwise assume it's a string
+    pack_dir = tmp_path_factory.mktemp(request.param)
+    return TmpPack(pack_dir)
+
+
+class TmpPack(os.PathLike):
+
+    def __init__(self, pack_dir):
+        self.pack_dir = pack_dir
+
+        self.default_integration_name = 'defaultintegration'
+        self.integration_cnt = 0
+        self.integration_dir = self.pack_dir / 'Integrations'
+
+        self.default_script_name = 'defaultscript'
+        self.script_dir = self.pack_dir / 'Scripts'
+        self.script_cnt = 0
+
+    def create_file(self, path, contents: Optional[str] = None):
+        file_path = self.pack_dir / path
+        file_contents = contents if contents else path
+        file_path.write_text(file_contents)
+
+    def create_integration(self, name: Optional[str], contents: Optional[str] = None):
+        if not self.integration_dir.exists():
+            self.integration_dir.mkdir()
+        if name:
+            integration_name = name
+        else:
+            integration_name = f'{self.default_integration_name}-{self.integration_cnt}'
+            self.integration_cnt += 1
+        integration_package_dir = self.integration_dir / integration_name
+        integration_package_dir.mkdir()
+        integration_files_to_make = {
+            f'{integration_name}.py',
+            f'{integration_name}.yml',
+            f'{integration_name}_image.png',
+            f'{integration_name}_description.md'
+        }
+        file_contents = contents if contents else integration_name
+        for integration_file in integration_files_to_make:
+            integration_file_path = integration_package_dir / integration_file
+            integration_file_path.write_text(file_contents)
+
+    def create_script(self, name: Optional[str], contents: Optional[str] = None):
+        if not self.script_dir.exists():
+            self.script_dir.mkdir()
+        if name:
+            script_name = name
+        else:
+            script_name = f'{self.default_script_name}-{self.script_cnt}'
+            self.script_cnt += 1
+        script_package_dir = self.script_dir / script_name
+        script_package_dir.mkdir()
+        script_files_to_make = {
+            f'{script_name}.py',
+            f'{script_name}.yml',
+            f'{script_name}_image.png',
+            f'{script_name}_description.md'
+        }
+        file_contents = contents if contents else script_name
+        for script_file in script_files_to_make:
+            script_file_path = script_package_dir / script_file
+            script_file_path.write_text(file_contents)
+
+    def __fspath__(self):
+        return str(self.pack_dir)
+
+    def __str__(self):
+        return str(self.pack_dir)
+
 
 
 def create_contribution_converter(
@@ -1125,7 +1207,7 @@ class TestReadmes:
             gh_user=self.gh_user,
             create_new=False,
             detected_content_items=contributed_content_items,
-            working_dir_path=tmp_path
+            working_dir_path=str(tmp_path)
         )
 
         # Convert the contribution to a pack
@@ -1148,6 +1230,7 @@ class TestReadmes:
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:
+
     def test_fixup_detected_content_items_automation(self, tmp_path):
         '''
         Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
@@ -1169,8 +1252,7 @@ class TestFixupDetectedContentItems:
         - Ensure the name field of "automation-TotallyAwesome.yml" has been changed to "Totally Awesome"
         - Ensure the id field of "automation-TotallyAwesome.yml" has been changed to "TotallyAwesome"
         '''
-        path_to_test_zip = ('./process_pack_test/contentpack-6a49388d-2cc6-4b09-886c-80211b03b005'
-                            '-ok_Contribution_Pack.zip')
+        path_to_test_zip = (os.path.join(CONTRIBUTION_TESTS, 'contentpack-6a49388d-2cc6-4b09-886c-80211b03b005-ok_Contribution_Pack.zip'))
         tmp_destination = tmp_path / 'ok_contribution_pack.zip'
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
 
@@ -1190,13 +1272,14 @@ class TestFixupDetectedContentItems:
         ryaml = YAML_Handler()
         # verify original zip
         with ZipFile(tmp_zip, 'r') as test_zip:
-            print(test_zip.infolist())
             with test_zip.open('automation/automation-ok.yml', 'r') as script_yml:
                 data_obj = ryaml.load(script_yml)
                 assert data_obj.get('commonfields', {}).get('id', '') == file_id
                 assert data_obj.get('name', '') == file_name
 
-        modified_zip_file_path, source_mapping = fixup_detected_content_items(tmp_zip, detected_content_items)
+        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=path_to_test_zip, working_dir_path=str(tmp_path))
+
+        modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
 
         # verify source mapping
         expected_base_name = expected_containing_dir_name = 'TotallyAwesome'
@@ -1237,7 +1320,7 @@ class TestFixupDetectedContentItems:
         - Ensure the name field of "incidenttype-ServiceNowTicket.json" has been changed to "Totally Awesome"
         - Ensure the id field of "incidenttype-ServiceNowTicket.json" has been changed to "TotallyAwesome"
         '''
-        path_to_test_zip = ('./process_pack_test/uploads_edb61840-4575-406b-93ed-c20d30200c70_pack.zip')
+        path_to_test_zip = (os.path.join(CONTRIBUTION_TESTS, 'uploads_edb61840-4575-406b-93ed-c20d30200c70_pack.zip'))
         tmp_destination = tmp_path / 'uploads_edb.zip'
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
 
@@ -1272,10 +1355,8 @@ class TestFixupDetectedContentItems:
         id_as_contributed = [content_item.get('id', '') for content_item in detected_content_items]
         names_as_contributed = [content_item.get('name', '') for content_item in detected_content_items]
         with ZipFile(tmp_zip, 'r') as test_zip:
-            print(test_zip.infolist())
 
             for item in test_zip.infolist():
-                print(f'{item.filename=}')
                 if item.filename.endswith('.yml'):
                     data_worker = ryaml
                 elif item.filename.endswith('.json'):
@@ -1291,7 +1372,9 @@ class TestFixupDetectedContentItems:
                 assert content_id in id_as_contributed or content_id == contribution_zip_metadata_id
                 assert content_name in names_as_contributed or content_name == contribution_zip_metadata_name
 
-        modified_zip_file_path, source_mapping = fixup_detected_content_items(tmp_zip, detected_content_items)
+        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=path_to_test_zip, working_dir_path=str(tmp_path))
+
+        modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
         # # verify source mapping
         expected_modified_file_names = [
             'automation-ServiceNowIncidentStatus.yml',
@@ -1380,7 +1463,7 @@ class TestFixupDetectedContentItems:
         - Ensure the id field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
         - Ensure the display field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
         '''
-        path_to_test_zip = './process_pack_test/contentpack-abuse_Contribution_Pack.zip'
+        path_to_test_zip = os.path.join(CONTRIBUTION_TESTS, 'contentpack-abuse_Contribution_Pack.zip')
         tmp_destination = tmp_path / 'abuse_contribution_pack.zip'
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
 
@@ -1408,17 +1491,18 @@ class TestFixupDetectedContentItems:
                 'source_file_name': 'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.yml'
             }
         ]
-        ryaml = YAML()
+        ryaml = YAML_Handler()
         # verify original zip
         with ZipFile(tmp_zip, 'r') as test_zip:
-            print(test_zip.infolist())
             with test_zip.open('integration/integration-AbuseIPDB_copy.yml', 'r') as integration_yml:
                 data_obj = ryaml.load(integration_yml)
                 assert data_obj.get('commonfields', {}).get('id', '') == file_id
                 assert data_obj.get('name', '') == file_name
                 assert data_obj.get('display', '') == file_name
 
-        modified_zip_file_path, source_mapping = fixup_detected_content_items(tmp_zip, detected_content_items)
+        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=tmp_zip, working_dir_path=str(tmp_path))
+
+        modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
 
         # verify source mapping
         expected_base_name = expected_containing_dir_name = 'AbuseDB'

@@ -11,6 +11,7 @@ from demisto_client.demisto_api.models import (
     IncidentWrapper,
 )
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import Version
 from pydantic import BaseModel, Field, SecretStr, validator
 from pydantic.fields import ModelField
 from requests.auth import HTTPBasicAuth
@@ -80,6 +81,23 @@ class XsoarApiInterface(ABC):
             else None,
             verify_ssl=verify_ssl,
         )
+
+    @property
+    def xsoar_version(self) -> Version:
+        """
+        Get the XSOAR version.
+
+        Returns:
+            Version: the xsoar version.
+        """
+        raw_response, _, _ = self.client.generic_request("/about", "GET", response_type="object")
+        if xsoar_version := raw_response.get("demistoVersion"):
+            return Version(xsoar_version)
+        raise RuntimeError(f'Could not get version from instance {self.host}, got response: {raw_response}')
+
+    @property
+    def host(self):
+        return self.client.api_client.configuration.host
 
     @abstractmethod
     def create_integration_instance(

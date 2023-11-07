@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import set_value, write_dict
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     LazyProperty,
@@ -180,6 +181,24 @@ class BaseContentWithPath(BaseContent):
     path: Path
     git_status: Optional[GitStatuses]
     old_path: Optional[Path]
+
+    def _save(self, path: Path, data: dict):
+        for key, val in self.mapping.items():
+            attr = getattr(self, key)
+            if key == "marketplaces":
+                if (
+                    MarketplaceVersions.XSOAR_SAAS in attr
+                    and MarketplaceVersions.XSOAR in attr
+                ):
+                    attr.remove(MarketplaceVersions.XSOAR_SAAS)
+                if (
+                    MarketplaceVersions.XSOAR_ON_PREM in attr
+                    and MarketplaceVersions.XSOAR in attr
+                ):
+                    attr.remove(MarketplaceVersions.XSOAR_ON_PREM)
+            if attr:
+                set_value(data, val, attr)
+        write_dict(path, data, indent=4)
 
     def __hash__(self):
         return hash(self.path)

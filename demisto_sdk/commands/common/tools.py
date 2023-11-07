@@ -846,7 +846,9 @@ def get_file(
     if git_sha:
         if file_path.is_absolute():
             file_path = file_path.relative_to(get_content_path())
-        return get_remote_file(str(file_path), tag=git_sha)
+        return get_remote_file(
+            str(file_path), tag=git_sha, return_content=return_content
+        )
 
     type_of_file = file_path.suffix.lower()
 

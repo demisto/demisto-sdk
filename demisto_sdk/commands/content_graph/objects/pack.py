@@ -22,7 +22,6 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     get_file,
-    set_value,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -512,19 +511,4 @@ class Pack(BaseContentWithPath, PackMetadata, content_type=ContentType.PACK):
     def save(self):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
-        for key, val in self.mapping.items():
-            attr = getattr(self, key)
-            if key == "marketplaces":
-                if (
-                    MarketplaceVersions.XSOAR_SAAS in attr
-                    and MarketplaceVersions.XSOAR in attr
-                ):
-                    attr.remove(MarketplaceVersions.XSOAR_SAAS)
-                if (
-                    MarketplaceVersions.XSOAR_ON_PREM in attr
-                    and MarketplaceVersions.XSOAR in attr
-                ):
-                    attr.remove(MarketplaceVersions.XSOAR_ON_PREM)
-            if attr:
-                set_value(data, val, attr)
-        write_dict(file_path, data, indent=4)
+        super()._save(file_path, data)

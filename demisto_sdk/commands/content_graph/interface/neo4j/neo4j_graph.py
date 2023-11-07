@@ -619,7 +619,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     )
                     self.move_to_import_dir(official_content_graph)
             except Exception:
-                logger.exception("Failed to download content graph from bucket")
+                logger.error("Failed to download content graph from bucket")
                 if fail_on_error:
                     raise
                 return False

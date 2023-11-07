@@ -176,20 +176,20 @@ class ValidationInitializer:
         """
         calling all the info requesting functions
         """
-        self.get_error_details()
-        self.get_validation_details()
-        self.get_file_name()
+        self.initialize_error_details()
+        self.initialize_validation_details()
+        self.initialize_file_name()
 
-    def get_error_details(self):
+    def initialize_error_details(self):
         """
         Calls all the methods that are related to error related fields.
         """
-        self.get_error_code()
-        self.get_error_description()
-        self.get_error_message()
-        self.get_validator_related_field()
+        self.initialize_error_code()
+        self.initialize_error_description()
+        self.initialize_error_message()
+        self.initialize_validator_related_field()
 
-    def get_error_code(self):
+    def initialize_error_code(self):
         """
         Request the error_code from the user and validate the input is in the right format (two capital letters followed by 3 digits).
         """
@@ -204,7 +204,7 @@ class ValidationInitializer:
                 )
             )
 
-    def get_error_description(self):
+    def initialize_error_description(self):
         """
         Request the error's description from the user.
         """
@@ -214,7 +214,7 @@ class ValidationInitializer:
             )
         )
 
-    def get_validator_related_field(self):
+    def initialize_validator_related_field(self):
         """
         Request the related_field from the user.
         """
@@ -224,7 +224,7 @@ class ValidationInitializer:
             )
         )
 
-    def get_error_message(self):
+    def initialize_error_message(self):
         """
         Request the error_message from the user.
         """
@@ -234,17 +234,17 @@ class ValidationInitializer:
             )
         )
 
-    def get_validation_details(self):
+    def initialize_validation_details(self):
         """
         Calls all the methods that are related to validation related fields.
         """
-        self.get_validator_class_name()
-        self.get_git_statuses()
-        self.get_content_types()
-        self.get_graph_info()
-        self.get_fix_info()
+        self.initialize_validator_class_name()
+        self.initialize_git_statuses()
+        self.initialize_content_types()
+        self.initialize_graph_info()
+        self.initialize_fix_info()
 
-    def get_validator_class_name(self):
+    def initialize_validator_class_name(self):
         """
         Request the validator class name and ensure the input is valid.
         """
@@ -268,7 +268,7 @@ class ValidationInitializer:
             f"class {validator_class_name}(BaseValidator[ContentTypes]):"
         )
 
-    def get_git_statuses(self):
+    def initialize_git_statuses(self):
         """
         Request the supported git statuses and ensure the input is valid.
         """
@@ -288,7 +288,7 @@ class ValidationInitializer:
                 )
             )
 
-    def get_content_types(self):
+    def initialize_content_types(self):
         """
         Request the supported content types list and ensure the input is valid.
         """
@@ -338,7 +338,7 @@ Fill the content types as the numbers they appear as: """
             ]
         )
 
-    def get_fix_info(self):
+    def initialize_fix_info(self):
         """
         Request the info wether the validation is fixable or not and ensure the input is valid.
         """
@@ -357,7 +357,7 @@ Fill the content types as the numbers they appear as: """
         else:
             self.support_fix = False
 
-    def get_graph_info(self):
+    def initialize_graph_info(self):
         """
         Request the info wether the validation run graph commands or not and ensure the input is valid.
         """
@@ -371,7 +371,7 @@ Fill the content types as the numbers they appear as: """
         if validate_graph in ["Y", "y"]:
             self.validate_graph = "graph = True"
 
-    def get_file_name(self):
+    def initialize_file_name(self):
         """
         Request the file name, ensure the given name is valid.
         """
@@ -421,9 +421,9 @@ Fill the content types as the numbers they appear as: """
         """
         self.imports = "from __future__ import annotations\n\n"
         if len(self.content_types) == 1:
-            self.imports = "from typing import Iterable, List\n\n"
+            self.imports += "from typing import Iterable, List\n\n"
         else:
-            self.imports = "from typing import Iterable, List, Union\n\n"
+            self.imports += "from typing import Iterable, List, Union\n\n"
         if self.git_statuses:
             self.imports += (
                 "from demisto_sdk.commands.common.constants import GitStatuses\n"

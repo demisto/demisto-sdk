@@ -2422,7 +2422,8 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     mocker.patch(
-        "demisto_sdk.commands.validate.old_validate_manager.find_type", return_value=None
+        "demisto_sdk.commands.validate.old_validate_manager.find_type",
+        return_value=None,
     )
     assert validator_obj.check_file_relevance_and_format_path(
         "Packs/type_missing_filename", None, set()
@@ -2993,7 +2994,8 @@ def test_check_file_relevance_and_format_path(mocker, f_path, f_type, expected_r
     )
     mocker.patch.object(OldValidateManager, "is_old_file_format", return_value=False)
     mocker.patch(
-        "demisto_sdk.commands.validate.old_validate_manager.find_type", return_value=f_type
+        "demisto_sdk.commands.validate.old_validate_manager.find_type",
+        return_value=f_type,
     )
     validate_manager = OldValidateManager()
     file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(

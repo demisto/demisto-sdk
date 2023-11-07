@@ -159,7 +159,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             result (List[Neo4jResult]): Result from neo4j query
 
         Returns:
-            List[BaseContentModel]: The objects to return with relationships
+            List[BaseContent]: The objects to return with relationships
         """
         content_item_nodes: Set[str] = set()
         packs: List[Pack] = []
@@ -203,7 +203,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Adds relationship to content object
 
         Args:
-            obj (BaseContentModel): Object to add relationship to
+            obj (BaseContent): Object to add relationship to
             node_from (graph.Node): The source node
             relationships (List[graph.Relationship]): The list of relationships from the source
             nodes_to (List[graph.Node]): The list of nodes of the target
@@ -458,7 +458,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 If not given, runs the query over all content items.
 
         Returns:
-            List[BaseContentModel]: The content items who use content items with a lower fromvesion.
+            List[BaseContent]: The content items who use content items with a lower fromvesion.
         """
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
@@ -478,7 +478,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 If not given, runs the query over all content items.
 
         Returns:
-            List[BaseContentModel]: The content items who use content items with a higher toversion.
+            List[BaseContent]: The content items who use content items with a higher toversion.
         """
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
@@ -510,7 +510,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 If not given, runs the query over all content items.
 
         Returns:
-            List[BaseContentModel]: The content items who use content items with invalid marketplaces.
+            List[BaseContent]: The content items who use content items with invalid marketplaces.
         """
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
@@ -533,7 +533,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             core_pack_list: A list of core packs
 
         Returns:
-            List[BaseContentModel]: The core packs who depends on content items who are not core packs.
+            List[BaseContent]: The core packs who depends on content items who are not core packs.
         """
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
@@ -553,7 +553,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             pack_ids (List[str]): A list of content items pack_ids to check.
 
         Returns:
-            List[BaseContentModel]: Packs which depend on hidden packs in case exist.
+            List[BaseContent]: Packs which depend on hidden packs in case exist.
 
         """
         with self.driver.session() as session:
@@ -648,7 +648,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 
         Returns:
-            List[BaseContentModel]: The search results
+            List[BaseContent]: The search results
         """
         if isinstance(marketplace, str):
             marketplace = MarketplaceVersions(marketplace)

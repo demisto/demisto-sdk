@@ -217,7 +217,7 @@ class ContentGraphInterface(ABC):
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 
         Returns:
-            List[BaseContentModel]: The search results
+            List[BaseContent]: The search results
         """
         if not marketplace and all_level_dependencies:
             raise ValueError(

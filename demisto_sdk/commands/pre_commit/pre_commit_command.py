@@ -178,8 +178,7 @@ class PreCommitRunner:
             if not hook_id.endswith("in-docker")
         ]
         for hook in docker_without_hooks:
-            value = hooks.get(hook)
-            GeneralHook(**value, **kwargs).prepare_hook()
+            GeneralHook(**hook, **kwargs).prepare_hook()
 
     def run(
         self,

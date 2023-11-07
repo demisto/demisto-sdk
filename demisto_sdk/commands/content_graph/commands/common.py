@@ -16,7 +16,7 @@ def recover_if_fails(func):
         try:
             return func(*args, **kwargs)
         except (ServiceUnavailable, ClientError, DatabaseError, TransactionError) as e:
-            if os.getenv("CI"):
+            if os.getenv("CI") and isinstance(e, ServiceUnavailable):
                 logger.warning(
                     "Failed to communicate with Neo4j in CI environment, retrying"
                 )

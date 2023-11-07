@@ -64,7 +64,7 @@ class File(ABC, BaseModel):
         return input_path
 
     @property
-    def input_file_content(self) -> bytes:
+    def content(self) -> bytes:
         if self._input_path_content is None:
             self._input_path_content = self.input_path.read_bytes()
         return self._input_path_content
@@ -77,10 +77,10 @@ class File(ABC, BaseModel):
 
     @property
     def input_path_original_encoding(self) -> Optional[str]:
-        return UnicodeDammit(self.input_file_content).original_encoding
+        return UnicodeDammit(self.content).original_encoding
 
     @property
-    def input_file_size(self) -> int:
+    def size(self) -> int:
         return self.input_path.stat().st_size
 
     def copy_file(self, destination_path: Union[Path, str]):
@@ -161,7 +161,7 @@ class File(ABC, BaseModel):
 
     def read_local_file(self) -> Any:
         try:
-            return self.load(self.input_file_content)
+            return self.load(self.content)
         except FileReadError:
             logger.exception(
                 f"Could not read file {self.input_path} as {self.__class__.__name__} file"

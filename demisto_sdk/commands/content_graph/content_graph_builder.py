@@ -42,6 +42,7 @@ class ContentGraphBuilder:
     def init_database(self) -> None:
         self.content_graph.clean_graph()
         self.content_graph.create_indexes_and_constraints()
+        gc.collect()
 
     def _parse_and_model_content(
         self, packs_to_parse: Optional[List[str]] = None

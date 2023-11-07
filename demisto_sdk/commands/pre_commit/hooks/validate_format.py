@@ -1,7 +1,11 @@
 from pathlib import Path
 from typing import Iterable, Optional
 
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files, safe_update_hook_args
+from demisto_sdk.commands.pre_commit.hooks.hook import (
+    Hook,
+    join_files,
+    safe_update_hook_args,
+)
 
 
 class ValidateFormatHook(Hook):

@@ -21,7 +21,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
 from TestSuite.repo import Repo
 
 TEST_DATA_PATH = (
-        Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"
+    Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"
 )
 
 PYTHON_VERSION_TO_FILES = {
@@ -87,7 +87,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         GitUtil,
         "get_all_files",
         return_value=relative_paths
-                     | {Path("README.md"), Path("test.md"), Path("fix.md")},
+        | {Path("README.md"), Path("test.md"), Path("fix.md")},
     )
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == relative_paths
@@ -97,20 +97,20 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         None, None, None, python_version_to_files, ""
     )
     assert (
-            Path(script1.yml.path).relative_to(repo.path)
-            in pre_commit.python_version_to_files["2.7"]
+        Path(script1.yml.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["2.7"]
     )
     assert (
-            Path(integration3.yml.path).relative_to(repo.path)
-            in pre_commit.python_version_to_files["3.8"]
+        Path(integration3.yml.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["3.8"]
     )
     assert (
-            Path(integration1.yml.path).relative_to(repo.path)
-            in pre_commit.python_version_to_files["3.9"]
+        Path(integration1.yml.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["3.9"]
     )
     assert (
-            Path(integration2.yml.path).relative_to(repo.path)
-            in pre_commit.python_version_to_files["3.10"]
+        Path(integration2.yml.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["3.10"]
     )
     assert all(
         Path(obj.path).relative_to(repo.path)
@@ -118,8 +118,8 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         for obj in (incident_field, classifier)
     )
     assert (
-            Path(integration_deprecated.yml.path).relative_to(repo.path)
-            not in pre_commit.python_version_to_files["3.10"]
+        Path(integration_deprecated.yml.path).relative_to(repo.path)
+        not in pre_commit.python_version_to_files["3.10"]
     )
 
     pre_commit.run(unit_test=is_test)
@@ -153,7 +153,7 @@ def test_mypy_hooks():
 
     MypyHook(**mypy_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
     for (hook, python_version) in itertools.zip_longest(
-            mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
+        mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert hook["args"][-1] == f"--python-version={python_version}"
         assert hook["name"] == f"mypy-py{python_version}"
@@ -165,14 +165,17 @@ def test_ruff_hook(github_actions):
     """
     Testing ruff hook created successfully (the python version is correct and github action created successfully)
     """
-    ruff_hook = create_hook({"args": ["--fix"],
-                             "args:nightly": ["--config=nightly_ruff.toml"]})
+    ruff_hook = create_hook(
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
+    )
     RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES, github_actions)
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
     for (hook, python_version) in itertools.zip_longest(
-            ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
+        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
-        assert f"--target-version={python_version_to_ruff[python_version]}" in hook["args"]
+        assert (
+            f"--target-version={python_version_to_ruff[python_version]}" in hook["args"]
+        )
         assert "--fix" in hook["args"]
         assert hook["name"] == f"ruff-py{python_version}"
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
@@ -184,12 +187,13 @@ def test_ruff_hook_nightly_mode():
     """
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
-    ruff_hook = create_hook({"args": ["--fix"],
-                             "args:nightly": ["--config=nightly_ruff.toml"]})
+    ruff_hook = create_hook(
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
+    )
     RuffHook(**ruff_hook, mode="nightly").prepare_hook(PYTHON_VERSION_TO_FILES)
 
     for (hook, _) in itertools.zip_longest(
-            ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
+        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         hook_args = hook["args"]
         assert "--fix" not in hook_args
@@ -377,13 +381,27 @@ def test_coverage_analyze_general_hook(mode):
     Then:
         - Make sure that the coverage-analyze hook was created successfully.
     """
-    args = ["-i", ".coverage", "--report-dir", "coverage_report", "--report-type",
-            "all", "--previous-coverage-report-url",
-            "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"]
-    args_nightly = ["-i", ".coverage", "--report-dir", "coverage_report",
-                    "--report-type", "all", "--allowed-coverage-degradation-percentage", "100"]
-    coverage_analyze_hook = create_hook({"args": args,
-                                         "args:nightly": args_nightly})
+    args = [
+        "-i",
+        ".coverage",
+        "--report-dir",
+        "coverage_report",
+        "--report-type",
+        "all",
+        "--previous-coverage-report-url",
+        "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+    ]
+    args_nightly = [
+        "-i",
+        ".coverage",
+        "--report-dir",
+        "coverage_report",
+        "--report-type",
+        "all",
+        "--allowed-coverage-degradation-percentage",
+        "100",
+    ]
+    coverage_analyze_hook = create_hook({"args": args, "args:nightly": args_nightly})
     kwargs = {"mode": mode, "all_files": False, "input_mode": True}
     GeneralHook(**coverage_analyze_hook, **kwargs).prepare_hook()
     expected_hook_args = args_nightly if mode else args

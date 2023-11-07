@@ -1382,7 +1382,7 @@ class TestValidators:
         # Mock the graph and the get_api_module_dependencies_from_graph function
         integration_mock = mock_integration("ApiDependent")
         mocker.patch(
-            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            "demisto_sdk.commands.validate.old_validate_manager.get_api_module_dependencies_from_graph",
             return_value=[integration_mock],
         )
         added_files = {"Packs/PackName1/ReleaseNotes/1_0_0.md"}
@@ -1417,7 +1417,7 @@ class TestValidators:
         integration_mock = mock_integration("ApiDependent", "Packs/ApiDependent/")
         validate_manager = OldValidateManager()
         mocker.patch(
-            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            "demisto_sdk.commands.validate.old_validate_manager.get_api_module_dependencies_from_graph",
             return_value=[integration_mock],
         )
         mocker.patch.object(
@@ -1467,7 +1467,7 @@ class TestValidators:
         }
         integration_mock = mock_integration("ApiDependent")
         mocker.patch(
-            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            "demisto_sdk.commands.validate.old_validate_manager.get_api_module_dependencies_from_graph",
             return_value=[integration_mock],
         )
 
@@ -2319,7 +2319,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
     """
     validator_obj = OldValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type",
+        "demisto_sdk.commands.validate.old_validate_manager.find_type",
         return_value=FileType.INTEGRATION,
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
@@ -2422,7 +2422,7 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type", return_value=None
+        "demisto_sdk.commands.validate.old_validate_manager.find_type", return_value=None
     )
     assert validator_obj.check_file_relevance_and_format_path(
         "Packs/type_missing_filename", None, set()
@@ -2457,7 +2457,7 @@ def test_check_file_relevance_and_format_path_ignore_test_file(
     """
     validator_obj = OldValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type",
+        "demisto_sdk.commands.validate.old_validate_manager.find_type",
         return_value=file_type,
     )
     assert validator_obj.check_file_relevance_and_format_path(
@@ -2489,7 +2489,7 @@ def test_check_file_relevance_and_format_path_file_to_format(
     """
     validator_obj = OldValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type",
+        "demisto_sdk.commands.validate.old_validate_manager.find_type",
         return_value=file_type,
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
@@ -2519,7 +2519,7 @@ def test_check_file_relevance_and_format_path_file_to_format_parsing_rules(
     """
     validator_obj = OldValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type",
+        "demisto_sdk.commands.validate.old_validate_manager.find_type",
         return_value=file_type,
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
@@ -2551,7 +2551,7 @@ def test_check_file_relevance_and_format_path_file_to_format_with_old_path(
     """
     validator_obj = OldValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type",
+        "demisto_sdk.commands.validate.old_validate_manager.find_type",
         return_value=file_type,
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
@@ -2573,7 +2573,7 @@ def test_check_file_relevance_and_format_path_old_format_file(mocker):
     """
     validator_obj = OldValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type",
+        "demisto_sdk.commands.validate.old_validate_manager.find_type",
         return_value=FileType.INTEGRATION,
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=True)
@@ -2851,11 +2851,11 @@ def test_validate_deleted_files(
     validate_manager = OldValidateManager(check_is_unskipped=False, skip_conf_json=True)
     if added_files:
         mocker.patch(
-            "demisto_sdk.commands.validate.validate_manager._get_file_id",
+            "demisto_sdk.commands.validate.old_validate_manager._get_file_id",
             return_value="playbook",
         )
         mocker.patch(
-            "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+            "demisto_sdk.commands.validate.old_validate_manager.get_remote_file",
             return_value={"id": "id"},
         )
 
@@ -2883,11 +2883,11 @@ def test_was_file_renamed_but_labeled_as_deleted(mocker):
         "Packs/Campaign/Scripts/ShowCampaignUniqueRecipients/ShowCampaignUniqueRecipients.yml"
     ]
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        "demisto_sdk.commands.validate.old_validate_manager.get_remote_file",
         return_value={"commonfields": {"id": "ShowCampaignUniqueRecipients"}},
     )
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.get_file",
+        "demisto_sdk.commands.validate.old_validate_manager.get_file",
         return_value={"commonfields": {"id": "ShowCampaignUniqueRecipients"}},
     )
 
@@ -2993,7 +2993,7 @@ def test_check_file_relevance_and_format_path(mocker, f_path, f_type, expected_r
     )
     mocker.patch.object(OldValidateManager, "is_old_file_format", return_value=False)
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type", return_value=f_type
+        "demisto_sdk.commands.validate.old_validate_manager.find_type", return_value=f_type
     )
     validate_manager = OldValidateManager()
     file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(
@@ -3334,7 +3334,7 @@ def test_get_all_files_edited_in_pack_ignore(
         },
     )
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        "demisto_sdk.commands.validate.old_validate_manager.get_remote_file",
         return_value=remote_file_content,
     )
     mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
@@ -3346,7 +3346,7 @@ def test_get_all_files_edited_in_pack_ignore(
     config.read_string(new_file_content)
 
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        "demisto_sdk.commands.validate.old_validate_manager.get_pack_ignore_content",
         return_value=config,
     )
     assert (
@@ -3383,7 +3383,7 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
     )
 
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        "demisto_sdk.commands.validate.old_validate_manager.get_remote_file",
         return_value={},
     )
     mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
@@ -3396,7 +3396,7 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
     config.read_string("[file:test.yml]\nignore=BA108,BA109,DS107")
 
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        "demisto_sdk.commands.validate.old_validate_manager.get_pack_ignore_content",
         return_value=config,
     )
 

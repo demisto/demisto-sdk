@@ -144,7 +144,7 @@ def test_staged(mocker):
         return_value=FileType.INTEGRATION,
     )
     mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.OldValidateManager.is_old_file_format",
+        "demisto_sdk.commands.validate.old_validate_manager.OldValidateManager.is_old_file_format",
         return_value=False,
     )
 

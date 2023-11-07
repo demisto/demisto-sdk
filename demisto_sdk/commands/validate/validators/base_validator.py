@@ -97,12 +97,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             True  # allows having custom classes for properties in model
         )
 
-
-class ValidationResult(BaseModel):
+class BaseResult(BaseModel):
     validator: BaseValidator
     message: str
     content_object: BaseContent
-    old_content_object: Optional[BaseContent] = None
 
     @property
     def format_readable_message(self):
@@ -116,23 +114,14 @@ class ValidationResult(BaseModel):
             "message": self.message,
         }
 
+class ValidationResult(BaseResult, BaseModel):
+    old_content_object: Optional[BaseContent] = None
 
-class FixResult(BaseModel):
-    validator: BaseValidator
-    message: str
-    content_object: BaseContent
+class FixResult(BaseResult, BaseModel):
 
     @property
     def format_readable_message(self):
         return f"Fixing {str(self.content_object.path)}: {self.validator.error_code} - {self.message}"
-
-    @property
-    def format_json_message(self):
-        return {
-            "file path": str(self.content_object.path),
-            "error code": self.validator.error_code,
-            "message": self.message,
-        }
 
 
 def is_error_ignored(

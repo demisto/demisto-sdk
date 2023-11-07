@@ -6,13 +6,13 @@ from demisto_sdk.commands.common.tools import replace_incident_to_alert
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Integration
+ContentTypes = Script
 
 
 class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):

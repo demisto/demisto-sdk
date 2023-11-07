@@ -91,5 +91,7 @@ class ContentGraphBuilder:
     def _create_or_update_graph(self) -> None:
         """Runs DB queries using the collected nodes and relationships to create or update the content graph."""
         self.content_graph.create_nodes(self.nodes)
+        gc.collect()
         self.content_graph.create_relationships(self.relationships)
+        gc.collect()
         self.content_graph.remove_non_repo_items()

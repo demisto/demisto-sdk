@@ -150,7 +150,6 @@ class PreCommitRunner:
             "all_files": self.all_files,
             "input_mode": self.input_mode,
         }
-        # PyclnHook(**hooks["pycln"], **kwargs).prepare_hook(PYTHONPATH)
         PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
         RuffHook(**hooks.pop("ruff"), **kwargs).prepare_hook(
             self.python_version_to_files, IS_GITHUB_ACTIONS

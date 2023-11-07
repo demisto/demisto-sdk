@@ -154,14 +154,8 @@ $class_declaration
 
 class ValidationInitializer:
     def __init__(self):
-        self.error_code = ""
-        self.error_description = ""
         self.git_statuses = ""
-        self.error_message = ""
-        self.fix_message = ""
         self.fix_method = ""
-        self.related_field = ""
-        self.error_description = ""
         self.validate_graph = ""
         self.include_old_format_files_is_valid_method = ", _"
         self.include_old_format_files_fix_method = ", _"

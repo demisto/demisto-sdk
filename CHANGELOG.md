@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.21.0
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.
 * Fixed an issue where the **pre-commit** command runs even in the case of deprecated or powershell integrations or scripts.
 * Fixed an issue where **validate** falsely failed with error `PB101` and `PB123` due to condition names discrepancy
@@ -24,6 +26,7 @@
 
 **Note:** Due to the optimization changes made to the **download** command, playbooks might be formatted a bit differently than before when downloaded from the server using the new version. The playbooks should however function and work the same.
 * Fixed an issue where the **pre-commit** command, now correctly gathers the associated python file when a yml file is provided as input.
+* Internal: Added a new GitHub action that will automatically assign the contribution TL and add the `Contribution` label in contributions PRs.
 
 ## 1.20.8
 * Internal: Fixed an issue where the `tools.get_id` function would not find the ID for layout content items in some cases.

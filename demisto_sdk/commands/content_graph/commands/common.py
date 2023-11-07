@@ -16,11 +16,11 @@ def recover_if_fails(func):
         try:
             return func(*args, **kwargs)
         except (ServiceUnavailable, ClientError, DatabaseError, TransactionError) as e:
-            if os.getenv("CI") and isinstance(e, ServiceUnavailable):
-                logger.warning(
-                    "Failed to communicate with Neo4j in CI environment, retrying"
+            if os.getenv("CI"):
+                logger.error(
+                    "Failed to communicate with Neo4j in CI environment", exc_info=True
                 )
-                return func(*args, **kwargs)
+                raise
             if not neo4j_service.is_running_on_docker():
 
                 logger.error(

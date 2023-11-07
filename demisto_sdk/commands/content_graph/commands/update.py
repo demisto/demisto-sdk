@@ -90,7 +90,7 @@ def update_content_graph(
         content_graph_interface, use_git, git_util, imported_path, packs_to_update
     ):
         logger.info(
-            f"Content graph is up to date, no need to update. Make sure to add/commit your changes. UI representation is available at {NEO4J_DATABASE_HTTP} "
+            f"Content graph is up-to-date. If you expected an update, make sure your changes are added/committed to git. UI representation is available at {NEO4J_DATABASE_HTTP} "
             f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
         )
         content_graph_interface.export_graph(

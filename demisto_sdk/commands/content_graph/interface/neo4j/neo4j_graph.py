@@ -610,7 +610,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self.clean_import_dir()
 
         if download:
-            logger.info("Importing graph from bucket files..")
+            logger.info("Importing graph from bucket")
             self.clean_import_dir()
             try:
                 with NamedTemporaryFile() as temp_file:

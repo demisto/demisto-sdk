@@ -109,7 +109,6 @@ def update_content_graph(
 
         if not success_local:
             # Import from remote if local failed
-            logger.info("Importing graph from bucket")
             # If the download fails and we are in external repo, we should raise an error
             success_remote = content_graph_interface.import_graph(
                 download=True, fail_on_error=is_external_repo

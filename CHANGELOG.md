@@ -21,7 +21,7 @@
     * Widgets
   * Fixed an issue where the download would fail when using the '-r' / '--regex' flag when there were multiple custom content items on the server matching the pattern, having the same name.
   * Fixed an issue where integrations / automations with a dot in their name would be saved with an incorrect file name (For example: `Test v1.1.py` would be named `Test v1.py`)
-  * Started adaption of the validator refactor - for more information, please refer to the [readme files](demisto_sdk/commands/validate/validate_manager_v2_README.md).
+  * Started adaption of the validator refactor - for more information, please refer to the [readme files](demisto_sdk/commands/validate/validate_manager_README.md).
   * Fixed the **Link to Jira** Github flow to match the Jira-dc.
 
 **Note:** Due to the optimization changes made to the **download** command, playbooks might be formatted a bit differently than before when downloaded from the server using the new version. The playbooks should however function and work the same.

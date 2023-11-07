@@ -219,16 +219,16 @@ class TestUpdateRNManager:
         from demisto_sdk.commands.update_release_notes.update_rn_manager import (
             UpdateReleaseNotesManager,
         )
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
+        from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
-        mocker.patch.object(ValidateManager, "setup_git_params")
+        mocker.patch.object(OldValidateManager, "setup_git_params")
         mocker.patch.object(
-            ValidateManager,
+            OldValidateManager,
             "filter_to_relevant_files",
             side_effect=(lambda x: (set(x), set(), True)),
         )
         mocker.patch.object(
-            ValidateManager,
+            OldValidateManager,
             "get_unfiltered_changed_files_from_git",
             return_value=({"Packs/test1", "Packs/test2"}, set(), set()),
         )

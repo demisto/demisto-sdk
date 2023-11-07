@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Iterable, Optional
 
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files, safe_update_hook_args
 
 
 class ValidateFormatHook(Hook):
@@ -15,11 +15,11 @@ class ValidateFormatHook(Hook):
             files_to_run (Optional[Iterable[Path]]): The input files to validate. Defaults to None.
         """
         if self.mode and self.mode.lower() == "nightly" and self.all_files:
-            self.base_hook["args"].append("-a")
+            safe_update_hook_args(self.base_hook, "-a")
         elif self.input_mode or self.all_files:
-            self.base_hook["args"].append("-i")
+            safe_update_hook_args(self.base_hook, "-i")
             self.base_hook["args"].append(join_files(files_to_run, ","))
         else:
-            self.base_hook["args"].append("-g")
+            safe_update_hook_args(self.base_hook, "-g")
 
         self.hooks.insert(self.hook_index, self.base_hook)

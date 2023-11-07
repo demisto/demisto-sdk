@@ -164,17 +164,15 @@ def test_ruff_hook(github_actions):
     """
     Testing ruff hook created successfully (the python version is correct and github action created successfully)
     """
-    ruff_hook = create_hook({})
+    ruff_hook = create_hook({"args": ["--fix"],
+                             "args:nightly": ["--config=nightly_ruff.toml"]})
     RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES, github_actions)
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
     for (hook, python_version) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
-        assert (
-            hook["args"][0]
-            == f"--target-version={python_version_to_ruff[python_version]}"
-        )
-        assert hook["args"][1] == "--fix"
+        assert f"--target-version={python_version_to_ruff[python_version]}" in hook["args"]
+        assert "--fix" in hook["args"]
         assert hook["name"] == f"ruff-py{python_version}"
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
@@ -185,7 +183,8 @@ def test_ruff_hook_nightly_mode():
     """
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
-    ruff_hook = create_hook({})
+    ruff_hook = create_hook({"args": ["--fix"],
+                             "args:nightly": ["--config=nightly_ruff.toml"]})
     RuffHook(**ruff_hook, mode="nightly").prepare_hook(PYTHON_VERSION_TO_FILES)
 
     for (hook, _) in itertools.zip_longest(

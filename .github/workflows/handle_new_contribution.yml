@@ -1,0 +1,32 @@
+name: Handle New Contribution
+
+on:
+  pull_request_target:
+    types: [opened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+  repository-projects: write
+
+jobs:
+  assign_and_label:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.fork == true
+    steps:
+      - name: Assign contribution TL and add the Contribution label
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          PR_URL: ${{github.event.pull_request.html_url}}
+        run: |
+          echo "get content_roles.json using curl"
+          contrib_tl=$( curl https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json | jq .CONTRIBUTION_TL -r )
+          echo "$contrib_tl"
+          echo "Finished retrieving the contribution TL username"
+
+          if [ $contrib_tl ]; then
+            echo "Add an assignee and a Contribution label"
+            gh pr edit --add-assignee "$contrib_tl" --add-label Contribution "$PR_URL"
+          else
+            echo "There was a problem with retrieving the GitHub user name of the contribution TL."
+          fi

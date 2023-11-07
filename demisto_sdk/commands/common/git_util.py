@@ -1,3 +1,4 @@
+import functools
 import os
 import re
 from pathlib import Path
@@ -131,8 +132,9 @@ class GitUtil:
         except KeyError:
             return False
 
+    @functools.lru_cache
     def get_all_files(self) -> Set[Path]:
-        return set(map(Path, self.repo.git.ls_files().split("\n")))
+        return set(map(Path, self.repo.git.ls_files("-z").split("\x00")))
 
     def modified_files(
         self,
@@ -602,6 +604,7 @@ class GitUtil:
 
         return extracted_paths
 
+    @functools.lru_cache
     def _get_staged_files(self) -> Set[Path]:
         """Get only staged files
 

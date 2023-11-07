@@ -85,7 +85,9 @@ class ValidateManager:
                 else:
                     self.validation_results.extend(validation_results)
 
-        return self.validation_results.post_results(only_throw_warning=self.configured_validations.only_throw_warnings)
+        return self.validation_results.post_results(
+            only_throw_warning=self.configured_validations.only_throw_warnings
+        )
 
     def filter_validators(self) -> List[BaseValidator]:
         """

@@ -37,7 +37,10 @@ class ValidationResults:
         else:
             self.json_file_path = ""
 
-    def post_results(self, only_throw_warning: Optional[List[str]] = None,) -> int:
+    def post_results(
+        self,
+        only_throw_warning: Optional[List[str]] = None,
+    ) -> int:
         """
             Go through the validation results list,
             posting the warnings / failure message for failed validation,
@@ -51,10 +54,7 @@ class ValidationResults:
         if self.json_file_path:
             self.write_validation_results()
         for result in self.results:
-            if (
-                only_throw_warning
-                and result.validator.error_code in only_throw_warning
-            ):
+            if only_throw_warning and result.validator.error_code in only_throw_warning:
                 logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
             else:
                 logger.error(f"[red]{result.format_readable_message}[/red]")

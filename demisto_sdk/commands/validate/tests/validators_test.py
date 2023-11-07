@@ -32,6 +32,7 @@ from TestSuite.test_tools import str_in_call_args_list
 
 INTEGRATION = create_integration_object()
 
+
 def get_validate_manager(mocker):
     validation_results = ValidationResults()
     config_reader = ConfigReader(category_to_run="test")
@@ -40,9 +41,8 @@ def get_validate_manager(mocker):
     return ValidateManager(
         validation_results=validation_results,
         config_reader=config_reader,
-        initializer=initializer
-        )
-    
+        initializer=initializer,
+    )
 
 
 @pytest.mark.parametrize(
@@ -161,9 +161,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
                 "support_level": {"community": {"ignore": ["BA101", "BC100", "PA108"]}},
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},
             },
-            ConfiguredValidations(
-                ["TE105", "TE106", "TE107"], [], [], {}
-            ),
+            ConfiguredValidations(["TE105", "TE106", "TE107"], [], [], {}),
             True,
         ),
     ],

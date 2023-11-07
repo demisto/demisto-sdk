@@ -2,9 +2,9 @@
 import sys
 
 import click
+
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
-
 from demisto_sdk.commands.validate.validation_results import ValidationResults
 
 try:

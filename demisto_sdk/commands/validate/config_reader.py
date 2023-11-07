@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import toml
 
@@ -19,10 +19,10 @@ class ConfiguredValidations:
 
     def __init__(
         self,
-        select: Optional[List[str]] = [],
-        warning: Optional[List[str]] = [],
-        ignorable_errors: Optional[List[str]] = [],
-        support_level_dict: Optional[dict[str, str]] = {},
+        select: List[str] = [],
+        warning: List[str] = [],
+        ignorable_errors: List[str] = [],
+        support_level_dict: Dict[str, str] = {},
     ):
         self.validations_to_run = select
         self.only_throw_warnings = warning

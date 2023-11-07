@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContentWithPath,
     BaseContent,
+    BaseContentWithPath,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack

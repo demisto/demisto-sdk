@@ -3,12 +3,16 @@ from typing import TYPE_CHECKING, Optional
 from packaging.version import Version
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+    from demisto_sdk.commands.content_graph.objects.base_content import (
+        BaseContentWithPath,
+    )
     from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class NotUploadableException(NotImplementedError):
-    def __init__(self, item: "BaseContentWithPath", description: Optional[str] = None) -> None:
+    def __init__(
+        self, item: "BaseContentWithPath", description: Optional[str] = None
+    ) -> None:
         description_suffix = f" {description}" if description else ""
         super().__init__(
             f"Object ({item.content_type} {item.object_id}) cannot be uploaded{description_suffix}"

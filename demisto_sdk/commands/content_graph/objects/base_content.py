@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import defaultdict
-from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 from typing import (
@@ -75,7 +74,9 @@ class BaseContentMetaclass(ModelMetaclass):
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["BaseContentWithPath"] = cast(Type["BaseContent"], super_cls)
+        model_cls: Type["BaseContentWithPath"] = cast(
+            Type["BaseContentWithPath"], super_cls
+        )
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
@@ -133,8 +134,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             "__fields_set__": self.__fields_set__,
         }
 
-    
-
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id
@@ -179,7 +178,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 class BaseContentWithPath(BaseContent):
     mapping: dict = Field({}, exclude=True)
     path: Path
-    git_status: Optional[Enum[GitStatuses]]
+    git_status: Optional[GitStatuses]
     old_path: Optional[Path]
 
     def __hash__(self):
@@ -217,7 +216,7 @@ class BaseContentWithPath(BaseContent):
     @lru_cache
     def from_path(
         path: Path,
-        git_status: Optional[str] = None,
+        git_status: Optional[GitStatuses] = None,
         old_file_path: Optional[Path] = None,
         git_sha: Optional[str] = None,
     ) -> Optional["BaseContentWithPath"]:

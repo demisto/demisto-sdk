@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
-* Added a script to init a validation in the new format, to execute the script, run `python init_validation_script.py` and follow the instructions.
+* Added a script to init a validation in the new format, to execute the script, run `init-validation` and follow the instructions.
+* Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks
 
 ## 1.21.0
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.

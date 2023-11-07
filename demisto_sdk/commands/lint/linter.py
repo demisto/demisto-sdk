@@ -1,4 +1,5 @@
 # STD python packages
+
 import copy
 import os
 import platform
@@ -18,7 +19,6 @@ from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
     FORMATTING_SCRIPT,
     INTEGRATIONS_DIR,
-    NATIVE_IMAGE_DOCKER_NAME,
     NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PARTNER_SUPPORT,
@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
 )
 from demisto_sdk.commands.common.docker_helper import (
+    docker_login,
     get_docker,
     get_python_version,
     init_global_docker_client,
@@ -34,11 +35,11 @@ from demisto_sdk.commands.common.docker_helper import (
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
+    get_dev_native_image,
 )
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (
@@ -127,10 +128,10 @@ class Linter:
         self.docker_image_target = docker_image_target
         # Docker client init
         if docker_engine:
-            self._docker_client: docker.DockerClient = init_global_docker_client(
+            self._docker_client: docker.DockerClient = init_global_docker_client(  # type: ignore
                 timeout=docker_timeout, log_prompt="Linter"
             )
-            self._docker_hub_login = self._docker_login()
+            self._docker_hub_login = docker_login(self._docker_client)
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {
             "images": [],
@@ -906,29 +907,6 @@ class Linter:
                 f'{log_prompt} - Finished linting. Number of images={self._facts["images"]}'
             )
 
-    def _docker_login(self) -> bool:
-        """Login to docker-hub using environment variables:
-                1. DOCKERHUB_USER - User for docker hub.
-                2. DOCKERHUB_PASSWORD - Password for docker-hub.
-            Used in Circle-CI for pushing into repo devtestdemisto
-
-        Returns:
-            bool: True if logged in successfully.
-        """
-        docker_user = os.getenv("DOCKERHUB_USER")
-        docker_pass = os.getenv("DOCKERHUB_PASSWORD")
-        if docker_user and docker_pass:
-            try:
-                self._docker_client.login(
-                    username=docker_user,
-                    password=docker_pass,
-                    registry="https://index.docker.io/v1",
-                )
-                return self._docker_client.ping()
-            except docker.errors.APIError:
-                return False
-        return False
-
     @timer(group_name="lint")
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
         """Create docker image:
@@ -1466,37 +1444,6 @@ class Linter:
             )
             return None
 
-    def _get_dev_native_image(self, script_id: str) -> Union[str, None]:
-        """
-        Gets the development (dev) native image, which is the latest tag of the native image from Docker Hub.
-        Args:
-            script_id (str): The ID of the integration/script that lint runs on.
-        Returns: The reference of the dev native image.
-        """
-        log_prompt = f"{self._pack_name} - Get Dev Native Image"
-        logger.info(f"{log_prompt} - Started")
-
-        # Get the latest tag of the native image from Docker Hub
-        latest_native_image_tag = (
-            DockerImageValidator.get_docker_image_latest_tag_request(
-                NATIVE_IMAGE_DOCKER_NAME
-            )
-        )
-
-        if latest_native_image_tag:
-            dev_native_image_full_name = (
-                f"{NATIVE_IMAGE_DOCKER_NAME}:{latest_native_image_tag}"
-            )
-            return dev_native_image_full_name
-
-        else:  # latest tag not found
-            err_msg = (
-                f"{log_prompt} - {script_id} - Error: Failed getting the native image latest tag from"
-                f" Docker Hub."
-            )
-            logger.error(err_msg)
-            raise RuntimeError(err_msg)
-
     def _get_versioned_native_image(
         self,
         native_image: str,
@@ -1641,7 +1588,6 @@ class Linter:
             if native_image := self._get_native_image_name_from_config_file(
                 image_support
             ):
-
                 if self._is_native_image_support_script(
                     native_image, supported_native_images, script_id
                 ):  # Integration/Script is supported by the requested native image
@@ -1656,7 +1602,7 @@ class Linter:
 
                     elif docker_image_flag == DockerImageFlagOption.NATIVE_DEV.value:
                         # Desirable docker image to run on is the dev native image - get the latest tag from Docker Hub
-                        native_image_ref = self._get_dev_native_image(script_id)
+                        native_image_ref = get_dev_native_image()
 
                     else:
                         # Desirable docker image to run on is a versioned native image - get the docker ref from the

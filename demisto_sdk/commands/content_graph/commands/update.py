@@ -76,7 +76,7 @@ def update_content_graph(
         output_path (Path): The path to export the graph zip to.
     """
     if not imported_path and not use_git:
-        logger.info("No arguments were given, using git")
+        logger.info("A path to import the graph from was not provided, using git")
         use_git = True
 
     git_util = GitUtil()

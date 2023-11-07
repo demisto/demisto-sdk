@@ -281,9 +281,8 @@ def test_xsoar_linter_errors(
     - Ensure invalid files fail with the correct error messages.
     """
 
-    mocker.patch.object(linter.Linter, "_docker_login")
+    mocker.patch("demisto_sdk.commands.lint.linter.docker_login", return_value=False)
     mocker.patch.object(linter.Linter, "_update_support_level")
-    linter.Linter._docker_login.return_value = False
     test_path = Path(f"{GIT_ROOT}/demisto_sdk/tests/test_files")
     runner = linter.Linter(
         content_repo=test_path,

@@ -7,6 +7,7 @@ import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
@@ -249,7 +250,7 @@ class TestPreprocessFiles:
         output = preprocess_files(input_files=input_files)
         assert output == expected_output
 
-    def test_preprocess_files_with_input_yml_files(self, mocker):
+    def test_preprocess_files_with_input_yml_files(self, mocker, repo):
         """
         Given:
             - A yml file.
@@ -258,8 +259,35 @@ class TestPreprocessFiles:
         Then:
             - Check that the associated python file was gathered correctly.
         """
+        pack1 = repo.create_pack("Pack1")
+        mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+
+        integration = pack1.create_integration("integration")
+        relative_paths = {
+            path.relative_to(repo.path)
+            for path in Path(pack1.path).rglob("*")
+            if path.is_file()
+        }
+        input_files = [Path(integration.yml.path)]
+        expected_output = {
+            Path(integration.yml.rel_path),
+            Path(integration.code.rel_path),
+        }
+        mocker.patch.object(GitUtil, "get_all_files", return_value=relative_paths)
+        output = preprocess_files(input_files=input_files)
+        assert output == expected_output
+
+    def test_preprocess_files_with_input_yml_files_not_exists(self, mocker):
+        """
+        Given:
+            - A yml file.
+        When:
+            - Running demisto-sdk pre-commit -i file1.yml.
+        Then:
+            - Check that the associated python file was not gathered because it doesn't exist.
+        """
         input_files = [Path("file1.yml")]
-        expected_output = set([Path("file1.yml"), Path("file1.py")])
+        expected_output = {Path("file1.yml")}
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
         output = preprocess_files(input_files=input_files)
         assert output == expected_output
@@ -339,3 +367,56 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
             assert hook["hook"].get("exclude") is None
         else:
             assert "file1.py" in hook["hook"]["exclude"]
+
+
+@pytest.mark.parametrize(
+    "hook, expected_result",
+    [
+        ({"files": r"\.py$", "exclude": r"_test\.py$"}, ["file1.py", "file6.py"]),
+        (
+            {
+                "files": r"\.py$",
+            },
+            ["file1.py", "file6.py", "file2_test.py"],
+        ),
+        (
+            {},
+            [
+                "file1.py",
+                "file2_test.py",
+                "file3.ps1",
+                "file4.md",
+                "file5.md",
+                "file6.py",
+            ],
+        ),
+        ({"files": r"\.ps1$"}, ["file3.ps1"]),
+    ],
+)
+def test_filter_files_matching_hook_config(hook, expected_result):
+    """
+    Given:
+        an exclude regex, an include regex, and a list of files
+    When:
+        running filter_files_matching_hook_config on those files
+    Then:
+        Only get files matching files and not matching exclude
+
+    """
+    base_hook = create_hook(hook)
+
+    files = [
+        Path(x)
+        for x in [
+            "file1.py",
+            "file2_test.py",
+            "file3.ps1",
+            "file4.md",
+            "file5.md",
+            "file6.py",
+        ]
+    ]
+
+    assert {Path(x) for x in expected_result} == set(
+        DockerHook(**base_hook).filter_files_matching_hook_config(files)
+    )

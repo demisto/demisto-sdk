@@ -50,7 +50,6 @@ class DockerException(Exception):
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
-
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         if log_prompt:
@@ -61,7 +60,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
             logger.debug(f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.debug(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
-            DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)
+            DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:
             msg = "Failed to init docker client. Please check that your docker daemon is running."
             logger.error(f"{log_prompt} - {msg}")
@@ -82,6 +81,36 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         msg = "docker client already available, using current DOCKER_CLIENT"
         logger.debug(f"{log_prompt} - {msg}" if log_prompt else msg)
     return DOCKER_CLIENT
+
+
+@functools.lru_cache
+def docker_login(docker_client) -> bool:
+    """Login to docker-hub using environment variables:
+            1. DOCKERHUB_USER - User for docker hub.
+            2. DOCKERHUB_PASSWORD - Password for docker-hub.
+        Used in Circle-CI for pushing into repo devtestdemisto
+
+    Returns:
+        bool: True if logged in successfully.
+    """
+    docker_user = os.getenv("DOCKERHUB_USER")
+    docker_pass = os.getenv("DOCKERHUB_PASSWORD")
+    if docker_user and docker_pass:
+        try:
+            docker_client.login(
+                username=docker_user,
+                password=docker_pass,
+                registry="https://index.docker.io/v1",
+            )
+            ping = docker_client.ping()
+            logger.debug(f"Successfully connected to dockerhub, login {ping=}")
+            return ping
+        except docker.errors.APIError:
+            logger.info("Did not successfully log in to dockerhub")
+            return False
+
+    logger.debug("Did not log in to dockerhub")
+    return False
 
 
 @functools.lru_cache
@@ -143,9 +172,9 @@ class DockerBase:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {image=} not found locally, pulling")
-            docker_client.images.pull(image)
+            ret = docker_client.images.pull(image)
             logger.debug(f"pulled docker {image=} successfully")
-            return docker_client.images.get(image)
+            return ret
 
     @staticmethod
     def copy_files_container(
@@ -337,7 +366,6 @@ class DockerBase:
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
                 logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
-
         return test_docker_image, errors
 
 
@@ -409,7 +437,6 @@ def get_docker():
 
 
 def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
-
     if match := DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
 

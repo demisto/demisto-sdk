@@ -33,6 +33,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     graph: (ClassVar[bool]): Wether the validation is a graph validation or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     """
+
     error_code: ClassVar[str]
     description: ClassVar[str]
     error_message: ClassVar[str]

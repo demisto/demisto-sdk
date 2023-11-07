@@ -33,7 +33,9 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
     mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git_util", return_value=GitUtil())
-    mocker.patch.object(OldValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(
+        OldValidateManager, "setup_prev_ver", return_value="origin/master"
+    )
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
     pack = repo.create_pack("tempPack")
     integration = pack.create_integration("myInt")

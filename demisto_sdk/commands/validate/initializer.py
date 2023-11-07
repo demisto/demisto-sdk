@@ -32,6 +32,7 @@ class Initializer:
     """
     A class for initializing objects to run on based on given flags.
     """
+
     def __init__(
         self,
         use_git=False,

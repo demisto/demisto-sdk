@@ -23,50 +23,34 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 class ValidateManager:
     def __init__(
         self,
-        use_git=False,
+        validation_results: ValidationResults,
+        config_reader: ConfigReader,
+        initializer: Initializer,
         validate_all=False,
         file_path=None,
-        config_file_category_to_run=None,
         multiprocessing=True,
-        prev_ver=None,
-        json_file_path=None,
-        staged=False,
         allow_autofix=False,
-        config_file_path=None,
-        only_committed_files=None,
         ignore_support_level=False,
     ):
         self.ignore_support_level = ignore_support_level
         self.validate_all = validate_all
         self.file_path = file_path
-        self.staged = staged
         self.run_with_multiprocessing = multiprocessing
         self.allow_autofix = allow_autofix
-        self.config_file_path = config_file_path
-        self.category_to_run = config_file_category_to_run
-        self.json_file_path = json_file_path
         self.validate_graph = False
-        self.config_reader = ConfigReader(
-            config_file_path=self.config_file_path,
-            category_to_run=self.category_to_run,
-        )
-        self.initializer = Initializer(
-            use_git=use_git,
-            staged=self.staged,
-            committed_only=only_committed_files,
-            prev_ver=prev_ver,
-            file_path=self.file_path,
-            all_files=self.validate_all,
-        )
+        self.validation_results = validation_results
+        self.config_reader = config_reader
+        self.initializer = initializer
         self.objects_to_run: Set[
             Tuple[BaseContent, Optional[BaseContent]]
         ] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
-        self.configured_validations: ConfiguredValidations = self.config_reader.gather_validations_to_run(
-            use_git=self.use_git, ignore_support_level=self.ignore_support_level
+        self.configured_validations: ConfiguredValidations = (
+            self.config_reader.gather_validations_to_run(
+                use_git=self.use_git, ignore_support_level=self.ignore_support_level
+            )
         )
-        self.validation_results = ValidationResults(json_file_path=self.json_file_path, only_throw_warnings=self.configured_validations.only_throw_warnings)
         self.validate_graph = False
         self.validators = self.filter_validators()
         if self.validate_graph:
@@ -101,7 +85,7 @@ class ValidateManager:
                 else:
                     self.validation_results.extend(validation_results)
 
-        return self.validation_results.post_results()
+        return self.validation_results.post_results(only_throw_warning=self.configured_validations.only_throw_warnings)
 
     def filter_validators(self) -> List[BaseValidator]:
         """

@@ -6,7 +6,10 @@ import pytest
 import toml
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.validate.config_reader import ConfigReader
+from demisto_sdk.commands.validate.config_reader import (
+    ConfigReader,
+    ConfiguredValidations,
+)
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -29,10 +32,17 @@ from TestSuite.test_tools import str_in_call_args_list
 
 INTEGRATION = create_integration_object()
 
-
 def get_validate_manager(mocker):
+    validation_results = ValidationResults()
+    config_reader = ConfigReader(category_to_run="test")
+    initializer = Initializer()
     mocker.patch.object(Initializer, "gather_objects_to_run", return_value={})
-    return ValidateManager()
+    return ValidateManager(
+        validation_results=validation_results,
+        config_reader=config_reader,
+        initializer=initializer
+        )
+    
 
 
 @pytest.mark.parametrize(
@@ -93,7 +103,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
         - Case 4: Make sure the retrieved list contains only the validation with the error_code that actually co-op with the validation_to_run.
     """
     validate_manager = get_validate_manager(mocker)
-    validate_manager.validations_to_run = validations_to_run
+    validate_manager.configured_validations.validations_to_run = validations_to_run
     with patch.object(BaseValidator, "__subclasses__", return_value=sub_classes):
         results = validate_manager.filter_validators()
         assert results == expected_results
@@ -106,7 +116,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
             None,
             True,
             {"use_git": {"select": ["BA101", "BC100", "PA108"]}},
-            (["BA101", "BC100", "PA108"], [], [], {}),
+            ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
             False,
         ),
         (
@@ -119,14 +129,14 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
                 },
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},
             },
-            (["BA101", "BC100", "PA108"], [], ["BA101"], {}),
+            ConfiguredValidations(["BA101", "BC100", "PA108"], [], ["BA101"], {}),
             False,
         ),
         (
             None,
             False,
             {"validate_all": {"select": ["BA101", "BC100", "PA108"]}},
-            (["BA101", "BC100", "PA108"], [], [], {}),
+            ConfiguredValidations(["BA101", "BC100", "PA108"], [], [], {}),
             False,
         ),
         (
@@ -136,7 +146,7 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
                 "support_level": {"community": {"ignore": ["BA101", "BC100", "PA108"]}},
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},
             },
-            (
+            ConfiguredValidations(
                 ["TE105", "TE106", "TE107"],
                 [],
                 [],
@@ -151,11 +161,8 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
                 "support_level": {"community": {"ignore": ["BA101", "BC100", "PA108"]}},
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},
             },
-            (
-                ["TE105", "TE106", "TE107"],
-                [],
-                [],
-                {},
+            ConfiguredValidations(
+                ["TE105", "TE106", "TE107"], [], [], {}
             ),
             True,
         ),
@@ -188,10 +195,13 @@ def test_gather_validations_to_run(
     """
     mocker.patch.object(toml, "load", return_value=config_file_content)
     config_reader = ConfigReader(category_to_run=category_to_run)
-    results = config_reader.gather_validations_to_run(
+    results: ConfiguredValidations = config_reader.gather_validations_to_run(
         use_git=use_git, ignore_support_level=ignore_support_level
     )
-    assert results == expected_results
+    assert results.validations_to_run == expected_results.validations_to_run
+    assert results.ignorable_errors == expected_results.ignorable_errors
+    assert results.only_throw_warnings == expected_results.only_throw_warnings
+    assert results.support_level_dict == expected_results.support_level_dict
 
 
 @pytest.mark.parametrize(
@@ -362,9 +372,9 @@ def test_post_results(
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    validation_results = ValidationResults(only_throw_warnings=only_throw_warnings)
+    validation_results = ValidationResults()
     validation_results.results = results
-    exit_code = validation_results.post_results()
+    exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
     assert exit_code == expected_exit_code
     assert logger_warning.call_count == expected_warnings_call_count
     assert logger_error.call_count == expected_error_call_count

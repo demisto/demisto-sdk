@@ -12,22 +12,20 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 class ValidationResults:
     """
-        Handle all the results, this class save all the results during run time and post the results when the whole execution is over.
-        The class can either log the results to the terminal or write the results to a json file in a given path.
-        The class also calculate the final result for the validations executions based on the validation results and list of errors that need to only the warnings.
+    Handle all the results, this class save all the results during run time and post the results when the whole execution is over.
+    The class can either log the results to the terminal or write the results to a json file in a given path.
+    The class also calculate the final result for the validations executions based on the validation results and list of errors that need to only the warnings.
     """
+
     def __init__(
         self,
         json_file_path: Optional[str] = None,
-        only_throw_warnings: Optional[List[str]] = None,
     ):
         """
             The ValidationResults init method.
         Args:
             json_file_path Optional[str]: The json path to write the outputs into.
-            only_throw_warnings (list): The list of error codes to only warn about.
         """
-        self.only_throw_warning = only_throw_warnings
         self.results: List[ValidationResult] = []
         self.fixing_results: List[FixResult] = []
         if json_file_path:
@@ -39,7 +37,7 @@ class ValidationResults:
         else:
             self.json_file_path = ""
 
-    def post_results(self) -> int:
+    def post_results(self, only_throw_warning: Optional[List[str]] = None,) -> int:
         """
             Go through the validation results list,
             posting the warnings / failure message for failed validation,
@@ -54,8 +52,8 @@ class ValidationResults:
             self.write_validation_results()
         for result in self.results:
             if (
-                self.only_throw_warning
-                and result.validator.error_code in self.only_throw_warning
+                only_throw_warning
+                and result.validator.error_code in only_throw_warning
             ):
                 logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
             else:
@@ -64,8 +62,8 @@ class ValidationResults:
         for fixing_result in self.fixing_results:
             fixed_objects_set.add(fixing_result.content_object)
             if (
-                not self.only_throw_warning
-                or fixing_result.validator.error_code not in self.only_throw_warning
+                not only_throw_warning
+                or fixing_result.validator.error_code not in only_throw_warning
             ):
                 exit_code = 1
             logger.warning(f"[yellow]{fixing_result.format_readable_message}[/yellow]")

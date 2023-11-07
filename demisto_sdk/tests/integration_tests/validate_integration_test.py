@@ -122,7 +122,9 @@ CONF_JSON_MOCK = {
 def set_git_test_env(mocker):
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git_util", return_value=GitUtil())
-    mocker.patch.object(OldValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(
+        OldValidateManager, "setup_prev_ver", return_value="origin/master"
+    )
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
     mocker.patch.object(
         OldValidateManager, "get_all_files_edited_in_pack_ignore", return_value=set()
@@ -5221,7 +5223,9 @@ class TestValidationUsingGit:
             BaseValidator, "update_checked_flags_by_support_level", return_value=None
         )
         mocker.patch.object(
-            OldValidateManager, "get_changed_files_from_git", side_effect=FileNotFoundError
+            OldValidateManager,
+            "get_changed_files_from_git",
+            side_effect=FileNotFoundError,
         )
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)

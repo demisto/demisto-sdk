@@ -172,7 +172,9 @@ class MyRepo:
 def set_git_test_env(mocker):
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git_util", return_value=GitUtil())
-    mocker.patch.object(OldValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(
+        OldValidateManager, "setup_prev_ver", return_value="origin/master"
+    )
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
 
@@ -857,7 +859,9 @@ class TestValidators:
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file type from get_dict_from_file function.
 
-        validate_manager = OldValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        validate_manager = OldValidateManager(
+            skip_conf_json=True, id_set_path=id_set_path
+        )
         result = validate_manager.validate_pack_unique_files(
             VALID_PACK, pack_error_ignore_list={}
         )
@@ -883,7 +887,9 @@ class TestValidators:
                 "id_set.json",
             )
         )
-        validate_manager = OldValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        validate_manager = OldValidateManager(
+            skip_conf_json=True, id_set_path=id_set_path
+        )
         mocker.patch.object(
             PackUniqueFilesValidator,
             "validate_pack_readme_and_pack_description",

@@ -2,6 +2,10 @@
 import sys
 
 import click
+from demisto_sdk.commands.validate.config_reader import ConfigReader
+from demisto_sdk.commands.validate.initializer import Initializer
+
+from demisto_sdk.commands.validate.validation_results import ValidationResults
 
 try:
     import git
@@ -827,18 +831,29 @@ def validate(ctx, config, file_paths: str, **kwargs):
             )
             exit_code += validator.run_validation()
         if kwargs["run_new_validate"]:
-            validator_v2 = ValidateManager(
-                only_committed_files=kwargs["post_commit"],
-                prev_ver=kwargs["prev_ver"],
+            validation_results = ValidationResults(
+                json_file_path=kwargs.get("json_file"),
+            )
+            config_reader = ConfigReader(
+                config_file_path=kwargs.get("config_path"),
+                category_to_run=kwargs.get("category_to_run"),
+            )
+            initializer = Initializer(
                 use_git=kwargs["use_git"],
+                staged=kwargs["staged"],
+                committed_only=kwargs["post_commit"],
+                prev_ver=kwargs["prev_ver"],
+                file_path=file_path,
+                all_files=kwargs.get("validate_all"),
+            )
+            validator_v2 = ValidateManager(
                 file_path=file_path,
                 validate_all=kwargs.get("validate_all"),
-                staged=kwargs["staged"],
-                json_file_path=kwargs.get("json_file"),
+                initializer=initializer,
+                validation_results=validation_results,
                 multiprocessing=run_with_mp,
-                config_file_category_to_run=kwargs.get("category_to_run"),
+                config_reader=config_reader,
                 allow_autofix=kwargs.get("fix"),
-                config_file_path=kwargs.get("config_path"),
                 ignore_support_level=kwargs.get("ignore_support_level"),
             )
             exit_code += validator_v2.run_validations()

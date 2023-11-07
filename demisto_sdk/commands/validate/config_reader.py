@@ -9,20 +9,21 @@ USE_GIT = "use_git"
 VALIDATE_ALL = "validate_all"
 DEFAULT_CATEGORY = "default_mandatory_validations"
 PATH = Path(__file__).parents[0].resolve()
-CONFIG_FILE_PATH = (
-    f"{PATH}/default_config.toml"
-)
+CONFIG_FILE_PATH = f"{PATH}/default_config.toml"
+
 
 class ConfiguredValidations:
     """
     class to hold all the sections from the config file as one object
     """
-    def __init__(self,
-                 select: Optional[List[str]]=[],
-                 warning: Optional[List[str]]=[],
-                 ignorable_errors: Optional[List[str]]=[],
-                 support_level_dict: Optional[dict[str, str]]={}
-        ):
+
+    def __init__(
+        self,
+        select: Optional[List[str]] = [],
+        warning: Optional[List[str]] = [],
+        ignorable_errors: Optional[List[str]] = [],
+        support_level_dict: Optional[dict[str, str]] = {},
+    ):
         self.validations_to_run = select
         self.only_throw_warnings = warning
         self.ignorable_errors = ignorable_errors

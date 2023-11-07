@@ -219,7 +219,9 @@ class TestUpdateRNManager:
         from demisto_sdk.commands.update_release_notes.update_rn_manager import (
             UpdateReleaseNotesManager,
         )
-        from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
+        from demisto_sdk.commands.validate.old_validate_manager import (
+            OldValidateManager,
+        )
 
         mocker.patch.object(OldValidateManager, "setup_git_params")
         mocker.patch.object(

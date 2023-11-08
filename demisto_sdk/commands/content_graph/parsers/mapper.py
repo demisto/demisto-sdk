@@ -81,7 +81,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                             "simple"
                         ) or fields_mapper.get("complex", {}).get("root")
                         if field := extract_field_from_mapping(mapping_value):
-                            self.add_dependency_by_id(
+                            add_dependency_func(
                                 field,
                                 fields_content_type,
                                 is_mandatory=False,
@@ -90,7 +90,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
             elif self.type == "mapping-incoming":
                 # all the incident fields are the keys of the mapping
                 for incident_field in internal_mapping.keys():
-                    self.add_dependency_by_name(
+                    add_dependency_func(
                         incident_field,
                         fields_content_type,
                         is_mandatory=False,

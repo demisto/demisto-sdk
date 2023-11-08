@@ -120,10 +120,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             neo4j_service.start()
         self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
 
-        self.driver: Driver = GraphDatabase.driver(
-            NEO4J_DATABASE_URL,
-            auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
-        )
+        self._init_driver()
         self.output_path = None
         if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
             self.output_path = Path(artifacts_folder) / "content_graph"
@@ -134,6 +131,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __exit__(self, *args) -> None:
         self.driver.close()
+
+    def _init_driver(self):
+        self.driver: Driver = GraphDatabase.driver(
+            NEO4J_DATABASE_URL,
+            auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
+        )
+
+    def clean(self):
+        self._init_driver()
 
     @property
     def import_path(self) -> Path:

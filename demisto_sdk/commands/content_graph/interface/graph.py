@@ -32,6 +32,10 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def clean(self) -> None:
+        pass
+
+    @abstractmethod
     def clean_import_dir(self) -> None:
         pass
 

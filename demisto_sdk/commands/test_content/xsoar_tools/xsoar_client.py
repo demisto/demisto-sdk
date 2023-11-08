@@ -251,7 +251,7 @@ class XsoarApiInterface(ABC):
         command: str,
         investigation_id: Optional[str] = None,
         response_type: str = "object",
-        should_delete_context: bool = True
+        should_delete_context: bool = True,
     ):
         pass
 
@@ -662,7 +662,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         command: str,
         investigation_id: Optional[str] = None,
         response_type: str = "object",
-        should_delete_context: bool = True
+        should_delete_context: bool = True,
     ):
         if should_delete_context:
             update_entry = {

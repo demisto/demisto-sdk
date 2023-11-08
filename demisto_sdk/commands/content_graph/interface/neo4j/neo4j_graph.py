@@ -138,10 +138,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
 
-    def clean(self):
-        self.driver.close()
-        self._init_driver()
-
     @property
     def import_path(self) -> Path:
         return self._import_handler.import_path

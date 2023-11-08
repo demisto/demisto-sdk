@@ -9,7 +9,7 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from string import punctuation
-from typing import Any, AnyStr, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 from zipfile import ZipFile
 
 from packaging.version import Version
@@ -40,6 +40,7 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
     get_child_files,
+    get_content_path,
     get_display_name,
     get_pack_metadata,
 )
@@ -486,7 +487,8 @@ class ContributionConverter:
                 self.generate_readmes_for_new_content_pack(
                     is_contribution=True)
 
-            # TODO currently generated readme removes some sections (e.g. command outputs)
+            # FIXME currently generated readme removes some sections (e.g. command outputs)
+            # FIXME 
             # In case the contribution is done to an existing Pack,
             # we need to generate the READMEs for any contributed content
             else:
@@ -911,7 +913,8 @@ class ContributionConverter:
             source_file_path = info_dict.get('source_file_name', '')
             if re.search(integrations_path_pattern, source_file_path):
                 fetched_display_field = self.get_source_integration_display_field(
-                    source_file_path)
+                    os.path.join(get_content_path(), source_file_path)
+                    )
                 if fetched_display_field:
                     info_dict['source_display'] = fetched_display_field
         ids_to_modify = id_to_data.keys()

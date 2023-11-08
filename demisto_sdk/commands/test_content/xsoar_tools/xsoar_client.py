@@ -251,6 +251,7 @@ class XsoarApiInterface(ABC):
         command: str,
         investigation_id: Optional[str] = None,
         response_type: str = "object",
+        should_delete_context: bool = True
     ):
         pass
 
@@ -661,14 +662,15 @@ class XsoarNGApiClient(XsoarApiInterface):
         command: str,
         investigation_id: Optional[str] = None,
         response_type: str = "object",
+        should_delete_context: bool = True
     ):
+        if should_delete_context:
+            update_entry = {
+                "investigationId": investigation_id,
+                "data": "!DeleteContext all=yes",
+            }
 
-        update_entry = {
-            "investigationId": investigation_id,
-            "data": "!DeleteContext all=yes",
-        }
-
-        self.client.investigation_add_entries_sync(update_entry=update_entry)
+            self.client.investigation_add_entries_sync(update_entry=update_entry)
 
         update_entry = {"investigationId": investigation_id, "data": command}
         response = self.client.investigation_add_entries_sync(update_entry=update_entry)

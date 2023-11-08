@@ -284,11 +284,10 @@ MATCH (n:BaseContent{not_in_repository: true})
 OPTIONAL MATCH (m:BaseContent{content_type: n.content_type, not_in_repository: false})
 WHERE ((m.object_id = n.object_id AND m.object_id <> "") OR (m.name = n.name AND m.name <> ""))
 WITH n, m
-CALL apoc.when(
-  n IS NOT NULL AND m IS NOT NULL,
-  'CALL apoc.refactor.mergeNodes([n, m], {properties: "overwrite", mergeRels: true}) YIELD node RETURN count(*)',
-  '',
-  {n: n, m: m}
-) YIELD value
-RETURN count(*)""",
+CASE WHEN n IS NOT NULL AND m IS NOT NULL THEN
+    apoc.refactor.mergeNodes([n, m], {properties: "overwrite", mergeRels: true}) YIELD node
+    RETURN count(*)
+ELSE 0
+END AS count
+""",
     )

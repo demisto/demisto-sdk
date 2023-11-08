@@ -4,6 +4,9 @@
 * Added the command demisto-sdk coverage-analyze to the pre-commit hooks.
 * Updated merge_coverage_report to be a hook in the pre-commit.
 * Updated the mode option to be free text. for more details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#modes
+* Adjust graph structure to accommodate anticipated changes in infrastructure for the **validate** command.
+* Fixed an issue where the **lint** command with docker, would not give unique container names to different image runs.
+* Added a new `display_name` field to `Pack` entity in graph.
 
 ## 1.21.0
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.

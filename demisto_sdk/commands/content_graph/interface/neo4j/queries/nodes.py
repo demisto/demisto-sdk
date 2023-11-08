@@ -280,12 +280,10 @@ def merge_duplicate_content_items(tx: Transaction) -> None:
     run_query(
         tx,
         """// Merges possible duplicate content item nodes after import
-CALL apoc.periodic.commit('
 MATCH (n:BaseContent{not_in_repository: true})
 MATCH (m:BaseContent{content_type: n.content_type, not_in_repository: false})
 WHERE ((m.object_id = n.object_id AND m.object_id <> "") OR (m.name = n.name AND m.name <> ""))
-WITH m, n
-LIMIT $limit
-CALL apoc.refactor.mergeNodes([m, n], {properties: "discard", mergeRels: true}) YIELD node
-RETURN count(*)',{limit: 10})""",
+WITH head(collect([n,m])) as nodes
+CALL apoc.refactor.mergeNodes([m, n], {properties: "overwrite", mergeRels: true}) YIELD node
+RETURN count(*)""",
     )

@@ -81,7 +81,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                             "simple"
                         ) or fields_mapper.get("complex", {}).get("root")
                         if field := extract_field_from_mapping(mapping_value):
-                            add_dependency_func(
+                            self.add_dependency_by_id(
                                 field,
                                 fields_content_type,
                                 is_mandatory=False,

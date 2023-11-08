@@ -850,13 +850,9 @@ def get_file(
     if git_sha:
         if file_path.is_absolute():
             file_path = file_path.relative_to(get_content_path())
-<<<<<<< HEAD
-        return get_remote_file(str(file_path), tag=git_sha)
-=======
         return get_remote_file(
             str(file_path), tag=git_sha, return_content=return_content
         )
->>>>>>> master
 
     type_of_file = file_path.suffix.lower()
 
@@ -3994,7 +3990,86 @@ def get_all_repo_pack_ids() -> list:
     return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]
 
 
-<<<<<<< HEAD
+def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):
+    """Extracts field value from nested object
+    Args:
+      obj (dict): The object to extract the field from
+      field (Union[str,List[str]]): The field or a list of possible fields to extract from the object, given in dot notation
+      defaultParam (object): The default value to return in case the field doesn't exist in obj
+    Returns:
+      str: The value of the extracted field
+    """
+    if isinstance(paths, str):
+        paths = [paths]
+    for path in paths:
+        keys = path.split(".")
+        temp_obj = obj
+        success = True
+        for key in keys:
+            try:
+                if "[" in key and "]" in key:
+                    # Handle list indexing
+                    list_key, index = key.split("[")
+                    index = int(index.strip("]"))  # type: ignore
+                    temp_obj = temp_obj[list_key][index]
+                else:
+                    temp_obj = temp_obj[key]
+            except (AttributeError, KeyError, IndexError):
+                success = False
+                continue
+        if success:
+            return temp_obj
+    return defaultParam
+
+
+def find_correct_key(data: dict, keys: List[str]) -> str:
+    """Given a data object and a list of possible paths, finding the path where the object holds a value in that path.
+    Args:
+        data (dict): The object that holds the keys.
+        keys (List[str]) List of possible paths.
+    Returns:
+        str: Either the path where the given data object has a value at or the last option.
+    """
+    for key in keys:
+        if get_value(data, key, None):
+            return key
+    return keys[-1]
+
+
+def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
+    """Updating a data object with given value in the given key.
+    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    Args:
+        data (dict): the data object to update.
+        keys (Union[str,List[str]]): the path or list of possible paths to update.
+        value (_type_): the value to update.
+    """
+    if isinstance(paths, list):
+        path = find_correct_key(data, paths)
+    else:
+        path = paths
+    current_dict = data
+    keys = path.split(".")
+    for key in keys[:-1]:
+        if "[" in key and "]" in key:
+            # Handle list indexing
+            list_key, index = key.split("[")
+            index = int(index.strip("]"))
+            current_dict = current_dict[list_key]
+            current_dict = current_dict[index]
+        else:
+            # Handle dictionary keys
+            current_dict = current_dict[key]
+
+    # Set the value in the dictionary at the specified path
+    last_key = keys[-1]
+    if "[" in last_key and "]" in last_key:
+        list_key, index = last_key.split("[")  # type: ignore
+        index = int(index.strip("]"))  # type: ignore
+        current_dict[list_key][index] = value
+    else:
+        current_dict[last_key] = value
+        
 def detect_file_level(file_path: str) -> PathLevel:
     """
     Detect the whether the path points to a file, a content entity dir, a content generic entity dir
@@ -4024,7 +4099,6 @@ def detect_file_level(file_path: str) -> PathLevel:
 
     else:
         return PathLevel.PACKAGE
-
 
 def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
     """Filter a set of file paths to only include ones which are from a specified directory.
@@ -4112,112 +4186,3 @@ def get_file_by_status(
         filtered_added_files,
         filtered_old_format_or_renamed_files,
     )
-
-
-def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):
-    """Extracts field value from nested object
-
-=======
-def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):
-    """Extracts field value from nested object
->>>>>>> master
-    Args:
-      obj (dict): The object to extract the field from
-      field (Union[str,List[str]]): The field or a list of possible fields to extract from the object, given in dot notation
-      defaultParam (object): The default value to return in case the field doesn't exist in obj
-<<<<<<< HEAD
-
-    Returns:
-      str: The value of the extracted field
-
-=======
-    Returns:
-      str: The value of the extracted field
->>>>>>> master
-    """
-    if isinstance(paths, str):
-        paths = [paths]
-    for path in paths:
-        keys = path.split(".")
-        temp_obj = obj
-        success = True
-        for key in keys:
-            try:
-                if "[" in key and "]" in key:
-                    # Handle list indexing
-                    list_key, index = key.split("[")
-                    index = int(index.strip("]"))  # type: ignore
-                    temp_obj = temp_obj[list_key][index]
-                else:
-                    temp_obj = temp_obj[key]
-            except (AttributeError, KeyError, IndexError):
-                success = False
-                continue
-        if success:
-            return temp_obj
-    return defaultParam
-
-
-def find_correct_key(data: dict, keys: List[str]) -> str:
-    """Given a data object and a list of possible paths, finding the path where the object holds a value in that path.
-<<<<<<< HEAD
-
-    Args:
-        data (dict): The object that holds the keys.
-        keys (List[str]) List of possible paths.
-
-=======
-    Args:
-        data (dict): The object that holds the keys.
-        keys (List[str]) List of possible paths.
->>>>>>> master
-    Returns:
-        str: Either the path where the given data object has a value at or the last option.
-    """
-    for key in keys:
-<<<<<<< HEAD
-        if get(data, key, None):
-=======
-        if get_value(data, key, None):
->>>>>>> master
-            return key
-    return keys[-1]
-
-
-def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
-    """Updating a data object with given value in the given key.
-    If a list of keys is given, will find the right path to update based on which path acctually has a value.
-<<<<<<< HEAD
-
-=======
->>>>>>> master
-    Args:
-        data (dict): the data object to update.
-        keys (Union[str,List[str]]): the path or list of possible paths to update.
-        value (_type_): the value to update.
-    """
-    if isinstance(paths, list):
-        path = find_correct_key(data, paths)
-    else:
-        path = paths
-    current_dict = data
-    keys = path.split(".")
-    for key in keys[:-1]:
-        if "[" in key and "]" in key:
-            # Handle list indexing
-            list_key, index = key.split("[")
-            index = int(index.strip("]"))
-            current_dict = current_dict[list_key]
-            current_dict = current_dict[index]
-        else:
-            # Handle dictionary keys
-            current_dict = current_dict[key]
-
-    # Set the value in the dictionary at the specified path
-    last_key = keys[-1]
-    if "[" in last_key and "]" in last_key:
-        list_key, index = last_key.split("[")  # type: ignore
-        index = int(index.strip("]"))  # type: ignore
-        current_dict[list_key][index] = value
-    else:
-        current_dict[last_key] = value

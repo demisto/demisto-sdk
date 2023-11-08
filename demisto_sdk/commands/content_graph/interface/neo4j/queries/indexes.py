@@ -17,6 +17,7 @@ NODE_INDEX_OPTIONS = [
     ["name"],
     ["name", "content_type"],
     ["path"],
+    ["not_in_repository"],
 ]
 
 CREATE_REL_INDEX_TEMPLATE = (

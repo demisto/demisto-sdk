@@ -1,4 +1,3 @@
-import gc
 import os
 from multiprocessing import Pool
 from pathlib import Path
@@ -635,11 +634,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(drop_constraints)
             session.execute_write(import_graphml, graphml_filenames)
-        gc.collect()
-        with self.driver.session() as session:
             session.execute_write(merge_duplicate_commands)
-        gc.collect()
-        with self.driver.session() as session:
             session.execute_write(merge_duplicate_content_items)
             session.execute_write(create_constraints)
             session.execute_write(remove_empty_properties)

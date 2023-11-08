@@ -638,6 +638,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         gc.collect()
         with self.driver.session() as session:
             session.execute_write(merge_duplicate_commands)
+        gc.collect()
+        with self.driver.session() as session:
             session.execute_write(merge_duplicate_content_items)
             session.execute_write(create_constraints)
             session.execute_write(remove_empty_properties)

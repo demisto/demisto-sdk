@@ -281,13 +281,9 @@ def merge_duplicate_content_items(tx: Transaction) -> None:
         tx,
         """// Merges possible duplicate content item nodes
 MATCH (n:BaseContent{not_in_repository: true})
-OPTIONAL MATCH (m:BaseContent{content_type: n.content_type, not_in_repository: false})
+MATCH (m:BaseContent{content_type: n.content_type, not_in_repository: false})
 WHERE ((m.object_id = n.object_id AND m.object_id <> "") OR (m.name = n.name AND m.name <> ""))
 WITH n, m
-CASE WHEN n IS NOT NULL AND m IS NOT NULL THEN
-    apoc.refactor.mergeNodes([n, m], {properties: "overwrite", mergeRels: true}) YIELD node
-    RETURN count(*)
-ELSE 0
-END AS count
+apoc.refactor.mergeNodes([n, m], {properties: "overwrite", mergeRels: true}) YIELD node
 """,
     )

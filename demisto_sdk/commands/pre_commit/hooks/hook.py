@@ -2,8 +2,8 @@ import re
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
+from typing import Any, Dict, List, Set
 
-from typing import Any, Dict, List, Optional, Set
 from demisto_sdk.commands.common.logger import logger
 
 

@@ -654,8 +654,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata(override_commit)
         if output_path:
-            if output_path.is_dir():
-                output_path = output_path / marketplace.value
+            output_path = output_path / marketplace.value
+            logger.info(f"Saving content graph in {output_path}.zip")
             self.zip_import_dir(output_path)
 
     def clean_graph(self):

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from neo4j import Transaction
 
@@ -169,7 +169,6 @@ RETURN count(r) AS relationships_merged"""
 def create_relationships(
     tx: Transaction,
     relationships: Dict[RelationshipType, List[Dict[str, Any]]],
-    timeout: Optional[int] = None,
 ) -> None:
     if relationships.get(RelationshipType.HAS_COMMAND):
         data = relationships.pop(RelationshipType.HAS_COMMAND)

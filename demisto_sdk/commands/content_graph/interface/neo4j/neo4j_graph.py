@@ -35,7 +35,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export im
     export_graphml,
     import_graphml,
     merge_duplicate_commands,
-    merge_duplicate_content_items,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
@@ -635,7 +634,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(drop_constraints)
             session.execute_write(import_graphml, graphml_filenames)
             session.execute_write(merge_duplicate_commands)
-            # session.execute_write(merge_duplicate_content_items)
             session.execute_write(create_constraints)
             session.execute_write(remove_empty_properties)
 

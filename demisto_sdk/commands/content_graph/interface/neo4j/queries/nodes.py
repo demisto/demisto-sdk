@@ -263,3 +263,28 @@ DETACH DELETE n"""
 
 def remove_empty_properties(tx: Transaction) -> None:
     run_query(tx, REMOVE_EMPTY_PROPERTIES)
+
+
+def merge_duplicate_commands(tx: Transaction) -> None:
+    run_query(
+        tx,
+        """// Merges possible duplicate command nodes after import
+MATCH (c:Command)
+WITH c.object_id as object_id, collect(c) as cmds
+CALL apoc.refactor.mergeNodes(cmds, {properties: "combine", mergeRels: true}) YIELD node
+RETURN node""",
+    )
+
+
+def merge_duplicate_content_items(tx: Transaction) -> None:
+    run_query(
+        tx,
+        """// Merges possible duplicate content item nodes after import
+MATCH (n:BaseContent{not_in_repository: true})
+MATCH (m:BaseContent{content_type: n.content_type})
+WHERE ((m.object_id = n.object_id AND m.object_id <> "") OR (m.name = n.name AND m.name <> ""))
+AND m.not_in_repository = false
+WITH m, n
+CALL apoc.refactor.mergeNodes([m, n], {properties: "discard", mergeRels: true}) YIELD node
+RETURN node""",
+    )

@@ -34,7 +34,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies imp
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
     export_graphml,
     import_graphml,
-    merge_duplicate_commands,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
@@ -45,6 +44,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     delete_all_graph_nodes,
     get_relationships_to_preserve,
     get_schema,
+    merge_duplicate_commands,
+    merge_duplicate_content_items,
     remove_content_private_nodes,
     remove_empty_properties,
     remove_packs_before_creation,
@@ -56,7 +57,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships,
     get_sources_by_path,
     get_targets_by_path,
-    merge_duplicate_content_items,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
@@ -574,6 +574,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(
                     return_preserved_relationships, self._rels_to_preserve
                 )
+            session.execute_write(merge_duplicate_commands)
             session.execute_write(merge_duplicate_content_items)
 
     def remove_non_repo_items(self) -> None:
@@ -635,7 +636,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(drop_constraints)
             session.execute_write(import_graphml, graphml_filenames)
-            session.execute_write(merge_duplicate_commands)
             session.execute_write(create_constraints)
             session.execute_write(remove_empty_properties)
 

@@ -413,17 +413,3 @@ RETURN
     minDepth
 ORDER BY content_type, object_id"""
     return run_query(tx, query).data()
-
-
-def merge_duplicate_content_items(tx: Transaction) -> None:
-    run_query(
-        tx,
-        """// Merges possible duplicate content item nodes after import
-MATCH (n:BaseContent{not_in_repository: true})
-MATCH (m:BaseContent{content_type: n.content_type})
-WHERE ((m.object_id = n.object_id AND m.object_id <> "") OR (m.name = n.name AND m.name <> ""))
-AND m.not_in_repository = false
-WITH m, n
-CALL apoc.refactor.mergeNodes([m, n], {properties: "discard", mergeRels: true}) YIELD node
-RETURN node""",
-    )

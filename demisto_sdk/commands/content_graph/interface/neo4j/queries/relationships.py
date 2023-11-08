@@ -169,6 +169,7 @@ RETURN count(r) AS relationships_merged"""
 def create_relationships(
     tx: Transaction,
     relationships: Dict[RelationshipType, List[Dict[str, Any]]],
+    timeout: int = 120,
 ) -> None:
     if relationships.get(RelationshipType.HAS_COMMAND):
         data = relationships.pop(RelationshipType.HAS_COMMAND)

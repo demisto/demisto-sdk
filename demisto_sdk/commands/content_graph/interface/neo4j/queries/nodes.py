@@ -285,5 +285,6 @@ MATCH (m:BaseContent{content_type: n.content_type, not_in_repository: false})
 WHERE ((m.object_id = n.object_id AND m.object_id <> "") OR (m.name = n.name AND m.name <> ""))
 WITH n, m
 CALL apoc.refactor.mergeNodes([n, m], {properties: "overwrite", mergeRels: true}) YIELD node
+RETURN count(*)
 """,
     )

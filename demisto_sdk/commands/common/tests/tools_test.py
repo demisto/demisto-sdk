@@ -111,6 +111,7 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
     search_and_delete_from_conf,
     server_version_compare,
+    set_value,
     str2bool,
     string_to_bool,
     to_kebab_case,
@@ -3236,3 +3237,37 @@ def test_is_epoch_datetime(string: str, expected_result: bool):
     from demisto_sdk.commands.common.tools import is_epoch_datetime
 
     assert is_epoch_datetime(string) == expected_result
+
+
+@pytest.mark.parametrize(
+    "dict, paths, value, expected_dict",
+    [
+        ({"test": "1"}, ["test"], 2, {"test": 2}),
+        ({"test": [1 ,2 ,3 ,4]}, ["test[3]"], 2, {"test": [1 ,2 ,3 ,2]}),
+        ({"test1": "1"}, ["test2", "test1"], 2, {"test1": 2}),
+        ({"test": "1"}, ["test2", "test1"], 2, {"test": "1", "test1": 2}),
+        ({"test": {"test2": 1}}, ["test.test2"], 2, {"test": {"test2": 2}}),
+    ],
+)
+def test_set_value(dict, paths, value, expected_dict):
+    """
+    Given:
+        a dictionary, path / list of paths, and a value to insert to the dict.
+        - Case 1: dict with items only in the root, a list with a path that exist in the dict, and a value to set there.
+        - Case 2: dict with a list in the root, a list with a path with the index in the list to replace, and a value to set there.
+        - Case 3: dict with items only in the root, a list of possible paths where one of them is in the dict, and a value to set there.
+        - Case 4: dict with items only in the root, a list of possible paths where none of them is in the dict, and a value to set there.
+        - Case 5: dict with items not only in the root, a list with a path not to the root that exist in the dict, and a value to set there.
+        
+    When:
+        - run set_value
+    Then:
+        - Ensure that the value was inserted in the right place.
+        - Case 1: the dict should replce the value in the key.
+        - Case 2: the dict will have the value in the right index in the list.
+        - Case 3: the dict has the value changed in the key that existed and will not add keys in paths that doesn't exist.
+        - Case 4: the dict has the value added in the last given key.
+        - Case 5: the dict should replce the value in the key.
+    """
+    set_value(dict, paths, value)
+    assert expected_dict == dict

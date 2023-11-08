@@ -38,22 +38,22 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         self.connect_to_tests()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update(
+    def field_mapping(self):
+        super().field_mapping.update(
             {
                 "docker_image": "dockerimage",
                 "description": "comment",
             }
         )
-        return super().mapping
+        return super().field_mapping
 
     @property
     def description(self) -> Optional[str]:
-        return get_value(self.yml_data, self.mapping.get("description", ""), "")
+        return get_value(self.yml_data, self.field_mapping.get("description", ""), "")
 
     @property
     def docker_image(self) -> str:
-        return get_value(self.yml_data, self.mapping.get("docker_image", ""), "")
+        return get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
 
     def connect_to_dependencies(self) -> None:
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.

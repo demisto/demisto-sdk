@@ -34,8 +34,8 @@ class JSONContentItemParser(ContentItemParser):
             raise NotAContentItemException
 
     @cached_property
-    def mapping(self):
-        super().mapping.update(
+    def field_mapping(self):
+        super().field_mapping.update(
             {
                 "name": "name",
                 "deprecated": "deprecated",
@@ -45,15 +45,15 @@ class JSONContentItemParser(ContentItemParser):
                 "toversion": "toVersion",
             }
         )
-        return super().mapping
+        return super().field_mapping
 
     @property
     def object_id(self) -> Optional[str]:
-        return get_value(self.json_data, self.mapping.get("object_id", ""))
+        return get_value(self.json_data, self.field_mapping.get("object_id", ""))
 
     @property
     def name(self) -> Optional[str]:
-        return get_value(self.json_data, self.mapping.get("name", ""))
+        return get_value(self.json_data, self.field_mapping.get("name", ""))
 
     @property
     def display_name(self) -> Optional[str]:
@@ -61,17 +61,17 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def deprecated(self) -> bool:
-        return get_value(self.json_data, self.mapping.get("deprecated", ""), False)
+        return get_value(self.json_data, self.field_mapping.get("deprecated", ""), False)
 
     @property
     def description(self) -> Optional[str]:
-        return get_value(self.json_data, self.mapping.get("description", ""), "")
+        return get_value(self.json_data, self.field_mapping.get("description", ""), "")
 
     @property
     def fromversion(self) -> str:
         return get_value(
             self.json_data,
-            self.mapping.get("fromversion", ""),
+            self.field_mapping.get("fromversion", ""),
             DEFAULT_CONTENT_ITEM_FROM_VERSION,
         )
 
@@ -80,7 +80,7 @@ class JSONContentItemParser(ContentItemParser):
         return (
             get_value(
                 self.json_data,
-                self.mapping.get("toversion", ""),
+                self.field_mapping.get("toversion", ""),
             )
             or DEFAULT_CONTENT_ITEM_TO_VERSION
         )

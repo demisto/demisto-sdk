@@ -26,9 +26,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self.connect_to_api_modules()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"object_id": "commonfields.id"})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "commonfields.id"})
+        return super().field_mapping
 
     @property
     @abstractmethod

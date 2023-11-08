@@ -37,9 +37,9 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
         self.connect_to_dependencies()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"name": ["name", "brandName"]})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"name": ["name", "brandName"]})
+        return super().field_mapping
 
     def get_filters_and_transformers_from_complex_value(
         self, complex_value: dict

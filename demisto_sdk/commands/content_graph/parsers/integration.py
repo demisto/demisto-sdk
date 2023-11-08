@@ -44,23 +44,23 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_tests()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update(
+    def field_mapping(self):
+        super().field_mapping.update(
             {
                 "display_name": "display",
                 "docker_image": "script.dockerimage",
                 "type": ["script.subtype", "script.type"],
             }
         )
-        return super().mapping
+        return super().field_mapping
 
     @property
     def display_name(self) -> Optional[str]:
-        return get_value(self.yml_data, self.mapping.get("display_name", ""))
+        return get_value(self.yml_data, self.field_mapping.get("display_name", ""))
 
     @property
     def docker_image(self) -> str:
-        return get_value(self.yml_data, self.mapping.get("docker_image", ""))
+        return get_value(self.yml_data, self.field_mapping.get("docker_image", ""))
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

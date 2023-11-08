@@ -23,8 +23,8 @@ class XSIAMDashboardParser(
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
 
     @cached_property
-    def mapping(self):
-        super().mapping.update(
+    def field_mapping(self):
+        super().field_mapping.update(
             {
                 "object_id": [
                     "dashboards_data[0].global_id",
@@ -39,7 +39,7 @@ class XSIAMDashboardParser(
                 "description": "dashboards_data[0].description",
             }
         )
-        return super().mapping
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

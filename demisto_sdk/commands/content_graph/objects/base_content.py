@@ -177,13 +177,13 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
 
 class BaseContentWithPath(BaseContent):
-    mapping: dict = Field({}, exclude=True)
+    field_mapping: dict = Field({}, exclude=True)
     path: Path
     git_status: Optional[GitStatuses]
     old_path: Optional[Path]
 
     def _save(self, path: Path, data: dict):
-        for key, val in self.mapping.items():
+        for key, val in self.field_mapping.items():
             attr = getattr(self, key)
             if key == "marketplaces":
                 if (

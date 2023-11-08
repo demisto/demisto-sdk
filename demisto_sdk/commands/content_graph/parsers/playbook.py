@@ -51,9 +51,9 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         self.connect_to_tests()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"object_id": "id"})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "id"})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

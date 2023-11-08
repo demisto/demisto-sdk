@@ -22,9 +22,9 @@ class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TE
         self.profile_type = self.json_data.get("profile_type")
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"object_id": "content_global_id"})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "content_global_id"})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

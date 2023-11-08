@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks
+* Adjust graph structure to accommodate anticipated changes in infrastructure for the **validate** command.
 
 ## 1.21.0
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.
@@ -14,7 +15,6 @@
   * Large optimizations: reducing the runtime and CPU usage by a significant amount when there's a considerable amount of custom content items on the server.
   * Improved error handling and messages, logs, and documentation (`demisto-sdk download --help`) for the command.
   * Fixed an issue where custom PowerShell-based integrations and automations would not download properly.
-  * graph infra improvements and preparations for validate refactor phase one.
   * Fixed an issue where names of the following custom content items would not have their IDs replaced from UUIDs:
     * Classifiers
     * Dashboards

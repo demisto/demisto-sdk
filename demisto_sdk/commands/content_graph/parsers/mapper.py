@@ -25,9 +25,9 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         self.connect_to_dependencies()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"name": ["name", "brandName"]})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"name": ["name", "brandName"]})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

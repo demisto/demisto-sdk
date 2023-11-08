@@ -25,9 +25,9 @@ class IndicatorTypeParser(
         self.enhancement_script_names = self.json_data.get("enhancementScriptNames")
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"name": "details", "description": "details"})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"name": "details", "description": "details"})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

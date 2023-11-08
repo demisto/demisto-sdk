@@ -27,13 +27,13 @@ class IndicatorFieldParser(
         self.connect_to_dependencies()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"object_id": "cliName"})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "cliName"})
+        return super().field_mapping
 
     @property
     def object_id(self) -> Optional[str]:
-        return get_value(self.json_data, self.mapping.get("object_id", ""))
+        return get_value(self.json_data, self.field_mapping.get("object_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

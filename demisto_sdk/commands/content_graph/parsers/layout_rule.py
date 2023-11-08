@@ -21,19 +21,19 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
         self.connect_to_dependencies()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update(
+    def field_mapping(self):
+        super().field_mapping.update(
             {
                 "object_id": "rule_id",
                 "name": "rule_name",
                 "layout_id": "layout_id",
             }
         )
-        return super().mapping
+        return super().field_mapping
 
     @property
     def layout_id(self) -> Optional[str]:
-        return get_value(self.json_data, self.mapping.get("layout_id", ""))
+        return get_value(self.json_data, self.field_mapping.get("layout_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

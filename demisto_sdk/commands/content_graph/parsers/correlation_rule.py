@@ -21,9 +21,9 @@ class CorrelationRuleParser(
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"object_id": "global_rule_id"})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "global_rule_id"})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

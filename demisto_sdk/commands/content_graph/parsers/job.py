@@ -20,9 +20,9 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
         self.connect_to_dependencies()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"description": "details"})
-        return super().mapping
+    def field_mapping(self):
+        super().field_mapping.update({"description": "details"})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

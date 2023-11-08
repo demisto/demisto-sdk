@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import extract_field_from_mapping, get
+from demisto_sdk.commands.common.tools import extract_field_from_mapping
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -25,13 +25,9 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         self.connect_to_dependencies()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"name": ["name", "brandName"]})
-        return super().mapping
-
-    @property
-    def name(self) -> Optional[str]:
-        return get(self.json_data, self.mapping.get("name", ""))
+    def field_mapping(self):
+        super().field_mapping.update({"name": ["name", "brandName"]})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

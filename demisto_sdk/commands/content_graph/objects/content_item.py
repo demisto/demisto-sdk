@@ -30,7 +30,6 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     replace_incident_to_alert,
-    set_val,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -38,14 +37,14 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContent,
+    BaseContentWithPath,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
 )
 
 
-class ContentItem(BaseContent):
+class ContentItem(BaseContentWithPath):
     path: Path
     marketplaces: List[MarketplaceVersions]
     name: str
@@ -104,7 +103,7 @@ class ContentItem(BaseContent):
             return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         if pack_name := get_pack_name(self.path):
             try:
-                return BaseContent.from_path(
+                return BaseContentWithPath.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[return-value]
             except InvalidContentItemException:
@@ -201,16 +200,11 @@ class ContentItem(BaseContent):
         return get_file(self.path, keep_order=False)
 
     @property
-    def original_data(self) -> dict:
+    def ordered_data(self) -> dict:
         return get_file(self.path, keep_order=True)
 
     def save(self):
-        data = self.original_data
-        for key, val in self.mapping.items():
-            attr = getattr(self, key)
-            set_val(data, val, attr)
-        with open(self.path, "w") as f:
-            self.handler.dump(data, f)
+        super()._save(self.path, self.ordered_data)
 
     def prepare_for_upload(
         self,

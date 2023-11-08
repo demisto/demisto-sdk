@@ -21,8 +21,8 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
 
     @cached_property
-    def mapping(self):
-        super().mapping.update(
+    def field_mapping(self):
+        super().field_mapping.update(
             {
                 "name": "templates_data[0].report_name",
                 "description": "templates_data[0].report_description",
@@ -31,7 +31,7 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
                 "toversion": "toVersion",
             }
         )
-        return super().mapping
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

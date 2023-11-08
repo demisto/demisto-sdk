@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Set
 import networkx
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     build_tasks_graph,
@@ -21,8 +20,13 @@ IGNORED_FIELDS = [
     "appendTags",
     "addLabels",
     "appendMultiSelect",
+    "deleteEmptyField",
+    "execution-timeout",
+    "extend-context",
+    "ignore-outputs",
     "retry-count",
     "retry-interval",
+    "using",
 ]
 
 
@@ -47,13 +51,9 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         self.connect_to_tests()
 
     @cached_property
-    def mapping(self):
-        super().mapping.update({"object_id": "id"})
-        return super().mapping
-
-    @property
-    def object_id(self) -> Optional[str]:
-        return get(self.yml_data, self.mapping.get("object_id", ""))
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "id"})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

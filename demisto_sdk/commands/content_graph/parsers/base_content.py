@@ -24,7 +24,7 @@ class BaseContentParser(ABC):
         self.path: Path = path
 
     @cached_property
-    def mapping(self):
+    def field_mapping(self):
         return {}
 
     @property

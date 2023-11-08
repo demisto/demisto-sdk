@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -24,11 +24,13 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
+    GitStatuses,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import set_value, write_dict
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     LazyProperty,
@@ -44,7 +46,7 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
+content_type_to_model: Dict[ContentType, Type["BaseContentWithPath"]] = {}
 json = JSON_Handler()
 
 
@@ -73,7 +75,9 @@ class BaseContentMetaclass(ModelMetaclass):
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
+        model_cls: Type["BaseContentWithPath"] = cast(
+            Type["BaseContentWithPath"], super_cls
+        )
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
@@ -87,7 +91,7 @@ class BaseContentMetaclass(ModelMetaclass):
         return model_cls
 
 
-class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
+class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
@@ -131,14 +135,6 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
             "__fields_set__": self.__fields_set__,
         }
 
-    @abstractmethod
-    def dump(
-        self,
-        path: DirectoryPath,
-        marketplace: MarketplaceVersions,
-    ) -> None:
-        pass
-
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id
@@ -171,16 +167,6 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
         json_dct["content_type"] = self.content_type
         return json_dct
 
-    def upload(
-        self,
-        client: demisto_client,
-        marketplace: MarketplaceVersions,
-        target_demisto_version: Version,
-        **kwargs,
-    ) -> None:
-        # Implemented at the ContentItem/Pack level rather than here
-        raise NotImplementedError()
-
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"
     ) -> None:
@@ -190,11 +176,29 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
         self.relationships_data[relationship_type].add(relationship)
 
 
-class BaseContent(BaseContentModel):
-    mapping: dict = Field({}, exclude=True)
+class BaseContentWithPath(BaseContent):
+    field_mapping: dict = Field({}, exclude=True)
     path: Path
-    git_status: Optional[str]
-    old_file_path: Optional[Path]
+    git_status: Optional[GitStatuses]
+    old_path: Optional[Path]
+
+    def _save(self, path: Path, data: dict):
+        for key, val in self.field_mapping.items():
+            attr = getattr(self, key)
+            if key == "marketplaces":
+                if (
+                    MarketplaceVersions.XSOAR_SAAS in attr
+                    and MarketplaceVersions.XSOAR in attr
+                ):
+                    attr.remove(MarketplaceVersions.XSOAR_SAAS)
+                if (
+                    MarketplaceVersions.XSOAR_ON_PREM in attr
+                    and MarketplaceVersions.XSOAR in attr
+                ):
+                    attr.remove(MarketplaceVersions.XSOAR_ON_PREM)
+            if attr:
+                set_value(data, val, attr)
+        write_dict(path, data, indent=4)
 
     def __hash__(self):
         return hash(self.path)
@@ -217,14 +221,24 @@ class BaseContent(BaseContentModel):
     ) -> None:
         raise NotImplementedError
 
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
+    ) -> None:
+        # Implemented at the ContentItem/Pack level rather than here
+        raise NotImplementedError()
+
     @staticmethod
     @lru_cache
     def from_path(
         path: Path,
-        git_status: Optional[str] = None,
+        git_status: Optional[GitStatuses] = None,
         old_file_path: Optional[Path] = None,
         git_sha: Optional[str] = None,
-    ) -> Optional["BaseContent"]:
+    ) -> Optional["BaseContentWithPath"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
             path.is_dir()
@@ -269,7 +283,7 @@ class BaseContent(BaseContentModel):
         try:
             obj = model.from_orm(content_item_parser)
             obj.git_status = git_status
-            obj.old_file_path = old_file_path
+            obj.old_path = old_file_path
             return obj
         except Exception as e:
             logger.error(
@@ -278,7 +292,7 @@ class BaseContent(BaseContentModel):
             return None
 
 
-class UnknownContent(BaseContentModel):
+class UnknownContent(BaseContent):
     """A model for non-existing content items used by existing content items."""
 
     not_in_repository: bool = True

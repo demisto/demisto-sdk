@@ -93,6 +93,5 @@ class ContentGraphBuilder:
         self.content_graph.create_nodes(self.nodes)
         gc.collect()
         self.content_graph.create_relationships(self.relationships)
-        self.content_graph.clean()
         gc.collect()
         self.content_graph.finalize()

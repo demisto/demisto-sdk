@@ -66,7 +66,9 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def description(self) -> Optional[str]:
-        description = get_value(self.yml_data, self.field_mapping.get("description", ""), "")
+        description = get_value(
+            self.yml_data, self.field_mapping.get("description", ""), ""
+        )
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
         description = re.sub(

@@ -61,7 +61,9 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def deprecated(self) -> bool:
-        return get_value(self.json_data, self.field_mapping.get("deprecated", ""), False)
+        return get_value(
+            self.json_data, self.field_mapping.get("deprecated", ""), False
+        )
 
     @property
     def description(self) -> Optional[str]:

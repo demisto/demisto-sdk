@@ -21,7 +21,9 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "trigger_id", "name": "trigger_name"})
+        super().field_mapping.update(
+            {"object_id": "trigger_id", "name": "trigger_name"}
+        )
         return super().field_mapping
 
     @property

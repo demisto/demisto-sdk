@@ -3243,7 +3243,7 @@ def test_is_epoch_datetime(string: str, expected_result: bool):
     "dict, paths, value, expected_dict",
     [
         ({"test": "1"}, ["test"], 2, {"test": 2}),
-        ({"test": [1 ,2 ,3 ,4]}, ["test[3]"], 2, {"test": [1 ,2 ,3 ,2]}),
+        ({"test": [1, 2, 3, 4]}, ["test[3]"], 2, {"test": [1, 2, 3, 2]}),
         ({"test1": "1"}, ["test2", "test1"], 2, {"test1": 2}),
         ({"test": "1"}, ["test2", "test1"], 2, {"test": "1", "test1": 2}),
         ({"test": {"test2": 1}}, ["test.test2"], 2, {"test": {"test2": 2}}),
@@ -3258,7 +3258,7 @@ def test_set_value(dict, paths, value, expected_dict):
         - Case 3: dict with items only in the root, a list of possible paths where one of them is in the dict, and a value to set there.
         - Case 4: dict with items only in the root, a list of possible paths where none of them is in the dict, and a value to set there.
         - Case 5: dict with items not only in the root, a list with a path not to the root that exist in the dict, and a value to set there.
-        
+
     When:
         - run set_value
     Then:

@@ -576,6 +576,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 )
 
     def finalize(self) -> None:
+        logger.info("Finalizing graph...")
         with self.driver.session() as session:
             # merge duplicates created for the graph
             session.execute_write(merge_duplicate_content_items)

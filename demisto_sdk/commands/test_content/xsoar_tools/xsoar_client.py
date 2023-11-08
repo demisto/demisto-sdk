@@ -83,9 +83,22 @@ class XsoarApiInterface(ABC):
         )
 
     @property
+    def server_health(self) -> bool:
+        return (
+            self.client.generic_request("/health/server", "GET")[1] == requests.codes.ok
+        )
+
+    @property
+    def server_containers_status(self):
+        raw_response, _, _ = self.client.generic_request("/health/containers", "GET")
+        return raw_response
+
+    @property
     @retry(exceptions=ApiException)
     def about(self) -> Dict[str, Any]:
-        raw_response, _, _ = self.client.generic_request("/about", "GET", response_type="object")
+        raw_response, _, _ = self.client.generic_request(
+            "/about", "GET", response_type="object"
+        )
         return raw_response
 
     @property
@@ -93,14 +106,18 @@ class XsoarApiInterface(ABC):
         about_raw_response = self.about
         if xsoar_version := about_raw_response.get("demistoVersion"):
             return Version(xsoar_version)
-        raise RuntimeError(f'Could not get version from instance {self.host}, got response: {about_raw_response}')
+        raise RuntimeError(
+            f"Could not get version from instance {self.host}, got response: {about_raw_response}"
+        )
 
     @property
     def build_number(self):
         about_raw_response = self.about
         if build_number := about_raw_response.get("buildNum"):
             return build_number
-        raise RuntimeError(f'Could not get build number from instance {self.host}, got response: {about_raw_response}')
+        raise RuntimeError(
+            f"Could not get build number from instance {self.host}, got response: {about_raw_response}"
+        )
 
     @property
     def host(self):
@@ -267,9 +284,7 @@ class XsoarNGApiClient(XsoarApiInterface):
     @property
     def external_base_url(self) -> str:
         # url for long-running integrations
-        return self.base_api_url.replace(
-            "api", "ext"
-        )
+        return self.base_api_url.replace("api", "ext")
 
     @property
     def base_url(self) -> str:

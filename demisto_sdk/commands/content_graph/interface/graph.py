@@ -114,7 +114,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def remove_non_repo_items(self) -> None:
+    def finalize(self) -> None:
         pass
 
     @abstractmethod

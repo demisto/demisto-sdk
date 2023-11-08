@@ -574,11 +574,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(
                     return_preserved_relationships, self._rels_to_preserve
                 )
+
+    def finalize(self) -> None:
+        with self.driver.session() as session:
+            # merge duplicates created for the graph
             session.execute_write(merge_duplicate_commands)
             session.execute_write(merge_duplicate_content_items)
 
-    def remove_non_repo_items(self) -> None:
-        with self.driver.session() as session:
+            # recreate constraints
+            session.execute_write(create_constraints)
+
             # Removing content-private nodes should be a temporary workaround.
             # For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
             session.execute_write(remove_content_private_nodes)
@@ -636,7 +641,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(drop_constraints)
             session.execute_write(import_graphml, graphml_filenames)
-            session.execute_write(create_constraints)
 
         has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}

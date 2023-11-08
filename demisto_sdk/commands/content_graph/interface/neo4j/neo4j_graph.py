@@ -139,6 +139,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         )
 
     def clean(self):
+        self.driver.close()
         self._init_driver()
 
     @property

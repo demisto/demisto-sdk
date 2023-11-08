@@ -636,8 +636,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(drop_constraints)
             session.execute_write(import_graphml, graphml_filenames)
-            session.execute_write(create_constraints)
-            session.execute_write(remove_empty_properties)
 
         has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}

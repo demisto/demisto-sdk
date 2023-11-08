@@ -90,7 +90,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
             elif self.type == "mapping-incoming":
                 # all the incident fields are the keys of the mapping
                 for incident_field in internal_mapping.keys():
-                    add_dependency_func(
+                    self.add_dependency_by_name(
                         incident_field,
                         fields_content_type,
                         is_mandatory=False,

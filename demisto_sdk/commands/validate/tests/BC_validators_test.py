@@ -71,10 +71,6 @@ def test_BreakingBackwardsSubtypeValidator(
     """
     create_old_file_pointers(content_items, old_content_items)
     assert (
-        len(
-            BreakingBackwardsSubtypeValidator().is_valid(
-                content_items
-            )
-        )
+        len(BreakingBackwardsSubtypeValidator().is_valid(content_items))
         == expected_number_of_failures
     )

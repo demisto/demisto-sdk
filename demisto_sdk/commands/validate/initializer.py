@@ -287,7 +287,7 @@ class Initializer:
         if self.use_git:
             content_objects_to_run = self.get_files_from_git()
         elif self.file_path:
-            content_objects_to_run = self.paths_to_BaseContentWithPath_set(
+            content_objects_to_run = self.paths_to_basecontent_with_path_set(
                 set(self.file_path.split(",")), None
             )
         elif self.all_files:
@@ -299,9 +299,9 @@ class Initializer:
             self.use_git = (True,)
             self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
-        content_objects_to_run_with_packs: Set[BaseContentWithPath] = self.get_items_from_packs(
-            content_objects_to_run
-        )
+        content_objects_to_run_with_packs: Set[
+            BaseContentWithPath
+        ] = self.get_items_from_packs(content_objects_to_run)
         return content_objects_to_run_with_packs
 
     def get_items_from_packs(
@@ -343,21 +343,29 @@ class Initializer:
         ) = self.collect_files_to_run(self.file_path)
         basecontent_with_path_set: Set[BaseContentWithPath] = set()
         basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_with_path_set(modified_files, GitStatuses.MODIFIED, git_sha=self.prev_ver)
+            self.paths_to_basecontent_with_path_set(
+                modified_files, GitStatuses.MODIFIED, git_sha=self.prev_ver
+            )
         )
         basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_with_path_set(renamed_files, GitStatuses.RENAMED, git_sha=self.prev_ver)
+            self.paths_to_basecontent_with_path_set(
+                renamed_files, GitStatuses.RENAMED, git_sha=self.prev_ver
+            )
         )
         basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_with_path_set(added_files, GitStatuses.ADDED, git_sha=self.prev_ver)
+            self.paths_to_basecontent_with_path_set(
+                added_files, GitStatuses.ADDED, git_sha=self.prev_ver
+            )
         )
         basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_with_path_set(deleted_files, GitStatuses.DELETED, git_sha=self.prev_ver)
+            self.paths_to_basecontent_with_path_set(
+                deleted_files, GitStatuses.DELETED, git_sha=self.prev_ver
+            )
         )
         return basecontent_with_path_set
 
     def paths_to_basecontent_with_path_set(
-        self, files_set: set, git_status: Optional[str], git_sha: Optional[str]
+        self, files_set: set, git_status: Optional[str], git_sha: Optional[str] = None
     ) -> Set[BaseContentWithPath]:
         """Return a set of all the successful casts to BaseContentWithPath from given set of files.
 
@@ -373,14 +381,18 @@ class Initializer:
         for file_path in files_set:
             try:
                 if git_status == GitStatuses.RENAMED:
-                    temp_obj: Optional[BaseContentWithPath] = BaseContentWithPath.from_path(
+                    temp_obj: Optional[
+                        BaseContentWithPath
+                    ] = BaseContentWithPath.from_path(
                         Path(file_path[0]),
                         git_status=git_status,
                         old_file_path=Path(file_path[1]),
-                        git_sha=git_sha
+                        git_sha=git_sha,
                     )
                 else:
-                    temp_obj = BaseContentWithPath.from_path(Path(file_path), git_status, git_sha=git_sha)
+                    temp_obj = BaseContentWithPath.from_path(
+                        Path(file_path), git_status, git_sha=git_sha
+                    )
                 if temp_obj is None:
                     invalid_content_items.append(file_path)
                 else:

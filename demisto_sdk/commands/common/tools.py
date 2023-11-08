@@ -4069,7 +4069,8 @@ def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
         current_dict[list_key][index] = value
     else:
         current_dict[last_key] = value
-        
+
+
 def detect_file_level(file_path: str) -> PathLevel:
     """
     Detect the whether the path points to a file, a content entity dir, a content generic entity dir
@@ -4099,6 +4100,7 @@ def detect_file_level(file_path: str) -> PathLevel:
 
     else:
         return PathLevel.PACKAGE
+
 
 def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
     """Filter a set of file paths to only include ones which are from a specified directory.

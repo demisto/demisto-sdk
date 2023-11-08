@@ -30,9 +30,7 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     graph = True
     is_auto_fixable = False
 
-    def is_valid(
-        self, content_items: Iterable[ContentTypes]
-    ) -> List[ValidationResult]:
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         """
         Validate that there are no duplicate names of scripts
         when the script name included `alert`.

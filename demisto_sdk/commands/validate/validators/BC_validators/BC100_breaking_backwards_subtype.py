@@ -1,7 +1,6 @@
-from typing import Iterable, List, Optional, Union, cast
+from typing import Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -30,7 +29,8 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         validation_results = []
         for content_item in content_items:
-            if content_item.old_base_content_object and content_item.type != content_item.old_base_content_object.type:
+            old_obj = cast(ContentTypes, content_item.old_base_content_object)
+            if content_item.type != old_obj:
                 validation_results.append(
                     ValidationResult(
                         content_object=content_item,
@@ -41,9 +41,10 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         return validation_results
 
     def fix(
-        self, content_item: ContentTypes, old_content_object: Optional[BaseContentWithPath]=None
+        self,
+        content_item: ContentTypes,
     ) -> FixResult:
-        old_content_object = cast(Iterable[ContentTypes], old_content_object)
+        old_content_object = cast(ContentTypes, content_item.old_base_content_object)
         content_item.type = old_content_object.type
         return FixResult(
             validator=self,

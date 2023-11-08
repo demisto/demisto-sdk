@@ -87,7 +87,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         raise NotImplementedError
 
     def fix(
-        self, content_item: ContentTypes, old_content_object: Optional[BaseContentWithPath] = None
+        self,
+        content_item: ContentTypes,
     ) -> FixResult:
         raise NotImplementedError
 
@@ -95,6 +96,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
         )
+
 
 class BaseResult(BaseModel):
     validator: BaseValidator
@@ -113,10 +115,13 @@ class BaseResult(BaseModel):
             "message": self.message,
         }
 
+
 class ValidationResult(BaseResult, BaseModel):
-    old_content_object: Optional[BaseContentWithPath] = None
+    """This is a class for validation results."""
+
 
 class FixResult(BaseResult, BaseModel):
+    """This is a class for fix results."""
 
     @property
     def format_readable_message(self):

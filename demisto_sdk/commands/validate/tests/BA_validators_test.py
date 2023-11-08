@@ -74,10 +74,7 @@ def test_IDNameValidator_is_valid(content_items, expected_number_of_failures):
         - Case 3: Should fail both the integration and the script
         - Case 4: Shouldn't fail any content item.
     """
-    assert (
-        len(IDNameValidator().is_valid(content_items))
-        == expected_number_of_failures
-    )
+    assert len(IDNameValidator().is_valid(content_items)) == expected_number_of_failures
 
 
 @pytest.mark.parametrize(

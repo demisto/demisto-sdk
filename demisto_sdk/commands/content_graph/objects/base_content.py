@@ -75,9 +75,7 @@ class BaseContentMetaclass(ModelMetaclass):
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["BaseContent"] = cast(
-            Type["BaseContent"], super_cls
-        )
+        model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
@@ -254,6 +252,7 @@ class BaseContentWithPath(BaseContent):
             or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
+                assert isinstance(content_type_to_model, BaseContentWithPath)
                 return content_type_to_model[ContentType.PACK].from_orm(
                     PackParser(path, git_sha=git_sha)
                 )
@@ -289,8 +288,9 @@ class BaseContentWithPath(BaseContent):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         try:
-            obj = model.from_orm(content_item_parser)
-            obj.git_status = git_status
+            obj = model.from_orm(content_item_parser)  # type: ignore
+            if obj:
+                obj.git_status = git_status
             return obj
         except Exception as e:
             logger.error(

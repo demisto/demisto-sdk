@@ -41,7 +41,9 @@ class ValidateManager:
         self.validation_results = validation_results
         self.config_reader = config_reader
         self.initializer = initializer
-        self.objects_to_run: Set[BaseContentWithPath] = self.initializer.gather_objects_to_run()
+        self.objects_to_run: Set[
+            BaseContentWithPath
+        ] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
@@ -78,7 +80,7 @@ class ValidateManager:
                 if self.allow_autofix and validator.is_auto_fixable:
                     for validation_result in validation_results:
                         self.validation_results.append_fixing_results(
-                            validator.fix(validation_result.content_object, validation_result.old_content_object)  # type: ignore
+                            validator.fix(validation_result.content_object)  # type: ignore
                         )
                 else:
                     self.validation_results.extend(validation_results)

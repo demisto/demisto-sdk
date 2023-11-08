@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import (
     DockerHook,
@@ -41,7 +40,7 @@ def test_no_files(repo):
 @pytest.mark.parametrize(
     "mode, expected_text",
     [
-        (PreCommitModes.NIGHTLY, ["i am the nightly args"]),
+        ("nightly", ["i am the nightly args"]),
         (None, ["i am some argument"]),
     ],
 )
@@ -108,7 +107,7 @@ def test_get_property():
             == expected_value
         )
 
-    assert_get_prop_successful(PreCommitModes.NIGHTLY, "prop1", nightly_val)
+    assert_get_prop_successful("nightly", "prop1", nightly_val)
     assert_get_prop_successful(None, "prop1", value1)
 
 
@@ -210,7 +209,7 @@ def test__set_properties():
         assert res == expected_value
 
     assert_get_prop_successful(
-        PreCommitModes.NIGHTLY,
+        "nightly",
         {"prop1": nightly_val, "other_prop": "whatever"},
         ["remove_me"],
     )

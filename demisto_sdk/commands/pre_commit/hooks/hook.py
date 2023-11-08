@@ -15,7 +15,6 @@ class Hook(ABC):
         mode: str = "",
         all_files: bool = False,
         input_mode: bool = False,
-        to_delete: tuple = (),
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
@@ -24,7 +23,7 @@ class Hook(ABC):
         self.mode = mode
         self.all_files = all_files
         self.input_mode = input_mode
-        self._set_properties(hook={}, to_delete=to_delete)
+        self._set_properties(hook={})
 
     @abstractmethod
     def prepare_hook(self, **kwargs):

@@ -284,6 +284,6 @@ MATCH (n:BaseContent{not_in_repository: true})
 MATCH (m:BaseContent{content_type: n.content_type, not_in_repository: false})
 WHERE ((m.object_id = n.object_id AND m.object_id <> "") OR (m.name = n.name AND m.name <> ""))
 WITH n, m
-apoc.refactor.mergeNodes([n, m], {properties: "overwrite", mergeRels: true}) YIELD node
+CALL apoc.refactor.mergeNodes([n, m], {properties: "overwrite", mergeRels: true}) YIELD node
 """,
     )

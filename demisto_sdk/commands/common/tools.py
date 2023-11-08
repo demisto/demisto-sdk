@@ -4111,7 +4111,7 @@ def get_file_by_status(
     )
 
 
-def get(obj: dict, paths: Union[str, List[str]], defaultParam=None):
+def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):
     """Extracts field value from nested object
 
     Args:
@@ -4162,7 +4162,7 @@ def find_correct_key(data: dict, keys: List[str]) -> str:
     return keys[-1]
 
 
-def set_val(data: dict, paths: Union[str, List[str]], value) -> None:
+def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
     """Updating a data object with given value in the given key.
     If a list of keys is given, will find the right path to update based on which path acctually has a value.
 

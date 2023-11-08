@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks
+* Adjust graph structure to accommodate anticipated changes in infrastructure for the **validate** command.
 * Fixed an issue where the **lint** command with docker, would not give unique container names to different image runs.
 
 ## 1.21.0

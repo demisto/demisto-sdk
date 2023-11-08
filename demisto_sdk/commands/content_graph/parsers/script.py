@@ -1,8 +1,10 @@
 import re
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
@@ -22,8 +24,9 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
         is_test_script: bool = False,
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.is_test: bool = is_test_script
         self.type = self.yml_data.get("subtype") or self.yml_data.get("type")
         self.tags: List[str] = self.yml_data.get("tags", [])
@@ -34,13 +37,23 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         self.connect_to_dependencies()
         self.connect_to_tests()
 
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "docker_image": "dockerimage",
+                "description": "comment",
+            }
+        )
+        return super().field_mapping
+
     @property
     def description(self) -> Optional[str]:
-        return self.yml_data.get("comment") or ""
+        return get_value(self.yml_data, self.field_mapping.get("description", ""), "")
 
     @property
     def docker_image(self) -> str:
-        return self.yml_data.get("dockerimage", "")
+        return get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
 
     def connect_to_dependencies(self) -> None:
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.

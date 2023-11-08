@@ -2,7 +2,9 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 
 import demisto_client
 
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+)
 
 if TYPE_CHECKING:
     # avoid circular imports

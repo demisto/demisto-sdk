@@ -180,7 +180,7 @@ class BaseContentWithPath(BaseContent):
     field_mapping: dict = Field({}, exclude=True)
     path: Path
     git_status: Optional[GitStatuses]
-    old_path: Optional[Path]
+    old_base_content_object: Optional["BaseContentWithPath"] = None
 
     def _save(self, path: Path, data: dict):
         for key, val in self.field_mapping.items():
@@ -240,6 +240,13 @@ class BaseContentWithPath(BaseContent):
         git_sha: Optional[str] = None,
     ) -> Optional["BaseContentWithPath"]:
         logger.debug(f"Loading content item from path: {path}")
+        if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
+            obj = BaseContentWithPath.from_path(path, git_status)
+            if obj:
+                path = path if not old_file_path else old_file_path
+                old_obj = BaseContentWithPath.from_path(path, git_sha=git_sha)
+                obj.old_base_content_object = old_obj
+            return obj
         if (
             path.is_dir()
             and path.parent.name == PACKS_FOLDER
@@ -283,7 +290,6 @@ class BaseContentWithPath(BaseContent):
         try:
             obj = model.from_orm(content_item_parser)
             obj.git_status = git_status
-            obj.old_path = old_file_path
             return obj
         except Exception as e:
             logger.error(

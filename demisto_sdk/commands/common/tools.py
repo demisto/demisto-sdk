@@ -834,24 +834,28 @@ def get_file(
     return_content: bool = False,
     keep_order: bool = False,
     raise_on_error: bool = False,
+    git_sha: Optional[str] = None,
 ):
     """
     Get file contents.
-
     if raise_on_error = False, this function will return empty dict
     """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
+    if git_sha:
+        if file_path.is_absolute():
+            file_path = file_path.relative_to(get_content_path())
+        return get_remote_file(
+            str(file_path), tag=git_sha, return_content=return_content
+        )
 
     type_of_file = file_path.suffix.lower()
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
-
     if not file_path.exists():
         raise FileNotFoundError(file_path)
-
     try:
         file_content = safe_read_unicode(file_path.read_bytes())
         if return_content:
@@ -865,7 +869,6 @@ def get_file(
             replaced = StringIO(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
-
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
             result = json.load(StringIO(file_content))
@@ -908,16 +911,23 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path: str | Path, cache_clear=False, keep_order: bool = False):
+def get_yaml(
+    file_path: str | Path,
+    cache_clear=False,
+    keep_order: bool = False,
+    git_sha: Optional[str] = None,
+):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
+    return get_file(
+        file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
+    )
 
 
-def get_json(file_path: str | Path, cache_clear=False):
+def get_json(file_path: str | Path, cache_clear=False, git_sha: Optional[str] = None):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear, git_sha=git_sha)
 
 
 def get_script_or_integration_id(file_path):
@@ -3974,3 +3984,84 @@ def parse_int_or_default(value: Any, default: int) -> int:
 
 def get_all_repo_pack_ids() -> list:
     return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]
+
+
+def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):
+    """Extracts field value from nested object
+    Args:
+      obj (dict): The object to extract the field from
+      field (Union[str,List[str]]): The field or a list of possible fields to extract from the object, given in dot notation
+      defaultParam (object): The default value to return in case the field doesn't exist in obj
+    Returns:
+      str: The value of the extracted field
+    """
+    if isinstance(paths, str):
+        paths = [paths]
+    for path in paths:
+        keys = path.split(".")
+        temp_obj = obj
+        success = True
+        for key in keys:
+            try:
+                if "[" in key and "]" in key:
+                    # Handle list indexing
+                    list_key, index = key.split("[")
+                    index = int(index.strip("]"))  # type: ignore
+                    temp_obj = temp_obj[list_key][index]
+                else:
+                    temp_obj = temp_obj[key]
+            except (AttributeError, KeyError, IndexError):
+                success = False
+                continue
+        if success:
+            return temp_obj
+    return defaultParam
+
+
+def find_correct_key(data: dict, keys: List[str]) -> str:
+    """Given a data object and a list of possible paths, finding the path where the object holds a value in that path.
+    Args:
+        data (dict): The object that holds the keys.
+        keys (List[str]) List of possible paths.
+    Returns:
+        str: Either the path where the given data object has a value at or the last option.
+    """
+    for key in keys:
+        if get_value(data, key, None):
+            return key
+    return keys[-1]
+
+
+def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
+    """Updating a data object with given value in the given key.
+    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    Args:
+        data (dict): the data object to update.
+        keys (Union[str,List[str]]): the path or list of possible paths to update.
+        value (_type_): the value to update.
+    """
+    if isinstance(paths, list):
+        path = find_correct_key(data, paths)
+    else:
+        path = paths
+    current_dict = data
+    keys = path.split(".")
+    for key in keys[:-1]:
+        if "[" in key and "]" in key:
+            # Handle list indexing
+            list_key, index = key.split("[")
+            index = int(index.strip("]"))
+            current_dict = current_dict[list_key]
+            current_dict = current_dict[index]
+        else:
+            # Handle dictionary keys
+            current_dict = current_dict[key]
+
+    # Set the value in the dictionary at the specified path
+    last_key = keys[-1]
+    if "[" in last_key and "]" in last_key:
+        list_key, index = last_key.split("[")  # type: ignore
+        index = int(index.strip("]"))  # type: ignore
+        current_dict[list_key][index] = value
+    else:
+        current_dict[last_key] = value

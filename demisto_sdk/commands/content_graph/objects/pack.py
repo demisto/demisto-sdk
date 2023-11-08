@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
+    get_file,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -31,7 +32,7 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContent,
+    BaseContentWithPath,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
@@ -108,11 +109,12 @@ def upload_zip(
     return True
 
 
-class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
+class Pack(BaseContentWithPath, PackMetadata, content_type=ContentType.PACK):
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
+    ignored_errors_dict: dict = Field({}, exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
@@ -134,12 +136,20 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.object_id
 
     @property
+    def ignored_errors(self) -> list:
+        return self.ignored_errors_dict.get(PACK_METADATA_FILENAME, [])
+
+    @property
     def pack_name(self) -> str:
         return self.name
 
     @property
     def pack_version(self) -> Optional[Version]:
         return Version(self.current_version) if self.current_version else None
+
+    @property
+    def support_level(self):
+        return self.support
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -497,3 +507,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
+
+    def save(self):
+        file_path = self.path / PACK_METADATA_FILENAME
+        data = get_file(file_path)
+        super()._save(file_path, data)

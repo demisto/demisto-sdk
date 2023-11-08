@@ -28,10 +28,11 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
     write_dict,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
@@ -162,6 +163,11 @@ class PreCommitRunner:
             self.files_to_run
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
+        [
+            DockerHook(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
+            for hook_id, hook in hooks.items()
+            if hook_id.endswith("in-docker")
+        ]
 
     def run(
         self,
@@ -284,7 +290,7 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
     python_versions_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
-            BaseContent.from_path, integrations_scripts_mapping.keys()
+            BaseContentWithPath.from_path, integrations_scripts_mapping.keys()
         )
 
     exclude_integration_script = set()

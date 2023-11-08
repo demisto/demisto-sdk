@@ -75,7 +75,7 @@ def test_IDNameValidator_is_valid(content_items, expected_number_of_failures):
         - Case 4: Shouldn't fail any content item.
     """
     assert (
-        len(IDNameValidator().is_valid(content_items, None))
+        len(IDNameValidator().is_valid(content_items))
         == expected_number_of_failures
     )
 
@@ -106,5 +106,5 @@ def test_IDNameValidator_fix(content_item, expected_name):
         - Case 3: Should fail both the integration and the script
         - Case 4: Shouldn't fail any content item.
     """
-    IDNameValidator().fix(content_item, None)
+    IDNameValidator().fix(content_item)
     assert content_item.name == expected_name

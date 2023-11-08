@@ -14,11 +14,11 @@ from typing import (
 from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContent,
     BaseContentMetaclass,
+    BaseContentWithPath,
 )
 
-ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
+ContentTypes = TypeVar("ContentTypes", bound=BaseContentWithPath)
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
@@ -45,7 +45,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     def get_content_types(self):
         args = get_args(self.__orig_bases__[0])  # type: ignore
-        if isinstance(args[0], (BaseContent, BaseContentMetaclass)):
+        if isinstance(args[0], (BaseContentWithPath, BaseContentMetaclass)):
             return args
         return get_args(args[0])
 
@@ -58,7 +58,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         """check wether to run validation on the given content item or not.
 
         Args:
-            content_item (BaseContent): The content item to run the validation on.
+            content_item (BaseContentWithPath): The content item to run the validation on.
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
 
@@ -83,12 +83,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     def is_valid(
         self,
         content_items: Iterable[ContentTypes],
-        old_content_items: Iterable[Optional[ContentTypes]],
     ) -> List[ValidationResult]:
         raise NotImplementedError
 
     def fix(
-        self, content_item: ContentTypes, old_content_item: ContentTypes
+        self, content_item: ContentTypes, old_content_object: Optional[BaseContentWithPath] = None
     ) -> FixResult:
         raise NotImplementedError
 
@@ -100,7 +99,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 class BaseResult(BaseModel):
     validator: BaseValidator
     message: str
-    content_object: BaseContent
+    content_object: BaseContentWithPath
 
     @property
     def format_readable_message(self):
@@ -115,7 +114,7 @@ class BaseResult(BaseModel):
         }
 
 class ValidationResult(BaseResult, BaseModel):
-    old_content_object: Optional[BaseContent] = None
+    old_content_object: Optional[BaseContentWithPath] = None
 
 class FixResult(BaseResult, BaseModel):
 

@@ -21,7 +21,6 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
     def is_valid(
         self,
         content_items: Iterable[ContentTypes],
-        _,
     ) -> List[ValidationResult]:
         return [
             ValidationResult(

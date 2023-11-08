@@ -157,8 +157,7 @@ class ValidationInitializer:
         self.git_statuses = ""
         self.fix_method = ""
         self.validate_graph = ""
-        self.include_old_format_files_is_valid_method = ", _"
-        self.include_old_format_files_fix_method = ", _"
+        self.include_old_format_files_fix_method = ""
         self.min_content_type_val = 1
         self.max_content_type_val = int(list(CONTENT_TYPES_DICT.keys())[-1])
 
@@ -403,11 +402,8 @@ Fill the content types as the numbers they appear as: """
         if self.git_statuses_str:
             git_statuses_ls = self.git_statuses_str.split(",")
             if "A" not in git_statuses_ls and "D" not in git_statuses_ls:
-                self.include_old_format_files_is_valid_method = (
-                    ", old_content_items: Iterable[Optional[ContentTypes]]"
-                )
                 self.include_old_format_files_fix_method = (
-                    ", old_content_item: ContentTypes"
+                    ", old_content_object: Optional[BaseContentWithPath]=None"
                 )
             git_statuses_enum_ls = [
                 GIT_STATUSES_DICT[git_status] for git_status in git_statuses_ls
@@ -462,10 +458,9 @@ Fill the content types as the numbers they appear as: """
         """
         Generate the is_valid function.
         """
-        self.is_valid_method = f"""
+        self.is_valid_method = """
     def is_valid(
-        self, content_items: Iterable[ContentTypes]{self.include_old_format_files_is_valid_method}
-    ) -> List[ValidationResult]:
+        self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         # Add your validation right here
         pass
     """

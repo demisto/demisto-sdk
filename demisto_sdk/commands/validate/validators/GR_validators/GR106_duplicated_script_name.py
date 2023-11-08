@@ -31,7 +31,7 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
 
     def is_valid(
-        self, content_items: Iterable[ContentTypes], _
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         """
         Validate that there are no duplicate names of scripts

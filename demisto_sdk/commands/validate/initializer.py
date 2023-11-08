@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     specify_files_from_directory,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import (
     ContentDTO,
@@ -276,19 +276,18 @@ class Initializer:
 
         return filtered_modified_files, filtered_added_files, filtered_renamed_files
 
-    def gather_objects_to_run(self) -> Set[Tuple[BaseContent, Optional[BaseContent]]]:
+    def gather_objects_to_run(self) -> Set[BaseContentWithPath]:
         """
         Filter the file that should run according to the given flag (-i/-g/-a).
 
         Returns:
-            Set[Tuple[BaseContent, Optional[BaseContent]]]: the set of tuples of files that should run,
-            where index 0 holds the new item and index 1 holds the old one (Before the rename/modification).
+            Set[BaseContentWithPath]: the set of files that should run.
         """
-        content_objects_to_run: Set[BaseContent] = set()
+        content_objects_to_run: Set[BaseContentWithPath] = set()
         if self.use_git:
             content_objects_to_run = self.get_files_from_git()
         elif self.file_path:
-            content_objects_to_run = self.paths_to_basecontent_set(
+            content_objects_to_run = self.paths_to_BaseContentWithPath_set(
                 set(self.file_path.split(",")), None
             )
         elif self.all_files:
@@ -300,51 +299,23 @@ class Initializer:
             self.use_git = (True,)
             self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
-        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
+        content_objects_to_run_with_packs: Set[BaseContentWithPath] = self.get_items_from_packs(
             content_objects_to_run
         )
-        final_objects_to_run_set: Set[
-            Tuple[BaseContent, Optional[BaseContent]]
-        ] = self.get_objects_with_old_version(content_objects_to_run_with_packs)
-        return final_objects_to_run_set
-
-    def get_objects_with_old_version(
-        self, content_objects_to_run_with_packs: Set[BaseContent]
-    ) -> Set[Tuple[BaseContent, Optional[BaseContent]]]:
-        """Goes through the given set and parse a copy of the modified/renamed items from before the modification/rename.
-
-        Args:
-            content_objects_to_run_with_packs (Set[BaseContent]): The set of BaseContent items to turn to tuples.
-
-        Returns:
-            Set[Tuple[BaseContent, Optional[BaseContent]]]: The set of the given items as a tuple where the second index is the objects before they got modified/renamed.
-        """
-        final_objects_to_run_set: Set[Tuple[BaseContent, Optional[BaseContent]]] = set()
-        for content_object in content_objects_to_run_with_packs:
-            old_content_item = None
-            if content_object.git_status == GitStatuses.MODIFIED:
-                old_content_item = BaseContent.from_path(
-                    content_object.path, git_sha=self.prev_ver
-                )
-            elif content_object.git_status == GitStatuses.RENAMED:
-                old_content_item = BaseContent.from_path(
-                    content_object.old_file_path, git_sha=self.prev_ver
-                )
-            final_objects_to_run_set.add((content_object, old_content_item))
-        return final_objects_to_run_set
+        return content_objects_to_run_with_packs
 
     def get_items_from_packs(
-        self, content_objects_to_run: Set[BaseContent]
-    ) -> Set[BaseContent]:
+        self, content_objects_to_run: Set[BaseContentWithPath]
+    ) -> Set[BaseContentWithPath]:
         """Gets the packs content items from the Packs objects in the given set if they weren't there before.
 
         Args:
-            content_objects_to_run (Set[BaseContent]): The set of BaseContent items to pick the Pack objects from.
+            content_objects_to_run (Set[BaseContentWithPath]): The set of BaseContentWithPath items to pick the Pack objects from.
 
         Returns:
-            Set[BaseContent]: The given set unified with the content items from inside the Pack objects.
+            Set[BaseContentWithPath]: The given set unified with the content items from inside the Pack objects.
         """
-        content_objects_to_run_with_packs: Set[BaseContent] = set()
+        content_objects_to_run_with_packs: Set[BaseContentWithPath] = set()
         for content_object in content_objects_to_run:
             if isinstance(content_object, Pack):
                 for content_item in content_object.content_items:
@@ -353,11 +324,11 @@ class Initializer:
             content_objects_to_run_with_packs.add(content_object)
         return content_objects_to_run_with_packs
 
-    def get_files_from_git(self) -> Set[BaseContent]:
+    def get_files_from_git(self) -> Set[BaseContentWithPath]:
         """Return all files added/changed/deleted.
 
         Returns:
-            Set[BaseContent]: The set of all the files from git successfully casted to BaseContent
+            Set[BaseContentWithPath]: The set of all the files from git successfully casted to BaseContentWithPath
         """
         self.validate_git_installed()
         self.set_prev_ver()
@@ -370,49 +341,50 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
-        basecontent_set: Set[BaseContent] = set()
-        basecontent_set = basecontent_set.union(
-            self.paths_to_basecontent_set(modified_files, GitStatuses.MODIFIED)
+        basecontent_with_path_set: Set[BaseContentWithPath] = set()
+        basecontent_with_path_set = basecontent_with_path_set.union(
+            self.paths_to_basecontent_with_path_set(modified_files, GitStatuses.MODIFIED, git_sha=self.prev_ver)
         )
-        basecontent_set = basecontent_set.union(
-            self.paths_to_basecontent_set(renamed_files, GitStatuses.RENAMED)
+        basecontent_with_path_set = basecontent_with_path_set.union(
+            self.paths_to_basecontent_with_path_set(renamed_files, GitStatuses.RENAMED, git_sha=self.prev_ver)
         )
-        basecontent_set = basecontent_set.union(
-            self.paths_to_basecontent_set(added_files, GitStatuses.ADDED)
+        basecontent_with_path_set = basecontent_with_path_set.union(
+            self.paths_to_basecontent_with_path_set(added_files, GitStatuses.ADDED, git_sha=self.prev_ver)
         )
-        basecontent_set = basecontent_set.union(
-            self.paths_to_basecontent_set(deleted_files, GitStatuses.DELETED)
+        basecontent_with_path_set = basecontent_with_path_set.union(
+            self.paths_to_basecontent_with_path_set(deleted_files, GitStatuses.DELETED, git_sha=self.prev_ver)
         )
-        return basecontent_set
+        return basecontent_with_path_set
 
-    def paths_to_basecontent_set(
-        self, files_set: set, git_status: Optional[str]
-    ) -> Set[BaseContent]:
-        """Return a set of all the successful casts to BaseContent from given set of files.
+    def paths_to_basecontent_with_path_set(
+        self, files_set: set, git_status: Optional[str], git_sha: Optional[str]
+    ) -> Set[BaseContentWithPath]:
+        """Return a set of all the successful casts to BaseContentWithPath from given set of files.
 
         Args:
-            files_set (set): The set of file paths to case into BaseContent.
+            files_set (set): The set of file paths to case into BaseContentWithPath.
             git_status (Optional[str]): The git status for the given files (if given).
 
         Returns:
-            Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
+            Set[BaseContentWithPath]: The set of all the successful casts to BaseContentWithPath from given set of files.
         """
-        basecontent_set: Set[BaseContent] = set()
+        basecontent_with_path_set: Set[BaseContentWithPath] = set()
         invalid_content_items: List[str] = []
         for file_path in files_set:
             try:
                 if git_status == GitStatuses.RENAMED:
-                    temp_obj: Optional[BaseContent] = BaseContent.from_path(
+                    temp_obj: Optional[BaseContentWithPath] = BaseContentWithPath.from_path(
                         Path(file_path[0]),
                         git_status=git_status,
                         old_file_path=Path(file_path[1]),
+                        git_sha=git_sha
                     )
                 else:
-                    temp_obj = BaseContent.from_path(Path(file_path), git_status)
+                    temp_obj = BaseContentWithPath.from_path(Path(file_path), git_status, git_sha=git_sha)
                 if temp_obj is None:
                     invalid_content_items.append(file_path)
                 else:
-                    basecontent_set.add(temp_obj)
+                    basecontent_with_path_set.add(temp_obj)
             except InvalidContentItemException:
                 invalid_content_items.append(file_path)
-        return basecontent_set
+        return basecontent_with_path_set

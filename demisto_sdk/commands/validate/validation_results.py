@@ -3,7 +3,7 @@ from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
 from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,
     ValidationResult,
@@ -49,7 +49,7 @@ class ValidationResults:
         Returns:
             int: The exit code number - 1 if the validations failed, otherwise return 0
         """
-        fixed_objects_set: Set[BaseContent] = set()
+        fixed_objects_set: Set[BaseContentWithPath] = set()
         exit_code = 0
         if self.json_file_path:
             self.write_validation_results()

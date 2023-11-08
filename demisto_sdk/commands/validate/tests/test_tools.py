@@ -2,8 +2,8 @@ import tempfile
 from pathlib import Path
 from typing import Any, Optional
 
-from demisto_sdk.commands.common.tools import set_val
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.common.tools import set_value
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.repo import Repo
 
@@ -24,11 +24,11 @@ def create_integration_object(
     """
     yml_content = load_yaml("integration.yml")
     if key_path and new_value:
-        set_val(yml_content, key_path, new_value)
+        set_value(yml_content, key_path, new_value)
     pack = REPO.create_pack()
     integration = pack.create_integration(yml=yml_content)
     integration.code.write("from MicrosoftApiModule import *")
-    return BaseContent.from_path(Path(integration.path))
+    return BaseContentWithPath.from_path(Path(integration.path))
 
 
 def create_script_object(
@@ -45,11 +45,11 @@ def create_script_object(
     """
     yml_content = load_yaml("script.yml")
     if key_path and new_value:
-        set_val(yml_content, key_path, new_value)
+        set_value(yml_content, key_path, new_value)
     pack = REPO.create_pack()
     script = pack.create_script(yml=yml_content)
     script.code.write("from MicrosoftApiModule import *")
-    return BaseContent.from_path(Path(script.path))
+    return BaseContentWithPath.from_path(Path(script.path))
 
 
 def create_metadata_object(
@@ -66,10 +66,10 @@ def create_metadata_object(
     """
     json_content = load_json("pack_metadata.json")
     if key_path and new_value is not None:
-        set_val(json_content, key_path, new_value)
+        set_value(json_content, key_path, new_value)
     pack = REPO.create_pack()
     pack.pack_metadata.write_json(json_content)
-    return BaseContent.from_path(Path(pack.pack_metadata.path))
+    return BaseContentWithPath.from_path(Path(pack.pack_metadata.path))
 
 
 def create_classifier_object(
@@ -86,10 +86,10 @@ def create_classifier_object(
     """
     json_content = load_json("classifier.json")
     if key_path and new_value is not None:
-        set_val(json_content, key_path, new_value)
+        set_value(json_content, key_path, new_value)
     pack = REPO.create_pack()
     pack.create_classifier(name="test_classifier", content=json_content)
-    return BaseContent.from_path(Path(pack.classifiers[0].path))
+    return BaseContentWithPath.from_path(Path(pack.classifiers[0].path))
 
 
 def create_dashboard_object(
@@ -106,10 +106,10 @@ def create_dashboard_object(
     """
     json_content = load_json("dashboard.json")
     if key_path and new_value is not None:
-        set_val(json_content, key_path, new_value)
+        set_value(json_content, key_path, new_value)
     pack = REPO.create_pack()
     pack.create_dashboard(name="dashboard", content=json_content)
-    return BaseContent.from_path(Path(pack.dashboards[0].path))
+    return BaseContentWithPath.from_path(Path(pack.dashboards[0].path))
 
 
 def create_incident_type_object(
@@ -126,10 +126,10 @@ def create_incident_type_object(
     """
     json_content = load_json("incident_type.json")
     if key_path and new_value is not None:
-        set_val(json_content, key_path, new_value)
+        set_value(json_content, key_path, new_value)
     pack = REPO.create_pack()
     pack.create_incident_type(name="incident_type", content=json_content)
-    return BaseContent.from_path(Path(pack.incident_types[0].path))
+    return BaseContentWithPath.from_path(Path(pack.incident_types[0].path))
 
 
 def create_wizard_object(dict_to_update: Optional[Any] = None):
@@ -145,5 +145,10 @@ def create_wizard_object(dict_to_update: Optional[Any] = None):
     pack.create_wizard(name="test_wizard")
     if dict_to_update:
         pack.wizards[0].update(dict_to_update)
-    wizard_object = BaseContent.from_path(Path(pack.wizards[0].path))
+    wizard_object = BaseContentWithPath.from_path(Path(pack.wizards[0].path))
     return wizard_object
+
+
+def create_old_file_pointers(content_items, old_content_items):
+    for content_item, old_content_item in zip(content_items, old_content_items):
+        content_item.old_base_content_object = old_content_item

@@ -46,7 +46,7 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-content_type_to_model: Dict[ContentType, Type["BaseContentWithPath"]] = {}
+content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 json = JSON_Handler()
 
 
@@ -75,8 +75,8 @@ class BaseContentMetaclass(ModelMetaclass):
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["BaseContentWithPath"] = cast(
-            Type["BaseContentWithPath"], super_cls
+        model_cls: Type["BaseContent"] = cast(
+            Type["BaseContent"], super_cls
         )
         if content_type:
             content_type_to_model[content_type] = model_cls
@@ -240,6 +240,7 @@ class BaseContentWithPath(BaseContent):
         git_sha: Optional[str] = None,
     ) -> Optional["BaseContentWithPath"]:
         logger.debug(f"Loading content item from path: {path}")
+        # if the file was added or renamed - add a pointer to the object created from the old file content / path.
         if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
             obj = BaseContentWithPath.from_path(path, git_status)
             if obj:

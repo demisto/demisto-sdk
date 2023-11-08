@@ -1,11 +1,11 @@
-from typing import List, Optional, Set, Tuple
+from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
@@ -41,9 +41,7 @@ class ValidateManager:
         self.validation_results = validation_results
         self.config_reader = config_reader
         self.initializer = initializer
-        self.objects_to_run: Set[
-            Tuple[BaseContent, Optional[BaseContent]]
-        ] = self.initializer.gather_objects_to_run()
+        self.objects_to_run: Set[BaseContentWithPath] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
@@ -69,18 +67,18 @@ class ValidateManager:
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(
-                        content_object[0],
+                        content_object,
                         self.configured_validations.ignorable_errors,
                         self.configured_validations.support_level_dict,
                     ),
                     self.objects_to_run,
                 )
             ):
-                validation_results: List[ValidationResult] = validator.is_valid(*zip(*filtered_content_objects_for_validator))  # type: ignore
+                validation_results: List[ValidationResult] = validator.is_valid(filtered_content_objects_for_validator)  # type: ignore
                 if self.allow_autofix and validator.is_auto_fixable:
                     for validation_result in validation_results:
                         self.validation_results.append_fixing_results(
-                            validator.fix(validation_result.content_object)  # type: ignore
+                            validator.fix(validation_result.content_object, validation_result.old_content_object)  # type: ignore
                         )
                 else:
                     self.validation_results.extend(validation_results)

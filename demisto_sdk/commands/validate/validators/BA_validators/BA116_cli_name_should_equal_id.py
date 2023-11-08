@@ -27,7 +27,7 @@ class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
 
     
     def is_valid(
-        self, content_items: Iterable[ContentTypes], _
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -42,7 +42,7 @@ class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
         ]
 
 
-    def fix(self, content_item: ContentTypes, _) -> FixResult:
+    def fix(self, content_item: ContentTypes) -> FixResult:
         content_item.cli_name = content_item.object_id
         return FixResult(
             validator=self,

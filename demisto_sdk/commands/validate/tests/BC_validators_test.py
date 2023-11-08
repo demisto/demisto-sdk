@@ -2,6 +2,7 @@ import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
+    create_old_file_pointers,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
@@ -68,10 +69,11 @@ def test_BreakingBackwardsSubtypeValidator(
         - Case 3: Should fail both the integration and the script
         - Case 4: Shouldn't fail any content item.
     """
+    create_old_file_pointers(content_items, old_content_items)
     assert (
         len(
             BreakingBackwardsSubtypeValidator().is_valid(
-                content_items, old_content_items
+                content_items
             )
         )
         == expected_number_of_failures

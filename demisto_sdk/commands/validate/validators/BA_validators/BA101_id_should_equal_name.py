@@ -39,7 +39,7 @@ class IDNameValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
 
     def is_valid(
-        self, content_items: Iterable[ContentTypes], _
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -53,7 +53,7 @@ class IDNameValidator(BaseValidator[ContentTypes]):
             if content_item.object_id != content_item.name
         ]
 
-    def fix(self, content_item: ContentTypes, _) -> FixResult:
+    def fix(self, content_item: ContentTypes) -> FixResult:
         content_item.name = content_item.object_id
         return FixResult(
             validator=self,

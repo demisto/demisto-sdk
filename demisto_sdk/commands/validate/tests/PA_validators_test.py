@@ -54,6 +54,6 @@ def test_pack_metadata_name_validator(
         - Case 6: Should fail 2 pack metadatas.
     """
     assert (
-        len(PackMetadataNameValidator().is_valid(packmetadatas_objects_list, None))
+        len(PackMetadataNameValidator().is_valid(packmetadatas_objects_list))
         == expected_number_of_failures
     )

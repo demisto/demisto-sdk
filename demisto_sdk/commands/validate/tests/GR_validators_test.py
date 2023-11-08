@@ -28,6 +28,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
 )
+from demisto_sdk.commands.validate.tests.test_tools import create_script_object
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_duplicated_script_name import (
     DuplicatedScriptNameValidator,
 )
@@ -520,8 +521,10 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
         - Validate the existence of duplicate script names
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        
-    results = DuplicatedScriptNameValidator().is_valid([create_script_object(), create_script_object()])
+    scripts = []
+    for pack in repository.packs:
+        scripts.extend(pack.content_items.script)
+    results = DuplicatedScriptNameValidator().is_valid(scripts)
     
     
     # with GraphValidator(update_graph=False) as graph_validator:

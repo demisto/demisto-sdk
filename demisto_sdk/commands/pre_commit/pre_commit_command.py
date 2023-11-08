@@ -32,6 +32,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContentW
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
@@ -162,6 +163,11 @@ class PreCommitRunner:
             self.files_to_run
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
+        [
+            DockerHook(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
+            for hook_id, hook in hooks.items()
+            if hook_id.endswith("in-docker")
+        ]
 
     def run(
         self,
@@ -441,10 +447,11 @@ def preprocess_files(
             files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
             files_to_run.add(file)
-            # if the current file is a yml file, add the matching python file to files_to_run
-            if str(file).endswith("yml"):
-                str_py_file_path = str(file).replace("yml", "py")
-                files_to_run.add(Path(str_py_file_path))
+            # If the current file is a yml file, add the matching python file to files_to_run
+            if file.suffix == ".yml":
+                py_file_path = file.with_suffix(".py")
+                if py_file_path.exists():
+                    files_to_run.add(py_file_path)
 
     # convert to relative file to content path
     relative_paths = {

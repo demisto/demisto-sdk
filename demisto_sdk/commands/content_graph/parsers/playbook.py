@@ -20,8 +20,13 @@ IGNORED_FIELDS = [
     "appendTags",
     "addLabels",
     "appendMultiSelect",
+    "deleteEmptyField",
+    "execution-timeout",
+    "extend-context",
+    "ignore-outputs",
     "retry-count",
     "retry-interval",
+    "using",
 ]
 
 

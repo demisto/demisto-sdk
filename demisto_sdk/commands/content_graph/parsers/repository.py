@@ -65,7 +65,7 @@ class RepositoryParser:
             Iterator[Path]: A pack path.
         """
         packs_folder: Path = self.path / PACKS_FOLDER
-        if packs_to_parse is not None:
+        if packs_to_parse:
             for pack in packs_to_parse:
                 path = packs_folder / pack
                 if not path.is_dir():

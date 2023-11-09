@@ -35,7 +35,7 @@ class ContentGraphBuilder:
             packs_to_update (Optional[List[str]]): A list of packs to update.
         """
         if not packs_to_update:
-            packs_to_update = []
+            return
         self._parse_and_model_content(packs_to_update)
         self._create_or_update_graph()
 

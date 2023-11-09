@@ -37,14 +37,14 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContentWithPath,
+    BaseContent,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
 )
 
 
-class ContentItem(BaseContentWithPath):
+class ContentItem(BaseContent):
     path: Path
     marketplaces: List[MarketplaceVersions]
     name: str
@@ -103,7 +103,7 @@ class ContentItem(BaseContentWithPath):
             return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         if pack_name := get_pack_name(self.path):
             try:
-                return BaseContentWithPath.from_path(
+                return BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[return-value]
             except InvalidContentItemException:
@@ -124,11 +124,11 @@ class ContentItem(BaseContentWithPath):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool
@@ -167,11 +167,11 @@ class ContentItem(BaseContentWithPath):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool

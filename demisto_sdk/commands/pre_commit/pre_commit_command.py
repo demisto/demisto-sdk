@@ -255,7 +255,7 @@ class PreCommitRunner:
         return ret_val
 
 
-def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]]:
+def group_by_language(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]]:
     """This function groups the files to run pre-commit on by the python version.
 
     Args:
@@ -265,7 +265,10 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
         Exception: If invalid files were given.
 
     Returns:
-        Dict[str, set]: The files grouped by their python version.
+        Tuple[Dict[str, Set], Set[Path]]: A tuple containing a dictionary and a set.
+        The dictionary contains the files grouped by their version (if they are in python then by python version
+            else by language).
+        The set contains deprecated scripts and integrations, that needs to be excluded.
     """
     integrations_scripts_mapping = defaultdict(set)
     infra_files = []
@@ -287,7 +290,7 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
         else:
             infra_files.append(file)
 
-    python_versions_to_files: Dict[str, Set] = defaultdict(set)
+    language_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
             BaseContentWithPath.from_path, integrations_scripts_mapping.keys()
@@ -313,28 +316,25 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
         code_file_path = integration_script.path.parent
         if python_version := integration_script.python_version:
             version = Version(python_version)
-            python_version_string = f"{version.major}.{version.minor}"
+            version_string = f"{version.major}.{version.minor}"
         else:
-            # Skip cases of powershell scripts
-            exclude_integration_script.add(
-                integration_script.path.relative_to(CONTENT_PATH)
-            )
-            continue
-        python_versions_to_files[
-            python_version_string or DEFAULT_PYTHON2_VERSION
+            version_string = integration_script.type
+
+        language_to_files[
+            version_string or DEFAULT_PYTHON2_VERSION
         ].update(
             integrations_scripts_mapping[code_file_path],
             {integration_script.path.relative_to(CONTENT_PATH)},
         )
 
     if infra_files:
-        python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
+        language_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
 
     if exclude_integration_script:
         logger.info(
-            f"Skipping deprecated or powershell integrations or scripts: {join_files(exclude_integration_script, ', ')}"
+            f"Skipping deprecated integrations or scripts: {join_files(exclude_integration_script, ', ')}"
         )
-    return python_versions_to_files, exclude_integration_script
+    return language_to_files, exclude_integration_script
 
 
 def pre_commit_manager(
@@ -396,13 +396,13 @@ def pre_commit_manager(
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files, exclude_files = group_by_python_version(files_to_run)
-    if not python_version_to_files:
+    version_to_files, exclude_files = group_by_language(files_to_run)
+    if not version_to_files:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return None
 
     pre_commit_runner = PreCommitRunner(
-        bool(input_files), all_files, mode, python_version_to_files, sdk_ref
+        bool(input_files), all_files, mode, version_to_files, sdk_ref
     )
     return pre_commit_runner.run(
         unit_test,

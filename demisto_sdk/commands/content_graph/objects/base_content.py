@@ -287,9 +287,7 @@ class BaseContent(BaseNode):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         try:
-            obj = model.from_orm(content_item_parser)  # type: ignore
-            if obj:
-                obj.git_status = git_status
+            obj = model.from_orm(content_item_parser, git_status=git_status)  # type: ignore
             return obj
         except Exception as e:
             logger.error(

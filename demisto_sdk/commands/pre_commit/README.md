@@ -18,6 +18,21 @@ It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastru
 ### Automatically, as a git hook
 * Create a [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) that calls `demisto-sdk pre-commit`.
 
+## Modes
+If you need different args set for the different modes, for example some rules should be excluded in the nightly build.
+Any key can be set this way.
+You can set this as follows.
+```yaml
+  - id: sample-hook
+    args:nightly: ['--exclude', '123']
+    args:mode1: ['--test', '123']
+    args: ['This is the default argument']
+    otherkey:nightly: hello
+    otherkey: world
+```
+And call precommit as follows: `demisto-sdk pre-commit -a --mode nightly`.
+Note, that it is possible to use any mode that you like, and have multiple modes for each hook, like in the example.
+
 ## Steps
 
 ### External tools
@@ -70,18 +85,3 @@ Often with commands we run in the docker we have a configuration file that is sp
       arg_name: '--config'
       file_name: 'ruff.toml'
 ```
-
-## Modes
-If you need different args set for the different modes, for example some rules should be excluded in the nightly build.
-Any key can be set this way.
-You can set this as follows.
-```yaml
-  - id: sample-hook
-    args:nightly: ['--exclude', '123']
-    args:mode1: ['--test', '123']
-    args: ['This is the default argument']
-    otherkey:nightly: hello
-    otherkey: world
-```
-And call precommit as follows: `demisto-sdk pre-commit -a --mode nightly`.
-Note, that it is possible to use any mode that you like, and have multiple modes for each kook, like in the example.

@@ -193,7 +193,7 @@ def test__set_properties():
 
     value1 = "value1"
 
-    def assert_get_prop_successful(mode, expected_value, remove_props):
+    def assert_get_prop_successful(mode, expected_value):
         res = {}
         hook = create_hook(
             {
@@ -201,18 +201,16 @@ def test__set_properties():
                 "prop1:nightly": nightly_val,
                 "prop1:othermode": "someval",
                 "other_prop": "whatever",
-                "remove_me": True,
                 "nonused:mode": "isignored",
             }
         )
-        DockerHook(**hook, mode=mode)._set_properties(res, to_delete=remove_props)
+        DockerHook(**hook, mode=mode)._set_properties(res)
         assert res == expected_value
 
     assert_get_prop_successful(
         "nightly",
         {"prop1": nightly_val, "other_prop": "whatever"},
-        ["remove_me"],
     )
     assert_get_prop_successful(
-        None, {"prop1": value1, "other_prop": "whatever"}, ["remove_me"]
+        None, {"prop1": value1, "other_prop": "whatever"}
     )

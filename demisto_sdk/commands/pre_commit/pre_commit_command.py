@@ -32,8 +32,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
-from demisto_sdk.commands.pre_commit.hooks.general_hook import GeneralHook
-from demisto_sdk.commands.pre_commit.hooks.hook import join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import join_files, Hook
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
@@ -176,7 +175,7 @@ class PreCommitRunner:
             hook for hook_id, hook in hooks.items() if not hook_id.endswith("in-docker")
         ]
         for hook in hooks_without_docker:
-            GeneralHook(**hook, **kwargs).prepare_hook()
+            Hook(**hook, **kwargs).prepare_hook()
 
     def run(
         self,

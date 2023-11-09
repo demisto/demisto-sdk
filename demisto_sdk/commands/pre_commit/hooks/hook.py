@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Set
 from demisto_sdk.commands.common.logger import logger
 
 
-class Hook(ABC):
+class Hook():
     def __init__(
         self,
         hook: dict,
@@ -25,14 +25,13 @@ class Hook(ABC):
         self.input_mode = input_mode
         self._set_properties(hook={})
 
-    @abstractmethod
     def prepare_hook(self, **kwargs):
         """
         This method should be implemented in each hook.
         Since we removed the base hook from the hooks list, we must add it back.
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
-        ...
+        self.hooks.append(deepcopy(self.base_hook))
 
     def _set_files_on_hook(self, hook: dict, files) -> int:
         """
@@ -92,7 +91,7 @@ class Hook(ABC):
             ret = self.base_hook.get(f"{name}:{self.mode}")
         return ret or self.base_hook.get(name, default)
 
-    def _set_properties(self, hook, to_delete=()):
+    def _set_properties(self, hook):
         """
         Will alter the new hook, setting the properties that don't need unique behavior
         For any propery x, if x isn't already defined, x will be set according to the mode provided.
@@ -102,11 +101,10 @@ class Hook(ABC):
         if the mode provided is nightly, args will be set to 456. Otherwise, the default (key with no :) will be taken
         Args:
             hook: the hook to modify
-            to_delete: keys on the demisto config that we dont want to pass to precommit
         """
         for full_key in self.base_hook:
             key = full_key.split(":")[0]
-            if hook.get(key) or key in to_delete:
+            if hook.get(key):
                 continue
             if prop := self._get_property(key):
                 hook[key] = prop

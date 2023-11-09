@@ -7,8 +7,7 @@ import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
-from demisto_sdk.commands.pre_commit.hooks.general_hook import GeneralHook
-from demisto_sdk.commands.pre_commit.hooks.hook import join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import join_files, Hook
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
@@ -404,7 +403,7 @@ def test_coverage_analyze_general_hook(mode):
     ]
     coverage_analyze_hook = create_hook({"args": args, "args:nightly": args_nightly})
     kwargs = {"mode": mode, "all_files": False, "input_mode": True}
-    GeneralHook(**coverage_analyze_hook, **kwargs).prepare_hook()
+    Hook(**coverage_analyze_hook, **kwargs).prepare_hook()
     expected_hook_args = args_nightly if mode else args
     hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
     assert expected_hook_args == hook_args

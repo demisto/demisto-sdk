@@ -75,9 +75,7 @@ class BaseContentMetaclass(ModelMetaclass):
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["BaseContent"] = cast(
-            Type["BaseContent"], super_cls
-        )
+        model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type

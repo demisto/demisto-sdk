@@ -42,6 +42,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
     create_nodes,
     delete_all_graph_nodes,
+    get_all_nodes,
     get_relationships_to_preserve,
     get_schema,
     merge_duplicate_commands,
@@ -641,6 +642,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(drop_constraints)
             session.execute_write(import_graphml, graphml_filenames)
+            # query to get all nodes to cache them
+            session.execute_read(get_all_nodes)
             session.execute_write(merge_duplicate_commands)
             session.execute_write(create_constraints)
 

@@ -717,14 +717,4 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return session.execute_read(get_schema)
 
     def run_single_query(self, query: str, **kwargs) -> Any:
-        with self.driver.session() as session:
-            try:
-                tx = session.begin_transaction()
-                res = tx.run(query, **kwargs)
-                data = res.data()
-                tx.commit()
-                tx.close()
-                return data
-            except Exception as e:
-                logger.error(f"Error when running query: {e}")
-                raise e
+        return self.driver.execute_query(query, **kwargs)

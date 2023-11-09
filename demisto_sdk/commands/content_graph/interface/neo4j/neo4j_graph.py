@@ -34,6 +34,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies imp
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
     export_graphml,
     import_graphml,
+    merge_duplicate_commands,
+    merge_duplicate_content_items,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
@@ -44,8 +46,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     delete_all_graph_nodes,
     get_relationships_to_preserve,
     get_schema,
-    merge_duplicate_commands,
-    merge_duplicate_content_items,
     remove_content_private_nodes,
     remove_empty_properties,
     remove_packs_before_creation,
@@ -578,12 +578,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     return_preserved_relationships, self._rels_to_preserve
                 )
 
-    def finalize(self) -> None:
-        logger.info("Finalizing graph...")
+    def remove_non_repo_items(self) -> None:
         with self.driver.session() as session:
-            # merge duplicates created for the graph
-            session.execute_write(merge_duplicate_content_items)
-
             # Removing content-private nodes should be a temporary workaround.
             # For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
             session.execute_write(remove_content_private_nodes)
@@ -643,9 +639,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(import_graphml, graphml_filenames)
             session.execute_write(merge_duplicate_commands)
             session.execute_write(create_constraints)
-        self.driver.close()
-        self._init_driver()
-        self.run_single_query("MATCH (n)-[r]-(m) RETURN *")
+            if len(graphml_filenames) > 1:
+                session.execute_write(merge_duplicate_content_items)
         has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
         return not has_infra_graph_been_changed

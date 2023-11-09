@@ -3467,7 +3467,7 @@ def update_content_graph(
     "--docker/--no-docker",
     help="Whether to run docker based hooks or not.",
     default=False,
-    is_flag=True
+    is_flag=True,
 )
 @click.pass_context
 @logging_setup_decorator

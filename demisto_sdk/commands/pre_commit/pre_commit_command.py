@@ -165,7 +165,9 @@ class PreCommitRunner:
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
         [
-            DockerHook(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run, run_docker_hooks=run_docker_hooks)
+            DockerHook(**hook, **kwargs).prepare_hook(
+                files_to_run=self.files_to_run, run_docker_hooks=run_docker_hooks
+            )
             for hook_id, hook in hooks.items()
             if hook_id.endswith("in-docker")
         ]
@@ -355,7 +357,7 @@ def pre_commit_manager(
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
     dry_run: bool = False,
-    run_docker_hooks: bool = False
+    run_docker_hooks: bool = False,
 ) -> Optional[int]:
     """Run pre-commit hooks .
 
@@ -418,7 +420,7 @@ def pre_commit_manager(
         show_diff_on_failure,
         exclude_files,
         dry_run,
-        run_docker_hooks
+        run_docker_hooks,
     )
 
 

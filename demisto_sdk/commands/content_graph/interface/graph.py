@@ -13,7 +13,10 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    BaseContentWithPath,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -238,7 +241,7 @@ class ContentGraphInterface(ABC):
         Returns:
             Union[Pack, ContentItem]: The content item found
         """
-        content_item = BaseContent.from_path(path)
+        content_item = BaseContentWithPath.from_path(path)
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(f"Could not parse content_item from {path}")
         # enrich the content_item with the graph

@@ -86,6 +86,7 @@ def mock_pack(
         node_id=f"{ContentType.PACK}:{name}",
         path=path,
         name=name,
+        display_name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
         hidden=False,
         server_min_version="5.5.0",

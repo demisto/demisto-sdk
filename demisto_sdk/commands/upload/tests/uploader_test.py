@@ -48,7 +48,7 @@ from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.constants import MULTIPLE_ZIPPED_PACKS_FILE_STEM
 from demisto_sdk.commands.upload.upload import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
-    BaseContent,
+    BaseContentWithPath,
     zip_multiple_packs,
 )
 from demisto_sdk.commands.upload.uploader import (
@@ -72,7 +72,7 @@ def mock_upload_method(mocker: Any, class_: ContentItem):
 
 
 DATA = ""
-DUMMY_SCRIPT_OBJECT: ContentItem = BaseContent.from_path(  # type:ignore[assignment]
+DUMMY_SCRIPT_OBJECT: ContentItem = BaseContentWithPath.from_path(  # type:ignore[assignment]
     Path(
         f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
     )
@@ -219,7 +219,9 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
 
     path = Path(git_path(), path)
     assert path.exists()
-    assert BaseContent.from_path(path) is not None, f"Failed parsing {path.absolute()}"
+    assert (
+        BaseContentWithPath.from_path(path) is not None
+    ), f"Failed parsing {path.absolute()}"
 
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
@@ -248,7 +250,7 @@ def test_upload_single_not_supported(mocker):
         "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layout-details-test_bla-V2.json",
     )
     assert path.exists()
-    assert BaseContent.from_path(path) is None
+    assert BaseContentWithPath.from_path(path) is None
     uploader = Uploader(input=path)
 
     uploader.upload()
@@ -645,7 +647,9 @@ class TestPrintSummary:
         uploader = Uploader(path)
         assert uploader.demisto_version == Version("6.6.0")
         assert uploader.upload() == ERROR_RETURN_CODE
-        assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
+        assert uploader._failed_upload_version_mismatch == [
+            BaseContentWithPath.from_path(path)
+        ]
 
         logged = flatten_call_args(logger_info.call_args_list)
         assert len(logged) == 3
@@ -1103,7 +1107,9 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     )
     shutil.rmtree(pack_to_zip.path)  # leave only the zip
     zipped_pack_path = tmp_path / "zipped.zip"
-    mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
+    mocker.patch.object(
+        BaseContentWithPath, "from_path", side_effect=[pack0, pack1, None]
+    )
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
     zip_multiple_packs(
         [pack0.path, pack1.path, zipped_pack_path],

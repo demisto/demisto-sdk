@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -14,16 +15,20 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 class IntegrationScriptParser(YAMLContentItemParser):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.connect_to_api_modules()
 
-    @property
-    def object_id(self) -> Optional[str]:
-        return self.yml_data.get("commonfields", {}).get("id")
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "commonfields.id"})
+        return super().field_mapping
 
     @property
     @abstractmethod

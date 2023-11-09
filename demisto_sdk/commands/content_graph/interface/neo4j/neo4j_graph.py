@@ -642,7 +642,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(drop_constraints)
             session.execute_write(import_graphml, graphml_filenames)
             session.execute_write(merge_duplicate_commands)
-        self.create_indexes_and_constraints()
+        self.run_single_query("MATCH (n)-[r]-(m) RETURN *")
         has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
         return not has_infra_graph_been_changed

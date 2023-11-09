@@ -1,6 +1,7 @@
 import os
 from multiprocessing import Pool
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from neo4j import Driver, GraphDatabase, Session, graph
@@ -9,6 +10,7 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
     NEO4J_PASSWORD,
@@ -114,14 +116,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     ) -> None:
         self._id_to_obj: Dict[str, BaseContent] = {}
 
-        if not neo4j_service.is_alive():
+        if not self.is_alive():
             neo4j_service.start()
         self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
 
-        self.driver: Driver = GraphDatabase.driver(
-            NEO4J_DATABASE_URL,
-            auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
-        )
+        self._init_driver()
         self.output_path = None
         if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
             self.output_path = Path(artifacts_folder) / "content_graph"
@@ -132,6 +131,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __exit__(self, *args) -> None:
         self.driver.close()
+
+    def _init_driver(self):
+        self.driver: Driver = GraphDatabase.driver(
+            NEO4J_DATABASE_URL,
+            auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
+        )
 
     @property
     def import_path(self) -> Path:
@@ -580,7 +585,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
 
-    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
+    def import_graph(
+        self,
+        imported_path: Optional[Path] = None,
+        download: bool = False,
+        fail_on_error: bool = False,
+    ) -> bool:
         """Imports GraphML files to neo4j, by:
         1. Preparing the GraphML files for import
         2. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
@@ -592,34 +602,62 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
             imported_path (Path): The path to import the graph from.
+            download (bool): Wheter download the graph from bucket or not.
+            fail_on_error (bool): Whether to raise exception on error or not.
 
         Returns:
             bool: Whether the import was successful or not
         """
+        if imported_path:
+            logger.info(f"Importing graph from {imported_path}")
+            self.clean_import_dir()
+
+        if download:
+            logger.info("Importing graph from bucket")
+            self.clean_import_dir()
+            try:
+                with NamedTemporaryFile() as temp_file:
+                    official_content_graph = download_content_graph(
+                        Path(temp_file.name),
+                    )
+                    self.move_to_import_dir(official_content_graph)
+            except Exception:
+                logger.error("Failed to download content graph from bucket")
+                if fail_on_error:
+                    raise
+                return False
+
         logger.info("Importing graph from GraphML files...")
         self._import_handler.extract_files_from_path(imported_path)
         self._import_handler.ensure_data_uniqueness()
         graphml_filenames = self._import_handler.get_graphml_filenames()
-        if graphml_filenames:
-            with self.driver.session() as session:
-                session.execute_write(drop_constraints)
-                session.execute_write(import_graphml, graphml_filenames)
-                session.execute_write(merge_duplicate_commands)
+        if not graphml_filenames:
+            # no ml files found in the import dir, nothing to import
+            return False
+        with self.driver.session() as session:
+            session.execute_write(drop_constraints)
+            session.execute_write(import_graphml, graphml_filenames)
+            session.execute_write(merge_duplicate_commands)
+            session.execute_write(create_constraints)
+            if len(graphml_filenames) > 1:
                 session.execute_write(merge_duplicate_content_items)
-                session.execute_write(create_constraints)
-                session.execute_write(remove_empty_properties)
         has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
         return not has_infra_graph_been_changed
 
     def export_graph(
-        self, output_path: Optional[Path] = None, override_commit: bool = True
+        self,
+        output_path: Optional[Path] = None,
+        override_commit: bool = True,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     ) -> None:
         self.clean_import_dir()
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata(override_commit)
         if output_path:
+            output_path = output_path / marketplace.value
+            logger.info(f"Saving content graph in {output_path}.zip")
             self.zip_import_dir(output_path)
 
     def clean_graph(self):
@@ -667,6 +705,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
             session.execute_write(create_pack_dependencies)
+
+    def is_alive(self):
+        return neo4j_service.is_alive()
 
     def get_schema(self) -> dict:
         with self.driver.session() as session:

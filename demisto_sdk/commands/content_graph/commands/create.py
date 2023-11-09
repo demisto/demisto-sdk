@@ -45,9 +45,9 @@ def create_content_graph(
     builder.create_graph()
     if dependencies:
         content_graph_interface.create_pack_dependencies()
-    if output_path:
-        output_path = output_path / marketplace.value
-    content_graph_interface.export_graph(output_path)
+    content_graph_interface.export_graph(
+        output_path, override_commit=True, marketplace=marketplace
+    )
     logger.info(
         f"Successfully created the content graph. UI representation "
         f"is available at {NEO4J_DATABASE_HTTP} "

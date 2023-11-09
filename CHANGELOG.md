@@ -4,6 +4,7 @@
 * Adjust graph structure to accommodate anticipated changes in infrastructure for the **validate** command.
 * Fixed an issue where the **lint** command with docker, would not give unique container names to different image runs.
 * Added a new `display_name` field to `Pack` entity in graph.
+* Renamed BaseContentWithPath to BaseContent and BaseContent to BaseNode.
 
 ## 1.21.0
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.

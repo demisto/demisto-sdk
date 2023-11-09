@@ -393,7 +393,9 @@ args_nightly = [
 ]
 
 
-@pytest.mark.parametrize("mode, expected_args", [(None, args), ("nightly", args_nightly)])
+@pytest.mark.parametrize(
+    "mode, expected_args", [(None, args), ("nightly", args_nightly)]
+)
 def test_coverage_analyze_general_hook(mode, expected_args):
     """
     Given:

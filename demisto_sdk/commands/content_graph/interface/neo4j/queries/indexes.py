@@ -12,6 +12,7 @@ NODE_INDEX_OPTIONS = [
     ["content_type"],
     ["marketplaces"],
     ["object_id"],
+    ["object_id", "name"],
     ["object_id", "content_type"],
     ["object_id", "content_type", "fromversion", "marketplaces"],
     ["name"],

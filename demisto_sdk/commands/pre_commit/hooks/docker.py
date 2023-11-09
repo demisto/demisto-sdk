@@ -259,7 +259,9 @@ class DockerHook(Hook):
         new_hook["id"] = f"{self._get_property('id')}-{image}"
         new_hook["name"] = f"{self._get_property('name')}-{image}"
         new_hook["language"] = "docker_image"
-        new_hook["entry"] = f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}'
+        new_hook[
+            "entry"
+        ] = f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}'
 
         ret_hooks = []
         counter = 0

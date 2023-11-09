@@ -211,6 +211,4 @@ def test__set_properties():
         "nightly",
         {"prop1": nightly_val, "other_prop": "whatever"},
     )
-    assert_get_prop_successful(
-        None, {"prop1": value1, "other_prop": "whatever"}
-    )
+    assert_get_prop_successful(None, {"prop1": value1, "other_prop": "whatever"})

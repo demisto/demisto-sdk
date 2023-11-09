@@ -288,7 +288,3 @@ CALL apoc.refactor.mergeNodes([n, m], {properties: "overwrite", mergeRels: true}
 RETURN count(*)
 """,
     )
-
-
-def get_all_nodes(tx: Transaction):
-    return run_query(tx, "MATCH (n) RETURN n")

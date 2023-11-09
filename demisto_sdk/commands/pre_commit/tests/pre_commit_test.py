@@ -371,8 +371,30 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
             assert "file1.py" in hook["hook"]["exclude"]
 
 
-@pytest.mark.parametrize("mode", [None, "nightly"])
-def test_coverage_analyze_general_hook(mode):
+args = [
+    "-i",
+    ".coverage",
+    "--report-dir",
+    "coverage_report",
+    "--report-type",
+    "all",
+    "--previous-coverage-report-url",
+    "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+]
+args_nightly = [
+    "-i",
+    ".coverage",
+    "--report-dir",
+    "coverage_report",
+    "--report-type",
+    "all",
+    "--allowed-coverage-degradation-percentage",
+    "100",
+]
+
+
+@pytest.mark.parametrize("mode, expected_args", [(None, args), ("nightly", args_nightly)])
+def test_coverage_analyze_general_hook(mode, expected_args):
     """
     Given:
         - A hook and kwargs.
@@ -381,32 +403,12 @@ def test_coverage_analyze_general_hook(mode):
     Then:
         - Make sure that the coverage-analyze hook was created successfully.
     """
-    args = [
-        "-i",
-        ".coverage",
-        "--report-dir",
-        "coverage_report",
-        "--report-type",
-        "all",
-        "--previous-coverage-report-url",
-        "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
-    ]
-    args_nightly = [
-        "-i",
-        ".coverage",
-        "--report-dir",
-        "coverage_report",
-        "--report-type",
-        "all",
-        "--allowed-coverage-degradation-percentage",
-        "100",
-    ]
+
     coverage_analyze_hook = create_hook({"args": args, "args:nightly": args_nightly})
     kwargs = {"mode": mode, "all_files": False, "input_mode": True}
     Hook(**coverage_analyze_hook, **kwargs).prepare_hook()
-    expected_hook_args = args_nightly if mode else args
     hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
-    assert expected_hook_args == hook_args
+    assert expected_args == hook_args
 
 
 @pytest.mark.parametrize(

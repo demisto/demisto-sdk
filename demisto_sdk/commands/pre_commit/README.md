@@ -19,7 +19,7 @@ It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastru
 * Create a [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) that calls `demisto-sdk pre-commit`.
 
 ## Modes
-If you need different args set for the different modes, for example some rules should be excluded in the nightly build.
+When different args set for the different modes are needed, for example, some rules should be excluded in the nightly build.
 Any key can be set this way.
 You can set this as follows.
 ```yaml

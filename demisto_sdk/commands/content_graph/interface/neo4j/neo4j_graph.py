@@ -69,9 +69,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_unknown_content,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
+    CONTENT_TYPE_TO_MODEL,
     BaseNode,
     UnknownContent,
-    content_type_to_model,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -93,7 +93,7 @@ def _parse_node(element_id: str, node: dict) -> BaseNode:
         obj = UnknownContent.parse_obj(node)
 
     else:
-        model = content_type_to_model.get(content_type)
+        model = CONTENT_TYPE_TO_MODEL.get(content_type)
         if not model:
             raise NoModelException(f"No model for {content_type}")
         obj = model.parse_obj(node)

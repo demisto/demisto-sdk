@@ -15,10 +15,10 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContentMetaclass,
-    BaseContentWithPath,
+    BaseContent,
 )
 
-ContentTypes = TypeVar("ContentTypes", bound=BaseContentWithPath)
+ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
@@ -45,7 +45,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     def get_content_types(self):
         args = get_args(self.__orig_bases__[0])  # type: ignore
-        if isinstance(args[0], (BaseContentWithPath, BaseContentMetaclass)):
+        if isinstance(args[0], (BaseContent, BaseContentMetaclass)):
             return args
         return get_args(args[0])
 
@@ -58,7 +58,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         """check wether to run validation on the given content item or not.
 
         Args:
-            content_item (BaseContentWithPath): The content item to run the validation on.
+            content_item (BaseContent): The content item to run the validation on.
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
 
@@ -101,7 +101,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 class BaseResult(BaseModel):
     validator: BaseValidator
     message: str
-    content_object: BaseContentWithPath
+    content_object: BaseContent
 
     @property
     def format_readable_message(self):

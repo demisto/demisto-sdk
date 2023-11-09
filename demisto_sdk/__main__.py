@@ -856,7 +856,12 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 allow_autofix=kwargs.get("fix"),
                 ignore_support_level=kwargs.get("ignore_support_level"),
             )
+            import time
+
+            start = time.time()
             exit_code += validator_v2.run_validations()
+            end = time.time()
+            logger.info(f"The new validate execution took {end - start}")
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.info(f"[red]{e}[/red]")

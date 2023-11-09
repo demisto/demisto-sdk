@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from demisto_sdk.commands.common.tools import set_value
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.repo import Repo
 
@@ -28,7 +28,7 @@ def create_integration_object(
     pack = REPO.create_pack()
     integration = pack.create_integration(yml=yml_content)
     integration.code.write("from MicrosoftApiModule import *")
-    return BaseContentWithPath.from_path(Path(integration.path))
+    return BaseContent.from_path(Path(integration.path))
 
 
 def create_script_object(
@@ -49,7 +49,7 @@ def create_script_object(
     pack = REPO.create_pack()
     script = pack.create_script(yml=yml_content)
     script.code.write("from MicrosoftApiModule import *")
-    return BaseContentWithPath.from_path(Path(script.path))
+    return BaseContent.from_path(Path(script.path))
 
 
 def create_metadata_object(
@@ -69,7 +69,7 @@ def create_metadata_object(
         set_value(json_content, key_path, new_value)
     pack = REPO.create_pack()
     pack.pack_metadata.write_json(json_content)
-    return BaseContentWithPath.from_path(Path(pack.pack_metadata.path))
+    return BaseContent.from_path(Path(pack.pack_metadata.path))
 
 
 def create_classifier_object(
@@ -89,7 +89,7 @@ def create_classifier_object(
         set_value(json_content, key_path, new_value)
     pack = REPO.create_pack()
     pack.create_classifier(name="test_classifier", content=json_content)
-    return BaseContentWithPath.from_path(Path(pack.classifiers[0].path))
+    return BaseContent.from_path(Path(pack.classifiers[0].path))
 
 
 def create_dashboard_object(
@@ -109,7 +109,7 @@ def create_dashboard_object(
         set_value(json_content, key_path, new_value)
     pack = REPO.create_pack()
     pack.create_dashboard(name="dashboard", content=json_content)
-    return BaseContentWithPath.from_path(Path(pack.dashboards[0].path))
+    return BaseContent.from_path(Path(pack.dashboards[0].path))
 
 
 def create_incident_type_object(
@@ -129,7 +129,7 @@ def create_incident_type_object(
         set_value(json_content, key_path, new_value)
     pack = REPO.create_pack()
     pack.create_incident_type(name="incident_type", content=json_content)
-    return BaseContentWithPath.from_path(Path(pack.incident_types[0].path))
+    return BaseContent.from_path(Path(pack.incident_types[0].path))
 
 
 def create_wizard_object(dict_to_update: Optional[Any] = None):
@@ -145,7 +145,7 @@ def create_wizard_object(dict_to_update: Optional[Any] = None):
     pack.create_wizard(name="test_wizard")
     if dict_to_update:
         pack.wizards[0].update(dict_to_update)
-    wizard_object = BaseContentWithPath.from_path(Path(pack.wizards[0].path))
+    wizard_object = BaseContent.from_path(Path(pack.wizards[0].path))
     return wizard_object
 
 

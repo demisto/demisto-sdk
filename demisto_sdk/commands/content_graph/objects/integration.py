@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 import demisto_client
 
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContent,
+    BaseNode,
 )
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 
 
-class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
+class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
 
     # From HAS_COMMAND relationship

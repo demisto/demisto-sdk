@@ -46,7 +46,7 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
+content_type_to_model: Dict[ContentType, Type["BaseNode"]] = {}
 json = JSON_Handler()
 
 
@@ -66,16 +66,16 @@ class BaseContentMetaclass(ModelMetaclass):
 
         Args:
             name: The class object name (e.g., Integration)
-            bases: The bases of the class object (e.g., [YAMLContentItem, ContentItem, BaseContent])
+            bases: The bases of the class object (e.g., [YAMLContentItem, ContentItem, BaseNode])
             namespace: The namespaces of the class object.
             content_type (ContentType, optional): The type corresponds to the class (e.g., ContentType.INTEGRATIONS)
 
         Returns:
-            BaseContent: The model class.
+            BaseNode: The model class.
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
+        model_cls: Type["BaseNode"] = cast(Type["BaseNode"], super_cls)
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
@@ -89,7 +89,7 @@ class BaseContentMetaclass(ModelMetaclass):
         return model_cls
 
 
-class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
+class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
@@ -174,11 +174,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         self.relationships_data[relationship_type].add(relationship)
 
 
-class BaseContentWithPath(BaseContent):
+class BaseContent(BaseNode):
     field_mapping: dict = Field({}, exclude=True)
     path: Path
     git_status: Optional[GitStatuses]
-    old_base_content_object: Optional["BaseContentWithPath"] = None
+    old_base_content_object: Optional["BaseContent"] = None
 
     def _save(self, path: Path, data: dict):
         for key, val in self.field_mapping.items():
@@ -236,14 +236,14 @@ class BaseContentWithPath(BaseContent):
         git_status: Optional[GitStatuses] = None,
         old_file_path: Optional[Path] = None,
         git_sha: Optional[str] = None,
-    ) -> Optional["BaseContentWithPath"]:
+    ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         # if the file was added or renamed - add a pointer to the object created from the old file content / path.
         if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
-            obj = BaseContentWithPath.from_path(path, git_status)
+            obj = BaseContent.from_path(path, git_status)
             if obj:
                 path = path if not old_file_path else old_file_path
-                old_obj = BaseContentWithPath.from_path(path, git_sha=git_sha)
+                old_obj = BaseContent.from_path(path, git_sha=git_sha)
                 obj.old_base_content_object = old_obj
             return obj
         if (
@@ -252,7 +252,7 @@ class BaseContentWithPath(BaseContent):
             or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
-                assert isinstance(content_type_to_model, BaseContentWithPath)
+                assert isinstance(content_type_to_model, Type[BaseContent])
                 return content_type_to_model[ContentType.PACK].from_orm(
                     PackParser(path, git_sha=git_sha)
                 )
@@ -299,7 +299,7 @@ class BaseContentWithPath(BaseContent):
             return None
 
 
-class UnknownContent(BaseContent):
+class UnknownContent(BaseNode):
     """A model for non-existing content items used by existing content items."""
 
     not_in_repository: bool = True

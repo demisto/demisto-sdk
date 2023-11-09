@@ -5,7 +5,7 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
@@ -42,7 +42,7 @@ class ValidateManager:
         self.config_reader = config_reader
         self.initializer = initializer
         self.objects_to_run: Set[
-            BaseContentWithPath
+            BaseContent
         ] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only

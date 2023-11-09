@@ -46,7 +46,7 @@ class RelationshipType(str, enum.Enum):
 
 
 class ContentType(str, enum.Enum):
-    BASE_CONTENT = "BaseContent"
+    BASE_CONTENT = "BaseNode"
     CLASSIFIER = "Classifier"
     COMMAND = "Command"
     COMMAND_OR_SCRIPT = "CommandOrScript"

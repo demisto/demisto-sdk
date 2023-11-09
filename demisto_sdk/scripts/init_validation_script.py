@@ -403,7 +403,7 @@ Fill the content types as the numbers they appear as: """
             git_statuses_ls = self.git_statuses_str.split(",")
             if "A" not in git_statuses_ls and "D" not in git_statuses_ls:
                 self.include_old_format_files_fix_method = (
-                    ", old_content_object: Optional[BaseContentWithPath]=None"
+                    ", old_content_object: Optional[BaseContent]=None"
                 )
             git_statuses_enum_ls = [
                 GIT_STATUSES_DICT[git_status] for git_status in git_statuses_ls

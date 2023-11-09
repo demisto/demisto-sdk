@@ -46,7 +46,7 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-content_type_to_model: Dict[ContentType, Type["BaseNode"]] = {}
+CONTENT_TYPE_TO_MODEL: Dict[ContentType, Type["BaseNode"]] = {}
 json = JSON_Handler()
 
 
@@ -77,7 +77,7 @@ class BaseContentMetaclass(ModelMetaclass):
         # for type checking
         model_cls: Type["BaseNode"] = cast(Type["BaseNode"], super_cls)
         if content_type:
-            content_type_to_model[content_type] = model_cls
+            CONTENT_TYPE_TO_MODEL[content_type] = model_cls
             model_cls.content_type = content_type
 
         if lazy_properties := {
@@ -252,7 +252,7 @@ class BaseContent(BaseNode):
             or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
-                assert isinstance(content_type_to_model, Type[BaseContent])
+                content_type_to_model = cast(Type["BaseContent"], CONTENT_TYPE_TO_MODEL)
                 return content_type_to_model[ContentType.PACK].from_orm(
                     PackParser(path, git_sha=git_sha)
                 )
@@ -282,7 +282,7 @@ class BaseContent(BaseNode):
             )
             return None
 
-        model = content_type_to_model.get(content_item_parser.content_type)
+        model = CONTENT_TYPE_TO_MODEL.get(content_item_parser.content_type)
         logger.debug(f"Loading content item from path: {path} as {model}")
         if not model:
             logger.error(f"Could not parse content item from path: {path}")

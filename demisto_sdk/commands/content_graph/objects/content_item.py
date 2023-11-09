@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
-from pydantic import DirectoryPath, validator
+from pydantic import DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -54,6 +54,7 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
+    _pack: Optional[Pack] = Field(None, exclude=True)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -101,11 +102,15 @@ class ContentItem(BaseContent):
         """
         if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
             return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if self._pack:
+            return self._pack
         if pack_name := get_pack_name(self.path):
             try:
-                return BaseContent.from_path(
+                pack = BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[return-value]
+                self._pack = pack
+                return pack
             except InvalidContentItemException:
                 logger.warning(
                     f"Could not parse pack {pack_name} for content item {self.path}"

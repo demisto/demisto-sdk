@@ -14,8 +14,8 @@ from typing import (
 from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContentMetaclass,
     BaseContent,
+    BaseContentMetaclass,
 )
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)

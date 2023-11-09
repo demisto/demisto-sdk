@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Callable, List, Optional, Set
+from typing import TYPE_CHECKING, Callable, List, Optional, Set, cast
 
 import demisto_client
 from packaging.version import Version
@@ -109,6 +109,7 @@ class ContentItem(BaseContent):
                 pack = BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[return-value]
+                pack = cast(Pack, pack)
                 self._pack = pack
                 return pack
             except InvalidContentItemException:

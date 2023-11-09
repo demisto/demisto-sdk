@@ -41,9 +41,7 @@ class ValidateManager:
         self.validation_results = validation_results
         self.config_reader = config_reader
         self.initializer = initializer
-        self.objects_to_run: Set[
-            BaseContent
-        ] = self.initializer.gather_objects_to_run()
+        self.objects_to_run: Set[BaseContent] = self.initializer.gather_objects_to_run()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (

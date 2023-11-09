@@ -10,9 +10,7 @@ if TYPE_CHECKING:
 
 
 class NotUploadableException(NotImplementedError):
-    def __init__(
-        self, item: "BaseContent", description: Optional[str] = None
-    ) -> None:
+    def __init__(self, item: "BaseContent", description: Optional[str] = None) -> None:
         description_suffix = f" {description}" if description else ""
         super().__init__(
             f"Object ({item.content_type} {item.object_id}) cannot be uploaded{description_suffix}"

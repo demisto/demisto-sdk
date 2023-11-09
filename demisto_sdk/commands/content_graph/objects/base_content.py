@@ -46,7 +46,7 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-CONTENT_TYPE_TO_MODEL: Dict[ContentType, Type["BaseNode"]] = {}
+CONTENT_TYPE_TO_MODEL: Dict[ContentType, Type["BaseContent"]] = {}
 json = JSON_Handler()
 
 
@@ -66,16 +66,16 @@ class BaseContentMetaclass(ModelMetaclass):
 
         Args:
             name: The class object name (e.g., Integration)
-            bases: The bases of the class object (e.g., [YAMLContentItem, ContentItem, BaseNode])
+            bases: The bases of the class object (e.g., [YAMLContentItem, ContentItem, BaseContent])
             namespace: The namespaces of the class object.
             content_type (ContentType, optional): The type corresponds to the class (e.g., ContentType.INTEGRATIONS)
 
         Returns:
-            BaseNode: The model class.
+            BaseContent: The model class.
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["BaseNode"] = cast(Type["BaseNode"], super_cls)
+        model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
             CONTENT_TYPE_TO_MODEL[content_type] = model_cls
             model_cls.content_type = content_type
@@ -252,8 +252,7 @@ class BaseContent(BaseNode):
             or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
-                content_type_to_model = cast(Type["BaseContent"], CONTENT_TYPE_TO_MODEL)
-                return content_type_to_model[ContentType.PACK].from_orm(
+                return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
                     PackParser(path, git_sha=git_sha)
                 )
             except InvalidContentItemException:

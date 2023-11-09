@@ -299,9 +299,9 @@ class Initializer:
             self.use_git = (True,)
             self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
-        content_objects_to_run_with_packs: Set[
-            BaseContent
-        ] = self.get_items_from_packs(content_objects_to_run)
+        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
+            content_objects_to_run
+        )
         return content_objects_to_run_with_packs
 
     def get_items_from_packs(
@@ -381,9 +381,7 @@ class Initializer:
         for file_path in files_set:
             try:
                 if git_status == GitStatuses.RENAMED:
-                    temp_obj: Optional[
-                        BaseContent
-                    ] = BaseContent.from_path(
+                    temp_obj: Optional[BaseContent] = BaseContent.from_path(
                         Path(file_path[0]),
                         git_status=git_status,
                         old_file_path=Path(file_path[1]),

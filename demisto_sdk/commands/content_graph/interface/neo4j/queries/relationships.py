@@ -71,7 +71,7 @@ RETURN count(r) AS relationships_merged"""
 
 
 def build_uses_relationships_query(
-    target_type: ContentType = ContentType.BASE_CONTENT,
+    target_type: ContentType = ContentType.BASE_NODE,
     target_identifier: str = "object_id",
     with_target_type: bool = True,
 ) -> str:
@@ -80,7 +80,7 @@ def build_uses_relationships_query(
 UNWIND $data AS rel_data
 
 // Get all content items with the specified properties
-MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
+MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
 
 // Get or create the targets with the given properties
 MERGE (target:{target_type}{
@@ -108,7 +108,7 @@ def build_in_pack_relationships_query() -> str:
 UNWIND $data AS rel_data
 
 // Get the pack and the content item with the specified properties
-MATCH (content_item:{ContentType.BASE_CONTENT}{build_source_properties()})
+MATCH (content_item:{ContentType.BASE_NODE}{build_source_properties()})
 MATCH (pack:{ContentType.PACK}{build_target_properties()})
 
 // Get/create the relationship
@@ -121,7 +121,7 @@ def build_tested_by_relationships_query() -> str:
 UNWIND $data AS rel_data
 
 // Get the content item with the specified properties
-MATCH (content_item:{ContentType.BASE_CONTENT}{build_source_properties()})
+MATCH (content_item:{ContentType.BASE_NODE}{build_source_properties()})
 
 // Get or create the test playbook with the given id
 MERGE (tpb:{ContentType.TEST_PLAYBOOK}{build_target_properties(with_content_type=True)})
@@ -156,8 +156,8 @@ RETURN count(r) AS relationships_merged"""
 def build_default_relationships_query(relationship: RelationshipType) -> str:
     return f"""// A default method for creating relationships
 UNWIND $data AS rel_data
-MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
-MERGE (target:{ContentType.BASE_CONTENT}{build_target_properties()})
+MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
+MERGE (target:{ContentType.BASE_NODE}{build_target_properties()})
 ON CREATE
     SET target.not_in_repository = true,
         target.object_id = CASE WHEN target.object_id IS NULL THEN target.name ELSE target.object_id END,

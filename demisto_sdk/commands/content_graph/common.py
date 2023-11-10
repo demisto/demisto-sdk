@@ -87,7 +87,7 @@ class ContentType(str, enum.Enum):
     def labels(self) -> List[str]:
         labels: Set[str] = {ContentType.BASE_NODE.value, self.value}
         if self.value != ContentType.COMMAND:
-            labels.add(ContentType.BASE_CONTENT.value)
+            labels.add(ContentType.BASE_NODE.value)
 
         if self.value == ContentType.TEST_PLAYBOOK.value:
             labels.add(ContentType.PLAYBOOK.value)
@@ -182,7 +182,7 @@ class ContentType(str, enum.Enum):
 
     @staticmethod
     def abstract_types() -> List["ContentType"]:
-        return [ContentType.BASE_CONTENT, ContentType.COMMAND_OR_SCRIPT]
+        return [ContentType.BASE_NODE, ContentType.COMMAND_OR_SCRIPT]
 
     @staticmethod
     def non_content_items() -> List["ContentType"]:

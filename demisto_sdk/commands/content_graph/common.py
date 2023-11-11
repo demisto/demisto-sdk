@@ -181,7 +181,11 @@ class ContentType(str, enum.Enum):
 
     @staticmethod
     def abstract_types() -> List["ContentType"]:
-        return [ContentType.BASE_NODE, ContentType.BASE_CONTENT, ContentType.COMMAND_OR_SCRIPT]
+        return [
+            ContentType.BASE_NODE,
+            ContentType.BASE_CONTENT,
+            ContentType.COMMAND_OR_SCRIPT,
+        ]
 
     @staticmethod
     def non_content_items() -> List["ContentType"]:

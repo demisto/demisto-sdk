@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
     write_dict,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -294,7 +294,7 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
     python_versions_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
-            BaseContentWithPath.from_path, integrations_scripts_mapping.keys()
+            BaseContent.from_path, integrations_scripts_mapping.keys()
         )
 
     exclude_integration_script = set()

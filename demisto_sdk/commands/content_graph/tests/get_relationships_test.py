@@ -125,7 +125,7 @@ class TestGetRelationships:
             pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 2,
                 MarketplaceVersions.XSOAR,
                 Direction.BOTH,
@@ -155,7 +155,7 @@ class TestGetRelationships:
             pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 2,
                 MarketplaceVersions.XSOAR,
                 Direction.SOURCES,
@@ -174,7 +174,7 @@ class TestGetRelationships:
             pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 2,
                 MarketplaceVersions.XSOAR,
                 Direction.TARGETS,
@@ -198,7 +198,7 @@ class TestGetRelationships:
             pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 2,
                 MarketplaceVersions.XSOAR,
                 Direction.TARGETS,
@@ -238,7 +238,7 @@ class TestGetRelationships:
                     "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
                 ),
                 RelationshipType.USES,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 2,
                 MarketplaceVersions.XSOAR,
                 Direction.BOTH,
@@ -269,7 +269,7 @@ class TestGetRelationships:
                     "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
                 ),
                 RelationshipType.USES,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 1,
                 MarketplaceVersions.XSOAR,
                 Direction.BOTH,
@@ -296,7 +296,7 @@ class TestGetRelationships:
                     "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
                 ),
                 RelationshipType.IMPORTS,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 1,
                 MarketplaceVersions.XSOAR,
                 Direction.BOTH,
@@ -316,7 +316,7 @@ class TestGetRelationships:
                     "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
                 ),
                 RelationshipType.TESTED_BY,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 1,
                 MarketplaceVersions.XSOAR,
                 Direction.BOTH,
@@ -334,7 +334,7 @@ class TestGetRelationships:
             pytest.param(
                 Path("Packs/SamplePack3"),
                 RelationshipType.DEPENDS_ON,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 2,
                 MarketplaceVersions.XSOAR,
                 Direction.BOTH,
@@ -347,7 +347,7 @@ class TestGetRelationships:
             pytest.param(
                 Path("Packs/SamplePack3"),
                 RelationshipType.DEPENDS_ON,
-                ContentType.BASE_CONTENT,
+                ContentType.BASE_NODE,
                 2,
                 MarketplaceVersions.XSOAR,
                 Direction.BOTH,

@@ -14,7 +14,9 @@ from demisto_sdk.commands.common.constants import (
 
 
 class XsoarClientConfig(BaseModel):
-
+    """
+    api client config for xsoar-on-prem
+    """
     base_api_url: str = Field(
         default=os.getenv(DEMISTO_BASE_URL), description="XSOAR Tenant Base API URL"
     )

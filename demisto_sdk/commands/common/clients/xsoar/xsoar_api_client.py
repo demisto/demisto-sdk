@@ -172,7 +172,7 @@ class XsoarClient(BaseModel, ABC):
         """
         integrations_metadata: Dict[
             str, Any
-        ] = self.get_integrations_module_configuration(_id)
+        ] = self.get_integrations_module_configuration(_id, name)
 
         integration_instance_body_request = {
             "brand": integrations_metadata["name"],
@@ -242,20 +242,25 @@ class XsoarClient(BaseModel, ABC):
             body=integration_instance_body_request,
             response_type=response_type,
         )
+        logger.info(f"Succesfully created instance for {_id}")
         if should_test:
-            response_data, response_code, _ = demisto_client.generic_request_func(
-                self=self.client,
-                method="POST",
-                path="/settings/integration/test",
-                body=integration_instance_body_request,
-                response_type="object",
-                _request_timeout=240,
-            )
-            if response_code >= 300 or not response_data.get("success"):
-                raise ApiException(
-                    f"Test connection failed - {response_data.get('message')}"
-                )
+            logger.info(f"Running test-module on {_id}")
+            self.test_module(integration_instance_body_request)
         return raw_response
+
+    def test_module(self, integration_instance_body_request):
+        response_data, response_code, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/settings/integration/test",
+            body=integration_instance_body_request,
+            response_type="object",
+            _request_timeout=240,
+        )
+        if response_code >= 300 or not response_data.get("success"):
+            raise ApiException(
+                f"Test connection failed - {response_data.get('message')}"
+            )
 
     @retry(exceptions=ApiException)
     def delete_integration_instance(
@@ -281,7 +286,10 @@ class XsoarClient(BaseModel, ABC):
 
     @retry(exceptions=ApiException)
     def get_integrations_module_configuration(
-        self, _id: Optional[str] = None, response_type: str = "object"
+        self,
+        _id: Optional[str] = None,
+        name: Optional[str] = None,
+        response_type: str = "object",
     ):
         """
         Get the integration(s) module configuration(s)
@@ -301,6 +309,14 @@ class XsoarClient(BaseModel, ABC):
             response_type=response_type,
             body={},
         )
+        if name:
+            for instance in raw_response.get("instances", []):
+                if name == instance.get("name"):
+                    logger.info(
+                        f"Found integration instance with name {name}, deleting..."
+                    )
+                    self.delete_integration_instance(instance.get("id"))
+                    break
         if not _id:
             return raw_response
         for config in raw_response.get("configurations") or []:

@@ -405,6 +405,7 @@ def setup_env(
         configure_dotenv()
         ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
         if ide == IDE.VSCODE:
+            ide_folder.mkdir(exist_ok=True)
             configure_vscode_settings(ide_folder)
     for file_path in file_paths:
         configure_integration(

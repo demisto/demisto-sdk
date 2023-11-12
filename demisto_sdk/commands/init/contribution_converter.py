@@ -39,7 +39,7 @@ from demisto_sdk.commands.common.tools import (
     get_display_name,
     get_pack_metadata,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -612,7 +612,7 @@ class ContributionConverter:
                             output=content_item_dir,
                         )
                     try:
-                        content_item = BaseContentWithPath.from_path(
+                        content_item = BaseContent.from_path(
                             Path(content_item_file_path)
                         )
                         if isinstance(content_item, IntegrationScript):

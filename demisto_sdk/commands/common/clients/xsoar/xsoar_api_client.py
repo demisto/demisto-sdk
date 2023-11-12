@@ -1,6 +1,8 @@
+import contextlib
 import re
 import urllib.parse
 from abc import ABC
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 import dateparser
@@ -118,6 +120,17 @@ class XsoarClient(BaseModel, ABC):
         )
         return raw_response
 
+    @lru_cache
+    def search_integrations(self, response_type: str = "object"):
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/settings/integration/search",
+            response_type=response_type,
+            body={},
+        )
+        return raw_response
+
     def search_marketplace_packs(self, filters: Dict):
         """
         Searches for packs in a marketplace
@@ -147,7 +160,7 @@ class XsoarClient(BaseModel, ABC):
     def create_integration_instance(
         self,
         _id: str,
-        name: str,
+        instance_name: str,
         integration_instance_config: Dict,
         integration_log_level: Optional[str] = None,
         is_long_running: bool = False,
@@ -170,11 +183,19 @@ class XsoarClient(BaseModel, ABC):
         Returns:
             raw response of the newly created integration instance
         """
-        logger.info(f"Creating integration instance {name} for integration {_id}")
+        logger.info(
+            f"Creating integration instance {instance_name} for integration {_id}"
+        )
         integrations_metadata: Dict[
             str, Any
-        ] = self.get_integrations_module_configuration(_id, name)
+        ] = self.get_integrations_module_configuration(_id, instance_name)
+        with contextlib.suppress(ValueError):
 
+            instance = self.get_integration_instance(instance_name)
+            logger.info(
+                f"Integration instance {instance_name} already exists, deleting instance"
+            )
+            self.delete_integration_instance(instance.get("id"))
         integration_instance_body_request = {
             "brand": integrations_metadata["name"],
             "category": integrations_metadata["category"],
@@ -185,7 +206,7 @@ class XsoarClient(BaseModel, ABC):
             "engine": "",
             "id": "",
             "isIntegrationScript": True,  # type: ignore
-            "name": name,
+            "name": instance_name,
             "passwordProtected": False,
             "version": 0,
             "incomingMapperId": integrations_metadata.get("defaultMapperIn", ""),
@@ -210,14 +231,16 @@ class XsoarClient(BaseModel, ABC):
 
         for param_conf in module_configuration:
             display = param_conf["display"]
-            name = param_conf["name"]
+            instance_name = param_conf["name"]
             default_value = param_conf["defaultValue"]
 
             if (
                 display in integration_instance_config
-                or name in integration_instance_config
+                or instance_name in integration_instance_config
             ):
-                key = display if display in integration_instance_config else name
+                key = (
+                    display if display in integration_instance_config else instance_name
+                )
                 if key in {"credentials", "creds_apikey"}:
                     credentials = integration_instance_config[key]
                     param_value = {
@@ -245,17 +268,20 @@ class XsoarClient(BaseModel, ABC):
         )
         logger.info(f"Succesfully created instance for {_id}")
         if should_test:
+            self.search_integrations.cache_clear()
             self.test_module(_id, integration_instance_body_request)
         return raw_response
 
-    def test_module(self, _id: str, integration_instance_body_request: dict):
+    @retry(exceptions=ApiException)
+    def test_module(self, _id: str, instance_name: str, response_type: str = "object"):
         logger.info(f"Running test-module on {_id}")
+        instance = self.get_integration_instance(instance_name, response_type)
         response_data, response_code, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/settings/integration/test",
-            body=integration_instance_body_request,
-            response_type="object",
+            body=instance,
+            response_type=response_type,
             _request_timeout=240,
         )
         if response_code >= 300 or not response_data.get("success"):
@@ -289,7 +315,6 @@ class XsoarClient(BaseModel, ABC):
     def get_integrations_module_configuration(
         self,
         _id: Optional[str] = None,
-        name: Optional[str] = None,
         response_type: str = "object",
     ):
         """
@@ -303,21 +328,7 @@ class XsoarClient(BaseModel, ABC):
             if _id is provided, the module config of a specific integration,
             otherwise all module configs of all integrations
         """
-        raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
-            method="POST",
-            path="/settings/integration/search",
-            response_type=response_type,
-            body={},
-        )
-        if name:
-            for instance in raw_response.get("instances", []):
-                if name == instance.get("name"):
-                    logger.info(
-                        f"Found integration instance with name {name}, deleting..."
-                    )
-                    self.delete_integration_instance(instance.get("id"))
-                    break
+        raw_response = self.search_integrations(response_type=response_type)
         if not _id:
             return raw_response
         for config in raw_response.get("configurations") or []:
@@ -327,6 +338,30 @@ class XsoarClient(BaseModel, ABC):
         raise ValueError(
             f"Could not find module configuration for integration ID '{_id}'"
         )
+
+    @retry(exceptions=ApiException)
+    def get_integration_instance(
+        self,
+        instance_name: str,
+        response_type: str = "object",
+    ):
+        """
+        Get the integration(s) module configuration(s)
+
+        Args:
+            _id: the module configuration of a specific integration
+            response_type: the response type to return
+
+        Returns:
+            if _id is provided, the module config of a specific integration,
+            otherwise all module configs of all integrations
+        """
+        raw_response = self.search_integrations(response_type=response_type)
+        for instance in raw_response.get("instances", []):
+            if instance_name == instance.get("name"):
+                return instance
+
+        raise ValueError(f"Could not find instance for instance name '{instance_name}'")
 
     """
      #############################

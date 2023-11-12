@@ -127,7 +127,14 @@ def get_client_from_server_type(
 
     try:
         # /ioc-rules is only an endpoint in XSIAM.
-        _client.generic_request("/ioc-rules", "GET")
+        response, status_code, response_headers = _client.generic_request(
+            "/ioc-rules", "GET"
+        )
+        if "text/html" in response_headers.get("Content-Type"):
+            raise ApiException(
+                status=400,
+                reason=f"endpoint /ioc-rules does not exist in {_client.api_client.configuration.host}",
+            )
         return XsiamClient(
             client=_client,
             config=XsiamClientConfig(

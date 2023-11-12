@@ -6,7 +6,7 @@ from pydantic.fields import ModelField
 
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
-    DEMISTO_API_KEY,
+    DEMISTO_KEY,
     DEMISTO_BASE_URL,
     XSIAM_COLLECTOR_TOKEN,
     XSIAM_TOKEN,
@@ -19,7 +19,7 @@ class XsoarClientConfig(BaseModel):
         default=os.getenv(DEMISTO_BASE_URL), description="XSOAR Tenant Base API URL"
     )
     api_key: SecretStr = Field(
-        default=SecretStr(os.getenv(DEMISTO_API_KEY, "")), description="XSOAR API Key"
+        default=SecretStr(os.getenv(DEMISTO_KEY, "")), description="XSOAR API Key"
     )
 
     @classmethod
@@ -42,7 +42,7 @@ class XsoarClientConfig(BaseModel):
     def __hash__(self) -> int:
         return hash((self.base_api_url, self.api_key.get_secret_value(), self.auth_id))
 
-    def __eq__(self, other: "XsoarClientConfig") -> bool:
+    def __eq__(self, other):
         return (
             self.base_api_url == other.base_api_url
             and self.api_key.get_secret_value() == other.api_key.get_secret_value()

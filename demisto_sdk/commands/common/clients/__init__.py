@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import
 )
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
-    DEMISTO_API_KEY,
+    DEMISTO_KEY,
     DEMISTO_BASE_URL,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
@@ -79,7 +79,7 @@ def get_client_from_marketplace(
         the correct client according to the marketplace provided
     """
     _base_api_url = base_url or os.getenv(DEMISTO_BASE_URL)
-    _api_key = api_key or os.getenv(DEMISTO_API_KEY)
+    _api_key = api_key or os.getenv(DEMISTO_KEY)
     _auth_id = auth_id or os.getenv(AUTH_ID)
 
     if marketplace in (MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR):
@@ -115,7 +115,7 @@ def get_client_from_server_type(
         the correct client based on querying the type of the server
     """
     _base_api_url = base_url or os.getenv(DEMISTO_BASE_URL)
-    _api_key = api_key or os.getenv(DEMISTO_API_KEY)
+    _api_key = api_key or os.getenv(DEMISTO_KEY)
     _auth_id = auth_id or os.getenv(AUTH_ID)
 
     _client = demisto_client.configure(

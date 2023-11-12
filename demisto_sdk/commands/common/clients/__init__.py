@@ -18,8 +18,8 @@ from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import
 )
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
-    DEMISTO_KEY,
     DEMISTO_BASE_URL,
+    DEMISTO_KEY,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )

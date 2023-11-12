@@ -71,16 +71,17 @@ def test_get_client_from_config(
 
 
 @pytest.mark.parametrize(
-    "marketplace, expected_client_type",
+    "base_api_url, marketplace, expected_client_type",
     [
-        (MarketplaceVersions.XSOAR, XsoarClient),
-        (MarketplaceVersions.XSOAR_ON_PREM, XsoarClient),
-        (MarketplaceVersions.XSOAR_SAAS, XsoarSaasClient),
-        (MarketplaceVersions.MarketplaceV2, XsiamClient),
+        ("test1", MarketplaceVersions.XSOAR, XsoarClient),
+        ("test2", MarketplaceVersions.XSOAR_ON_PREM, XsoarClient),
+        ("test3", MarketplaceVersions.XSOAR_SAAS, XsoarSaasClient),
+        ("test4", MarketplaceVersions.MarketplaceV2, XsiamClient),
     ],
 )
 def test_get_client_from_marketplace(
     api_requests_mocker,
+    base_api_url: str,
     marketplace: MarketplaceVersions,
     expected_client_type: Type[XsoarClient],
 ):
@@ -100,18 +101,24 @@ def test_get_client_from_marketplace(
     """
     from demisto_sdk.commands.common.clients import get_client_from_marketplace
 
-    assert type(get_client_from_marketplace(marketplace)) == expected_client_type
+    assert (
+        type(get_client_from_marketplace(marketplace, base_url=base_api_url))
+        == expected_client_type
+    )
 
 
 @pytest.mark.parametrize(
-    "xsoar_version, expected_client_type",
+    "base_api_url, xsoar_version, expected_client_type",
     [
-        ("6.11.0", XsoarClient),
-        ("8.4.0", XsoarSaasClient),
+        ("test", "6.11.0", XsoarClient),
+        ("tes2", "8.4.0", XsoarSaasClient),
     ],
 )
 def test_get_xsoar_client_from_server_type(
-    api_requests_mocker, xsoar_version: str, expected_client_type: Type[XsoarClient]
+    api_requests_mocker,
+    base_api_url: str,
+    xsoar_version: str,
+    expected_client_type: Type[XsoarClient],
 ):
     """
     Given:
@@ -137,7 +144,9 @@ def test_get_xsoar_client_from_server_type(
     api_requests_mocker.patch.object(
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect
     )
-    assert type(get_client_from_server_type()) == expected_client_type
+    assert (
+        type(get_client_from_server_type(base_url=base_api_url)) == expected_client_type
+    )
 
 
 def test_get_xsiam_client_from_server_type(api_requests_mocker):

@@ -6,8 +6,8 @@ from pydantic.fields import ModelField
 
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
-    DEMISTO_KEY,
     DEMISTO_BASE_URL,
+    DEMISTO_KEY,
     XSIAM_COLLECTOR_TOKEN,
     XSIAM_TOKEN,
 )

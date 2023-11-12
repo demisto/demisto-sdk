@@ -1250,18 +1250,27 @@ class TestReadmes:
         # Copy files from contribution dir to pack
         copied_files = contrib_converter.copy_files_to_existing_pack(dst_path=content_temp_dir.__str__())
 
-        actual_integration_readme = Path(copied_files[1]).read_text()
 
-        with Path(copied_files[3]).open("r") as stream:
+        actual_integration_readme = Path(copied_files[1])
+        actual_integration_yml_path = Path(copied_files[3])
+
+        with actual_integration_yml_path.open("r") as stream:
             actual_integration_yml = yaml.load(stream)
 
-        actual_integration_python = Path(copied_files[4]).read_text()
+        actual_integration_python = Path(copied_files[4])
+
+        modified = set()
+        modified.add(Path(copied_files[1])) # readme
+        modified.add(Path(copied_files[3])) # yml
+        modified.add(Path(copied_files[4])) # py
+
+        mocker.patch.object(repo.git_util, "modified_files", modified)
         
-        # Verify the copied integration Python code, YAML and README are different than the one found in the 
+        # Verify the copied integration Python code, YAML and README are different than the one found in the
         # original integration path
-        assert actual_integration_readme != readme
+        assert actual_integration_readme.read_text() != readme
         assert actual_integration_yml != yml_code
-        assert actual_integration_python != py_code
+        assert actual_integration_python.read_text() != py_code
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:

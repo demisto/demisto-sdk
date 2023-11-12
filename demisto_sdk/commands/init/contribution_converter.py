@@ -1029,4 +1029,3 @@ class ContributionConverter:
                 cp_files.extend(copy_tree(src_sub_path, dst_sub_path))
         
         return cp_files
-

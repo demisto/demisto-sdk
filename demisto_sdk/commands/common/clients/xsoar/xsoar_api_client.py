@@ -2,7 +2,6 @@ import contextlib
 import re
 import urllib.parse
 from abc import ABC
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 import dateparser
@@ -120,7 +119,6 @@ class XsoarClient(BaseModel, ABC):
         )
         return raw_response
 
-    @lru_cache
     def search_integrations(self, response_type: str = "object"):
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
@@ -188,7 +186,7 @@ class XsoarClient(BaseModel, ABC):
         )
         integrations_metadata: Dict[
             str, Any
-        ] = self.get_integrations_module_configuration(_id, instance_name)
+        ] = self.get_integrations_module_configuration(_id)
         with contextlib.suppress(ValueError):
 
             instance = self.get_integration_instance(instance_name)
@@ -268,7 +266,6 @@ class XsoarClient(BaseModel, ABC):
         )
         logger.info(f"Succesfully created instance for {_id}")
         if should_test:
-            self.search_integrations.cache_clear()
             self.test_module(_id, integration_instance_body_request)
         return raw_response
 

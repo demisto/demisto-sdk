@@ -3569,7 +3569,7 @@ def run_unit_tests(
     required=False,
     help="What to call the Integration instance created by the command",
 )
-@click.option("--test-module", requried=False, is_flag=True, default=False)
+@click.option("--test-module", required=False, is_flag=True, default=False)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
     input,

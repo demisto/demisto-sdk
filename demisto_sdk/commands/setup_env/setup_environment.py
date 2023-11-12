@@ -52,9 +52,10 @@ def configure_dotenv():
     env_vars["PYTHONPATH"] = python_path_values
     env_vars["MYPYPATH"] = python_path_values
     for key, value in env_vars.items():
-        if not value:
-            continue
-        dotenv.set_key(dotenv_path, key, value)
+        if value:
+            dotenv.set_key(dotenv_path, key, value)
+        else:
+            logger.warning(f"empty value for {key}, not setting it")
 
 
 def configure_vscode_settings(

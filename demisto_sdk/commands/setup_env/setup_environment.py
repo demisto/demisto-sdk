@@ -48,8 +48,9 @@ def configure_dotenv():
     """
     dotenv_path = CONTENT_PATH / ".env"
     env_vars = dotenv.dotenv_values(dotenv_path)
-    env_vars["PYTHONPATH"] = ":".join([str(path) for path in PYTHONPATH])
-    env_vars["MYPYPATH"] = ":".join([str(path) for path in PYTHONPATH])
+    python_path_values = ":".join((str(path) for path in PYTHONPATH))
+    env_vars["PYTHONPATH"] = python_path_values
+    env_vars["MYPYPATH"] = python_path_values
     for key, value in env_vars.items():
         if not value:
             continue

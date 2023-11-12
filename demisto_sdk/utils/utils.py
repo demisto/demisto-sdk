@@ -4,6 +4,9 @@ from functools import wraps
 from pathlib import Path
 from typing import Callable, Tuple, Type, Union
 
+import google
+from google.cloud import secretmanager
+
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
 )
@@ -14,15 +17,17 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentUnifiedObject,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.logger import logger
-from google.cloud import secretmanager
-import google
 from demisto_sdk.commands.common.handlers.json.json5_handler import JSON5_Handler
+from demisto_sdk.commands.common.logger import logger
+
 json5 = JSON5_Handler()
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
 
+
 class SecretManagerException(Exception):
     pass
+
+
 def get_containing_pack(content_entity: ContentEntity) -> Pack:
     """Get pack object that contains the content entity.
 
@@ -109,6 +114,7 @@ def retry(
 
     return _retry
 
+
 def get_integration_params(project_id: str, secret_id: str) -> dict:
     """This function retrieves the parameters of an integration from Google Secret Manager
     *Note*: This function will not run if the `DEMISTO_SDK_GCP_PROJECT_ID` env variable is not set.
@@ -138,16 +144,12 @@ def get_integration_params(project_id: str, secret_id: str) -> dict:
         )
         raise SecretManagerException
     except Exception:
-        logger.warning(
-            f"Failed to get secret {secret_id} from Secret Manager."
-        )
+        logger.warning(f"Failed to get secret {secret_id} from Secret Manager.")
         raise SecretManagerException
     # Return the decoded payload.
     payload = json5.loads(response.payload.data.decode("UTF-8"))
-    if 'params' not in payload:
-        logger.warning(
-            f"Parameters are not found in {secret_id} from Secret Manager."
-        )
+    if "params" not in payload:
+        logger.warning(f"Parameters are not found in {secret_id} from Secret Manager.")
 
         raise SecretManagerException
-    return payload['params']
+    return payload["params"]

@@ -317,6 +317,7 @@ def configure_params(
                         instance_name,
                         params,
                         is_long_running=integration_script.long_running,
+                        should_test=True,
                     )
                     logger.info(
                         f"Created integration instance for {integration_script.object_id}"

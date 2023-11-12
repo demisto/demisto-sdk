@@ -2486,12 +2486,12 @@ files = [
 
 [[package]]
 name = "neo4j"
-version = "5.8.0"
+version = "5.14.1"
 description = "Neo4j Bolt driver for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "neo4j-5.8.0.tar.gz", hash = "sha256:af5e70801f63eaaff8fa90bfdc943c144fb6857438590782b30d0ed745229b9e"},
+    {file = "neo4j-5.14.1.tar.gz", hash = "sha256:3200be8550ed16622b2fadf4f749d08b9982989c4bfce6f99ab693f104104cb4"},
 ]
 
 [package.dependencies]
@@ -2500,6 +2500,7 @@ pytz = "*"
 [package.extras]
 numpy = ["numpy (>=1.7.0,<2.0.0)"]
 pandas = ["numpy (>=1.7.0,<2.0.0)", "pandas (>=1.1.0,<3.0.0)"]
+pyarrow = ["pyarrow (>=1.0.0)"]
 
 [[package]]
 name = "nest-asyncio"
@@ -4936,4 +4937,4 @@ build = ["gsutil"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "b241a4cbc414f1a67ece39ee86236da01d19eedca911455d78acf521b0d316de"
+content-hash = "058ac4ee83f8434477cce4962c843065d8b364eda1a829fe37f7ff2c559ad2cd"

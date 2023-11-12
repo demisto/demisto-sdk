@@ -46,7 +46,8 @@ class RelationshipType(str, enum.Enum):
 
 
 class ContentType(str, enum.Enum):
-    BASE_CONTENT = "BaseNode"
+    BASE_CONTENT = "BaseContent"
+    BASE_NODE = "BaseNode"
     CLASSIFIER = "Classifier"
     COMMAND = "Command"
     COMMAND_OR_SCRIPT = "CommandOrScript"
@@ -84,8 +85,9 @@ class ContentType(str, enum.Enum):
 
     @property
     def labels(self) -> List[str]:
-        labels: Set[str] = {ContentType.BASE_CONTENT.value, self.value}
-
+        labels: Set[str] = {ContentType.BASE_NODE.value, self.value}
+        if self.value != ContentType.COMMAND:
+            labels.add(ContentType.BASE_CONTENT.value)
         if self.value == ContentType.TEST_PLAYBOOK.value:
             labels.add(ContentType.PLAYBOOK.value)
 
@@ -179,7 +181,11 @@ class ContentType(str, enum.Enum):
 
     @staticmethod
     def abstract_types() -> List["ContentType"]:
-        return [ContentType.BASE_CONTENT, ContentType.COMMAND_OR_SCRIPT]
+        return [
+            ContentType.BASE_NODE,
+            ContentType.BASE_CONTENT,
+            ContentType.COMMAND_OR_SCRIPT,
+        ]
 
     @staticmethod
     def non_content_items() -> List["ContentType"]:

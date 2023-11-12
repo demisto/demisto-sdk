@@ -28,6 +28,7 @@ json = JSON_Handler()
 
 class PackMetadata(BaseModel):
     name: str
+    display_name: str
     description: Optional[str]
     created: Optional[str]
     updated: Optional[str] = Field("")

@@ -66,12 +66,12 @@ class BaseContentMetaclass(ModelMetaclass):
 
         Args:
             name: The class object name (e.g., Integration)
-            bases: The bases of the class object (e.g., [YAMLContentItem, ContentItem, BaseContent])
+            bases: The bases of the class object (e.g., [YAMLContentItem, ContentItem, BaseNode])
             namespace: The namespaces of the class object.
             content_type (ContentType, optional): The type corresponds to the class (e.g., ContentType.INTEGRATIONS)
 
         Returns:
-            BaseContent: The model class.
+            BaseNode: The model class.
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking

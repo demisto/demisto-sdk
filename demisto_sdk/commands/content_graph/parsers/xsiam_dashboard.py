@@ -29,8 +29,6 @@ class XSIAMDashboardParser(
                 "object_id": [
                     "dashboards_data[0].global_id",
                     "dashboards_data[0].id",
-                    "id",
-                    "global_id",
                 ],
                 "fromversion": "fromVersion",
                 "toversion": "toVersion",

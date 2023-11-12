@@ -118,12 +118,20 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
+    def import_graph(
+        self,
+        imported_path: Optional[Path] = None,
+        download: bool = False,
+        fail_on_error: bool = False,
+    ) -> bool:
         pass
 
     @abstractmethod
     def export_graph(
-        self, output_path: Optional[Path] = None, override_commit: bool = True
+        self,
+        output_path: Optional[Path] = None,
+        override_commit: bool = True,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     ) -> None:
         pass
 
@@ -201,7 +209,7 @@ class ContentGraphInterface(ABC):
     def search(
         self,
         marketplace: Union[MarketplaceVersions, str] = None,
-        content_type: ContentType = ContentType.BASE_CONTENT,
+        content_type: ContentType = ContentType.BASE_NODE,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
@@ -211,7 +219,7 @@ class ContentGraphInterface(ABC):
 
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
-            content_type (ContentType]): The content_type to filter. Defaults to ContentType.BASE_CONTENT.
+            content_type (ContentType]): The content_type to filter. Defaults to ContentType.BASE_NODE.
             ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
@@ -285,3 +293,7 @@ class ContentGraphInterface(ABC):
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
         pass
+
+    @abstractmethod
+    def is_alive(self):
+        ...

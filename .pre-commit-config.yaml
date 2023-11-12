@@ -86,7 +86,7 @@ repos:
     - more-itertools==9.1.0 ; python_version >= "3.8" and python_version < "3.11"
     - mypy-extensions==1.0.0 ; python_version >= "3.8" and python_version < "3.11"
     - mypy==0.982 ; python_version >= "3.8" and python_version < "3.11"
-    - neo4j==5.8.0 ; python_version >= "3.8" and python_version < "3.11"
+    - neo4j==5.14.1 ; python_version >= "3.8" and python_version < "3.11"
     - networkx==2.8.8 ; python_version >= "3.8" and python_version < "3.11"
     - nltk==3.8.1 ; python_version >= "3.8" and python_version < "3.11"
     - ordered-set==4.1.0 ; python_version >= "3.8" and python_version < "3.11"

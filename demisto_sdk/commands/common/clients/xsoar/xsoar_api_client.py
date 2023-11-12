@@ -170,6 +170,7 @@ class XsoarClient(BaseModel, ABC):
         Returns:
             raw response of the newly created integration instance
         """
+        logger.info(f"Creating integration instance {name} for integration {_id}")
         integrations_metadata: Dict[
             str, Any
         ] = self.get_integrations_module_configuration(_id, name)
@@ -244,11 +245,11 @@ class XsoarClient(BaseModel, ABC):
         )
         logger.info(f"Succesfully created instance for {_id}")
         if should_test:
-            logger.info(f"Running test-module on {_id}")
-            self.test_module(integration_instance_body_request)
+            self.test_module(_id, integration_instance_body_request)
         return raw_response
 
-    def test_module(self, integration_instance_body_request):
+    def test_module(self, _id: str, integration_instance_body_request: dict):
+        logger.info(f"Running test-module on {_id}")
         response_data, response_code, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",

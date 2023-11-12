@@ -3454,6 +3454,12 @@ def update_content_graph(
     nargs=-1,
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
 )
+@click.option(
+    "--docker/--no-docker",
+    help="Whether to run docker based hooks or not.",
+    default=True,
+    is_flag=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
@@ -3474,6 +3480,7 @@ def pre_commit(
     sdk_ref: str,
     file_paths: Iterable[Path],
     dry_run: bool,
+    docker: bool,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
@@ -3506,6 +3513,7 @@ def pre_commit(
             secrets,
             verbose,
             show_diff_on_failure,
+            run_docker_hooks=docker,
             sdk_ref=sdk_ref,
             dry_run=dry_run,
         )

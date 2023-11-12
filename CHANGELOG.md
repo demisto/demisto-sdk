@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.22.0
 * Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks
 * Removed **-use-local-import** flag to **graph update** command.
 * Perfomance improvements to **graph** commands.

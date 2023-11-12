@@ -18,6 +18,7 @@ __all__ = [
     "MapperParser",
     "ModelingRuleParser",
     "ParsingRuleParser",
+    "BasePlaybookParser",
     "PlaybookParser",
     "ReportParser",
     "ScriptParser",
@@ -63,6 +64,7 @@ from demisto_sdk.commands.content_graph.parsers.list import ListParser
 from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRuleParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import ParsingRuleParser
+from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlaybookParser
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.parsers.pre_process_rule import (
     PreProcessRuleParser,

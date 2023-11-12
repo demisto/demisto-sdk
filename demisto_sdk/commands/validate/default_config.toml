@@ -6,7 +6,7 @@ ignorable_errors = []
 [validate_all]
 select = ["BA101"]
 warning = []
-ignorable_errors = []
+ignorable_errors = ["BA101"]
 
 [Custom_Categories]
 select = []

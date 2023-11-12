@@ -79,11 +79,10 @@ class ContentItem(BaseContent):
 
     @property
     def ignored_errors(self) -> list:
-        return (
-            self.in_pack.ignored_errors_dict.get(self.path.name, [])
-            if self.in_pack and self.in_pack.ignored_errors_dict
-            else []
-        )
+        try:
+            return list(self.in_pack.ignored_errors_dict.get(f"file:{self.path.name}", []).items())[0][1].split(',') or []
+        except:  # noqa: E722
+            return []
 
     @property
     def pack_name(self) -> str:

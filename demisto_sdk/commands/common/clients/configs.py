@@ -2,7 +2,6 @@ import os
 from typing import Optional
 
 from pydantic import BaseModel, Field, SecretStr, validator
-from pydantic.fields import ModelField
 
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
@@ -38,7 +37,9 @@ class XsoarClientConfig(BaseModel):
         if not values["base_api_url"]:
             raise ValueError("base_api_url is required")
 
-        if not values["api_key"] and not (values["user"] and values["password"]):
+        if not values.get("api_key") and not (
+            values.get("user") and values.get("password")
+        ):
             raise ValueError(
                 "Either api_key or both user and password must be provided"
             )
@@ -61,13 +62,7 @@ class XsoarClientConfig(BaseModel):
 
 
 class XsoarSaasClientConfig(XsoarClientConfig):
-    auth_id: Optional[str] = Field(
-        default=os.getenv(AUTH_ID), description="XSOAR/XSIAM Auth ID"
-    )
-
-    @validator("auth_id", always=True)
-    def validate_auth_id(cls, v, field: ModelField):
-        return cls.validate_config(v, field)
+    auth_id: str = Field(default=os.getenv(AUTH_ID), description="XSOAR/XSIAM Auth ID")
 
 
 class XsiamClientConfig(XsoarSaasClientConfig):

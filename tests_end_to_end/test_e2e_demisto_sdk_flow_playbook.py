@@ -3,6 +3,7 @@ from pathlib import Path
 import e2e_tests_utils
 from demisto_client.demisto_api.rest import ApiException
 
+from demisto_sdk.commands.common.clients import get_client_from_server_type
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.download.downloader import Downloader
@@ -75,7 +76,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         ).upload()
 
 
-def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
+def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = True):
     unique_id = 789
     pack_name = "foo_" + str(unique_id)
     playbook_name = "pb_" + str(unique_id)
@@ -87,7 +88,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     pack_name = "foo_" + str(unique_id)
     playbook_name = "pb_" + str(unique_id)
 
-    demisto_client = e2e_tests_utils.connect_to_server(insecure=insecure)
+    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
     body = [
         {
             "name": playbook_name,

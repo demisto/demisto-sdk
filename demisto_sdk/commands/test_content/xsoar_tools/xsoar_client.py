@@ -133,6 +133,7 @@ class XsoarApiInterface(ABC):
         integration_log_level: Optional[str] = None,
         is_long_running: bool = False,
         should_enable: str = "true",
+        should_test: bool = False,
     ):
         pass
 
@@ -301,6 +302,7 @@ class XsoarNGApiClient(XsoarApiInterface):
         integration_log_level: Optional[str] = None,
         is_long_running: bool = False,
         should_enable: str = "true",
+        should_test: bool = False,
     ):
         integrations_metadata: Dict[
             str, Any
@@ -374,6 +376,20 @@ class XsoarNGApiClient(XsoarApiInterface):
             body=integration_instance_body_request,
             response_type=response_type,
         )
+        if should_test:
+            response_data, response_code, _ = demisto_client.generic_request_func(
+                self=self.client,
+                method="POST",
+                path="/settings/integration/test",
+                body=integration_instance_body_request,
+                response_type="object",
+                _request_timeout=240,
+            )
+            if response_code >= 300 or not response_data.get("success"):
+                raise ApiException(
+                    f"Test connection failed - {response_data.get('message')}"
+                )
+
         return raw_response
 
     @retry(exceptions=ApiException)

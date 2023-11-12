@@ -32,7 +32,7 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContentWithPath,
+    BaseContent,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
@@ -109,7 +109,7 @@ def upload_zip(
     return True
 
 
-class Pack(BaseContentWithPath, PackMetadata, content_type=ContentType.PACK):
+class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
@@ -161,11 +161,11 @@ class Pack(BaseContentWithPath, PackMetadata, content_type=ContentType.PACK):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool

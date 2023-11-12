@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
@@ -34,7 +34,7 @@ class PrepareUploadManager:
 
         if force:
             kwargs["force"] = True
-        content_item = BaseContentWithPath.from_path(input)
+        content_item = BaseContent.from_path(input)
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(
                 f"Unsupported input for {input}. Please provide a path to a content item or a pack."

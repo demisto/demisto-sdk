@@ -14,7 +14,7 @@ from demisto_sdk.commands.content_graph.common import (
     Relationships,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
@@ -1508,7 +1508,7 @@ class TestParsersAndModels:
         )
 
     def test_preprocess_parser(self):
-        pre_process_rule = BaseContentWithPath.from_path(
+        pre_process_rule = BaseContent.from_path(
             Path(
                 f"{git_path()}/demisto_sdk/tests/test_files/content_slim/Packs/Sample01/PreProcessRules/preprocessrule-Drop.json"
             )

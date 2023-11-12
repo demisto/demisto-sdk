@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.tools import (
     parse_marketplace_kwargs,
     parse_multiple_path_inputs,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.upload.constants import (
@@ -108,7 +108,7 @@ def zip_multiple_packs(
 
         pack = None
         with suppress(Exception):
-            pack = BaseContentWithPath.from_path(path)
+            pack = BaseContent.from_path(path)
         if (pack is None) or (not isinstance(pack, Pack)):
             logger.error(f"[red]could not parse pack from {path}, skipping[/red]")
             continue

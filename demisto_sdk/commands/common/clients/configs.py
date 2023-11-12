@@ -34,15 +34,13 @@ class XsoarClientConfig(BaseModel):
 
     @root_validator()
     def validate_auth_params(cls, values):
-        if not values["base_api_url"]:
-            raise ValueError("base_api_url is required")
-
         if not values.get("api_key") and not (
             values.get("user") and values.get("password")
         ):
             raise ValueError(
                 "Either api_key or both user and password must be provided"
             )
+        return values
 
     def __getattr__(self, item):
         if item in {"token", "collector_token", "auth_id"}:

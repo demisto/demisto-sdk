@@ -35,13 +35,20 @@ def api_requests_mocker(mocker):
 @pytest.mark.parametrize(
     "config, expected_client_type",
     [
-        (XsoarClientConfig(base_api_url="test", api_key="test"), XsoarClient),
         (
-            XsoarSaasClientConfig(base_api_url="test", api_key="test", auth_id="1"),
+            XsoarClientConfig(base_api_url="https://test.com", api_key="test"),
+            XsoarClient,
+        ),
+        (
+            XsoarSaasClientConfig(
+                base_api_url="https://test.com", api_key="test", auth_id="1"
+            ),
             XsoarSaasClient,
         ),
         (
-            XsiamClientConfig(base_api_url="test", api_key="test", auth_id="2"),
+            XsiamClientConfig(
+                base_api_url="https://test.com", api_key="test", auth_id="2"
+            ),
             XsiamClient,
         ),
     ],
@@ -73,10 +80,10 @@ def test_get_client_from_config(
 @pytest.mark.parametrize(
     "base_api_url, marketplace, expected_client_type",
     [
-        ("test1", MarketplaceVersions.XSOAR, XsoarClient),
-        ("test2", MarketplaceVersions.XSOAR_ON_PREM, XsoarClient),
-        ("test3", MarketplaceVersions.XSOAR_SAAS, XsoarSaasClient),
-        ("test4", MarketplaceVersions.MarketplaceV2, XsiamClient),
+        ("https://test1.com", MarketplaceVersions.XSOAR, XsoarClient),
+        ("https://test2.com", MarketplaceVersions.XSOAR_ON_PREM, XsoarClient),
+        ("https://test3.com", MarketplaceVersions.XSOAR_SAAS, XsoarSaasClient),
+        ("https://test4.com", MarketplaceVersions.MarketplaceV2, XsiamClient),
     ],
 )
 def test_get_client_from_marketplace(
@@ -110,8 +117,8 @@ def test_get_client_from_marketplace(
 @pytest.mark.parametrize(
     "base_api_url, xsoar_version, expected_client_type",
     [
-        ("test", "6.11.0", XsoarClient),
-        ("tes2", "8.4.0", XsoarSaasClient),
+        ("https://test.com", "6.11.0", XsoarClient),
+        ("https://tes2.com", "8.4.0", XsoarSaasClient),
     ],
 )
 def test_get_xsoar_client_from_server_type(
@@ -169,4 +176,4 @@ def test_get_xsiam_client_from_server_type(api_requests_mocker):
     api_requests_mocker.patch.object(
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect
     )
-    assert type(get_client_from_server_type()) == XsiamClient
+    assert type(get_client_from_server_type(base_url="https://test.com")) == XsiamClient

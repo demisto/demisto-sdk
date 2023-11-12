@@ -28,10 +28,11 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
     write_dict,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
@@ -162,6 +163,11 @@ class PreCommitRunner:
             self.files_to_run
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
+        [
+            DockerHook(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
+            for hook_id, hook in hooks.items()
+            if hook_id.endswith("in-docker")
+        ]
 
     def run(
         self,
@@ -284,7 +290,7 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
     python_versions_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
-            BaseContent.from_path, integrations_scripts_mapping.keys()
+            BaseContentWithPath.from_path, integrations_scripts_mapping.keys()
         )
 
     exclude_integration_script = set()
@@ -334,6 +340,7 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
 def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
+    commited_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
     mode: Optional[PreCommitModes] = None,
@@ -352,6 +359,7 @@ def pre_commit_manager(
     Args:
         input_files (Iterable[Path], optional): Input files to run pre-commit on. Defaults to None.
         staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
+        commited_only (bool, optional): Whether to run on commited files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         mode (PreCommitModes, optional): The mode to run pre-commit in. Defaults to None.
@@ -372,7 +380,9 @@ def pre_commit_manager(
         logger.info("No arguments were given, running on staged files and git changes.")
         git_diff = True
 
-    files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
+    files_to_run = preprocess_files(
+        input_files, staged_only, commited_only, git_diff, all_files
+    )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
         return None
@@ -387,6 +397,10 @@ def pre_commit_manager(
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     python_version_to_files, exclude_files = group_by_python_version(files_to_run)
+    if not python_version_to_files:
+        logger.info("No files to run pre-commit on, skipping pre-commit.")
+        return None
+
     pre_commit_runner = PreCommitRunner(
         bool(input_files), all_files, mode, python_version_to_files, sdk_ref
     )
@@ -406,6 +420,7 @@ def pre_commit_manager(
 def preprocess_files(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
+    commited_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,
 ) -> Set[Path]:
@@ -417,7 +432,9 @@ def preprocess_files(
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files().union(staged_files)
+        raw_files = git_util._get_all_changed_files()
+        if not commited_only:
+            raw_files = raw_files.union(staged_files)
     elif all_files:
         raw_files = all_git_files
     else:
@@ -430,6 +447,11 @@ def preprocess_files(
             files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
             files_to_run.add(file)
+            # If the current file is a yml file, add the matching python file to files_to_run
+            if file.suffix == ".yml":
+                py_file_path = file.with_suffix(".py")
+                if py_file_path.exists():
+                    files_to_run.add(py_file_path)
 
     # convert to relative file to content path
     relative_paths = {

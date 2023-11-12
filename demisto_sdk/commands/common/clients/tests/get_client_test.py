@@ -1,0 +1,172 @@
+import os
+from typing import Type
+
+import pytest
+from demisto_client.demisto_api import DefaultApi
+from demisto_client.demisto_api.rest import ApiException
+
+from demisto_sdk.commands.common.clients import (
+    XsiamClient,
+    XsiamClientConfig,
+    XsoarClient,
+    XsoarClientConfig,
+    XsoarSaasClient,
+    XsoarSaasClientConfig,
+)
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+
+
+def getenv_side_effect(key: str, default=None):
+    if key in {"DEMISTO_BASE_URL", "DEMISTO_API_KEY"}:
+        return "test"
+    elif key == "XSIAM_AUTH_ID":
+        return "1"
+    return default
+
+
+@pytest.fixture()
+def api_requests_mocker(mocker):
+    mocker.patch.object(os, "getenv", side_effect=getenv_side_effect)
+    mocker.patch.object(XsoarClient, "get_xsoar_about", return_value={})
+    mocker.patch.object(XsiamClient, "is_xsiam_server_healthy", return_value=True)
+    return mocker
+
+
+@pytest.mark.parametrize(
+    "config, expected_client_type",
+    [
+        (XsoarClientConfig(base_api_url="test", api_key="test"), XsoarClient),
+        (
+            XsoarSaasClientConfig(base_api_url="test", api_key="test", auth_id="1"),
+            XsoarSaasClient,
+        ),
+        (
+            XsiamClientConfig(base_api_url="test", api_key="test", auth_id="2"),
+            XsiamClient,
+        ),
+    ],
+)
+def test_get_client_from_config(
+    api_requests_mocker,
+    config: XsoarClientConfig,
+    expected_client_type: Type[XsoarClient],
+):
+    """
+    Given:
+     - Case A: a predefined XsoarClientConfig
+     - Case B: a predefined XsoarSaasClientConfig
+     - Case C: a predefined XsiamClientConfig
+
+    When:
+     - running get_client_from_config function
+
+    Then:
+     - Case A: make sure XsoarOnPremClient is returned
+     - Case B: make sure XsoarSaasClient is returned
+     - Case C: make sure XsiamClient is returned
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_config
+
+    assert type(get_client_from_config(config)) == expected_client_type
+
+
+@pytest.mark.parametrize(
+    "base_api_url, marketplace, expected_client_type",
+    [
+        ("test1", MarketplaceVersions.XSOAR, XsoarClient),
+        ("test2", MarketplaceVersions.XSOAR_ON_PREM, XsoarClient),
+        ("test3", MarketplaceVersions.XSOAR_SAAS, XsoarSaasClient),
+        ("test4", MarketplaceVersions.MarketplaceV2, XsiamClient),
+    ],
+)
+def test_get_client_from_marketplace(
+    api_requests_mocker,
+    base_api_url: str,
+    marketplace: MarketplaceVersions,
+    expected_client_type: Type[XsoarClient],
+):
+    """
+    Given:
+     - Case A + B: a predefined MarketplaceVersions.XSOAR_ON_PREM or MarketplaceVersions.XSOAR
+     - Case C: a predefined MarketplaceVersions.XSOAR_SAAS
+     - Case D: a predefined MarketplaceVersions.MarketplaceV2
+
+    When:
+     - running get_client_from_marketplace function
+
+    Then:
+     - Case A + B: make sure XsoarOnPremClient is returned
+     - Case C: make sure XsoarSaasClient is returned
+     - Case D: make sure XsiamClient is returned
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_marketplace
+
+    assert (
+        type(get_client_from_marketplace(marketplace, base_url=base_api_url))
+        == expected_client_type
+    )
+
+
+@pytest.mark.parametrize(
+    "base_api_url, xsoar_version, expected_client_type",
+    [
+        ("test", "6.11.0", XsoarClient),
+        ("tes2", "8.4.0", XsoarSaasClient),
+    ],
+)
+def test_get_xsoar_client_from_server_type(
+    api_requests_mocker,
+    base_api_url: str,
+    xsoar_version: str,
+    expected_client_type: Type[XsoarClient],
+):
+    """
+    Given:
+     - Case A: xsoar 6 version
+     - Case B: xsoar 8 version
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - Case A: make sure XsoarOnPremClient is returned
+     - Case B: make sure XsoarSaasClient is returned
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(path: str, method: str):
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException("ioc-rules is only in xsiam")
+
+    api_requests_mocker.patch.object(
+        XsoarClient, "get_xsoar_about", return_value={"demistoVersion": xsoar_version}
+    )
+    api_requests_mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    assert (
+        type(get_client_from_server_type(base_url=base_api_url)) == expected_client_type
+    )
+
+
+def test_get_xsiam_client_from_server_type(api_requests_mocker):
+    """
+    Given:
+     - /ioc-rules endpoint that is valid
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure XsiamClient is returned
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(path: str, method: str):
+        if path == "/ioc-rules" and method == "GET":
+            return True
+
+    api_requests_mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    assert type(get_client_from_server_type()) == XsiamClient

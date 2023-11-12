@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -19,8 +20,13 @@ IGNORED_FIELDS = [
     "appendTags",
     "addLabels",
     "appendMultiSelect",
+    "deleteEmptyField",
+    "execution-timeout",
+    "extend-context",
+    "ignore-outputs",
     "retry-count",
     "retry-interval",
+    "using",
 ]
 
 
@@ -30,6 +36,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
         is_test_playbook: bool = False,
+        git_sha: Optional[str] = None,
     ) -> None:
         """Builds a directed graph representing the playbook and parses it.
 
@@ -37,15 +44,16 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             path (Path): The playbook path.
             is_test_playbook (bool, optional): Whether this is a test playbook or not. Defaults to False.
         """
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.is_test: bool = is_test_playbook
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()
         self.connect_to_tests()
 
-    @property
-    def object_id(self) -> Optional[str]:
-        return self.yml_data.get("id")
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "id"})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

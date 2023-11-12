@@ -6,17 +6,14 @@
     ],
     "python.analysis.typeCheckingMode": "basic",
     "python.testing.unittestEnabled": false,
-    "python.linting.flake8Enabled": false,
-    "python.linting.mypyEnabled": true,
-    "python.linting.mypyArgs": [
+    "mypy-type-checker.args": [
         "--follow-imports=silent",
         "--ignore-missing-imports",
         "--show-column-numbers",
         "--no-pretty",
         "--allow-redefinition"
     ],
-    "python.linting.pylintEnabled": true,
-    "python.linting.pylintArgs": [
+    "pylint.args": [
         "-E",
         "--load-plugins",
         "xsoar_level_checker,partner_level_checker,certified_partner_level_checker,community_level_checker,base_checker",

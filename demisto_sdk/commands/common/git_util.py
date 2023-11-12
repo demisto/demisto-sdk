@@ -1,7 +1,8 @@
+import functools
 import os
 import re
 from pathlib import Path
-from typing import Optional, Set, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union
 
 import click
 import gitdb
@@ -25,7 +26,7 @@ class GitUtil:
 
     def __init__(
         self,
-        path: Optional[Path] = None,
+        path: Optional[Union[str, Path]] = None,
         search_parent_directories: bool = True,
     ):
 
@@ -43,8 +44,9 @@ class GitUtil:
                 f"Unable to find Repository from current {repo_path.absolute()} - aborting"
             )
 
+    @functools.lru_cache
     def get_all_files(self) -> Set[Path]:
-        return set(map(Path, self.repo.git.ls_files().split("\n")))
+        return set(map(Path, self.repo.git.ls_files("-z").split("\x00")))
 
     def modified_files(
         self,
@@ -514,6 +516,7 @@ class GitUtil:
 
         return extracted_paths
 
+    @functools.lru_cache
     def _get_staged_files(self) -> Set[Path]:
         """Get only staged files
 
@@ -852,3 +855,7 @@ class GitUtil:
     def fetch_all(self):
         for remote in self.repo.remotes:
             remote.fetch()
+
+    def commit_files(self, commit_message: str, files: Union[List, str] = "."):
+        self.repo.git.add(files)
+        self.repo.index.commit(commit_message)

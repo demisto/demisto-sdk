@@ -7,10 +7,9 @@ import venv
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Tuple
+from demisto_client.demisto_api.rest import ApiException
 
 import dotenv
-import google
-from google.cloud import secretmanager
 
 from demisto_sdk.commands.common import docker_helper
 from demisto_sdk.commands.common.constants import DEF_DOCKER
@@ -24,10 +23,8 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.setup_env.configure_integration_in_server import (
-    create_integration_instance,
-)
-
+from demisto_sdk.commands.common.clients import get_client_from_server_type
+from demisto_sdk.utils.utils import get_integration_params, SecretManagerException
 json5 = JSON5_Handler()
 json = JSON_Handler()
 
@@ -38,44 +35,6 @@ class IDE(Enum):
 
 
 IDE_TO_FOLDER = {IDE.VSCODE: ".vscode", IDE.PYCHARM: ".idea"}
-
-
-def get_integration_params(project_id: str, secret_id: str) -> dict:
-    """This function retrieves the parameters of an integration from Google Secret Manager
-    *Note*: This function will not run if the `DEMISTO_SDK_GCP_PROJECT_ID` env variable is not set.
-
-    Args:
-        project_id (str): GSM project id
-        secret_id (str): The secret id in GSM
-
-    Returns:
-        dict: The integration params
-    """
-    # Create the Secret Manager client.
-    client = secretmanager.SecretManagerServiceClient()
-
-    # Build the resource name of the secret version.
-    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
-
-    # Access the secret version.
-    try:
-        response = client.access_secret_version(name=name)
-    except google.api_core.exceptions.NotFound:
-        logger.warning("The secret is not found in the secret manager")
-        return {}
-    except google.api_core.exceptions.PermissionDenied:
-        logger.warning(
-            "Insufficient permissions for gcloud. If you have the correct permissions, run `gcloud auth application-default login`"
-        )
-        return {}
-    except Exception:
-        logger.warning(
-            f"Failed to get secret {secret_id} from secret manager, skipping"
-        )
-        return {}
-    # Return the decoded payload.
-    payload = response.payload.data.decode("UTF-8")
-    return json5.loads(payload).get("params")
 
 
 def add_init_file_in_test_data(integration_script: IntegrationScript):
@@ -106,6 +65,7 @@ def configure_vscode_settings(
 
     settings["python.defaultInterpreterPath"] = str(interpreter_path)
     settings["python.testing.cwd"] = str(integration_script.path.parent)
+    settings["python.analysis.extraPaths"] = [path for path in PYTHONPATH]
     with open(ide_folder / "settings.json", "w") as f:
         json.dump(settings, f, indent=4)
 
@@ -323,24 +283,22 @@ def configure_params(
     if (project_id := os.getenv("DEMISTO_SDK_GCP_PROJECT_ID")) and isinstance(
         integration_script, Integration
     ):
-        params = get_integration_params(project_id, secret_id)
-        if params and instance_name:
-            if (
-                instance_created := create_integration_instance(
-                    integration_script.name,
-                    instance_name,
-                    params,
-                    params.get("byoi", True),
-                )
-            ) and instance_created[0]:
-                logger.info(
-                    f"Created integration instance {instance_created[0]['name']}"
-                )
-            else:
-                logger.warning(f"Failed to create integration instance {instance_name}")
-        (CONTENT_PATH / ".vscode").mkdir(exist_ok=True)
-        with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
-            json.dump(params, f, indent=4)
+        try:
+            params = get_integration_params(project_id, secret_id)
+            if params and instance_name:
+                try:
+                    get_client_from_server_type().create_integration_instance(integration_script.object_id, integration_script.object_id, params)
+                    logger.info(
+                            f"Created integration instance for {integration_script.object_id}"
+                        )
+                except ApiException:
+                    logger.warning(f"Failed to create integration instance {instance_name}")
+            (CONTENT_PATH / ".vscode").mkdir(exist_ok=True)
+            with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
+                json.dump(params, f, indent=4)
+        except SecretManagerException:
+            logger.warning(f"Failed to fetch integration params from Google Secret Manager for {secret_id}")
+
     else:
         logger.info(
             "Skipping searching in Google Secret Manager as DEMISTO_SDK_GCP_PROJECT_ID is not set"
@@ -354,7 +312,7 @@ def setup_env(
     overwrite_virtualenv: bool = False,
     secret_id: Optional[str] = None,
     instance_name: Optional[str] = None,
-):
+) -> None:
     """This function sets up the development environment for integration scripts
 
     Args:

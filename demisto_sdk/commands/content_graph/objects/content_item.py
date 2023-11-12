@@ -37,14 +37,14 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContent,
+    BaseContentWithPath,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
 )
 
 
-class ContentItem(BaseContent):
+class ContentItem(BaseContentWithPath):
     path: Path
     marketplaces: List[MarketplaceVersions]
     name: str
@@ -68,6 +68,22 @@ class ContentItem(BaseContent):
         return self.in_pack.pack_id if self.in_pack else ""
 
     @property
+    def support_level(self) -> str:
+        return (
+            self.in_pack.support_level
+            if self.in_pack and self.in_pack.support_level
+            else ""
+        )
+
+    @property
+    def ignored_errors(self) -> list:
+        return (
+            self.in_pack.ignored_errors_dict.get(self.path.name, [])
+            if self.in_pack and self.in_pack.ignored_errors_dict
+            else []
+        )
+
+    @property
     def pack_name(self) -> str:
         return self.in_pack.name if self.in_pack else ""
 
@@ -87,7 +103,7 @@ class ContentItem(BaseContent):
             return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         if pack_name := get_pack_name(self.path):
             try:
-                return BaseContent.from_path(
+                return BaseContentWithPath.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[return-value]
             except InvalidContentItemException:
@@ -182,6 +198,13 @@ class ContentItem(BaseContent):
     @property
     def data(self) -> dict:
         return get_file(self.path, keep_order=False)
+
+    @property
+    def ordered_data(self) -> dict:
+        return get_file(self.path, keep_order=True)
+
+    def save(self):
+        super()._save(self.path, self.ordered_data)
 
     def prepare_for_upload(
         self,

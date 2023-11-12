@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from pydantic import BaseModel, Field, SecretStr, root_validator
+from pydantic import AnyUrl, BaseModel, Field, SecretStr, root_validator, validator
 
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
@@ -19,7 +19,7 @@ class XsoarClientConfig(BaseModel):
     api client config for xsoar-on-prem
     """
 
-    base_api_url: str = Field(
+    base_api_url: AnyUrl = Field(
         default=os.getenv(DEMISTO_BASE_URL), description="XSOAR Tenant Base API URL"
     )
     api_key: SecretStr = Field(
@@ -61,6 +61,12 @@ class XsoarClientConfig(BaseModel):
 
 class XsoarSaasClientConfig(XsoarClientConfig):
     auth_id: str = Field(default=os.getenv(AUTH_ID), description="XSOAR/XSIAM Auth ID")
+
+    @validator("api_key", always=True)
+    def validate_auth_params(cls, v, values):
+        if not v:
+            raise ValueError("api_key is required for SaaS")
+        return v
 
 
 class XsiamClientConfig(XsoarSaasClientConfig):

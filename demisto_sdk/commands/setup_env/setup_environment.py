@@ -293,6 +293,7 @@ def configure_params(
     integration_script: IntegrationScript,
     secret_id: Optional[str],
     instance_name: Optional[str],
+    test_module: bool,
 ) -> None:
     """Configuring the integration parameters locally and in XSOAR/XSIAM
 
@@ -300,6 +301,7 @@ def configure_params(
         integration_script (IntegrationScript): The integration script object configure params to
         secret_id (Optional[str]): The secret id of the parameters. defaults to the inegration name.
         instance_name (Optional[str]): The instance name to configure on XSOAR/XSIAM. If None, will not configure.
+        test_module (bool): Whether test-module will run or not.
     """
 
     if not secret_id:
@@ -317,7 +319,7 @@ def configure_params(
                         instance_name,
                         params,
                         is_long_running=integration_script.long_running,
-                        should_test=True,
+                        should_test=test_module,
                     )
                     logger.info(
                         f"Created integration instance for {integration_script.object_id}"
@@ -347,6 +349,7 @@ def configure_integration(
     overwrite_virtualenv: bool,
     secret_id: Optional[str],
     instance_name: Optional[str],
+    test_module: bool,
 ):
     ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
     integration_script = BaseContent.from_path(Path(file_path))
@@ -357,7 +360,7 @@ def configure_integration(
     configure_dotenv()
     docker_image = integration_script.docker_image
     interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
-    configure_params(integration_script, secret_id, instance_name)
+    configure_params(integration_script, secret_id, instance_name, test_module)
     if not docker_image:
         docker_image = DEF_DOCKER
     (test_docker_image, errors,) = docker_helper.get_docker().pull_or_create_test_image(
@@ -389,6 +392,7 @@ def setup_env(
     overwrite_virtualenv: bool = False,
     secret_id: Optional[str] = None,
     instance_name: Optional[str] = None,
+    test_module: bool = False,
 ) -> None:
     """This function sets up the development environment for integration scripts
 
@@ -417,4 +421,5 @@ def setup_env(
             overwrite_virtualenv,
             secret_id,
             instance_name,
+            test_module,
         )

@@ -3569,9 +3569,16 @@ def run_unit_tests(
     required=False,
     help="What to call the Integration instance created by the command",
 )
+@click.option("--test-module", requried=False, is_flag=True, default=False)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
-    input, file_paths, create_virtualenv, overwrite_virtualenv, secret_id, instance_name
+    input,
+    file_paths,
+    create_virtualenv,
+    overwrite_virtualenv,
+    secret_id,
+    instance_name,
+    test_module,
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup_env,
@@ -3586,6 +3593,7 @@ def setup_env(
         overwrite_virtualenv=overwrite_virtualenv,
         secret_id=secret_id,
         instance_name=instance_name,
+        test_module=test_module,
     )
 
 

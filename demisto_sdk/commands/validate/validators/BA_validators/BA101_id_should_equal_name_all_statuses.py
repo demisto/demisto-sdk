@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Union
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
@@ -16,18 +16,10 @@ from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equa
     IDNameValidator,
 )
 
-ContentTypes = Union[
-    Integration,
-    Layout,
-    Mapper,
-    Playbook,
-    Script,
-    Wizard,
-    Job
-]
+ContentTypes = Union[Integration, Layout, Mapper, Playbook, Script, Wizard, Job]
 
 
 class IDNameAllStatusesValidator(IDNameValidator, BaseValidator[ContentTypes]):
     """
-        This class is for cases where the IDNameValidator need to run on all cases (no matter what git status)
+    This class is for cases where the IDNameValidator need to run on all cases (no matter what git status)
     """

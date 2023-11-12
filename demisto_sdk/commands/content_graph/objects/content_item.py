@@ -55,7 +55,6 @@ class ContentItem(BaseContent):
     description: Optional[str] = ""
     is_test: bool = False
     _pack: Optional["Pack"] = Field(default=None, exclude=True)
-    # _pack: Optional["Pack"] = None
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -80,7 +79,14 @@ class ContentItem(BaseContent):
     @property
     def ignored_errors(self) -> list:
         try:
-            return list(self.in_pack.ignored_errors_dict.get(f"file:{self.path.name}", []).items())[0][1].split(',') or []
+            return (
+                list(
+                    self.in_pack.ignored_errors_dict.get(  # type: ignore
+                        f"file:{self.path.name}", []
+                    ).items()
+                )[0][1].split(",")
+                or []
+            )
         except:  # noqa: E722
             return []
 

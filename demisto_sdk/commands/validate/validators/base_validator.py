@@ -13,10 +13,12 @@ from typing import (
 
 from pydantic import BaseModel
 
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
 )
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
@@ -44,10 +46,13 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool] = False
 
     def get_content_types(self):
-        args = get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1])  # type: ignore
-        if isinstance(args[0], (BaseContent, BaseContentMetaclass)):
+        args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
+        if isinstance(args, (BaseContent, BaseContentMetaclass)):
             return args
-        return get_args(args[0])
+        return get_args(args)
+
+    def should_run_as_test_playbook(self, content_type):
+        return content_type == ContentType.TEST_PLAYBOOK and TestPlaybook in get_args((get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0])  # type: ignore
 
     def should_run(
         self,
@@ -68,6 +73,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return all(
             [
                 isinstance(content_item, self.get_content_types()),
+                self.should_run_as_test_playbook(content_item.content_type),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),

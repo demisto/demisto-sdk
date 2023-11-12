@@ -240,20 +240,23 @@ class XsoarClient(BaseModel, ABC):
         logger.info(f"Integration {_id} was created successfully.")
 
         if should_test:
-            logger.info(f"Running test-module for integration {_id}.")
-            response_data, response_code, _ = demisto_client.generic_request_func(
-                self=self.client,
-                method="POST",
-                path="/settings/integration/test",
-                body=integration_instance_body_request,
-                response_type="object",
-                _request_timeout=240,
-            )
-            if response_code >= 300 or not response_data.get("success"):
-                raise ApiException(
-                    f"Test connection failed - {response_data.get('message')}"
-                )
+            self.test_module(_id, integration_instance_body_request)
         return raw_response
+
+    def test_module(self, _id: str, integration_instance_body_request: dict):
+        logger.info(f"Running test-module for integration {_id}.")
+        response_data, response_code, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/settings/integration/test",
+            body=integration_instance_body_request,
+            response_type="object",
+            _request_timeout=240,
+        )
+        if response_code >= 300 or not response_data.get("success"):
+            raise ApiException(
+                f"Test connection failed - {response_data.get('message')}"
+            )
 
     @retry(exceptions=ApiException)
     def delete_integration_instance(

@@ -168,7 +168,7 @@ class XsoarClient(BaseModel, ABC):
         """
         integrations_metadata: Dict[
             str, Any
-        ] = self.get_integrations_module_configuration(_id)
+        ] = self.get_integrations_module_configuration(_id, name)
 
         integration_instance_body_request = {
             "brand": integrations_metadata["name"],
@@ -230,7 +230,6 @@ class XsoarClient(BaseModel, ABC):
                 param_conf["value"] = default_value
 
             integration_instance_body_request["data"].append(param_conf)
-
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="PUT",
@@ -238,7 +237,10 @@ class XsoarClient(BaseModel, ABC):
             body=integration_instance_body_request,
             response_type=response_type,
         )
+        logger.info(f"Integration {_id} was created successfully.")
+
         if should_test:
+            logger.info(f"Running test-module for integration {_id}.")
             response_data, response_code, _ = demisto_client.generic_request_func(
                 self=self.client,
                 method="POST",
@@ -277,7 +279,10 @@ class XsoarClient(BaseModel, ABC):
 
     @retry(exceptions=ApiException)
     def get_integrations_module_configuration(
-        self, _id: Optional[str] = None, response_type: str = "object"
+        self,
+        _id: Optional[str] = None,
+        name: Optional[str] = None,
+        response_type: str = "object",
     ):
         """
         Get the integration(s) module configuration(s)
@@ -297,6 +302,15 @@ class XsoarClient(BaseModel, ABC):
             response_type=response_type,
             body={},
         )
+        if name:
+            for instance in raw_response["instances"]:
+                if instance.get("name") == name:
+                    logger.info(
+                        "Identified integration instance with matching name, deleting..."
+                    )
+                    self.delete_integration_instance(instance.get("id"))
+                    break
+
         if not _id:
             return raw_response
         for config in raw_response.get("configurations") or []:

@@ -49,12 +49,22 @@ class XsoarClientConfig(BaseModel):
             self.__dict__[item] = None
 
     def __hash__(self) -> int:
-        return hash((self.base_api_url, self.api_key.get_secret_value(), self.auth_id))
+        return hash(
+            (
+                str(self.base_api_url),
+                self.api_key.get_secret_value(),
+                self.user,
+                self.password.get_secret_value(),
+                self.auth_id,
+            )
+        )
 
     def __eq__(self, other):
         return (
-            self.base_api_url == other.base_api_url
+            str(self.base_api_url) == str(other.base_api_url)
             and self.api_key.get_secret_value() == other.api_key.get_secret_value()
+            and self.user == other.user
+            and self.password.get_secret_value() == other.password.get_secret_value()
             and self.auth_id == other.auth_id
         )
 

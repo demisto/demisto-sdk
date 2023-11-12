@@ -24,6 +24,7 @@ class XsoarClient(BaseModel, ABC):
     """
     api client for xsoar-on-prem
     """
+
     _ENTRY_TYPE_ERROR: int = 4
     client: DefaultApi = Field(exclude=True)
     config: XsoarClientConfig

@@ -45,6 +45,7 @@ from .wizard.wizard import Wizard
 from .xdrc_template.xdrc_template import XDRCTemplate
 from .xsiam_dashboard.xsiam_dashboard import XSIAMDashboard
 from .xsiam_report.xsiam_report import XSIAMReport
+from .assets_modeling_rule.assets_modeling_rule import AssetsModelingRule
 
 __all__ = [
     name

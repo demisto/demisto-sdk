@@ -146,6 +146,8 @@ class SingleModelingRule:
             try:
                 splitted_dataset = self.dataset.split("_")[1:]
                 splitted_dataset.remove("raw")
+                if "assets" in splitted_dataset:
+                    splitted_dataset.remove("assets")
                 self.product = "_".join(splitted_dataset)
             except ValueError:
                 pass
@@ -206,8 +208,13 @@ class ModelingRule(YAMLContentUnifiedObject):
     TESTDATA_FILE_SUFFIX = "_testdata.json"
     SCHEMA_FILE_SUFFIX = "_schema.json"
 
-    def __init__(self, path: Union[Path, str]):
-        super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
+    def __init__(
+        self,
+        path: Union[Path, str],
+        file_type: FileType = FileType.MODELING_RULE,
+        entity_name: str = MODELING_RULE,
+    ):
+        super().__init__(path, file_type, entity_name)
         self._rules: List[SingleModelingRule] = []
         self.rules_dict: dict = {}
 

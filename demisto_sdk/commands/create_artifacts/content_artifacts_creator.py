@@ -12,6 +12,7 @@ from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from demisto_sdk.commands.common.constants import (
+    ASSETS_MODELING_RULES_DIR,
     BASE_PACK,
     CLASSIFIERS_DIR,
     CONTENT_ITEMS_DISPLAY_FOLDERS,
@@ -147,6 +148,7 @@ XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.README,
     FileType.AUTHOR_IMAGE,
     FileType.LAYOUT_RULE,
+    FileType.ASSETS_MODELING_RULE,
 ]
 XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.INCIDENT_FIELD,
@@ -341,6 +343,7 @@ class ContentItemsHandler:
             ContentItems.WIZARDS: [],
             ContentItems.XDRC_TEMPLATE: [],
             ContentItems.LAYOUT_RULES: [],
+            ContentItems.ASSETS_MODELING_RULES: [],
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -371,6 +374,7 @@ class ContentItemsHandler:
             WIZARDS_DIR: self.add_wizards_as_content_item,
             XDRC_TEMPLATE_DIR: self.add_xdrc_template_as_content_item,
             LAYOUT_RULES_DIR: self.add_layout_rule_as_content_item,
+            ASSETS_MODELING_RULES_DIR: self.add_assets_modeling_rule_as_content_item,
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -652,6 +656,14 @@ class ContentItemsHandler:
             self.content_items[ContentItems.LAYOUT_RULES].append(
                 {"name": content_object.get("rule_name", "")}
             )
+
+    def add_assets_modeling_rule_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.ASSETS_MODELING_RULES].append(
+            {
+                "name": content_object.get("name", ""),
+                "description": content_object.get("description", ""),
+            }
+        )
 
 
 @contextmanager
@@ -1146,6 +1158,14 @@ def handle_modeling_rule(
         pack_report += dump_pack_conditionally(artifact_manager, modeling_rule)
 
 
+def handle_assets_modeling_rule(
+    content_items_handler, pack, pack_report, artifact_manager, **kwargs
+):
+    for assets_modeling_rule in pack.assets_modeling_rules:
+        content_items_handler.handle_content_item(assets_modeling_rule)
+        pack_report += dump_pack_conditionally(artifact_manager, assets_modeling_rule)
+
+
 def handle_correlation_rule(
     content_items_handler, pack, pack_report, artifact_manager, **kwargs
 ):
@@ -1329,11 +1349,14 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         FileType.README: handle_readme,
         FileType.AUTHOR_IMAGE: handle_author_image,
         FileType.LAYOUT_RULE: handle_layout_rule,
+        FileType.ASSETS_MODELING_RULE: handle_assets_modeling_rule,
     }
 
     items_to_dump = MARKETPLACE_TO_ITEMS_MAPPING.get(
         artifact_manager.marketplace, XSOAR_MARKETPLACE_ITEMS_TO_DUMP
     )
+
+    # items_to_dump = [FileType.ASSETS_MODELING_RULE, FileType.MODELING_RULE]  # todo: just testing, remove
     for item in items_to_dump:
         content_items_to_handler[item](
             content_items_handler=content_items_handler,
@@ -1640,6 +1663,10 @@ def calc_relative_packs_dir(
         or (
             XDRC_TEMPLATE_DIR in relative_pack_path.parts
             and relative_pack_path.parts[-2] != XDRC_TEMPLATE_DIR
+        )
+        or (
+            ASSETS_MODELING_RULES_DIR in relative_pack_path.parts
+            and relative_pack_path.parts[-2] != ASSETS_MODELING_RULES_DIR
         )
     ):
         relative_pack_path = relative_pack_path.parent.parent

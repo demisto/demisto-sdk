@@ -100,7 +100,11 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         Returns:
             bool: True if unified else False.
         """
-        if self._content_type in [FileType.PARSING_RULE, FileType.MODELING_RULE]:
+        if self._content_type in [
+            FileType.PARSING_RULE,
+            FileType.MODELING_RULE,
+            FileType.ASSETS_MODELING_RULE,
+        ]:
             return self.rules_path is None
 
         return self.code_path is None

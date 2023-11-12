@@ -1,25 +1,31 @@
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
-    YAMLContentItemParser,
-)
+from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRuleParser
 
 
 class AssetsModelingRuleParser(
-    YAMLContentItemParser, content_type=ContentType.ASSETS_MODELING_RULE
+    ModelingRuleParser, content_type=ContentType.ASSETS_MODELING_RULE
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
 
-    @property
-    def object_id(self) -> Optional[str]:
-        return self.yml_data.get("id")
-
-    @property
-    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.MarketplaceV2}
+    # def __init__(
+    #     self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+    # ) -> None:
+    #     super().__init__(path, pack_marketplaces)
+    #
+    # @property
+    # def object_id(self) -> Optional[str]:
+    #     return self.yml_data.get("id")
+    #
+    # @property
+    # def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+    #     return {MarketplaceVersions.MarketplaceV2}

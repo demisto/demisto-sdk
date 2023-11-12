@@ -97,6 +97,7 @@ XDRC_TEMPLATE = "xdrctemplate"
 LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 EVENT_COLLECTOR = "EventCollector"
+ASSETS_MODELING_RULE = "assetsmodelingrule"
 # ENV VARIABLES
 
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
@@ -196,6 +197,7 @@ class FileType(str, Enum):
     PEM = "pem"
     VULTURE_WHITELIST = "vulture_whitelist"
     ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
+    ASSETS_MODELING_RULE = "assetsmodelingrule"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1699,6 +1701,7 @@ class ContentItems(Enum):
     WIZARDS = ("wizard",)
     XDRC_TEMPLATE = "xdrctemplate"
     LAYOUT_RULES = "layoutrule"
+    ASSETS_MODELING_RULES = "assetsmodelingrule"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1726,6 +1729,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
     LAYOUT_RULES_DIR,
+    ASSETS_MODELING_RULES_DIR,
 }
 
 

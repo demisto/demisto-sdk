@@ -6,6 +6,7 @@ import traceback
 import zipfile
 from collections import defaultdict
 from datetime import datetime
+from distutils.dir_util import copy_tree
 from io import StringIO
 from pathlib import Path
 from string import punctuation
@@ -486,6 +487,13 @@ class ContributionConverter:
             if self.create_new:
                 self.generate_readmes_for_new_content_pack(
                     is_contribution=True)
+                
+            # TODO implement
+            # When the changed item (integration, playbook, script)
+            # is no new, we need to merge the old README with the new one
+            # elif not integration.is_new():
+            #     pass
+                
 
             # FIXME currently generated readme removes some sections (e.g. command outputs)
             # FIXME 
@@ -992,3 +1000,33 @@ class ContributionConverter:
                 else:
                     tmp_zf.writestr(item, zf.read(item.filename))
         return modified_contribution_zip_path, filename_to_basename_and_containing_dir
+
+    def copy_files_to_existing_pack(self, dst_path: str) -> List[str]:
+        """Copies relevant files from the source pack to the destination pack recursively
+
+        Used for when the contribution was intended to update/modify a pack that exists in
+        the demisto/content repo already. Because the demisto-sdk creates a new pack from a
+        contribution zip file (prevents creating a pack that conflicts with an existing one)
+        we will copy the relevant files to the pack the contributor intended to update.
+        Relevant files are content files in pack subdirectories, e.g. Integrations/*, Scripts/*,
+        etc.
+
+        Args:
+            - `dst_path` (``str``): The destination directory to copy the files to. Usually this would be
+            the path to the content repo.
+
+        Returns:
+            - `List[str]` of all copied files.
+        """
+
+        cp_files: List[str] = []
+
+        for src_path in os.listdir(self.working_dir_path):
+            src_sub_path = os.path.join(self.working_dir_path, src_path)
+            dst_sub_path = os.path.join(dst_path, self.pack_dir_path, src_path)
+            print(f'{dst_sub_path=}')
+            if os.path.isdir(src_sub_path):
+                cp_files.extend(copy_tree(src_sub_path, dst_sub_path))
+        
+        return cp_files
+

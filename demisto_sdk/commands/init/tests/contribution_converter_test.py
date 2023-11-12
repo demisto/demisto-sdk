@@ -6,11 +6,14 @@ from os.path import join
 from pathlib import Path
 from typing import Optional, Union
 from zipfile import ZipFile
+from demisto_sdk.commands.common.handlers import YAML_Handler
+yaml = YAML_Handler()
 
 import pytest
 import urllib3
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
@@ -1166,13 +1169,15 @@ class TestReadmes:
 
     repo_dir_name = "content_repo"
     pack_name = "HelloWorld"
+    existing_integration_name = "HelloWorld"
     script_name = "script0"
     author = "Kobbi Gal"
     gh_user = "kgal-pan"
 
-    def test_process_existing_pack_integration_readme(
+    def test_process_existing_pack_existing_integration_readme(
         self,
         tmp_path: TempPathFactory,
+        mocker: MockerFixture
     ):
         """
         Test for an existing integration in an existing pack
@@ -1190,14 +1195,43 @@ class TestReadmes:
 
         Then
         - The integration README should be updated with the new command.
-
         """
+
+        # Create content repo
+        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
+        content_temp_dir.mkdir()
+        repo = Repo(tmpdir=content_temp_dir, init_git=True)
+
+        # Read integration python, yml code and README to create mock integration
+        py_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.py")
+        py_code = py_code_path.read_text()
+
+        readme_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.md")
+        readme = readme_path.read_text()
+
+        yml_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.yml")
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+
+        repo.create_pack(self.pack_name)
+        repo.packs[0].create_integration(
+            name=self.existing_integration_name,
+            code=py_code,
+            readme=readme,
+            yml=yml_code
+        )
+        
+        mocker.patch.object(repo.git_util, "added_files", return_value=set())
+        mocker.patch.object(repo.git_util, "modified_files", return_value=set())
 
         # Read the contribution content mapping
         with open(os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.json"), "r") as j:
             contributed_content_mapping = json.load(j)
             contributed_content_items = contributed_content_mapping.get(self.pack_name, {}).get("detected_content_items", [])
 
+        contribution_temp_dir = Path(str(tmp_path)) / "contribution"
+        contribution_temp_dir.mkdir()
         # Create a contribution converter instance
         contrib_converter = ContributionConverter(
             name=self.pack_name,
@@ -1207,26 +1241,27 @@ class TestReadmes:
             gh_user=self.gh_user,
             create_new=False,
             detected_content_items=contributed_content_items,
-            working_dir_path=str(tmp_path)
+            working_dir_path=contribution_temp_dir.__str__()
         )
 
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
-        # Check that Integration README was updated
-        with open(os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.md"), "r") as original_readme:
-            original_readme_text_lines = original_readme.readlines()
+        # Copy files from contribution dir to pack
+        copied_files = contrib_converter.copy_files_to_existing_pack(dst_path=content_temp_dir.__str__())
 
-        with open(os.path.join(str(tmp_path), INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME), "r") as modified_readme:
-            modified_readme_text_lines = modified_readme.readlines()
+        actual_integration_readme = Path(copied_files[1]).read_text()
 
-        for line in difflib.unified_diff(original_readme_text_lines, modified_readme_text_lines, fromfile="existing_pack_add_integration_cmd.md", tofile=PACKS_README_FILE_NAME):
-            print(line)
+        with Path(copied_files[3]).open("r") as stream:
+            actual_integration_yml = yaml.load(stream)
 
-        # TODO - currently readmes are different but some of the changes
-        # remove existing sections (e.g. command outputs)
-        assert original_readme_text_lines != modified_readme_text_lines
-
+        actual_integration_python = Path(copied_files[4]).read_text()
+        
+        # Verify the copied integration Python code, YAML and README are different than the one found in the 
+        # original integration path
+        assert actual_integration_readme != readme
+        assert actual_integration_yml != yml_code
+        assert actual_integration_python != py_code
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:

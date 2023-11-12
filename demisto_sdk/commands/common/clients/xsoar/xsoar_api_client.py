@@ -149,6 +149,7 @@ class XsoarClient(BaseModel, ABC):
         is_long_running: bool = False,
         should_enable: str = "true",
         response_type: str = "object",
+        should_test: bool = False,
     ):
         """
         Creates an integration instance.

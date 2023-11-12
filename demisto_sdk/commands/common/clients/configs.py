@@ -8,12 +8,17 @@ from demisto_sdk.commands.common.constants import (
     AUTH_ID,
     DEMISTO_BASE_URL,
     DEMISTO_KEY,
+    DEMISTO_PASSWORD,
+    DEMISTO_USERNAME,
     XSIAM_COLLECTOR_TOKEN,
     XSIAM_TOKEN,
 )
 
 
 class XsoarClientConfig(BaseModel):
+    """
+    api client config for xsoar-on-prem
+    """
 
     base_api_url: str = Field(
         default=os.getenv(DEMISTO_BASE_URL), description="XSOAR Tenant Base API URL"
@@ -21,19 +26,24 @@ class XsoarClientConfig(BaseModel):
     api_key: SecretStr = Field(
         default=SecretStr(os.getenv(DEMISTO_KEY, "")), description="XSOAR API Key"
     )
+    user: str = Field(
+        default=os.getenv(DEMISTO_USERNAME, ""), description="XSOAR Username"
+    )
+    password: SecretStr = Field(
+        default=SecretStr(os.getenv(DEMISTO_PASSWORD, "")), description="XSOAR Password"
+    )
 
-    @classmethod
-    def validate_config(cls, v, field: ModelField):
-        if not v:
+    @validator("api_key", "user", "password")
+    def validate_auth_params(cls, v, values, **kwargs):
+        if not values["base_api_url"]:
+            raise ValueError("base_api_url is required")
+
+        if not values["api_key"] and not (values["user"] and values["password"]):
             raise ValueError(
-                f"XSOAR client configuration is not complete: value was not passed for {field.name} and"
-                f" the associated environment variable for {field.name} is not set"
+                "Either api_key or both user and password must be provided"
             )
-        return v
 
-    @validator("base_api_url", "api_key", always=True)
-    def validate_base_url_and_api_key(cls, v, field: ModelField):
-        return cls.validate_config(v, field)
+        return v
 
     def __getattr__(self, item):
         if item in {"token", "collector_token", "auth_id"}:

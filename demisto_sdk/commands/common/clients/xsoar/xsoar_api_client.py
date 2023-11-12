@@ -182,7 +182,7 @@ class XsoarClient(BaseModel, ABC):
             raw response of the newly created integration instance
         """
         logger.info(
-            f"Creating integration instance {instance_name} for integration {_id}"
+            f"Creating integration instance {instance_name} for Integration {_id}"
         )
         integrations_metadata: Dict[
             str, Any
@@ -264,9 +264,11 @@ class XsoarClient(BaseModel, ABC):
             body=integration_instance_body_request,
             response_type=response_type,
         )
-        logger.info(f"Succesfully created instance for {_id}")
+        logger.info(
+            f"Successfully created integration instance {instance_name} for Integration {_id}"
+        )
         if should_test:
-            self.test_module(_id, integration_instance_body_request)
+            self.test_module(_id, instance_name)
         return raw_response
 
     @retry(exceptions=ApiException)

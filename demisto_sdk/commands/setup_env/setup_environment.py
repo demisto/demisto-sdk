@@ -321,9 +321,9 @@ def configure_params(
                     logger.info(
                         f"Created integration instance for {integration_script.object_id}"
                     )
-                except ApiException:
+                except ApiException as e:
                     logger.warning(
-                        f"Failed to create integration instance {instance_name}"
+                        f"Failed to create integration instance {instance_name}. Error {e}"
                     )
             (CONTENT_PATH / ".vscode").mkdir(exist_ok=True)
             with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:

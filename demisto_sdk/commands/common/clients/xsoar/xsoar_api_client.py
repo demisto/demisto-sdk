@@ -96,7 +96,7 @@ class XsoarClient(BaseModel, ABC):
 
     """
     #############################
-    packs related methods
+    marketplace related methods
     #############################
     """
 
@@ -111,6 +111,25 @@ class XsoarClient(BaseModel, ABC):
             method="GET",
             path="/contentpacks/metadata/installed",
             response_type="object",
+        )
+        return raw_response
+
+    def search_marketplace_packs(self, filters: Dict):
+        """
+        Searches for packs in a marketplace
+
+        Args:
+            filters: whether there are any filters to apply
+
+        Returns:
+            raw response
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/contentpacks/marketplace/search",
+            response_type="object",
+            body=filters,
         )
         return raw_response
 

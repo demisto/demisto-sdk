@@ -183,7 +183,7 @@ class PreCommitRunner:
         show_diff_on_failure: bool = False,
         exclude_files: Optional[Set[Path]] = None,
         dry_run: bool = False,
-        run_docker_hooks: bool = False,
+        run_docker_hooks: bool = True,
     ) -> int:
         ret_val = 0
         precommit_env = os.environ.copy()
@@ -357,7 +357,7 @@ def pre_commit_manager(
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
     dry_run: bool = False,
-    run_docker_hooks: bool = False,
+    run_docker_hooks: bool = True,
 ) -> Optional[int]:
     """Run pre-commit hooks .
 

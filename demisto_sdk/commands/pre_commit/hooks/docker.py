@@ -194,7 +194,7 @@ class DockerHook(Hook):
     This class will make common manipulations on commands that need to run in docker
     """
 
-    def prepare_hook(self, files_to_run: Iterable, run_docker_hooks: bool = False):
+    def prepare_hook(self, files_to_run: Iterable, run_docker_hooks):
         """
         Group all the files by dockerimages
         Split those images by config files

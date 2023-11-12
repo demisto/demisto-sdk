@@ -3466,7 +3466,7 @@ def update_content_graph(
 @click.option(
     "--docker/--no-docker",
     help="Whether to run docker based hooks or not.",
-    default=False,
+    default=True,
     is_flag=True,
 )
 @click.pass_context

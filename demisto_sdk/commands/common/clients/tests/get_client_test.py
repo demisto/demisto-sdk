@@ -136,7 +136,7 @@ def test_get_xsoar_client_from_server_type(
 
     def _generic_request_side_effect(path: str, method: str):
         if path == "/ioc-rules" and method == "GET":
-            raise ApiException("ioc-rules is only in xsiam")
+            raise ApiException(status=500, reason="error")
 
     api_requests_mocker.patch.object(
         XsoarClient, "get_xsoar_about", return_value={"demistoVersion": xsoar_version}
@@ -164,7 +164,7 @@ def test_get_xsiam_client_from_server_type(api_requests_mocker):
 
     def _generic_request_side_effect(path: str, method: str):
         if path == "/ioc-rules" and method == "GET":
-            return True
+            return None, 200, {"Content-Type": "application/json"}
 
     api_requests_mocker.patch.object(
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect

@@ -61,15 +61,20 @@ def configure_dotenv():
 
 
 def configure_vscode_settings(
-    ide_folder: Path, integration_script: IntegrationScript, interpreter_path: Path
+    ide_folder: Path,
+    integration_script: Optional[IntegrationScript] = None,
+    interpreter_path: Optional[Path] = None,
 ):
     shutil.copy(Path(__file__).parent / "settings.json", ide_folder / "settings.json")
     with open(ide_folder / "settings.json") as f:
         settings = json5.load(f)
-
-    settings["python.defaultInterpreterPath"] = str(interpreter_path)
-    settings["python.testing.cwd"] = str(integration_script.path.parent)
-    settings["python.analysis.extraPaths"] = [path for path in PYTHONPATH]
+    if interpreter_path:
+        settings["python.defaultInterpreterPath"] = str(interpreter_path)
+    if integration_script:
+        settings["python.testing.cwd"] = str(integration_script.path.parent)
+    settings["python.analysis.extraPaths"] = [
+        str(path) for path in PYTHONPATH if str(path)
+    ]
     with open(ide_folder / "settings.json", "w") as f:
         json.dump(settings, f, indent=4)
 
@@ -309,7 +314,7 @@ def configure_params(
                 try:
                     get_client_from_server_type().create_integration_instance(
                         integration_script.object_id,
-                        integration_script.object_id,
+                        instance_name,
                         params,
                     )
                     logger.info(
@@ -394,8 +399,13 @@ def setup_env(
         instance_name (Optional[str], optional): The instance name to configure on XSOAR/XSIAM. Defaults to None.
 
     Raises:
-        RuntimeError: _description_
+        RuntimeError:
     """
+    if not file_paths:
+        configure_dotenv()
+        ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
+        if ide == IDE.VSCODE:
+            configure_vscode_settings(ide_folder)
     for file_path in file_paths:
         configure_integration(
             ide,

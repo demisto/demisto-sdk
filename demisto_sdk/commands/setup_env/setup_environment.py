@@ -38,8 +38,8 @@ IDE_TO_FOLDER = {IDE.VSCODE: ".vscode", IDE.PYCHARM: ".idea"}
 
 
 def add_init_file_in_test_data(integration_script: IntegrationScript):
-    if (integration_script.path.parent / "test_data").exists():
-        (integration_script.path.parent / "test_data" / "__init__.py").touch()
+    if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
+        (test_data_dir / "__init__.py").touch()
 
 
 def configure_dotenv():

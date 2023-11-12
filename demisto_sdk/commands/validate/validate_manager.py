@@ -98,7 +98,10 @@ class ValidateManager:
         # gather validator from validate package
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
-            if validator.error_code in self.configured_validations.validations_to_run:
+            if (
+                validator.error_code in self.configured_validations.validations_to_run
+                and "super_classes" not in str(validator)
+            ):
                 validators.append(validator())
                 if validator.graph:
                     self.validate_graph = True

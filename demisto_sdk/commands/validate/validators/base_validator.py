@@ -44,7 +44,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool] = False
 
     def get_content_types(self):
-        args = get_args(self.__orig_bases__[0])  # type: ignore
+        args = get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1])  # type: ignore
         if isinstance(args[0], (BaseContent, BaseContentMetaclass)):
             return args
         return get_args(args[0])

@@ -7,7 +7,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_wizard_object,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
+from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equal_name import (
     IDNameValidator,
 )
 

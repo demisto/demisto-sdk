@@ -14,8 +14,8 @@ from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ValidationResults
-from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
-    IDNameValidator,
+from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name_all_statuses import (
+    IDNameAllStatusesValidator,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -27,6 +27,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
+)
+from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equal_name import (
+    IDNameValidator,
 )
 from TestSuite.test_tools import str_in_call_args_list
 
@@ -60,11 +63,11 @@ def get_validate_manager(mocker):
         (
             ["BA101", "BC100"],
             [
-                IDNameValidator,
+                IDNameAllStatusesValidator,
                 BreakingBackwardsSubtypeValidator,
                 PackMetadataNameValidator,
             ],
-            [IDNameValidator(), BreakingBackwardsSubtypeValidator()],
+            [IDNameAllStatusesValidator(), BreakingBackwardsSubtypeValidator()],
         ),
         (
             ["TE"],
@@ -78,11 +81,11 @@ def get_validate_manager(mocker):
         (
             ["BA101", "TE103"],
             [
-                IDNameValidator,
+                IDNameAllStatusesValidator,
                 BreakingBackwardsSubtypeValidator,
                 PackMetadataNameValidator,
             ],
-            [IDNameValidator()],
+            [IDNameAllStatusesValidator()],
         ),
     ],
 )

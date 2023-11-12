@@ -30,7 +30,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         validation_results = []
         for content_item in content_items:
             old_obj = cast(ContentTypes, content_item.old_base_content_object)
-            if content_item.type != old_obj:
+            if content_item.type != old_obj.type:
                 validation_results.append(
                     ValidationResult(
                         content_object=content_item,

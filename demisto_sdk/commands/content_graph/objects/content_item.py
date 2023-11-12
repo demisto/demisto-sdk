@@ -54,7 +54,8 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
-    _pack: Optional[Pack] = Field(None, exclude=True)
+    _pack: Optional["Pack"] = Field(default=None, exclude=True)
+    # _pack: Optional["Pack"] = None
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -102,15 +103,15 @@ class ContentItem(BaseContent):
         """
         if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
             return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
-        if self._pack:
-            return self._pack
+        if self._pack.default is not None:  # type: ignore
+            return self._pack.default  # type: ignore
         if pack_name := get_pack_name(self.path):
             try:
                 pack = BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[return-value]
-                pack = cast(Pack, pack)
-                self._pack = pack
+                pack = cast("Pack", pack)
+                self._pack.default = pack  # type: ignore
                 return pack
             except InvalidContentItemException:
                 logger.warning(

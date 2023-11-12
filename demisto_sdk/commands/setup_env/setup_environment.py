@@ -39,8 +39,8 @@ IDE_TO_FOLDER = {IDE.VSCODE: ".vscode", IDE.PYCHARM: ".idea"}
 
 
 def add_init_file_in_test_data(integration_script: IntegrationScript):
-    if (integration_script.path.parent / "test_data").exists():
-        (integration_script.path.parent / "test_data" / "__init__.py").touch()
+    if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
+        (test_data_dir / "__init__.py").touch()
 
 
 def configure_dotenv():
@@ -50,12 +50,14 @@ def configure_dotenv():
     """
     dotenv_path = CONTENT_PATH / ".env"
     env_vars = dotenv.dotenv_values(dotenv_path)
-    env_vars["PYTHONPATH"] = ":".join([str(path) for path in PYTHONPATH])
-    env_vars["MYPYPATH"] = ":".join([str(path) for path in PYTHONPATH])
+    python_path_values = ":".join((str(path) for path in PYTHONPATH))
+    env_vars["PYTHONPATH"] = python_path_values
+    env_vars["MYPYPATH"] = python_path_values
     for key, value in env_vars.items():
-        if not value:
-            continue
-        dotenv.set_key(dotenv_path, key, value)
+        if value:
+            dotenv.set_key(dotenv_path, key, value)
+        else:
+            logger.warning(f"empty value for {key}, not setting it")
 
 
 def configure_vscode_settings(

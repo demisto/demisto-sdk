@@ -5,7 +5,11 @@ import pytest
 import demisto_sdk.commands.content_graph.objects.content_item as content_item
 import demisto_sdk.commands.setup_env.setup_environment as setup_environment
 from demisto_sdk.commands.common.tools import get_file
-from demisto_sdk.commands.setup_env.setup_environment import docker_helper, setup_env
+from demisto_sdk.commands.setup_env.setup_environment import (
+    docker_helper,
+    json5,
+    setup_env,
+)
 
 
 @pytest.mark.parametrize("create_virtualenv", [False, True])
@@ -15,6 +19,14 @@ def test_setup_env_vscode(mocker, pack, create_virtualenv):
     params = {"username": "user", "password": "pass"}
     repo_path = Path(pack.repo_path)
     mocker.patch.object(setup_environment, "CONTENT_PATH", repo_path)
+    mocker.patch.object(
+        setup_environment,
+        "PYTHONPATH",
+        [repo_path / "Packs/Base/Scripts/CommonServerPython"],
+    )
+
+    mocker.patch.object(setup_environment, "add_demistomock_and_commonserveruser")
+
     mocker.patch.object(content_item, "CONTENT_PATH", repo_path)
     mocker.patch.object(
         docker_helper.DockerBase,
@@ -44,10 +56,14 @@ def test_setup_env_vscode(mocker, pack, create_virtualenv):
     vscode_folder = (
         repo_path / ".vscode" if not create_virtualenv else Path(pack.path) / ".vscode"
     )
-    launch_json = get_file(vscode_folder / "launch.json")
-    tasks_json = get_file(vscode_folder / "tasks.json")
+    with open(vscode_folder / "launch.json") as f:
+        launch_json = json5.load(f)
+    with open(vscode_folder / "tasks.json") as f:
+        tasks_json = json5.load(f)
+    with open(vscode_folder / "settings.json") as f:
+        settings_json = json5.load(f)
+
     params_json = get_file(repo_path / ".vscode" / "params.json")
-    settings_json = get_file(vscode_folder / "settings.json")
     launch_json_configs = launch_json["configurations"]
     assert len(launch_json_configs) == 4
     assert launch_json_configs[0]["name"] == "Docker: Debug (integration_0)"

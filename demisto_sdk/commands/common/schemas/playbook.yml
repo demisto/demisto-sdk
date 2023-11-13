@@ -326,12 +326,10 @@ schema;inputsSection_schema:
     name:
       type: str
       required: true
-    id:
-      type: str
     description:
       type: str
       required: true
-    keys:
+    inputs:
       type: seq
       sequence:
         - type: str
@@ -358,12 +356,10 @@ schema;outputsSection_schema:
     name:
       type: str
       required: true
-    id:
-      type: str
     description:
       type: str
       required: true
-    contextPaths:
+    outputs:
       type: seq
       sequence:
         - type: str

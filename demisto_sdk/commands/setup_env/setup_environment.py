@@ -7,7 +7,7 @@ import tempfile
 import venv
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import dotenv
 from demisto_client.demisto_api.rest import ApiException
@@ -67,19 +67,47 @@ def configure_vscode_settings(
     ide_folder: Path,
     integration_script: Optional[IntegrationScript] = None,
     interpreter_path: Optional[Path] = None,
+    devcontainer: bool = False,
 ):
     shutil.copy(Path(__file__).parent / "settings.json", ide_folder / "settings.json")
     with open(ide_folder / "settings.json") as f:
         settings = json5.load(f)
+    if devcontainer:
+        interpreter_path = Path("/usr/local/bin/python")
     if interpreter_path:
         settings["python.defaultInterpreterPath"] = str(interpreter_path)
     if integration_script:
-        settings["python.testing.cwd"] = str(integration_script.path.parent)
-    settings["python.analysis.extraPaths"] = [
-        str(path) for path in PYTHONPATH if str(path)
-    ]
+        if devcontainer:
+            testing_path = f"workspaces/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
+        else:
+            testing_path = str(integration_script.path.parent)
+        settings["python.testing.cwd"] = testing_path
+    if devcontainer:
+        python_path = get_docker_python_path("/workspaces/content")
+    else:
+        python_path = [str(path) for path in PYTHONPATH if str(path)]
+
+    settings["python.analysis.extraPaths"] = python_path
     with open(ide_folder / "settings.json", "w") as f:
         json.dump(settings, f, indent=4)
+
+
+def get_docker_python_path(docker_prefix: str) -> List[str]:
+    docker_python_path = []
+    for path in PYTHONPATH:
+        with contextlib.suppress(ValueError):
+            # we can't add paths which is not relative to CONTENT_PATH, and `is_relative_to is not working on python3.8`
+            docker_python_path.append(
+                f"{docker_prefix}/{path.relative_to(CONTENT_PATH.absolute())}"
+            )
+    if (
+        f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"
+        not in docker_python_path
+    ):
+        raise RuntimeError(
+            "Could not set debug-in-docker on VSCode. Probably CONTENT_PATH is not set properly."
+        )
+    return docker_python_path
 
 
 def configure_vscode_tasks(
@@ -88,17 +116,7 @@ def configure_vscode_tasks(
     if integration_script.type == "powershell":
         logger.debug("Powershell integration, skipping tasks.json")
         return
-    docker_python_path = []
-    for path in PYTHONPATH:
-        with contextlib.suppress(ValueError):
-            # we can't add paths which is not relative to CONTENT_PATH, and `is_relative_to is not working on python3.8`
-            docker_python_path.append(
-                f"/app/{path.relative_to(CONTENT_PATH.absolute())}"
-            )
-    if "/app/Packs/Base/Scripts/CommonServerPython" not in docker_python_path:
-        raise RuntimeError(
-            "Could not set debug-in-docker on VSCode. Probably CONTENT_PATH is not set properly."
-        )
+    docker_python_path = get_docker_python_path("/app")
 
     def build_tasks():
         return {
@@ -221,8 +239,24 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
                 ],
             }
             return launch
-        with open(ide_folder / "launch.json", "w") as f:
-            json.dump(build_launch(), f, indent=4)
+
+    with open(ide_folder / "launch.json", "w") as f:
+        json.dump(build_launch(), f, indent=4)
+
+
+def configure_devcontainer(
+    integration_script: IntegrationScript, test_docker_image: str
+):
+    with open(Path(__file__).parent / ".devcontainer" / "devcontainer.json") as f:
+        devcontainer_json = json5.load(f)
+    (integration_script.path / ".devcontainer").mkdir()
+    devcontainer_path = integration_script.path.parent / ".devcontainer"
+    docker_python_path = get_docker_python_path("/worspaces/content")
+    devcontainer_json["build"]["args"]["IMAGENAME"] = test_docker_image
+    devcontainer_json["remoteEnv"]["PYTHONPATH"] = ":".join(docker_python_path)
+    devcontainer_json["remoteEnv"]["MYPYPATH"] = ":".join(docker_python_path)
+    configure_vscode_launch(devcontainer_path, integration_script)
+    configure_vscode_settings(devcontainer_path, integration_script, devcontainer=True)
 
 
 def configure_vscode(
@@ -243,6 +277,7 @@ def configure_vscode(
     configure_vscode_settings(ide_folder, integration_script, interpreter_path)
     configure_vscode_tasks(ide_folder, integration_script, test_docker_image)
     configure_vscode_launch(ide_folder, integration_script)
+    configure_devcontainer(integration_script, test_docker_image)
 
 
 def install_virtualenv(
@@ -407,9 +442,10 @@ def configure_integration(
         pack = integration_script.in_pack
         assert isinstance(pack, Pack), "Expected pack"
         ide_folder = pack.path / IDE_TO_FOLDER[ide]
-        interpreter_path = install_virtualenv(
-            integration_script, test_docker_image, overwrite_virtualenv
-        )
+        if create_virtualenv and integration_script.type.startswith("python"):
+            interpreter_path = install_virtualenv(
+                integration_script, test_docker_image, overwrite_virtualenv
+            )
 
     if ide == IDE.VSCODE:
         configure_vscode(

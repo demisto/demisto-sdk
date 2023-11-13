@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.handlers.json.json5_handler import JSON5_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -376,8 +377,7 @@ def configure_params(
                         f"Failed to create integration instance {instance_name}. Error {e}"
                     )
             (CONTENT_PATH / ".vscode").mkdir(exist_ok=True)
-            with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
-                json5.dump(params, f, indent=4)
+            write_dict(CONTENT_PATH / ".vscode" / "params.json", params, indent=4)
         except SecretManagerException:
             logger.warning(
                 f"Failed to fetch integration params from Google Secret Manager for {secret_id}"

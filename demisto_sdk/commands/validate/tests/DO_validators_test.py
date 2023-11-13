@@ -14,18 +14,14 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_e
     [
         (
             [
-                create_integration_object(
-                    key_path="script.dockerimage", new_value=""
-                ),
+                create_integration_object(key_path="script.dockerimage", new_value=""),
                 create_integration_object(),
             ],
             1,
         ),
         (
             [
-                create_script_object(
-                    key_path="dockerimage", new_value=""
-                ),
+                create_script_object(key_path="dockerimage", new_value=""),
                 create_script_object(),
             ],
             1,
@@ -39,12 +35,8 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_e
         ),
         (
             [
-                create_script_object(
-                    key_path="dockerimage", new_value=""
-                ),
-                create_integration_object(
-                    key_path="script.dockerimage", new_value=""
-                ),
+                create_script_object(key_path="dockerimage", new_value=""),
+                create_integration_object(key_path="script.dockerimage", new_value=""),
             ],
             2,
         ),
@@ -67,4 +59,7 @@ def test_DockerImageExistValidator_is_valid(content_items, expected_number_of_fa
         - Case 3: Should fail 0 integration.
         - Case 4: Should fail 2 integration.
     """
-    assert len(DockerImageExistValidator().is_valid(content_items)) == expected_number_of_failures
+    assert (
+        len(DockerImageExistValidator().is_valid(content_items))
+        == expected_number_of_failures
+    )

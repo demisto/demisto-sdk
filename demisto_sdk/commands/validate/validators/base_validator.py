@@ -51,8 +51,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             return args
         return get_args(args)
 
-    def should_run_as_test_playbook(self, content_type):
-        return content_type == ContentType.TEST_PLAYBOOK and TestPlaybook in get_args((get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0])  # type: ignore
+    def should_run_as_test_playbook(self, content_type: ContentType):
+        return content_type == ContentType.TEST_PLAYBOOK and TestPlaybook in self.get_content_types()  # type: ignore
 
     def should_run(
         self,

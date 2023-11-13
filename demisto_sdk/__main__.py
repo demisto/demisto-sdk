@@ -580,7 +580,7 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Skip conf.json validation.",
+    help="Relevant only for the old validate flow. Skip conf.json validation.",
 )
 @click.option(
     "-s",
@@ -588,12 +588,12 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Perform validations using the id_set file.",
+    help="Relevant only for the old validate flow. Perform validations using the id_set file.",
 )
 @click.option(
     "-idp",
     "--id-set-path",
-    help="The path of the id-set.json used for validations.",
+    help="Relevant only for the old validate flow. The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True),
 )
 @click.option(
@@ -602,7 +602,7 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Perform validations on content graph.",
+    help="Relevant only for the old validate flow. Perform validations on content graph.",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
@@ -611,7 +611,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "--no-backward-comp",
     is_flag=True,
     show_default=True,
-    help="Whether to check backward compatibility or not.",
+    help="Relevant only for the old validate flow. Whether to check backward compatibility or not.",
 )
 @click.option(
     "-g",
@@ -643,7 +643,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "-iu",
     "--include-untracked",
     is_flag=True,
-    help="Whether to include untracked files in the validation. "
+    help="Relevant only for the old validate flow. Whether to include untracked files in the validation. "
     "This applies only when the -g flag is supplied.",
 )
 @click.option(
@@ -665,31 +665,31 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--skip-pack-release-notes",
     is_flag=True,
-    help="Skip validation of pack release notes.",
+    help="Relevant only for the old validate flow. Skip validation of pack release notes.",
 )
 @click.option(
-    "--print-ignored-errors", is_flag=True, help="Print ignored errors as warnings."
+    "--print-ignored-errors", is_flag=True, help="Relevant only for the old validate flow. Print ignored errors as warnings."
 )
 @click.option(
     "--print-ignored-files",
     is_flag=True,
-    help="Print which files were ignored by the command.",
+    help="Relevant only for the old validate flow. Print which files were ignored by the command.",
 )
 @click.option(
-    "--no-docker-checks", is_flag=True, help="Whether to run docker image validation."
+    "--no-docker-checks", is_flag=True, help="Relevant only for the old validate flow. Whether to run docker image validation."
 )
 @click.option(
     "--silence-init-prints",
     is_flag=True,
-    help="Whether to skip the initialization prints.",
+    help="Relevant only for the old validate flow. Whether to skip the initialization prints.",
 )
 @click.option(
     "--skip-pack-dependencies",
     is_flag=True,
-    help="Skip validation of pack dependencies.",
+    help="Relevant only for the old validate flow. Skip validation of pack dependencies.",
 )
 @click.option(
-    "--create-id-set", is_flag=True, help="Whether to create the id_set.json file."
+    "--create-id-set", is_flag=True, help="Relevant only for the old validate flow. Whether to create the id_set.json file."
 )
 @click.option(
     "-j",
@@ -697,34 +697,34 @@ def zip_packs(ctx, **kwargs) -> int:
     help="The JSON file path to which to output the command results.",
 )
 @click.option(
-    "--skip-schema-check", is_flag=True, help="Whether to skip the file schema check."
+    "--skip-schema-check", is_flag=True, help="Relevant only for the old validate flow. Whether to skip the file schema check."
 )
 @click.option(
-    "--debug-git", is_flag=True, help="Whether to print debug logs for git statuses."
+    "--debug-git", is_flag=True, help="Relevant only for the old validate flow. Whether to print debug logs for git statuses."
 )
 @click.option(
-    "--print-pykwalify", is_flag=True, help="Whether to print the pykwalify log errors."
+    "--print-pykwalify", is_flag=True, help="Relevant only for the old validate flow. Whether to print the pykwalify log errors."
 )
 @click.option(
     "--quiet-bc-validation",
-    help="Set backwards compatibility validation's errors as warnings.",
+    help="Relevant only for the old validate flow. Set backwards compatibility validation's errors as warnings.",
     is_flag=True,
 )
 @click.option(
     "--allow-skipped",
-    help="Don't fail on skipped integrations or when all test playbooks are skipped.",
+    help="Relevant only for the old validate flow. Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True,
 )
 @click.option(
     "--no-multiprocessing",
-    help="run validate all without multiprocessing, for debugging purposes.",
+    help="Relevant only for the old validate flow. run validate all without multiprocessing, for debugging purposes.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "-sv",
     "--run-specific-validations",
-    help="Run specific validations by stating the error codes.",
+    help="Relevant only for the old validate flow. Run specific validations by stating the error codes.",
     is_flag=False,
 )
 @click.option(
@@ -851,7 +851,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 validate_all=kwargs.get("validate_all"),
                 initializer=initializer,
                 validation_results=validation_results,
-                multiprocessing=run_with_mp,
                 config_reader=config_reader,
                 allow_autofix=kwargs.get("fix"),
                 ignore_support_level=kwargs.get("ignore_support_level"),

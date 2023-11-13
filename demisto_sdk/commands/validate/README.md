@@ -30,7 +30,14 @@ Run specific validations by stating category they're listed under in the config 
 * **-f, --fix**
 Wether to autofix failing validations with an available auto fix or not.
 * **--config-path**
-Path for a config file to run, if not given - will run the default path at: ...
+Path for a config file to run, if not given - will run the default path at: [demisto_sdk/commands/validate/default_config.toml](default_config.toml)
+* **--ignore-support-level**
+Wether to skip validations based on their support level or not.
+* **--skip-old-validate**
+Wether to skip the old validate flow.
+* **--run-new-validate**
+Wether to run the new validate flow.
+
 
 **Examples**:
 
@@ -85,7 +92,7 @@ The first 2 letters indicate the error type and can be used to easily identify t
 
 
 Each user will have a personal config file which he can edit however he wants.
-A default config file can be found [here](demisto_sdk/commands/validate/default_config.toml)
+A default config file can be found [here.](default_config.toml)
 The config file will have few sections: validate_all, use_git, and sections provided by the user.
 Each section will have the following options:
 **select**: The validations to run.

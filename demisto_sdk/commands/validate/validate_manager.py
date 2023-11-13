@@ -28,14 +28,12 @@ class ValidateManager:
         initializer: Initializer,
         validate_all=False,
         file_path=None,
-        multiprocessing=True,
         allow_autofix=False,
         ignore_support_level=False,
     ):
         self.ignore_support_level = ignore_support_level
         self.validate_all = validate_all
         self.file_path = file_path
-        self.run_with_multiprocessing = multiprocessing
         self.allow_autofix = allow_autofix
         self.validate_graph = False
         self.validation_results = validation_results

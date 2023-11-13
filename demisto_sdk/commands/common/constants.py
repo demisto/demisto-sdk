@@ -236,6 +236,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.WIZARD: "Wizards",
     FileType.XDRC_TEMPLATE: "XDRC Templates",
     FileType.LAYOUT_RULE: "Layout Rules",
+    FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -288,6 +289,7 @@ SIEM_ONLY_ENTITIES = [
     FileType.TRIGGER.value,
     FileType.XDRC_TEMPLATE.value,
     FileType.LAYOUT_RULE.value,
+    FileType.ASSETS_MODELING_RULE,
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]

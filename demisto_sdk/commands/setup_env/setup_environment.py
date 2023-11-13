@@ -385,6 +385,13 @@ def configure_integration(
     configure_params(integration_script, secret_id, instance_name, test_module)
     if not docker_image:
         docker_image = DEF_DOCKER
+    try:
+        docker_helper.init_global_docker_client()
+    except docker_helper.DockerException:
+        logger.error(
+            "Failed to initialize docker client. Make sure Docker is running and configured correctly"
+        )
+        raise
     (test_docker_image, errors,) = docker_helper.get_docker().pull_or_create_test_image(
         docker_image, integration_script.type
     )

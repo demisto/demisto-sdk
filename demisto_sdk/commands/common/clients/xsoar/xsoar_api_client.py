@@ -17,6 +17,7 @@ from requests.exceptions import RequestException
 from demisto_sdk.commands.common.clients.configs import (
     XsoarClientConfig,
 )
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.utils.utils import retry
 
@@ -30,6 +31,7 @@ class XsoarClient(BaseModel, ABC):
     client: DefaultApi = Field(exclude=True)
     config: XsoarClientConfig
     about_xsoar: Dict = Field(None, exclude=True)
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR_ON_PREM
 
     class Config:
         arbitrary_types_allowed = True

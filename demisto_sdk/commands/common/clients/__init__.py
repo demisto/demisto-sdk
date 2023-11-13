@@ -115,7 +115,7 @@ def get_client_from_server_type(
         the correct client based on querying the type of the server
     """
     _base_api_url = base_url or os.getenv(DEMISTO_BASE_URL)
-    _api_key = api_key or os.getenv(DEMISTO_KEY)
+    _api_key = api_key or os.getenv(DEMISTO_KEY, "")
     _auth_id = auth_id or os.getenv(AUTH_ID)
 
     _client = demisto_client.configure(

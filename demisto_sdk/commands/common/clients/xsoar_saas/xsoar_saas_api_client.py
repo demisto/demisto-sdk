@@ -7,11 +7,13 @@ from requests import Response, Session
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.utils.utils import retry
 
 
 class XsoarSaasClient(XsoarClient):
     session: Session = Field(None, exclude=True)
+    marketplace = MarketplaceVersions.XSOAR_SAAS
 
     @validator("session", always=True)
     def get_xdr_session(cls, v: Optional[Session], values: Dict[str, Any]) -> Session:

@@ -1,3 +1,4 @@
+import functools
 import os
 import re
 from pathlib import Path
@@ -43,8 +44,9 @@ class GitUtil:
                 f"Unable to find Repository from current {repo_path.absolute()} - aborting"
             )
 
+    @functools.lru_cache
     def get_all_files(self) -> Set[Path]:
-        return set(map(Path, self.repo.git.ls_files().split("\n")))
+        return set(map(Path, self.repo.git.ls_files("-z").split("\x00")))
 
     def modified_files(
         self,
@@ -482,7 +484,7 @@ class GitUtil:
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
         return {
             file.parts[1]
-            for file in self.get_all_changed_files(prev_ver)
+            for file in self._get_all_changed_files(prev_ver) | self._get_staged_files()
             if file.parts[0] == PACKS_FOLDER
         }
 
@@ -514,6 +516,7 @@ class GitUtil:
 
         return extracted_paths
 
+    @functools.lru_cache
     def _get_staged_files(self) -> Set[Path]:
         """Get only staged files
 

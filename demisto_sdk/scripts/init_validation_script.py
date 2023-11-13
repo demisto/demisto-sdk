@@ -460,8 +460,7 @@ Fill the content types as the numbers they appear as: """
         Generate the is_valid function.
         """
         self.is_valid_method = """
-    def is_valid(
-        self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         # Add your validation right here
         pass
     """

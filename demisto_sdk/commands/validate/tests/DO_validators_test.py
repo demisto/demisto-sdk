@@ -55,9 +55,9 @@ def test_DockerImageExistValidator_is_valid(content_items, expected_number_of_fa
     Then
         - Make sure the right amount of failures return.
         - Case 1: Should fail 1 integration.
-        - Case 2: Should fail 1 integration.
-        - Case 3: Should fail 0 integration.
-        - Case 4: Should fail 2 integration.
+        - Case 2: Should fail 1 script.
+        - Case 3: Should'nt fail at all.
+        - Case 4: Should fail all content items.
     """
     assert (
         len(DockerImageExistValidator().is_valid(content_items))

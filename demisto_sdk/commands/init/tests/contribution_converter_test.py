@@ -1193,7 +1193,7 @@ class TestReadmes:
         - A contributed content mapping JSON.
 
         When
-        - The contribution, a new integration command, was made to an existing pack.
+        - A new command was added to an existing Pack and Integration
 
         Then
         - The integration README should be updated with the new command.

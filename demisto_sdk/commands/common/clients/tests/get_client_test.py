@@ -176,4 +176,6 @@ def test_get_xsiam_client_from_server_type(api_requests_mocker):
     api_requests_mocker.patch.object(
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect
     )
-    assert type(get_client_from_server_type(base_url="https://test.com")) == XsiamClient
+    assert (
+        type(get_client_from_server_type(base_url="https://test3.com")) == XsiamClient
+    )

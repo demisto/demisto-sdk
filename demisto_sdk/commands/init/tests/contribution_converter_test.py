@@ -1249,16 +1249,21 @@ class TestReadmes:
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
+        # Create a README file
         for yml_file in contrib_converter.working_dir_path.rglob("*.yml"):
             contrib_converter.generate_readme_for_pack_content_item(
                 str(yml_file),
                 is_contribution=True
             )
 
-        o = FileUtils.merge_files(
-            f1=Path(os.path.join(content_temp_dir, "Packs", self.pack_name, INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME)),
-            f2=Path(os.path.join(contribution_temp_dir, INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME)),
-            output_dir=os.path.join(contribution_temp_dir.__str__(), "merged")
+        original_readme = Path(os.path.join(content_temp_dir, "Packs", self.pack_name, INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME))
+        modified_readme = Path(os.path.join(contribution_temp_dir, INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME))
+
+        # Merge the original README with the generated one
+        FileUtils.merge_files(
+            f1=original_readme,
+            f2=modified_readme,
+            output_dir=modified_readme.__str__()
         )
 
         # Copy files from contribution dir to pack
@@ -1282,8 +1287,13 @@ class TestReadmes:
         # Verify the copied integration Python code, YAML and README are different than the one found in the
         # original integration path
         assert actual_integration_readme.read_text() != readme
+        assert 'helloworld-new-cmd' in actual_integration_readme.read_text()
+
         assert actual_integration_yml != yml_code
+        assert actual_integration_yml['script']['commands'][4]['name'] == 'helloworld-new-cmd'
+
         assert actual_integration_python.read_text() != py_code
+        assert 'helloworld-new-cmd' in actual_integration_python.read_text()
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:

@@ -134,7 +134,7 @@ class FileUtils:
         if output_path.is_dir():
             if output_path.exists():
                 output_path.rmdir()
-            output_file = Path(output_dir) / f"{f1.name}-merged{f1.suffix}"
+            output_file = output_path / f"{f1.name}-merged{f1.suffix}"
         elif output_path.is_file():
             if output_path.exists():
                 output_path.unlink(missing_ok=True)

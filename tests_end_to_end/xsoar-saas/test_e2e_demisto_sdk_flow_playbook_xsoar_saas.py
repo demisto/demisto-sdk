@@ -16,6 +16,7 @@ from TestSuite.test_tools import ChangeCWD
 
 def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
+    
     e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
     e2e_tests_utils.git_clone_demisto_sdk(
         destination_folder=f"{tmpdir}/git/demisto-sdk",
@@ -112,7 +113,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = True):
     }
 
     try:
-        demisto_client.api_client.call_api(
+        demisto_client.client.api_client.call_api(
             resource_path="/playbook/save",
             method="POST",
             header_params=header_params,

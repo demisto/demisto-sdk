@@ -414,6 +414,14 @@ def upload_and_create_instance(
     logger.info(f"Created integration instance for {integration_script.object_id}")
 
 
+def add_demistomock_and_commonserveruser(integration_script: IntegrationScript):
+    shutil.copy(
+        CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py",
+        integration_script.path.parent / "demistomock.py",
+    )
+    (integration_script.path.parent / "CommonServerUserPython.py").touch()
+
+
 def configure_integration(
     ide: IDE,
     file_path: Path,
@@ -428,6 +436,7 @@ def configure_integration(
     assert isinstance(
         integration_script, IntegrationScript
     ), "Expected Integration Script"
+    add_demistomock_and_commonserveruser(integration_script)
     add_init_file_in_test_data(integration_script)
     docker_image = integration_script.docker_image
     interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
@@ -493,6 +502,7 @@ def setup_env(
         )
     if not file_paths:
         configure_dotenv()
+        (CONTENT_PATH / "CommonServerUserPython.py").touch()
         ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
         if ide == IDE.VSCODE:
             ide_folder.mkdir(exist_ok=True)

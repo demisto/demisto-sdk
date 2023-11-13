@@ -12,7 +12,9 @@ import dotenv
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common import docker_helper
-from demisto_sdk.commands.common.clients import get_client_from_server_type
+from demisto_sdk.commands.common.clients import (
+    get_client_from_server_type,
+)
 from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -314,15 +316,8 @@ def configure_params(
             params = get_integration_params(project_id, secret_id)
             if params and instance_name:
                 try:
-                    get_client_from_server_type().create_integration_instance(
-                        integration_script.object_id,
-                        instance_name,
-                        params,
-                        is_long_running=integration_script.long_running,
-                        should_test=test_module,
-                    )
-                    logger.info(
-                        f"Created integration instance for {integration_script.object_id}"
+                    upload_and_create_instance(
+                        integration_script, instance_name, params, test_module
                     )
                 except ApiException as e:
                     logger.warning(
@@ -340,6 +335,29 @@ def configure_params(
         logger.info(
             "Skipping searching in Google Secret Manager as DEMISTO_SDK_GCP_PROJECT_ID is not set"
         )
+
+
+def upload_and_create_instance(
+    integration_script: Integration, instance_name: str, params: dict, test_module: bool
+):
+    client = get_client_from_server_type()
+    pack = integration_script.in_pack
+    assert isinstance(pack, Pack)
+    pack.upload(
+        client=client.client,
+        marketplace=client.marketplace,
+        target_demisto_version=client.version,
+        zip=True,
+    )
+    logger.info(f"Uploaded pack {pack.name} to {client.base_url}")
+    client.create_integration_instance(
+        integration_script.object_id,
+        instance_name,
+        params,
+        is_long_running=integration_script.long_running,
+        should_test=test_module,
+    )
+    logger.info(f"Created integration instance for {integration_script.object_id}")
 
 
 def configure_integration(

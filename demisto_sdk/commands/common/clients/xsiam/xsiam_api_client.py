@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.clients import XsiamClientConfig
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
     XsoarSaasClient,
 )
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.utils.utils import retry
@@ -20,6 +21,8 @@ json = DEFAULT_JSON_HANDLER
 
 
 class XsiamClient(XsoarSaasClient):
+    marketplace = MarketplaceVersions.MarketplaceV2
+
     @classmethod
     @retry(exceptions=RequestException)
     def is_xsiam_server_healthy(

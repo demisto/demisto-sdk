@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import e2e_tests_utils
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.clients import get_client_from_server_type
@@ -11,6 +10,7 @@ from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from tests_end_to_end import e2e_tests_utils
 from TestSuite.test_tools import ChangeCWD
 
 

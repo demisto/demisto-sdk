@@ -77,7 +77,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         ).upload()
 
 
-def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = True):
+def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     unique_id = 789
     pack_name = "foo_" + str(unique_id)
     playbook_name = "pb_" + str(unique_id)

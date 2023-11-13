@@ -69,7 +69,7 @@ class PreCommitRunner:
     input_mode: bool
     all_files: bool
     mode: Optional[PreCommitModes]
-    python_version_to_files: Dict[str, Set[Path]]
+    language_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
     def __post_init__(self):
@@ -77,7 +77,7 @@ class PreCommitRunner:
         We initialize the hooks and all_files for later use.
         """
         self.files_to_run = set(
-            itertools.chain.from_iterable(self.python_version_to_files.values())
+            itertools.chain.from_iterable(self.language_to_files.values())
         )
         self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
@@ -125,7 +125,7 @@ class PreCommitRunner:
         This function handles the python2 files.
         Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
         """
-        python2_files = self.python_version_to_files.get(DEFAULT_PYTHON2_VERSION)
+        python2_files = self.language_to_files.get(DEFAULT_PYTHON2_VERSION)
         if not python2_files:
             return
 
@@ -152,12 +152,10 @@ class PreCommitRunner:
             "input_mode": self.input_mode,
         }
         PyclnHook(**hooks["pycln"], **kwargs).prepare_hook(PYTHONPATH)
-        RuffHook(**hooks["ruff"], **kwargs).prepare_hook(
-            self.python_version_to_files, IS_GITHUB_ACTIONS
-        )
-        MypyHook(**hooks["mypy"], **kwargs).prepare_hook(self.python_version_to_files)
+        RuffHook(**hooks["ruff"], **kwargs).prepare_hook(self.language_to_files, IS_GITHUB_ACTIONS)
+        MypyHook(**hooks["mypy"], **kwargs).prepare_hook(self.language_to_files)
         SourceryHook(**hooks["sourcery"], **kwargs).prepare_hook(
-            self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
+            self.language_to_files, config_file_path=SOURCERY_CONFIG_PATH
         )
         ValidateFormatHook(**hooks["validate"], **kwargs).prepare_hook(
             self.files_to_run
@@ -206,7 +204,7 @@ class PreCommitRunner:
         for (
             python_version,
             changed_files_by_version,
-        ) in self.python_version_to_files.items():
+        ) in self.language_to_files.items():
             changed_files_string = ", ".join(
                 sorted(str(file) for file in changed_files_by_version)
             )

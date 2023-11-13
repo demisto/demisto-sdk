@@ -20,7 +20,7 @@ class RuffHook(Hook):
 
     def prepare_hook(
         self,
-        python_version_to_files: Dict[str, Set[Path]],
+        language_to_files: Dict[str, Set[Path]],
         github_actions: bool = False,
         **kwargs,
     ) -> None:
@@ -28,10 +28,10 @@ class RuffHook(Hook):
         Prepares the Ruff hook for each Python version.
         Changes the hook's name, files and the "--target-version" argument according to the Python version.
         Args:
-            python_version_to_files (Dict[str, Set[Path]]): dictionary mapping python version to files
+            language_to_files (Dict[str, Set[Path]]): dictionary mapping python version to files
             github_actions (bool, optional): Whether to use github actions format. Defaults to False.
         """
-        for python_version in python_version_to_files:
+        for python_version in language_to_files:
             hook: Dict[str, Any] = {
                 "name": f"ruff-py{python_version}",
             }
@@ -45,6 +45,6 @@ class RuffHook(Hook):
                 hook["args"].append("--fix")
             if github_actions:
                 hook["args"].append("--format=github")
-            hook["files"] = join_files(python_version_to_files[python_version])
+            hook["files"] = join_files(language_to_files[python_version])
 
             self.hooks.append(hook)

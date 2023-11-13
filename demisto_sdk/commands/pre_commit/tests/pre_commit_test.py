@@ -99,28 +99,28 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["2.7"]
+        in pre_commit.language_to_files["2.7"]
     )
     assert (
         Path(integration3.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.8"]
+        in pre_commit.language_to_files["3.8"]
     )
     assert (
         Path(integration1.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.9"]
+        in pre_commit.language_to_files["3.9"]
     )
     assert (
         Path(integration2.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.10"]
+        in pre_commit.language_to_files["3.10"]
     )
     assert all(
         Path(obj.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.10"]
+        in pre_commit.language_to_files["3.10"]
         for obj in (incident_field, classifier)
     )
     assert (
         Path(integration_deprecated.yml.path).relative_to(repo.path)
-        not in pre_commit.python_version_to_files["3.10"]
+        not in pre_commit.language_to_files["3.10"]
     )
 
     pre_commit.run(unit_test=is_test)
@@ -186,9 +186,7 @@ def test_ruff_hook_nightly_mode():
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
     ruff_hook = create_hook({})
-    RuffHook(**ruff_hook, mode=PreCommitModes.NIGHTLY).prepare_hook(
-        PYTHON_VERSION_TO_FILES
-    )
+    RuffHook(**ruff_hook, mode=PreCommitModes.NIGHTLY).prepare_hook(PYTHON_VERSION_TO_FILES)
 
     for (hook, _) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
@@ -333,12 +331,12 @@ class TestPreprocessFiles:
 def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
     """
     Given:
-        python_version_to_files with python 2.7 and python 3.8 files, and unit_test is True
+        language_to_files with python 2.7 and python 3.8 files, and unit_test is True
     When:
         Calling handle_python2_files
     Then:
         1. python2_files contain the python 2.7 files
-        2. python_version_to_files should contain only python 3.8 files
+        2. language_to_files should contain only python 3.8 files
         3. The logger should print that it is running pre-commit with python 2.7 on file1.py
         4. The exclude field of the run-unit-tests hook should be None
         5. The exclude field of the other hooks should be file1.py

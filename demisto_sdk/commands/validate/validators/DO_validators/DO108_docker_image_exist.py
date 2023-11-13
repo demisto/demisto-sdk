@@ -25,7 +25,9 @@ class DockerImageExistValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.content_type, content_item.name),
+                message=self.error_message.format(
+                    content_item.content_type, content_item.name
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

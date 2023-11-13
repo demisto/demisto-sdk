@@ -15,9 +15,7 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
     [
         (
             [
-                create_integration_object(
-                    key_path="script.subtype", new_value="python2"
-                ),
+                create_integration_object(paths=["script.subtype"], values=["python2"]),
                 create_integration_object(),
             ],
             [create_integration_object(), create_integration_object()],
@@ -25,9 +23,7 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
         ),
         (
             [
-                create_integration_object(
-                    key_path="script.subtype", new_value="python2"
-                ),
+                create_integration_object(paths=["script.subtype"], values=["python2"]),
                 create_script_object(),
             ],
             [create_integration_object(), create_script_object()],
@@ -35,10 +31,8 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
         ),
         (
             [
-                create_integration_object(
-                    key_path="script.subtype", new_value="python2"
-                ),
-                create_script_object(key_path="subtype", new_value="python2"),
+                create_integration_object(paths=["script.subtype"], values=["python2"]),
+                create_script_object(paths=["subtype"], values=["python2"]),
             ],
             [create_integration_object(), create_script_object()],
             2,

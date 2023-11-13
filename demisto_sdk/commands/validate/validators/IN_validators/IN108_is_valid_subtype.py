@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List, Union
@@ -11,7 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union['Integration', 'Script']
+ContentTypes = Union["Integration", "Script"]
 
 
 class ValidSubtypeValidator(BaseValidator[ContentTypes]):
@@ -21,8 +20,7 @@ class ValidSubtypeValidator(BaseValidator[ContentTypes]):
     fix_message = ""
     related_field = "subtype"
     is_auto_fixable = False
-    
-    
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(

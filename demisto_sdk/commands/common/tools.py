@@ -4188,3 +4188,21 @@ def get_file_by_status(
         filtered_added_files,
         filtered_old_format_or_renamed_files,
     )
+
+
+def pascal_to_snake(pascal_string):
+    """Convert the given string from pascal case to snake case.
+
+    Args:
+        pascal_string(str): A string in pascal case format
+
+    Returns:
+        str: The givn string converted to snake_case format.
+    """
+    result = [pascal_string[0].lower()]
+    for char in pascal_string[1:]:
+        if char.isupper():
+            result.extend(["_", char.lower()])
+        else:
+            result.append(char)
+    return "".join(result)

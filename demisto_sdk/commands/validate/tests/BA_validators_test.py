@@ -18,7 +18,7 @@ from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equa
         (
             [
                 create_integration_object(
-                    key_path="commonfields.id", new_value="changedName"
+                    paths=["commonfields.id"], values=["changedName"]
                 ),
                 create_integration_object(),
             ],
@@ -26,8 +26,8 @@ from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equa
         ),
         (
             [
-                create_classifier_object(key_path="id", new_value="changedName"),
-                create_classifier_object(key_path="id", new_value="Github Classifier"),
+                create_classifier_object(paths=["id"], values=["changedName"]),
+                create_classifier_object(paths=["id"], values=["Github Classifier"]),
             ],
             1,
         ),

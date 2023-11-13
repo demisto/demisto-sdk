@@ -9,23 +9,23 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_
 @pytest.mark.parametrize(
     "expected_number_of_failures, packmetadatas_objects_list",
     [
-        (1, [create_metadata_object("name", " ")]),
-        (1, [create_metadata_object("name", "")]),
-        (0, [create_metadata_object("name", "Working pack name")]),
-        (1, [create_metadata_object("name", "fill mandatory field")]),
+        (1, [create_metadata_object(["name"], [" "])]),
+        (1, [create_metadata_object(["name"], [""])]),
+        (0, [create_metadata_object(["name"], ["Working pack name"])]),
+        (1, [create_metadata_object(["name"], ["fill mandatory field"])]),
         (
             2,
             [
-                create_metadata_object("name", "fill mandatory field"),
-                create_metadata_object("name", ""),
+                create_metadata_object(["name"], ["fill mandatory field"]),
+                create_metadata_object(["name"], [""]),
             ],
         ),
         (
             2,
             [
-                create_metadata_object("name", "fill mandatory field"),
-                create_metadata_object("name", " "),
-                create_metadata_object("name", "Working pack name"),
+                create_metadata_object(["name"], ["fill mandatory field"]),
+                create_metadata_object(["name"], [" "]),
+                create_metadata_object(["name"], ["Working pack name"]),
             ],
         ),
     ],

@@ -668,7 +668,9 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Relevant only for the old validate flow. Skip validation of pack release notes.",
 )
 @click.option(
-    "--print-ignored-errors", is_flag=True, help="Relevant only for the old validate flow. Print ignored errors as warnings."
+    "--print-ignored-errors",
+    is_flag=True,
+    help="Relevant only for the old validate flow. Print ignored errors as warnings.",
 )
 @click.option(
     "--print-ignored-files",
@@ -676,7 +678,9 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Relevant only for the old validate flow. Print which files were ignored by the command.",
 )
 @click.option(
-    "--no-docker-checks", is_flag=True, help="Relevant only for the old validate flow. Whether to run docker image validation."
+    "--no-docker-checks",
+    is_flag=True,
+    help="Relevant only for the old validate flow. Whether to run docker image validation.",
 )
 @click.option(
     "--silence-init-prints",
@@ -689,7 +693,9 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Relevant only for the old validate flow. Skip validation of pack dependencies.",
 )
 @click.option(
-    "--create-id-set", is_flag=True, help="Relevant only for the old validate flow. Whether to create the id_set.json file."
+    "--create-id-set",
+    is_flag=True,
+    help="Relevant only for the old validate flow. Whether to create the id_set.json file.",
 )
 @click.option(
     "-j",
@@ -697,13 +703,19 @@ def zip_packs(ctx, **kwargs) -> int:
     help="The JSON file path to which to output the command results.",
 )
 @click.option(
-    "--skip-schema-check", is_flag=True, help="Relevant only for the old validate flow. Whether to skip the file schema check."
+    "--skip-schema-check",
+    is_flag=True,
+    help="Relevant only for the old validate flow. Whether to skip the file schema check.",
 )
 @click.option(
-    "--debug-git", is_flag=True, help="Relevant only for the old validate flow. Whether to print debug logs for git statuses."
+    "--debug-git",
+    is_flag=True,
+    help="Relevant only for the old validate flow. Whether to print debug logs for git statuses.",
 )
 @click.option(
-    "--print-pykwalify", is_flag=True, help="Relevant only for the old validate flow. Whether to print the pykwalify log errors."
+    "--print-pykwalify",
+    is_flag=True,
+    help="Relevant only for the old validate flow. Whether to print the pykwalify log errors.",
 )
 @click.option(
     "--quiet-bc-validation",

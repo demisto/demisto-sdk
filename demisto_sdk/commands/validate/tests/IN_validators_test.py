@@ -7,6 +7,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subtype import (
     ValidSubtypeValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration_runable import (
+    IsIntegrationRunnableValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -14,14 +17,14 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subty
     [
         (
             [
-                create_integration_object(key_path="script.subtype", new_value="test"),
+                create_integration_object(paths=["script.subtype"], values=["test"]),
                 create_integration_object(),
             ],
             1,
         ),
         (
             [
-                create_script_object(key_path="subtype", new_value="test"),
+                create_script_object(paths=["subtype"], values=["test"]),
                 create_script_object(),
             ],
             1,
@@ -35,8 +38,8 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subty
         ),
         (
             [
-                create_script_object(key_path="subtype", new_value="test"),
-                create_integration_object(key_path="script.subtype", new_value="test"),
+                create_script_object(paths=["subtype"], values=["test"]),
+                create_integration_object(paths=["script.subtype"], values=["test"]),
             ],
             2,
         ),
@@ -61,5 +64,107 @@ def test_ValidSubtypeValidator_is_valid(content_items, expected_number_of_failur
     """
     assert (
         len(ValidSubtypeValidator().is_valid(content_items))
+        == expected_number_of_failures
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "script.isfetch",
+                        "script.feed",
+                        "script.longRunning",
+                        "script.commands",
+                    ],
+                    values=[False, False, False, []],
+                ),
+            ],
+            1,
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "script.isfetch",
+                        "script.feed",
+                        "script.longRunning",
+                        "script.commands",
+                    ],
+                    values=[True, False, False, []],
+                ),
+            ],
+            0,
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "script.isfetch",
+                        "script.feed",
+                        "script.longRunning",
+                        "script.commands",
+                    ],
+                    values=[False, True, False, []],
+                ),
+            ],
+            0,
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "script.isfetch",
+                        "script.feed",
+                        "script.longRunning",
+                        "script.commands",
+                    ],
+                    values=[False, False, True, []],
+                ),
+            ],
+            0,
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "script.isfetch",
+                        "script.feed",
+                        "script.longRunning",
+                        "script.commands",
+                    ],
+                    values=[False, False, False, [{"name": "test"}]],
+                ),
+            ],
+            0,
+        ),
+    ],
+)
+def test_IsIntegrationRunnableValidator_is_valid(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: An integration without any commands, and isfetch, feeed, and longRunnings keys are set to false.
+        - Case 2: An integration without any commands, and feeed, and longRunnings keys are set to false, and isfetch is set to True.
+        - Case 3: An integration without any commands, and isfetch, feeed, and longRunnings keys are set to false, and feeed is set to True.
+        - Case 4: An integration without any commands, and isfetch, and feeed keys are set to false, and longRunnings is set to True.
+        - Case 5: An integration with one command, and isfetch, feeed, and longRunnings keys are set to false.
+    When
+    - Calling the IsIntegrationRunnableValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to.
+        - Case 1: Should fail.
+        - Case 2: Should pass.
+        - Case 3: Should pass.
+        - Case 4: Should pass.
+        - Case 5: Should pass.
+    """
+    assert (
+        len(IsIntegrationRunnableValidator().is_valid(content_items))
         == expected_number_of_failures
     )

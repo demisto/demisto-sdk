@@ -4,6 +4,7 @@ from pathlib import Path
 from string import Template
 
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import pascal_to_snake
 
 GIT_STATUSES_DICT = {
     "A": "GitStatuses.ADDED",
@@ -375,11 +376,15 @@ Fill the content types as the numbers they appear as: """
         """
         Request the file name, ensure the given name is valid.
         """
-        self.file_name = str(input("Enter a file name in snake_case format: "))
-        while self.file_name and " " in self.file_name:
+        self.file_name = str(
+            input(
+                "Enter a file name in snake_case format or leave empty to generate a formatted name for the class name: "
+            )
+        )
+        while " " in self.file_name:
             self.file_name = str(
                 input(
-                    "Please enter a valid file name in snake_case format without spaces: "
+                    "Please enter a valid file name in snake_case format without spaces or leave empty to generate a formatted name for the class name: "
                 )
             )
 
@@ -479,6 +484,8 @@ Fill the content types as the numbers they appear as: """
         """
         Generate the final file name and the dir path for the file, and the file path.
         """
+        if not self.file_name:
+            self.file_name = pascal_to_snake(self.class_declaration[6:-39])
         if not self.file_name.startswith(self.error_code):
             self.file_name = f"{self.error_code}_{self.file_name}"
         if not self.file_name.endswith(".py"):

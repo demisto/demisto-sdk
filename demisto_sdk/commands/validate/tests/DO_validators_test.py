@@ -14,14 +14,14 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_e
     [
         (
             [
-                create_integration_object(key_path="script.dockerimage", new_value=""),
+                create_integration_object(paths=["script.dockerimage"], values=[""]),
                 create_integration_object(),
             ],
             1,
         ),
         (
             [
-                create_script_object(key_path="dockerimage", new_value=""),
+                create_script_object(paths=["dockerimage"], values=[""]),
                 create_script_object(),
             ],
             1,
@@ -35,8 +35,8 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_e
         ),
         (
             [
-                create_script_object(key_path="dockerimage", new_value=""),
-                create_integration_object(key_path="script.dockerimage", new_value=""),
+                create_script_object(paths=["dockerimage"], values=[""]),
+                create_integration_object(paths=["script.dockerimage"], values=[""]),
             ],
             2,
         ),

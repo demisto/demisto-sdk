@@ -94,6 +94,10 @@ def configure_vscode_tasks(
             docker_python_path.append(
                 f"/app/{path.relative_to(CONTENT_PATH.absolute())}"
             )
+    if "/app/Packs/Base/Scripts/CommonServerPython" not in docker_python_path:
+        raise RuntimeError(
+            "Could not set debug-in-docker on VSCode. Probably CONTENT_PATH is not set properly."
+        )
 
     def build_tasks():
         return {

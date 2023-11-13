@@ -1172,6 +1172,7 @@ class TestReadmes:
     repo_dir_name = "content_repo"
     pack_name = "HelloWorld"
     existing_integration_name = "HelloWorld"
+    new_integration_name = "HelloWorldNew"
     script_name = "script0"
     author = "Kobbi Gal"
     gh_user = "kgal-pan"
@@ -1294,6 +1295,87 @@ class TestReadmes:
 
         assert actual_integration_python.read_text() != py_code
         assert 'helloworld-new-cmd' in actual_integration_python.read_text()
+
+    def test_process_existing_pack_new_integration_readme(
+        self,
+        tmp_path: TempPathFactory,
+        mocker: MockerFixture
+    ):
+        # TODO implement
+        """
+        Test for a new integration in an existing pack
+        to ensure the README is updated correctly.
+
+        The zip and content mapping JSON used in this test were taken from
+        the GCP bucket.
+
+        Given
+        - A contribution zip file.
+        - A contributed content mapping JSON.
+
+        When
+        - A new Integration was added to an existing Pack.
+
+        Then
+        - A new Integration README should be generated.
+        """
+
+        # Create content repo
+        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
+        content_temp_dir.mkdir()
+        repo = Repo(tmpdir=content_temp_dir, init_git=True)
+
+        # Read integration python, yml code and README to create mock integration
+        py_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.py")
+        py_code = py_code_path.read_text()
+
+        readme_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.md")
+        readme = readme_path.read_text()
+
+        yml_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.yml")
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        repo.create_pack(self.pack_name)
+        repo.packs[0].create_integration(
+            name=self.existing_integration_name,
+            code=py_code,
+            readme=readme,
+            yml=yml_code
+        )
+
+        contribution_temp_dir = Path(str(tmp_path)) / "contribution"
+        contribution_temp_dir.mkdir()
+        # Create a contribution converter instance
+        contrib_converter = ContributionConverter(
+            name=self.pack_name,
+            author=self.author,
+            description="Test contrib-management process_pack",
+            contribution=os.path.join(CONTRIBUTION_TESTS, "existing_pack_new_integration.zip"),
+            gh_user=self.gh_user,
+            create_new=False,
+            working_dir_path=contribution_temp_dir.__str__()
+        )
+
+        # Convert the contribution to a pack
+        contrib_converter.convert_contribution_to_pack()
+
+        # Create a README file
+        for yml_file in contrib_converter.working_dir_path.rglob("*.yml"):
+            contrib_converter.generate_readme_for_pack_content_item(
+                str(yml_file),
+                is_contribution=True
+            )
+
+        # Copy files from contribution dir to pack
+        contrib_converter.copy_files_to_existing_pack(dst_path=content_temp_dir.__str__())
+
+        # Check that there are 2 integrations
+        assert len(os.listdir(os.path.join(content_temp_dir, "Packs", self.pack_name, INTEGRATIONS_DIR))) == 2
+
+        # Check that the generated readme exists
+        generated_readme = Path(os.path.join(content_temp_dir, "Packs", self.pack_name, INTEGRATIONS_DIR, self.new_integration_name, PACKS_README_FILE_NAME))
+        assert generated_readme.exists()
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:

@@ -2,11 +2,10 @@ from typing import IO, Any, AnyStr
 
 import ujson  # noqa: TID251 - this is the handler
 
-from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
-
-
-class JSONDecodeError(ValueError):
-    pass
+from demisto_sdk.commands.common.handlers.xsoar_handler import (
+    JSONDecodeError,
+    XSOAR_Handler,
+)
 
 
 class UJSON_Handler(XSOAR_Handler):
@@ -14,8 +13,6 @@ class UJSON_Handler(XSOAR_Handler):
     XSOAR wrapper to UJSON
     Use only this wrapper for json handling.
     """
-
-    JSONDecodeError = JSONDecodeError
 
     def __init__(self):
         self.json = ujson
@@ -44,7 +41,7 @@ class UJSON_Handler(XSOAR_Handler):
                 ensure_ascii=kwargs.get("ensure_ascii", False),
             )
         except ValueError as e:
-            raise JSONDecodeError(e)
+            raise JSONDecodeError(e) from e
 
     def dumps(self, obj: Any, indent=0, sort_keys=False, **kwargs):
         try:
@@ -56,4 +53,4 @@ class UJSON_Handler(XSOAR_Handler):
                 ensure_ascii=kwargs.get("ensure_ascii", False),
             )
         except ValueError as e:
-            raise JSONDecodeError(e)
+            raise JSONDecodeError(e) from e

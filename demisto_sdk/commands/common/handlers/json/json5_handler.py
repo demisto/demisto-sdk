@@ -1,12 +1,11 @@
 from typing import IO, Any, AnyStr
 
-import json5  # - this is the handler
+import json5  # noqa: TID251 - this is the handler
 
-from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
-
-
-class JSONDecodeError(ValueError):
-    pass
+from demisto_sdk.commands.common.handlers.xsoar_handler import (
+    JSONDecodeError,
+    XSOAR_Handler,
+)
 
 
 class JSON5_Handler(XSOAR_Handler):
@@ -14,8 +13,6 @@ class JSON5_Handler(XSOAR_Handler):
     XSOAR wrapper to JSON5
     Use only this wrapper for json handling.
     """
-
-    JSONDecodeError = JSONDecodeError
 
     def __init__(self):
         self.json = json5
@@ -36,9 +33,9 @@ class JSON5_Handler(XSOAR_Handler):
         self,
         data: Any,
         fp: IO[str],
-        indent=0,
-        sort_keys=False,
-        quote_keys=True,
+        indent: int = 0,
+        sort_keys: bool = False,
+        quote_keys: bool = True,
         **kwargs,
     ):
         try:
@@ -53,13 +50,21 @@ class JSON5_Handler(XSOAR_Handler):
         except ValueError as e:
             raise JSONDecodeError from e
 
-    def dumps(self, obj: Any, indent=0, sort_keys=False, **kwargs):
+    def dumps(
+        self,
+        obj: Any,
+        indent: int = 0,
+        sort_keys: bool = False,
+        quote_keys: bool = True,
+        **kwargs,
+    ):
         try:
             return self.dumps(
                 obj,
                 indent=indent,
                 sort_keys=sort_keys,
+                quote_keys=quote_keys,
                 ensure_ascii=kwargs.get("ensure_ascii", False),
             )
         except ValueError as e:
-            raise JSONDecodeError(e)
+            raise JSONDecodeError(e) from e

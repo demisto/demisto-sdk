@@ -186,6 +186,7 @@ max-complexity = 30
 [tool.ruff.flake8-tidy-imports.banned-api]
 # "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
 "json".msg = "use JSON_Handler instead"
+"json5".msg = "use JSON_Handler instead"
 "ujson".msg = "use JSON_Handler instead"
 "orjson".msg = "use JSON_Handler instead"
 "ruamel.yaml".msg = "use YAML_Handler instead"

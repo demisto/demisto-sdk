@@ -231,15 +231,15 @@ class XsoarClient(BaseModel, ABC):
 
         for param_conf in module_configuration:
             display = param_conf["display"]
-            instance_name = param_conf["name"]
+            name = param_conf["name"]
             default_value = param_conf["defaultValue"]
 
             if (
                 display in integration_instance_config
-                or instance_name in integration_instance_config
+                or name in integration_instance_config
             ):
                 key = (
-                    display if display in integration_instance_config else instance_name
+                    display if display in integration_instance_config else name
                 )
                 if key in {"credentials", "creds_apikey"}:
                     credentials = integration_instance_config[key]

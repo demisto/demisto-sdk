@@ -8,7 +8,7 @@ from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlayboo
 NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
 
-class PlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
+class PlaybookParser(BasePlaybookParser, content_type=ContentType.PLAYBOOK):
     def __init__(
         self,
         path: Path,

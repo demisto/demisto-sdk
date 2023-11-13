@@ -30,7 +30,7 @@ IGNORED_FIELDS = [
 ]
 
 
-class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
+class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PLAYBOOK):
     def __init__(
         self,
         path: Path,

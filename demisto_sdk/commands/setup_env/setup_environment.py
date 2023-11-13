@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 import venv
 from enum import Enum
 from pathlib import Path
@@ -347,12 +348,14 @@ def upload_and_create_instance(
     client = get_client_from_server_type()
     pack = integration_script.in_pack
     assert isinstance(pack, Pack)
-    pack.upload(
-        client=client.client,
-        marketplace=client.marketplace,
-        target_demisto_version=client.version,
-        zip=True,
-    )
+    with tempfile.TemporaryDirectory() as temp_dir:
+        pack.upload(
+            client=client.client,
+            marketplace=client.marketplace,
+            target_demisto_version=client.version,
+            zip=True,
+            destination_zip_dir=Path(temp_dir),
+        )
     logger.info(f"Uploaded pack {pack.name} to {client.base_url}")
     client.create_integration_instance(
         integration_script.object_id,

@@ -38,7 +38,7 @@ class JSON5_Handler(XSOAR_Handler):
         fp: IO[str],
         indent=0,
         sort_keys=False,
-        quote_keys=False,
+        quote_keys=True,
         **kwargs,
     ):
         try:

@@ -2,10 +2,10 @@ ARG IMAGENAME
 
 FROM --platform=linux/amd64 ${IMAGENAME}
 
-ADD create_certs.sh /
+ADD createCerts.sh /
 
-RUN chmod +x /create_certs.sh \
-    && /create_certs.sh /usr/local/share/ca-certificates/certs.crt \
+RUN chmod +x /createCerts.sh \
+    && /createCerts.sh /usr/local/share/ca-certificates/certs.crt \
     && update-ca-certificates \
     && apk update || apt-get update -y || echo "Could not update package mangaer" \
     && apk add bash || echo "No alpine, no need to install bash" \

@@ -194,15 +194,18 @@ class DockerHook(Hook):
     This class will make common manipulations on commands that need to run in docker
     """
 
-    def prepare_hook(self, files_to_run: Iterable):
+    def prepare_hook(self, files_to_run: Iterable, run_docker_hooks):
         """
         Group all the files by dockerimages
         Split those images by config files
         Get the devimage for each image
         Args:
             files_to_run: all files to run on
+            run_docker_hooks: bool - Whether to run docker based hooks or skip them.
 
         """
+        if not run_docker_hooks:
+            return
         start_time = time.time()
         tag_to_files_ymls = docker_tag_to_runfiles(
             self.filter_files_matching_hook_config(files_to_run),

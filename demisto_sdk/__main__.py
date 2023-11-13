@@ -3313,13 +3313,6 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uli",
-    "--use-local-import",
-    is_flag=True,
-    help="Whether to use the current import files to import the graph.",
-    default=False,
-)
-@click.option(
     "-p",
     "--packs",
     help="A comma-separated list of packs to update",
@@ -3346,7 +3339,6 @@ def update_content_graph(
     ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-    use_local_import: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3358,7 +3350,6 @@ def update_content_graph(
         ctx,
         use_git=use_git,
         marketplace=marketplace,
-        use_local_import=use_local_import,
         imported_path=imported_path,
         packs_to_update=packs,
         no_dependencies=no_dependencies,
@@ -3463,6 +3454,12 @@ def update_content_graph(
     nargs=-1,
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
 )
+@click.option(
+    "--docker/--no-docker",
+    help="Whether to run docker based hooks or not.",
+    default=True,
+    is_flag=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
@@ -3483,6 +3480,7 @@ def pre_commit(
     sdk_ref: str,
     file_paths: Iterable[Path],
     dry_run: bool,
+    docker: bool,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
@@ -3515,6 +3513,7 @@ def pre_commit(
             secrets,
             verbose,
             show_diff_on_failure,
+            run_docker_hooks=docker,
             sdk_ref=sdk_ref,
             dry_run=dry_run,
         )

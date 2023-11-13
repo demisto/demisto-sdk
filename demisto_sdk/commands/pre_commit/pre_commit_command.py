@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
     write_dict,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContentWithPath
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -145,6 +145,7 @@ class PreCommitRunner:
     def prepare_hooks(
         self,
         hooks: dict,
+        run_docker_hooks,
     ) -> None:
         kwargs = {
             "mode": self.mode,
@@ -162,7 +163,9 @@ class PreCommitRunner:
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
         [
-            DockerHook(**hook, **kwargs).prepare_hook(files_to_run=self.files_to_run)
+            DockerHook(**hook, **kwargs).prepare_hook(
+                files_to_run=self.files_to_run, run_docker_hooks=run_docker_hooks
+            )
             for hook_id, hook in hooks.items()
             if hook_id.endswith("in-docker")
         ]
@@ -178,6 +181,7 @@ class PreCommitRunner:
         show_diff_on_failure: bool = False,
         exclude_files: Optional[Set[Path]] = None,
         dry_run: bool = False,
+        run_docker_hooks: bool = True,
     ) -> int:
         ret_val = 0
         precommit_env = os.environ.copy()
@@ -212,7 +216,7 @@ class PreCommitRunner:
                 f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
 
-        self.prepare_hooks(self.hooks)
+        self.prepare_hooks(self.hooks, run_docker_hooks)
         if self.all_files:
             self.precommit_template["exclude"] += f"|{join_files(exclude_files or {})}"
         else:
@@ -291,7 +295,7 @@ def group_by_language(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]]:
     language_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
-            BaseContentWithPath.from_path, integrations_scripts_mapping.keys()
+            BaseContent.from_path, integrations_scripts_mapping.keys()
         )
 
     exclude_integration_script = set()
@@ -351,6 +355,7 @@ def pre_commit_manager(
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
     dry_run: bool = False,
+    run_docker_hooks: bool = True,
 ) -> Optional[int]:
     """Run pre-commit hooks .
 
@@ -367,6 +372,7 @@ def pre_commit_manager(
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
         dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
+        run_docker_hooks (bool, optional): Whether to run docker based hooks or not.
 
     Returns:
         int: Return code of pre-commit.
@@ -412,6 +418,7 @@ def pre_commit_manager(
         show_diff_on_failure,
         exclude_files,
         dry_run,
+        run_docker_hooks,
     )
 
 

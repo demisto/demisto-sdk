@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContentWithPath,
+    BaseContent,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
@@ -257,7 +257,7 @@ class Uploader:
             NotIndivitudallyUploadedException (see exception class)
             NotUploadableException
         """
-        content_item: Union[ContentItem, Pack] = BaseContentWithPath.from_path(
+        content_item: Union[ContentItem, Pack] = BaseContent.from_path(
             path
         )  # type:ignore[assignment]
         if content_item is None:
@@ -311,7 +311,7 @@ class Uploader:
 
                 _failed_content_item: Union[
                     Pack, ContentItem, None
-                ] = BaseContentWithPath.from_path(
+                ] = BaseContent.from_path(
                     failure.path
                 )  # type:ignore[assignment]
 

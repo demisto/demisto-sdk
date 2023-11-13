@@ -418,3 +418,22 @@ def test_filter_files_matching_hook_config(hook, expected_result):
     assert {Path(x) for x in expected_result} == set(
         DockerHook(**base_hook).filter_files_matching_hook_config(files)
     )
+
+
+def test_no_docker_flag_docker_hook():
+    """
+    Given:
+        run_docker flag (--no-docker) is given.
+    When:
+        running pre-commit command.
+    Then:
+        Do not add the docker hook to the list of hooks.
+    """
+    file_path = Path("SomeFile.py")
+    docker_hook = create_hook({"args": ["test"]})
+    kwargs = {"mode": None, "all_files": False, "input_mode": True}
+    DockerHook(**docker_hook, **kwargs).prepare_hook(
+        files_to_run=[file_path], run_docker_hooks=False
+    )
+
+    assert len(docker_hook["repo"]["hooks"]) == 0

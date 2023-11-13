@@ -79,7 +79,7 @@ def get_client_from_marketplace(
         the correct client according to the marketplace provided
     """
     _base_api_url = base_url or os.getenv(DEMISTO_BASE_URL)
-    _api_key = api_key or os.getenv(DEMISTO_KEY)
+    _api_key = api_key or os.getenv(DEMISTO_KEY, "")
     _auth_id = auth_id or os.getenv(AUTH_ID)
 
     if marketplace in (MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR):

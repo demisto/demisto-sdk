@@ -31,7 +31,7 @@ class XsoarClient(BaseModel, ABC):
     client: DefaultApi = Field(exclude=True)
     config: XsoarClientConfig
     about_xsoar: Dict = Field(None, exclude=True)
-    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR_ON_PREM
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
 
     class Config:
         arbitrary_types_allowed = True
@@ -173,12 +173,13 @@ class XsoarClient(BaseModel, ABC):
 
         Args:
             _id: integration ID.
-            name: the name for the new instance
+            instance_name: the name for the new instance
             integration_instance_config: integration configuration (params)
             integration_log_level: integration log level (Verbose, Debug, None)
             is_long_running: whether the integration is a long-running-integration
             should_enable: should the instance be enabled, True if yes, False if not.
             response_type: the response type to return
+            should_test: whether to test the newly created integration (run its test-module)
 
         Returns:
             raw response of the newly created integration instance
@@ -273,6 +274,17 @@ class XsoarClient(BaseModel, ABC):
 
     @retry(exceptions=ApiException)
     def test_module(self, _id: str, instance_name: str, response_type: str = "object"):
+        """
+        Runs test module for an integration instance
+
+        Args:
+            _id: the ID of the integration
+            instance_name: the instance integration name
+            response_type: the type of the response to return
+
+        Returns:
+
+        """
         logger.info(f"Running test-module on {_id}")
         instance = self.get_integration_instance(instance_name, response_type)
         response_data, response_code, _ = demisto_client.generic_request_func(

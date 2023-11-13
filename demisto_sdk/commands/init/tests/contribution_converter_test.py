@@ -1,4 +1,3 @@
-import difflib
 import os
 import re
 import shutil
@@ -6,7 +5,10 @@ from os.path import join
 from pathlib import Path
 from typing import Optional, Union
 from zipfile import ZipFile
+
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.utils.utils import FileUtils
+
 yaml = YAML_Handler()
 
 import pytest
@@ -1247,9 +1249,20 @@ class TestReadmes:
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
+        for yml_file in contrib_converter.working_dir_path.rglob("*.yml"):
+            contrib_converter.generate_readme_for_pack_content_item(
+                str(yml_file),
+                is_contribution=True
+            )
+
+        o = FileUtils.merge_files(
+            f1=Path(os.path.join(content_temp_dir, "Packs", self.pack_name, INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME)),
+            f2=Path(os.path.join(contribution_temp_dir, INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME)),
+            output_dir=os.path.join(contribution_temp_dir.__str__(), "merged")
+        )
+
         # Copy files from contribution dir to pack
         copied_files = contrib_converter.copy_files_to_existing_pack(dst_path=content_temp_dir.__str__())
-
 
         actual_integration_readme = Path(copied_files[1])
         actual_integration_yml_path = Path(copied_files[3])

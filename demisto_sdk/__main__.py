@@ -303,6 +303,7 @@ def split(ctx, config, **kwargs):
         FileType.GENERIC_MODULE,
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
+        FileType.ASSETS_MODELING_RULE,
     ]:
         logger.info(
             "[red]File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.[/red]"
@@ -314,6 +315,7 @@ def split(ctx, config, **kwargs):
         FileType.SCRIPT,
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
+        FileType.ASSETS_MODELING_RULE,
     ]:
         yml_splitter = YmlSplitter(
             configuration=config.configuration, file_type=file_type.value, **kwargs
@@ -1985,6 +1987,7 @@ def init(ctx, **kwargs):
 
     check_configuration_file("init", kwargs)
     marketplace = parse_marketplace_kwargs(kwargs)
+    marketplace = MarketplaceVersions.MarketplaceV2
     initiator = Initiator(marketplace=marketplace, **kwargs)
     initiator.init()
     return 0

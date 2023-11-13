@@ -198,6 +198,7 @@ class FileType(str, Enum):
     VULTURE_WHITELIST = "vulture_whitelist"
     ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
     ASSETS_MODELING_RULE = "assetsmodelingrule"
+    ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1421,6 +1422,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
     FileType.XSIAM_DASHBOARD: "6.10.0",
+    FileType.ASSETS_MODELING_RULE: "6.2.1",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"

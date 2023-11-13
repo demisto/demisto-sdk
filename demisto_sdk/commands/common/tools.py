@@ -1691,14 +1691,16 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".js":
         return FileType.JAVASCRIPT_FILE
 
-    elif path.suffix == ".xif":
-        if any(
-            dir_name in path.parts
-            for dir_name in [MODELING_RULES_DIR, ASSETS_MODELING_RULES_DIR]
-        ):
-            return FileType.MODELING_RULE_XIF
-        # if MODELING_RULES_DIR in path.parts:
+    elif path.suffix == ".xif":  # todo: split to 2 conditions
+        # if any(
+        #     dir_name in path.parts
+        #     for dir_name in [MODELING_RULES_DIR, ASSETS_MODELING_RULES_DIR]
+        # ):
         #     return FileType.MODELING_RULE_XIF
+        if ASSETS_MODELING_RULES_DIR in path.parts:
+            return FileType.ASSETS_MODELING_RULE_XIF
+        if MODELING_RULES_DIR in path.parts:
+            return FileType.MODELING_RULE_XIF
         elif PARSING_RULES_DIR in path.parts:
             return FileType.PARSING_RULE_XIF
         return FileType.XIF_FILE

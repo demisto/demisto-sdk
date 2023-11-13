@@ -1054,6 +1054,9 @@ class ValidateManager:
             FileType.MODELING_RULE,
             FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
+            FileType.ASSETS_MODELING_RULE,
+            FileType.ASSETS_MODELING_RULE_XIF,
+            FileType.MODELING_RULE_TEST_DATA,
         ):
             logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:

@@ -238,9 +238,7 @@ class XsoarClient(BaseModel, ABC):
                 display in integration_instance_config
                 or name in integration_instance_config
             ):
-                key = (
-                    display if display in integration_instance_config else name
-                )
+                key = display if display in integration_instance_config else name
                 if key in {"credentials", "creds_apikey"}:
                     credentials = integration_instance_config[key]
                     param_value = {

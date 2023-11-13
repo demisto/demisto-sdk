@@ -43,7 +43,7 @@ class XsoarClientConfig(BaseModel):
         return values
 
     def __getattr__(self, item):
-        if item in {"token", "collector_token", "auth_id"}:
+        if item in {"token", "collector_token", "auth_id", "user", "password"}:
             self.__dict__[item] = None
 
     def __hash__(self) -> int:

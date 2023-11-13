@@ -31,7 +31,7 @@ class XsoarClient(BaseModel, ABC):
     client: DefaultApi = Field(exclude=True)
     config: XsoarClientConfig
     about_xsoar: Dict = Field(None, exclude=True)
-    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR_ON_PREM
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
 
     class Config:
         arbitrary_types_allowed = True

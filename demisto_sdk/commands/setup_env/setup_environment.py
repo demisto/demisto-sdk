@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.clients import (
 )
 from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.handlers.json.json5_handler import JSON5_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -30,7 +29,6 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.utils.utils import SecretManagerException, get_integration_params
 
 json5 = JSON5_Handler()
-json = JSON_Handler()
 
 
 class IDE(Enum):
@@ -89,7 +87,7 @@ def configure_vscode_settings(
 
     settings["python.analysis.extraPaths"] = python_path
     with open(ide_folder / "settings.json", "w") as f:
-        json.dump(settings, f, indent=4)
+        json5.dump(settings, f, indent=4)
 
 
 def get_docker_python_path(docker_prefix: str) -> List[str]:
@@ -167,10 +165,12 @@ def configure_vscode_tasks(
         }
 
     with open(ide_folder / "tasks.json", "w") as f:
-        json.dump(build_tasks(), f, indent=4)
+        json5.dump(build_tasks(), f, indent=4)
 
 
-def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScript):
+def configure_vscode_launch(
+    ide_folder: Path, integration_script: IntegrationScript, devcontainer: bool = False
+):
     def build_launch():
         if integration_script.type == "powershell":
             launch = {
@@ -180,7 +180,9 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
                         "name": "PowerShell: Debug Integration",
                         "type": "PowerShell",
                         "request": "launch",
-                        "script": str(integration_script.path.with_suffix(".ps1")),
+                        "script": f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
+                        if devcontainer
+                        else str(integration_script.path.with_suffix(".ps1")),
                         "cwd": "${workspaceFolder}",
                     }
                 ],
@@ -222,7 +224,9 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
                         "name": "Python: Debug Integration locally",
                         "type": "python",
                         "request": "launch",
-                        "program": str(integration_script.path.with_suffix(".py")),
+                        "program": f"/workspaces/content/{integration_script.path.relative_to(CONTENT_PATH)}"
+                        if devcontainer
+                        else str(integration_script.path.with_suffix(".py")),
                         "console": "integratedTerminal",
                         "cwd": "${workspaceFolder}",
                         "justMyCode": False,
@@ -238,25 +242,33 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
                     },
                 ],
             }
-            return launch
+            if devcontainer:
+                # keep only the last
+                launch["configurations"] = launch["configurations"][2:]
+
+        return launch
 
     with open(ide_folder / "launch.json", "w") as f:
-        json.dump(build_launch(), f, indent=4)
+        json5.dump(build_launch(), f, indent=4)
 
 
 def configure_devcontainer(
     integration_script: IntegrationScript, test_docker_image: str
 ):
-    with open(Path(__file__).parent / ".devcontainer" / "devcontainer.json") as f:
+    devcontainer_template_folder = Path(__file__).parent / ".devcontainer"
+    with open(devcontainer_template_folder / "devcontainer.json") as f:
         devcontainer_json = json5.load(f)
-    (integration_script.path / ".devcontainer").mkdir(exist_ok=True)
     devcontainer_path = integration_script.path.parent / ".devcontainer"
-    docker_python_path = get_docker_python_path("/worspaces/content")
+    shutil.copytree(devcontainer_template_folder, devcontainer_path, dirs_exist_ok=True)
+
+    docker_python_path = get_docker_python_path("/workspaces/content")
     devcontainer_json["build"]["args"]["IMAGENAME"] = test_docker_image
     devcontainer_json["remoteEnv"]["PYTHONPATH"] = ":".join(docker_python_path)
     devcontainer_json["remoteEnv"]["MYPYPATH"] = ":".join(docker_python_path)
-    configure_vscode_launch(devcontainer_path, integration_script)
+    configure_vscode_launch(devcontainer_path, integration_script, devcontainer=True)
     configure_vscode_settings(devcontainer_path, integration_script, devcontainer=True)
+    with open(devcontainer_path / "devcontainer.json", "w") as f:
+        json5.dump(devcontainer_json, f, indent=4)
 
 
 def configure_vscode(
@@ -365,7 +377,7 @@ def configure_params(
                     )
             (CONTENT_PATH / ".vscode").mkdir(exist_ok=True)
             with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
-                json.dump(params, f, indent=4)
+                json5.dump(params, f, indent=4)
         except SecretManagerException:
             logger.warning(
                 f"Failed to fetch integration params from Google Secret Manager for {secret_id}"
@@ -417,7 +429,6 @@ def configure_integration(
         integration_script, IntegrationScript
     ), "Expected Integration Script"
     add_init_file_in_test_data(integration_script)
-    configure_dotenv()
     docker_image = integration_script.docker_image
     interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
     configure_params(integration_script, secret_id, instance_name, test_module)
@@ -475,6 +486,11 @@ def setup_env(
     Raises:
         RuntimeError:
     """
+    if "content" not in CONTENT_PATH.name:
+        raise RuntimeError(
+            "This command must be run from the content folder "
+            "or with 'DEMISTO_SDK_CONTENT_PATH' environment variable set to a content path"
+        )
     if not file_paths:
         configure_dotenv()
         ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]

@@ -23,7 +23,7 @@ def create_integration_object(
         The integration object.
     """
     yml_content = load_yaml("integration.yml")
-    if key_path and new_value:
+    if key_path and new_value is not None:
         set_value(yml_content, key_path, new_value)
     pack = REPO.create_pack()
     integration = pack.create_integration(yml=yml_content)
@@ -44,7 +44,7 @@ def create_script_object(
         The script object.
     """
     yml_content = load_yaml("script.yml")
-    if key_path and new_value:
+    if key_path and new_value is not None:
         set_value(yml_content, key_path, new_value)
     pack = REPO.create_pack()
     script = pack.create_script(yml=yml_content)

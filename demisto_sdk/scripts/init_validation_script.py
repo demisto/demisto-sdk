@@ -157,6 +157,7 @@ class ValidationInitializer:
         self.git_statuses = ""
         self.fix_method = ""
         self.validate_graph = ""
+        self.fix_message = ""
         self.include_old_format_files_fix_method = ""
         self.min_content_type_val = 1
         self.max_content_type_val = int(list(CONTENT_TYPES_DICT.keys())[-1])

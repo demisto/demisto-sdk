@@ -249,7 +249,7 @@ def configure_devcontainer(
 ):
     with open(Path(__file__).parent / ".devcontainer" / "devcontainer.json") as f:
         devcontainer_json = json5.load(f)
-    (integration_script.path / ".devcontainer").mkdir()
+    (integration_script.path / ".devcontainer").mkdir(exist_ok=True)
     devcontainer_path = integration_script.path.parent / ".devcontainer"
     docker_python_path = get_docker_python_path("/worspaces/content")
     devcontainer_json["build"]["args"]["IMAGENAME"] = test_docker_image

@@ -12,7 +12,7 @@ The Command sets up a content environment and an integration/script environment.
 ## Usage
 
 ```
-demisto-sdk setup_env [OPTIONS] [FILE_PATHS]
+demisto-sdk setup-env [OPTIONS] [FILE_PATHS]
 ```
 
 ## Options

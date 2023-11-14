@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
 
-class JsonYmlFile(TextFile, ABC):
+class StructuredFile(TextFile, ABC):
 
     handler: XSOAR_Handler = Field(None, exclude=True)
 

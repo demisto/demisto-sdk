@@ -61,11 +61,12 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     assert not dest_playbook_path.exists()
 
     logger.info(
-        f"Generating docs (creating a readme file) for playbook {source_pack_path}"
+        f"Generating docs (creating a readme file) for playbook {source_playbook_path}"
     )
-    generate_playbook_doc.generate_playbook_doc(input_path=str(source_pack_path))
-    assert source_pack_path.with_name(f"{playbook_name}_README.md").exists()
-
+    generate_playbook_doc.generate_playbook_doc(input_path=str(source_playbook_path))
+    assert Path(
+        f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}_README.md"
+    ).exists()
     logger.info(f"Formating playbook {source_playbook_path}")
     with ChangeCWD(pack.repo_path):
         format_manager(
@@ -122,7 +123,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     assert not dest_playbook_path.exists()
 
     logger.info(
-        f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks"
+        f"Trying to download the CommonServerUserPowerShell file to {tmpdir}/Packs/{pack_name}_client/Playbooks"
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_client",

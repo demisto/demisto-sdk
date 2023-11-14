@@ -14,6 +14,8 @@ from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from tests_end_to_end import e2e_tests_utils
+from TestSuite.playbook import Playbook
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -24,8 +26,6 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         destination_folder=f"{tmpdir}/git/demisto-sdk",
         sdk_git_branch=DEMISTO_GIT_PRIMARY_BRANCH,
     )
-    from TestSuite.playbook import Playbook
-    from TestSuite.repo import Repo
 
     repo = Repo(tmpdir)
 
@@ -58,13 +58,13 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     dest_playbook_path = Path(
         f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
-    assert dest_playbook_path.exists()
+    assert not dest_playbook_path.exists()
 
     logger.info(
-        f"Generating docs (creating a readme file) for playbook {dest_playbook_path}"
+        f"Generating docs (creating a readme file) for playbook {source_pack_path}"
     )
-    generate_playbook_doc.generate_playbook_doc(input_path=str(dest_playbook_path))
-    assert dest_playbook_path.with_name(f"{playbook_name}_README.md").exists()
+    generate_playbook_doc.generate_playbook_doc(input_path=str(source_pack_path))
+    assert source_pack_path.with_name(f"{playbook_name}_README.md").exists()
 
     logger.info(f"Formating playbook {source_playbook_path}")
     with ChangeCWD(pack.repo_path):
@@ -80,50 +80,23 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
-    unique_id = 789
-    pack_name = "foo_" + str(unique_id)
-    playbook_name = "pb_" + str(unique_id)
-    dest_playbook_path = Path(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
-    )
-
-    unique_id = 789
-    pack_name = "foo_" + str(unique_id)
-    playbook_name = "pb_" + str(unique_id)
-
     demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
-    body = [
-        {
-            "name": playbook_name,
-            "propagationLabels": ["all"],
-            "tasks": {
-                "0": {
-                    "id": "0",
-                    "unqiueId": "0",
-                    "type": "start",
-                    "nextTasks": None,
-                    "task": {},
-                }
-            },
-        }
-    ]
 
-    header_params = {
-        "Accept": "application/json",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Content-Type": "application/json",
-    }
+    repo = Repo(tmpdir)
+
+    unique_id = 456
+    pack_name = "foo_" + str(unique_id)
+    pack = repo.create_pack(name=pack_name)
+    playbook_name = "pb_" + pack_name
+    playbook: Playbook = pack.create_playbook(name=playbook_name)
+    source_playbook_path = playbook.yml.path
 
     try:
-        demisto_client.api_client.call_api(
-            resource_path="/playbook/save",
-            method="POST",
-            header_params=header_params,
-            body=body,
-        )
+        demisto_client.client.import_playbook(file=source_playbook_path)
     except ApiException as ae:
         logger.info(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
         assert False
+
 
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
@@ -158,22 +131,22 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     ).download()
 
     logger.info(
-        f"Generating docs (creating a readme file for the playbook {dest_playbook_path}"
+        f"Generating docs (creating a readme file for the playbook {source_playbook_path}"
     )
-    generate_playbook_doc.generate_playbook_doc(input_path=str(dest_playbook_path))
+    generate_playbook_doc.generate_playbook_doc(input_path=str(source_playbook_path))
     assert Path(
         f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}_README.md"
     ).exists()
 
-    logger.info(f"Formating playbook {dest_playbook_path}")
+    logger.info(f"Formating playbook {source_playbook_path}")
 
-    with ChangeCWD(str(dest_playbook_path.parent)):
+    with ChangeCWD(str(Path(source_playbook_path).parent)):
         format_manager(
-            input=str(dest_playbook_path),
+            input=source_playbook_path,
             assume_answer=True,
         )
-        logger.info(f"Validating playbook {dest_playbook_path}")
-        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+        logger.info(f"Validating playbook {source_playbook_path}")
+        ValidateManager(file_path=source_playbook_path).run_validation()
 
-        logger.info(f"Uploading updated playbook {dest_playbook_path}")
-        Uploader(input=dest_playbook_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
+        logger.info(f"Uploading updated playbook {source_playbook_path}")
+        Uploader(input=source_playbook_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()

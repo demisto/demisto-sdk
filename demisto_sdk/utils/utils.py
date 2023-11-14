@@ -17,10 +17,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentUnifiedObject,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.handlers.json.json5_handler import JSON5_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.logger import logger
 
-json5 = JSON5_Handler()
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
 
 

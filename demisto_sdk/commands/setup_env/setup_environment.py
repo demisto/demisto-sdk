@@ -495,11 +495,6 @@ def setup_env(
     Raises:
         RuntimeError:
     """
-    # if "content" not in CONTENT_PATH.name:
-    #     raise RuntimeError(
-    #         "This command must be run from the content folder "
-    #         "or with 'DEMISTO_SDK_CONTENT_PATH' environment variable set to a content path"
-    #     )
     configure_dotenv()
     if not file_paths:
         (CONTENT_PATH / "CommonServerUserPython.py").touch()

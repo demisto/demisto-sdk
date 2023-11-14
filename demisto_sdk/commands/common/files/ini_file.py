@@ -13,22 +13,21 @@ class IniFile(TextFile):
 
     def _write(self, data: Any, path: Path, encoding: Optional[str] = None):
         """
+        Writes an INI file.
 
         Args:
-            data:
-            encoding:
-
-        Returns:
+            data: the data to write
+            encoding: whether any custom encoding is needed
 
         data example:
-        data = {
-            'file:APIVoid.yml': {
-                'ignore': 'BA124'
-            },
-            'known_words': {
-                'apivoid': None
+            data = {
+                'file:APIVoid.yml': {
+                    'ignore': 'BA124'
+                },
+                'known_words': {
+                    'apivoid': None
+                }
             }
-        }
 
         """
         config = ConfigParser(allow_no_value=True)

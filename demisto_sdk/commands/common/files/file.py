@@ -88,6 +88,15 @@ class File(ABC, BaseModel):
 
     @abstractmethod
     def load(self, file_content: bytes) -> Any:
+        """
+        Loads the file as the requested file type.
+
+        Args:
+            file_content: the file content in bytes
+
+        Returns:
+            Any: the file content in the desired format
+        """
         raise NotImplementedError(
             "load must be implemented for each File concrete object"
         )
@@ -100,6 +109,16 @@ class File(ABC, BaseModel):
         git_util: Optional[GitUtil] = None,
         **kwargs,
     ) -> "File":
+        """
+
+        Args:
+            input_path: the file input path
+            git_util: whether there should be any customized git util
+            **kwargs: any additional arguments to initialize the model
+
+        Returns:
+            File: any subclass of the File model.
+        """
         if cls is File:
             raise ValueError(
                 "when reading from file content please specify concrete class"
@@ -125,6 +144,16 @@ class File(ABC, BaseModel):
         file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
     ) -> Any:
+        """
+        Read a file from its representation in bytes.
+
+        Args:
+            file_content: the file content in bytes / bytesIo
+            handler: whether a custom handler is required, if not takes the default.
+
+        Returns:
+            Any: the file content in the desired format
+        """
         if cls is File:
             raise ValueError(
                 "when reading from file content please specify concrete class"
@@ -154,6 +183,18 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ) -> Any:
+        """
+        Reads a file from a local path in the file system.
+
+        Args:
+            path: the path of the file
+            git_util: whether custom git-util is required
+            handler: whether a custom handler is required, if not takes the default.
+            clear_cache: whether to clear cache
+
+        Returns:
+            Any: the file content in the desired format
+        """
         if clear_cache:
             cls.read_from_local_path.cache_clear()
         model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
@@ -179,6 +220,20 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ) -> Any:
+        """
+        Reads a file from a specific git sha/branch.
+
+        Args:
+            path: the path to the file
+            tag: branch / sha of the desired commit
+            git_util: whether custom git-util is required
+            from_remote: whether it should be taken from remote branch/sha or local branch/sha
+            handler: whether a custom handler is required, if not takes the default.
+            clear_cache: whether to clear cache
+
+        Returns:
+            Any: the file content in the desired format
+        """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
         model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
@@ -214,6 +269,19 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ) -> Any:
+        """
+        Reads a file from Github api.
+
+        Args:
+            path: the path to the file in github
+            git_content_config: git content config object
+            tag: the branch/sha to take the file from within Github
+            handler: whether a custom handler is required, if not takes the default.
+            clear_cache: whether to clear cache
+
+        Returns:
+            Any: the file content in the desired format
+        """
         if not git_content_config:
             git_content_config = GitContentConfig()
 
@@ -262,6 +330,19 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ) -> Any:
+        """
+        Reads a file from Gitlab api.
+
+        Args:
+            path: the path to the file in gitlab
+            git_content_config: git content config object
+            tag: the branch/sha to take the file from within Gitlab
+            handler: whether a custom handler is required, if not takes the default.
+            clear_cache: whether to clear cache
+
+        Returns:
+            Any: the file content in the desired format
+        """
         if not git_content_config:
             git_content_config = GitContentConfig()
 
@@ -290,6 +371,22 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ) -> Any:
+        """
+        Reads a file from any api via http request.
+
+        Args:
+            url: the utl to the file
+            headers: request headers
+            params: request params
+            verify: whether SSL should be verified
+            timeout: timeout for the request
+            handler: whether a custom handler is required, if not takes the default.
+            clear_cache: whether to clear cache
+
+        Returns:
+            Any: the file content in the desired format
+
+        """
         if cls is File:
             raise ValueError(
                 "when reading from file content please specify concrete class"
@@ -323,6 +420,17 @@ class File(ABC, BaseModel):
         encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
     ):
+        """
+
+        Args:
+            data: the data to write
+            output_path: the output path to write to
+            encoding: any custom encoding if needed
+            handler:
+
+        Returns:
+            Any: the file content in the desired format
+        """
         output_path = Path(output_path)
 
         if cls is File:

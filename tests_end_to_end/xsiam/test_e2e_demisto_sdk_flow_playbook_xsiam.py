@@ -136,7 +136,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     )
     generate_playbook_doc.generate_playbook_doc(input_path=str(source_playbook_path))
     assert Path(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}_README.md"
+        f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}_README.md"
     ).exists()
 
     logger.info(f"Formating playbook {source_playbook_path}")

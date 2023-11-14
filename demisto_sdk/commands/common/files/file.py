@@ -268,6 +268,7 @@ class File(ABC, BaseModel):
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
+        verify_ssl: bool = True,
     ) -> Any:
         """
         Reads a file from Github api.
@@ -278,6 +279,7 @@ class File(ABC, BaseModel):
             tag: the branch/sha to take the file from within Github
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
+            verify_ssl: whether SSL should be verified
 
         Returns:
             Any: the file content in the desired format
@@ -304,6 +306,7 @@ class File(ABC, BaseModel):
                 timeout=timeout,
                 handler=handler,
                 clear_cache=clear_cache,
+                verify=verify_ssl,
             )
         except FileReadError as e:
             logger.warning(
@@ -329,6 +332,7 @@ class File(ABC, BaseModel):
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
+        verify_ssl: bool = True,
     ) -> Any:
         """
         Reads a file from Gitlab api.
@@ -339,6 +343,7 @@ class File(ABC, BaseModel):
             tag: the branch/sha to take the file from within Gitlab
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
+            verify_ssl: whether SSL should be verified
 
         Returns:
             Any: the file content in the desired format
@@ -357,6 +362,7 @@ class File(ABC, BaseModel):
             params=frozenset({"ref": tag}.items()),
             handler=handler,
             clear_cache=clear_cache,
+            verify=verify_ssl,
         )
 
     @classmethod

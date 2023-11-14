@@ -3592,7 +3592,7 @@ def setup_env(
     overwrite_virtualenv,
     secret_id,
     instance_name,
-    test_module,
+    run_test_module,
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup_env,
@@ -3607,7 +3607,7 @@ def setup_env(
         overwrite_virtualenv=overwrite_virtualenv,
         secret_id=secret_id,
         instance_name=instance_name,
-        test_module=test_module,
+        test_module=run_test_module,
     )
 
 

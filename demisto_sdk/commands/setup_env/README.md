@@ -30,5 +30,5 @@ Overwrite existing virtualenvs. Use with the create-virtualenv flag.
 Secret ID, to use with Google Secret Manager instance. If not provided, will use the integration id.
 - **--instance-name**
 Instance name to configure in XSOAR/XSIAM.
-- **--test-module**
-Set to validate the test module.
+- **--run-test-module**
+Whether to run the test-module of the integration.

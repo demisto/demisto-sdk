@@ -14,6 +14,8 @@ class UJSON_Handler(XSOAR_Handler):
     Use only this wrapper for json handling.
     """
 
+    JSONDecodeError = JSONDecodeError
+
     def __init__(self):
         self.json = ujson
 

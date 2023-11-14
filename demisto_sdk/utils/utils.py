@@ -146,7 +146,7 @@ def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> 
         raise SecretManagerException
     except google.api_core.exceptions.PermissionDenied:
         logger.warning(
-            "Insufficient permissions for gcloud. , run `gcloud auth application-default login`"
+            "Insufficient permissions for gcloud. run `gcloud auth application-default login`"
         )
         raise SecretManagerException
     except Exception:

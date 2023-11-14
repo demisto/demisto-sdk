@@ -371,7 +371,7 @@ def configure_params(
         integration_script, Integration
     ):
         try:
-            params = get_integration_params(project_id, secret_id)
+            params = get_integration_params(secret_id, project_id)
             if params and instance_name:
                 try:
                     upload_and_create_instance(

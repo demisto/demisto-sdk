@@ -432,6 +432,20 @@ def configure_integration(
     instance_name: Optional[str],
     test_module: bool,
 ):
+    """Configures the environment of the integration
+
+    Args:
+        ide (IDE): The IDE to configure to
+        file_path (Path): The filepath of the integration
+        create_virtualenv (bool): Whether create a virtual environment
+        overwrite_virtualenv (bool): Whether overwrite the virtual environment
+        secret_id (Optional[str]): The secret id to use
+        instance_name (Optional[str]): The instance name to configure on XSOAR/XSIAM. If None, will not configure.
+        test_module (bool): Whether run test module on the instance on XSOAR/XSIAM
+
+    Raises:
+        RuntimeError: If configuring failed (for instance, Docker is turned off)
+    """
     ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
     integration_script = BaseContent.from_path(Path(file_path))
     assert isinstance(

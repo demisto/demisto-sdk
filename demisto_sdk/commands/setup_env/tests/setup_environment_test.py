@@ -14,6 +14,16 @@ from demisto_sdk.commands.setup_env.setup_environment import (
 
 @pytest.mark.parametrize("create_virtualenv", [False, True])
 def test_setup_env_vscode(mocker, pack, create_virtualenv):
+    """
+    Given:
+        - pack fixture with integration
+
+    When:
+        - Calling setup environment of the integration
+
+    Then:
+        - The environment is setup correctly in VSCode
+    """
     image = "python3"
     test_image = "test/python3-sha"
     params = {"username": "user", "password": "pass"}

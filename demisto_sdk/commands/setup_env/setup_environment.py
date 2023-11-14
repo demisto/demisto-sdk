@@ -92,12 +92,12 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
     return docker_python_path
 
 
-def update_dotenv(values: Dict[str, str]):
+def update_dotenv(values: Dict[str, str], quote_mode="always"):
     env_vars = dotenv.dotenv_values(DOTENV_PATH)
     env_vars.update(values)
     for key, value in env_vars.items():
         if value:
-            dotenv.set_key(DOTENV_PATH, key, value)
+            dotenv.set_key(DOTENV_PATH, key, value, quote_mode=quote_mode)
         else:
             logger.warning(f"empty value for {key}, not setting it")
 
@@ -386,7 +386,7 @@ def configure_params(
                     logger.warning(
                         f"Failed to create integration instance {instance_name}. Error {e}"
                     )
-            update_dotenv({"DEMISTO_PARAMS": json.dumps(params)})
+            update_dotenv({"DEMISTO_PARAMS": json.dumps(params)}, quote_mode="never")
         except SecretManagerException:
             logger.warning(
                 f"Failed to fetch integration params from Google Secret Manager for {secret_id}"

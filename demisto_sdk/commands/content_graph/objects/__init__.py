@@ -20,6 +20,7 @@ __all__ = [
     "ModelingRule",
     "ParsingRule",
     "Playbook",
+    "BasePlaybook",
     "Report",
     "Script",
     "TestPlaybook",
@@ -38,6 +39,7 @@ __all__ = [
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
+from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard

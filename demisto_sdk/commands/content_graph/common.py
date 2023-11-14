@@ -48,6 +48,7 @@ class RelationshipType(str, enum.Enum):
 class ContentType(str, enum.Enum):
     BASE_CONTENT = "BaseContent"
     BASE_NODE = "BaseNode"
+    BASE_PLAYBOOK = "BasePlaybook"
     CLASSIFIER = "Classifier"
     COMMAND = "Command"
     COMMAND_OR_SCRIPT = "CommandOrScript"
@@ -89,8 +90,8 @@ class ContentType(str, enum.Enum):
         labels: Set[str] = {ContentType.BASE_NODE.value, self.value}
         if self.value != ContentType.COMMAND:
             labels.add(ContentType.BASE_CONTENT.value)
-        if self.value == ContentType.TEST_PLAYBOOK.value:
-            labels.add(ContentType.PLAYBOOK.value)
+        if self.value in [ContentType.TEST_PLAYBOOK.value, ContentType.PLAYBOOK.value]:
+            labels.add(ContentType.BASE_PLAYBOOK.value)
 
         if self in [ContentType.SCRIPT, ContentType.COMMAND]:
             labels.add(ContentType.COMMAND_OR_SCRIPT.value)

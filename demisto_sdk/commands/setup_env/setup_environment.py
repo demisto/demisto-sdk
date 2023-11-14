@@ -102,6 +102,15 @@ def update_dotenv(values: Dict[str, str]):
             logger.warning(f"empty value for {key}, not setting it")
 
 
+def configure_dotenv():
+    """
+    This functions configures the .env file located with PYTHONPATH and MYPYPATH
+    This is needed for discovery and liniting for CommonServerPython, demistomock and API Modules files.
+    """
+    python_path_values = ":".join((str(path) for path in PYTHONPATH))
+    update_dotenv({"PYTHONPATH": python_path_values, "MYPYPATH": python_path_values})
+
+
 def configure_vscode_tasks(
     ide_folder: Path, integration_script: IntegrationScript, test_docker_image: str
 ):
@@ -509,7 +518,7 @@ def setup_env(
     Raises:
         RuntimeError:
     """
-    DOTENV_PATH.touch()
+    configure_dotenv()
     if not file_paths:
         (CONTENT_PATH / "CommonServerUserPython.py").touch()
         ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]

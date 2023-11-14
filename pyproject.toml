@@ -83,7 +83,6 @@ types-ipaddress = "^1.0.8"
 types-chardet = ">=4.0.3,<6.0.0"
 types-six = "^1.16.12"
 types-PyMySQL = "^1.0.15"
-types-protobuf = "^3.19.15"
 typing-extensions = "^4.1.1"
 gsutil = {version = "5.17", optional = true}
 klara = "^0.6.3"

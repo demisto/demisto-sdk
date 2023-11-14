@@ -4439,17 +4439,6 @@ files = [
 ]
 
 [[package]]
-name = "types-protobuf"
-version = "3.20.4.6"
-description = "Typing stubs for protobuf"
-optional = false
-python-versions = "*"
-files = [
-    {file = "types-protobuf-3.20.4.6.tar.gz", hash = "sha256:ba27443c592bbec1629dd69494a24c84461c63f0d3b7d648ce258aaae9680965"},
-    {file = "types_protobuf-3.20.4.6-py3-none-any.whl", hash = "sha256:ab2d315ba82246b83d28f8797c98dc0fe1dd5cfd187909e56faf87239aedaae3"},
-]
-
-[[package]]
 name = "types-pymysql"
 version = "1.0.19.6"
 description = "Typing stubs for PyMySQL"
@@ -5075,4 +5064,4 @@ build = ["gsutil"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "1c5266d8876648f2e0ae645ec98e7de113063d25fd6aa0b61048127b0a9262e0"
+content-hash = "7104aa8162f2ad942af9d6170615bf1bd7a3fafdfaf664150e636cc0419fc7d9"

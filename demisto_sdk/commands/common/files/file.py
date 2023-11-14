@@ -421,6 +421,7 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
     ):
         """
+        Writes a file into to the local file system.
 
         Args:
             data: the data to write

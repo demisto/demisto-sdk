@@ -3577,7 +3577,13 @@ def run_unit_tests(
     required=False,
     help="Instance name to configure in XSOAR/XSIAM.",
 )
-@click.option("--test-module", required=False, is_flag=True, default=False)
+@click.option(
+    "--run-test-module",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Whether to run test-module on the configured XSOAR/XSIAM instance",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
     input,

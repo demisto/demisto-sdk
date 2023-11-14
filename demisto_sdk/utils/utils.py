@@ -1,8 +1,9 @@
+import os
 import time
 from configparser import ConfigParser, MissingSectionHeaderError
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Tuple, Type, Union
+from typing import Callable, Optional, Tuple, Type, Union
 
 import google
 from google.cloud import secretmanager
@@ -113,7 +114,7 @@ def retry(
     return _retry
 
 
-def get_integration_params(project_id: str, secret_id: str) -> dict:
+def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> dict:
     """This function retrieves the parameters of an integration from Google Secret Manager
     *Note*: This function will not run if the `DEMISTO_SDK_GCP_PROJECT_ID` env variable is not set.
 
@@ -124,6 +125,13 @@ def get_integration_params(project_id: str, secret_id: str) -> dict:
     Returns:
         dict: The integration params
     """
+    if not project_id:
+        project_id = os.getenv("DEMISTO_SDK_GCP_PROJECT_ID")
+    if not project_id:
+        raise ValueError(
+            "Either provide the project id or set the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable"
+        )
+
     # Create the Secret Manager client.
     client = secretmanager.SecretManagerServiceClient()
 

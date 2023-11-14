@@ -254,6 +254,12 @@ def configure_vscode_launch(
 def configure_devcontainer(
     integration_script: IntegrationScript, test_docker_image: str
 ):
+    """This function configures the `.devcontainer` files to allow opening the integration inside a devcontainer
+
+    Args:
+        integration_script (IntegrationScript): The integration/script to configure.
+        test_docker_image (str): The test image of the integration/script.
+    """
     devcontainer_template_folder = Path(__file__).parent / ".devcontainer"
     with open(devcontainer_template_folder / "devcontainer.json") as f:
         devcontainer_json = json5.load(f)

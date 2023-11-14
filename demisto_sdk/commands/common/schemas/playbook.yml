@@ -55,10 +55,18 @@ mapping:
       type: seq
       sequence:
         - include: output_schema
+  outputsSections:
+    type: seq
+    sequence:
+      - include: outputsSection_schema
   inputs:
     type: seq
     sequence:
       - include: input_schema
+  inputsSections:
+    type: seq
+    sequence:
+      - include: inputsSection_schema
   tags:
     type: seq
     sequence:
@@ -311,6 +319,21 @@ schema;input_schema:
     playbookInputQuery:
       type: any
 
+# playbook->inputSections
+schema;inputsSection_schema:
+  type: map
+  mapping:
+    name:
+      type: str
+      required: true
+    description:
+      type: str
+      required: true
+    inputs:
+      type: seq
+      sequence:
+        - type: str
+
 # playbook->outputs
 schema;output_schema:
   type: map
@@ -325,6 +348,21 @@ schema;output_schema:
       required: true
     description_x2:
       type: str
+
+# playbook->outputsSections
+schema;outputsSection_schema:
+  type: map
+  mapping:
+    name:
+      type: str
+      required: true
+    description:
+      type: str
+      required: true
+    outputs:
+      type: seq
+      sequence:
+        - type: str
 
 # playbook->tasks->conditions
 schema;condition_schema:

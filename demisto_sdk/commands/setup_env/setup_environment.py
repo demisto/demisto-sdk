@@ -7,7 +7,7 @@ import tempfile
 import venv
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import dotenv
 from demisto_client.demisto_api.rest import ApiException
@@ -19,8 +19,8 @@ from demisto_sdk.commands.common.clients import (
 from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -43,21 +43,24 @@ def add_init_file_in_test_data(integration_script: IntegrationScript):
         (test_data_dir / "__init__.py").touch()
 
 
-def configure_dotenv():
-    """
-    This functions configures the .env file located with PYTHONPATH and MYPYPATH
-    This is needed for discovery and liniting for CommonServerPython, demistomock and API Modules files.
-    """
+def update_dotenv(values: Dict[str, str]):
     dotenv_path = CONTENT_PATH / ".env"
     env_vars = dotenv.dotenv_values(dotenv_path)
-    python_path_values = ":".join((str(path) for path in PYTHONPATH))
-    env_vars["PYTHONPATH"] = python_path_values
-    env_vars["MYPYPATH"] = python_path_values
+    env_vars.update(values)
     for key, value in env_vars.items():
         if value:
             dotenv.set_key(dotenv_path, key, value)
         else:
             logger.warning(f"empty value for {key}, not setting it")
+
+
+def configure_dotenv():
+    """
+    This functions configures the .env file located with PYTHONPATH and MYPYPATH
+    This is needed for discovery and liniting for CommonServerPython, demistomock and API Modules files.
+    """
+    python_path_values = ":".join((str(path) for path in PYTHONPATH))
+    update_dotenv({"PYTHONPATH": python_path_values, "MYPYPATH": python_path_values})
 
 
 def configure_vscode_settings(
@@ -131,7 +134,6 @@ def configure_vscode_tasks(
                             {"localPath": str(CONTENT_PATH), "containerPath": "/app"}
                         ],
                         "env": {
-                            "DEMISTO_PARAMS": "/app/.vscode/params.json",
                             "PYTHONPATH": ":".join(docker_python_path),
                         },
                     },
@@ -381,8 +383,7 @@ def configure_params(
                     logger.warning(
                         f"Failed to create integration instance {instance_name}. Error {e}"
                     )
-            (CONTENT_PATH / ".vscode").mkdir(exist_ok=True)
-            write_dict(CONTENT_PATH / ".vscode" / "params.json", params, indent=4)
+            update_dotenv({"DEMISTO_PARAMS": json.dumps(params)})
         except SecretManagerException:
             logger.warning(
                 f"Failed to fetch integration params from Google Secret Manager for {secret_id}"
@@ -481,6 +482,7 @@ def configure_integration(
         pack = integration_script.in_pack
         assert isinstance(pack, Pack), "Expected pack"
         ide_folder = pack.path / IDE_TO_FOLDER[ide]
+        shutil.copy(CONTENT_PATH / ".env", pack.path / ".env")
         if create_virtualenv and integration_script.type.startswith("python"):
             interpreter_path = install_virtualenv(
                 integration_script, test_docker_image, overwrite_virtualenv

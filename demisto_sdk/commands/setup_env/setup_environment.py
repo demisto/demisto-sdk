@@ -105,7 +105,7 @@ def update_dotenv(values: Dict[str, str]):
 def configure_dotenv():
     """
     This functions configures the .env file located with PYTHONPATH and MYPYPATH
-    This is needed for discovery and liniting for CommonServerPython, demistomock and API Modules files.
+    This is needed for discovery and linting for CommonServerPython, demistomock and API Modules files.
     """
     DOTENV_PATH.touch()
     python_path_values = ":".join((str(path) for path in PYTHONPATH))

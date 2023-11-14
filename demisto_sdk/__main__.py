@@ -3569,13 +3569,13 @@ def run_unit_tests(
 )
 @click.option(
     "--secret-id",
-    help="Secret ID, to use with PANW's Google Secret Manager instance. (internal use only)",
+    help="Secret ID, to use with Google Secret Manager instance with `DEMISTO_SDK_GCP_PROJECT_ID` environment variable set.",
     required=False,
 )
 @click.option(
     "--instance-name",
     required=False,
-    help="What to call the Integration instance created by the command",
+    help="Instance name to configure in XSOAR/XSIAM.",
 )
 @click.option("--test-module", required=False, is_flag=True, default=False)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))

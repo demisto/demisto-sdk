@@ -572,7 +572,7 @@ class GitUtil:
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
         return {
             file.parts[1]
-            for file in self.get_all_changed_files(prev_ver)
+            for file in self._get_all_changed_files(prev_ver) | self._get_staged_files()
             if file.parts[0] == PACKS_FOLDER
         }
 

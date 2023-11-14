@@ -1,21 +1,24 @@
 from pathlib import Path
-from typing import List, Set
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlaybookParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     IncorrectParserException,
     NotAContentItemException,
 )
-from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 
 NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
 
-class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
+class TestPlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
         """Parses the test playbook.
 
@@ -29,7 +32,9 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK)
         if NON_CIRCLE_TESTS_DIRECTORY in path.name:
             raise NotAContentItemException
 
-        super().__init__(path, pack_marketplaces, is_test_playbook=True)
+        super().__init__(
+            path, pack_marketplaces, is_test_playbook=True, git_sha=git_sha
+        )
 
         if self.yml_data.get("script"):
             raise IncorrectParserException(

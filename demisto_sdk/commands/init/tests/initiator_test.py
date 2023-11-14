@@ -838,11 +838,11 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
     """
     # Prepare mockers
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
-    # The inputs are: Product, Vendor, Parsing-Rule Version, Modeling-Rule Version, Integration Version,
-    # Ignore secrets
+    # The inputs are: Product, Vendor, Parsing-Rule Version, Modeling-Rule Version, Assets Modeling-Rule version,
+    # Integration Version, Ignore secrets
     monkeypatch.setattr(
         "builtins.input",
-        generate_multiple_inputs(deque(["Product", "Vendor", "", "", "", "Y"])),
+        generate_multiple_inputs(deque(["Product", "Vendor", "", "", "", "", "Y"])),
     )
     temp_pack_dir = Path(tmpdir).joinpath(f"{PACKS_DIR}/{PACK_NAME}")
     temp_pack_dir.mkdir(exist_ok=True, parents=True)
@@ -903,10 +903,11 @@ def test_integration_init_xsiam_files_existence(mocker, monkeypatch, initiator, 
     """
     # Prepare mockers
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
-    # Product, Vendor, from version parsing, from version modeling, from version yml, ignore secrets
+    # Product, Vendor, from version parsing, from version modeling, from version assets modeling rule,
+    # from version yml, ignore secrets
     monkeypatch.setattr(
         "builtins.input",
-        generate_multiple_inputs(deque(["vendor", "product", "", "", "", "Y"])),
+        generate_multiple_inputs(deque(["vendor", "product", "", "", "", "", "Y"])),
     )
     temp_pack_dir = Path(tmpdir).joinpath(f"{PACKS_DIR}/{PACK_NAME}")
     temp_pack_dir.mkdir(exist_ok=True, parents=True)

@@ -4,10 +4,10 @@ The Command sets up a content environment and an integration/script environment.
 
 **Notes**
 
-- This command will download integration parameters from Google Secret Manager, if the enviornment variable **DEMISTO_SDK_GCP_PROJECT_ID** is set to the GCP project ID.
-- It will also create a virtual environment in the .venv folder if **--create-virtualenv** is passed.
-- It will configure VSCode debugging and linting for the provided file paths or content repo.
-- It will create a XSOAR/XSIAM instance and configure it for testing with the provided file paths or content repo, if a secret was found in Google Secret Manager.
+* This command will download integration parameters from Google Secret Manager, if the enviornment variable **DEMISTO_SDK_GCP_PROJECT_ID** is set to the GCP project ID.
+* It will also create a virtual environment in the .venv folder if **--create-virtualenv** is passed.
+* It will configure VSCode debugging and linting for the provided file paths or content repo.
+* It will create a XSOAR/XSIAM instance and configure it for testing with the provided file paths or content repo, if a secret was found in Google Secret Manager.
 
 ## Usage
 

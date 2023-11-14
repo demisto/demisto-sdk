@@ -7,8 +7,9 @@ import tempfile
 import venv
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
+import dotenv
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common import docker_helper
@@ -18,8 +19,8 @@ from demisto_sdk.commands.common.clients import (
 from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -27,6 +28,8 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.utils.utils import SecretManagerException, get_integration_params
+
+DOTENV_PATH = CONTENT_PATH / ".env"
 
 
 class IDE(Enum):
@@ -89,6 +92,16 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
     return docker_python_path
 
 
+def update_dotenv(values: Dict[str, str]):
+    env_vars = dotenv.dotenv_values(DOTENV_PATH)
+    env_vars.update(values)
+    for key, value in env_vars.items():
+        if value:
+            dotenv.set_key(DOTENV_PATH, key, value)
+        else:
+            logger.warning(f"empty value for {key}, not setting it")
+
+
 def configure_vscode_tasks(
     ide_folder: Path, integration_script: IntegrationScript, test_docker_image: str
 ):
@@ -113,9 +126,9 @@ def configure_vscode_tasks(
                             {"localPath": str(CONTENT_PATH), "containerPath": "/app"}
                         ],
                         "env": {
-                            "DEMISTO_PARAMS": "/app/.vscode/params.json",
                             "PYTHONPATH": ":".join(docker_python_path),
                         },
+                        "envFiles": [str(DOTENV_PATH)],
                     },
                 },
                 {
@@ -363,8 +376,7 @@ def configure_params(
                     logger.warning(
                         f"Failed to create integration instance {instance_name}. Error {e}"
                     )
-            (CONTENT_PATH / ".vscode").mkdir(exist_ok=True)
-            write_dict(CONTENT_PATH / ".vscode" / "params.json", params, indent=4)
+            update_dotenv({"DEMISTO_PARAMS": json.dumps(params)})
         except SecretManagerException:
             logger.warning(
                 f"Failed to fetch integration params from Google Secret Manager for {secret_id}"
@@ -463,6 +475,7 @@ def configure_integration(
         pack = integration_script.in_pack
         assert isinstance(pack, Pack), "Expected pack"
         ide_folder = pack.path / IDE_TO_FOLDER[ide]
+        shutil.copy(DOTENV_PATH, pack.path / ".env")
         if create_virtualenv and integration_script.type.startswith("python"):
             interpreter_path = install_virtualenv(
                 integration_script, test_docker_image, overwrite_virtualenv
@@ -496,6 +509,7 @@ def setup_env(
     Raises:
         RuntimeError:
     """
+    DOTENV_PATH.touch()
     if not file_paths:
         (CONTENT_PATH / "CommonServerUserPython.py").touch()
         ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]

@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.clients import (
 )
 from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.handlers.json.json5_handler import JSON5_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -28,8 +28,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.utils.utils import SecretManagerException, get_integration_params
-
-json5 = JSON5_Handler()
 
 
 class IDE(Enum):

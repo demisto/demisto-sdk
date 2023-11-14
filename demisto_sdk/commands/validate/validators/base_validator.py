@@ -51,11 +51,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             return args
         return get_args(args)
 
-    def should_run_as_test_playbook(self, content_type: ContentType):
-        if content_type == ContentType.TEST_PLAYBOOK:
-            return TestPlaybook in self.get_content_types()  # type: ignore
-        return True
-
     def should_run(
         self,
         content_item: ContentTypes,
@@ -75,7 +70,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return all(
             [
                 isinstance(content_item, self.get_content_types()),
-                self.should_run_as_test_playbook(content_item.content_type),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),

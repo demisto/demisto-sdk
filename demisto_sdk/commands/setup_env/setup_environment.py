@@ -260,6 +260,7 @@ def configure_devcontainer(
     with open(devcontainer_template_folder / "devcontainer.json") as f:
         devcontainer_json = json5.load(f)
     devcontainer_path = integration_script.path.parent / ".devcontainer"
+    shutil.rmtree(devcontainer_path, ignore_errors=True)
     shutil.copytree(devcontainer_template_folder, devcontainer_path, dirs_exist_ok=True)
 
     docker_python_path = get_docker_python_path("/workspaces/content")

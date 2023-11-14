@@ -1987,7 +1987,6 @@ def init(ctx, **kwargs):
 
     check_configuration_file("init", kwargs)
     marketplace = parse_marketplace_kwargs(kwargs)
-    marketplace = MarketplaceVersions.MarketplaceV2
     initiator = Initiator(marketplace=marketplace, **kwargs)
     initiator.init()
     return 0

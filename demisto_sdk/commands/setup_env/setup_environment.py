@@ -484,7 +484,7 @@ def configure_integration(
         pack = integration_script.in_pack
         assert isinstance(pack, Pack), "Expected pack"
         ide_folder = pack.path / IDE_TO_FOLDER[ide]
-        shutil.copy(DOTENV_PATH, pack.path / ".env")
+        (pack.path / ".env").symlink_to(DOTENV_PATH)
         if create_virtualenv and integration_script.type.startswith("python"):
             interpreter_path = install_virtualenv(
                 integration_script, test_docker_image, overwrite_virtualenv

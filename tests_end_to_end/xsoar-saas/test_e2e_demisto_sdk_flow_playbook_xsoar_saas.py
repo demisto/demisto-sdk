@@ -11,6 +11,8 @@ from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from tests_end_to_end import e2e_tests_utils
+from TestSuite.playbook import Playbook
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -78,53 +80,30 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
-    unique_id = 789
-    pack_name = "foo_" + str(unique_id)
-    playbook_name = "pb_" + str(unique_id)
-    dest_playbook_path = Path(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
-    )
-
-    unique_id = 789
-    pack_name = "foo_" + str(unique_id)
-    playbook_name = "pb_" + str(unique_id)
-
     demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
-    body = [
-        {
-            "name": playbook_name,
-            "propagationLabels": ["all"],
-            "tasks": {
-                "0": {
-                    "id": "0",
-                    "unqiueId": "0",
-                    "type": "start",
-                    "nextTasks": None,
-                    "task": {},
-                }
-            },
-        }
-    ]
 
-    header_params = {
-        "Accept": "application/json",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Content-Type": "application/json",
-    }
+    repo = Repo(tmpdir)
+
+    unique_id = 456
+    pack_name = "foo_" + str(unique_id)
+    pack = repo.create_pack(name=pack_name)
+    playbook_name = "pb_" + pack_name
+    playbook: Playbook = pack.create_playbook(name=playbook_name)
+    dest_playbook_path = playbook.yml.path
 
     try:
-        demisto_client.client.api_client.call_api(
-            resource_path="/playbook/save",
-            method="POST",
-            header_params=header_params,
-            body=body,
-        )
+        demisto_client.client.import_playbook(file=dest_playbook_path)
     except ApiException as ae:
         logger.info(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
         assert False
 
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
+
+    Downloader(
+        list_files=True,
+        insecure=True,
+    ).download()
 
     logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks"

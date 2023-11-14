@@ -128,6 +128,11 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
 
+    Downloader(
+        list_files=True,
+        insecure=True,
+    ).download()
+
     logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks"
     )
@@ -141,7 +146,16 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     dest_playbook_path = Path(
         f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
-    assert dest_playbook_path.exists()
+    assert not dest_playbook_path.exists()
+
+    logger.info(
+        f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks"
+    )
+    Downloader(
+        output=f"{tmpdir}/Packs/{pack_name}_client",
+        input=('CommonServerUserPowerShell',),
+        insecure=True,
+    ).download()
 
     logger.info(
         f"Generating docs (creating a readme file for the playbook {dest_playbook_path}"

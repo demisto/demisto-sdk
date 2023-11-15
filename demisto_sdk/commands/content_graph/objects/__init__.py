@@ -34,7 +34,7 @@ __all__ = [
     "LayoutRule",
     "PreProcessRule",
 ]
-
+from demisto_sdk.commands.content_graph.objects.base_content import CONTENT_TYPE_TO_MODEL, BaseContent
 from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
@@ -70,3 +70,6 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+RelationshipData.update_forward_refs()
+for model in CONTENT_TYPE_TO_MODEL.values():
+    model.update_forward_refs()

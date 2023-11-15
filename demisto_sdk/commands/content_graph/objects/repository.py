@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
+from demisto_sdk.commands.content_graph.objects.base_content import CONTENT_TYPE_TO_MODEL
 
 USE_MULTIPROCESSING = False  # toggle this for better debugging
 

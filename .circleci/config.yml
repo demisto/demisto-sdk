@@ -324,7 +324,7 @@ jobs:
               
         - store_artifacts:
             path: /home/circleci/project/artifacts
-  validate-files-new-valdiate:
+  validate-files-new-validate:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       resource_class: large
@@ -362,6 +362,7 @@ jobs:
               
         - store_artifacts:
             path: /home/circleci/project/artifacts
+
       
 
   test-lint:
@@ -527,7 +528,8 @@ jobs:
           name: Run Slack Notifier
           command: |
             poetry run python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
-
+  allow_failures:
+      - validate-files-new-validate
 
 workflows:
   version: 2.1

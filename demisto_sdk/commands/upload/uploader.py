@@ -43,6 +43,7 @@ from demisto_sdk.commands.upload.exceptions import (
     NotUploadableException,
 )
 from demisto_sdk.commands.upload.tools import parse_error_response
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
@@ -66,6 +67,7 @@ class Uploader:
         reattach: bool = False,
         override_existing: bool = False,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        graph: bool = False,
         zip: bool = False,
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
@@ -93,6 +95,7 @@ class Uploader:
         self.should_reattach_files = reattach
         self.override_existing = override_existing
         self.marketplace = marketplace
+        self.graph = graph  # --graph flag
         self.zip = zip  # -z flag
         self.destination_zip_dir = destination_zip_dir
 
@@ -259,6 +262,8 @@ class Uploader:
         """
         content_item: Union[ContentItem, Pack] = BaseContent.from_path(
             path
+        if self.graph:
+            content_item = 
         )  # type:ignore[assignment]
         if content_item is None:
             reason = (

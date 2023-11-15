@@ -13,16 +13,18 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple, Union
+from typing import IO, Any, Dict, Iterable, Optional, Tuple, Union
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
+    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -45,7 +47,7 @@ from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,
 )
 from demisto_sdk.commands.content_graph.commands.update import update
-from demisto_sdk.commands.content_graph.objects.repository import all_content_repo
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
@@ -438,7 +440,7 @@ def prepare_content(ctx, **kwargs):
     ), "Exactly one of the '-a' or '-i' parameters must be provided."
 
     if kwargs["all"]:
-        content_DTO = all_content_repo()
+        content_DTO = ContentDTO.from_path()
         output_path = kwargs.get("output", ".") or "."
         content_DTO.dump(
             dir=Path(output_path, "prepare-content-tmp"),
@@ -1171,7 +1173,7 @@ def lint(ctx, **kwargs):
 @click.option(
     "--previous-coverage-report-url",
     help="URL of the previous coverage report.",
-    default="https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+    default=f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
     type=str,
 )
 @click.pass_context
@@ -1443,52 +1445,53 @@ def upload(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="The path of a package directory to download custom content to",
+    help="A path to a pack directory to download content to.",
     required=False,
     multiple=False,
 )
 @click.option(
     "-i",
     "--input",
-    help="Custom content file name to be downloaded. Can be provided multiple times",
+    help="Name of a custom content item to download. The flag can be used multiple times to download multiple files.",
     required=False,
     multiple=True,
 )
 @click.option(
     "-r",
     "--regex",
-    help="Regex Pattern, download all the custom content files that match this regex pattern.",
+    help="Download all custom content items matching this RegEx pattern.",
     required=False,
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
-    "-f", "--force", help="Whether to override existing files or not", is_flag=True
+    "-f",
+    "--force",
+    help="If downloaded content already exists in the output directory, overwrite it. ",
+    is_flag=True,
 )
 @click.option(
     "-lf",
     "--list-files",
-    help="Prints a list of all custom content files available to be downloaded",
+    help="List all custom content items available to download and exit.",
     is_flag=True,
 )
 @click.option(
     "-a",
     "--all-custom-content",
-    help="Download all available custom content files",
+    help="Download all available custom content items.",
     is_flag=True,
 )
 @click.option(
     "-fmt",
     "--run-format",
-    help="Whether to run demisto-sdk format on downloaded files or not",
+    help="Format downloaded files.",
     is_flag=True,
 )
 @click.option("--system", help="Download system items", is_flag=True, default=False)
 @click.option(
     "-it",
     "--item-type",
-    help="The items type to download, use just when downloading system items, should be one "
-    "form the following list: [IncidentType, IndicatorType, Field, Layout, Playbook, "
-    "Automation, Classifier, Mapper]",
+    help="Type of the content item to download. Required and used only when downloading system items.",
     type=click.Choice(
         [
             "IncidentType",
@@ -1505,28 +1508,32 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--init",
-    help="Create a directory structure and download the items to it",
+    help="Initialize the output directory with a pack structure.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "--keep-empty-folders",
-    help="Keep empty folders when using the --init flag",
+    help="Keep empty folders when a pack structure is initialized.",
     is_flag=True,
     default=False,
+)
+@click.option(
+    "--auto-replace-uuids/--no-auto-replace-uuids",
+    help="Whether to replace UUID IDs (automatically assigned to custom content by the server) for downloaded custom content.",
+    default=True,
 )
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):
-    """Download custom content from Demisto instance.
-    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
-    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """Download custom content from a Cortex XSOAR / XSIAM instance.
+    DEMISTO_BASE_URL environment variable should contain the server base URL.
+    DEMISTO_API_KEY environment variable should contain a valid API Key for the server.
     """
     from demisto_sdk.commands.download.downloader import Downloader
 
     check_configuration_file("download", kwargs)
-    downloader: Downloader = Downloader(**kwargs)
-    return downloader.download()
+    return Downloader(**kwargs).download()
 
 
 # ====================== update-xsoar-config-file ====================== #
@@ -2102,7 +2109,7 @@ def generate_docs(ctx, **kwargs):
 
         else:
             raise Exception(
-                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file."
+                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.[/red]"
             )
 
         return 0
@@ -2837,6 +2844,14 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.help_option("-h", "--help")
 @click.option(
+    "-a",
+    "--artifacts-path",
+    help="Destination directory to create the artifacts.",
+    type=click.Path(file_okay=False, resolve_path=True),
+    default=Path("./Tests"),
+    required=True,
+)
+@click.option(
     "-k", "--api-key", help="The Demisto API key for the server", required=True
 )
 @click.option("-s", "--server", help="The server URL to connect to")
@@ -2873,7 +2888,14 @@ def openapi_codegen(ctx, **kwargs):
     default=False,
 )
 @click.option(
-    "--server-type", help="Which server runs the tests? XSIAM or XSOAR", default="XSOAR"
+    "--server-type",
+    help="On which server type runs the tests:XSIAM, XSOAR, XSOAR SAAS",
+    default="XSOAR",
+)
+@click.option(
+    "--product-type",
+    help="On which product type runs the tests:XSIAM, XSOAR",
+    default="XSOAR",
 )
 @click.option(
     "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."
@@ -3291,13 +3313,6 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uli",
-    "--use-local-import",
-    is_flag=True,
-    help="Whether to use the current import files to import the graph.",
-    default=False,
-)
-@click.option(
     "-p",
     "--packs",
     help="A comma-separated list of packs to update",
@@ -3324,7 +3339,6 @@ def update_content_graph(
     ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-    use_local_import: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3336,7 +3350,6 @@ def update_content_graph(
         ctx,
         use_git=use_git,
         marketplace=marketplace,
-        use_local_import=use_local_import,
         imported_path=imported_path,
         packs_to_update=packs,
         no_dependencies=no_dependencies,
@@ -3363,6 +3376,12 @@ def update_content_graph(
     default=False,
 )
 @click.option(
+    "--commited-only",
+    help="Whether to run on commited files only",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-g",
     "--git-diff",
     help="Whether to use git to determine which files to run on",
@@ -3375,6 +3394,11 @@ def update_content_graph(
     help="Whether to run on all files",
     is_flag=True,
     default=False,
+)
+@click.option(
+    "--mode",
+    help="Special mode to run the pre-commit with",
+    type=click.Choice([mode.value for mode in list(PreCommitModes)]),
 )
 @click.option(
     "-ut/--no-ut",
@@ -3430,14 +3454,22 @@ def update_content_graph(
     nargs=-1,
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
 )
+@click.option(
+    "--docker/--no-docker",
+    help="Whether to run docker based hooks or not.",
+    default=True,
+    is_flag=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
     ctx,
     input: str,
     staged_only: bool,
+    commited_only: bool,
     git_diff: bool,
     all_files: bool,
+    mode: Optional[str],
     unit_test: bool,
     skip: str,
     validate: bool,
@@ -3448,10 +3480,12 @@ def pre_commit(
     sdk_ref: str,
     file_paths: Iterable[Path],
     dry_run: bool,
+    docker: bool,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
+    mode = PreCommitModes(mode) if mode else None
     if file_paths and input:
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
@@ -3468,8 +3502,10 @@ def pre_commit(
         pre_commit_manager(
             input_files,
             staged_only,
+            commited_only,
             git_diff,
             all_files,
+            mode,
             unit_test,
             skip,
             validate,
@@ -3477,6 +3513,7 @@ def pre_commit(
             secrets,
             verbose,
             show_diff_on_failure,
+            run_docker_hooks=docker,
             sdk_ref=sdk_ref,
             dry_run=dry_run,
         )
@@ -3515,7 +3552,6 @@ def exit_from_program(result=0, **kwargs):
 
 
 # ====================== modeling-rules command group ====================== #
-
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
 app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)

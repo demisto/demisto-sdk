@@ -3,7 +3,7 @@ import pytest
 from Utils.github_workflow_scripts.jira_integration_scripts import link_pr_to_jira_issue
 
 PR_WITH_ONLY_FIXES_WITH_SPACE = """This pr is dummy
-fixes: https://jira-hq.paloaltonetworks.local/browse/CIAC-3473 somthing
+fixes: https://jira-hq.paloaltonetworks.local/browse/CIAC-3473 something
 something else to say"""
 PR_WITH_ONLY_FIXES_WITH_NEWLINE = """This pr is dummy
 fixes: https://jira-hq.paloaltonetworks.local/browse/CIAC-3473
@@ -12,7 +12,7 @@ PR_WITH_ONLY_FIXES_WITHOUT_END_OF_STR = """This pr is dummy
 fixes: https://jira-hq.paloaltonetworks.local/browse/CIAC-3473"""
 
 PR_WITH_ONLY_RELATES_WITH_SPACE = """This pr is dummy
-relates: https://jira-hq.paloaltonetworks.local/browse/CIAC-3472 somthing
+relates: https://jira-hq.paloaltonetworks.local/browse/CIAC-3472 something
 something else to say"""
 PR_WITH_ONLY_RELATES_WITH_NEWLINE = """This pr is dummy
 relates: https://jira-hq.paloaltonetworks.local/browse/CIAC-3472
@@ -22,12 +22,12 @@ relates:https://jira-hq.paloaltonetworks.local/browse/CIAC-3472"""
 
 PR_WITH_BOTH_BY_NEWLINE = """This pr is dummy
 fixes: https://jira-hq.paloaltonetworks.local/browse/CIAC-3473
-relates: https://jira-hq.paloaltonetworks.local/browse/CIAC-3475
+relates: https://jira-dc.paloaltonetworks.com/browse/CIAC-3475
 
 something else to say"""
 PR_WITH_MULTIPLE_FIXES_BY_NEWLINE = """This pr is dummy
 fixes:https://jira-hq.paloaltonetworks.local/browse/CIAC-3473
-fixes: https://jira-hq.paloaltonetworks.local/browse/CIAC-3475
+fixes: https://jira-dc.paloaltonetworks.com/browse/CIAC-3475
 
 something else to say"""
 
@@ -72,7 +72,8 @@ def test_find_fixed_issue_in_body(pr_body, is_merged, expected_ids, expected_act
     """
     Given: A PR representing text containing a few links.
     When: Searching all relevant links for closing/ for connecting
-    Then: validates relevant links were fetch for closing, and relevant links were fetch when only connected.
+    Then: validates relevant links were fetch for closing,
+    and relevant links were fetch when only connected.
     """
     res = link_pr_to_jira_issue.find_fixed_issue_in_body(pr_body, is_merged)
     res_ids = [x.get("id") for x in res]
@@ -103,7 +104,7 @@ TRIGGER_TEST_CASE = [
             },
             {
                 "action": "relates",
-                "link": "https://jira-hq.paloaltonetworks.local/browse/CIAC-3475",
+                "link": "https://jira-dc.paloaltonetworks.com/browse/CIAC-3475",
                 "id": "CIAC-3475",
             },
         ],

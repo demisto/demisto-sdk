@@ -73,7 +73,7 @@ def str_in_call_args_list(
     :return: True is required_str was found, False otherwise
     """
     ret_value = any(
-        isinstance(current_call[0], tuple) and required_str in current_call[0][0]
+        isinstance(current_call[0], tuple) and required_str in str(current_call[0][0])
         for current_call in filter(None, call_args_list)
     )
     if not ret_value:

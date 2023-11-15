@@ -81,7 +81,6 @@ from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_display_name,
     get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type,
     get_file,
     get_file_displayed_name,
     get_file_version_suffix_if_exists,
@@ -109,10 +108,10 @@ from demisto_sdk.commands.common.tools import (
     is_pack_path,
     is_uuid,
     parse_multiple_path_inputs,
-    retrieve_file_ending,
     run_command_os,
     search_and_delete_from_conf,
     server_version_compare,
+    set_value,
     str2bool,
     string_to_bool,
     to_kebab_case,
@@ -298,7 +297,7 @@ class TestGenericFunctions:
         "dir_path", ["demisto_sdk", f"{GIT_ROOT}/demisto_sdk/tests/test_files"]
     )
     def test_get_yml_paths_in_dir(self, dir_path):
-        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg="")
+        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path)
         yml_paths_test = glob.glob(os.path.join(dir_path, "*yml"))
         assert sorted(yml_paths) == sorted(yml_paths_test)
         if yml_paths_test:
@@ -480,10 +479,6 @@ class TestGenericFunctions:
         files = filter_files_by_type(files, types)
 
         assert files == output
-
-    @pytest.mark.parametrize("path, output", [("demisto.json", "json"), ("wow", "")])
-    def test_retrieve_file_ending(self, path, output):
-        assert retrieve_file_ending(path) == output
 
     @pytest.mark.parametrize(
         "data, entity, output",
@@ -732,17 +727,6 @@ class TestEntityAttributes:
     )
     def test_get_entity_id_by_entity_type(self, data, entity):
         assert get_entity_id_by_entity_type(data, entity) == 1
-
-    @pytest.mark.parametrize(
-        "data, entity",
-        [
-            ({"typeId": "wow"}, LAYOUTS_DIR),
-            ({"name": "wow"}, LAYOUTS_DIR),
-            ({"name": "wow"}, PLAYBOOKS_DIR),
-        ],
-    )
-    def test_get_entity_name_by_entity_type(self, data, entity):
-        assert get_entity_name_by_entity_type(data, entity) == "wow"
 
 
 class TestGetFilesInDir:
@@ -2666,6 +2650,7 @@ class TestMarketplaceTagParser:
         ({"layout": {"id": "Testlayout"}}, "Testlayout"),
         ({"dashboards_data": [{"name": "D Name"}]}, "D Name"),
         ({"templates_data": [{"report_name": "R Name"}]}, "R Name"),
+        ({"id": "Test1", "details": "Test2"}, "Test2"),  # IndicatorType Content Items
     ],
 )
 def test_get_display_name(data, answer, tmpdir):
@@ -3284,3 +3269,37 @@ def test_is_epoch_datetime(string: str, expected_result: bool):
     from demisto_sdk.commands.common.tools import is_epoch_datetime
 
     assert is_epoch_datetime(string) == expected_result
+
+
+@pytest.mark.parametrize(
+    "dict, paths, value, expected_dict",
+    [
+        ({"test": "1"}, ["test"], 2, {"test": 2}),
+        ({"test": [1, 2, 3, 4]}, ["test[3]"], 2, {"test": [1, 2, 3, 2]}),
+        ({"test1": "1"}, ["test2", "test1"], 2, {"test1": 2}),
+        ({"test": "1"}, ["test2", "test1"], 2, {"test": "1", "test1": 2}),
+        ({"test": {"test2": 1}}, ["test.test2"], 2, {"test": {"test2": 2}}),
+    ],
+)
+def test_set_value(dict, paths, value, expected_dict):
+    """
+    Given:
+        a dictionary, path / list of paths, and a value to insert to the dict.
+        - Case 1: dict with items only in the root, a list with a path that exist in the dict, and a value to set there.
+        - Case 2: dict with a list in the root, a list with a path with the index in the list to replace, and a value to set there.
+        - Case 3: dict with items only in the root, a list of possible paths where one of them is in the dict, and a value to set there.
+        - Case 4: dict with items only in the root, a list of possible paths where none of them is in the dict, and a value to set there.
+        - Case 5: dict with items not only in the root, a list with a path not to the root that exist in the dict, and a value to set there.
+
+    When:
+        - run set_value
+    Then:
+        - Ensure that the value was inserted in the right place.
+        - Case 1: the dict should replce the value in the key.
+        - Case 2: the dict will have the value in the right index in the list.
+        - Case 3: the dict has the value changed in the key that existed and will not add keys in paths that doesn't exist.
+        - Case 4: the dict has the value added in the last given key.
+        - Case 5: the dict should replce the value in the key.
+    """
+    set_value(dict, paths, value)
+    assert expected_dict == dict

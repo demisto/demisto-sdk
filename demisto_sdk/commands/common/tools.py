@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import contextlib
 import glob
-import io
 import logging
 import os
 import re
 import shlex
 import sys
+import time
+import traceback
 import urllib.parse
 from collections import OrderedDict
 from concurrent.futures import as_completed
@@ -13,8 +16,9 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
-from functools import lru_cache
+from functools import lru_cache, wraps
 from hashlib import sha1
+from io import StringIO, TextIOWrapper
 from pathlib import Path, PosixPath
 from subprocess import PIPE, Popen
 from time import sleep
@@ -29,6 +33,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 
@@ -264,19 +269,19 @@ def get_mp_tag_parser():
     return MARKETPLACE_TAG_PARSER
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str | Path) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
-    :param project_dir: string path to the project_dir
-    :param error_msg: the error msg to show to the user in case not yml files found in the directory
+    :param project_dir: path to the project_dir
     :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
     string path to the first yml file in project_dir
     """
-    yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
+    project_dir_path = Path(project_dir)
+    yml_files = [str(path) for path in project_dir_path.glob("*.yml")]
+
     if not yml_files:
-        if error_msg:
-            logger.info(error_msg)
         return [], ""
+
     return yml_files, yml_files[0]
 
 
@@ -687,16 +692,21 @@ def filter_packagify_changes(
     return modified_files, updated_added_files, removed_files
 
 
-def get_child_directories(directory):
-    """Return a list of paths of immediate child directories of the 'directory' argument"""
-    if not os.path.isdir(directory):
-        return []
-    child_directories = [
-        os.path.join(directory, path)
-        for path in os.listdir(directory)
-        if os.path.isdir(os.path.join(directory, path))
-    ]
-    return child_directories
+def get_child_directories(directory: str | Path) -> list[str]:
+    """
+    Get a list of all directories within a directory.
+    Does not search recursively.
+    Args:
+        directory (str | Path): The directory to search in
+    Returns:
+        list[str]: A list of paths (in string format) of immediate child directories of the 'directory' argument
+    """
+    directory_path = Path(directory)
+
+    if directory_path.is_dir():
+        return [str(path) for path in directory_path.iterdir() if path.is_dir()]
+
+    return []
 
 
 def get_child_files(directory):
@@ -758,36 +768,39 @@ def get_last_remote_release_version():
                 f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
                 f"This may happen if you are not connected to the internet."
             )
-        logger.info(
-            f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
+        logger.warning(
+            f"Could not find the latest version of 'demisto-sdk'.\nError: {exc_msg}"
         )
         return ""
 
 
-def _read_file(file_path: Path) -> str:
-    """returns the body of a text-based file, after reading it as UTF8, or trying to guess its encoding.
+def safe_read_unicode(bytes_data: bytes) -> str:
+    """
+    Safely read unicode data from bytes.
 
     Args:
-        file_path (Path): file to read
+        bytes_data (bytes): bytes to read.
 
     Returns:
-        str: file contents
+        str: A string representation of the parsed bytes.
     """
     try:
-        return file_path.read_text(encoding="utf8")
+        return bytes_data.decode("utf-8")
 
     except UnicodeDecodeError:
         try:
-            # guesses the original encoding
-            return UnicodeDammit(file_path.read_bytes()).unicode_markup
+            logger.debug(
+                "Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
+            )
+            return UnicodeDammit(bytes_data).unicode_markup
 
         except UnicodeDecodeError:
-            logger.info(f"could not auto-detect encoding for file {file_path}")
+            logger.error("Could not auto-detect encoding.")
             raise
 
 
 def safe_write_unicode(
-    write_method: Callable[[io.TextIOWrapper], Any],
+    write_method: Callable[[TextIOWrapper], Any],
     path: Path,
 ):
     # Write unicode content into a file.
@@ -818,45 +831,49 @@ def safe_write_unicode(
 
 @lru_cache
 def get_file(
-    file_path: Union[str, Path],
+    file_path: str | Path,
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = False,
     raise_on_error: bool = False,
+    git_sha: Optional[str] = None,
 ):
     """
     Get file contents.
-
     if raise_on_error = False, this function will return empty dict
     """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
+    if git_sha:
+        if file_path.is_absolute():
+            file_path = file_path.relative_to(get_content_path())
+        return get_remote_file(
+            str(file_path), tag=git_sha, return_content=return_content
+        )
 
     type_of_file = file_path.suffix.lower()
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
-
     if not file_path.exists():
         raise FileNotFoundError(file_path)
-
     try:
-        file_content = _read_file(file_path)
+        file_content = safe_read_unicode(file_path.read_bytes())
         if return_content:
             return file_content
     except IOError as e:
-        logger.error(f"Could not read file {file_path}.\nError: {e}")
+        logger.error(f"Could not read file '{file_path}': {e}")
+        logger.debug("Traceback:\n" + traceback.format_exc())
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
-            replaced = io.StringIO(
+            replaced = StringIO(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
-
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
-            result = json.load(io.StringIO(file_content))
+            result = json.load(StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
             return json.loads(result) if isinstance(result, str) else result
     except Exception as e:
@@ -896,16 +913,23 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
+def get_yaml(
+    file_path: str | Path,
+    cache_clear=False,
+    keep_order: bool = False,
+    git_sha: Optional[str] = None,
+):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
+    return get_file(
+        file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
+    )
 
 
-def get_json(file_path, cache_clear=False):
+def get_json(file_path: str | Path, cache_clear=False, git_sha: Optional[str] = None):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear, git_sha=git_sha)
 
 
 def get_script_or_integration_id(file_path):
@@ -964,27 +988,6 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     except AttributeError:
         raise ValueError(
             f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
-            f"valid"
-        )
-
-
-def get_entity_name_by_entity_type(data: dict, content_entity: str):
-    """
-    Returns the name of the content entity given its entity type
-    :param data: The data of the file
-    :param content_entity: The content entity type
-    :return: The file name
-    """
-    try:
-        if content_entity == LAYOUTS_DIR:
-            if "typeId" in data:
-                return data.get("typeId", "")
-            return data.get("name", "")  # for layoutscontainer
-        return data.get("name", "")
-
-    except AttributeError:
-        raise ValueError(
-            f"Could not retrieve name from file of type {content_entity} - make sure the file structure is "
             f"valid"
         )
 
@@ -1763,7 +1766,7 @@ def find_type(
     clear_cache: bool = False,
 ):
     """
-    returns the content file type
+    Returns the content file type
 
     Arguments:
          path (str): a path to the file.
@@ -1772,10 +1775,10 @@ def find_type(
         ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
         ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
             True to ignore, False otherwise.
-        clear_cache (bool): wether to clear the cache
+        clear_cache (bool): whether to clear the cache.
 
     Returns:
-        FileType: string representing of the content file type, None otherwise.
+        FileType | None: Enum representation of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -2195,20 +2198,6 @@ def should_file_skip_validation(file_path: str) -> bool:
     return False
 
 
-def retrieve_file_ending(file_path: str) -> str:
-    """
-    Retrieves the file ending (without the dot)
-    :param file_path: The file path
-    :return: The file ending
-    """
-    os_split: tuple = os.path.splitext(file_path)
-    if os_split:
-        file_ending: str = os_split[1]
-        if file_ending and "." in file_ending:
-            return file_ending[1:]
-    return ""
-
-
 def is_test_config_match(
     test_config: dict,
     test_playbook_id: str = "",
@@ -2506,7 +2495,7 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
     """
-    Returns the code language by the file entity
+    Returns content item's code language (python / javascript).
     :param file_data: The file data
     :param file_entity: The file entity
     :return: The code language
@@ -3509,7 +3498,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     return field_name
 
 
-def get_display_name(file_path, file_data={}) -> str:
+def get_display_name(file_path: str | Path, file_data: dict | None = None) -> str:
     """Gets the entity display name from the file.
 
     :param file_path: The entity file path
@@ -3518,47 +3507,54 @@ def get_display_name(file_path, file_data={}) -> str:
     :rtype: ``str``
     :return The display name
     """
+    file_path = Path(file_path)
+
+    if not file_data and file_path.suffix in (".yml", ".yaml", ".json"):
+        file_data = get_file(file_path)
+
     if not file_data:
-        file_extension = os.path.splitext(file_path)[1]
-        if file_extension in [".yml", ".json"]:
-            file_data = get_file(file_path)
+        file_data = {}
 
     if "display" in file_data:
-        name = file_data.get("display", None)
-    elif "layout" in file_data and isinstance(file_data["layout"], dict):
-        name = file_data["layout"].get("id")
+        return file_data["display"]
+    elif (
+        "layout" in file_data
+        and isinstance(file_data["layout"], dict)
+        and "id" in file_data["layout"]
+    ):
+        return file_data["layout"]["id"]
     elif "name" in file_data:
-        name = file_data.get("name", None)
+        return file_data["name"]
     elif "TypeName" in file_data:
-        name = file_data.get("TypeName", None)
+        return file_data["TypeName"]
     elif "brandName" in file_data:
-        name = file_data.get("brandName", None)
+        return file_data["brandName"]
+    elif "details" in file_data and isinstance(file_data["details"], str):
+        return file_data["details"]
     elif "id" in file_data:
-        name = file_data.get("id", None)
+        return file_data["id"]
     elif "trigger_name" in file_data:
-        name = file_data.get("trigger_name")
+        return file_data["trigger_name"]
     elif "rule_name" in file_data:
-        name = file_data.get("rule_name")
-
+        return file_data["rule_name"]
     elif (
         "dashboards_data" in file_data
-        and file_data.get("dashboards_data")
+        and "dashboards_data" in file_data
         and isinstance(file_data["dashboards_data"], list)
+        and len(file_data["dashboards_data"]) > 0
+        and "name" in file_data["dashboards_data"][0]
     ):
-        dashboard_data = file_data.get("dashboards_data", [{}])[0]
-        name = dashboard_data.get("name")
-
+        return file_data["dashboards_data"][0]["name"]
     elif (
         "templates_data" in file_data
-        and file_data.get("templates_data")
+        and "templates_data" in file_data
         and isinstance(file_data["templates_data"], list)
+        and len(file_data["templates_data"]) > 0
+        and "report_name" in file_data["templates_data"][0]
     ):
-        r_name = file_data.get("templates_data", [{}])[0]
-        name = r_name.get("report_name")
+        return file_data["templates_data"][0]["report_name"]
 
-    else:
-        name = Path(file_path).name
-    return name
+    return file_path.name
 
 
 def get_invalid_incident_fields_from_mapper(
@@ -3752,7 +3748,7 @@ def get_id(file_content: Dict) -> Union[str, None]:
         file_content: the content of the file.
 
     Returns:
-        str: the ID of the content item in case found, None otherwise.
+        str | None: the ID of the content item in case found, None otherwise.
     """
     if "commonfields" in file_content:
         return file_content["commonfields"].get("id")
@@ -3761,7 +3757,13 @@ def get_id(file_content: Dict) -> Union[str, None]:
     elif "templates_data" in file_content:
         return file_content["templates_data"][0].get("global_id")
 
-    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id"):
+    for key in (
+        "global_rule_id",
+        "trigger_id",
+        "content_global_id",
+        "rule_id",
+        "typeId",
+    ):
         if key in file_content:
             return file_content[key]
 
@@ -3984,3 +3986,123 @@ def parse_int_or_default(value: Any, default: int) -> int:
 
 def get_all_repo_pack_ids() -> list:
     return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]
+
+
+def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):
+    """Extracts field value from nested object
+    Args:
+      obj (dict): The object to extract the field from
+      field (Union[str,List[str]]): The field or a list of possible fields to extract from the object, given in dot notation
+      defaultParam (object): The default value to return in case the field doesn't exist in obj
+    Returns:
+      str: The value of the extracted field
+    """
+    if isinstance(paths, str):
+        paths = [paths]
+    for path in paths:
+        keys = path.split(".")
+        temp_obj = obj
+        success = True
+        for key in keys:
+            try:
+                if "[" in key and "]" in key:
+                    # Handle list indexing
+                    list_key, index = key.split("[")
+                    index = int(index.strip("]"))  # type: ignore
+                    temp_obj = temp_obj[list_key][index]
+                else:
+                    temp_obj = temp_obj[key]
+            except (AttributeError, KeyError, IndexError):
+                success = False
+                continue
+        if success:
+            return temp_obj
+    return defaultParam
+
+
+def find_correct_key(data: dict, keys: List[str]) -> str:
+    """Given a data object and a list of possible paths, finding the path where the object holds a value in that path.
+    Args:
+        data (dict): The object that holds the keys.
+        keys (List[str]) List of possible paths.
+    Returns:
+        str: Either the path where the given data object has a value at or the last option.
+    """
+    for key in keys:
+        if get_value(data, key, None):
+            return key
+    return keys[-1]
+
+
+def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
+    """Updating a data object with given value in the given key.
+    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    Args:
+        data (dict): the data object to update.
+        keys (Union[str,List[str]]): the path or list of possible paths to update.
+        value (_type_): the value to update.
+    """
+    if isinstance(paths, list):
+        path = find_correct_key(data, paths)
+    else:
+        path = paths
+    current_dict = data
+    keys = path.split(".")
+    for key in keys[:-1]:
+        if "[" in key and "]" in key:
+            # Handle list indexing
+            list_key, index = key.split("[")
+            index = int(index.strip("]"))
+            current_dict = current_dict[list_key]
+            current_dict = current_dict[index]
+        else:
+            # Handle dictionary keys
+            current_dict = current_dict[key]
+
+    # Set the value in the dictionary at the specified path
+    last_key = keys[-1]
+    if "[" in last_key and "]" in last_key:
+        list_key, index = last_key.split("[")  # type: ignore
+        index = int(index.strip("]"))  # type: ignore
+        current_dict[list_key][index] = value
+    else:
+        current_dict[last_key] = value
+
+
+def retry(
+    times: int = 3,
+    delay: int = 1,
+    exceptions: Union[Tuple[Type[Exception], ...], Type[Exception]] = Exception,
+):
+    """
+    retries to execute a function until an exception isn't raised anymore.
+
+    Args:
+        times: the amount of times to try and execute the function
+        delay: the number of seconds to wait between each time
+        exceptions: the exceptions that should be caught when executing the function
+
+    Returns:
+        Any: the decorated function result
+    """
+
+    def _retry(func: Callable):
+        func_name = func.__name__
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(1, times + 1):
+                logger.debug(f"trying to run func {func_name} for the {i} time")
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as error:
+                    logger.debug(
+                        f"error when executing func {func_name}, error: {error}, time {i}"
+                    )
+                    if i == times:
+                        raise
+                    time.sleep(delay)
+
+        return wrapper
+
+    return _retry

@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_USE_CASES,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
+    PARTNER_SUPPORT,
     XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.common.errors import Errors
@@ -800,6 +801,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     raise GitCommandError("A", "B")
@@ -852,6 +857,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     return None
@@ -899,6 +908,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 remote_file_path = (
                     "remote_path/prev_ver:Packs/PackName/pack_metadata.json"
@@ -942,7 +955,7 @@ class TestPackUniqueFilesValidator:
              - Ensure result is False for empty README.md file and True otherwise.
         """
         self.validator = PackUniqueFilesValidator(self.FAKE_PACK_PATH)
-        self.validator.support = "partner"
+        self.validator.support = PARTNER_SUPPORT
         mocker.patch.object(
             PackUniqueFilesValidator, "_read_file_content", return_value=text
         )

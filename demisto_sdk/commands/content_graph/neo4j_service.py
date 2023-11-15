@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -16,7 +17,7 @@ from demisto_sdk.commands.content_graph.common import (
 )
 
 REPO_PATH = CONTENT_PATH.absolute()
-NEO4J_VERSION = "5.5.0"
+NEO4J_VERSION = "5.13.0"
 
 NEO4J_SERVICE_IMAGE = f"neo4j:{NEO4J_VERSION}"
 
@@ -33,7 +34,7 @@ class Neo4jServiceException(Exception):
     pass
 
 
-def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
+def _stop_neo4j_service_docker(docker_client: docker.DockerClient):  # type: ignore
     """Helper function to stop the neo4j service docker container
 
     Args:
@@ -91,6 +92,10 @@ def _docker_start():
     (REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER).mkdir(parents=True, exist_ok=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER).mkdir(parents=True, exist_ok=True)
+    # suppress logs in docker init to avoid spamming
+    neo4j_log = logging.getLogger("neo4j")
+    neo4j_log.setLevel(logging.CRITICAL)
+
     docker_client.containers.run(
         image=NEO4J_SERVICE_IMAGE,
         name="neo4j-content",
@@ -110,6 +115,7 @@ def _docker_start():
             "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             "NEO4J_dbms_connector_http_advertised__address": "127.0.0.1:7474",
             "NEO4J_dbms_connector_bolt_advertised__address": "127.0.0.1:7687",
+            "NEO4J_dbms_memory_transaction_total_max": "600m",
         },
         healthcheck={
             "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
@@ -119,6 +125,8 @@ def _docker_start():
         },
         user=f"{os.getuid()}:{os.getgid()}",
     )
+    # reset logger to warning after neo4j is started
+    neo4j_log.setLevel(logging.WARNING)
 
     logger.debug("Neo4j service started successfully")
 
@@ -160,6 +168,9 @@ def stop(force: bool = False, clean: bool = False):
     _stop_neo4j_service_docker(docker_client)
     if clean:
         shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
+        shutil.rmtree(
+            REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER, ignore_errors=True
+        )
 
 
 def is_alive():

@@ -67,5 +67,5 @@ class ContentItemXSIAM(ContentItem, ABC):
             self.content_type in [ContentType.XSIAM_DASHBOARD, ContentType.XSIAM_REPORT]
             and (self.path.parent / f"{self.path.stem}_image.png").exists()
         ):
-            return f"content/packs/{self.pack_id}/{self.in_pack.current_version}/{self.content_type.as_folder}/{self.path.stem}_image.png"  # type:ignore[union-attr]
+            return f"content/packs/{self.pack_id}/{self.pack.current_version}/{self.content_type.as_folder}/{self.path.stem}_image.png"  # type:ignore[union-attr]
         return ""

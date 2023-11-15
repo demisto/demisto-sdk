@@ -783,9 +783,11 @@ def zip_packs(ctx, **kwargs) -> int:
 @logging_setup_decorator
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
+    import time
+
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
-    import time
+
     start_time = time.time()
 
     if is_sdk_defined_working_offline():

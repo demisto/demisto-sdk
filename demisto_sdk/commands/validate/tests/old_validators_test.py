@@ -1473,7 +1473,7 @@ class TestValidators:
 
         mocker.patch.object(
             ContentItem,
-            "in_pack",
+            "pack",
             mock_pack("ApiDependent", path=Path("Packs/ApiDependent")),
         )
         with ChangeCWD(repo.path):

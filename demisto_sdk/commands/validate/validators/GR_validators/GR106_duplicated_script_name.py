@@ -3,19 +3,17 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.tools import replace_incident_to_alert
-from demisto_sdk.commands.content_graph.interface import (
-    ContentGraphInterface,
-)
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+from demisto_sdk.commands.validate.validators.graph_validator import GraphValidator
 
 ContentTypes = Script
 
 
-class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
+class DuplicatedScriptNameValidator(GraphValidator, BaseValidator[ContentTypes]):
     error_code = "GR106"
     description = "Validate that there are no 2 content items with the same type and the same name."
     error_message = (
@@ -27,7 +25,6 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     )
     related_field = "name"
     content_types = ContentTypes
-    graph = True
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -38,10 +35,9 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         file_paths_to_objects = {
             str(content_item.path): content_item for content_item in content_items
         }
-        with ContentGraphInterface() as graph:
-            query_results = graph.get_duplicate_script_name_included_incident(
-                list(file_paths_to_objects)
-            )
+        query_results = self.graph.get_duplicate_script_name_included_incident(
+            list(file_paths_to_objects)
+        )
 
         return [
             ValidationResult(

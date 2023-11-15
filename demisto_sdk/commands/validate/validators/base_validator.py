@@ -13,12 +13,11 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
 )
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
@@ -42,14 +41,20 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     fixing_message: ClassVar[str] = ""
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[str]]] = []
-    graph: ClassVar[bool] = False
+    run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
+    validate_graph: ClassVar[bool] = False
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
         if isinstance(args, (BaseContent, BaseContentMetaclass)):
             return args
         return get_args(args)
+
+    def should_run_on_deprecated(self, content_item):
+        if content_item.deprecated and not self.run_on_deprecated:
+            return False
+        return True
 
     def should_run(
         self,
@@ -70,6 +75,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return all(
             [
                 isinstance(content_item, self.get_content_types()),
+                self.should_run_on_deprecated(content_item),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),
@@ -107,7 +113,7 @@ class BaseResult(BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.content_object.path)}: {self.validator.error_code} - {self.message}"
+        return f"{str(self.content_object.path.relative_to(CONTENT_PATH))}: {self.validator.error_code} - {self.message}"
 
     @property
     def format_json_message(self):
@@ -144,6 +150,7 @@ def is_error_ignored(
     Returns:
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
+    a = err_code in ignored_errors and err_code in ignorable_errors
     return err_code in ignored_errors and err_code in ignorable_errors
 
 

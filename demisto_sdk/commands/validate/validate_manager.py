@@ -1,10 +1,6 @@
 from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.commands.update import update_content_graph
-from demisto_sdk.commands.content_graph.interface import (
-    ContentGraphInterface,
-)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -47,11 +43,8 @@ class ValidateManager:
                 use_git=self.use_git, ignore_support_level=self.ignore_support_level
             )
         )
-        self.validate_graph = False
+        self.graph_validator = None
         self.validators = self.filter_validators()
-        if self.validate_graph:
-            logger.info("Graph validations were selected, will init graph")
-            self.init_graph()
 
     def run_validations(self) -> int:
         """
@@ -61,6 +54,7 @@ class ValidateManager:
         Returns:
             int: the exit code to obtained from the calculations of post_results.
         """
+        logger.info("Starting validate items.")
         for validator in self.validators:
             if filtered_content_objects_for_validator := list(
                 filter(
@@ -80,7 +74,8 @@ class ValidateManager:
                         )
                 else:
                     self.validation_results.extend(validation_results)
-
+        if self.graph_validator:
+            self.graph_validator.graph.close()
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.only_throw_warnings
         )
@@ -97,19 +92,16 @@ class ValidateManager:
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
             if (
-                validator.error_code in self.configured_validations.validations_to_run
+                str(validator)
+                not in [
+                    "<class 'graph_validator.GraphValidator'>",
+                    "<class 'demisto_sdk.commands.validate.validators.graph_validator.GraphValidator'>",
+                ]
+                and validator.error_code
+                in self.configured_validations.validations_to_run
                 and "super_classes" not in str(validator)
             ):
                 validators.append(validator())
-                if validator.graph:
-                    self.validate_graph = True
+                if validator.validate_graph:
+                    self.graph_validator = validator
         return validators
-
-    def init_graph(self):
-        """Initialize and update the graph in case of existing graph validations."""
-        graph = ContentGraphInterface()
-        update_content_graph(
-            graph,
-            use_git=True,
-            output_path=graph.output_path,
-        )

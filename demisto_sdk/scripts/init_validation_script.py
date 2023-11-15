@@ -144,8 +144,7 @@ $class_declaration
     error_message = "$error_message"
     fix_message = "$fix_message"
     related_field = "$related_field"
-    is_auto_fixable = $is_auto_fixable
-    $expected_git_statuses$graph
+    is_auto_fixable = $is_auto_fixable$expected_git_statuses$support_deprecated
 
     $is_valid_method
 
@@ -157,9 +156,10 @@ class ValidationInitializer:
     def __init__(self):
         self.git_statuses = ""
         self.fix_method = ""
-        self.validate_graph = ""
+        self.validate_graph_class_init = ""
         self.fix_message = ""
         self.include_old_format_files_fix_method = ""
+        self.run_on_deprecated = ""
         self.min_content_type_val = 1
         self.max_content_type_val = int(list(CONTENT_TYPES_DICT.keys())[-1])
 
@@ -370,7 +370,23 @@ Fill the content types as the numbers they appear as: """
                 )
             )
         if validate_graph in ["Y", "y"]:
-            self.validate_graph = "graph = True"
+            self.validate_graph_class_init = "GraphValidator, "
+
+    def initialize_deprecation_info(self):
+        """
+        Request the info wether the validation should run on deprecated items or not.
+        """
+        run_on_deprecated = str(
+            input("does the validation should run on deprecated items or not? (Y/N): ")
+        )
+        while not run_on_deprecated or run_on_deprecated not in ["Y", "N", "y", "n"]:
+            run_on_deprecated = str(
+                input(
+                    "Please enter wether the validation should run on deprecated items or not? (Y/N): "
+                )
+            )
+        if run_on_deprecated in ["Y", "y"]:
+            self.run_on_deprecated = "\n    run_on_deprecated = True"
 
     def initialize_file_name(self):
         """
@@ -415,7 +431,7 @@ Fill the content types as the numbers they appear as: """
                 GIT_STATUSES_DICT[git_status] for git_status in git_statuses_ls
             ]
             git_statuses_enum_str = str(git_statuses_enum_ls).replace("'", "")
-            self.git_statuses = f"expected_git_statuses = {git_statuses_enum_str}\n    "
+            self.git_statuses = f"\n    expected_git_statuses = {git_statuses_enum_str}"
 
     def generate_imports(self):
         """
@@ -430,11 +446,6 @@ Fill the content types as the numbers they appear as: """
             self.imports += (
                 "from demisto_sdk.commands.common.constants import GitStatuses\n"
             )
-        if self.validate_graph:
-            self.imports += """from demisto_sdk.commands.content_graph.interface import (
-    ContentGraphInterface,
-)
-"""
         for content_type in self.content_types:
             self.imports += (
                 f"{CONTENT_TYPES_DICT.get(content_type, {}).get('import', '')}\n"
@@ -444,6 +455,8 @@ Fill the content types as the numbers they appear as: """
         BaseValidator,
         {fix_result_import}ValidationResult,
 )"""
+        if self.validate_graph_class_init:
+            self.imports += "\n    from demisto_sdk.commands.validate.validators.graph_validator import GraphValidator"
 
     def generate_supported_content_types_section(self):
         """
@@ -520,6 +533,7 @@ Fill the content types as the numbers they appear as: """
                 graph=self.validate_graph,
                 is_valid_method=self.is_valid_method,
                 fix_method=self.fix_method,
+                support_deprecated=self.run_on_deprecated,
             )
             file.write(new_file_content)
 

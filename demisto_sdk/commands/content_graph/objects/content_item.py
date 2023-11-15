@@ -10,9 +10,6 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
-from demisto_sdk.commands.content_graph.parsers.content_item import (
-    InvalidContentItemException,
-)
 from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
 from demisto_sdk.commands.upload.tools import parse_upload_response
 
@@ -23,12 +20,11 @@ if TYPE_CHECKING:
 
 from pydantic import DirectoryPath, Field, validator
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
-    get_pack_name,
     replace_incident_to_alert,
     write_dict,
 )
@@ -54,7 +50,7 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
-    _pack: Optional["Pack"] = Field(default=None, exclude=True)
+    pack: Optional["Pack"] = Field(default=None, exclude=True)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -66,13 +62,13 @@ class ContentItem(BaseContent):
 
     @property
     def pack_id(self) -> str:
-        return self.in_pack.pack_id if self.in_pack else ""
+        return self.pack.pack_id if self.pack else ""
 
     @property
     def support_level(self) -> str:
         return (
-            self.in_pack.support_level
-            if self.in_pack and self.in_pack.support_level
+            self.pack.support_level
+            if self.pack and self.pack.support_level
             else ""
         )
 
@@ -81,7 +77,7 @@ class ContentItem(BaseContent):
         try:
             return (
                 list(
-                    self.in_pack.ignored_errors_dict.get(  # type: ignore
+                    self.pack.ignored_errors_dict.get(  # type: ignore
                         f"file:{self.path.name}", []
                     ).items()
                 )[0][1].split(",")
@@ -92,11 +88,11 @@ class ContentItem(BaseContent):
 
     @property
     def pack_name(self) -> str:
-        return self.in_pack.name if self.in_pack else ""
+        return self.pack.name if self.in_pack else ""
 
     @property
     def pack_version(self) -> Optional[Version]:
-        return self.in_pack.pack_version if self.in_pack else None
+        return self.pack.pack_version if self.pack else None
 
     @property
     def in_pack(self) -> Optional["Pack"]:
@@ -106,25 +102,7 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
-            return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
-        if self._pack.default is not None:  # type: ignore
-            return self._pack.default  # type: ignore
-        if pack_name := get_pack_name(self.path):
-            try:
-                pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name
-                )  # type: ignore[return-value]
-                pack = cast("Pack", pack)
-                self._pack.default = pack  # type: ignore
-                return pack
-            except InvalidContentItemException:
-                logger.warning(
-                    f"Could not parse pack {pack_name} for content item {self.path}"
-                )
-                return None
-        logger.warning(f"Could not find pack for content item {self.path}")
-        return None
+        return self.pack
 
     @property
     def uses(self) -> List["RelationshipData"]:
@@ -333,7 +311,7 @@ class ContentItem(BaseContent):
         """
         id_set_entity = self.dict()
         id_set_entity["file_path"] = str(self.path)
-        id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
+        id_set_entity["pack"] = self.pack.object_id  # type: ignore[union-attr]
         return id_set_entity
 
     def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:

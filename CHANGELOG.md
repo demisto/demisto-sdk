@@ -2,6 +2,7 @@
 ## Unreleased
 * Added support for inputs sections and outputs sections in a playbook.
 * Added a new flag `--docker/--no-docker` to demisto-sdk pre-commit, in order to enable the option to run the pre-commit command without docker hooks.
+* Started adaption of the validator refactor - for more information, please refer to the [readme files](demisto_sdk/commands/validate/README.md).
 * Added BasePlaybook graph class for Playbook & TestPlaybook to inherit from.
 * Added support for xsoar, xsoar-saas and xsiam wrapper clients to ease the integration via their apis.
 
@@ -11,7 +12,6 @@
 * Perfomance improvements to **graph** commands.
 * Adjust graph structure to accommodate anticipated changes in infrastructure for the **validate** command.
 * Fixed an issue where the **lint** command with docker, would not give unique container names to different image runs.
-* Started adaption of the validator refactor - for more information, please refer to the [readme files](demisto_sdk/commands/validate/README.md).
 * Added a new `display_name` field to `Pack` entity in graph.
 
 ## 1.21.0

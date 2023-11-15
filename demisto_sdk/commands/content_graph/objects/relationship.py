@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import CONTENT_TYPE_TO_MODEL, BaseContent, BaseNode
+from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
 
 
 class RelationshipData(BaseModel):
@@ -42,8 +42,3 @@ class RelationshipData(BaseModel):
     def __eq__(self, __o: object) -> bool:
         """This is needed to check if the relationship already exists"""
         return hash(self) == hash(__o)
-
-# BaseNode.update_forward_refs()
-# BaseContent.update_forward_refs()
-# for model in CONTENT_TYPE_TO_MODEL.values():
-#     model.update_forward_refs()

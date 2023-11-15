@@ -7,7 +7,6 @@ from typing import (
     Any,
     ClassVar,
     Dict,
-    ForwardRef,
     List,
     Optional,
     Set,

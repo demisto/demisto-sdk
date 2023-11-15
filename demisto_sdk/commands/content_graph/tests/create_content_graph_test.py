@@ -723,7 +723,7 @@ class TestCreateContentGraph:
                         assert content_item_target
                         if relationship_type == RelationshipType.IN_PACK:
                             assert (
-                                content_item_source.pack.object_id == pack.object_id
+                                content_item_source.in_pack.object_id == pack.object_id
                             )
                         if relationship_type == RelationshipType.IMPORTS:
                             assert (

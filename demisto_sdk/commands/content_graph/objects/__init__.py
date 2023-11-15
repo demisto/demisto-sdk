@@ -34,7 +34,6 @@ __all__ = [
     "LayoutRule",
     "PreProcessRule",
 ]
-from demisto_sdk.commands.content_graph.objects.base_content import CONTENT_TYPE_TO_MODEL, BaseContent, BaseNode
 from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule

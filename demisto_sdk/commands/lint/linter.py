@@ -1292,7 +1292,7 @@ class Linter:
             str: Container log
         """
         log_prompt = f"{self._pack_name} - Powershell test - Image {test_image}"
-        logger.info(f"{log_prompt} - Start with files {self._facts['lint_files']}")
+        logger.info(f"{log_prompt} - Start")
         container_name = self.get_container_name("pwsh-test", test_image)
         # Check if previous run left container a live if it do, we remove it
         self._docker_remove_container(container_name)

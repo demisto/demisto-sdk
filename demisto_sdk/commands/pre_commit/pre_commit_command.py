@@ -32,6 +32,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
@@ -144,6 +145,7 @@ class PreCommitRunner:
     def prepare_hooks(
         self,
         hooks: dict,
+        run_docker_hooks,
     ) -> None:
         kwargs = {
             "mode": self.mode,
@@ -162,6 +164,13 @@ class PreCommitRunner:
             self.files_to_run
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
+        [
+            DockerHook(**hook, **kwargs).prepare_hook(
+                files_to_run=self.files_to_run, run_docker_hooks=run_docker_hooks
+            )
+            for hook_id, hook in hooks.items()
+            if hook_id.endswith("in-docker")
+        ]
 
     def run(
         self,
@@ -174,6 +183,7 @@ class PreCommitRunner:
         show_diff_on_failure: bool = False,
         exclude_files: Optional[Set[Path]] = None,
         dry_run: bool = False,
+        run_docker_hooks: bool = True,
     ) -> int:
         ret_val = 0
         precommit_env = os.environ.copy()
@@ -208,7 +218,7 @@ class PreCommitRunner:
                 f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
 
-        self.prepare_hooks(self.hooks)
+        self.prepare_hooks(self.hooks, run_docker_hooks)
         if self.all_files:
             self.precommit_template["exclude"] += f"|{join_files(exclude_files or {})}"
         else:
@@ -347,6 +357,7 @@ def pre_commit_manager(
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
     dry_run: bool = False,
+    run_docker_hooks: bool = True,
 ) -> Optional[int]:
     """Run pre-commit hooks .
 
@@ -363,6 +374,7 @@ def pre_commit_manager(
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
         dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
+        run_docker_hooks (bool, optional): Whether to run docker based hooks or not.
 
     Returns:
         int: Return code of pre-commit.
@@ -408,6 +420,7 @@ def pre_commit_manager(
         show_diff_on_failure,
         exclude_files,
         dry_run,
+        run_docker_hooks,
     )
 
 

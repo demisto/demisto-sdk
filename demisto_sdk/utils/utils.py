@@ -1,6 +1,8 @@
+import time
 from configparser import ConfigParser, MissingSectionHeaderError
+from functools import wraps
 from pathlib import Path
-from typing import Union
+from typing import Callable, Tuple, Type, Union
 
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
@@ -12,6 +14,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentUnifiedObject,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.logger import logger
 
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
 
@@ -61,3 +64,43 @@ def check_configuration_file(command, args):
 
         except MissingSectionHeaderError:
             pass
+
+
+def retry(
+    times: int = 3,
+    delay: int = 1,
+    exceptions: Union[Tuple[Type[Exception]], Type[Exception]] = Exception,
+):
+    """
+    retries to execute a function until an exception isn't raised anymore.
+
+    Args:
+        times: the amount of times to try and execute the function
+        delay: the number of seconds to wait between each time
+        exceptions: the exceptions that should be caught when executing the function
+
+    Returns:
+        Any: the decorated function result
+    """
+
+    def _retry(func: Callable):
+
+        func_name = func.__name__
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(1, times + 1):
+                logger.debug(f"trying to run func {func_name} for the {i} time")
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as error:
+                    logger.debug(
+                        f"error when executing func {func_name}, error: {error}, time {i}"
+                    )
+                    if i == times:
+                        raise
+                    time.sleep(delay)
+
+        return wrapper
+
+    return _retry

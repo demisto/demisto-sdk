@@ -37,4 +37,4 @@ jobs:
           PR_URL: ${{github.event.pull_request.html_url}}
         run: |
           echo "Add a welcome comment"
-          gh pr comment "$PR_URL" --body "Thank you for your contribution. Your willingness to improve our product and contribute to our community is highly appreciated.\nFor your convenience, here is a link to the contributions SLAs document."
+          gh pr comment "$PR_URL" --body "Thank you for your contribution. Your willingness to improve our product and contribute to our community is highly appreciated. For your convenience, here is a [link](https://xsoar.pan.dev/docs/contributing/sla) to the contributions SLAs document."

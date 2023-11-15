@@ -96,7 +96,7 @@ class ContentItem(BaseContent):
         return self.in_pack.pack_version if self.in_pack else None
 
     @property
-    def in_pack(self) -> "Pack":
+    def in_pack(self) -> Optional["Pack"]:
         """
         This returns the Pack which the content item is in.
 

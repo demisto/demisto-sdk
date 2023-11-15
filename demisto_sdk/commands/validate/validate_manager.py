@@ -92,16 +92,11 @@ class ValidateManager:
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
             if (
-                str(validator)
-                not in [
-                    "<class 'graph_validator.GraphValidator'>",
-                    "<class 'demisto_sdk.commands.validate.validators.graph_validator.GraphValidator'>",
-                ]
+                not validator.__subclasses__()
                 and validator.error_code
                 in self.configured_validations.validations_to_run
-                and "super_classes" not in str(validator)
             ):
                 validators.append(validator())
                 if validator.validate_graph:
-                    self.graph_validator = validator
+                    self.validate_graph = True
         return validators

@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
+from typing import TYPE_CHECKING, Callable, List, Optional, Set
 
 import demisto_client
 from packaging.version import Version
@@ -113,7 +113,7 @@ class ContentItem(BaseContent):
                 )  # type: ignore[assignment]
             else:
                 raise ValueError("No pack found for content item")
-        return self.pack # type: ignore[return-value]
+        return self.pack  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:

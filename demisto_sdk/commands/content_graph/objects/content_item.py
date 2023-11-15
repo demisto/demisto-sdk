@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Callable, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
 
 import demisto_client
 from packaging.version import Version
@@ -51,7 +51,7 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
-    pack: Optional["Pack"] = Field(None, exclude=True)
+    pack: Any = Field(None, exclude=True)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -111,8 +111,8 @@ class ContentItem(BaseContent):
                 self.pack = BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[assignment]
-            else:
-                raise ValueError("No pack found for content item")
+        if not self.pack:
+            raise ValueError("No pack found for content item")
         return self.pack  # type: ignore[return-value]
 
     @property

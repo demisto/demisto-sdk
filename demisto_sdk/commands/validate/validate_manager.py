@@ -98,5 +98,5 @@ class ValidateManager:
             ):
                 validators.append(validator())
                 if validator.validate_graph:
-                    self.validate_graph = True
+                    self.graph_validator = validator
         return validators

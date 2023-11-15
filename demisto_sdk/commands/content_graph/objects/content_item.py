@@ -112,7 +112,7 @@ class ContentItem(BaseContent):
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[assignment]
         if not self.pack:
-            raise ValueError("No pack found for content item")
+            return None
         return self.pack  # type: ignore[return-value]
 
     @property

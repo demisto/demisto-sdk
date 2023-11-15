@@ -4209,6 +4209,7 @@ def pascal_to_snake(pascal_string):
             result.append(char)
     return "".join(result)
 
+
 def retry(
     times: int = 3,
     delay: int = 1,

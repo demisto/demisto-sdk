@@ -8,7 +8,7 @@ from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.utils.utils import retry
+from demisto_sdk.commands.common.tools import retry
 
 
 class XsoarSaasClient(XsoarClient):

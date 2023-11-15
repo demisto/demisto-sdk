@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.clients.configs import (
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.utils.utils import retry
+from demisto_sdk.commands.common.tools import retry
 
 
 class XsoarClient(BaseModel, ABC):

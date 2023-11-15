@@ -1,4 +1,4 @@
-from typing import List, Optional, Set
+from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -44,7 +44,6 @@ class ValidateManager:
                 use_git=self.use_git, ignore_support_level=self.ignore_support_level
             )
         )
-        self.validate_graph: bool = False
         self.validators = self.filter_validators()
 
     def run_validations(self) -> int:
@@ -93,14 +92,9 @@ class ValidateManager:
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
             if (
-                str(validator)
-                not in [
-                    "<class 'graph_validator.GraphValidator'>",
-                    "<class 'demisto_sdk.commands.validate.validators.graph_validator.GraphValidator'>",
-                ]
+                not validator.__subclasses__()
                 and validator.error_code
                 in self.configured_validations.validations_to_run
-                and "super_classes" not in str(validator)
             ):
                 validators.append(validator())
                 if validator.validate_graph:

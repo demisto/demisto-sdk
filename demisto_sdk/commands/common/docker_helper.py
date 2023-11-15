@@ -5,7 +5,6 @@ import re
 import shutil
 import tarfile
 import tempfile
-import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -15,6 +14,7 @@ import urllib3
 from docker.types import Mount
 from packaging.version import Version
 from requests import JSONDecodeError
+from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.utils.utils import retry
 
 DOCKER_CLIENT = None
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
@@ -444,9 +445,9 @@ def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
     return None
 
 
-def _get_docker_hub_token(repo: str, timeout: int = 20, num_of_retries: int = 5) -> str:
+@retry(times=5, exceptions=(RuntimeError, RequestException))
+def _get_docker_hub_token(repo: str) -> str:
     auth = None
-
 
     # If the user has credentials for docker hub, use them to get the token
     if (docker_user := os.getenv("DOCKERHUB_USER")) and (
@@ -455,15 +456,12 @@ def _get_docker_hub_token(repo: str, timeout: int = 20, num_of_retries: int = 5)
         logger.debug("Using docker hub credentials to get token")
         auth = (docker_user, docker_pass)
 
-    for _ in range(num_of_retries):
-        response = requests.get(
-            f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull",  auth=auth)
-        if response.ok:
-            break
-
-        time.sleep(timeout)
+    response = requests.get(
+        f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull",
+        auth=auth,
+    )
     if not response.ok:
-        raise RuntimeError(f"Response to get docker hub token failed: {response.text}")
+        raise RuntimeError(f"Failed to get docker hub token: {response.text}")
     try:
         return response.json()["token"]
     except (JSONDecodeError, KeyError) as e:

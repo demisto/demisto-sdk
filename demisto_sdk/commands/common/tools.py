@@ -128,11 +128,11 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
-logger = logging.getLogger("demisto-sdk")
 
 yaml_safe_load = YAML_Handler(typ="safe")
 

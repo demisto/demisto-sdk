@@ -3,6 +3,7 @@ from functools import lru_cache
 from typing import Optional
 
 import demisto_client
+import requests
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 
@@ -23,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.logger import logger
 
 
 @lru_cache
@@ -135,13 +137,17 @@ def get_client_from_server_type(
                 status=400,
                 reason=f"endpoint /ioc-rules does not exist in {_client.api_client.configuration.host}",
             )
+        if status_code != requests.codes.ok:
+            raise ApiException(status=status_code, reason=response)
+
         return XsiamClient(
             client=_client,
             config=XsiamClientConfig(
                 base_api_url=_base_api_url, api_key=_api_key, auth_id=_auth_id
             ),
         )
-    except ApiException:
+    except ApiException as e:
+        logger.debug(f"got exception when querying /ioc-rules: {e}")
         about_raw_response = XsoarClient.get_xsoar_about(_client)
         if server_version := about_raw_response.get("demistoVersion"):
             if Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION):

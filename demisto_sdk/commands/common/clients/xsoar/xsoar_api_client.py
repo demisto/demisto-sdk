@@ -17,6 +17,7 @@ from requests.exceptions import RequestException
 from demisto_sdk.commands.common.clients.configs import (
     XsoarClientConfig,
 )
+from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.utils.utils import retry
@@ -42,18 +43,23 @@ class XsoarClient(BaseModel, ABC):
         """
         Get basic information about XSOAR server.
         """
-        raw_response, _, _ = client.generic_request(
-            "/about", "GET", response_type="object"
-        )
-        return raw_response
+        try:
+            raw_response, _, _ = client.generic_request(
+                "/about", "GET", response_type="object"
+            )
+            return raw_response
+        except ApiException as err:
+            if err.status == requests.codes.unauthorized:
+                raise UnAuthorized(
+                    message=f"Could not connect to {client.api_client.configuration.host}, check credentials are valid",
+                    status_code=err.status,
+                )
+            raise
 
     @validator("client", always=True, pre=True)
     def validate_client_configured_correctly(
         cls, v: Optional[DefaultApi]
     ) -> DefaultApi:
-        """
-        Validates the provided client is valid, by checking if XSOAR server is healthy.
-        """
         return v or demisto_client.configure()
 
     @validator("about_xsoar", always=True)
@@ -61,8 +67,10 @@ class XsoarClient(BaseModel, ABC):
         return v or cls.get_xsoar_about(values["client"])
 
     @property
-    def containers_health(self):
-        raw_response, _, _ = self.client.generic_request("/health/containers", "GET")
+    def containers_health(self) -> Dict[str, int]:
+        raw_response, _, _ = self.client.generic_request(
+            "/health/containers", "GET", response_type="object"
+        )
         return raw_response
 
     @property
@@ -75,7 +83,7 @@ class XsoarClient(BaseModel, ABC):
         raise RuntimeError(f"Could not get version from instance {self.xsoar_host_url}")
 
     @property
-    def build_number(self):
+    def build_number(self) -> str:
         if build_number := self.about_xsoar.get("buildNum"):
             return build_number
         raise RuntimeError(
@@ -83,7 +91,7 @@ class XsoarClient(BaseModel, ABC):
         )
 
     @property
-    def xsoar_host_url(self):
+    def xsoar_host_url(self) -> str:
         """
         Returns the base api url used for api requests to xsoar endpoints
         """
@@ -97,7 +105,7 @@ class XsoarClient(BaseModel, ABC):
         return re.sub(r"api-|/xsoar", "", self.xsoar_host_url)
 
     @property
-    def external_base_url(self):
+    def external_base_url(self) -> str:
         # url that its purpose is to expose apis of integrations outside from xsoar/xsiam
         return self.config.base_api_url
 
@@ -118,16 +126,6 @@ class XsoarClient(BaseModel, ABC):
             method="GET",
             path="/contentpacks/metadata/installed",
             response_type="object",
-        )
-        return raw_response
-
-    def search_integrations(self, response_type: str = "object"):
-        raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
-            method="POST",
-            path="/settings/integration/search",
-            response_type=response_type,
-            body={},
         )
         return raw_response
 
@@ -273,6 +271,23 @@ class XsoarClient(BaseModel, ABC):
         return raw_response
 
     @retry(exceptions=ApiException)
+    def search_integrations(self, response_type: str = "object"):
+        """
+        Searches for integrations
+
+        Args:
+            response_type: the response type to return
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/settings/integration/search",
+            response_type=response_type,
+            body={},
+        )
+        return raw_response
+
+    @retry(exceptions=ApiException)
     def test_module(self, _id: str, instance_name: str, response_type: str = "object"):
         """
         Runs test module for an integration instance
@@ -360,7 +375,7 @@ class XsoarClient(BaseModel, ABC):
         Get the integration(s) module configuration(s)
 
         Args:
-            _id: the module configuration of a specific integration
+            instance_name: the instance name of the integration
             response_type: the response type to return
 
         Returns:

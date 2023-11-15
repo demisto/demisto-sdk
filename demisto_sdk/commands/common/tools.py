@@ -10,6 +10,7 @@ import sys
 import time
 import traceback
 import urllib.parse
+from abc import ABC
 from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -4247,3 +4248,7 @@ def retry(
         return wrapper
 
     return _retry
+
+
+def is_abstract_class(cls):
+    return ABC in getattr(cls, "__bases__", ())

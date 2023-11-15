@@ -119,13 +119,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         PackContentItems(), alias="contentItems", exclude=True
     )
 
-    @validator("content_items")
-    def validate_content_items(cls, v: PackContentItems, values):
-        # This populates the content item to point the self reference to this pack object
-        if v:
-            for item in v:
-                item.pack = cls.construct(**values)
-        return v
+    @classmethod
+    def from_orm(cls, obj) -> "Pack":
+        pack = super().from_orm(obj)
+        for content_item in pack.content_items:
+            content_item.pack = pack
+        return pack
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:

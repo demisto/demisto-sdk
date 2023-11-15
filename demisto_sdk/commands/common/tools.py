@@ -7,6 +7,7 @@ import os
 import re
 import shlex
 import sys
+import time
 import traceback
 import urllib.parse
 from collections import OrderedDict
@@ -15,7 +16,7 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
-from functools import lru_cache
+from functools import lru_cache, wraps
 from hashlib import sha1
 from io import StringIO, TextIOWrapper
 from pathlib import Path, PosixPath
@@ -32,6 +33,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 
@@ -4065,3 +4067,42 @@ def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
         current_dict[list_key][index] = value
     else:
         current_dict[last_key] = value
+
+
+def retry(
+    times: int = 3,
+    delay: int = 1,
+    exceptions: Union[Tuple[Type[Exception]], Type[Exception]] = Exception,
+):
+    """
+    retries to execute a function until an exception isn't raised anymore.
+
+    Args:
+        times: the amount of times to try and execute the function
+        delay: the number of seconds to wait between each time
+        exceptions: the exceptions that should be caught when executing the function
+
+    Returns:
+        Any: the decorated function result
+    """
+
+    def _retry(func: Callable):
+        func_name = func.__name__
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(1, times + 1):
+                logger.debug(f"trying to run func {func_name} for the {i} time")
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as error:
+                    logger.debug(
+                        f"error when executing func {func_name}, error: {error}, time {i}"
+                    )
+                    if i == times:
+                        raise
+                    time.sleep(delay)
+
+        return wrapper
+
+    return _retry

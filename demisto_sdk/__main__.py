@@ -3546,6 +3546,71 @@ def run_unit_tests(
     sys.exit(unit_test_runner(file_paths, verbose))
 
 
+@main.command(short_help="Setup integration environments")
+@click.option(
+    "-i",
+    "--input",
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
+    help="A list of content packs/files to validate.",
+)
+@click.option(
+    "--create-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Create a virtualenv for the environment",
+)
+@click.option(
+    "--overwrite-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Overwrite existing virtualenvs. Use with the create-virtualenv flag",
+)
+@click.option(
+    "--secret-id",
+    help="Secret ID, to use with Google Secret Manager instance with `DEMISTO_SDK_GCP_PROJECT_ID` environment variable set.",
+    required=False,
+)
+@click.option(
+    "--instance-name",
+    required=False,
+    help="Instance name to configure in XSOAR/XSIAM.",
+)
+@click.option(
+    "--run-test-module",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Whether to run test-module on the configured XSOAR/XSIAM instance",
+)
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+def setup_env(
+    input,
+    file_paths,
+    create_virtualenv,
+    overwrite_virtualenv,
+    secret_id,
+    instance_name,
+    run_test_module,
+):
+    from demisto_sdk.commands.setup_env.setup_environment import (
+        setup_env,
+    )
+
+    if input:
+        file_paths = tuple(input.split(","))
+
+    setup_env(
+        file_paths,
+        create_virtualenv=create_virtualenv,
+        overwrite_virtualenv=overwrite_virtualenv,
+        secret_id=secret_id,
+        instance_name=instance_name,
+        test_module=run_test_module,
+    )
+
+
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)

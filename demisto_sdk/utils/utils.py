@@ -1,8 +1,10 @@
-import time
+import os
 from configparser import ConfigParser, MissingSectionHeaderError
-from functools import wraps
 from pathlib import Path
-from typing import Callable, Tuple, Type, Union
+from typing import Optional, Union
+
+import google
+from google.cloud import secretmanager
 
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
@@ -14,9 +16,14 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentUnifiedObject,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.logger import logger
 
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
+
+
+class SecretManagerException(Exception):
+    pass
 
 
 def get_containing_pack(content_entity: ContentEntity) -> Pack:
@@ -66,41 +73,48 @@ def check_configuration_file(command, args):
             pass
 
 
-def retry(
-    times: int = 3,
-    delay: int = 1,
-    exceptions: Union[Tuple[Type[Exception]], Type[Exception]] = Exception,
-):
-    """
-    retries to execute a function until an exception isn't raised anymore.
+def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> dict:
+    """This function retrieves the parameters of an integration from Google Secret Manager
+    *Note*: This function will not run if the `DEMISTO_SDK_GCP_PROJECT_ID` env variable is not set.
 
     Args:
-        times: the amount of times to try and execute the function
-        delay: the number of seconds to wait between each time
-        exceptions: the exceptions that should be caught when executing the function
+        project_id (str): GSM project id
+        secret_id (str): The secret id in GSM
 
     Returns:
-        Any: the decorated function result
+        dict: The integration params
     """
+    if not project_id:
+        project_id = os.getenv("DEMISTO_SDK_GCP_PROJECT_ID")
+    if not project_id:
+        raise ValueError(
+            "Either provide the project id or set the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable"
+        )
 
-    def _retry(func: Callable):
+    # Create the Secret Manager client.
+    client = secretmanager.SecretManagerServiceClient()
 
-        func_name = func.__name__
+    # Build the resource name of the secret version.
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for i in range(1, times + 1):
-                logger.debug(f"trying to run func {func_name} for the {i} time")
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as error:
-                    logger.debug(
-                        f"error when executing func {func_name}, error: {error}, time {i}"
-                    )
-                    if i == times:
-                        raise
-                    time.sleep(delay)
+    # Access the secret version.
+    try:
+        response = client.access_secret_version(name=name)
+    except google.api_core.exceptions.NotFound:
+        logger.warning("The secret is not found in the secret manager")
+        raise SecretManagerException
+    except google.api_core.exceptions.PermissionDenied:
+        logger.warning(
+            "Insufficient permissions for gcloud. run `gcloud auth application-default login`"
+        )
+        raise SecretManagerException
+    except Exception:
+        logger.warning(f"Failed to get secret {secret_id} from Secret Manager.")
+        raise SecretManagerException
+    # Return the decoded payload.
+    payload = json5.loads(response.payload.data.decode("UTF-8"))
+    if "params" not in payload:
+        logger.warning(f"Parameters are not found in {secret_id} from Secret Manager.")
 
-        return wrapper
-
-    return _retry
+        raise SecretManagerException
+    return payload["params"]

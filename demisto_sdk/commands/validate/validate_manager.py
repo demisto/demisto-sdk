@@ -75,7 +75,7 @@ class ValidateManager:
                 else:
                     self.validation_results.extend(validation_results)
         if self.validate_graph:
-            GraphValidator.graph.close()  # type: ignore
+            GraphValidator.graph_interface.close()
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.only_throw_warnings
         )

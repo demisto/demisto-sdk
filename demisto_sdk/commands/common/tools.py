@@ -4072,7 +4072,7 @@ def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
 def retry(
     times: int = 3,
     delay: int = 1,
-    exceptions: Union[Tuple[Type[Exception]], Type[Exception]] = Exception,
+    exceptions: Union[Tuple[Type[Exception], ...], Type[Exception]] = Exception,
 ):
     """
     retries to execute a function until an exception isn't raised anymore.

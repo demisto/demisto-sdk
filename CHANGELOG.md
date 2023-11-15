@@ -1,10 +1,12 @@
 # Changelog
 ## Unreleased
 * Added support for inputs sections and outputs sections in a playbook.
+* Added a new service for file management, allowing to write files and read files from specific git branches, local file system, or from any remote api.
 * Added a new flag `--docker/--no-docker` to demisto-sdk pre-commit, in order to enable the option to run the pre-commit command without docker hooks.
 * Started adaption of the validator refactor - for more information, please refer to the [readme files](demisto_sdk/commands/validate/README.md).
 * Added BasePlaybook graph class for Playbook & TestPlaybook to inherit from.
 * Added support for xsoar, xsoar-saas and xsiam wrapper clients to ease the integration via their apis.
+* Internal: Added a welcome comment to contributions PRs.
 
 ## 1.22.0
 * Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks

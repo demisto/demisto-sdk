@@ -801,6 +801,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     raise GitCommandError("A", "B")
@@ -853,6 +857,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     return None
@@ -899,6 +907,10 @@ class TestPackUniqueFilesValidator:
 
             def remote(self):
                 return "remote_path"
+
+            @property
+            def working_dir(self):
+                return repo.path
 
             class gitClass:
                 remote_file_path = (

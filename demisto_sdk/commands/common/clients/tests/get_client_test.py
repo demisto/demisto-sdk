@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.clients import (
     XsoarSaasClient,
     XsoarSaasClientConfig,
 )
+from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
@@ -179,3 +180,31 @@ def test_get_xsiam_client_from_server_type(api_requests_mocker):
     assert (
         type(get_client_from_server_type(base_url="https://test3.com")) == XsiamClient
     )
+
+
+def test_get_client_from_server_type_unauthorized_exception(api_requests_mocker):
+    """
+    Given:
+     - /ioc-rules endpoint that is not valid
+     - unauthorized exception when querying /about
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure an exception of UnAuthorized is raised
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(path: str, method: str):
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException(status=500, reason="error")
+
+    api_requests_mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    api_requests_mocker.patch.object(
+        XsoarClient, "get_xsoar_about", side_effect=UnAuthorized("error")
+    )
+    with pytest.raises(UnAuthorized):
+        get_client_from_server_type(base_url="https://test4.com")

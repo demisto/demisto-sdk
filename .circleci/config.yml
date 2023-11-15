@@ -584,5 +584,5 @@ workflows:
           filters:
             branches:
               only: master  # notifies when a post-merge build fails
-  allow_failures:
-      - validate-files-new-validate
+  # allow_failures:
+  #     - validate-files-new-validate

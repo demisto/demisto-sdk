@@ -6,6 +6,10 @@ from abc import ABC, abstractmethod
 from typing import IO, Any
 
 
+class JSONDecodeError(ValueError):
+    pass
+
+
 class XSOAR_Handler(ABC):
     @abstractmethod
     def load(self, stream: IO[str]) -> Any:

@@ -49,7 +49,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = False
     is_feed: bool = False
-    is_long_running: bool = False
+    long_running: bool = False
     category: str
     commands: List[Command] = []
 

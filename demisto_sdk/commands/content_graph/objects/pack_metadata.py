@@ -52,7 +52,7 @@ class PackMetadata(BaseModel):
     use_cases: Optional[List[str]] = Field(alias="useCases")
     keywords: Optional[List[str]]
     search_rank: Optional[int] = Field(alias="searchRank")
-    excluded_dependencies: Optional[List[str]] = Field(alias="excludedDependencies")
+    excluded_dependencies: Optional[List[str]] = Field([], alias="excludedDependencies")
     videos: Optional[List[str]] = Field([])
     modules: Optional[List[str]] = Field([])
     integrations: Optional[List[str]] = Field([])
@@ -199,7 +199,7 @@ class PackMetadata(BaseModel):
                 or "",
             }
             for r in dependencies
-            if r.is_direct
+            if r.is_direct and r.content_item_to.object_id not in self.excluded_dependencies and not r.content_item_to.hidden  # type: ignore
         }
 
     def _get_pack_tags(

@@ -153,9 +153,9 @@ class TagParser:
             Text with no wrapper tags.
         """
         if remove_tag:
-            text = re.sub(self.pattern, "", text)
+            text = re.sub(self.pattern, "", text, flags=re.DOTALL)
 
-        text = re.sub(self.only_tags_pattern, "", text)
+        text = re.sub(self.only_tags_pattern, "", text, flags=re.DOTALL)
         return text
 
 

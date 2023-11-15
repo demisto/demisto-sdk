@@ -2449,6 +2449,38 @@ class TestMarketplaceTagParser:
 {XSOAR_SAAS_INLINE_PREFIX} xsoar_saas inline test {XSOAR_SAAS_INLINE_SUFFIX}
 {XSOAR_ON_PREM_INLINE_PREFIX} xsoar_on_prem inline test {XSOAR_ON_PREM_INLINE_SUFFIX}"""
 
+    @pytest.mark.parametrize(
+        "res_file, marketplace_version",
+        [
+            ("EDL_xsoar_res.md", MarketplaceVersions.XSOAR.value),
+            ("EDL_xsiam_res.md", MarketplaceVersions.MarketplaceV2.value),
+        ],
+    )
+    def test_xsoar_tag_only_on_edl_description(self, res_file, marketplace_version):
+        """
+        Given:
+            - Am example of a real complex file with tags of xsoar and xsiam.
+        When:
+            - Parsing with the tag parser for xsoar mp
+            - Parsing with the tag parser for xsiam mp
+        Then:
+            - Validate the results fit the prepared marketplace
+        """
+        test_files_folder = Path(os.path.abspath(__file__)).parent / "test_files"
+        edl_test_file = test_files_folder / "EDL_description.md"
+        res_text_after_filter_by_mp = test_files_folder / res_file
+
+        self.MARKETPLACE_TAG_PARSER.marketplace = marketplace_version
+        with open(edl_test_file, "r") as f:
+            edl_content = f.read()
+
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(edl_content)
+
+        with open(res_text_after_filter_by_mp, "r") as f:
+            res = f.read()
+
+        assert actual == res
+
     def check_prefix_not_in_text(self, actual):
         assert self.XSOAR_PREFIX not in actual
         assert self.XSIAM_PREFIX not in actual

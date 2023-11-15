@@ -9,6 +9,7 @@ import shlex
 import sys
 import traceback
 import urllib.parse
+from abc import ABC
 from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -4206,3 +4207,7 @@ def pascal_to_snake(pascal_string):
         else:
             result.append(char)
     return "".join(result)
+
+
+def is_abstract_class(cls):
+    return ABC in getattr(cls, "__bases__", ())

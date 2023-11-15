@@ -1,6 +1,7 @@
 from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import is_abstract_class
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -92,7 +93,7 @@ class ValidateManager:
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
             if (
-                hasattr(validator, "error_code")
+                not is_abstract_class(validator)
                 and validator.error_code
                 in self.configured_validations.validations_to_run
             ):

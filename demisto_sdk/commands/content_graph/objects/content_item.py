@@ -111,8 +111,6 @@ class ContentItem(BaseContent):
                 self.pack = BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[assignment]
-        if not self.pack:
-            return None
         return self.pack  # type: ignore[return-value]
 
     @property

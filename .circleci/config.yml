@@ -324,8 +324,7 @@ jobs:
               
         - store_artifacts:
             path: /home/circleci/project/artifacts
-  
-    validate-files-new-valdiate:
+  validate-files-new-valdiate:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       resource_class: large

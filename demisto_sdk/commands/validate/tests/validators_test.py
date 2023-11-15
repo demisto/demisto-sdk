@@ -1,10 +1,12 @@
 import logging
 import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import toml
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -34,6 +36,9 @@ from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equa
 from TestSuite.test_tools import str_in_call_args_list
 
 INTEGRATION = create_integration_object()
+INTEGRATION.path = Path(
+    f"{CONTENT_PATH}/Packs/pack_0/Integrations/integration_0/integration_0.yml"
+)
 
 
 def get_validate_manager(mocker):

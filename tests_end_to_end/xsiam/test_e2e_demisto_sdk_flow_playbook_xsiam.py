@@ -81,6 +81,11 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
+    """The flow the test is using:
+        1. Creates a new playbook and uploading it to the machine using an http request
+        2. Downloads the playbook using demisto-sdk upload command
+        3. 
+    """
     demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
 
     repo = Repo(tmpdir)
@@ -152,4 +157,9 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         ValidateManager(file_path=source_playbook_path).run_validation()
 
         logger.info(f"Uploading updated playbook {source_playbook_path}")
-        Uploader(input=source_playbook_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
+        Uploader(input=Path(source_playbook_path), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
+
+    try:
+        demisto_client.delete_playbook(playbook_name, playbook_name)
+    except ApiException as ae:
+        logger.info(f"*** Failed to delete playbook {playbook_name}, reason: {ae}")

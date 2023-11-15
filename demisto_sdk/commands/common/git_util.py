@@ -3,7 +3,6 @@ import os
 import re
 from pathlib import Path
 from typing import List, Optional, Set, Tuple, Union
-from demisto_sdk.commands.common.logger import logger
 import click
 import gitdb
 from git import (
@@ -20,7 +19,8 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_UPSTREAM,
     PACKS_FOLDER,
 )
-
+import logging
+logger = logging.getLogger("demisto-sdk")
 
 class CommitOrBranchNotFoundError(GitError):
     def __init__(

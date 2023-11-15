@@ -783,12 +783,8 @@ def zip_packs(ctx, **kwargs) -> int:
 @logging_setup_decorator
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
-    import time
-
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
-
-    start_time = time.time()
 
     if is_sdk_defined_working_offline():
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
@@ -872,11 +868,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 ignore_support_level=kwargs.get("ignore_support_level"),
             )
             exit_code += validator_v2.run_validations()
-        end_time = time.time()
-
-        # Calculate the running time
-        running_time = end_time - start_time
-        logger.info(f"Running time: {running_time} seconds")
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.info(f"[red]{e}[/red]")

@@ -254,7 +254,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
         logger.debug(f"Parsing {self.node_id}")
         self.parse_pack_folders()
         self.parse_ignored_errors()
-        self.parse_support_level()
 
         logger.debug(f"Successfully parsed {self.node_id}")
 
@@ -322,9 +321,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
         self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name)) or {}  # type: ignore
-        
-    def parse_support_level(self):
-        self.support_level = self.support
 
     @cached_property
     def field_mapping(self):

@@ -43,7 +43,6 @@ class ValidateManager:
                 use_git=self.use_git, ignore_support_level=self.ignore_support_level
             )
         )
-        self.graph_validator = None
         self.validators = self.filter_validators()
 
     def run_validations(self) -> int:
@@ -75,7 +74,7 @@ class ValidateManager:
                 else:
                     self.validation_results.extend(validation_results)
         if self.graph_validator:
-            self.graph_validator.graph.close()
+            self.graph_validator.graph.close()  # type: ignore
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.only_throw_warnings
         )

@@ -150,7 +150,6 @@ def is_error_ignored(
     Returns:
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
-    a = err_code in ignored_errors and err_code in ignorable_errors
     return err_code in ignored_errors and err_code in ignorable_errors
 
 

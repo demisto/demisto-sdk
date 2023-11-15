@@ -9,19 +9,19 @@ from demisto_sdk.commands.validate.validators.base_validator import BaseValidato
 
 
 class GraphValidator(BaseValidator):
-    graph_initialized: ClassVar[bool] = False
-    graph: ClassVar[ContentGraphInterface]
+    graph_initialized = False
     validate_graph: ClassVar[bool] = True
+    graph_interface: ContentGraphInterface
 
     @property
-    def graph(self):
+    def graph(self) -> ContentGraphInterface:
         if not self.graph_initialized:
             logger.info("Graph validations were selected, will init graph")
             self.graph_initialized = True
-            self.graph = ContentGraphInterface()
+            self.graph_interface = ContentGraphInterface()
             update_content_graph(
-                self.graph,
+                self.graph_interface,
                 use_git=True,
-                output_path=self.graph,
+                output_path=self.graph_interface,
             )
-        return self.graph
+        return self.graph_interface

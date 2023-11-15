@@ -530,7 +530,6 @@ Fill the content types as the numbers they appear as: """
                 related_field=self.related_field,
                 is_auto_fixable=self.support_fix,
                 expected_git_statuses=self.git_statuses,
-                graph=self.validate_graph,
                 is_valid_method=self.is_valid_method,
                 fix_method=self.fix_method,
                 support_deprecated=self.run_on_deprecated,

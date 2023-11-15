@@ -329,6 +329,12 @@ def lazy_property(property_func: Callable):
 
 
 def get_server_content_items() -> Dict[ContentType, list]:
+    """Reads a JSON file containing server content items from content repository
+    and returns a dict representation of it in the required format.
+
+    Returns:
+        Dict[ContentType, list]: A mapping of content types to the list of server content items.
+    """
     try:
         json_data: dict = get_json(SERVER_CONTENT_ITEMS_PATH)
     except FileNotFoundError:

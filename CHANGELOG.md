@@ -6,6 +6,7 @@
 * Added support for xsoar, xsoar-saas and xsiam wrapper clients to ease the integration via their apis.
 * Added a new command **setup-env** to setup the environment for integrations and scripts in vs code IDE, XSOAR and XSIAM.
 * Internal: Added a welcome comment to contributions PRs.
+* Fixed metadata dependencies dumping in **prepare-content** command.
 
 ## 1.22.0
 * Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks

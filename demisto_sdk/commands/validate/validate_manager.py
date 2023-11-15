@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
@@ -93,6 +94,7 @@ class ValidateManager:
         for validator in BaseValidator.__subclasses__():
             if (
                 hasattr(validator, "error_code")
+                and ABC not in getattr(validator, "__bases__", ())
                 and validator.error_code
                 in self.configured_validations.validations_to_run
             ):

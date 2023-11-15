@@ -95,9 +95,11 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     try:
         demisto_client.client.import_playbook(file=source_playbook_path)
     except ApiException as ae:
-        logger.info(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
-        assert False
-
+        if "already exists" in str(ae):
+            logger.info(f"*** Playbook {playbook_name} already exists.")
+        else:
+            logger.info(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
+            assert False
 
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")

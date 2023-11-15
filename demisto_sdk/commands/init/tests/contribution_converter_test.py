@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUT,
     LAYOUTS_CONTAINER,
     PACKS_README_FILE_NAME,
+    PACKS_DIR
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -1170,7 +1171,8 @@ class TestReleaseNotes:
 class TestReadmes:
 
     repo_dir_name = "content_repo"
-    pack_name = "HelloWorld"
+    existing_pack_name = "HelloWorld"
+    new_pack_name = "HelloWorldNew"
     existing_integration_name = "HelloWorld"
     new_integration_name = "HelloWorldNew"
     script_name = "script0"
@@ -1217,7 +1219,7 @@ class TestReadmes:
             yml_code = yaml.load(stream)
 
 
-        repo.create_pack(self.pack_name)
+        repo.create_pack(self.existing_pack_name)
         repo.packs[0].create_integration(
             name=self.existing_integration_name,
             code=py_code,
@@ -1231,20 +1233,21 @@ class TestReadmes:
         # Read the contribution content mapping
         with open(os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.json"), "r") as j:
             contributed_content_mapping = json.load(j)
-            contributed_content_items = contributed_content_mapping.get(self.pack_name, {}).get("detected_content_items", [])
+            contributed_content_items = contributed_content_mapping.get(self.existing_pack_name, {}).get("detected_content_items", [])
 
         contribution_temp_dir = Path(str(tmp_path)) / "contribution"
         contribution_temp_dir.mkdir()
         # Create a contribution converter instance
         contrib_converter = ContributionConverter(
-            name=self.pack_name,
+            name=self.existing_pack_name,
             author=self.author,
             description="Test contrib-management process_pack",
             contribution=os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.zip"),
             gh_user=self.gh_user,
             create_new=False,
             detected_content_items=contributed_content_items,
-            working_dir_path=contribution_temp_dir.__str__()
+            working_dir_path=contribution_temp_dir.__str__(),
+            base_dir=content_temp_dir.__str__()
         )
 
         # Convert the contribution to a pack
@@ -1257,8 +1260,8 @@ class TestReadmes:
                 is_contribution=True
             )
 
-        original_readme = Path(os.path.join(content_temp_dir, "Packs", self.pack_name, INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME))
-        modified_readme = Path(os.path.join(contribution_temp_dir, INTEGRATIONS_DIR, self.pack_name, PACKS_README_FILE_NAME))
+        original_readme = Path(os.path.join(content_temp_dir, PACKS_DIR, self.existing_pack_name, INTEGRATIONS_DIR, self.existing_pack_name, PACKS_README_FILE_NAME))
+        modified_readme = Path(os.path.join(contribution_temp_dir, INTEGRATIONS_DIR, self.existing_pack_name, PACKS_README_FILE_NAME))
 
         # Merge the original README with the generated one
         FileUtils.merge_files(
@@ -1268,7 +1271,7 @@ class TestReadmes:
         )
 
         # Copy files from contribution dir to pack
-        copied_files = contrib_converter.copy_files_to_existing_pack(dst_path=content_temp_dir.__str__())
+        copied_files = contrib_converter.copy_files_to_existing_pack()
 
         actual_integration_readme = Path(copied_files[1])
         actual_integration_yml_path = Path(copied_files[3])
@@ -1298,10 +1301,8 @@ class TestReadmes:
 
     def test_process_existing_pack_new_integration_readme(
         self,
-        tmp_path: TempPathFactory,
-        mocker: MockerFixture
+        tmp_path: TempPathFactory
     ):
-        # TODO implement
         """
         Test for a new integration in an existing pack
         to ensure the README is updated correctly.
@@ -1309,14 +1310,13 @@ class TestReadmes:
         The zip and content mapping JSON used in this test were taken from
         the GCP bucket.
 
-        Given
+        Given:
         - A contribution zip file.
-        - A contributed content mapping JSON.
 
-        When
+        When:
         - A new Integration was added to an existing Pack.
 
-        Then
+        Then:
         - A new Integration README should be generated.
         """
 
@@ -1326,6 +1326,7 @@ class TestReadmes:
         repo = Repo(tmpdir=content_temp_dir, init_git=True)
 
         # Read integration python, yml code and README to create mock integration
+        # and Pack
         py_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.py")
         py_code = py_code_path.read_text()
 
@@ -1336,7 +1337,7 @@ class TestReadmes:
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
-        repo.create_pack(self.pack_name)
+        repo.create_pack(self.existing_pack_name)
         repo.packs[0].create_integration(
             name=self.existing_integration_name,
             code=py_code,
@@ -1348,13 +1349,14 @@ class TestReadmes:
         contribution_temp_dir.mkdir()
         # Create a contribution converter instance
         contrib_converter = ContributionConverter(
-            name=self.pack_name,
+            name=self.existing_pack_name,
             author=self.author,
             description="Test contrib-management process_pack",
             contribution=os.path.join(CONTRIBUTION_TESTS, "existing_pack_new_integration.zip"),
             gh_user=self.gh_user,
             create_new=False,
-            working_dir_path=contribution_temp_dir.__str__()
+            working_dir_path=contribution_temp_dir.__str__(),
+            base_dir=content_temp_dir.__str__()
         )
 
         # Convert the contribution to a pack
@@ -1368,14 +1370,87 @@ class TestReadmes:
             )
 
         # Copy files from contribution dir to pack
-        contrib_converter.copy_files_to_existing_pack(dst_path=content_temp_dir.__str__())
+        contrib_converter.copy_files_to_existing_pack()
 
         # Check that there are 2 integrations
-        assert len(os.listdir(os.path.join(content_temp_dir, "Packs", self.pack_name, INTEGRATIONS_DIR))) == 2
+        assert len(os.listdir(os.path.join(content_temp_dir, PACKS_DIR, self.existing_pack_name, INTEGRATIONS_DIR))) == 2
 
         # Check that the generated readme exists
-        generated_readme = Path(os.path.join(content_temp_dir, "Packs", self.pack_name, INTEGRATIONS_DIR, self.new_integration_name, PACKS_README_FILE_NAME))
+        generated_readme = Path(os.path.join(content_temp_dir, PACKS_DIR, self.existing_pack_name, INTEGRATIONS_DIR, self.new_integration_name, PACKS_README_FILE_NAME))
         assert generated_readme.exists()
+
+    def test_process_new_pack(
+        self,
+        tmp_path: TempPathFactory
+    ):
+        """
+        Test for a new Integration added to a new Pack.
+        The Pack and the Integration READMEs should be generated.
+
+        Given:
+        - A contributon zip.
+
+        When:
+        - A new Integration in a new Pack is requested.
+
+        Then:
+        - A Pack README should be generated.
+        - An Integration README should be generated.
+        """
+
+        # Create content repo
+        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
+        content_temp_dir.mkdir()
+        repo = Repo(tmpdir=content_temp_dir, init_git=True)
+
+         # Read integration python, yml code and README to create mock integration
+         # and Pack
+        py_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.py")
+        py_code = py_code_path.read_text()
+
+        readme_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.md")
+        readme = readme_path.read_text()
+
+        yml_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.yml")
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        repo.create_pack(self.existing_pack_name)
+        repo.packs[0].create_integration(
+            name=self.existing_integration_name,
+            code=py_code,
+            readme=readme,
+            yml=yml_code
+        )
+
+        contribution_temp_dir = Path(str(tmp_path)) / "contribution"
+        contribution_temp_dir.mkdir()
+
+        contrib_converter = ContributionConverter(
+            name = self.new_pack_name,
+            author=self.author,
+            description="Test new Integration and Pack",
+            contribution=os.path.join(CONTRIBUTION_TESTS, "new_pack_new_integration.zip"),
+            gh_user=self.gh_user,
+            create_new=True,
+            working_dir_path=contribution_temp_dir.__str__(),
+            base_dir=content_temp_dir.__str__()
+        )
+
+        # Convert the contribution to a pack
+        contrib_converter.convert_contribution_to_pack()
+
+        # Remove zip
+        (contribution_temp_dir / "modified_contribution.zip").unlink()
+
+        # Create READMEs
+        contrib_converter.generate_readmes_for_new_content_pack(is_contribution=True)
+
+        # Copy new Pack to content
+        contrib_converter.copy_files_to_existing_pack()
+
+        assert Path(contrib_converter.pack_dir_path, PACKS_README_FILE_NAME).exists()
+        assert Path(contrib_converter.pack_dir_path, INTEGRATIONS_DIR, contrib_converter.name, PACKS_README_FILE_NAME).exists()
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:

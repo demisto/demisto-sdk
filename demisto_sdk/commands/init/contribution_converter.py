@@ -162,7 +162,7 @@ class ContributionConverter:
         self.create_new = create_new
         self.contribution_items_version: Dict[str, Dict[str, str]] = {}
         self.contribution_items_version_note = ""
-        base_dir = base_dir or CONTENT_PATH  # type: ignore
+        self.base_dir = base_dir or CONTENT_PATH  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)
@@ -484,27 +484,27 @@ class ContributionConverter:
 
             self.create_contribution_items_version_note()
 
-            if self.create_new:
-                self.generate_readmes_for_new_content_pack(
-                    is_contribution=True)
+            # if self.create_new:
+            #     self.generate_readmes_for_new_content_pack(
+            #         is_contribution=True)
                 
-            # TODO implement
-            # When the changed item (integration, playbook, script)
-            # is no new, we need to merge the old README with the new one
-            # elif not integration.is_new():
-            #     pass
+            # # TODO implement
+            # # When the changed item (integration, playbook, script)
+            # # is no new, we need to merge the old README with the new one
+            # # elif not integration.is_new():
+            # #     pass
                 
 
-            # FIXME currently generated readme removes some sections (e.g. command outputs)
-            # FIXME 
-            # In case the contribution is done to an existing Pack,
-            # we need to generate the READMEs for any contributed content
-            else:
-                for yml_file in self.working_dir_path.rglob("*.yml"):
-                    self.generate_readme_for_pack_content_item(
-                        str(yml_file),
-                        is_contribution=True
-                    )
+            # # FIXME currently generated readme removes some sections (e.g. command outputs)
+            # # FIXME 
+            # # In case the contribution is done to an existing Pack,
+            # # we need to generate the READMEs for any contributed content
+            # else:
+            #     for yml_file in self.working_dir_path.rglob("*.yml"):
+            #         self.generate_readme_for_pack_content_item(
+            #             str(yml_file),
+            #             is_contribution=True
+            #         )
 
         except Exception as e:
             logger.info(
@@ -1001,7 +1001,7 @@ class ContributionConverter:
                     tmp_zf.writestr(item, zf.read(item.filename))
         return modified_contribution_zip_path, filename_to_basename_and_containing_dir
 
-    def copy_files_to_existing_pack(self, dst_path: str) -> List[str]:
+    def copy_files_to_existing_pack(self) -> List[str]:
         """Copies relevant files from the source pack to the destination pack recursively
 
         Used for when the contribution was intended to update/modify a pack that exists in
@@ -1023,7 +1023,7 @@ class ContributionConverter:
 
         for src_path in os.listdir(self.working_dir_path):
             src_sub_path = os.path.join(self.working_dir_path, src_path)
-            dst_sub_path = os.path.join(dst_path, self.pack_dir_path, src_path)
+            dst_sub_path = os.path.join(self.base_dir, self.pack_dir_path, src_path)
             print(f'{dst_sub_path=}')
             if os.path.isdir(src_sub_path):
                 cp_files.extend(copy_tree(src_sub_path, dst_sub_path))

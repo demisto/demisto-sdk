@@ -258,12 +258,13 @@ class DockerHook(Hook):
         Returns:
             All the hooks to be appended for this image
         """
-        new_hook = {
-            "id": f"{self._get_property('id')}-{image}",
-            "name": f"{self._get_property('name')}-{image}",
-            "language": "docker_image",
-            "entry": f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}',
-        }
+        new_hook = deepcopy(self.base_hook)
+        new_hook["id"] = f"{self._get_property('id')}-{image}"
+        new_hook["name"] = f"{self._get_property('name')}-{image}"
+        new_hook["language"] = "docker_image"
+        new_hook[
+            "entry"
+        ] = f'--entrypoint {self._get_property("entry")} {get_environment_flag()} {dev_image}'
 
         ret_hooks = []
         counter = 0

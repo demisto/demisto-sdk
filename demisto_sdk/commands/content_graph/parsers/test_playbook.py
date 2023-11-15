@@ -3,17 +3,17 @@ from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlaybookParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     IncorrectParserException,
     NotAContentItemException,
 )
-from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 
 NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
 
-class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
+class TestPlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
     def __init__(
         self,
         path: Path,

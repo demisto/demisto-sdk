@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, cast
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
 
 import demisto_client
 from packaging.version import Version
@@ -102,7 +102,12 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        return self.pack
+        # This function converts the pack attribute, which is a parser object to the pack model
+        # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
+        # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+        return Pack.from_orm(self.pack)
 
     @property
     def uses(self) -> List["RelationshipData"]:

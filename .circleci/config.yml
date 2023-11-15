@@ -528,10 +528,11 @@ jobs:
           name: Run Slack Notifier
           command: |
             poetry run python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
-  allow_failures:
-      - validate-files-new-validate
+
 
 workflows:
+  allow_failures:
+      - validate-files-new-validate
   version: 2.1
   build_and_release:
     jobs:

@@ -107,13 +107,13 @@ class ContentItem(BaseContent):
         # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
         # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
         if not self.pack:
-            if pack_name := get_pack_name(self.path):
-                self.pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name
-                )  # type: ignore[assignment]
-                if not self.pack:
-                    if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
-                        self.pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+            if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
+                self.pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+            if not self.pack:
+                if pack_name := get_pack_name(self.path):
+                    self.pack = BaseContent.from_path(
+                        CONTENT_PATH / PACKS_FOLDER / pack_name
+                    )  # type: ignore[assignment]
         return self.pack  # type: ignore[return-value]
 
     @property

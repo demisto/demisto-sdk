@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
 * Added support for inputs sections and outputs sections in a playbook.
-* Added a new service for file management, allowing to write files and read files from git, GitHub api, local file system, or from any api.
+* Added a new service for file management, allowing to write files and read files from specific git branches, local file system, or from any remote api.
 * Added a new flag `--docker/--no-docker` to demisto-sdk pre-commit, in order to enable the option to run the pre-commit command without docker hooks.
 * Added support for xsoar, xsoar-saas and xsiam wrapper clients to ease the integration via their apis.
 

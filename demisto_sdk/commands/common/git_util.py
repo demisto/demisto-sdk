@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 from typing import List, Optional, Set, Tuple, Union
-
+from demisto_sdk.commands.common.logger import logger
 import click
 import gitdb
 from git import (
@@ -695,13 +695,16 @@ class GitUtil:
         # Try to get the main branch
         if not repo:
             # Null input
+            logger.warning("No repo was found")
             return ""
         if not hasattr(repo, "remotes"):
+            logger.warning("No remotes was found")
             # No remotes
             return ""
         for current_remote in repo.remotes:
             # No refs in this remote
             if not hasattr(current_remote, "refs"):
+                logger.warning("No refs was found")
                 return ""
             for current_remote_ref in current_remote.refs:
                 current_remote_ref_str = str(current_remote_ref)

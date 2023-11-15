@@ -25,7 +25,7 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     Then:
         - The environment is setup correctly in VSCode
     """
-    monkeypatch.setenv({"DEMISTO_SDK_GCP_PROJECT_ID": 3})
+    monkeypatch.setenv("DEMISTO_SDK_GCP_PROJECT_ID", 3)
     image = "python3"
     test_image = "test/python3-sha"
     params = {"username": "user", "password": "pass"}

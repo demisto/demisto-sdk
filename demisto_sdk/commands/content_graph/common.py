@@ -11,7 +11,6 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.tools import (
     get_json,
     get_remote_file,
-    is_external_repository,
 )
 
 NEO4J_ADMIN_DOCKER = ""
@@ -330,9 +329,9 @@ def lazy_property(property_func: Callable):
 
 
 def get_server_content_items() -> Dict[ContentType, list]:
-    if not is_external_repository():
+    try:
         json_data: dict = get_json(SERVER_CONTENT_ITEMS_PATH)
-    else:
+    except FileNotFoundError:
         json_data = get_remote_file(
             SERVER_CONTENT_ITEMS_PATH,
             git_content_config=GitContentConfig(

@@ -111,6 +111,9 @@ class ContentItem(BaseContent):
                 self.pack = BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
                 )  # type: ignore[assignment]
+                if not self.pack:
+                    if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
+                        self.pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         return self.pack  # type: ignore[return-value]
 
     @property

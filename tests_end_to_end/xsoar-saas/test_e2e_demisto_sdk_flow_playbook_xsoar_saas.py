@@ -17,6 +17,14 @@ from TestSuite.test_tools import ChangeCWD
 
 
 def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
+    """This flow checks:
+        1. Creates a new playbook and uploads it demisto-sdk upload command.
+        2. Downloads the playbook using demisto-sdk upload command.
+        3. Generates docs for the playbook using demisto-sdk generate-docs command.
+        4. Formatting the playbook using the demisto-sdk format command.
+        5. Validates the playbook using the demisto-sdk validate command.
+        6. Uploads the playbook using the demisto-sdk upload command.
+    """
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
     
     e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
@@ -80,6 +88,16 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
+    """This flow checks:
+        1. Creates a new playbook and uploading it to the machine using an http request.
+        2. Downloads the playbook using demisto-sdk download command.
+        3. Downloads the script CommonServerUserPowerShell using demisto-sdk upload command.
+        4. Generates docs for the playbook using demisto-sdk generate-docs command.
+        5. Formatting the playbook using the demisto-sdk format command.
+        6. Validates the playbook using the demisto-sdk validate command.
+        7. Uploads the playbook using the demisto-sdk upload command.
+        8. Deletes the playbook using an http request.
+    """
     demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
 
     repo = Repo(tmpdir)

@@ -181,9 +181,13 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         logger.info(f"*** Failed to delete playbook {playbook_name}, reason: {ae}.")
 
 
-def test_e2e_demisto_sdk_flow_modeling_rules(tmpdir):
+def test_e2e_demisto_sdk_flow_modeling_rules():
     """This flow checks:
     1. Uploads the pack HelloWorld with the modeling rules HelloWorldModelingRule using the demisto-sdk upload command
     2. Tests the modeling rules using the demisto-sdk modeling-rules test command
     """
     
+    # Uploads the HelloWorld pack
+    Uploader(input=Path('Packs/HelloWorld'), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
+    
+    e2e_tests_utils.cli('demisto-sdk modeling-rules test "Packs/HelloWorld/ModelingRules/HelloWorldModelingRules"')

@@ -22,6 +22,5 @@ class GraphValidator(BaseValidator):
             update_content_graph(
                 self.graph_interface,
                 use_git=True,
-                output_path=self.graph_interface,
             )
         return self.graph_interface

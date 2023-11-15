@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, cast
+from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -44,7 +44,6 @@ class ValidateManager:
                 use_git=self.use_git, ignore_support_level=self.ignore_support_level
             )
         )
-        self.graph_validator: Optional[GraphValidator] = None
         self.validators = self.filter_validators()
 
     def run_validations(self) -> int:
@@ -75,8 +74,8 @@ class ValidateManager:
                         )
                 else:
                     self.validation_results.extend(validation_results)
-        if self.graph_validator:
-            self.graph_validator.graph.close()  # type: ignore
+        if self.validate_graph:
+            GraphValidator.graph.close()  # type: ignore
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.only_throw_warnings
         )
@@ -104,5 +103,5 @@ class ValidateManager:
             ):
                 validators.append(validator())
                 if validator.validate_graph:
-                    self.graph_validator = cast(GraphValidator, validator)
+                    self.graph_validator = validator
         return validators

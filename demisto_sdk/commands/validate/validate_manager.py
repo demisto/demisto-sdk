@@ -92,7 +92,7 @@ class ValidateManager:
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
             if (
-                not validator.__subclasses__()
+                hasattr(validator, "error_code")
                 and validator.error_code
                 in self.configured_validations.validations_to_run
             ):

@@ -20,11 +20,12 @@ if TYPE_CHECKING:
 
 from pydantic import DirectoryPath, Field, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
+    get_pack_name,
     replace_incident_to_alert,
     write_dict,
 )
@@ -50,7 +51,7 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
-    pack: "Pack" = Field(None, exclude=True)
+    pack: Optional["Pack"] = Field(None, exclude=True)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -105,8 +106,14 @@ class ContentItem(BaseContent):
         # This function converts the pack attribute, which is a parser object to the pack model
         # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
         # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
-
-        return self.pack
+        if not self.pack:
+            if pack_name := get_pack_name(self.path):
+                self.pack = BaseContent.from_path(
+                    CONTENT_PATH / PACKS_FOLDER / pack_name
+                )  # type: ignore[assignment]
+            else:
+                raise ValueError("No pack found for content item")
+        return self.pack # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:

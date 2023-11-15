@@ -119,6 +119,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         PackContentItems(), alias="contentItems", exclude=True
     )
 
+    @validator("content_items")
+    def validate_content_items(cls, v: PackContentItems, values):
+        # This populates the content item to point the self reference to this pack object
+        if v:
+            for item in v:
+                item.pack = cls.construct(**values)
+        return v
+
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():

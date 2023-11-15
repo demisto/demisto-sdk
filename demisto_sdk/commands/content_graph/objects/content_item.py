@@ -50,7 +50,7 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
-    pack: Any = Field(default=None, exclude=True)
+    pack: "Pack" = Field(default=None, exclude=True)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -105,9 +105,8 @@ class ContentItem(BaseContent):
         # This function converts the pack attribute, which is a parser object to the pack model
         # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
         # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
-        from demisto_sdk.commands.content_graph.objects.pack import Pack
 
-        return Pack.from_orm(self.pack)
+        return self.pack
 
     @property
     def uses(self) -> List["RelationshipData"]:

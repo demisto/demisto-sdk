@@ -50,7 +50,7 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
-    pack: Optional["Pack"] = Field(default=None, exclude=True)
+    pack: Any = Field(default=None, exclude=True)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -62,13 +62,13 @@ class ContentItem(BaseContent):
 
     @property
     def pack_id(self) -> str:
-        return self.pack.pack_id if self.pack else ""
+        return self.in_pack.pack_id if self.in_pack else ""
 
     @property
     def support_level(self) -> str:
         return (
-            self.pack.support_level
-            if self.pack and self.pack.support_level
+            self.in_pack.support_level
+            if self.in_pack and self.in_pack.support_level
             else ""
         )
 
@@ -77,7 +77,7 @@ class ContentItem(BaseContent):
         try:
             return (
                 list(
-                    self.pack.ignored_errors_dict.get(  # type: ignore
+                    self.in_pack.ignored_errors_dict.get(  # type: ignore
                         f"file:{self.path.name}", []
                     ).items()
                 )[0][1].split(",")
@@ -88,14 +88,14 @@ class ContentItem(BaseContent):
 
     @property
     def pack_name(self) -> str:
-        return self.pack.name if self.in_pack else ""
+        return self.in_pack.name if self.in_pack else ""
 
     @property
     def pack_version(self) -> Optional[Version]:
-        return self.pack.pack_version if self.pack else None
+        return self.in_pack.pack_version if self.in_pack else None
 
     @property
-    def in_pack(self) -> Optional["Pack"]:
+    def in_pack(self) -> "Pack":
         """
         This returns the Pack which the content item is in.
 

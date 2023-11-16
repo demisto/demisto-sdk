@@ -190,4 +190,4 @@ def test_e2e_demisto_sdk_flow_modeling_rules():
     # Uploads the HelloWorld pack
     Uploader(input=Path('Packs/HelloWorld'), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
     
-    e2e_tests_utils.cli('demisto-sdk modeling-rules test "Packs/HelloWorld/ModelingRules/HelloWorldModelingRules"')
+    e2e_tests_utils.cli('demisto-sdk modeling-rules test Packs/HelloWorld/ModelingRules/HelloWorldModelingRules')

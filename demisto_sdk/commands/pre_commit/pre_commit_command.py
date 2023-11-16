@@ -151,22 +151,28 @@ class PreCommitRunner:
             "all_files": self.all_files,
             "input_mode": self.input_mode,
         }
-        PyclnHook(**hooks.pop("pycln", None), **kwargs).prepare_hook(PYTHONPATH)
-        RuffHook(**hooks.pop("ruff", None), **kwargs).prepare_hook(
-            self.python_version_to_files, IS_GITHUB_ACTIONS
-        )
-        MypyHook(**hooks.pop("mypy", None), **kwargs).prepare_hook(
-            self.python_version_to_files
-        )
-        SourceryHook(**hooks.pop("sourcery", None), **kwargs).prepare_hook(
-            self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
-        )
-        ValidateFormatHook(**hooks.pop("validate", None), **kwargs).prepare_hook(
-            self.files_to_run
-        )
-        ValidateFormatHook(**hooks.pop("format", None), **kwargs).prepare_hook(
-            self.files_to_run
-        )
+        if "pycln" in hooks:
+            PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
+        if "ruff" in hooks:
+            RuffHook(**hooks.pop("ruff"), **kwargs).prepare_hook(
+                self.python_version_to_files, IS_GITHUB_ACTIONS
+            )
+        if "mypy" in hooks:
+            MypyHook(**hooks.pop("mypy"), **kwargs).prepare_hook(
+                self.python_version_to_files
+            )
+        if "sourcery" in hooks:
+            SourceryHook(**hooks.pop("sourcery"), **kwargs).prepare_hook(
+                self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
+            )
+        if "validate" in hooks:
+            ValidateFormatHook(**hooks.pop("validate"), **kwargs).prepare_hook(
+                self.files_to_run
+            )
+        if "format" in hooks:
+            ValidateFormatHook(**hooks.pop("format"), **kwargs).prepare_hook(
+                self.files_to_run
+            )
         [
             DockerHook(**hook, **kwargs).prepare_hook(
                 files_to_run=self.files_to_run, run_docker_hooks=run_docker_hooks

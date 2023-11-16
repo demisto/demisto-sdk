@@ -15,8 +15,6 @@ class Hook:
         all_files: bool = False,
         input_mode: bool = False,
     ) -> None:
-        if not hook:
-            return
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
         self.hook_index = self.hooks.index(self.base_hook)

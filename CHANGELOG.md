@@ -8,6 +8,7 @@
 * Fixed an issue where the SDK failed to retrieve docker hub token when there were temporary connection errors.
 * Internal: Added a welcome comment to contributions PRs.
 * Fixed metadata dependencies dumping in **prepare-content** command.
+* Fixed an issue where the TagParser didn't work properly on all edge cases.
 
 ## 1.22.0
 * Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks

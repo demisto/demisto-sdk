@@ -1,9 +1,16 @@
 # Changelog
 ## Unreleased
-* Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks
+* Added support for inputs sections and outputs sections in a playbook.
+* Added a new flag `--docker/--no-docker` to demisto-sdk pre-commit, in order to enable the option to run the pre-commit command without docker hooks.
+* Added support for xsoar, xsoar-saas and xsiam wrapper clients to ease the integration via their apis.
 * Added the command demisto-sdk coverage-analyze to the pre-commit hooks.
 * Updated merge_coverage_report to be a hook in the pre-commit.
 * Updated the mode option to be free text. for more details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#modes
+
+## 1.22.0
+* Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks
+* Removed **-use-local-import** flag to **graph update** command.
+* Perfomance improvements to **graph** commands.
 * Adjust graph structure to accommodate anticipated changes in infrastructure for the **validate** command.
 * Fixed an issue where the **lint** command with docker, would not give unique container names to different image runs.
 * Added a new `display_name` field to `Pack` entity in graph.

@@ -1,3 +1,4 @@
+from functools import lru_cache
 import math
 import os
 import string
@@ -602,6 +603,7 @@ class SecretsValidator:
         return file_contents
 
     @staticmethod
+    @lru_cache()
     def get_branch_name() -> str:
         branches = run_command("git branch")
         branch_name_reg = re.search(r"\* (.*)", branches)

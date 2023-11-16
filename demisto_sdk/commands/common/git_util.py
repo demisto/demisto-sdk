@@ -1,4 +1,4 @@
-import functools
+from functools import lru_cache
 import os
 import re
 from pathlib import Path
@@ -132,7 +132,7 @@ class GitUtil:
         except KeyError:
             return False
 
-    @functools.lru_cache
+    @lru_cache
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files("-z").split("\x00")))
 
@@ -944,9 +944,11 @@ class GitUtil:
         """
         return bool(self.repo.ignored(file_path))
 
+    @lru_cache
     def fetch(self):
         self.repo.remote().fetch()
 
+    @lru_cache
     def fetch_all(self):
         for remote in self.repo.remotes:
             remote.fetch()

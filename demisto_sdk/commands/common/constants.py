@@ -537,7 +537,7 @@ PIPFILE_REGEX = r".*/Pipfile(\.lock)?"
 TEST_DATA_REGEX = r".*test_data.*"
 TEST_FILES_REGEX = r".*test_files.*"
 DOCS_REGEX = r".*docs.*"
-IMAGE_REGEX = r".*\.png$"
+IMAGE_REGEX = r".*\.(png|svg)$"
 DESCRIPTION_REGEX = r".*\.md"
 SCHEMA_REGEX = "Tests/schemas/.*.yml"
 

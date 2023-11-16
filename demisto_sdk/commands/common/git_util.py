@@ -604,7 +604,7 @@ class GitUtil:
 
         return extracted_paths
 
-    @functools.lru_cache
+    @lru_cache
     def _get_staged_files(self) -> Set[Path]:
         """Get only staged files
 

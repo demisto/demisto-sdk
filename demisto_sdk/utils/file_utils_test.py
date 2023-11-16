@@ -1,6 +1,7 @@
 from pathlib import Path
+from typing import Tuple
 
-from pytest import TempPathFactory
+from pytest import TempPathFactory, fixture
 
 from demisto_sdk.utils.file_utils import (
     TOKEN_ADDED,
@@ -12,67 +13,104 @@ from demisto_sdk.utils.file_utils import (
 )
 
 
-def test_get_file_diff_2_line_rm_add(tmp_path: TempPathFactory):
+class TestFileDiff:
 
-    """
-    Test a 2-line text file with one character removed from the 
-    first line and appended to the second line.
+    @fixture(autouse=True)
+    def _get_tmp_diff_files(self, tmp_path: TempPathFactory):
+        self.original = (Path(str(tmp_path)) / "original")
+        self.modified = (Path(str(tmp_path)) / "modified")
 
-    Given:
-    - An original file with the following contents:
+        self.original.touch()
+        self.modified.touch()
 
-    ```
-    abcd
-    efghi
-    ```
+    def test_get_file_diff_rm_add(self):
 
-    - A modified file with the following contents:
+        """
+        Çreate file diff with 2 2-line text files with one character removed 
+        from the first line and appended to the second line.
 
-    ```
-    acd
-    befghi
-    ```
+        Given:
+        - An original file with the following contents:
 
-    When:
-    - Calculating the file difference.
+        ```
+        abcd
+        efghi
+        ```
 
-    Then:
-    - There are 6 lines in the diff (2 removal, 2 added, 2 change indicator lines)
-    """
+        - A modified file with the following contents:
+
+        ```
+        acd
+        befghi
+        ```
+
+        When:
+        - Calculating the file difference.
+
+        Then:
+        - There are 6 lines in the diff (2 removal, 2 added, 2 change indicator lines)
+        """
 
 
-    expected_diff = [
-        f"{TOKEN_REMOVED}abcd\n",
-        f"{TOKEN_NOT_PRESENT} -\n",
-        f"{TOKEN_ADDED}acd\n",
-        f"{TOKEN_REMOVED}efghi\n",
-        f"{TOKEN_ADDED}befghi\n",
-        f"{TOKEN_NOT_PRESENT}+\n",
-    ]
+        expected_diff = [
+            f"{TOKEN_REMOVED}abcd\n",
+            f"{TOKEN_NOT_PRESENT} -\n",
+            f"{TOKEN_ADDED}acd\n",
+            f"{TOKEN_REMOVED}efghi\n",
+            f"{TOKEN_ADDED}befghi\n",
+            f"{TOKEN_NOT_PRESENT}+\n",
+        ]
+
+        rm_index = 1
+
+        line_1_original = 'abcd'
+        line_2_original = 'efghi'
+
+        original_lines = [line_1_original, line_2_original]
+
+        line_1_modified = line_1_original[:rm_index] + line_1_original[rm_index + 1:]
+        line_2_modified = line_1_original[rm_index] + line_2_original
+        modified_lines = [line_1_modified, line_2_modified]
+
+        with self.original.open("w") as f:
+            f.writelines(line + '\n' for line in original_lines)
+
+        with self.modified.open("w") as f:
+            f.writelines(line + '\n' for line in modified_lines)
+
+        actual_diff = get_file_diff(self.original, self.modified)
+        assert len(expected_diff) == 6
+        assert expected_diff == actual_diff
+
+    def test_get_file_diff_add_new_section(self):
+
+        original_lines = [
+            "# Title\n",
+            "## Section 1\n",
+            "## Section 2\n"
+        ]
+
+        modified_lines = [
+            "# Title\n",
+            "## Section 1\n",
+            "## Section 2\n",
+            "## Section 3\n",
+        ]
+
+        expected = [
+            f"{TOKEN_BOTH} {modified_lines[0]}",
+            f"{TOKEN_BOTH} {modified_lines[1]}",
+            f"{TOKEN_BOTH} {modified_lines[2]}",
+            f"{TOKEN_ADDED}{modified_lines[3]}"
+        ]
+
+        with self.original.open("w") as o, self.modified.open("w") as m:
+            o.writelines(original_lines)
+            m.writelines(modified_lines)
 
 
-    original = (Path(str(tmp_path)) / "original")
-    modified = (Path(str(tmp_path)) / "modified")
-    
-    original.touch()
-    modified.touch()
+        actual = get_file_diff(self.original, self.modified)
 
-    rm_index = 1
+        assert actual == expected
 
-    line_1_original = 'abcd'
-    line_2_original = 'efghi'
-
-    original_lines = [line_1_original, line_2_original]
-
-    line_1_modified = line_1_original[:rm_index] + line_1_original[rm_index + 1:]
-    line_2_modified = line_1_original[rm_index] + line_2_original
-    modified_lines = [line_1_modified, line_2_modified]
-
-    with original.open("w") as f:
-        f.writelines(line + '\n' for line in original_lines)
-
-    with modified.open("w") as f:
-        f.writelines(line + '\n' for line in modified_lines)
-
-    actual_diff = get_file_diff(original, modified)
-    assert expected_diff == actual_diff
+        assert True

@@ -222,6 +222,8 @@ class Pack:
         image: Optional[bytes] = None,
         docker_image: Optional[str] = None,
         create_unified=False,
+        commands_txt: Optional[str] = None,
+        test: Optional[str] = None,
     ) -> Integration:
         if name is None:
             name = f"integration_{len(self.integrations)}"
@@ -249,7 +251,9 @@ class Pack:
         integration = Integration(
             self._integrations_path, name, self._repo, create_unified=create_unified
         )
-        integration.build(code, yml, readme, description, changelog, image)
+        integration.build(
+            code, yml, readme, description, changelog, image, commands_txt, test
+        )
         self.integrations.append(integration)
         return integration
 

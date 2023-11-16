@@ -6,9 +6,9 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     CONTENT_PRIVATE_ITEMS,
-    SERVER_CONTENT_ITEMS,
     ContentType,
     RelationshipType,
+    get_server_content_items,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
@@ -157,7 +157,7 @@ def remove_nodes(tx: Transaction, content_type_to_identifiers: dict) -> None:
 
 
 def remove_server_nodes(tx: Transaction) -> None:
-    remove_nodes(tx, SERVER_CONTENT_ITEMS)
+    remove_nodes(tx, get_server_content_items())
 
 
 def remove_content_private_nodes(tx: Transaction) -> None:

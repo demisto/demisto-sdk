@@ -35,7 +35,7 @@ def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
     inputs = parse_multiple_path_inputs(kwargs.get("input"))
-
+    graph = kwargs.get("graph")
     keep_zip = kwargs.pop("keep_zip", None)
     destination_zip_path = Path(keep_zip or tempfile.mkdtemp())
     marketplace = parse_marketplace_kwargs(kwargs)

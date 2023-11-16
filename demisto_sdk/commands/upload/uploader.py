@@ -10,7 +10,10 @@ import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 from tabulate import tabulate
-
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
+)
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     INTEGRATIONS_DIR,
@@ -95,9 +98,11 @@ class Uploader:
         self.should_reattach_files = reattach
         self.override_existing = override_existing
         self.marketplace = marketplace
-        self.graph = graph  # --graph flag
         self.zip = zip  # -z flag
         self.destination_zip_dir = destination_zip_dir
+        self.graph = None
+        self.use_graph = graph
+        
 
     def _upload_zipped(self, path: Path) -> bool:
         """
@@ -247,6 +252,8 @@ class Uploader:
             return ERROR_RETURN_CODE
 
         self.print_summary()
+        if self.graph:
+            self.graph.close()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
     def _upload_single(self, path: Path) -> bool:
@@ -260,11 +267,16 @@ class Uploader:
             NotIndivitudallyUploadedException (see exception class)
             NotUploadableException
         """
-        content_item: Union[ContentItem, Pack] = BaseContent.from_path(
+        content_item: BaseContent
+        content_item = BaseContent.from_path(
             path
-        if self.graph:
-            content_item = 
         )  # type:ignore[assignment]
+        if isinstance(content_item, Pack) and self.use_graph:
+            if not self.graph:
+                self.graph = ContentGraphInterface()
+                update_content_graph(self.graph, self.marketplace)
+            content_item = self.graph.from_path(path)
+
         if content_item is None:
             reason = (
                 "Deprecated type - use LayoutContainer instead"

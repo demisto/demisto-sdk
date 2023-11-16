@@ -1421,6 +1421,12 @@ def format(
     "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
     "command to be used within non-interactive shells.",
 )
+@click.option(
+    "--graph",
+    help="Use the graph to calculate dependencies, and add them to the uploaded content.",
+    is_flag=True,
+    default=False,
+)
 @click.pass_context
 @logging_setup_decorator
 def upload(ctx, **kwargs):

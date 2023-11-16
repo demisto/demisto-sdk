@@ -6,11 +6,6 @@ from pathlib import Path
 from typing import Optional, Union
 from zipfile import ZipFile
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.utils.utils import FileUtils
-
-yaml = YAML_Handler()
-
 import pytest
 import urllib3
 from _pytest.fixtures import FixtureRequest
@@ -35,9 +30,11 @@ from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
     get_previous_nonempty_line,
 )
+from demisto_sdk.utils.file_utils import merge_files
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
+yaml = YAML_Handler()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -1285,7 +1282,7 @@ class TestReadmes:
 
         # Merge the original README with the generated one
 
-        FileUtils.merge_files(
+        merge_files(
             f1=original_readme,
             f2=modified_readme,
             output_dir=modified_readme.__str__()

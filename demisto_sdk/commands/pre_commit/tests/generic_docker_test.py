@@ -187,14 +187,13 @@ def test__set_properties():
     When:
         Calling on same config with different modes
     Then:
-        The proper config is returned
+        The proper config is in base_hook.
     """
     nightly_val = "nightlyval"
 
     value1 = "value1"
 
     def assert_get_prop_successful(mode, expected_value):
-        res = {}
         hook = create_hook(
             {
                 "prop1": value1,
@@ -204,8 +203,8 @@ def test__set_properties():
                 "nonused:mode": "isignored",
             }
         )
-        DockerHook(**hook, mode=mode)._set_properties(res)
-        assert res == expected_value
+        docker_hook = DockerHook(**hook, mode=mode)
+        assert docker_hook.base_hook == expected_value
 
     assert_get_prop_successful(
         "nightly",

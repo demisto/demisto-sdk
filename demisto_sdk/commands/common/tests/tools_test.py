@@ -850,7 +850,7 @@ def test_has_remote(mocker, git_value, response):
     :param git_value: Git string from `git remotes -v`
     """
     mocker.patch(
-        "demisto_sdk.commands.common.tools.run_command", return_value=git_value
+        "demisto_sdk.commands.common.tools.git_remote_v", return_value=git_value
     )
     test_remote = has_remote_configured()
     assert response == test_remote
@@ -875,7 +875,7 @@ def test_origin_content(mocker, git_value, response):
     :param git_value: Git string from `git remotes -v`
     """
     mocker.patch(
-        "demisto_sdk.commands.common.tools.run_command", return_value=git_value
+        "demisto_sdk.commands.common.tools.git_remote_v", return_value=git_value
     )
     test_remote = is_origin_content_repo()
     assert response == test_remote

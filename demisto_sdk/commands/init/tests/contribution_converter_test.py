@@ -15,14 +15,13 @@ import pytest
 import urllib3
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
-from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     LAYOUT,
     LAYOUTS_CONTAINER,
+    PACKS_DIR,
     PACKS_README_FILE_NAME,
-    PACKS_DIR
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -88,7 +87,12 @@ def util_open_file(path):
 
 @pytest.fixture
 def contrib_converter():
-    return ContributionConverter("")
+    return ContributionConverter(
+        contribution="contribution.zip",
+        name="",
+        pack_dir_name="",
+        base_dir="/tmp"
+    )
 
 
 @pytest.fixture
@@ -178,7 +182,7 @@ def create_contribution_converter(
     request: FixtureRequest, tmp_path_factory: TempPathFactory
 ) -> ContributionConverter:
     tmp_dir = _mk_tmp(request, tmp_path_factory)
-    return ContributionConverter(name=request.param, base_dir=str(tmp_dir))
+    return ContributionConverter(contribution="contrib.zip", name=request.param, base_dir=str(tmp_dir))
 
 
 @pytest.fixture
@@ -274,6 +278,7 @@ def test_convert_contribution_zip_updated_pack(tmp_path, mocker):
         description=description,
         author=author,
         create_new=False,
+        base_dir=repo.path
     )
     contrib_converter_inst.convert_contribution_to_pack()
     converted_pack_path = repo_dir / "Packs" / "TestPack"
@@ -384,8 +389,10 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
         contribution=contribution_path,
         description=description,
         author=author,
+        base_dir=repo_dir
     )
     contrib_converter_inst.convert_contribution_to_pack()
+    contrib_converter_inst.generate_readmes_for_new_content_pack()
 
     # Ensure directory/file structure output by conversion meets expectations
 
@@ -501,8 +508,10 @@ def test_convert_contribution_zip(tmp_path, mocker):
         contribution=contribution_path,
         description=description,
         author=author,
+        base_dir=repo_dir
     )
     contrib_converter_inst.convert_contribution_to_pack()
+    contrib_converter_inst.generate_readmes_for_new_content_pack()
 
     converted_pack_path = repo_dir / "Packs" / "ContribTestPack"
     assert converted_pack_path.exists()
@@ -630,8 +639,10 @@ def test_convert_contribution_zip_with_args(tmp_path, mocker):
         description=description,
         author=author,
         gh_user=gh_user,
+        base_dir=repo_dir
     )
     contrib_converter_inst.convert_contribution_to_pack()
+    contrib_converter_inst.generate_readmes_for_new_content_pack()
 
     converted_pack_path = repo_dir / "Packs" / "TestPack"
     assert converted_pack_path.exists()
@@ -733,7 +744,11 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     update_file = fake_pack_extracted_dir / "incidentfield-SomeIncidentField.json"
     new_json = {"field": "new_value"}
     update_file.write_text(json.dumps(new_json))
-    converter = ContributionConverter(working_dir_path=str(tmp_path))
+    converter = ContributionConverter(
+        contribution="/tmp/contrib.zip",
+        working_dir_path=str(tmp_path),
+        base_dir=fake_pack_subdir
+    )
     converter.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
     assert json.loads(extant_file.read_text()) == new_json
     assert not fake_pack_extracted_dir.exists()
@@ -787,7 +802,10 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     - Ensure (at first test/check) in case the original directory becomes empty, then it is deleted
 
     """
-    contribution_converter = ContributionConverter(contribution=zip_path)
+    contribution_converter = ContributionConverter(
+        contribution=zip_path,
+        base_dir="/tmp/content"
+    )
     contribution_converter.convert_contribution_to_pack()
     unpacked_contribution_dirs = get_child_directories(
         contribution_converter.pack_dir_path
@@ -828,12 +846,18 @@ def test_extract_pack_version(input_script: str, output_version: str):
     - Ensure that pack version was extracted correctly.
 
     """
-    contribution_converter = ContributionConverter()
+    contribution_converter = ContributionConverter(
+        contribution="contrib.zip",
+        base_dir="/tmp/content"
+    )
     assert contribution_converter.extract_pack_version(input_script) == output_version
 
 
 def test_create_contribution_items_version_note():
-    contribution_converter = ContributionConverter()
+    contribution_converter = ContributionConverter(
+        contribution="contrib.zip",
+        base_dir="/tmp/content"
+    )
     contribution_converter.contribution_items_version = {
         "CortexXDRIR": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},
         "XDRScript": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},
@@ -1181,8 +1205,7 @@ class TestReadmes:
 
     def test_process_existing_pack_existing_integration_readme(
         self,
-        tmp_path: TempPathFactory,
-        mocker: MockerFixture
+        tmp_path: TempPathFactory
     ):
         """
         Test for an existing integration in an existing pack
@@ -1208,13 +1231,13 @@ class TestReadmes:
         repo = Repo(tmpdir=content_temp_dir, init_git=True)
 
         # Read integration python, yml code and README to create mock integration
-        py_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.py")
+        py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
         py_code = py_code_path.read_text()
 
-        readme_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.md")
+        readme_path = Path(CONTRIBUTION_TESTS, "README.md")
         readme = readme_path.read_text()
 
-        yml_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.yml")
+        yml_code_path = Path(CONTRIBUTION_TESTS, "integration.yml")
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
@@ -1227,9 +1250,6 @@ class TestReadmes:
             yml=yml_code
         )
         
-        mocker.patch.object(repo.git_util, "added_files", return_value=set())
-        mocker.patch.object(repo.git_util, "modified_files", return_value=set())
-
         # Read the contribution content mapping
         with open(os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.json"), "r") as j:
             contributed_content_mapping = json.load(j)
@@ -1264,34 +1284,24 @@ class TestReadmes:
         modified_readme = Path(os.path.join(contribution_temp_dir, INTEGRATIONS_DIR, self.existing_pack_name, PACKS_README_FILE_NAME))
 
         # Merge the original README with the generated one
+
         FileUtils.merge_files(
             f1=original_readme,
             f2=modified_readme,
             output_dir=modified_readme.__str__()
         )
 
-        # Copy files from contribution dir to pack
-        copied_files = contrib_converter.copy_files_to_existing_pack()
-
-        actual_integration_readme = Path(copied_files[1])
-        actual_integration_yml_path = Path(copied_files[3])
+        actual_integration_yml_path = Path(contribution_temp_dir / INTEGRATIONS_DIR / self.existing_integration_name / f"{self.existing_integration_name}.yml")
 
         with actual_integration_yml_path.open("r") as stream:
             actual_integration_yml = yaml.load(stream)
 
-        actual_integration_python = Path(copied_files[4])
-
-        modified = set()
-        modified.add(Path(copied_files[1])) # readme
-        modified.add(Path(copied_files[3])) # yml
-        modified.add(Path(copied_files[4])) # py
-
-        mocker.patch.object(repo.git_util, "modified_files", modified)
+        actual_integration_python = Path(contribution_temp_dir / INTEGRATIONS_DIR / self.existing_integration_name / f"{self.existing_integration_name}.py")
         
         # Verify the copied integration Python code, YAML and README are different than the one found in the
         # original integration path
-        assert actual_integration_readme.read_text() != readme
-        assert 'helloworld-new-cmd' in actual_integration_readme.read_text()
+        assert modified_readme.read_text() != readme
+        assert 'helloworld-new-cmd' in modified_readme.read_text()
 
         assert actual_integration_yml != yml_code
         assert actual_integration_yml['script']['commands'][4]['name'] == 'helloworld-new-cmd'
@@ -1327,13 +1337,13 @@ class TestReadmes:
 
         # Read integration python, yml code and README to create mock integration
         # and Pack
-        py_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.py")
+        py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
         py_code = py_code_path.read_text()
 
-        readme_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.md")
+        readme_path = Path(CONTRIBUTION_TESTS, "README.md")
         readme = readme_path.read_text()
 
-        yml_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.yml")
+        yml_code_path = Path(CONTRIBUTION_TESTS, "integration.yml")
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
@@ -1369,14 +1379,8 @@ class TestReadmes:
                 is_contribution=True
             )
 
-        # Copy files from contribution dir to pack
-        contrib_converter.copy_files_to_existing_pack()
-
-        # Check that there are 2 integrations
-        assert len(os.listdir(os.path.join(content_temp_dir, PACKS_DIR, self.existing_pack_name, INTEGRATIONS_DIR))) == 2
-
         # Check that the generated readme exists
-        generated_readme = Path(os.path.join(content_temp_dir, PACKS_DIR, self.existing_pack_name, INTEGRATIONS_DIR, self.new_integration_name, PACKS_README_FILE_NAME))
+        generated_readme = Path(contribution_temp_dir, INTEGRATIONS_DIR, self.new_integration_name, PACKS_README_FILE_NAME)
         assert generated_readme.exists()
 
     def test_process_new_pack(
@@ -1405,13 +1409,13 @@ class TestReadmes:
 
          # Read integration python, yml code and README to create mock integration
          # and Pack
-        py_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.py")
+        py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
         py_code = py_code_path.read_text()
 
-        readme_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.md")
+        readme_path = Path(CONTRIBUTION_TESTS, "README.md")
         readme = readme_path.read_text()
 
-        yml_code_path = Path(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.yml")
+        yml_code_path = Path(CONTRIBUTION_TESTS, "integration.yml")
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
@@ -1441,16 +1445,16 @@ class TestReadmes:
         contrib_converter.convert_contribution_to_pack()
 
         # Remove zip
-        (contribution_temp_dir / "modified_contribution.zip").unlink()
+        contrib_converter.delete_contrib_zip()
 
         # Create READMEs
         contrib_converter.generate_readmes_for_new_content_pack(is_contribution=True)
 
-        # Copy new Pack to content
-        contrib_converter.copy_files_to_existing_pack()
+        # Check new Pack README exists
+        assert Path(contrib_converter.working_dir_path, PACKS_README_FILE_NAME).exists()
 
-        assert Path(contrib_converter.pack_dir_path, PACKS_README_FILE_NAME).exists()
-        assert Path(contrib_converter.pack_dir_path, INTEGRATIONS_DIR, contrib_converter.name, PACKS_README_FILE_NAME).exists()
+        # Check new Integration README exists
+        assert Path(contrib_converter.working_dir_path, INTEGRATIONS_DIR, contrib_converter.name, PACKS_README_FILE_NAME).exists()
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:
@@ -1476,7 +1480,7 @@ class TestFixupDetectedContentItems:
         - Ensure the name field of "automation-TotallyAwesome.yml" has been changed to "Totally Awesome"
         - Ensure the id field of "automation-TotallyAwesome.yml" has been changed to "TotallyAwesome"
         '''
-        path_to_test_zip = (os.path.join(CONTRIBUTION_TESTS, 'contentpack-6a49388d-2cc6-4b09-886c-80211b03b005-ok_Contribution_Pack.zip'))
+        path_to_test_zip = (os.path.join(CONTRIBUTION_TESTS, 'test_fixup_detected_content_items_automation.zip'))
         tmp_destination = tmp_path / 'ok_contribution_pack.zip'
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
 
@@ -1501,7 +1505,7 @@ class TestFixupDetectedContentItems:
                 assert data_obj.get('commonfields', {}).get('id', '') == file_id
                 assert data_obj.get('name', '') == file_name
 
-        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=path_to_test_zip, working_dir_path=str(tmp_path))
+        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=path_to_test_zip, working_dir_path=str(tmp_path), base_dir="/tmp")
 
         modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
 
@@ -1596,7 +1600,7 @@ class TestFixupDetectedContentItems:
                 assert content_id in id_as_contributed or content_id == contribution_zip_metadata_id
                 assert content_name in names_as_contributed or content_name == contribution_zip_metadata_name
 
-        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=path_to_test_zip, working_dir_path=str(tmp_path))
+        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=path_to_test_zip, working_dir_path=str(tmp_path), base_dir="/tmp")
 
         modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
         # # verify source mapping
@@ -1724,7 +1728,7 @@ class TestFixupDetectedContentItems:
                 assert data_obj.get('name', '') == file_name
                 assert data_obj.get('display', '') == file_name
 
-        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=tmp_zip, working_dir_path=str(tmp_path))
+        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=tmp_zip, working_dir_path=str(tmp_path), base_dir="/tmp")
 
         modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
 

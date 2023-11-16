@@ -116,8 +116,8 @@ class ContributionConverter:
 
     def __init__(
         self,
+        contribution: str,
         name: str = "",
-        contribution: Optional[str] = None,
         description: str = "",
         author: str = "",
         gh_user: str = "",
@@ -127,7 +127,7 @@ class ContributionConverter:
         release_notes: str = "",
         detected_content_items: list = [],
         base_dir: Optional[str] = None,
-        working_dir_path: str = "",
+        working_dir_path: str = ""
     ):
         """Initializes a ContributionConverter instance
 
@@ -136,7 +136,7 @@ class ContributionConverter:
 
         Args:
             name (str, optional): The name of the pack. Defaults to ''.
-            contribution (Union[str], optional): The path to the contribution zipfile. Defaults to None.
+            contribution (str): The path to the contribution zipfile.
             description (str, optional): The description for the contribution. Defaults to ''.
             author (str, optional): The author of the contribution. Defaults to ''.
             gh_user (str, optional): The github username of the person contributing. Defaults to ''.
@@ -262,20 +262,13 @@ class ContributionConverter:
 
     def unpack_contribution_to_dst_pack_directory(self) -> None:
         """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
-        if self.contribution:
-            shutil.unpack_archive(
-                filename=self.contribution, extract_dir=str(
-                    self.working_dir_path)
-            )
-            # remove metadata.json file
-            Path(self.working_dir_path, "metadata.json").unlink()
-        else:
-            err_msg = (
-                "Tried unpacking contribution to destination directory but the instance variable"
-                ' "contribution" is "None" - Make sure "contribution" is set before trying to unpack'
-                " the contribution."
-            )
-            raise TypeError(err_msg)
+        shutil.unpack_archive(
+            filename=self.contribution, extract_dir=str(
+                self.working_dir_path)
+        )
+        # remove metadata.json file
+        Path(self.working_dir_path, "metadata.json").unlink()
+        
 
     def convert_contribution_dir_to_pack_contents(
         self, unpacked_contribution_dir: str
@@ -441,15 +434,14 @@ class ContributionConverter:
         try:
             # only create pack_metadata.json and base pack files if creating a new pack
             if self.create_new:
-                if self.contribution:
-                    # create pack metadata file
-                    with zipfile.ZipFile(self.contribution) as zipped_contrib:
-                        with zipped_contrib.open("metadata.json") as metadata_file:
-                            logger.info(
-                                f"Pulling relevant information from {metadata_file.name}"
-                            )
-                            metadata = json.loads(metadata_file.read())
-                            self.create_metadata_file(metadata)
+                # create pack metadata file
+                with zipfile.ZipFile(self.contribution) as zipped_contrib:
+                    with zipped_contrib.open("metadata.json") as metadata_file:
+                        logger.info(
+                            f"Pulling relevant information from {metadata_file.name}"
+                        )
+                        metadata = json.loads(metadata_file.read())
+                        self.create_metadata_file(metadata)
                 # create base files
                 self.create_pack_base_files()
 
@@ -1001,31 +993,9 @@ class ContributionConverter:
                     tmp_zf.writestr(item, zf.read(item.filename))
         return modified_contribution_zip_path, filename_to_basename_and_containing_dir
 
-    def copy_files_to_existing_pack(self) -> List[str]:
-        """Copies relevant files from the source pack to the destination pack recursively
-
-        Used for when the contribution was intended to update/modify a pack that exists in
-        the demisto/content repo already. Because the demisto-sdk creates a new pack from a
-        contribution zip file (prevents creating a pack that conflicts with an existing one)
-        we will copy the relevant files to the pack the contributor intended to update.
-        Relevant files are content files in pack subdirectories, e.g. Integrations/*, Scripts/*,
-        etc.
-
-        Args:
-            - `dst_path` (``str``): The destination directory to copy the files to. Usually this would be
-            the path to the content repo.
-
-        Returns:
-            - `List[str]` of all copied files.
+    def delete_contrib_zip(self):
+        """
+        Delete the contribution zip.
         """
 
-        cp_files: List[str] = []
-
-        for src_path in os.listdir(self.working_dir_path):
-            src_sub_path = os.path.join(self.working_dir_path, src_path)
-            dst_sub_path = os.path.join(self.base_dir, self.pack_dir_path, src_path)
-            print(f'{dst_sub_path=}')
-            if os.path.isdir(src_sub_path):
-                cp_files.extend(copy_tree(src_sub_path, dst_sub_path))
-        
-        return cp_files
+        Path(self.contribution).unlink()

@@ -1,3 +1,4 @@
+import filecmp
 import os
 import tempfile
 from difflib import Differ
@@ -46,20 +47,19 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
     """
     Merges 2 files into one.
     """
-
-    
-
     if not f1.exists() or not f2.exists():
         logger.error(f"Either file '{f1.__str__()}' or  '{f2.__str__()}' don't exist")
         return None
+    
+    if filecmp.cmp(f1, f2, shallow=False):
+        logger.debug(f"Files '{f1.__str__()}' and '{f2.__str__()}' are identical. Returning '{f1.__str__()}'")
+        return f1
 
     diff = get_file_diff(f1, f2)
 
     output_text = []
     output_path = Path(output_dir)
     if output_path.is_dir():
-        if output_path.exists():
-            output_path.rmdir()
         output_file = output_path / f"{f1.name}-merged{f1.suffix}"
     elif output_path.is_file():
         if output_path.exists():

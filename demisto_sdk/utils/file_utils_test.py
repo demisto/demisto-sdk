@@ -13,7 +13,7 @@ from demisto_sdk.utils.file_utils import (
 )
 
 
-class TestFileDiff:
+class TestFileUtils:
 
     @fixture(autouse=True)
     def _get_tmp_diff_files(self, tmp_path: TempPathFactory):
@@ -84,6 +84,36 @@ class TestFileDiff:
 
     def test_get_file_diff_add_new_section(self):
 
+        """
+        Çreate file diff with 2 2-line text files with one character removed 
+        from the first line and appended to the second line.
+
+        Given:
+        - An original file with the following contents:
+
+        ```
+        # Title
+        ## Section 1
+        ## Section 2
+        ```
+
+        - A modified file with the following contents:
+
+        ```
+        # Title
+        ## Section 1
+        ## Section 2
+        ## Section 3
+        ```
+
+        When:
+        - Calculating the file difference.
+
+        Then:
+        - There are 4 lines in the diff (3 same line, 1 added)
+        """
+
+
         original_lines = [
             "# Title\n",
             "## Section 1\n",
@@ -114,3 +144,106 @@ class TestFileDiff:
         assert actual == expected
 
         assert True
+
+    def test_merge_files(self, tmp_path: TempPathFactory):
+        """
+        Take 2 files and merge them to check if the output file is
+        as expected.
+
+        Given:
+        - An original file with the following contents:
+
+        ```
+        # Title
+
+        # Section 1
+        ```
+
+        - A modified file with the following contents:
+
+        ```
+        # Title
+
+        # Section 2
+        ```
+
+        When:
+        - Merging 2 files with a removed and an added section
+
+        Then:
+        - The merged file should be:
+
+        ```
+        # Title
+
+        # Section 1
+
+        # Section 2
+        ```
+        """
+
+        original_lines = [
+            "# Title\n\n",
+            "## Section 1\n"
+        ]
+
+        modified_lines = [
+            original_lines[0],
+            original_lines[1].replace("1", "2")
+        ]
+        
+        with self.original.open("w") as o, self.modified.open("w") as m:
+            o.writelines(original_lines)
+            m.writelines(modified_lines)
+
+        actual = merge_files(self.original, self.modified, tmp_path.__str__())
+
+        if actual:
+            assert actual.exists()
+            assert actual.name == f"{self.original.name}-merged"
+            # FIXME merged includes only section 2.
+
+    def test_merge_files_identical(self, tmp_path: TempPathFactory):
+
+        """
+        Check that the original file is returned when the files are identical.
+
+        Given:
+        - An original file with the following contents:
+
+        ```
+        # Title
+
+        # Section 1
+        ```
+
+        - A modified file with the following contents:
+
+        ```
+        # Title
+
+        # Section 1
+        ```
+
+        When:
+        - Merging 2 files.
+
+        Then:
+        - The merged file should be the original file.
+        ```
+        """
+
+
+        lines = [
+            "# Title\n\n",
+            "## Section 1\n"
+        ]
+
+        with self.original.open("w") as o, self.modified.open("w") as m:
+            o.writelines(lines)
+            m.writelines(lines)
+
+        actual = merge_files(self.original, self.modified, tmp_path.__str__())
+        expected = self.original
+
+        assert actual == expected

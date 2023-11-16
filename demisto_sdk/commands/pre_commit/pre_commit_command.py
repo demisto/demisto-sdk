@@ -150,20 +150,20 @@ class PreCommitRunner:
             "all_files": self.all_files,
             "input_mode": self.input_mode,
         }
-        PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
-        RuffHook(**hooks.pop("ruff"), **kwargs).prepare_hook(
+        PyclnHook(**hooks.pop("pycln", None), **kwargs).prepare_hook(PYTHONPATH)
+        RuffHook(**hooks.pop("ruff", None), **kwargs).prepare_hook(
             self.python_version_to_files, IS_GITHUB_ACTIONS
         )
-        MypyHook(**hooks.pop("mypy"), **kwargs).prepare_hook(
+        MypyHook(**hooks.pop("mypy", None), **kwargs).prepare_hook(
             self.python_version_to_files
         )
-        SourceryHook(**hooks.pop("sourcery"), **kwargs).prepare_hook(
+        SourceryHook(**hooks.pop("sourcery", None), **kwargs).prepare_hook(
             self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
         )
-        ValidateFormatHook(**hooks.pop("validate"), **kwargs).prepare_hook(
+        ValidateFormatHook(**hooks.pop("validate", None), **kwargs).prepare_hook(
             self.files_to_run
         )
-        ValidateFormatHook(**hooks.pop("format"), **kwargs).prepare_hook(
+        ValidateFormatHook(**hooks.pop("format", None), **kwargs).prepare_hook(
             self.files_to_run
         )
         [

@@ -15,6 +15,8 @@ class Hook:
         all_files: bool = False,
         input_mode: bool = False,
     ) -> None:
+        if not hook:
+            return
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
         self.hook_index = self.hooks.index(self.base_hook)
@@ -22,7 +24,7 @@ class Hook:
         self.mode = mode
         self.all_files = all_files
         self.input_mode = input_mode
-        self._set_properties(hook={})
+        self._set_properties()
 
     def prepare_hook(self, **kwargs):
         """
@@ -90,17 +92,16 @@ class Hook:
             ret = self.base_hook.get(f"{name}:{self.mode}")
         return ret or self.base_hook.get(name, default)
 
-    def _set_properties(self, hook):
+    def _set_properties(self):
         """
-        Will alter the new hook, setting the properties that don't need unique behavior
-        For any propery x, if x isn't already defined, x will be set according to the mode provided.
+        For any property x, if x isn't already defined, x will be set according to the mode provided.
         For example, given an input
         args: 123
         args:nightly 456
-        if the mode provided is nightly, args will be set to 456. Otherwise, the default (key with no :) will be taken
-        Args:
-            hook: the hook to modify
+        if the mode provided is nightly, args will be set to 456. Otherwise, the default (key with no :) will be taken.
+        Update the base_hook accordingly.
         """
+        hook: Dict = {}
         for full_key in self.base_hook:
             key = full_key.split(":")[0]
             if hook.get(key):

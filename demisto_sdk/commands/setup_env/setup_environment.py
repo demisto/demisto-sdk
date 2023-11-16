@@ -21,13 +21,16 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYT
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import (
+    SecretManagerException,
+    get_integration_params,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.utils.utils import SecretManagerException, get_integration_params
 
 DOTENV_PATH = CONTENT_PATH / ".env"
 

@@ -247,3 +247,90 @@ class TestFileUtils:
         expected = self.original
 
         assert actual == expected
+
+    def test_merge_files_f1_dne(self, tmp_path: TempPathFactory):
+
+        """
+        Test to ensure that when the original file doesn't exist, the modified one is returned.
+
+        Given:
+        - 2 files, original and modified.
+
+        When:
+        - The original file doesn't exist.
+
+        Then:
+        - The modified file is returned.
+        """
+
+        lines = [
+            "# Title\n\n",
+            "## Section 1\n"
+        ]
+
+        # Remove the original file
+        self.original.unlink()
+
+        with self.modified.open("w") as m:
+            m.writelines(lines)
+
+        expected = self.modified
+        actual = merge_files(self.original, self.modified, tmp_path.__str__())
+
+        assert actual == expected
+
+    def test_merge_files_f2_dne(self, tmp_path: TempPathFactory):
+
+        """
+        Test to ensure that when the modified file doesn't exist, the original one is returned.
+
+        Given:
+        - 2 files, original and modified.
+
+        When:
+        - The modified file doesn't exist.
+
+        Then:
+        - The original file is returned.
+        """
+
+        lines = [
+            "# Title\n\n",
+            "## Section 1\n"
+        ]
+
+        # Remove the modified file
+        self.modified.unlink()
+
+        with self.original.open("w") as o:
+            o.writelines(lines)
+
+        expected = self.original
+        actual = merge_files(self.original, self.modified, tmp_path.__str__())
+
+        assert actual == expected
+
+    def test_merge_files_f1_f2_dne(self, tmp_path: TempPathFactory):
+        """
+        Test when neigher the original or modifed files exist we return `None`.
+
+        Given:
+        - 2 files, original and modified.
+
+        When:
+        - The modified file doesn't exist.
+        - The original file doesn't exist.
+
+        Then:
+        - None is returned.
+        """
+
+        # Remove both files
+        self.original.unlink()
+        self.modified.unlink()
+
+        actual = merge_files(self.original, self.modified, tmp_path.__str__())
+
+        assert not actual
+
+

@@ -4,11 +4,10 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
-from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
-from demisto_sdk.commands.pre_commit.hooks.hook import join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
@@ -130,6 +129,8 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
+        tests_we_should_skip.add("coverage-analyze")
+        tests_we_should_skip.add("merge-coverage-report")
     for m in mock_subprocess.call_args_list:
         assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
 
@@ -164,17 +165,18 @@ def test_ruff_hook(github_actions):
     """
     Testing ruff hook created successfully (the python version is correct and github action created successfully)
     """
-    ruff_hook = create_hook({})
+    ruff_hook = create_hook(
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
+    )
     RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES, github_actions)
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
     for (hook, python_version) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert (
-            hook["args"][0]
-            == f"--target-version={python_version_to_ruff[python_version]}"
+            f"--target-version={python_version_to_ruff[python_version]}" in hook["args"]
         )
-        assert hook["args"][1] == "--fix"
+        assert "--fix" in hook["args"]
         assert hook["name"] == f"ruff-py{python_version}"
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
@@ -185,10 +187,10 @@ def test_ruff_hook_nightly_mode():
     """
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
-    ruff_hook = create_hook({})
-    RuffHook(**ruff_hook, mode=PreCommitModes.NIGHTLY).prepare_hook(
-        PYTHON_VERSION_TO_FILES
+    ruff_hook = create_hook(
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
     )
+    RuffHook(**ruff_hook, mode="nightly").prepare_hook(PYTHON_VERSION_TO_FILES)
 
     for (hook, _) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
@@ -203,7 +205,7 @@ def test_validate_format_hook_nightly_mode_and_all_files():
     Testing validate_format hook created successfully (the -a flag is added and the -i arg is not exist)
     """
     validate_format_hook = create_hook({"args": []})
-    kwargs = {"mode": PreCommitModes.NIGHTLY, "all_files": True}
+    kwargs = {"mode": "nightly", "all_files": True}
     ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
         PYTHON_VERSION_TO_FILES
     )
@@ -218,7 +220,7 @@ def test_validate_format_hook_nightly_mode():
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist, even in nightly mode)
     """
     validate_format_hook = create_hook({"args": []})
-    kwargs = {"mode": PreCommitModes.NIGHTLY, "input_mode": True}
+    kwargs = {"mode": "nightly", "input_mode": True}
     ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
         PYTHON_VERSION_TO_FILES
     )
@@ -367,6 +369,48 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
             assert hook["hook"].get("exclude") is None
         else:
             assert "file1.py" in hook["hook"]["exclude"]
+
+
+args = [
+    "-i",
+    ".coverage",
+    "--report-dir",
+    "coverage_report",
+    "--report-type",
+    "all",
+    "--previous-coverage-report-url",
+    "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+]
+args_nightly = [
+    "-i",
+    ".coverage",
+    "--report-dir",
+    "coverage_report",
+    "--report-type",
+    "all",
+    "--allowed-coverage-degradation-percentage",
+    "100",
+]
+
+
+@pytest.mark.parametrize(
+    "mode, expected_args", [(None, args), ("nightly", args_nightly)]
+)
+def test_coverage_analyze_general_hook(mode, expected_args):
+    """
+    Given:
+        - A hook and kwargs.
+    When:
+        - pre-commit command is running.
+    Then:
+        - Make sure that the coverage-analyze hook was created successfully.
+    """
+
+    coverage_analyze_hook = create_hook({"args": args, "args:nightly": args_nightly})
+    kwargs = {"mode": mode, "all_files": False, "input_mode": True}
+    Hook(**coverage_analyze_hook, **kwargs).prepare_hook()
+    hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
+    assert expected_args == hook_args
 
 
 @pytest.mark.parametrize(

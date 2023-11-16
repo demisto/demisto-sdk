@@ -70,10 +70,10 @@ class XsoarClientConfig(BaseModel):
 class XsoarSaasClientConfig(XsoarClientConfig):
     auth_id: str = Field(default=os.getenv(AUTH_ID), description="XSOAR/XSIAM Auth ID")
 
-    @validator("api_key", always=True)
+    @validator("auth_id", always=True)
     def validate_auth_params(cls, v, values):
         if not v:
-            raise ValueError("api_key is required for SaaS")
+            raise ValueError("auth_id is required for xsoar-saas/xsiam")
         return v
 
 

@@ -44,7 +44,7 @@ class ImageValidator(BaseValidator):
         )
         self._is_valid = True
         self.file_path = ""
-        if file_path.endswith(".png"):
+        if file_path.endswith(".png") or file_path.endswith(".svg"):
             self.file_path = file_path
         # For integrations that are not in a package format, the image is within the yml
         else:

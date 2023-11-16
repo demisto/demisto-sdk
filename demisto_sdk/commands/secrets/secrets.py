@@ -1,8 +1,8 @@
-from functools import lru_cache
 import math
 import os
 import string
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 from typing import DefaultDict
 

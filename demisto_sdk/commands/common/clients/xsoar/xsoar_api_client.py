@@ -1,8 +1,10 @@
 import contextlib
 import re
+import time
 import urllib.parse
 from abc import ABC
-from typing import Any, Dict, List, Optional, Union
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Union
 
 import dateparser
 import demisto_client
@@ -21,6 +23,15 @@ from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
+
+
+class InvestigationPlaybookState(str, Enum):
+    NEW = "new"  # indicates that playbook not executed yet
+    IN_PROGRESS = "inprogress"  # indicates that playbook in progress
+    PAUSED = "paused"  # indicates that playbook paused
+    COMPLETED = "completed"  # indicates that playbook completed
+    FAILED = "failed"  # indicates that playbook failed
+    WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
 class XsoarClient(BaseModel, ABC):
@@ -880,3 +891,58 @@ class XsoarClient(BaseModel, ABC):
             response_type=response_type,
         )
         return raw_response
+
+    def poll_playbook_state(
+        self,
+        incident_id: str,
+        expected_states: Optional[Set[InvestigationPlaybookState]] = None,
+        timeout: int = 120,
+    ):
+        """
+        Polls for a playbook state until it reaches into an expected state.
+
+        Args:
+            incident_id: incident ID that the playbook is running on
+            expected_states: which states are considered to be valid for the playbook to reach
+            timeout: how long to query until the playbook reaches the expected state
+
+        Returns:
+            the raw response of the state of the playbook
+        """
+        if not expected_states:
+            expected_states = {InvestigationPlaybookState.COMPLETED}
+
+        if timeout <= 0:
+            raise ValueError("timeout argument must be larger than 0")
+
+        elapsed_time = 0
+        start_time = time.time()
+        interval = timeout / 10
+        playbook_id = None
+        playbook_state = None
+
+        while elapsed_time < timeout:
+            playbook_state_raw_response = self.get_playbook_state(incident_id)
+            playbook_state = playbook_state_raw_response.get("state")
+            playbook_id = playbook_state_raw_response.get("playbookId")
+            logger.debug(
+                f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
+            )
+            if playbook_state in expected_states:
+                return playbook_state_raw_response
+            else:
+                time.sleep(interval)
+                elapsed_time = int(time.time() - start_time)
+
+        raise RuntimeError(
+            f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
+        )
+
+    def get_incident_work_plan_url(self, incident_id: str):
+        """
+        Returns the URL of the work-plan of the incident ID.
+
+        Args:
+            incident_id: incident ID.
+        """
+        return f"{self.base_url}/#/WorkPlan/{incident_id}"

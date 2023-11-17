@@ -1671,7 +1671,7 @@ def run(ctx, **kwargs):
 @click.option(
     "--url",
     "-u",
-    help="URL to a Demisto instance. You can also specify the URL as an environment variable named: DEMISTO_BASE_URL",
+    help="URL to a Demisto instance. If not provided, the url will be taken from DEMISTO_BASE_URL environment variable.",
 )
 @click.option("--playbook_id", "-p", help="The playbook ID to run.", required=True)
 @click.option(
@@ -1685,7 +1685,7 @@ def run(ctx, **kwargs):
     "-t",
     default=90,
     show_default=True,
-    help="Timeout for the command. The playbook will continue to run in Demisto",
+    help="Timeout to query for playbook's state. Relevant only if --wait has been passed.",
 )
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.pass_context
@@ -1699,7 +1699,13 @@ def run_playbook(ctx, **kwargs):
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
     check_configuration_file("run-playbook", kwargs)
-    playbook_runner = PlaybookRunner(**kwargs)
+    playbook_runner = PlaybookRunner(
+        playbook_id=kwargs.get("playbook_id", ""),
+        url=kwargs.get("url", ""),
+        wait=kwargs.get("wait", False),
+        timeout=kwargs.get("timeout", 90),
+        insecure=kwargs.get("insecure", False),
+    )
     return playbook_runner.run_playbook()
 
 

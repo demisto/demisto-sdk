@@ -21,15 +21,17 @@ from demisto_sdk.commands.common.constants import (
     AUTH_ID,
     DEMISTO_BASE_URL,
     DEMISTO_KEY,
+    DEMISTO_VERIFY_SSL,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import str2bool
 
 
 @lru_cache
 def get_client_from_config(
-    client_config: XsoarClientConfig, verify_ssl: bool = False
+    client_config: XsoarClientConfig, verify_ssl: Optional[bool] = None
 ) -> XsoarClient:
     """
     Returns the correct Client (xsoar on prem, xsoar saas or xsiam) based on the clients config object
@@ -44,6 +46,9 @@ def get_client_from_config(
     base_url = client_config.base_api_url
     api_key = client_config.api_key
     auth_id = client_config.auth_id
+
+    if verify_ssl is None:
+        verify_ssl = str2bool(os.getenv(DEMISTO_VERIFY_SSL))
 
     _client = demisto_client.configure(
         base_url=base_url,
@@ -102,7 +107,7 @@ def get_client_from_server_type(
     base_url: Optional[str] = None,
     api_key: Optional[str] = None,
     auth_id: Optional[str] = None,
-    verify_ssl: bool = False,
+    verify_ssl: Optional[bool] = None,
 ) -> XsoarClient:
     """
     Returns the client based on the server type by doing api requests to determine which server it is
@@ -119,12 +124,15 @@ def get_client_from_server_type(
     _base_api_url = base_url or os.getenv(DEMISTO_BASE_URL)
     _api_key = api_key or os.getenv(DEMISTO_KEY, "")
     _auth_id = auth_id or os.getenv(AUTH_ID)
+    _verify_ssl = (
+        str2bool(os.getenv(DEMISTO_VERIFY_SSL)) if verify_ssl is None else verify_ssl
+    )
 
     _client = demisto_client.configure(
         base_url=_base_api_url,
         api_key=_api_key,
         auth_id=_auth_id,
-        verify_ssl=verify_ssl,
+        verify_ssl=_verify_ssl,
     )
 
     try:
@@ -163,4 +171,6 @@ def get_client_from_server_type(
                 about_xsoar=about_raw_response,
                 config=XsoarClientConfig(base_api_url=_base_api_url, api_key=_api_key),
             )
-        raise RuntimeError("Could not determine the correct api client")
+        raise RuntimeError(
+            f"Could not determine the correct api-client for {_client.api_client.configuration.host}"
+        )

@@ -44,9 +44,14 @@ class XsoarClient(BaseModel, ABC):
         Get basic information about XSOAR server.
         """
         try:
-            raw_response, _, _ = client.generic_request(
+            raw_response, _, response_headers = client.generic_request(
                 "/about", "GET", response_type="object"
             )
+            if "text/html" in response_headers.get("Content-Type"):
+                raise ValueError(
+                    f"the {client.api_client.configuration.host} URL is not the api-url",
+                )
+
             return raw_response
         except ApiException as err:
             if err.status == requests.codes.unauthorized:

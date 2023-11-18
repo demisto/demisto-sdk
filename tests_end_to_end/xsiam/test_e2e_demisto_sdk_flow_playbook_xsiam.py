@@ -58,7 +58,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     dest_playbook_path = Path(
         f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
-    assert not dest_playbook_path.exists()
+    assert dest_playbook_path.exists()
 
     logger.info(
         f"Generating docs (creating a readme file) for playbook {source_playbook_path}"
@@ -131,7 +131,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     dest_playbook_path = Path(
         f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
-    assert not dest_playbook_path.exists()
+    assert dest_playbook_path.exists()
 
     logger.info(
         f"Trying to download the CommonServerUserPowerShell file to {tmpdir}/Packs/{pack_name}_client/Playbooks."

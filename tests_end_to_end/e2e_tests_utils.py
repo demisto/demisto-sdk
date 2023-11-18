@@ -48,18 +48,17 @@ def connect_to_server(insecure: bool = False):
         )
     return client
 
-def create_pack(repo: Repo):
-    unique_id = 456
+def create_pack(repo: Repo, unique_id: int = 456):
     pack_name = "foo_" + str(unique_id)
     pack = repo.create_pack(name=pack_name)
     source_pack_path = Path(pack.path)
+
     return pack, pack_name, source_pack_path
 
-def create_playbook(repo: Repo, pack, pack_name):
+def create_playbook(pack, pack_name):
     playbook_name = "pb_" + pack_name
     playbook: Playbook = pack.create_playbook(name=playbook_name)
     playbook.create_default_playbook(name=playbook_name)
-    source_playbook_path = Path(playbook.path)
-
+    playbook_path = Path(playbook.path)
     
-    return playbook, playbook_name, source_playbook_path
+    return playbook, playbook_name, playbook_path

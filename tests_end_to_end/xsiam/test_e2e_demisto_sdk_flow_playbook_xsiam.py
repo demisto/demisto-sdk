@@ -37,7 +37,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
 
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
-    source_playbook_path, playbook_name = e2e_tests_utils.create_playbook(repo, pack, pack_name)
+    playbook, source_playbook_path, playbook_name = e2e_tests_utils.create_playbook(pack, pack_name)
     assert source_playbook_path.exists()
 
     logger.info(f"Trying to upload pack from {source_pack_path}")
@@ -96,7 +96,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
 
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
-    source_playbook_path, playbook_name = e2e_tests_utils.create_playbook(repo, pack, pack_name)
+    playbook, source_playbook_path, playbook_name = e2e_tests_utils.create_playbook(pack, pack_name)
 
     try:
         demisto_client.client.import_playbook(file=source_playbook_path)

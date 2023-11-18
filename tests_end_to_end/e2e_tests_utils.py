@@ -59,6 +59,6 @@ def create_playbook(pack, pack_name):
     playbook_name = "pb_" + pack_name
     playbook: Playbook = pack.create_playbook(name=playbook_name)
     playbook.create_default_playbook(name=playbook_name)
-    playbook_path = Path(playbook.path)
+    playbook_path = Path(playbook.yml.path)
     
     return playbook, playbook_name, playbook_path

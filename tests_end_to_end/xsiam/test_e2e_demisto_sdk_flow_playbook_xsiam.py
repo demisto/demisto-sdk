@@ -14,7 +14,6 @@ from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from tests_end_to_end import e2e_tests_utils
-from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -38,7 +37,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
     playbook, source_playbook_path, playbook_name = e2e_tests_utils.create_playbook(pack, pack_name)
-    assert source_playbook_path.exists()
+    assert Path(source_playbook_path).exists()
 
     logger.info(f"Trying to upload pack from {source_pack_path}")
     Uploader(input=source_pack_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
@@ -68,6 +67,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     assert Path(
         f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}_README.md"
     ).exists()
+
     logger.info(f"Formating playbook {source_playbook_path}")
     with ChangeCWD(pack.repo_path):
         format_manager(

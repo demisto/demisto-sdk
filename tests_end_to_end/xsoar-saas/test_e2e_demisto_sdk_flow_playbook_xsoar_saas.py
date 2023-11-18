@@ -25,7 +25,6 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         6. Uploads the playbook using the demisto-sdk upload command.
     """
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
-    
     e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
     e2e_tests_utils.git_clone_demisto_sdk(
         destination_folder=f"{tmpdir}/git/demisto-sdk",
@@ -35,6 +34,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
     playbook, source_playbook_path, playbook_name = e2e_tests_utils.create_playbook(pack, pack_name)
+    assert Path(source_playbook_path).exists()
 
     logger.info(f"Trying to upload playbook from {source_playbook_path}")
     Uploader(input=source_playbook_path, insecure=True).upload()

@@ -69,7 +69,7 @@ def test_get_client_from_config(
      - running get_client_from_config function
 
     Then:
-     - Case A: make sure XsoarOnPremClient is returned
+     - Case A: make sure Xsoarclient is returned
      - Case B: make sure XsoarSaasClient is returned
      - Case C: make sure XsiamClient is returned
     """

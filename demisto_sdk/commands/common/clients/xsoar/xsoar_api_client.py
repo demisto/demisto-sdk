@@ -1,7 +1,6 @@
 import contextlib
 import re
 import urllib.parse
-from abc import ABC
 from typing import Any, Dict, List, Optional, Union
 
 import dateparser
@@ -23,7 +22,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 
-class XsoarClient(BaseModel, ABC):
+class XsoarClient(BaseModel):
     """
     api client for xsoar-on-prem
     """

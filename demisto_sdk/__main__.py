@@ -5,7 +5,7 @@ import click
 
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
-from demisto_sdk.commands.validate.validation_results import ValidationResults
+from demisto_sdk.commands.validate.validation_results import ResultWriter
 
 try:
     import git
@@ -579,7 +579,7 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Relevant only for the old validate flow. Skip conf.json validation.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip conf.json validation.",
 )
 @click.option(
     "-s",
@@ -587,12 +587,12 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Relevant only for the old validate flow. Perform validations using the id_set file.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Perform validations using the id_set file.",
 )
 @click.option(
     "-idp",
     "--id-set-path",
-    help="Relevant only for the old validate flow. The path of the id-set.json used for validations.",
+    help="Relevant only for the old validate flow and will be removed in a future release. The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True),
 )
 @click.option(
@@ -601,7 +601,7 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Relevant only for the old validate flow. Perform validations on content graph.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Perform validations on content graph.",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
@@ -610,7 +610,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "--no-backward-comp",
     is_flag=True,
     show_default=True,
-    help="Relevant only for the old validate flow. Whether to check backward compatibility or not.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to check backward compatibility or not.",
 )
 @click.option(
     "-g",
@@ -642,7 +642,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "-iu",
     "--include-untracked",
     is_flag=True,
-    help="Relevant only for the old validate flow. Whether to include untracked files in the validation. "
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to include untracked files in the validation. "
     "This applies only when the -g flag is supplied.",
 )
 @click.option(
@@ -664,37 +664,37 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--skip-pack-release-notes",
     is_flag=True,
-    help="Relevant only for the old validate flow. Skip validation of pack release notes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack release notes.",
 )
 @click.option(
     "--print-ignored-errors",
     is_flag=True,
-    help="Relevant only for the old validate flow. Print ignored errors as warnings.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Print ignored errors as warnings.",
 )
 @click.option(
     "--print-ignored-files",
     is_flag=True,
-    help="Relevant only for the old validate flow. Print which files were ignored by the command.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Print which files were ignored by the command.",
 )
 @click.option(
     "--no-docker-checks",
     is_flag=True,
-    help="Relevant only for the old validate flow. Whether to run docker image validation.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to run docker image validation.",
 )
 @click.option(
     "--silence-init-prints",
     is_flag=True,
-    help="Relevant only for the old validate flow. Whether to skip the initialization prints.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to skip the initialization prints.",
 )
 @click.option(
     "--skip-pack-dependencies",
     is_flag=True,
-    help="Relevant only for the old validate flow. Skip validation of pack dependencies.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack dependencies.",
 )
 @click.option(
     "--create-id-set",
     is_flag=True,
-    help="Relevant only for the old validate flow. Whether to create the id_set.json file.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to create the id_set.json file.",
 )
 @click.option(
     "-j",
@@ -704,38 +704,38 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--skip-schema-check",
     is_flag=True,
-    help="Relevant only for the old validate flow. Whether to skip the file schema check.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to skip the file schema check.",
 )
 @click.option(
     "--debug-git",
     is_flag=True,
-    help="Relevant only for the old validate flow. Whether to print debug logs for git statuses.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to print debug logs for git statuses.",
 )
 @click.option(
     "--print-pykwalify",
     is_flag=True,
-    help="Relevant only for the old validate flow. Whether to print the pykwalify log errors.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to print the pykwalify log errors.",
 )
 @click.option(
     "--quiet-bc-validation",
-    help="Relevant only for the old validate flow. Set backwards compatibility validation's errors as warnings.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Set backwards compatibility validation's errors as warnings.",
     is_flag=True,
 )
 @click.option(
     "--allow-skipped",
-    help="Relevant only for the old validate flow. Don't fail on skipped integrations or when all test playbooks are skipped.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True,
 )
 @click.option(
     "--no-multiprocessing",
-    help="Relevant only for the old validate flow. run validate all without multiprocessing, for debugging purposes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. run validate all without multiprocessing, for debugging purposes.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "-sv",
     "--run-specific-validations",
-    help="Relevant only for the old validate flow. Run specific validations by stating the error codes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Run specific validations by stating the error codes.",
     is_flag=False,
 )
 @click.option(
@@ -752,7 +752,7 @@ def zip_packs(ctx, **kwargs) -> int:
 )
 @click.option(
     "--config-path",
-    help="Path for a config file to run, if not given - will run the default path at: demisto_sdk/commands/validate/default_config.toml",
+    help="Path for a config file to run, if not given - will run the default config at https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/default_config.toml",
     is_flag=False,
 )
 @click.option(
@@ -842,7 +842,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             )
             exit_code += validator.run_validation()
         if kwargs["run_new_validate"]:
-            validation_results = ValidationResults(
+            validation_results = ResultWriter(
                 json_file_path=kwargs.get("json_file"),
             )
             config_reader = ConfigReader(

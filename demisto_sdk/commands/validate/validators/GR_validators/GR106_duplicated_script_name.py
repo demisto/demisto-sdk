@@ -8,12 +8,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.graph_validator import GraphValidator
 
 ContentTypes = Script
 
 
-class DuplicatedScriptNameValidator(GraphValidator, BaseValidator[ContentTypes]):
+class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     error_code = "GR106"
     description = "Validate that there are no 2 content items with the same type and the same name."
     error_message = (

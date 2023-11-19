@@ -9,19 +9,18 @@ from demisto_sdk.commands.validate.config_reader import (
 )
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import (
-    ValidationResults,
+    ResultWriter,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.graph_validator import GraphValidator
 
 
 class ValidateManager:
     def __init__(
         self,
-        validation_results: ValidationResults,
+        validation_results: ResultWriter,
         config_reader: ConfigReader,
         initializer: Initializer,
         validate_all=False,
@@ -33,11 +32,12 @@ class ValidateManager:
         self.validate_all = validate_all
         self.file_path = file_path
         self.allow_autofix = allow_autofix
-        self.validate_graph = False
         self.validation_results = validation_results
         self.config_reader = config_reader
         self.initializer = initializer
-        self.objects_to_run: Set[BaseContent] = self.initializer.gather_objects_to_run()
+        self.objects_to_run: Set[
+            BaseContent
+        ] = self.initializer.gather_objects_to_run_on()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
@@ -75,8 +75,8 @@ class ValidateManager:
                         )
                 else:
                     self.validation_results.extend(validation_results)
-        if self.validate_graph:
-            GraphValidator.graph_interface.close()
+        if BaseValidator.graph_interface:
+            BaseValidator.graph_interface.close()
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.only_throw_warnings
         )
@@ -93,12 +93,9 @@ class ValidateManager:
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
             if (
-                hasattr(validator, "error_code")
-                and not is_abstract_class(validator)
+                not is_abstract_class(validator)
                 and validator.error_code
                 in self.configured_validations.validations_to_run
             ):
                 validators.append(validator())
-                if validator.validate_graph:
-                    self.validate_graph = True
         return validators

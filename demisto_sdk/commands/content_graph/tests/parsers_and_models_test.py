@@ -1483,7 +1483,7 @@ class TestParsersAndModels:
         assert pre_process_rule.name == "Drop"
         assert pre_process_rule.object_id == "preprocessrule-Drop-id"
 
-    def test_pack_parser(self, repo: Repo):
+    def test_pack_parser(self, mocker, repo: Repo):
         """
         Given:
             - A pack with several content items.
@@ -1504,6 +1504,7 @@ class TestParsersAndModels:
         pack.create_incident_type("sample", load_json("incident_type.json"))
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {

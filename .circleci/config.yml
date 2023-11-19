@@ -324,6 +324,45 @@ jobs:
               
         - store_artifacts:
             path: /home/circleci/project/artifacts
+  validate-files-new-validate:
+      docker:
+        - image: << pipeline.parameters.global-docker-image >>
+      resource_class: large
+      <<: *environment
+      steps:
+        - checkout
+        - <<: *install_poetry
+        - <<: *install_neo4j
+        - attach_workspace:
+            at: ~/project
+        - <<: *install_build_dependencies
+        - node/install-packages:
+            cache-version: << pipeline.parameters.cache-version >>
+            app-dir: content
+        - run:
+            name: Test validate files and yaml - new validate
+            when: always
+            no_output_timeout: 20m
+            environment:
+              CI_COMMIT_BRANCH: "master"
+            command: |
+              source $(poetry env info --path)/bin/activate
+              export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
+              mkdir -p $ARTIFACTS_FOLDER
+              export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER/demisto_sdk_debug.log
+              cd content
+              demisto-sdk -v
+              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
+
+              neo4j start
+              # poll for neo4j status until available
+              while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+
+              ./Tests/scripts/validate.sh
+              
+        - store_artifacts:
+            path: /home/circleci/project/artifacts
+
       
 
   test-lint:
@@ -512,6 +551,9 @@ workflows:
               pythonversion: ["3.8", "3.9", "3.10"]   
           name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
+          <<: *tag_filter
+          <<: *reqs_content_checkout
+      - validate-files-new-validate:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - test-lint:

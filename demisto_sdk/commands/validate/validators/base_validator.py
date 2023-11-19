@@ -14,6 +14,11 @@ from typing import (
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
@@ -43,7 +48,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: ClassVar[Optional[List[str]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
-    validate_graph: ClassVar[bool] = False
+    graph_initialized = False
+    graph_interface: ContentGraphInterface
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -99,6 +105,18 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         raise NotImplementedError
+
+    @property
+    def graph(self) -> ContentGraphInterface:
+        if not self.graph_initialized:
+            logger.info("Graph validations were selected, will init graph")
+            self.graph_initialized = True
+            self.graph_interface = ContentGraphInterface()
+            update_content_graph(
+                self.graph_interface,
+                use_git=True,
+            )
+        return self.graph_interface
 
     class Config:
         arbitrary_types_allowed = (

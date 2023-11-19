@@ -134,6 +134,7 @@ def test_upload_folder(
     )
     content_path = f"{git_path()}/demisto_sdk/tests/test_files/"
     mocker.patch.object(content_item, "CONTENT_PATH", Path(content_path))
+    mocker.patch.object(content_item.ContentItem, "in_pack", return_value=None)
 
     path = Path(content_path, path_end)
 

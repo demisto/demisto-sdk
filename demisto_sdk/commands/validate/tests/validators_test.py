@@ -15,7 +15,7 @@ from demisto_sdk.commands.validate.config_reader import (
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.commands.validate.validation_results import ValidationResults
+from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name_all_statuses import (
     IDNameAllStatusesValidator,
 )
@@ -42,10 +42,10 @@ INTEGRATION.path = Path(
 
 
 def get_validate_manager(mocker):
-    validation_results = ValidationResults()
+    validation_results = ResultWriter()
     config_reader = ConfigReader(category_to_run="test")
     initializer = Initializer()
-    mocker.patch.object(Initializer, "gather_objects_to_run", return_value={})
+    mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value={})
     return ValidateManager(
         validation_results=validation_results,
         config_reader=config_reader,
@@ -288,7 +288,7 @@ def test_write_validation_results(results, fixing_results, expected_results):
         mode="w", delete=False, suffix=".json"
     ) as temp_file:
         temp_file_path = temp_file.name
-        validation_results = ValidationResults(json_file_path=temp_file_path)
+        validation_results = ResultWriter(json_file_path=temp_file_path)
         validation_results.results = results
         validation_results.fixing_results = fixing_results
         validation_results.write_validation_results()
@@ -378,7 +378,7 @@ def test_post_results(
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    validation_results = ValidationResults()
+    validation_results = ResultWriter()
     validation_results.results = results
     exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
     assert exit_code == expected_exit_code

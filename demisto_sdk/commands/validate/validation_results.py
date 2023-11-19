@@ -10,7 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 
-class ValidationResults:
+class ResultWriter:
     """
     Handle all the results, this class save all the results during run time and post the results when the whole execution is over.
     The class can either log the results to the terminal or write the results to a json file in a given path.
@@ -22,7 +22,7 @@ class ValidationResults:
         json_file_path: Optional[str] = None,
     ):
         """
-            The ValidationResults init method.
+            The ResultWriter init method.
         Args:
             json_file_path Optional[str]: The json path to write the outputs into.
         """

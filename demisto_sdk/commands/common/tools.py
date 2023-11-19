@@ -4256,6 +4256,7 @@ def retry(
 def is_abstract_class(cls):
     return ABC in getattr(cls, "__bases__", ())
 
+
 class SecretManagerException(Exception):
     pass
 

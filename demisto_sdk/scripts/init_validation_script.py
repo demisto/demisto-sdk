@@ -156,7 +156,6 @@ class ValidationInitializer:
     def __init__(self):
         self.git_statuses = ""
         self.fix_method = ""
-        self.validate_graph_class_init = ""
         self.fix_message = ""
         self.include_old_format_files_fix_method = ""
         self.run_on_deprecated = ""
@@ -242,7 +241,6 @@ class ValidationInitializer:
         self.initialize_validator_class_name()
         self.initialize_git_statuses()
         self.initialize_content_types()
-        self.initialize_graph_info()
         self.initialize_fix_info()
 
     def initialize_validator_class_name(self):
@@ -358,20 +356,6 @@ Fill the content types as the numbers they appear as: """
         else:
             self.support_fix = False
 
-    def initialize_graph_info(self):
-        """
-        Request the info wether the validation run graph commands or not and ensure the input is valid.
-        """
-        validate_graph = str(input("does the validation run graph commands? (Y/N): "))
-        while not validate_graph or validate_graph not in ["Y", "N", "y", "n"]:
-            validate_graph = str(
-                input(
-                    "Please enter wether the validation support use validate_graph or not? (Y/N): "
-                )
-            )
-        if validate_graph in ["Y", "y"]:
-            self.validate_graph_class_init = "GraphValidator, "
-
     def initialize_deprecation_info(self):
         """
         Request the info wether the validation should run on deprecated items or not.
@@ -455,8 +439,6 @@ Fill the content types as the numbers they appear as: """
         BaseValidator,
         {fix_result_import}ValidationResult,
 )"""
-        if self.validate_graph_class_init:
-            self.imports += "\n    from demisto_sdk.commands.validate.validators.graph_validator import GraphValidator"
 
     def generate_supported_content_types_section(self):
         """

@@ -4,14 +4,15 @@ import shutil
 import textwrap
 import traceback
 import zipfile
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 from distutils.dir_util import copy_tree
 from io import StringIO
 from pathlib import Path
 from string import punctuation
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from zipfile import ZipFile
+from click import Option
 
 from packaging.version import Version
 import yaml
@@ -26,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
     PACK_INITIAL_VERSION,
+    PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR,
     SCRIPT,
     SCRIPTS_DIR,
@@ -64,6 +66,7 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
+from demisto_sdk.utils.file_utils import merge_files
 
 
 def get_previous_nonempty_line(lines: List[str], index: int):
@@ -479,27 +482,29 @@ class ContributionConverter:
 
             self.create_contribution_items_version_note()
 
-            # if self.create_new:
-            #     self.generate_readmes_for_new_content_pack(
-            #         is_contribution=True)
-                
-            # # TODO implement
-            # # When the changed item (integration, playbook, script)
-            # # is no new, we need to merge the old README with the new one
-            # # elif not integration.is_new():
-            # #     pass
-                
+            # Create documentation
+            # If it's a new Pack, we recursively create READMEs for all content items
+            if self.create_new:
+                self.generate_readmes_for_new_content_pack(
+                    is_contribution=True
+                )
 
-            # # FIXME currently generated readme removes some sections (e.g. command outputs)
-            # # FIXME 
-            # # In case the contribution is done to an existing Pack,
-            # # we need to generate the READMEs for any contributed content
-            # else:
-            #     for yml_file in self.working_dir_path.rglob("*.yml"):
-            #         self.generate_readme_for_pack_content_item(
-            #             str(yml_file),
-            #             is_contribution=True
-            #         )
+            # If it's an existing Pack, we need to generate the map
+            # to check if the contributed content item is new or not
+            # and merge its README with the existing one if it's not
+            else:
+                for contributed_yml, content_yml, exists in self.get_new_content_tuple():
+                    self.generate_readme_for_pack_content_item(
+                        yml_path=contributed_yml.__str__(),
+                        is_contribution=True
+                    )
+
+                    if exists:
+                        generated_readme_path = contributed_yml.parent / PACKS_README_FILE_NAME
+                        existing_readme_path = content_yml.parent / PACKS_README_FILE_NAME
+                        
+                        merge_files(generated_readme_path, existing_readme_path, generated_readme_path.__str__())
+
 
         except Exception as e:
             logger.info(
@@ -1003,37 +1008,39 @@ class ContributionConverter:
 
         Path(self.contribution).unlink()
 
-    def new_content_map(self) -> Dict[Path, bool]:
+    def get_new_content_tuple(self) -> List[Tuple[Path, Path, bool]]:
         """
         A helper method to check whether the contributed content items (Integration, Playbook, Script only)
         are new (doesn't exist in the `content` repo).
 
         Returns:
-        - `Dict[Path, bool]` indicating the content item and whether it's new or not. Example:
-
-        ```
-        {
-            Path('/path/to/new/Integrations/integration/integration.yml') : True,
-            Path('/path/to/existing/Integrations/integration/integration.yml') : False,
-            Path('/path/to/existing/Playbooks/playbook.yml') : False
-        }
-        ```
+        - `NamedTuple[Path, Path, bool]` indicating the content item and whether it's new or not.
+        The first `Path` is to the contributed content item YML.
+        The second `Path` is to the content item YML.
+        The `bool` indicates whether the content item is new.
         """
 
-        map: Dict[Path, bool] = {}
+        result: List[Tuple[Path, Path, bool]] = []
 
         for dir in get_child_directories(self.working_dir_path):
+            new_content = namedtuple("new_content", ["contributed_yml", "content_yml", "exists"])
             if Path(dir).name == INTEGRATIONS_DIR or Path(dir).name == SCRIPTS_DIR:
                 for sub_dir in get_child_directories(dir):
                     logger.debug(f"Checking whether '{sub_dir}' exists in '{Path(self.pack_dir_path / dir / Path(sub_dir).name)}'...")
 
                     # There should only be 1 YAML
                     try:
-                        yml = list(Path(sub_dir).glob(f"*.yml"))[0]
+                        yml = list(Path(sub_dir).glob("*.yml"))[0]
 
-                        map[yml] = Path(self.pack_dir_path / Path(dir).name / Path(sub_dir).name).exists()
+                        result.append(
+                            new_content(
+                                yml,
+                                Path(self.pack_dir_path / Path(dir).name / Path(sub_dir).name / f"{Path(sub_dir).name}.yml"),
+                                Path(self.pack_dir_path / Path(dir).name / Path(sub_dir).name).exists()
+                            )
+                        )
                     except IndexError as ie:
-                        logger.warn(f"Couldn't find a YML in the directory '{sub_dir}'. Skipping...")
+                        logger.warn(f"Couldn't find a YML in the directory '{sub_dir}': {str(ie)}. Skipping...")
                         pass
             # Since Playbooks are not put in a separate directory 
             # we need to parse the Playbook ID and check if it exists
@@ -1052,6 +1059,12 @@ class ContributionConverter:
                             pb_data_existing = yaml_handler.load(stream2)
                             pb_id_existing = pb_data_existing.get("id")
 
-                        map[pb_yml] = pb_id == pb_id_existing
+                        result.append(
+                            new_content(
+                                pb_yml,
+                                pb_content_yml,
+                                pb_id == pb_id_existing
+                            )
+                        )
 
-        return map
+        return result

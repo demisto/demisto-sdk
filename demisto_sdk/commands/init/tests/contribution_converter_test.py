@@ -1,9 +1,10 @@
+from collections import namedtuple
 import os
 import re
 import shutil
 from os.path import join
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Tuple, Union, List
 from zipfile import ZipFile
 
 import pytest
@@ -1272,23 +1273,7 @@ class TestReadmes:
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
-        # Create a README file
-        for yml_file in contrib_converter.working_dir_path.rglob("*.yml"):
-            contrib_converter.generate_readme_for_pack_content_item(
-                str(yml_file),
-                is_contribution=True
-            )
-
-        original_readme = Path(os.path.join(content_temp_dir, PACKS_DIR, self.existing_pack_name, INTEGRATIONS_DIR, self.existing_pack_name, PACKS_README_FILE_NAME))
         modified_readme = Path(os.path.join(contribution_temp_dir, INTEGRATIONS_DIR, self.existing_pack_name, PACKS_README_FILE_NAME))
-
-        # Merge the original README with the generated one
-
-        merge_files(
-            f1=original_readme,
-            f2=modified_readme,
-            output_dir=modified_readme.__str__()
-        )
 
         actual_integration_yml_path = Path(contribution_temp_dir / INTEGRATIONS_DIR / self.existing_integration_name / f"{self.existing_integration_name}.yml")
 
@@ -1371,13 +1356,6 @@ class TestReadmes:
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
-        # Create a README file
-        for yml_file in contrib_converter.working_dir_path.rglob("*.yml"):
-            contrib_converter.generate_readme_for_pack_content_item(
-                str(yml_file),
-                is_contribution=True
-            )
-
         # Check that the generated readme exists
         generated_readme = Path(contribution_temp_dir, INTEGRATIONS_DIR, self.new_integration_name, PACKS_README_FILE_NAME)
         assert generated_readme.exists()
@@ -1442,12 +1420,6 @@ class TestReadmes:
 
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
-
-        # Remove zip
-        contrib_converter.delete_contrib_zip()
-
-        # Create READMEs
-        contrib_converter.generate_readmes_for_new_content_pack(is_contribution=True)
 
         # Check new Pack README exists
         assert Path(contrib_converter.working_dir_path, PACKS_README_FILE_NAME).exists()
@@ -1529,19 +1501,33 @@ class TestReadmes:
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
-        expected = {
-            Path(contrib_converter.working_dir_path / PLAYBOOKS_DIR / "playbook-CIAC-8757.yml"): True,
-            Path(contrib_converter.working_dir_path / INTEGRATIONS_DIR / "HelloWorldV3" /  "HelloWorldV3.yml"): True,
-            Path(contrib_converter.working_dir_path / SCRIPTS_DIR / "CommonServerUserPython" / "CommonServerUserPython.yml"): False
-        }
-        actual = contrib_converter.new_content_map()
+        expected: List[Tuple[Path, Path, bool]] = []
+        new_content = namedtuple("new_content", ["contributed_yml", "content_yml", "exists"])
+        expected.append(
+            new_content(
+                Path(contrib_converter.working_dir_path / PLAYBOOKS_DIR / "playbook-CIAC-8757.yml"),
+                Path(contrib_converter.pack_dir_path / PLAYBOOKS_DIR / "HelloWorld Playbook.yml"),
+                True
+                )
+        )
+        expected.append(
+            new_content(
+                Path(contrib_converter.working_dir_path / INTEGRATIONS_DIR / "HelloWorldV3" /  "HelloWorldV3.yml"),
+                Path(contrib_converter.pack_dir_path / INTEGRATIONS_DIR / "HelloWorldV3" /  "HelloWorldV3.yml"),
+                True
+            )
+        )
+        expected.append(
+            new_content(
+                Path(contrib_converter.working_dir_path / SCRIPTS_DIR / "CommonServerUserPython" /  "CommonServerUserPython.yml"),
+                Path(contrib_converter.pack_dir_path / SCRIPTS_DIR / "CommonServerUserPython" /  "CommonServerUserPython.yml"),
+                False
+            )
+        )
 
+
+        actual = contrib_converter.get_new_content_tuple()
         assert actual == expected
-
-
-
-
-
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:

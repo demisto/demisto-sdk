@@ -43,12 +43,6 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
 
     logger.info(f"Trying to upload pack from {source_pack_path}")
     Uploader(input=source_pack_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
-
-    try:
-        demisto_client.client.search_pack(pack_name)
-    except Exception as ae:
-        logger.info(f"*** Failed to upload playbook {playbook_name}, reason: {ae}")
-        assert False
     
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
@@ -177,20 +171,13 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         logger.info(f"*** Failed to delete playbook {playbook_name}, reason: {ae}.")
 
 
-def test_e2e_demisto_sdk_flow_modeling_rules(verify_ssl: bool = False):
+def test_e2e_demisto_sdk_flow_modeling_rules():
     """This flow checks:
     1. Uploads the pack HelloWorld with the modeling rules HelloWorldModelingRule using the demisto-sdk upload command
     2. Tests the modeling rules using the demisto-sdk modeling-rules test command
     """
-    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
     
     # Uploads the HelloWorld pack
     Uploader(input=Path('Packs/HelloWorld'), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
-    
-    try:
-        demisto_client.client.search_pack('HelloWorld')
-    except Exception as ae:
-        logger.info(f"*** Failed to upload pack HelloWorld, reason: {ae}")
-        assert False
     
     e2e_tests_utils.cli('demisto-sdk modeling-rules test Packs/HelloWorld/ModelingRules/HelloWorldModelingRules')

@@ -4,8 +4,8 @@ import dotenv
 import pytest
 
 import demisto_sdk.commands.content_graph.objects.content_item as content_item
-from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 import demisto_sdk.commands.setup_env.setup_environment as setup_environment
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.setup_env.setup_environment import (
     docker_helper,
     json,

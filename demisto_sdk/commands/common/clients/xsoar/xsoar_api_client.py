@@ -2,8 +2,7 @@ import contextlib
 import re
 import time
 import urllib.parse
-from abc import ABC
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Union
 
 import dateparser
 import demisto_client
@@ -27,7 +26,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 
-class XsoarClient(BaseModel, ABC):
+class XsoarClient(BaseModel):
     """
     api client for xsoar-on-prem
     """
@@ -48,9 +47,14 @@ class XsoarClient(BaseModel, ABC):
         Get basic information about XSOAR server.
         """
         try:
-            raw_response, _, _ = client.generic_request(
+            raw_response, _, response_headers = client.generic_request(
                 "/about", "GET", response_type="object"
             )
+            if "text/html" in response_headers.get("Content-Type"):
+                raise ValueError(
+                    f"the {client.api_client.configuration.host} URL is not the api-url",
+                )
+
             return raw_response
         except ApiException as err:
             if err.status == requests.codes.unauthorized:

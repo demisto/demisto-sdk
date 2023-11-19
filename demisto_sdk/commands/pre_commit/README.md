@@ -18,6 +18,21 @@ It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastru
 ### Automatically, as a git hook
 * Create a [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) that calls `demisto-sdk pre-commit`.
 
+## Modes
+When different args set for the different modes are needed, for example, some rules should be excluded in the nightly build.
+Any key can be set this way.
+You can set this as follows.
+```yaml
+  - id: sample-hook
+    args:nightly: ['--exclude', '123']
+    args:mode1: ['--test', '123']
+    args: ['This is the default argument']
+    otherkey:nightly: hello
+    otherkey: world
+```
+And call precommit as follows: `demisto-sdk pre-commit -a --mode nightly`.
+Note, that it is possible to use any mode that you like, and have multiple modes for each hook, like in the example.
+
 ## Steps
 
 ### External tools
@@ -62,19 +77,6 @@ A docker hook must be under the `local` repo and it's `id` must end with `in-doc
 
 The `entry` key should be the command that should be run (eg. pylint, pytest).
 
-#### Modes
-If you need different args set for the different modes, for example some rules should be excluded in the nightly build.
-Any key can be set this way.
-You can set this as follows.
-```yaml
-  - id: simple-in-docker
-    args:nightly: ['--exclude', '123']
-    args: ['This is the default argument']
-    otherkey:nightly: hello
-    otherkey: world
-```
-And call precommit as follows: `demisto-sdk pre-commit -a --mode nightly`
-Note, only "nightly" is currently supported. This will be free text soon.
 #### The config_file_arg key
 Often with commands we run in the docker we have a configuration file that is specified per Integration/Script. To configure this you can set the `config_file_arg` key as follows. The configuration file should be in the same directory as the code file. Here is an example with ruff.
 ```yaml

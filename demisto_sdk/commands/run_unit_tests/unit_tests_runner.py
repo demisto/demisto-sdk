@@ -1,12 +1,8 @@
 import os
-import shutil
-import sqlite3
-import tempfile
 import traceback
 from pathlib import Path
 from typing import List
 
-import coverage
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
@@ -17,7 +13,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 DOCKER_PYTHONPATH = [
@@ -34,72 +29,6 @@ TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
 
 NO_TESTS_COLLECTED = 5
-
-
-def fix_coverage_report_path(coverage_file: Path) -> bool:
-    """
-
-    Args:
-        coverage_file: The coverage file to to fix (absolute file).
-
-    Returns:
-        True if the file was fixed, False otherwise.
-
-    Notes:
-        the .coverage files contain all the files list with their absolute path.
-        but our tests (pytest step) are running inside a docker container.
-        so we have to change the path to the correct one.
-
-    """
-    try:
-        logger.debug(f"Editing coverage report for {coverage_file}")
-        with tempfile.NamedTemporaryFile() as temp_file:
-            # we use a tempfile because the original file could be readonly, this way we assure we can edit it.
-            shutil.copy(coverage_file, temp_file.name)
-            with sqlite3.connect(temp_file.name) as sql_connection:
-                cursor = sql_connection.cursor()
-                files = cursor.execute("SELECT * FROM file").fetchall()
-                for id_, file in files:
-                    if not file.startswith("/content"):
-                        # means that the .coverage file is already fixed
-                        continue
-                    file = Path(file).relative_to("/content")
-                    if (
-                        not (CONTENT_PATH / file).exists()
-                        or file.parent.name
-                        not in file.name  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
-                    ):
-                        logger.debug(f"Removing {file} from coverage report")
-                        cursor.execute(
-                            "DELETE FROM file WHERE id = ?", (id_,)
-                        )  # delete the file from the coverage report, as it is not relevant.
-                    else:
-                        cursor.execute(
-                            "UPDATE file SET path = ? WHERE id = ?",
-                            (str(CONTENT_PATH / file), id_),
-                        )
-                sql_connection.commit()
-                logger.debug("Done editing coverage report")
-            coverage_file.unlink()
-            shutil.copy(temp_file.name, coverage_file)
-            return True
-    except Exception:
-        logger.warning(f"Broken .coverage file found: {file}, deleting it")
-        file.unlink(missing_ok=True)
-        return False
-
-
-def merge_coverage_report():
-    coverage_path = CONTENT_PATH / ".coverage"
-    coverage_path.unlink(missing_ok=True)
-    cov = coverage.Coverage(data_file=coverage_path)
-    if not (files := coverage_files()):
-        logger.warning("No coverage files found, skipping coverage report.")
-        return
-    fixed_files = [file for file in files if fix_coverage_report_path(Path(file))]
-    cov.combine(fixed_files, keep=True)
-    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
-    logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
 
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
@@ -218,8 +147,4 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 )
                 traceback.print_exc()
                 exit_code = 1
-    try:
-        merge_coverage_report()
-    except Exception as e:
-        logger.warning(f"Failed to merge coverage report: {e}")
     return exit_code

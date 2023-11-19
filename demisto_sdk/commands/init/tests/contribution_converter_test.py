@@ -17,6 +17,8 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_CONTAINER,
     PACKS_DIR,
     PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR,
+    SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -1452,6 +1454,83 @@ class TestReadmes:
 
         # Check new Integration README exists
         assert Path(contrib_converter.working_dir_path, INTEGRATIONS_DIR, contrib_converter.name, PACKS_README_FILE_NAME).exists()
+
+    def test_new_content_map(
+            self,
+            tmp_path: TempPathFactory
+    ):
+        """
+        Test whether the new content map works when we receive a contribution
+        with an existing integration, an existing playbook but a new script.
+
+        # TODO
+        """
+
+        # Create content repo
+        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
+        content_temp_dir.mkdir()
+        repo = Repo(tmpdir=content_temp_dir, init_git=True)
+
+        repo.create_pack(self.existing_pack_name)
+
+        # Create Integration
+        py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
+        py_code = py_code_path.read_text()
+
+        readme_path = Path(CONTRIBUTION_TESTS, "README.md")
+        readme = readme_path.read_text()
+
+        yml_code_path = Path(CONTRIBUTION_TESTS, "integration.yml")
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        repo.packs[0].create_integration(
+            name="HelloWorldV3",
+            code=py_code,
+            readme=readme,
+            yml=yml_code
+        )
+
+        # Create Playbook
+        pb_yml_path = Path(CONTRIBUTION_TESTS, "playbook.yml")
+        with pb_yml_path.open("r") as stream:
+            pb_yml_code = yaml.load(stream)
+        repo.packs[0].create_playbook(
+            name="HelloWorld Playbook",
+            yml=pb_yml_code,
+            readme="#HelloWorld Playbook\n\n##Prints the README\n"
+        )
+
+        contribution_temp_dir = Path(str(tmp_path)) / "contribution"
+        contribution_temp_dir.mkdir()
+        # Create a contribution converter instance
+        contrib_converter = ContributionConverter(
+            name=self.existing_pack_name,
+            author=self.author,
+            description="Test contrib-management process_pack",
+            contribution=os.path.join(CONTRIBUTION_TESTS, "existing_pack_new_int_pb_scr.zip"),
+            gh_user=self.gh_user,
+            create_new=False,
+            working_dir_path=contribution_temp_dir.__str__(),
+            base_dir=content_temp_dir.__str__()
+        )
+
+        # Convert the contribution to a pack
+        contrib_converter.convert_contribution_to_pack()
+
+        expected = {
+            Path(contrib_converter.working_dir_path / PLAYBOOKS_DIR / "playbook-CIAC-8757.yml"): True,
+            Path(contrib_converter.working_dir_path / INTEGRATIONS_DIR / "HelloWorldV3" /  "HelloWorldV3.yml"): True,
+            Path(contrib_converter.working_dir_path / SCRIPTS_DIR / "CommonServerUserPython" / "CommonServerUserPython.yml"): False
+        }
+        actual = contrib_converter.new_content_map()
+
+        assert actual == expected
+
+
+
+
+
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:

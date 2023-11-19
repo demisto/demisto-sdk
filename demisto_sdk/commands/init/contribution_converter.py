@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from zipfile import ZipFile
 
 from packaging.version import Version
+import yaml
+from TestSuite.yml import YAML
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -24,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
     PACK_INITIAL_VERSION,
+    PLAYBOOKS_DIR,
     SCRIPT,
     SCRIPTS_DIR,
     XSOAR_AUTHOR,
@@ -999,3 +1002,56 @@ class ContributionConverter:
         """
 
         Path(self.contribution).unlink()
+
+    def new_content_map(self) -> Dict[Path, bool]:
+        """
+        A helper method to check whether the contributed content items (Integration, Playbook, Script only)
+        are new (doesn't exist in the `content` repo).
+
+        Returns:
+        - `Dict[Path, bool]` indicating the content item and whether it's new or not. Example:
+
+        ```
+        {
+            Path('/path/to/new/Integrations/integration/integration.yml') : True,
+            Path('/path/to/existing/Integrations/integration/integration.yml') : False,
+            Path('/path/to/existing/Playbooks/playbook.yml') : False
+        }
+        ```
+        """
+
+        map: Dict[Path, bool] = {}
+
+        for dir in get_child_directories(self.working_dir_path):
+            if Path(dir).name == INTEGRATIONS_DIR or Path(dir).name == SCRIPTS_DIR:
+                for sub_dir in get_child_directories(dir):
+                    logger.debug(f"Checking whether '{sub_dir}' exists in '{Path(self.pack_dir_path / dir / Path(sub_dir).name)}'...")
+
+                    # There should only be 1 YAML
+                    try:
+                        yml = list(Path(sub_dir).glob(f"*.yml"))[0]
+
+                        map[yml] = Path(self.pack_dir_path / Path(dir).name / Path(sub_dir).name).exists()
+                    except IndexError as ie:
+                        logger.warn(f"Couldn't find a YML in the directory '{sub_dir}'. Skipping...")
+                        pass
+            # Since Playbooks are not put in a separate directory 
+            # we need to parse the Playbook ID and check if it exists
+            elif Path(dir).name == PLAYBOOKS_DIR:
+                contrib_ymls = Path(dir).glob("*.yml")
+                content_ymls = Path(self.pack_dir_path / Path(dir).name).glob("*.yml")
+
+                for pb_yml in contrib_ymls:
+                    yaml_handler = YAML_Handler()
+                    with pb_yml.open("r") as stream:
+                        pb_data = yaml_handler.load(stream)
+                        pb_id = pb_data.get("id")
+
+                    for pb_content_yml in content_ymls:
+                        with pb_content_yml.open("r") as stream2:
+                            pb_data_existing = yaml_handler.load(stream2)
+                            pb_id_existing = pb_data_existing.get("id")
+
+                        map[pb_yml] = pb_id == pb_id_existing
+
+        return map

@@ -45,7 +45,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
     Uploader(input=source_pack_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
 
     try:
-        demisto_client.search_pack(pack_name)
+        demisto_client.client.search_pack(pack_name)
     except Exception as ae:
         logger.info(f"*** Failed to upload playbook {playbook_name}, reason: {ae}")
         assert False
@@ -188,7 +188,7 @@ def test_e2e_demisto_sdk_flow_modeling_rules(verify_ssl: bool = False):
     Uploader(input=Path('Packs/HelloWorld'), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
     
     try:
-        demisto_client.search_pack('HelloWorld')
+        demisto_client.client.search_pack('HelloWorld')
     except Exception as ae:
         logger.info(f"*** Failed to upload pack HelloWorld, reason: {ae}")
         assert False

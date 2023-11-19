@@ -3,7 +3,6 @@ import re
 import time
 import urllib.parse
 from abc import ABC
-from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union
 
 import dateparser
@@ -20,18 +19,12 @@ from demisto_sdk.commands.common.clients.configs import (
     XsoarClientConfig,
 )
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    InvestigationPlaybookState,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
-
-
-class InvestigationPlaybookState(str, Enum):
-    NEW = "new"  # indicates that playbook not executed yet
-    IN_PROGRESS = "inprogress"  # indicates that playbook in progress
-    PAUSED = "paused"  # indicates that playbook paused
-    COMPLETED = "completed"  # indicates that playbook completed
-    FAILED = "failed"  # indicates that playbook failed
-    WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
 class XsoarClient(BaseModel, ABC):

@@ -1,6 +1,7 @@
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.clients import get_client_from_server_type
+from demisto_sdk.commands.common.constants import InvestigationPlaybookState
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -65,10 +66,6 @@ class PlaybookRunner:
                 f"To see the playbook run in real-time visit: {work_plan_link}"
             )
             try:
-                from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import (
-                    InvestigationPlaybookState,
-                )
-
                 playbook_state_raw_response = (
                     self.instance_api_client.poll_playbook_state(
                         incident_id,

@@ -208,3 +208,34 @@ def test_get_client_from_server_type_unauthorized_exception(api_requests_mocker)
     )
     with pytest.raises(UnAuthorized):
         get_client_from_server_type(base_url="https://test4.com")
+
+
+def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
+    """
+    Given:
+     - /ioc-rules endpoint that is not valid
+     - /about that returns content-type of text/html
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure an exception of ValueError is raised
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException(status=500, reason="error")
+        if path == "/about" and method == "GET" and response_type == "object":
+            return {}, 200, {"Content-Type": "text/html"}
+
+    mocker.patch.object(os, "getenv", side_effect=getenv_side_effect)
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    with pytest.raises(ValueError):
+        get_client_from_server_type(base_url="https://test5.com")

@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     SCRIPTS_DIR,
-    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -33,7 +32,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
-from demisto_sdk.commands.pre_commit.hooks.hook import join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
@@ -68,7 +67,7 @@ class PreCommitRunner:
 
     input_mode: bool
     all_files: bool
-    mode: Optional[PreCommitModes]
+    mode: str
     language_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -152,16 +151,28 @@ class PreCommitRunner:
             "all_files": self.all_files,
             "input_mode": self.input_mode,
         }
-        PyclnHook(**hooks["pycln"], **kwargs).prepare_hook(PYTHONPATH)
-        RuffHook(**hooks["ruff"], **kwargs).prepare_hook(self.language_to_files, IS_GITHUB_ACTIONS)
-        MypyHook(**hooks["mypy"], **kwargs).prepare_hook(self.language_to_files)
-        SourceryHook(**hooks["sourcery"], **kwargs).prepare_hook(
-            self.language_to_files, config_file_path=SOURCERY_CONFIG_PATH
-        )
-        ValidateFormatHook(**hooks["validate"], **kwargs).prepare_hook(
-            self.files_to_run
-        )
-        ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
+        if "pycln" in hooks:
+            PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
+        if "ruff" in hooks:
+            RuffHook(**hooks.pop("ruff"), **kwargs).prepare_hook(
+                self.python_version_to_files, IS_GITHUB_ACTIONS
+            )
+        if "mypy" in hooks:
+            MypyHook(**hooks.pop("mypy"), **kwargs).prepare_hook(
+                self.python_version_to_files
+            )
+        if "sourcery" in hooks:
+            SourceryHook(**hooks.pop("sourcery"), **kwargs).prepare_hook(
+                self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
+            )
+        if "validate" in hooks:
+            ValidateFormatHook(**hooks.pop("validate"), **kwargs).prepare_hook(
+                self.files_to_run
+            )
+        if "format" in hooks:
+            ValidateFormatHook(**hooks.pop("format"), **kwargs).prepare_hook(
+                self.files_to_run
+            )
         [
             DockerHook(**hook, **kwargs).prepare_hook(
                 files_to_run=self.files_to_run, run_docker_hooks=run_docker_hooks
@@ -169,6 +180,11 @@ class PreCommitRunner:
             for hook_id, hook in hooks.items()
             if hook_id.endswith("in-docker")
         ]
+        hooks_without_docker = [
+            hook for hook_id, hook in hooks.items() if not hook_id.endswith("in-docker")
+        ]
+        for hook in hooks_without_docker:
+            Hook(**hook, **kwargs).prepare_hook()
 
     def run(
         self,
@@ -189,6 +205,8 @@ class PreCommitRunner:
         skipped_hooks.update(set(skip_hooks or ()))
         if not unit_test:
             skipped_hooks.add("run-unit-tests")
+            skipped_hooks.add("coverage-analyze")
+            skipped_hooks.add("merge-coverage-report")
         if validate and "validate" in skipped_hooks:
             skipped_hooks.remove("validate")
         if format and "format" in skipped_hooks:
@@ -345,7 +363,7 @@ def pre_commit_manager(
     commited_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
-    mode: Optional[PreCommitModes] = None,
+    mode: str = "",
     unit_test: bool = False,
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
@@ -365,7 +383,7 @@ def pre_commit_manager(
         commited_only (bool, optional): Whether to run on commited files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
-        mode (PreCommitModes, optional): The mode to run pre-commit in. Defaults to None.
+        mode (str): The mode to run pre-commit in. Defaults to empty str.
         test (bool, optional): Whether to run unit-tests. Defaults to False.
         skip_hooks (Optional[List[str]], optional): List of hooks to skip. Defaults to None.
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.

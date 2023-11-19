@@ -24,7 +24,6 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
-    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -3398,7 +3397,6 @@ def update_content_graph(
 @click.option(
     "--mode",
     help="Special mode to run the pre-commit with",
-    type=click.Choice([mode.value for mode in list(PreCommitModes)]),
 )
 @click.option(
     "-ut/--no-ut",
@@ -3485,7 +3483,6 @@ def pre_commit(
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
-    mode = PreCommitModes(mode) if mode else None
     if file_paths and input:
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
@@ -3544,6 +3541,71 @@ def run_unit_tests(
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
 
     sys.exit(unit_test_runner(file_paths, verbose))
+
+
+@main.command(short_help="Setup integration environments")
+@click.option(
+    "-i",
+    "--input",
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
+    help="A list of content packs/files to validate.",
+)
+@click.option(
+    "--create-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Create a virtualenv for the environment",
+)
+@click.option(
+    "--overwrite-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Overwrite existing virtualenvs. Use with the create-virtualenv flag",
+)
+@click.option(
+    "--secret-id",
+    help="Secret ID, to use with Google Secret Manager instance with `DEMISTO_SDK_GCP_PROJECT_ID` environment variable set.",
+    required=False,
+)
+@click.option(
+    "--instance-name",
+    required=False,
+    help="Instance name to configure in XSOAR/XSIAM.",
+)
+@click.option(
+    "--run-test-module",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Whether to run test-module on the configured XSOAR/XSIAM instance",
+)
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+def setup_env(
+    input,
+    file_paths,
+    create_virtualenv,
+    overwrite_virtualenv,
+    secret_id,
+    instance_name,
+    run_test_module,
+):
+    from demisto_sdk.commands.setup_env.setup_environment import (
+        setup_env,
+    )
+
+    if input:
+        file_paths = tuple(input.split(","))
+
+    setup_env(
+        file_paths,
+        create_virtualenv=create_virtualenv,
+        overwrite_virtualenv=overwrite_virtualenv,
+        secret_id=secret_id,
+        instance_name=instance_name,
+        test_module=run_test_module,
+    )
 
 
 @main.result_callback()

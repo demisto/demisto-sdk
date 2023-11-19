@@ -7,6 +7,7 @@ import os
 import re
 import shlex
 import sys
+import time
 import traceback
 import urllib.parse
 from collections import OrderedDict
@@ -15,7 +16,7 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
-from functools import lru_cache
+from functools import lru_cache, wraps
 from hashlib import sha1
 from io import StringIO, TextIOWrapper
 from pathlib import Path, PosixPath
@@ -32,15 +33,18 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 
 import demisto_client
 import git
 import giturlparse
+import google
 import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
+from google.cloud import secretmanager
 from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
@@ -120,6 +124,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import (
@@ -156,9 +161,9 @@ class TagParser:
             Text with no wrapper tags.
         """
         if remove_tag:
-            text = re.sub(self.pattern, "", text)
+            text = re.sub(self.pattern, "", text, flags=re.DOTALL)
 
-        text = re.sub(self.only_tags_pattern, "", text)
+        text = re.sub(self.only_tags_pattern, "", text, flags=re.DOTALL)
         return text
 
 
@@ -4065,3 +4070,93 @@ def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
         current_dict[list_key][index] = value
     else:
         current_dict[last_key] = value
+
+
+def retry(
+    times: int = 3,
+    delay: int = 1,
+    exceptions: Union[Tuple[Type[Exception], ...], Type[Exception]] = Exception,
+):
+    """
+    retries to execute a function until an exception isn't raised anymore.
+
+    Args:
+        times: the amount of times to try and execute the function
+        delay: the number of seconds to wait between each time
+        exceptions: the exceptions that should be caught when executing the function
+
+    Returns:
+        Any: the decorated function result
+    """
+
+    def _retry(func: Callable):
+        func_name = func.__name__
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(1, times + 1):
+                logger.debug(f"trying to run func {func_name} for the {i} time")
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as error:
+                    logger.debug(
+                        f"error when executing func {func_name}, error: {error}, time {i}"
+                    )
+                    if i == times:
+                        raise
+                    time.sleep(delay)
+
+        return wrapper
+
+    return _retry
+
+
+class SecretManagerException(Exception):
+    pass
+
+
+def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> dict:
+    """This function retrieves the parameters of an integration from Google Secret Manager
+    *Note*: This function will not run if the `DEMISTO_SDK_GCP_PROJECT_ID` env variable is not set.
+
+    Args:
+        project_id (str): GSM project id
+        secret_id (str): The secret id in GSM
+
+    Returns:
+        dict: The integration params
+    """
+    if not project_id:
+        project_id = os.getenv("DEMISTO_SDK_GCP_PROJECT_ID")
+    if not project_id:
+        raise ValueError(
+            "Either provide the project id or set the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable"
+        )
+
+    # Create the Secret Manager client.
+    client = secretmanager.SecretManagerServiceClient()
+
+    # Build the resource name of the secret version.
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+
+    # Access the secret version.
+    try:
+        response = client.access_secret_version(name=name)
+    except google.api_core.exceptions.NotFound:
+        logger.warning("The secret is not found in the secret manager")
+        raise SecretManagerException
+    except google.api_core.exceptions.PermissionDenied:
+        logger.warning(
+            "Insufficient permissions for gcloud. run `gcloud auth application-default login`"
+        )
+        raise SecretManagerException
+    except Exception:
+        logger.warning(f"Failed to get secret {secret_id} from Secret Manager.")
+        raise SecretManagerException
+    # Return the decoded payload.
+    payload = json5.loads(response.payload.data.decode("UTF-8"))
+    if "params" not in payload:
+        logger.warning(f"Parameters are not found in {secret_id} from Secret Manager.")
+
+        raise SecretManagerException
+    return payload["params"]

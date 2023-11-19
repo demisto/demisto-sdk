@@ -35,6 +35,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
         self.is_feed = self.script_info.get("feed", False)
+        self.long_running = self.script_info.get("longRunning", False)
         self.type = self.script_info.get("subtype") or self.script_info.get("type")
         if self.type == "python":
             self.type += "2"

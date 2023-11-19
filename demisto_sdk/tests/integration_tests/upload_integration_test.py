@@ -79,10 +79,10 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
         mock_upload_method(mocker, content_class)
 
     runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     result = runner.invoke(
         main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--no-zip"]
     )
-    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     assert result.exit_code == 0
     logged = flatten_call_args(logger_info.call_args)
     assert len(logged) == 1

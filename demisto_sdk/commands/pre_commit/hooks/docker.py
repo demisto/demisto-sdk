@@ -160,9 +160,9 @@ def devtest_image(image_tag, is_powershell) -> str:
 
 def get_environment_flag() -> str:
     """
-    The env flag needed to run python scripts in docker
+    The env flag needed to run python and powershell scripts in docker
     """
-    return f'--env "PYTHONPATH={get_docker_python_path()}"'
+    return f'--env "PYTHONPATH={get_docker_python_path()}" --env "PSModulePath={get_docker_python_path()}"'
 
 
 def _split_by_config_file(files, config_arg: Optional[Tuple]):

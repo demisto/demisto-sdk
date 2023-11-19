@@ -24,6 +24,7 @@ NATIVE_IMAGE_PATH = CONTENT_PATH / "Tests" / NATIVE_IMAGE_FILE_NAME
 PYTHONPATH = [
     Path(CONTENT_PATH),
     Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"),
+    Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPowerShell"),
     Path(CONTENT_PATH / TESTS_DIR / "demistomock"),
     Path(__file__).parent.parent / "lint" / "resources" / "pylint_plugins",
 ]

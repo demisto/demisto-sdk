@@ -49,7 +49,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_initialized = False
-    graph_interface: ContentGraphInterface
+    graph_interface: ContentGraphInterface = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore

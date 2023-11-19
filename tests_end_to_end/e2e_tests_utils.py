@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.tools import get_demisto_version
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from pathlib import Path
+import random
 
 def git_clone_demisto_sdk(
     destination_folder: str, sdk_git_branch: str = DEMISTO_GIT_PRIMARY_BRANCH
@@ -48,15 +49,16 @@ def connect_to_server(insecure: bool = False):
         )
     return client
 
-def create_pack(repo: Repo, unique_id: int = 456):
-    pack_name = "foo_" + str(unique_id)
+def create_pack(repo: Repo):
+    unique_id = random.randint(1, 100)
+    pack_name = "e2e_test_" + str(unique_id)
     pack = repo.create_pack(name=pack_name)
     source_pack_path = Path(pack.path)
 
     return pack, pack_name, source_pack_path
 
 def create_playbook(pack, pack_name):
-    playbook_name = "pb_" + pack_name
+    playbook_name = "pb_e2e_test_" + pack_name
     playbook: Playbook = pack.create_playbook(name=playbook_name)
     playbook.create_default_playbook(name=playbook_name)
     playbook_path = Path(playbook.yml.path)

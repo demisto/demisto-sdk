@@ -18,7 +18,7 @@ from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 
-def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
+def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = False):
     """This flow checks:
         1. Creates a new playbook and uploads it demisto-sdk upload command.
         2. Downloads the playbook using demisto-sdk upload command.
@@ -34,6 +34,8 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         sdk_git_branch=DEMISTO_GIT_PRIMARY_BRANCH,
     )
 
+    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
+    
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
     playbook, playbook_name, source_playbook_path = e2e_tests_utils.create_playbook(pack, pack_name)
@@ -42,6 +44,12 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     logger.info(f"Trying to upload pack from {source_pack_path}")
     Uploader(input=source_pack_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
 
+    try:
+        demisto_client.search_pack(pack_name)
+    except Exception as ae:
+        logger.info(f"*** Failed to upload playbook {playbook_name}, reason: {ae}")
+        assert False
+    
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
 
@@ -119,7 +127,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     ).download()
 
     logger.info(
-        f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks."
+        f"Trying to download the updated playbook {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks."
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_client",
@@ -154,7 +162,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
 
     with ChangeCWD(str(Path(source_playbook_path).parent)):
         format_manager(
-            input=source_playbook_path,
+            input=str(source_playbook_path),
             assume_answer=True,
         )
         logger.info(f"Validating playbook {source_playbook_path}.")
@@ -169,13 +177,20 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         logger.info(f"*** Failed to delete playbook {playbook_name}, reason: {ae}.")
 
 
-def test_e2e_demisto_sdk_flow_modeling_rules():
+def test_e2e_demisto_sdk_flow_modeling_rules(verify_ssl: bool = False):
     """This flow checks:
     1. Uploads the pack HelloWorld with the modeling rules HelloWorldModelingRule using the demisto-sdk upload command
     2. Tests the modeling rules using the demisto-sdk modeling-rules test command
     """
+    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
     
     # Uploads the HelloWorld pack
     Uploader(input=Path('Packs/HelloWorld'), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
+    
+    try:
+        demisto_client.search_pack('HelloWorld')
+    except Exception as ae:
+        logger.info(f"*** Failed to upload pack HelloWorld, reason: {ae}")
+        assert False
     
     e2e_tests_utils.cli('demisto-sdk modeling-rules test Packs/HelloWorld/ModelingRules/HelloWorldModelingRules')

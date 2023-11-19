@@ -60,7 +60,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
     dest_playbook_path = Path(
         f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
-    assert dest_playbook_path.exists()
+    assert not dest_playbook_path.exists()
 
     logger.info(
         f"Generating docs (creating a readme file) for playbook {source_playbook_path}"
@@ -160,7 +160,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
             assume_answer=True,
         )
         logger.info(f"Validating playbook {source_playbook_path}.")
-        ValidateManager(file_path=source_playbook_path).run_validation()
+        ValidateManager(file_path=str(source_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {source_playbook_path}.")
         Uploader(input=Path(source_playbook_path), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()

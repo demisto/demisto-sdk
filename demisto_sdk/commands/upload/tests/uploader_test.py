@@ -927,6 +927,7 @@ class TestZippedPackUpload:
         mocker.patch.object(
             PackMetadata, "_get_tags_from_landing_page", retrun_value={}
         )
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with TemporaryDirectory() as dir:
             click.Context(command=upload).invoke(

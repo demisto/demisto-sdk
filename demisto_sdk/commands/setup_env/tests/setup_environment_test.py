@@ -4,6 +4,7 @@ import dotenv
 import pytest
 
 import demisto_sdk.commands.content_graph.objects.content_item as content_item
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 import demisto_sdk.commands.setup_env.setup_environment as setup_environment
 from demisto_sdk.commands.setup_env.setup_environment import (
     docker_helper,
@@ -59,6 +60,7 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
             "install_virtualenv",
             return_value=Path(integration.path) / "venv" / "bin" / "python",
         )
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     else:
         interpreter_path = repo_path / ".venv" / "bin" / "python"
     setup_env([integration.yml.path], create_virtualenv=create_virtualenv)

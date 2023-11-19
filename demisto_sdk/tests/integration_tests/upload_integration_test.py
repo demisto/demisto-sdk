@@ -18,6 +18,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.upload.tests.uploader_test import (
     API_CLIENT,
     mock_upload_method,
@@ -81,6 +82,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     result = runner.invoke(
         main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--no-zip"]
     )
+    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     assert result.exit_code == 0
     logged = flatten_call_args(logger_info.call_args)
     assert len(logged) == 1

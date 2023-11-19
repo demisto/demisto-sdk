@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added support for running powershell test files in demisto-sdk pre-commit.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

@@ -158,11 +158,13 @@ def devtest_image(image_tag, is_powershell) -> str:
     raise DockerException(all_errors)
 
 
-def get_environment_flag() -> str:
+def get_environment_flag(code_type) -> str:
     """
     The env flag needed to run python and powershell scripts in docker
     """
-    return f'--env "PYTHONPATH={get_docker_python_path()}" --env "PSModulePath={get_docker_python_path()}"'
+    if code_type == 'pwsh':
+        return f'--env "PSModulePath={get_docker_python_path()}"'
+    return f'--env "PYTHONPATH={get_docker_python_path()}"'
 
 
 def _split_by_config_file(files, config_arg: Optional[Tuple]):
@@ -264,7 +266,7 @@ class DockerHook(Hook):
         new_hook["language"] = "docker_image"
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} -u  {os.getuid() or 4000}:4000 {get_environment_flag()} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} -u  {os.getuid() or 4000}:4000 {get_environment_flag(new_hook.get("entry"))} {dev_image}'
 
         ret_hooks = []
         counter = 0

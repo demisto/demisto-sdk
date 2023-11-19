@@ -163,7 +163,7 @@ def get_environment_flag(code_type) -> str:
     The env flag needed to run python and powershell scripts in docker
     """
     if code_type == 'pwsh':
-        return f'--env "PSModulePath={get_docker_python_path()}"'
+        return f'--env "PSModulePath={get_docker_python_path()}:/src/Packs/Office365AndAzureAuditLog/Integrations/MicrosoftPolicyAndComplianceAuditLog"'
     return f'--env "PYTHONPATH={get_docker_python_path()}"'
 
 

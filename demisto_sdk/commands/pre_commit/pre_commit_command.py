@@ -155,15 +155,13 @@ class PreCommitRunner:
             PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
         if "ruff" in hooks:
             RuffHook(**hooks.pop("ruff"), **kwargs).prepare_hook(
-                self.python_version_to_files, IS_GITHUB_ACTIONS
+                self.language_to_files, IS_GITHUB_ACTIONS
             )
         if "mypy" in hooks:
-            MypyHook(**hooks.pop("mypy"), **kwargs).prepare_hook(
-                self.python_version_to_files
-            )
+            MypyHook(**hooks.pop("mypy"), **kwargs).prepare_hook(self.language_to_files)
         if "sourcery" in hooks:
             SourceryHook(**hooks.pop("sourcery"), **kwargs).prepare_hook(
-                self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
+                self.language_to_files, config_file_path=SOURCERY_CONFIG_PATH
             )
         if "validate" in hooks:
             ValidateFormatHook(**hooks.pop("validate"), **kwargs).prepare_hook(
@@ -340,9 +338,7 @@ def group_by_language(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]]:
         else:
             version_string = integration_script.type
 
-        language_to_files[
-            version_string or DEFAULT_PYTHON2_VERSION
-        ].update(
+        language_to_files[version_string or DEFAULT_PYTHON2_VERSION].update(
             integrations_scripts_mapping[code_file_path],
             {integration_script.path.relative_to(CONTENT_PATH)},
         )

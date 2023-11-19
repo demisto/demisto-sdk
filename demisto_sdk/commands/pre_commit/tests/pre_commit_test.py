@@ -113,8 +113,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         in pre_commit.language_to_files["3.10"]
     )
     assert all(
-        Path(obj.path).relative_to(repo.path)
-        in pre_commit.language_to_files["3.10"]
+        Path(obj.path).relative_to(repo.path) in pre_commit.language_to_files["3.10"]
         for obj in (incident_field, classifier)
     )
     assert (

@@ -24,25 +24,27 @@ class SourceryHook(Hook):
         return tf.name
 
     def prepare_hook(
-        self, python_version_to_files: dict, config_file_path: Path, **kwargs
+        self, language_to_files: dict, config_file_path: Path, **kwargs
     ):
         """
         Prepares the Sourcery hook for each Python version.
         Changes the hook's name, files and the "--config" argument according to the Python version.
         Args:
-            python_version_to_files (dict): A dictionary mapping Python versions to files.
+            language_to_files (dict): A dictionary mapping Python versions to files.
             config_file_path (Path): The path to the configuration file.
         Returns:
             None
         """
-        for python_version in python_version_to_files:
+        for version in language_to_files:
+            if version in ["powershell", "javascript"]:
+                continue
             hook: Dict[str, Any] = {
-                "name": f"sourcery-py{python_version}",
+                "name": f"sourcery-py{version}",
             }
             hook.update(deepcopy(self.base_hook))
             hook["args"].append(
-                f"--config={self._get_temp_config_file(config_file_path, python_version)}"
+                f"--config={self._get_temp_config_file(config_file_path, version)}"
             )
-            hook["files"] = join_files(python_version_to_files[python_version])
+            hook["files"] = join_files(language_to_files[version])
 
             self.hooks.append(hook)

@@ -264,7 +264,7 @@ class DockerHook(Hook):
         new_hook["language"] = "docker_image"
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag()} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} -u  {os.getuid() or 4000}:4000 {get_environment_flag()} {dev_image}'
 
         ret_hooks = []
         counter = 0

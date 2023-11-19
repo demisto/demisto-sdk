@@ -34,17 +34,19 @@ class RuffHook(Hook):
             language_to_files (Dict[str, Set[Path]]): dictionary mapping python version to files
             github_actions (bool, optional): Whether to use github actions format. Defaults to False.
         """
-        for python_version in language_to_files:
+        for version in language_to_files:
+            if version in ["powershell", "javascript"]:
+                continue
             hook: Dict[str, Any] = {
-                "name": f"ruff-py{python_version}",
+                "name": f"ruff-py{version}",
             }
             hook.update(deepcopy(self.base_hook))
             target_version = (
-                f"--target-version={self._python_version_to_ruff(python_version)}"
+                f"--target-version={self._python_version_to_ruff(version)}"
             )
             safe_update_hook_args(hook, target_version)
             if github_actions:
                 hook["args"].append("--format=github")
-            hook["files"] = join_files(language_to_files[python_version])
+            hook["files"] = join_files(language_to_files[version])
 
             self.hooks.append(hook)

@@ -48,7 +48,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: ClassVar[Optional[List[str]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
-    graph_initialized = False
+    graph_initialized: bool = False
     graph_interface: ContentGraphInterface = None
 
     def get_content_types(self):

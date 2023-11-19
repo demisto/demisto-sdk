@@ -4,7 +4,7 @@ warning = []
 ignorable_errors = []
 
 [validate_all]
-select = ["BA101"]
+select = ["BA101", "GR106"]
 warning = []
 ignorable_errors = ["BA101"]
 

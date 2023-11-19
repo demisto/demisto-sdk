@@ -21,6 +21,7 @@ from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProce
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
@@ -1495,7 +1496,6 @@ class TestParsersAndModels:
             - Verify the pack is modeled correctly.
         """
         from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
-        from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
         pack = repo.create_pack("HelloWorld")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
@@ -1548,7 +1548,7 @@ class TestParsersAndModels:
             expected_deprecated=False,
         )
 
-    def test_repo_parser(self, repo: Repo):
+    def test_repo_parser(self, mocker, repo: Repo):
         """
         Given:
             - A repository with two packs.
@@ -1566,6 +1566,7 @@ class TestParsersAndModels:
         pack1.pack_metadata.write_json(load_json("pack_metadata.json"))
         pack2 = repo.create_pack("sample2")
         pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
         parser = RepositoryParser(Path(repo.path))
         parser.parse()
         model = ContentDTO.from_orm(parser)

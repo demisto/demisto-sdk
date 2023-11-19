@@ -1154,6 +1154,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_relationships_from_metadata(
         self,
+        mocker,
         repo: Repo,
     ):
         """
@@ -1172,6 +1173,7 @@ class TestCreateContentGraph:
         pack_core = repo.create_pack("Core")
         repo.create_pack("NonCorePack")
         pack_core.pack_metadata.write_json(core_metadata)
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface)

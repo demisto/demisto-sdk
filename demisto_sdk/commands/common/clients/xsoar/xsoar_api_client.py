@@ -2,7 +2,7 @@ import contextlib
 import re
 import time
 import urllib.parse
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import dateparser
 import demisto_client

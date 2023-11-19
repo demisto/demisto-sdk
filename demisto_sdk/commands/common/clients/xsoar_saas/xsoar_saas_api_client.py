@@ -43,5 +43,5 @@ class XsoarSaasClient(XsoarClient):
         response.raise_for_status()
         return response
 
-    def get_incident_work_plan_url(self, incident_id: str):
+    def get_incident_work_plan_url(self, incident_id: str) -> str:
         return f"{self.base_url}/WorkPlan/{incident_id}"

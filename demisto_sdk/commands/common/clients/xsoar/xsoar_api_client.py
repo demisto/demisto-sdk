@@ -935,7 +935,7 @@ class XsoarClient(BaseModel):
             f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
         )
 
-    def get_incident_work_plan_url(self, incident_id: str):
+    def get_incident_work_plan_url(self, incident_id: str) -> str:
         """
         Returns the URL of the work-plan of the incident ID.
 

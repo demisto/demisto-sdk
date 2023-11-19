@@ -1463,7 +1463,18 @@ class TestReadmes:
         Test whether the new content map works when we receive a contribution
         with an existing integration, an existing playbook but a new script.
 
-        # TODO
+        Given:
+        - A contribution zip.
+        
+        When:
+        - The content repo has an integration and a playbook.
+        - The contribution zip has an integration, playbook and script.
+
+        Then:
+        - The new content map will have a 3 keys:
+            - 1 for the playbook set to `True`.
+            - 1 for the integration set to `True`.
+            - 1 for the script set to `False`.
         """
 
         # Create content repo

@@ -724,6 +724,11 @@ def get_child_files(directory):
     return child_files
 
 
+@lru_cache
+def git_remote_v():
+    return run_command("git remote -v")
+
+
 def has_remote_configured():
     """
     Checks to see if a remote named "upstream" is configured. This is important for forked
@@ -731,8 +736,7 @@ def has_remote_configured():
     opposed to the master branch of the fork.
     :return: bool : True if remote is configured, False if not.
     """
-    remotes = run_command("git remote -v")
-    if re.search(GitContentConfig.CONTENT_GITHUB_UPSTREAM, remotes):
+    if re.search(GitContentConfig.CONTENT_GITHUB_UPSTREAM, git_remote_v()):
         return True
     else:
         return False
@@ -744,8 +748,7 @@ def is_origin_content_repo():
     validation needs to be ran against the origin master branch or the upstream master branch
     :return: bool : True if remote is configured, False if not.
     """
-    remotes = run_command("git remote -v")
-    if re.search(GitContentConfig.CONTENT_GITHUB_ORIGIN, remotes):
+    if re.search(GitContentConfig.CONTENT_GITHUB_ORIGIN, git_remote_v()):
         return True
     else:
         return False

@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
+* Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

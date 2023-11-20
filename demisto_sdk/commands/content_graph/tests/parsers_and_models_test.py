@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -252,6 +253,11 @@ class PackModelVerifier:
             for content_item in model.content_items
         }
         assert content_items == expected_content_items
+
+        for content_item in model.content_items:
+            assert content_item.in_pack == model
+            if content_item.content_type == ContentType.CLASSIFIER:
+                assert content_item.ignored_errors == ["SC100"]
 
 
 class PackRelationshipsVerifier:
@@ -1504,7 +1510,9 @@ class TestParsersAndModels:
         pack.create_incident_type("sample", load_json("incident_type.json"))
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
-        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
+        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+        with open(f"{pack.path}/.pack-ignore", "w") as f:
+            f.write("[file:classifier-sample.json]\nignore=SC100")
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {

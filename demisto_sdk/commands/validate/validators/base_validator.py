@@ -48,8 +48,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: ClassVar[Optional[List[str]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
-    graph_initialized: bool = False
-    graph_interface: ContentGraphInterface = None
+    graph_initialized: ClassVar[bool] = False
+    graph_interface: ClassVar[ContentGraphInterface] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -108,15 +108,15 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     @property
     def graph(self) -> ContentGraphInterface:
-        if not self.graph_initialized:
+        if not BaseValidator.graph_initialized:
             logger.info("Graph validations were selected, will init graph")
-            self.graph_initialized = True
-            self.graph_interface = ContentGraphInterface()
+            BaseValidator.graph_initialized = True
+            BaseValidator.graph_interface = ContentGraphInterface()
             update_content_graph(
-                self.graph_interface,
+                BaseValidator.graph_interface,
                 use_git=True,
             )
-        return self.graph_interface
+        return BaseValidator.graph_interface
 
     class Config:
         arbitrary_types_allowed = (

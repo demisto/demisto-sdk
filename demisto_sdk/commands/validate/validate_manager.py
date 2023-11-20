@@ -75,7 +75,7 @@ class ValidateManager:
                         )
                 else:
                     self.validation_results.extend(validation_results)
-        if BaseValidator().graph_initialized:
+        if BaseValidator.graph_interface:
             logger.info("Closing graph.")
             BaseValidator.graph_interface.close()
         return self.validation_results.post_results(

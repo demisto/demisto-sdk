@@ -8,6 +8,11 @@ on:
     branches:
       - "**"
 
+concurrency:
+  group: tests-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
 jobs:
   tests:
     name: Unit Tests / ${{ matrix.python-version }} (${{ matrix.group }})
@@ -25,68 +30,38 @@ jobs:
         with:
           fetch-depth: 0
 
+#      - name: checkout-content-repo
+#        run: |
+#          git clone https://github.com/demisto/content.git
+#          cd content
+#          git config diff.renameLimit 5000
+#          git --no-pager log -1
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Get full Python version
-        id: full-python-version
-        run: echo version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))") >> $GITHUB_OUTPUT
-
-      - name: Bootstrap poetry
+      - name: Setup Poetry
         run: |
-          pipx install poetry
-      - name: Configure poetry
-        run: poetry config virtualenvs.in-project true
+          sudo curl -sSL https://install.python-poetry.org | python3 -
+          poetry --version
+          poetry check --lock
+          poetry install
 
-      - name: Set up cache
-        uses: actions/cache@v3
-        id: cache
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+          node-version: '14'
 
-      - name: Ensure cache is healthy
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: |
-          # `timeout` is not available on macOS, so we define a custom function.
-          [ "$(command -v timeout)" ] || function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
-          # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
-          timeout 10s poetry run pip --version || rm -rf .venv
-      - name: Check lock file
-        run: poetry lock --check
-
-      - name: Install dependencies
-        run: poetry install --with github-actions
-
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
-        with:
-          # npm cache files are stored in `~/.npm` on Linux/macOS
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
-
-      - name: Install dependencies
+      - name: Install npm
         run: npm install
 
       - name: Run pytest
         run: |
-          source .venv/bin/activate
+          poetry shell
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
-          demisto-sdk start-content-graph
           poetry run pytest --cov --splits 5 --group ${{ matrix.group }} -v
       - name: Upload coverage
         uses: actions/upload-artifact@v2

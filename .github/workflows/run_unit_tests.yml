@@ -62,6 +62,7 @@ jobs:
           source "$(poetry env info --path)/bin/activate"
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
+          poetry run pytest --store-durations
           poetry run pytest --cov --splits 5 --group ${{ matrix.group }} -v
       - name: Upload coverage
         uses: actions/upload-artifact@v2

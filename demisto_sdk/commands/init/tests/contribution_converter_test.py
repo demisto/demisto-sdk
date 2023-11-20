@@ -1,10 +1,10 @@
-from collections import namedtuple
 import os
 import re
 import shutil
+from collections import namedtuple
 from os.path import join
 from pathlib import Path
-from typing import Optional, Tuple, Union, List
+from typing import List, Optional, Tuple, Union
 from zipfile import ZipFile
 
 import pytest
@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     LAYOUT,
     LAYOUTS_CONTAINER,
-    PACKS_DIR,
     PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
@@ -31,9 +30,8 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 )
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
-    get_previous_nonempty_line,
+    get_previous_nonempty_line
 )
-from demisto_sdk.utils.file_utils import merge_files
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
@@ -1821,3 +1819,163 @@ class TestFixupDetectedContentItems:
                 assert data_obj.get('commonfields', {}).get('id', '') == original_id
                 assert data_obj.get('name', '') == original_name
                 assert data_obj.get('display', '') == original_name
+
+
+@pytest.mark.helper
+class TestGetSourceIntegrationDisplayField:
+    valid_path = 'Packs/FakePack/Integrations/FakeIntegration/FakeIntegration.yml'
+
+    def test_get_source_integration_display_field_valid(self, tmp_path):
+        '''
+        Scenario: Get a source integration's display field value
+
+        Given
+        - The path to the source integration yaml file
+
+        When
+        - The file is valid
+        - The file contains the display field with a value of "Fake Integration"
+
+        Then
+        - Ensure calling the 'get_source_integration_display_field' function on the path returns "Fake Integration"
+        '''
+
+        # setup
+        path_to_file = tmp_path
+        path_split = self.valid_path.split('/')
+        for path_part in path_split[:-1]:
+            path_to_file = path_to_file / path_part
+            path_to_file.mkdir()
+        path_to_file = path_to_file / path_split[-1]
+
+        display_field_value = 'Fake Integration'
+        data_obj = {'display': display_field_value}
+        ryaml = yaml
+        with path_to_file.open('w') as df:
+            ryaml.dump(data_obj, df)
+
+        # assertions
+        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
+        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        assert fetched_display_field == display_field_value
+
+    def test_get_source_integration_display_field_valid_but_no_field(self, tmp_path):
+        '''
+        Scenario: Get a source integration's display field value
+
+        Given
+        - The path to the source integration yaml file
+
+        When
+        - The file is valid
+        - The file does not contain the "display" field (at the top level)
+
+        Then
+        - Ensure calling the 'get_source_integration_display_field' function on the path returns None
+        '''
+        
+
+        # setup
+        path_to_file = tmp_path
+        path_split = self.valid_path.split('/')
+        for path_part in path_split[:-1]:
+            path_to_file = path_to_file / path_part
+            path_to_file.mkdir()
+        path_to_file = path_to_file / path_split[-1]
+
+        data_obj = {'name': 'FakeName'}
+        ryaml = yaml
+        with path_to_file.open('w') as df:
+            ryaml.dump(data_obj, df)
+
+        # assertions
+        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
+        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        assert not fetched_display_field
+
+    def test_get_source_integration_display_field_invalid_file_type(self, tmp_path):
+        '''
+        Scenario: Get a source integration's display field value
+
+        Given
+        - The path to the source integration yaml file
+
+        When
+        - The path points to a directory (not a file)
+
+        Then
+        - Ensure calling the 'get_source_integration_display_field' function on the path returns None
+        '''
+
+        # setup
+        path_to_file = tmp_path
+        path_split = self.valid_path.split('/')
+        for path_part in path_split:
+            path_to_file = path_to_file / path_part
+            path_to_file.mkdir()
+
+        # assertions
+        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
+        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        assert not fetched_display_field
+
+    def test_get_source_integration_display_field_invalid_no_file(self, tmp_path):
+        '''
+        Scenario: Get a source integration's display field value
+
+        Given
+        - The path to the source integration yaml file
+
+        When
+        - The file pointed to by the path does not exist
+
+        Then
+        - Ensure calling the 'get_source_integration_display_field' function on the path returns None
+        '''
+
+        # setup
+        path_to_file = tmp_path
+        path_split = self.valid_path.split('/')
+        for path_part in path_split[:-1]:
+            path_to_file = path_to_file / path_part
+            path_to_file.mkdir()
+        path_to_file = path_to_file / path_split[-1]
+
+        # assertions
+        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
+        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        assert not fetched_display_field
+
+    def test_get_source_integration_display_field_invalid_not_yaml(self, tmp_path):
+        '''
+        Scenario: Get a source integration's display field value
+
+        Given
+        - The path to the source integration file
+
+        When
+        - The file is not a yaml (wrong file type extension)
+        - The file contains the display field with a value of "Fake Integration"
+
+        Then
+        - Ensure calling the 'get_source_integration_display_field' function on the path returns None
+        '''
+
+        # setup
+        path_to_file = tmp_path
+        path_split = self.valid_path.split('/')
+        for path_part in path_split[:-1]:
+            path_to_file = path_to_file / path_part
+            path_to_file.mkdir()
+        path_to_file = path_to_file / path_split[-1].replace('.yml', '.txt')
+
+        display_field_value = 'Fake Integration'
+        data_obj = {'display': display_field_value}
+        ryaml = yaml
+        with path_to_file.open('w') as df:
+            ryaml.dump(data_obj, df)
+
+        # assertions
+        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
+        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        assert not fetched_display_field

@@ -59,7 +59,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          poetry shell
+          poetry shell --no-ansi
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
           poetry run pytest --cov --splits 5 --group ${{ matrix.group }} -v

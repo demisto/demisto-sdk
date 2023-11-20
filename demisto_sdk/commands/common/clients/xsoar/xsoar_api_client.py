@@ -2,6 +2,7 @@ import contextlib
 import re
 import urllib.parse
 from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
 
 import dateparser
 import demisto_client
@@ -141,7 +142,7 @@ class XsoarClient(BaseModel):
             filters: whether there are any filters to apply
 
         Returns:
-            raw response
+            raw response of the found packs
         """
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
@@ -149,6 +150,94 @@ class XsoarClient(BaseModel):
             path="/contentpacks/marketplace/search",
             response_type="object",
             body=filters,
+        )
+        return raw_response
+
+    def get_marketplace_pack(self, pack_id: str):
+        """
+        Retrives a marketplace pack metadata
+
+        Args:
+            pack_id: the pack ID to retrieve.
+
+        Returns:
+            raw response of the found pack request
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="GET",
+            path=f"/contentpacks/marketplace/{pack_id}",
+            response_type="object",
+        )
+        return raw_response
+
+    def delete_marketplace_packs(self, pack_ids: List[str]):
+        """
+        Deletes installed packs from the marketplace.
+
+        Args:
+            pack_ids: list of pack IDs to delete
+
+        Returns:
+            raw response of the deleted packs request
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/contentpacks/installed/delete",
+            response_type="object",
+            body={"IDs": pack_ids},
+        )
+        return raw_response
+
+    def upload_marketplace_packs(self, zipped_packs_path: Path | str, skip_validation: bool = True):
+        """
+        Uploads packs to the marketplace.
+
+        Args:
+            pack_ids: list of pack IDs to upload
+            skip_validation: whether to skip packs validations, True if yes, False if not.
+
+        Returns:
+            raw response of the upload packs request
+        """
+        params = {}
+        if skip_validation:
+            params["skip_validation"] = "true"
+
+        raw_response = self.client.upload_content_packs(
+            str(zipped_packs_path), **params
+        )
+
+        return raw_response
+
+    def install_marketplace_packs(self, packs: List[Dict[str, Any]], ignore_warnings: bool = True):
+        """
+        Installs packs from the marketplace.
+
+        Args:
+            packs: the packs metadata to install
+            ignore_warnings: whether to ignore warnings when installing, True if yes, False if not.
+
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/contentpacks/marketplace/install",
+            response_type="object",
+            body={"packs": packs, "ignoreWarnings": ignore_warnings}
+        )
+        return raw_response
+
+    def sync_marketplace(self):
+        """
+        Syncs up the marketplace.
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/contentpacks/marketplace/sync",
+            response_type="object",
         )
         return raw_response
 

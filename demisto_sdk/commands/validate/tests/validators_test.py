@@ -270,7 +270,7 @@ def test_gather_validations_to_run(
         ),
     ],
 )
-def test_write_validation_results(results, fixing_results, expected_results):
+def test_write_results_to_json_file(results, fixing_results, expected_results):
     """
     Given
     results and fixing_results lists.
@@ -278,7 +278,7 @@ def test_write_validation_results(results, fixing_results, expected_results):
         - Case 2: Both lists are empty.
         - Case 3: Both lists has one item.
     When
-    - Calling the write_validation_results function.
+    - Calling the write_results_to_json_file function.
     Then
         - Case 1: Make sure the results hold both list where the fixing results is empty.
         - Case 2: Make sure the results hold both list where both are empty.
@@ -291,7 +291,7 @@ def test_write_validation_results(results, fixing_results, expected_results):
         validation_results = ResultWriter(json_file_path=temp_file_path)
         validation_results.results = results
         validation_results.fixing_results = fixing_results
-        validation_results.write_validation_results()
+        validation_results.write_results_to_json_file()
         with open(temp_file_path, "r") as file:
             loaded_data = json.load(file)
             assert loaded_data == expected_results

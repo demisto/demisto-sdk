@@ -70,11 +70,11 @@ class ValidateManager:
                 validation_results: List[ValidationResult] = validator.is_valid(filtered_content_objects_for_validator)  # type: ignore
                 if self.allow_autofix and validator.is_auto_fixable:
                     for validation_result in validation_results:
-                        self.validation_results.append_fixing_results(
+                        self.validation_results.append_fix_results(
                             validator.fix(validation_result.content_object)  # type: ignore
                         )
                 else:
-                    self.validation_results.extend(validation_results)
+                    self.validation_results.extend_validation_results(validation_results)
         if BaseValidator.graph_interface:
             logger.info("Closing graph.")
             BaseValidator.graph_interface.close()

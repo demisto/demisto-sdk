@@ -26,7 +26,7 @@ class ResultWriter:
         Args:
             json_file_path Optional[str]: The json path to write the outputs into.
         """
-        self.results: List[ValidationResult] = []
+        self.validation_results: List[ValidationResult] = []
         self.fixing_results: List[FixResult] = []
         if json_file_path:
             self.json_file_path = (
@@ -52,8 +52,8 @@ class ResultWriter:
         fixed_objects_set: Set[BaseContent] = set()
         exit_code = 0
         if self.json_file_path:
-            self.write_validation_results()
-        for result in self.results:
+            self.write_results_to_json_file()
+        for result in self.validation_results:
             if only_throw_warning and result.validator.error_code in only_throw_warning:
                 logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
             else:
@@ -73,12 +73,12 @@ class ResultWriter:
             fixed_object.save()
         return exit_code
 
-    def write_validation_results(self):
+    def write_results_to_json_file(self):
         """
         If the json path argument is given,
         Writing all the results into a json file located in the given path.
         """
-        json_validations_list = [result.format_json_message for result in self.results]
+        json_validations_list = [result.format_json_message for result in self.validation_results]
         json_fixing_list = [
             fixing_result.format_json_message for fixing_result in self.fixing_results
         ]
@@ -93,15 +93,15 @@ class ResultWriter:
         with open(self.json_file_path, "w") as outfile:
             outfile.write(json_object)
 
-    def append(self, validation_result: ValidationResult):
+    def append_validation_results(self, validation_result: ValidationResult):
         """Append an item to the validation results list.
 
         Args:
             validation_result (ValidationResult): the validation result to append.
         """
-        self.results.append(validation_result)
+        self.validation_results.append(validation_result)
 
-    def append_fixing_results(self, fixing_result: FixResult):
+    def append_fix_results(self, fixing_result: FixResult):
         """Append an item to the fixing results list.
 
         Args:
@@ -109,15 +109,15 @@ class ResultWriter:
         """
         self.fixing_results.append(fixing_result)
 
-    def extend(self, validation_results: List[ValidationResult]):
+    def extend_validation_results(self, validation_results: List[ValidationResult]):
         """Extending the list of ValidationResult objects with a given list of validation results.
 
         Args:
             validation_results (List[ValidationResult]): The list of ValidationResult objects to add to the existing list.
         """
-        self.results.extend(validation_results)
+        self.validation_results.extend(validation_results)
 
-    def extend_fixing_results(self, fixing_results: List[FixResult]):
+    def extend_fix_results(self, fixing_results: List[FixResult]):
         """Extending the list of FixResult objects with a given list of FixResult objects.
 
         Args:

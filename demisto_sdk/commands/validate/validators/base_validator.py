@@ -12,6 +12,7 @@ from typing import (
 )
 
 from pydantic import BaseModel
+from demisto_sdk.commands.common.constants import GitStatuses
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -35,9 +36,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     error_message: (ClassVar[str]): The validation's error message.
     fixing_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
-    expected_git_statuses: (ClassVar[Optional[List[str]]]): The list of git statuses the validation should run on.
-    graph: (ClassVar[bool]): Wether the validation is a graph validation or not.
+    expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
+    run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
+    graph_initialized: (ClassVar[bool]): If the graph was initialized or not.
+    graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
     """
 
     error_code: ClassVar[str]
@@ -45,7 +48,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     error_message: ClassVar[str]
     fixing_message: ClassVar[str] = ""
     related_field: ClassVar[str]
-    expected_git_statuses: ClassVar[Optional[List[str]]] = []
+    expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_initialized: ClassVar[bool] = False
@@ -56,11 +59,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         if isinstance(args, (BaseContent, BaseContentMetaclass)):
             return args
         return get_args(args)
-
-    def should_run_on_deprecated(self, content_item):
-        if content_item.deprecated and not self.run_on_deprecated:
-            return False
-        return True
 
     def should_run(
         self,
@@ -81,7 +79,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return all(
             [
                 isinstance(content_item, self.get_content_types()),
-                self.should_run_on_deprecated(content_item),
+                should_run_on_deprecated(self.run_on_deprecated, content_item),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),
@@ -202,3 +200,8 @@ def should_run_according_to_status(
         bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
     """
     return not expected_git_statuses or content_item_git_status in expected_git_statuses
+
+def should_run_on_deprecated(run_on_deprecated, content_item):
+    if content_item.deprecated and not run_on_deprecated:
+        return False
+    return True

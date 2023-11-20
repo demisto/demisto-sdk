@@ -1,8 +1,8 @@
 import contextlib
 import re
 import urllib.parse
-from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 import dateparser
 import demisto_client
@@ -190,7 +190,9 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
-    def upload_marketplace_packs(self, zipped_packs_path: Path | str, skip_validation: bool = True):
+    def upload_marketplace_packs(
+        self, zipped_packs_path: Path | str, skip_validation: bool = True
+    ):
         """
         Uploads packs to the marketplace.
 
@@ -211,7 +213,9 @@ class XsoarClient(BaseModel):
 
         return raw_response
 
-    def install_marketplace_packs(self, packs: List[Dict[str, Any]], ignore_warnings: bool = True):
+    def install_marketplace_packs(
+        self, packs: List[Dict[str, Any]], ignore_warnings: bool = True
+    ):
         """
         Installs packs from the marketplace.
 
@@ -225,7 +229,7 @@ class XsoarClient(BaseModel):
             method="POST",
             path="/contentpacks/marketplace/install",
             response_type="object",
-            body={"packs": packs, "ignoreWarnings": ignore_warnings}
+            body={"packs": packs, "ignoreWarnings": ignore_warnings},
         )
         return raw_response
 

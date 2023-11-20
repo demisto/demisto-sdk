@@ -191,7 +191,7 @@ class XsoarClient(BaseModel):
         return raw_response
 
     def upload_marketplace_packs(
-        self, zipped_packs_path: Path | str, skip_validation: bool = True
+        self, zipped_packs_path: Union[Path, str], skip_validation: bool = True
     ):
         """
         Uploads packs to the marketplace.

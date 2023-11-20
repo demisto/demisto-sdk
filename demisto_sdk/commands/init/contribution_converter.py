@@ -6,17 +6,13 @@ import traceback
 import zipfile
 from collections import defaultdict, namedtuple
 from datetime import datetime
-from distutils.dir_util import copy_tree
 from io import StringIO
 from pathlib import Path
 from string import punctuation
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from zipfile import ZipFile
-from click import Option
 
 from packaging.version import Version
-import yaml
-from TestSuite.yml import YAML
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -168,7 +164,7 @@ class ContributionConverter:
         self.create_new = create_new
         self.contribution_items_version: Dict[str, Dict[str, str]] = {}
         self.contribution_items_version_note = ""
-        self.base_dir = base_dir or CONTENT_PATH  # type: ignore
+        base_dir = base_dir or CONTENT_PATH  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)

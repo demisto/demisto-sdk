@@ -51,7 +51,7 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
-    pack: Any = Field(None, exclude=True)
+    pack: Any = Field(None, exclude=True, repr=False)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:

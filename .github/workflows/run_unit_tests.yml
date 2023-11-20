@@ -62,8 +62,17 @@ jobs:
           source "$(poetry env info --path)/bin/activate"
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
+          
+          TEST_FILES=$(circleci tests glob "**/*_test.py")
+          # filter out files which are in .venv directory
+          TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
+          TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
+          TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
+          TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
+
+          
           poetry run pytest --store-durations
-          poetry run pytest --cov --splits 5 --group ${{ matrix.group }} -v
+          poetry run pytest -v --cov --splits 5 --group ${{ matrix.group }} $TEST_FILES
       - name: Upload coverage
         uses: actions/upload-artifact@v2
         with:

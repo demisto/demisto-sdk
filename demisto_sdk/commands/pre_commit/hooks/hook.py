@@ -1,9 +1,12 @@
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 
 
 class Hook:
@@ -42,12 +45,18 @@ class Hook:
         Returns: the number of files that ultimately are set on the hook. Use this to decide if to run the hook at all
 
         """
-        files_to_run_on_hook = self.filter_files_matching_hook_config(files)
+        if files and not isinstance(files[0], tuple):
+            files = [(f, None) for f in files]
+        files_to_run_on_hook = {
+            file for file, _ in self.filter_files_matching_hook_config(files)
+        }
         hook["files"] = join_files(files_to_run_on_hook)
 
         return len(files_to_run_on_hook)
 
-    def filter_files_matching_hook_config(self, files):
+    def filter_files_matching_hook_config(
+        self, files: Iterable[Tuple[Path, Optional[IntegrationScript]]]
+    ):
         """
         returns files that should be run in this hook according to the provided regexs in files and exclude
         Note, we could easily support glob syntax here too in the future.
@@ -69,8 +78,8 @@ class Hook:
             logger.info("regex not set correctly on hook. Ignoring")
 
         return {
-            file
-            for file in files
+            (file, obj)
+            for file, obj in files
             if (
                 not include_pattern or re.search(include_pattern, str(file))
             )  # include all if not defined

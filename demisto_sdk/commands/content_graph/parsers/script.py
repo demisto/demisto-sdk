@@ -43,6 +43,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
             {
                 "docker_image": "dockerimage",
                 "description": "comment",
+                "alt_dockerimages": "alt_dockerimages",
             }
         )
         return super().field_mapping
@@ -50,10 +51,6 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
     @property
     def description(self) -> Optional[str]:
         return get_value(self.yml_data, self.field_mapping.get("description", ""), "")
-
-    @property
-    def docker_image(self) -> str:
-        return get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
 
     def connect_to_dependencies(self) -> None:
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.

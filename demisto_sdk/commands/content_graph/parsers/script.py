@@ -43,7 +43,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
             {
                 "docker_image": "dockerimage",
                 "description": "comment",
-                "alt_dockerimages": "alt_dockerimages",
+                "alt_docker_images": "alt_dockerimages",
             }
         )
         return super().field_mapping

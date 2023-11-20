@@ -2552,7 +2552,7 @@ def get_demisto_version(client: demisto_client) -> Version:
         about_data = json.loads(resp[0].replace("'", '"'))
         return Version(Version(about_data.get("demistoVersion")).base_version)
     except Exception as e:
-        logger.debug(f"Failed to get server version. Error: {e}")
+        logger.debug(f"Failed to fetch server version. Error: {e}")
         logger.warning(
             "Could not parse server version, please make sure the environment is properly configured."
         )

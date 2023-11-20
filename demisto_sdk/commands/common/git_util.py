@@ -1,6 +1,6 @@
-import functools
 import os
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Set, Tuple, Union
 
@@ -132,7 +132,7 @@ class GitUtil:
         except KeyError:
             return False
 
-    @functools.lru_cache
+    @lru_cache
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files("-z").split("\x00")))
 
@@ -604,7 +604,7 @@ class GitUtil:
 
         return extracted_paths
 
-    @functools.lru_cache
+    @lru_cache
     def _get_staged_files(self) -> Set[Path]:
         """Get only staged files
 
@@ -944,9 +944,11 @@ class GitUtil:
         """
         return bool(self.repo.ignored(file_path))
 
+    @lru_cache
     def fetch(self):
         self.repo.remote().fetch()
 
+    @lru_cache
     def fetch_all(self):
         for remote in self.repo.remotes:
             remote.fetch()

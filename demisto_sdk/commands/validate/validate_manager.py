@@ -74,7 +74,9 @@ class ValidateManager:
                             validator.fix(validation_result.content_object)  # type: ignore
                         )
                 else:
-                    self.validation_results.extend_validation_results(validation_results)
+                    self.validation_results.extend_validation_results(
+                        validation_results
+                    )
         if BaseValidator.graph_interface:
             logger.info("Closing graph.")
             BaseValidator.graph_interface.close()

@@ -12,8 +12,8 @@ from typing import (
 )
 
 from pydantic import BaseModel
-from demisto_sdk.commands.common.constants import GitStatuses
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
@@ -187,7 +187,8 @@ def is_support_level_support_validation(
 
 
 def should_run_according_to_status(
-    content_item_git_status: Optional[str], expected_git_statuses: Optional[List[str]]
+    content_item_git_status: Optional[GitStatuses],
+    expected_git_statuses: Optional[List[GitStatuses]],
 ) -> bool:
     """
     Check if the given content item git status is in the given expected git statuses for the specific validation.
@@ -200,6 +201,7 @@ def should_run_according_to_status(
         bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
     """
     return not expected_git_statuses or content_item_git_status in expected_git_statuses
+
 
 def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:

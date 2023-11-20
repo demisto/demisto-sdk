@@ -78,7 +78,9 @@ class ResultWriter:
         If the json path argument is given,
         Writing all the results into a json file located in the given path.
         """
-        json_validations_list = [result.format_json_message for result in self.validation_results]
+        json_validations_list = [
+            result.format_json_message for result in self.validation_results
+        ]
         json_fixing_list = [
             fixing_result.format_json_message for fixing_result in self.fixing_results
         ]

@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added a debug-level log with more information in case connection to the server failed while trying to fetch its version.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

@@ -63,9 +63,18 @@ class XsoarClient(BaseModel):
 
     @validator("client", always=True, pre=True)
     def validate_client_configured_correctly(
-        cls, v: Optional[DefaultApi]
+        cls, v: Optional[DefaultApi], values: Dict[str, Any]
     ) -> DefaultApi:
-        return v or demisto_client.configure()
+        if v:
+            return v
+        config: XsoarClientConfig = values["config"]
+        return demisto_client.configure(
+            config.base_api_url,
+            api_key=config.api_key,
+            auth_id=config.auth_id,
+            username=config.user,
+            password=config.password,
+        )
 
     @validator("about_xsoar", always=True)
     def get_xsoar_server_about(cls, v: Optional[Dict], values: Dict[str, Any]) -> Dict:
@@ -84,6 +93,7 @@ class XsoarClient(BaseModel):
         Returns XSOAR version
         """
         if xsoar_version := self.about_xsoar.get("demistoVersion"):
+            logger.debug(f"{self.base_url} version is {xsoar_version}")
             return Version(xsoar_version)
         raise RuntimeError(f"Could not get version from instance {self.xsoar_host_url}")
 
@@ -171,7 +181,7 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
-    def delete_marketplace_packs(self, pack_ids: List[str]):
+    def uninstall_marketplace_packs(self, pack_ids: List[str]):
         """
         Deletes installed packs from the marketplace.
 
@@ -188,6 +198,7 @@ class XsoarClient(BaseModel):
             response_type="object",
             body={"IDs": pack_ids},
         )
+        logger.debug(f"Successfully removed packs {pack_ids} from {self.base_url}")
         return raw_response
 
     def upload_marketplace_packs(
@@ -207,11 +218,7 @@ class XsoarClient(BaseModel):
         if skip_validation:
             params["skip_validation"] = "true"
 
-        raw_response = self.client.upload_content_packs(
-            str(zipped_packs_path), **params
-        )
-
-        return raw_response
+        return self.client.upload_content_packs(str(zipped_packs_path), **params)
 
     def install_marketplace_packs(
         self, packs: List[Dict[str, Any]], ignore_warnings: bool = True
@@ -274,19 +281,19 @@ class XsoarClient(BaseModel):
             is_long_running: whether the integration is a long-running-integration
             should_enable: should the instance be enabled, True if yes, False if not.
             response_type: the response type to return
-            should_test: whether to test the newly created integration (run its test-module)
+            should_test: whether to test the newly created integration (run its test-module),
+                         True to run test module, False if not.
 
         Returns:
             raw response of the newly created integration instance
         """
         logger.info(
-            f"Creating integration instance {instance_name} for Integration {_id}"
+            f"Creating integration instance {instance_name} for integration {_id}"
         )
         integrations_metadata: Dict[
             str, Any
         ] = self.get_integrations_module_configuration(_id)
         with contextlib.suppress(ValueError):
-
             instance = self.get_integration_instance(instance_name)
             logger.info(
                 f"Integration instance {instance_name} already exists, deleting instance"
@@ -385,26 +392,23 @@ class XsoarClient(BaseModel):
         return raw_response
 
     @retry(exceptions=ApiException)
-    def test_module(self, _id: str, instance_name: str, response_type: str = "object"):
+    def test_module(self, _id: str, instance_name: str):
         """
         Runs test module for an integration instance
 
         Args:
             _id: the ID of the integration
             instance_name: the instance integration name
-            response_type: the type of the response to return
-
-        Returns:
 
         """
         logger.info(f"Running test-module on {_id}")
-        instance = self.get_integration_instance(instance_name, response_type)
+        instance = self.get_integration_instance(instance_name)
         response_data, response_code, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/settings/integration/test",
             body=instance,
-            response_type=response_type,
+            response_type="object",
             _request_timeout=240,
         )
         if response_code >= 300 or not response_data.get("success"):
@@ -423,8 +427,6 @@ class XsoarClient(BaseModel):
             instance_id: the ID of the instance to delete
             response_type: the response type to return
 
-        Returns:
-            raw response of the deleted integration
         """
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
@@ -432,7 +434,9 @@ class XsoarClient(BaseModel):
             path=f"/settings/integration/{urllib.parse.quote(instance_id)}",
             response_type=response_type,
         )
-        return raw_response
+        logger.debug(
+            f"Successfully removed instance {instance_id} from {self.base_url}"
+        )
 
     @retry(exceptions=ApiException)
     def get_integrations_module_configuration(
@@ -451,6 +455,9 @@ class XsoarClient(BaseModel):
             if _id is provided, the module config of a specific integration,
             otherwise all module configs of all integrations
         """
+        if response_type != "object" and _id:
+            raise ValueError('response_type be equal to "object" when providing _id')
+
         raw_response = self.search_integrations(response_type=response_type)
         if not _id:
             return raw_response
@@ -463,23 +470,15 @@ class XsoarClient(BaseModel):
         )
 
     @retry(exceptions=ApiException)
-    def get_integration_instance(
-        self,
-        instance_name: str,
-        response_type: str = "object",
-    ):
+    def get_integration_instance(self, instance_name: str):
         """
-        Get the integration(s) module configuration(s)
+        Searches for an existing integration instance.
 
         Args:
             instance_name: the instance name of the integration
-            response_type: the response type to return
 
-        Returns:
-            if _id is provided, the module config of a specific integration,
-            otherwise all module configs of all integrations
         """
-        raw_response = self.search_integrations(response_type=response_type)
+        raw_response = self.search_integrations()
         for instance in raw_response.get("instances", []):
             if instance_name == instance.get("name"):
                 return instance
@@ -703,6 +702,8 @@ class XsoarClient(BaseModel):
                 f"could not delete the following indicator IDs "
                 f"{indicators_ids_to_remove.difference(successful_removed_ids)}"
             )
+        else:
+            logger.debug(f"Successfully deleted indicators {indicator_ids}")
 
         return raw_response
 
@@ -724,12 +725,11 @@ class XsoarClient(BaseModel):
         Returns:
             the raw response of existing indicators
         """
-        body = {"page": page, "size": size, "query": query}
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/indicators/search",
-            body=body,
+            body={"page": page, "size": size, "query": query},
             response_type=response_type,
         )
         return raw_response
@@ -842,6 +842,9 @@ class XsoarClient(BaseModel):
 
         update_entry = {"investigationId": investigation_id, "data": command}
         self.client.investigation_add_entries_sync(update_entry=update_entry)
+        logger.debug(
+            f"Successfully run the command {command} in investigation {investigation_id}"
+        )
 
         return self.get_investigation_context(investigation_id, response_type)
 
@@ -958,7 +961,7 @@ class XsoarClient(BaseModel):
                 ] = f'Body:\n{entry["contents"]}'
         return error_entries
 
-    @retry(times=20, delay=3, exceptions=ApiException)
+    @retry(exceptions=ApiException)
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):
         """
         Returns the playbook state within an incident

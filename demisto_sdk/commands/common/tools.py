@@ -4215,8 +4215,6 @@ def pascal_to_snake(pascal_string):
         else:
             result.append(char)
     return "".join(result)
-<<<<<<< HEAD
-=======
 
 
 def retry(
@@ -4311,4 +4309,3 @@ def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> 
 
         raise SecretManagerException
     return payload["params"]
->>>>>>> master

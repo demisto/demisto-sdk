@@ -13,9 +13,6 @@ from typing import (
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-=======
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -23,7 +20,6 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
->>>>>>> master
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
@@ -40,17 +36,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     error_message: (ClassVar[str]): The validation's error message.
     fixing_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
-<<<<<<< HEAD
-    expected_git_statuses: (ClassVar[Optional[List[str]]]): The list of git statuses the validation should run on.
-    graph: (ClassVar[bool]): Wether the validation is a graph validation or not.
-    is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
-=======
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
     run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     graph_initialized: (ClassVar[bool]): If the graph was initialized or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
->>>>>>> master
     """
 
     error_code: ClassVar[str]
@@ -58,18 +48,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     error_message: ClassVar[str]
     fixing_message: ClassVar[str] = ""
     related_field: ClassVar[str]
-<<<<<<< HEAD
-    expected_git_statuses: ClassVar[Optional[List[str]]] = []
-    run_on_deprecated: ClassVar[bool] = False
-    is_auto_fixable: ClassVar[bool] = False
-    validate_graph: ClassVar[bool] = False
-=======
     expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_initialized: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
->>>>>>> master
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -77,14 +60,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             return args
         return get_args(args)
 
-<<<<<<< HEAD
-    def should_run_on_deprecated(self, content_item):
-        if content_item.deprecated and not self.run_on_deprecated:
-            return False
-        return True
-
-=======
->>>>>>> master
     def should_run(
         self,
         content_item: ContentTypes,
@@ -104,11 +79,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return all(
             [
                 isinstance(content_item, self.get_content_types()),
-<<<<<<< HEAD
-                self.should_run_on_deprecated(content_item),
-=======
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
->>>>>>> master
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),
@@ -133,8 +104,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     ) -> FixResult:
         raise NotImplementedError
 
-<<<<<<< HEAD
-=======
     @property
     def graph(self) -> ContentGraphInterface:
         if not BaseValidator.graph_initialized:
@@ -147,7 +116,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             )
         return BaseValidator.graph_interface
 
->>>>>>> master
     class Config:
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
@@ -198,10 +166,6 @@ def is_error_ignored(
     Returns:
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
-<<<<<<< HEAD
-    a = err_code in ignored_errors and err_code in ignorable_errors
-=======
->>>>>>> master
     return err_code in ignored_errors and err_code in ignorable_errors
 
 
@@ -223,12 +187,8 @@ def is_support_level_support_validation(
 
 
 def should_run_according_to_status(
-<<<<<<< HEAD
-    content_item_git_status: Optional[str], expected_git_statuses: Optional[List[str]]
-=======
     content_item_git_status: Optional[GitStatuses],
     expected_git_statuses: Optional[List[GitStatuses]],
->>>>>>> master
 ) -> bool:
     """
     Check if the given content item git status is in the given expected git statuses for the specific validation.
@@ -241,12 +201,9 @@ def should_run_according_to_status(
         bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
     """
     return not expected_git_statuses or content_item_git_status in expected_git_statuses
-<<<<<<< HEAD
-=======
 
 
 def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:
         return False
     return True
->>>>>>> master

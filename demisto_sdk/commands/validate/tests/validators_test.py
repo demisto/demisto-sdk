@@ -1,18 +1,12 @@
 import logging
 import tempfile
-<<<<<<< HEAD
-=======
 from pathlib import Path
->>>>>>> master
 from unittest.mock import patch
 
 import pytest
 import toml
 
-<<<<<<< HEAD
-=======
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
->>>>>>> master
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -21,11 +15,7 @@ from demisto_sdk.commands.validate.config_reader import (
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-<<<<<<< HEAD
-from demisto_sdk.commands.validate.validation_results import ValidationResults
-=======
 from demisto_sdk.commands.validate.validation_results import ResultWriter
->>>>>>> master
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name_all_statuses import (
     IDNameAllStatusesValidator,
 )
@@ -36,8 +26,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
-<<<<<<< HEAD
-=======
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
@@ -50,7 +38,6 @@ from TestSuite.test_tools import str_in_call_args_list
 INTEGRATION = create_integration_object()
 INTEGRATION.path = Path(
     f"{CONTENT_PATH}/Packs/pack_0/Integrations/integration_0/integration_0.yml"
->>>>>>> master
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
@@ -64,17 +51,10 @@ INTEGRATION = create_integration_object()
 
 
 def get_validate_manager(mocker):
-<<<<<<< HEAD
-    validation_results = ValidationResults()
-    config_reader = ConfigReader(category_to_run="test")
-    initializer = Initializer()
-    mocker.patch.object(Initializer, "gather_objects_to_run", return_value={})
-=======
     validation_results = ResultWriter()
     config_reader = ConfigReader(category_to_run="test")
     initializer = Initializer()
     mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value={})
->>>>>>> master
     return ValidateManager(
         validation_results=validation_results,
         config_reader=config_reader,
@@ -299,11 +279,7 @@ def test_gather_validations_to_run(
         ),
     ],
 )
-<<<<<<< HEAD
-def test_write_validation_results(results, fixing_results, expected_results):
-=======
 def test_write_results_to_json_file(results, fixing_results, expected_results):
->>>>>>> master
     """
     Given
     results and fixing_results lists.
@@ -311,11 +287,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
         - Case 2: Both lists are empty.
         - Case 3: Both lists has one item.
     When
-<<<<<<< HEAD
-    - Calling the write_validation_results function.
-=======
     - Calling the write_results_to_json_file function.
->>>>>>> master
     Then
         - Case 1: Make sure the results hold both list where the fixing results is empty.
         - Case 2: Make sure the results hold both list where both are empty.
@@ -325,17 +297,10 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
         mode="w", delete=False, suffix=".json"
     ) as temp_file:
         temp_file_path = temp_file.name
-<<<<<<< HEAD
-        validation_results = ValidationResults(json_file_path=temp_file_path)
-        validation_results.results = results
-        validation_results.fixing_results = fixing_results
-        validation_results.write_validation_results()
-=======
         validation_results = ResultWriter(json_file_path=temp_file_path)
         validation_results.validation_results = results
         validation_results.fixing_results = fixing_results
         validation_results.write_results_to_json_file()
->>>>>>> master
         with open(temp_file_path, "r") as file:
             loaded_data = json.load(file)
             assert loaded_data == expected_results
@@ -422,13 +387,8 @@ def test_post_results(
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-<<<<<<< HEAD
-    validation_results = ValidationResults()
-    validation_results.results = results
-=======
     validation_results = ResultWriter()
     validation_results.validation_results = results
->>>>>>> master
     exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
     assert exit_code == expected_exit_code
     assert logger_warning.call_count == expected_warnings_call_count

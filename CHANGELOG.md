@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
+* fixed an issue where to_id_set_entity method failed on id extraction.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

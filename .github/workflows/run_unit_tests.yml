@@ -63,7 +63,6 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
           
-          TEST_FILES=$(circleci tests glob "**/*_test.py")
           # filter out files which are in .venv directory
           TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
           TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')

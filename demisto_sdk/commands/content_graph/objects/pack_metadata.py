@@ -230,6 +230,7 @@ class PackMetadata(BaseModel):
                 [
                     playbook.name.startswith("TIM ")
                     for playbook in content_items.playbook
+                    if not playbook.is_test
                 ]
             )
             else set()
@@ -237,12 +238,24 @@ class PackMetadata(BaseModel):
         tags |= {PackTags.USE_CASE} if self.use_cases else set()
         tags |= (
             {PackTags.TRANSFORMER}
-            if any(["transformer" in script.tags for script in content_items.script])
+            if any(
+                [
+                    "transformer" in script.tags
+                    for script in content_items.script
+                    if not script.is_test
+                ]
+            )
             else set()
         )
         tags |= (
             {PackTags.FILTER}
-            if any(["filter" in script.tags for script in content_items.script])
+            if any(
+                [
+                    "filter" in script.tags
+                    for script in content_items.script
+                    if not script.is_test
+                ]
+            )
             else set()
         )
         tags |= (

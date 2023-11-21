@@ -1,9 +1,15 @@
 import pytest
 
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.validate.tests.test_tools import create_metadata_object
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
 )
+
+
+@pytest.fixture(scope="session")
+def setup_before_tests(mocker):
+    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
 
 @pytest.mark.parametrize(

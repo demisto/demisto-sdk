@@ -519,9 +519,14 @@ class XsoarClient(BaseModel):
 
         create_incident_request.name = name
 
-        return self.client.create_incident(
-            create_incident_request=create_incident_request
-        )
+        try:
+            return self.client.create_incident(
+                create_incident_request=create_incident_request
+            )
+        except ApiException as err:
+            if err.status == requests.codes.bad_request and attached_playbook_id:
+                raise ValueError(f"playbook-id {attached_playbook_id} does not exist.")
+            raise
 
     @retry(exceptions=ApiException)
     def search_incidents(

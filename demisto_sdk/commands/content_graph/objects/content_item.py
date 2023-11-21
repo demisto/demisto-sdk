@@ -327,7 +327,7 @@ class ContentItem(BaseContent):
         """
         id_set_entity = self.dict()
         id_set_entity["file_path"] = str(self.path)
-        id_set_entity["pack"] = self.pack.object_id  # type: ignore[union-attr]
+        id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
 
     def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:

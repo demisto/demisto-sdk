@@ -20,10 +20,10 @@ from demisto_sdk.commands.common.clients.configs import (
 )
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import (
+    IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.constants import IncidentState, MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 

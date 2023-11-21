@@ -59,6 +59,7 @@ jobs:
 
       - name: Run pytest
         run: |
+          shopt -u globstar
           source "$(poetry env info --path)/bin/activate"
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!

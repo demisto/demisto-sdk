@@ -5,7 +5,11 @@ import click
 
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
+<<<<<<< HEAD
 from demisto_sdk.commands.validate.validation_results import ValidationResults
+=======
+from demisto_sdk.commands.validate.validation_results import ResultWriter
+>>>>>>> master
 
 try:
     import git
@@ -28,7 +32,6 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
-    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -580,7 +583,11 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Skip conf.json validation.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip conf.json validation.",
+>>>>>>> master
 )
 @click.option(
     "-s",
@@ -588,12 +595,20 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Perform validations using the id_set file.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Perform validations using the id_set file.",
+>>>>>>> master
 )
 @click.option(
     "-idp",
     "--id-set-path",
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. The path of the id-set.json used for validations.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. The path of the id-set.json used for validations.",
+>>>>>>> master
     type=click.Path(resolve_path=True),
 )
 @click.option(
@@ -602,7 +617,11 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Perform validations on content graph.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Perform validations on content graph.",
+>>>>>>> master
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
@@ -611,7 +630,11 @@ def zip_packs(ctx, **kwargs) -> int:
     "--no-backward-comp",
     is_flag=True,
     show_default=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Whether to check backward compatibility or not.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to check backward compatibility or not.",
+>>>>>>> master
 )
 @click.option(
     "-g",
@@ -643,7 +666,11 @@ def zip_packs(ctx, **kwargs) -> int:
     "-iu",
     "--include-untracked",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Whether to include untracked files in the validation. "
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to include untracked files in the validation. "
+>>>>>>> master
     "This applies only when the -g flag is supplied.",
 )
 @click.option(
@@ -665,37 +692,65 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--skip-pack-release-notes",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Skip validation of pack release notes.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack release notes.",
+>>>>>>> master
 )
 @click.option(
     "--print-ignored-errors",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Print ignored errors as warnings.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Print ignored errors as warnings.",
+>>>>>>> master
 )
 @click.option(
     "--print-ignored-files",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Print which files were ignored by the command.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Print which files were ignored by the command.",
+>>>>>>> master
 )
 @click.option(
     "--no-docker-checks",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Whether to run docker image validation.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to run docker image validation.",
+>>>>>>> master
 )
 @click.option(
     "--silence-init-prints",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Whether to skip the initialization prints.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to skip the initialization prints.",
+>>>>>>> master
 )
 @click.option(
     "--skip-pack-dependencies",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Skip validation of pack dependencies.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack dependencies.",
+>>>>>>> master
 )
 @click.option(
     "--create-id-set",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Whether to create the id_set.json file.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to create the id_set.json file.",
+>>>>>>> master
 )
 @click.option(
     "-j",
@@ -705,38 +760,66 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--skip-schema-check",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Whether to skip the file schema check.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to skip the file schema check.",
+>>>>>>> master
 )
 @click.option(
     "--debug-git",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Whether to print debug logs for git statuses.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to print debug logs for git statuses.",
+>>>>>>> master
 )
 @click.option(
     "--print-pykwalify",
     is_flag=True,
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Whether to print the pykwalify log errors.",
 )
 @click.option(
     "--quiet-bc-validation",
     help="Relevant only for the old validate flow. Set backwards compatibility validation's errors as warnings.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to print the pykwalify log errors.",
+)
+@click.option(
+    "--quiet-bc-validation",
+    help="Relevant only for the old validate flow and will be removed in a future release. Set backwards compatibility validation's errors as warnings.",
+>>>>>>> master
     is_flag=True,
 )
 @click.option(
     "--allow-skipped",
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Don't fail on skipped integrations or when all test playbooks are skipped.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Don't fail on skipped integrations or when all test playbooks are skipped.",
+>>>>>>> master
     is_flag=True,
 )
 @click.option(
     "--no-multiprocessing",
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. run validate all without multiprocessing, for debugging purposes.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. run validate all without multiprocessing, for debugging purposes.",
+>>>>>>> master
     is_flag=True,
     default=False,
 )
 @click.option(
     "-sv",
     "--run-specific-validations",
+<<<<<<< HEAD
     help="Relevant only for the old validate flow. Run specific validations by stating the error codes.",
+=======
+    help="Relevant only for the old validate flow and will be removed in a future release. Run specific validations by stating the error codes.",
+>>>>>>> master
     is_flag=False,
 )
 @click.option(
@@ -753,7 +836,11 @@ def zip_packs(ctx, **kwargs) -> int:
 )
 @click.option(
     "--config-path",
+<<<<<<< HEAD
     help="Path for a config file to run, if not given - will run the default path at: demisto_sdk/commands/validate/default_config.toml",
+=======
+    help="Path for a config file to run, if not given - will run the default config at https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/default_config.toml",
+>>>>>>> master
     is_flag=False,
 )
 @click.option(
@@ -783,8 +870,11 @@ def zip_packs(ctx, **kwargs) -> int:
 @logging_setup_decorator
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
+<<<<<<< HEAD
     import time
 
+=======
+>>>>>>> master
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -847,7 +937,11 @@ def validate(ctx, config, file_paths: str, **kwargs):
             )
             exit_code += validator.run_validation()
         if kwargs["run_new_validate"]:
+<<<<<<< HEAD
             validation_results = ValidationResults(
+=======
+            validation_results = ResultWriter(
+>>>>>>> master
                 json_file_path=kwargs.get("json_file"),
             )
             config_reader = ConfigReader(
@@ -872,11 +966,14 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 ignore_support_level=kwargs.get("ignore_support_level"),
             )
             exit_code += validator_v2.run_validations()
+<<<<<<< HEAD
         end_time = time.time()
 
         # Calculate the running time
         running_time = end_time - start_time
         logger.info(f"Running time: {running_time} seconds")
+=======
+>>>>>>> master
         return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.info(f"[red]{e}[/red]")
@@ -3491,7 +3588,6 @@ def update_content_graph(
 @click.option(
     "--mode",
     help="Special mode to run the pre-commit with",
-    type=click.Choice([mode.value for mode in list(PreCommitModes)]),
 )
 @click.option(
     "-ut/--no-ut",
@@ -3578,7 +3674,6 @@ def pre_commit(
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
-    mode = PreCommitModes(mode) if mode else None
     if file_paths and input:
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
@@ -3637,6 +3732,71 @@ def run_unit_tests(
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
 
     sys.exit(unit_test_runner(file_paths, verbose))
+
+
+@main.command(short_help="Setup integration environments")
+@click.option(
+    "-i",
+    "--input",
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
+    help="A list of content packs/files to validate.",
+)
+@click.option(
+    "--create-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Create a virtualenv for the environment",
+)
+@click.option(
+    "--overwrite-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Overwrite existing virtualenvs. Use with the create-virtualenv flag",
+)
+@click.option(
+    "--secret-id",
+    help="Secret ID, to use with Google Secret Manager instance with `DEMISTO_SDK_GCP_PROJECT_ID` environment variable set.",
+    required=False,
+)
+@click.option(
+    "--instance-name",
+    required=False,
+    help="Instance name to configure in XSOAR/XSIAM.",
+)
+@click.option(
+    "--run-test-module",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Whether to run test-module on the configured XSOAR/XSIAM instance",
+)
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+def setup_env(
+    input,
+    file_paths,
+    create_virtualenv,
+    overwrite_virtualenv,
+    secret_id,
+    instance_name,
+    run_test_module,
+):
+    from demisto_sdk.commands.setup_env.setup_environment import (
+        setup_env,
+    )
+
+    if input:
+        file_paths = tuple(input.split(","))
+
+    setup_env(
+        file_paths,
+        create_virtualenv=create_virtualenv,
+        overwrite_virtualenv=overwrite_virtualenv,
+        secret_id=secret_id,
+        instance_name=instance_name,
+        test_module=run_test_module,
+    )
 
 
 @main.result_callback()

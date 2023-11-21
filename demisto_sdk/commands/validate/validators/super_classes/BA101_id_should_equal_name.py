@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
@@ -30,7 +31,7 @@ ContentTypes = Union[
 ]
 
 
-class IDNameValidator(BaseValidator[ContentTypes]):
+class IDNameValidator(BaseValidator[ContentTypes], ABC):
     error_code = "BA101"
     description = "Validate that the file id and name fields are identical."
     error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"

@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.utils.utils import retry
+from demisto_sdk.commands.common.tools import retry
 
 json = DEFAULT_JSON_HANDLER
 

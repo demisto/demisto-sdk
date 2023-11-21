@@ -32,6 +32,7 @@ def git_path() -> str:
     return git_path.replace("\n", "")
 
 
+@functools.lru_cache()
 def get_current_working_branch() -> str:
     branches = run_command("git branch")
     branch_name_reg = re.search(r"\* (.*)", branches)

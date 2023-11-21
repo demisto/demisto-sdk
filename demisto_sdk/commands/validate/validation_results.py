@@ -10,7 +10,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 
+<<<<<<< HEAD
 class ValidationResults:
+=======
+class ResultWriter:
+>>>>>>> master
     """
     Handle all the results, this class save all the results during run time and post the results when the whole execution is over.
     The class can either log the results to the terminal or write the results to a json file in a given path.
@@ -22,11 +26,19 @@ class ValidationResults:
         json_file_path: Optional[str] = None,
     ):
         """
+<<<<<<< HEAD
             The ValidationResults init method.
         Args:
             json_file_path Optional[str]: The json path to write the outputs into.
         """
         self.results: List[ValidationResult] = []
+=======
+            The ResultWriter init method.
+        Args:
+            json_file_path Optional[str]: The json path to write the outputs into.
+        """
+        self.validation_results: List[ValidationResult] = []
+>>>>>>> master
         self.fixing_results: List[FixResult] = []
         if json_file_path:
             self.json_file_path = (
@@ -52,8 +64,13 @@ class ValidationResults:
         fixed_objects_set: Set[BaseContent] = set()
         exit_code = 0
         if self.json_file_path:
+<<<<<<< HEAD
             self.write_validation_results()
         for result in self.results:
+=======
+            self.write_results_to_json_file()
+        for result in self.validation_results:
+>>>>>>> master
             if only_throw_warning and result.validator.error_code in only_throw_warning:
                 logger.warning(f"[yellow]{result.format_readable_message}[/yellow]")
             else:
@@ -73,12 +90,22 @@ class ValidationResults:
             fixed_object.save()
         return exit_code
 
+<<<<<<< HEAD
     def write_validation_results(self):
+=======
+    def write_results_to_json_file(self):
+>>>>>>> master
         """
         If the json path argument is given,
         Writing all the results into a json file located in the given path.
         """
+<<<<<<< HEAD
         json_validations_list = [result.format_json_message for result in self.results]
+=======
+        json_validations_list = [
+            result.format_json_message for result in self.validation_results
+        ]
+>>>>>>> master
         json_fixing_list = [
             fixing_result.format_json_message for fixing_result in self.fixing_results
         ]
@@ -93,15 +120,25 @@ class ValidationResults:
         with open(self.json_file_path, "w") as outfile:
             outfile.write(json_object)
 
+<<<<<<< HEAD
     def append(self, validation_result: ValidationResult):
+=======
+    def append_validation_results(self, validation_result: ValidationResult):
+>>>>>>> master
         """Append an item to the validation results list.
 
         Args:
             validation_result (ValidationResult): the validation result to append.
         """
+<<<<<<< HEAD
         self.results.append(validation_result)
 
     def append_fixing_results(self, fixing_result: FixResult):
+=======
+        self.validation_results.append(validation_result)
+
+    def append_fix_results(self, fixing_result: FixResult):
+>>>>>>> master
         """Append an item to the fixing results list.
 
         Args:
@@ -109,15 +146,25 @@ class ValidationResults:
         """
         self.fixing_results.append(fixing_result)
 
+<<<<<<< HEAD
     def extend(self, validation_results: List[ValidationResult]):
+=======
+    def extend_validation_results(self, validation_results: List[ValidationResult]):
+>>>>>>> master
         """Extending the list of ValidationResult objects with a given list of validation results.
 
         Args:
             validation_results (List[ValidationResult]): The list of ValidationResult objects to add to the existing list.
         """
+<<<<<<< HEAD
         self.results.extend(validation_results)
 
     def extend_fixing_results(self, fixing_results: List[FixResult]):
+=======
+        self.validation_results.extend(validation_results)
+
+    def extend_fix_results(self, fixing_results: List[FixResult]):
+>>>>>>> master
         """Extending the list of FixResult objects with a given list of FixResult objects.
 
         Args:

@@ -322,9 +322,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
         self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name)) or {}  # type: ignore
+<<<<<<< HEAD
         
     def parse_support_level(self):
         self.support_level = self.support
+=======
+>>>>>>> master
 
     @cached_property
     def field_mapping(self):

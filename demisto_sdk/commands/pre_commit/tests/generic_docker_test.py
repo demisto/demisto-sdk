@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import (
     DockerHook,
@@ -41,7 +40,7 @@ def test_no_files(repo):
 @pytest.mark.parametrize(
     "mode, expected_text",
     [
-        (PreCommitModes.NIGHTLY, ["i am the nightly args"]),
+        ("nightly", ["i am the nightly args"]),
         (None, ["i am some argument"]),
     ],
 )
@@ -108,7 +107,7 @@ def test_get_property():
             == expected_value
         )
 
-    assert_get_prop_successful(PreCommitModes.NIGHTLY, "prop1", nightly_val)
+    assert_get_prop_successful("nightly", "prop1", nightly_val)
     assert_get_prop_successful(None, "prop1", value1)
 
 
@@ -188,32 +187,27 @@ def test__set_properties():
     When:
         Calling on same config with different modes
     Then:
-        The proper config is returned
+        The proper config is in base_hook.
     """
     nightly_val = "nightlyval"
 
     value1 = "value1"
 
-    def assert_get_prop_successful(mode, expected_value, remove_props):
-        res = {}
+    def assert_get_prop_successful(mode, expected_value):
         hook = create_hook(
             {
                 "prop1": value1,
                 "prop1:nightly": nightly_val,
                 "prop1:othermode": "someval",
                 "other_prop": "whatever",
-                "remove_me": True,
                 "nonused:mode": "isignored",
             }
         )
-        DockerHook(**hook, mode=mode)._set_properties(res, to_delete=remove_props)
-        assert res == expected_value
+        docker_hook = DockerHook(**hook, mode=mode)
+        assert docker_hook.base_hook == expected_value
 
     assert_get_prop_successful(
-        PreCommitModes.NIGHTLY,
+        "nightly",
         {"prop1": nightly_val, "other_prop": "whatever"},
-        ["remove_me"],
     )
-    assert_get_prop_successful(
-        None, {"prop1": value1, "other_prop": "whatever"}, ["remove_me"]
-    )
+    assert_get_prop_successful(None, {"prop1": value1, "other_prop": "whatever"})

@@ -276,7 +276,11 @@ class Initializer:
 
         return filtered_modified_files, filtered_added_files, filtered_renamed_files
 
+<<<<<<< HEAD
     def gather_objects_to_run(self) -> Set[BaseContent]:
+=======
+    def gather_objects_to_run_on(self) -> Set[BaseContent]:
+>>>>>>> master
         """
         Filter the file that should run according to the given flag (-i/-g/-a).
 
@@ -287,7 +291,11 @@ class Initializer:
         if self.use_git:
             content_objects_to_run = self.get_files_from_git()
         elif self.file_path:
+<<<<<<< HEAD
             content_objects_to_run = self.paths_to_basecontent_with_path_set(
+=======
+            content_objects_to_run = self.paths_to_basecontent_set(
+>>>>>>> master
                 set(self.file_path.split(",")), None
             )
         elif self.all_files:
@@ -343,28 +351,48 @@ class Initializer:
         ) = self.collect_files_to_run(self.file_path)
         basecontent_with_path_set: Set[BaseContent] = set()
         basecontent_with_path_set = basecontent_with_path_set.union(
+<<<<<<< HEAD
             self.paths_to_basecontent_with_path_set(
+=======
+            self.paths_to_basecontent_set(
+>>>>>>> master
                 modified_files, GitStatuses.MODIFIED, git_sha=self.prev_ver
             )
         )
         basecontent_with_path_set = basecontent_with_path_set.union(
+<<<<<<< HEAD
             self.paths_to_basecontent_with_path_set(
+=======
+            self.paths_to_basecontent_set(
+>>>>>>> master
                 renamed_files, GitStatuses.RENAMED, git_sha=self.prev_ver
             )
         )
         basecontent_with_path_set = basecontent_with_path_set.union(
+<<<<<<< HEAD
             self.paths_to_basecontent_with_path_set(
+=======
+            self.paths_to_basecontent_set(
+>>>>>>> master
                 added_files, GitStatuses.ADDED, git_sha=self.prev_ver
             )
         )
         basecontent_with_path_set = basecontent_with_path_set.union(
+<<<<<<< HEAD
             self.paths_to_basecontent_with_path_set(
+=======
+            self.paths_to_basecontent_set(
+>>>>>>> master
                 deleted_files, GitStatuses.DELETED, git_sha=self.prev_ver
             )
         )
         return basecontent_with_path_set
 
+<<<<<<< HEAD
     def paths_to_basecontent_with_path_set(
+=======
+    def paths_to_basecontent_set(
+>>>>>>> master
         self, files_set: set, git_status: Optional[str], git_sha: Optional[str] = None
     ) -> Set[BaseContent]:
         """Return a set of all the successful casts to BaseContent from given set of files.

@@ -4,7 +4,11 @@ warning = []
 ignorable_errors = []
 
 [validate_all]
+<<<<<<< HEAD
 select = ["BA101"]
+=======
+select = ["BA101", "GR106"]
+>>>>>>> master
 warning = []
 ignorable_errors = ["BA101"]
 

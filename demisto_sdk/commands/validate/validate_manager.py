@@ -1,6 +1,10 @@
 from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
+<<<<<<< HEAD
+=======
+from demisto_sdk.commands.common.tools import is_abstract_class
+>>>>>>> master
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -8,7 +12,11 @@ from demisto_sdk.commands.validate.config_reader import (
 )
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import (
+<<<<<<< HEAD
     ValidationResults,
+=======
+    ResultWriter,
+>>>>>>> master
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -19,7 +27,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 class ValidateManager:
     def __init__(
         self,
+<<<<<<< HEAD
         validation_results: ValidationResults,
+=======
+        validation_results: ResultWriter,
+>>>>>>> master
         config_reader: ConfigReader,
         initializer: Initializer,
         validate_all=False,
@@ -31,11 +43,20 @@ class ValidateManager:
         self.validate_all = validate_all
         self.file_path = file_path
         self.allow_autofix = allow_autofix
+<<<<<<< HEAD
         self.validate_graph = False
         self.validation_results = validation_results
         self.config_reader = config_reader
         self.initializer = initializer
         self.objects_to_run: Set[BaseContent] = self.initializer.gather_objects_to_run()
+=======
+        self.validation_results = validation_results
+        self.config_reader = config_reader
+        self.initializer = initializer
+        self.objects_to_run: Set[
+            BaseContent
+        ] = self.initializer.gather_objects_to_run_on()
+>>>>>>> master
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
@@ -43,7 +64,10 @@ class ValidateManager:
                 use_git=self.use_git, ignore_support_level=self.ignore_support_level
             )
         )
+<<<<<<< HEAD
         self.graph_validator = None
+=======
+>>>>>>> master
         self.validators = self.filter_validators()
 
     def run_validations(self) -> int:
@@ -69,6 +93,7 @@ class ValidateManager:
                 validation_results: List[ValidationResult] = validator.is_valid(filtered_content_objects_for_validator)  # type: ignore
                 if self.allow_autofix and validator.is_auto_fixable:
                     for validation_result in validation_results:
+<<<<<<< HEAD
                         self.validation_results.append_fixing_results(
                             validator.fix(validation_result.content_object)  # type: ignore
                         )
@@ -76,6 +101,18 @@ class ValidateManager:
                     self.validation_results.extend(validation_results)
         if self.graph_validator:
             self.graph_validator.graph.close()
+=======
+                        self.validation_results.append_fix_results(
+                            validator.fix(validation_result.content_object)  # type: ignore
+                        )
+                else:
+                    self.validation_results.extend_validation_results(
+                        validation_results
+                    )
+        if BaseValidator.graph_interface:
+            logger.info("Closing graph.")
+            BaseValidator.graph_interface.close()
+>>>>>>> master
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.only_throw_warnings
         )
@@ -92,6 +129,7 @@ class ValidateManager:
         validators: List[BaseValidator] = []
         for validator in BaseValidator.__subclasses__():
             if (
+<<<<<<< HEAD
                 str(validator)
                 not in [
                     "<class 'graph_validator.GraphValidator'>",
@@ -104,4 +142,11 @@ class ValidateManager:
                 validators.append(validator())
                 if validator.validate_graph:
                     self.graph_validator = validator
+=======
+                not is_abstract_class(validator)
+                and validator.error_code
+                in self.configured_validations.validations_to_run
+            ):
+                validators.append(validator())
+>>>>>>> master
         return validators

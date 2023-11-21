@@ -10,7 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union["Integration", "Script"]
+ContentTypes = Union[Integration, Script]
 
 
 class ValidSubtypeValidator(BaseValidator[ContentTypes]):

@@ -1,9 +1,12 @@
 import tempfile
 from pathlib import Path
 from typing import Any, List, Optional
+from unittest.mock import MagicMock
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.repo import Repo
 
@@ -51,7 +54,9 @@ def create_script_object(
 
 
 def create_metadata_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_ignore_content: Optional[str] = "",
 ):
     """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
 
@@ -65,8 +70,11 @@ def create_metadata_object(
     json_content = load_json("pack_metadata.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
+    tools.get_content_path = MagicMock(return_value=Path(REPO.path))
+    with open(f"{pack.path}/.pack-ignore", "w") as f:
+        f.write(pack_ignore_content)
     pack.pack_metadata.write_json(json_content)
-    return BaseContent.from_path(Path(pack.pack_metadata.path))
+    return PackParser(Path(pack.path))
 
 
 def create_classifier_object(

@@ -11,7 +11,7 @@ from typing import (
     get_args,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -34,7 +34,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     error_code: (ClassVar[str]): The validation's error code.
     description: (ClassVar[str]): The validation's error description.
     error_message: (ClassVar[str]): The validation's error message.
-    fixing_message: (ClassVar[str]): The validation's fixing message.
+    fix_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
     run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
@@ -46,13 +46,15 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     error_code: ClassVar[str]
     description: ClassVar[str]
     error_message: ClassVar[str]
-    fixing_message: ClassVar[str] = ""
+    fix_message: ClassVar[str] = ""
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_initialized: ClassVar[bool] = False
-    graph_interface: ClassVar[ContentGraphInterface] = None
+    graph_interface: ClassVar[ContentGraphInterface] = Field(
+        None, exclude=True, repr=False
+    )
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -116,10 +118,18 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             )
         return BaseValidator.graph_interface
 
+    def __repr__(self):
+        # Exclude 'full_name' from the representation
+        fields = ", ".join(
+            f"{k}={v!r}" for k, v in self.dict(exclude={"graph"}).items()
+        )
+        return f"{self.__class__.__name__}({fields})"
+
     class Config:
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
         )
+        fields = {"graph": {"exclude": True}}  # Exclude the property from the repr
 
 
 class BaseResult(BaseModel):

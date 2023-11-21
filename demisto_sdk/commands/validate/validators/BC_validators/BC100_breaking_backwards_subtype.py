@@ -19,7 +19,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     )
     error_message = "Possible backwards compatibility break, You've changed the subtype, please undo."
     related_field = "subtype"
-    fixing_message = "Changing subtype back to the old one ({0})."
+    fix_message = "Changing subtype back to the old one ({0})."
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     is_auto_fixable = True
 
@@ -48,6 +48,6 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         content_item.type = old_content_object.type
         return FixResult(
             validator=self,
-            message=self.fixing_message.format(old_content_object.type),
+            message=self.fix_message.format(old_content_object.type),
             content_object=content_item,
         )

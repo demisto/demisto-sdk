@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union["IncidentField", "IndicatorField"]
+ContentTypes = Union[IncidentField, IndicatorField]
 
 
 class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
@@ -42,6 +42,6 @@ class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
         content_item.cli_name = content_item.object_id
         return FixResult(
             validator=self,
-            message=self.fixing_message.format(content_item.object_id),
+            message=self.fix_message.format(content_item.object_id),
             content_object=content_item,
         )

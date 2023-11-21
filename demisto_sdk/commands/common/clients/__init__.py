@@ -21,12 +21,10 @@ from demisto_sdk.commands.common.constants import (
     AUTH_ID,
     DEMISTO_BASE_URL,
     DEMISTO_KEY,
-    DEMISTO_VERIFY_SSL,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import str2bool
 
 
 @lru_cache
@@ -39,6 +37,7 @@ def get_client_from_config(
     Args:
         client_config: clients configuration
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not
+                    if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
 
     Returns:
         the correct api clients based on the clients config
@@ -46,9 +45,6 @@ def get_client_from_config(
     base_url = client_config.base_api_url
     api_key = client_config.api_key
     auth_id = client_config.auth_id
-
-    if verify_ssl is None:
-        verify_ssl = str2bool(os.getenv(DEMISTO_VERIFY_SSL))
 
     _client = demisto_client.configure(
         base_url=base_url,
@@ -70,7 +66,7 @@ def get_client_from_marketplace(
     base_url: Optional[str] = None,
     api_key: Optional[str] = None,
     auth_id: Optional[str] = None,
-    verify_ssl: bool = False,
+    verify_ssl: Optional[bool] = None,
 ) -> XsoarClient:
     """
     Returns the client based on the marketplace.
@@ -81,6 +77,7 @@ def get_client_from_marketplace(
         api_key: the api key, if not provided will take from DEMISTO_API_KEY env var
         auth_id: the auth ID, if not provided will take from XSIAM_AUTH_ID env var
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not
+                    if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
 
     Returns:
         the correct client according to the marketplace provided
@@ -116,7 +113,8 @@ def get_client_from_server_type(
         base_url: the base URL, if not provided will take from DEMISTO_BASE_URL env var
         api_key: the api key, if not provided will take from DEMISTO_API_KEY env var
         auth_id: the auth ID, if not provided will take from XSIAM_AUTH_ID env var
-        verify_ssl: whether in each request SSL should be verified, True if yes, False if not
+        verify_ssl: whether in each request SSL should be verified, True if yes, False if not,
+                    if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
 
     Returns:
         the correct client based on querying the type of the server
@@ -124,15 +122,12 @@ def get_client_from_server_type(
     _base_api_url = base_url or os.getenv(DEMISTO_BASE_URL)
     _api_key = api_key or os.getenv(DEMISTO_KEY, "")
     _auth_id = auth_id or os.getenv(AUTH_ID)
-    _verify_ssl = (
-        str2bool(os.getenv(DEMISTO_VERIFY_SSL)) if verify_ssl is None else verify_ssl
-    )
 
     _client = demisto_client.configure(
         base_url=_base_api_url,
         api_key=_api_key,
         auth_id=_auth_id,
-        verify_ssl=_verify_ssl,
+        verify_ssl=verify_ssl,
     )
 
     try:

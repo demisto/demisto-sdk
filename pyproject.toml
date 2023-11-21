@@ -121,6 +121,7 @@ requests-mock = "^1.9.3"
 black = "^22.10.0"
 ipykernel = "^6.16.1"
 ruff = "^0.1.2"
+pytest-split = "^0.8.1"
 
 [tool.poetry.extras]
 build = ["gsutil"]

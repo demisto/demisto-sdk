@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -21,6 +22,7 @@ from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProce
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
@@ -251,6 +253,11 @@ class PackModelVerifier:
             for content_item in model.content_items
         }
         assert content_items == expected_content_items
+
+        for content_item in model.content_items:
+            assert content_item.in_pack == model
+            if content_item.content_type == ContentType.CLASSIFIER:
+                assert content_item.ignored_errors == ["SC100"]
 
 
 class PackRelationshipsVerifier:
@@ -1483,7 +1490,7 @@ class TestParsersAndModels:
         assert pre_process_rule.name == "Drop"
         assert pre_process_rule.object_id == "preprocessrule-Drop-id"
 
-    def test_pack_parser(self, repo: Repo):
+    def test_pack_parser(self, mocker, repo: Repo):
         """
         Given:
             - A pack with several content items.
@@ -1495,7 +1502,6 @@ class TestParsersAndModels:
             - Verify the pack is modeled correctly.
         """
         from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
-        from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
         pack = repo.create_pack("HelloWorld")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
@@ -1504,6 +1510,9 @@ class TestParsersAndModels:
         pack.create_incident_type("sample", load_json("incident_type.json"))
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
+        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+        with open(f"{pack.path}/.pack-ignore", "w") as f:
+            f.write("[file:classifier-sample.json]\nignore=SC100")
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {
@@ -1547,7 +1556,7 @@ class TestParsersAndModels:
             expected_deprecated=False,
         )
 
-    def test_repo_parser(self, repo: Repo):
+    def test_repo_parser(self, mocker, repo: Repo):
         """
         Given:
             - A repository with two packs.
@@ -1565,6 +1574,7 @@ class TestParsersAndModels:
         pack1.pack_metadata.write_json(load_json("pack_metadata.json"))
         pack2 = repo.create_pack("sample2")
         pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
         parser = RepositoryParser(Path(repo.path))
         parser.parse()
         model = ContentDTO.from_orm(parser)

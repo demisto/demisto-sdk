@@ -29,5 +29,6 @@ class ValidSubtypeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.type == "python" and content_item.subtype not in PYTHON_SUBTYPES
+            if content_item.type == "python"
+            and content_item.subtype not in PYTHON_SUBTYPES
         ]

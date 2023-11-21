@@ -10,6 +10,7 @@ import sys
 import time
 import traceback
 import urllib.parse
+from abc import ABC
 from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -54,6 +55,7 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     CLASSIFIERS_DIR,
     CONF_JSON_FILE_NAME,
+    CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEF_DOCKER,
@@ -65,6 +67,8 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ENV_SDK_WORKING_OFFLINE,
+    GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR,
     ID_IN_COMMONFIELDS,
     ID_IN_ROOT,
     INCIDENT_FIELDS_DIR,
@@ -119,6 +123,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     IdSetKeys,
     MarketplaceVersions,
+    PathLevel,
     urljoin,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -2551,7 +2556,8 @@ def get_demisto_version(client: demisto_client) -> Version:
         resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
         return Version(Version(about_data.get("demistoVersion")).base_version)
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to fetch server version. Error: {e}")
         logger.warning(
             "Could not parse server version, please make sure the environment is properly configured."
         )
@@ -4075,6 +4081,143 @@ def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
         current_dict[last_key] = value
 
 
+def detect_file_level(file_path: str) -> PathLevel:
+    """
+    Detect the whether the path points to a file, a content entity dir, a content generic entity dir
+    (i.e GenericFields or GenericTypes), a pack dir or package dir
+
+    Args:
+            file_path(str): the path to check.
+
+    Returns:
+        PathLevel. File, ContentDir, ContentGenericDir, Pack or Package - depending on the file path level.
+    """
+    if Path(file_path).is_file():
+        return PathLevel.FILE
+
+    file_path = file_path.rstrip("/")
+    dir_name = Path(file_path).name
+    if dir_name in CONTENT_ENTITIES_DIRS:
+        return PathLevel.CONTENT_ENTITY_DIR
+
+    if str(os.path.dirname(file_path)).endswith(GENERIC_TYPES_DIR) or str(
+        os.path.dirname(file_path)
+    ).endswith(GENERIC_FIELDS_DIR):
+        return PathLevel.CONTENT_GENERIC_ENTITY_DIR
+
+    if Path(file_path).parent.name == PACKS_DIR:
+        return PathLevel.PACK
+
+    else:
+        return PathLevel.PACKAGE
+
+
+def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
+    """Filter a set of file paths to only include ones which are from a specified directory.
+
+    Args:
+        file_set(Set): A set of file paths - could be stings or tuples for rename files.
+        directory_path(str): the directory path in which to check for the files.
+
+    Returns:
+        Set. A set of all the paths of files that appear in the given directory.
+    """
+    filtered_set: Set = set()
+    for file in file_set:
+        if isinstance(file, str) and directory_path in file:
+            filtered_set.add(file)
+
+        # handle renamed files
+        elif isinstance(file, tuple) and directory_path in file[1]:
+            filtered_set.add(file)
+
+    return filtered_set
+
+
+def get_file_by_status(
+    modified_files: Set,
+    old_format_files: Optional[Set],
+    file_path: str,
+    renamed_files: Optional[Set] = None,
+) -> Tuple[Set, Set, Set]:
+    """Given a specific file path identify in which git status set
+    it exists and return a set containing that file and 2 additional empty sets.
+
+    Args:
+        modified_files(Set): A set of modified and renamed files.
+        old_format_files(Optional[Set]): A set of old format files.
+        file_path(str): The file path to check.
+        renamed_files(Optional[Set]): A set of renamed files.
+
+    Returns:
+        Tuple[Set, Set, Set]. 3 sets representing modified, added and old format or renamed files respectively
+        where the file path is in the appropriate set
+    """
+    filtered_modified_files: Set = set()
+    filtered_added_files: Set = set()
+    filtered_old_format_or_renamed_files: Set = set()
+
+    # go through modified files and try to identify if the file is there
+    for file in modified_files:
+        if isinstance(file, str) and file == file_path:
+            filtered_modified_files.add(file_path)
+            return (
+                filtered_modified_files,
+                filtered_added_files,
+                filtered_old_format_or_renamed_files,
+            )
+
+        # handle renamed files which are in tuples
+        elif file_path in file:
+            filtered_modified_files.add(file)
+            return (
+                filtered_modified_files,
+                filtered_added_files,
+                filtered_old_format_or_renamed_files,
+            )
+    if renamed_files:
+        for file in renamed_files:
+            if file_path in file:
+                filtered_old_format_or_renamed_files.add(file)
+                return (
+                    filtered_modified_files,
+                    filtered_added_files,
+                    filtered_old_format_or_renamed_files,
+                )
+
+    # if the file is not modified check if it is in old format files
+    if old_format_files and file_path in old_format_files:
+        filtered_old_format_or_renamed_files.add(file_path)
+
+    else:
+        # if not found in either modified or old format consider the file newly added
+        filtered_added_files.add(file_path)
+
+    return (
+        filtered_modified_files,
+        filtered_added_files,
+        filtered_old_format_or_renamed_files,
+    )
+
+
+def pascal_to_snake(pascal_string):
+    """Convert the given string from pascal case to snake case.
+
+    Args:
+        pascal_string(str): A string in pascal case format
+
+    Returns:
+        str: The givn string converted to snake_case format.
+    """
+    result = [pascal_string[0].lower()]
+    for char in pascal_string[1:]:
+        if char.isupper():
+            result.extend(["_", char.lower()])
+        else:
+            result.append(char)
+    return "".join(result)
+
+
 def retry(
     times: int = 3,
     delay: int = 1,
@@ -4112,6 +4255,10 @@ def retry(
         return wrapper
 
     return _retry
+
+
+def is_abstract_class(cls):
+    return ABC in getattr(cls, "__bases__", ())
 
 
 class SecretManagerException(Exception):

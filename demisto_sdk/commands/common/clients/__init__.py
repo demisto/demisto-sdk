@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.logger import logger
 
 @lru_cache
 def get_client_from_config(
-    client_config: XsoarClientConfig, verify_ssl: bool = False
+    client_config: XsoarClientConfig, verify_ssl: Optional[bool] = None
 ) -> XsoarClient:
     """
     Returns the correct Client (xsoar on prem, xsoar saas or xsiam) based on the clients config object
@@ -37,6 +37,7 @@ def get_client_from_config(
     Args:
         client_config: clients configuration
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not
+                    if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
 
     Returns:
         the correct api clients based on the clients config
@@ -65,7 +66,7 @@ def get_client_from_marketplace(
     base_url: Optional[str] = None,
     api_key: Optional[str] = None,
     auth_id: Optional[str] = None,
-    verify_ssl: bool = False,
+    verify_ssl: Optional[bool] = None,
 ) -> XsoarClient:
     """
     Returns the client based on the marketplace.
@@ -76,6 +77,7 @@ def get_client_from_marketplace(
         api_key: the api key, if not provided will take from DEMISTO_API_KEY env var
         auth_id: the auth ID, if not provided will take from XSIAM_AUTH_ID env var
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not
+                    if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
 
     Returns:
         the correct client according to the marketplace provided
@@ -102,7 +104,7 @@ def get_client_from_server_type(
     base_url: Optional[str] = None,
     api_key: Optional[str] = None,
     auth_id: Optional[str] = None,
-    verify_ssl: bool = False,
+    verify_ssl: Optional[bool] = None,
 ) -> XsoarClient:
     """
     Returns the client based on the server type by doing api requests to determine which server it is
@@ -111,7 +113,8 @@ def get_client_from_server_type(
         base_url: the base URL, if not provided will take from DEMISTO_BASE_URL env var
         api_key: the api key, if not provided will take from DEMISTO_API_KEY env var
         auth_id: the auth ID, if not provided will take from XSIAM_AUTH_ID env var
-        verify_ssl: whether in each request SSL should be verified, True if yes, False if not
+        verify_ssl: whether in each request SSL should be verified, True if yes, False if not,
+                    if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
 
     Returns:
         the correct client based on querying the type of the server
@@ -163,4 +166,6 @@ def get_client_from_server_type(
                 about_xsoar=about_raw_response,
                 config=XsoarClientConfig(base_api_url=_base_api_url, api_key=_api_key),
             )
-        raise RuntimeError("Could not determine the correct api client")
+        raise RuntimeError(
+            f"Could not determine the correct api-client for {_client.api_client.configuration.host}"
+        )

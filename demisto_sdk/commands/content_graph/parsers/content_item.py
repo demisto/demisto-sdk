@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Type, cast
+from typing import Any, Dict, List, Optional, Set, Type, cast
 
 from packaging.version import Version
+from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
@@ -74,6 +75,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     """
 
     content_type_to_parser: Dict[ContentType, Type["ContentItemParser"]] = {}
+    pack: Any = Field(default=None, exclude=True)
 
     def __init__(
         self,

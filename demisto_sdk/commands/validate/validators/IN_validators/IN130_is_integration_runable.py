@@ -31,7 +31,7 @@ class IsIntegrationRunnableValidator(BaseValidator[ContentTypes]):
                     content_item.commands,
                     content_item.is_feed,
                     content_item.is_fetch,
-                    content_item.is_long_running,
+                    content_item.long_running,
                 ]
             )
         ]

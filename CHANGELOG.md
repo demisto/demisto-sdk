@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
+* Updated demisto-sdk coverage-analyze to print a warning and exit with exit code 0 in case that a .coverage file doesn't exist.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

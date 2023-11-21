@@ -114,6 +114,7 @@ DEMISTO_KEY = "DEMISTO_API_KEY"
 AUTH_ID = "XSIAM_AUTH_ID"
 XSIAM_TOKEN = "XSIAM_TOKEN"
 XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
+DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
 
 
 # Marketplaces
@@ -1934,6 +1935,15 @@ SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 class ImagesFolderNames(str, Enum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
+
+
+class InvestigationPlaybookState(str, Enum):
+    NEW = "new"  # indicates that playbook not executed yet
+    IN_PROGRESS = "inprogress"  # indicates that playbook in progress
+    PAUSED = "paused"  # indicates that playbook paused
+    COMPLETED = "completed"  # indicates that playbook completed
+    FAILED = "failed"  # indicates that playbook failed
+    WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
 class IncidentState(str, Enum):

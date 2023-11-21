@@ -147,7 +147,7 @@ def get_client_from_server_type(
             ),
         )
     except ApiException as e:
-        logger.debug(f"got exception when querying /ioc-rules: {e}")
+        logger.debug(f"instance is not XSIAM instance, error:{e}")
         about_raw_response = XsoarClient.get_xsoar_about(_client)
         if server_version := about_raw_response.get("demistoVersion"):
             if Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION):
@@ -163,4 +163,4 @@ def get_client_from_server_type(
                 about_xsoar=about_raw_response,
                 config=XsoarClientConfig(base_api_url=_base_api_url, api_key=_api_key),
             )
-        raise RuntimeError("Could not determine the correct api client")
+        raise RuntimeError(f"Could not determine the correct api-client for {base_url}")

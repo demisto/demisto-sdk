@@ -29,8 +29,8 @@ class XsoarClient(BaseModel):
     """
 
     _ENTRY_TYPE_ERROR: int = 4
-    client: DefaultApi = Field(exclude=True)
     config: XsoarClientConfig
+    client: DefaultApi = Field(None, exclude=True)
     about_xsoar: Dict = Field(None, exclude=True)
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
 
@@ -70,10 +70,10 @@ class XsoarClient(BaseModel):
         config: XsoarClientConfig = values["config"]
         return demisto_client.configure(
             config.base_api_url,
-            api_key=config.api_key,
+            api_key=config.api_key.get_secret_value(),
             auth_id=config.auth_id,
             username=config.user,
-            password=config.password,
+            password=config.password.get_secret_value(),
         )
 
     @validator("about_xsoar", always=True)

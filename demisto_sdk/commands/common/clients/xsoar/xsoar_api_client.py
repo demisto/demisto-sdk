@@ -3,7 +3,7 @@ import re
 import time
 import urllib.parse
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import dateparser
 import demisto_client

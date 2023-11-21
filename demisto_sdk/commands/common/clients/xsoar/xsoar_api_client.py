@@ -3,7 +3,7 @@ import re
 import time
 import urllib.parse
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, Tuple
 
 import dateparser
 import demisto_client
@@ -582,7 +582,7 @@ class XsoarClient(BaseModel):
     def poll_incident_state(
         self,
         incident_id: str,
-        expected_states: Optional[Set[IncidentState]] = None,
+        expected_states: Tuple[IncidentState, ...] = (IncidentState.CLOSED,),
         timeout: int = 120,
     ):
         """
@@ -594,11 +594,8 @@ class XsoarClient(BaseModel):
             timeout: how long to query until incidents reaches the expected state
 
         Returns:
-
+            raw response of the incident that reached into the relevant state.
         """
-        if not expected_states:
-            expected_states = {IncidentState.CLOSED}
-
         if timeout <= 0:
             raise ValueError("timeout argument must be larger than 0")
 
@@ -620,7 +617,7 @@ class XsoarClient(BaseModel):
             incident_name = incident.get("name")
             logger.debug(f"status of the incident {incident_name} is {incident_status}")
             if incident_status in expected_states:
-                return incident_status
+                return incident
             else:
                 time.sleep(interval)
                 elapsed_time = int(time.time() - start_time)

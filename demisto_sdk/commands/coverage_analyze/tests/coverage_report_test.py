@@ -21,7 +21,7 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     copy_file,
     read_file,
 )
-from TestSuite.test_tools import flatten_call_args, str_in_call_args_list
+from TestSuite.test_tools import flatten_call_args
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -62,15 +62,17 @@ class TestCoverageReport:
         temp_cover_file = tmpdir.join(".coverage")
         copy_file(coverage_path, temp_cover_file)
 
-        cov_report = CoverageReport(report_dir=str(tmpdir),
-                                    report_type="html,json,xml",
-                                    coverage_file=temp_cover_file,
-                                    no_cache=True)
+        cov_report = CoverageReport(
+            report_dir=str(tmpdir),
+            report_type="html,json,xml",
+            coverage_file=temp_cover_file,
+            no_cache=True,
+        )
         cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         cov_report.coverage_report()
         assert (
-                f"\n{Path(REPORT_STR_FILE).read_text()}"
-                in flatten_call_args(logger_info.call_args_list)[0]
+            f"\n{Path(REPORT_STR_FILE).read_text()}"
+            in flatten_call_args(logger_info.call_args_list)[0]
         )
 
     def test_with_export_report_function(self, tmpdir, monkeypatch, mocker):
@@ -186,7 +188,7 @@ class TestCoverageReport:
         requests_mock.get(DEFAULT_URL, json=read_file(JSON_MIN_DATA_FILE))
         monkeypatch.chdir(tmpdir)
         assert (
-                CoverageReport().original_summary == read_file(JSON_MIN_DATA_FILE)["files"]
+            CoverageReport().original_summary == read_file(JSON_MIN_DATA_FILE)["files"]
         )
 
 
@@ -219,7 +221,7 @@ class TestFileMinCoverage:
         "file_path, current_cover, expected_min_cover", data_test_with_exist_file
     )
     def test_with_exist_file(
-            self, file_path, current_cover, expected_min_cover, tmpdir, monkeypatch
+        self, file_path, current_cover, expected_min_cover, tmpdir, monkeypatch
     ):
         file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
@@ -240,7 +242,7 @@ class TestFileMinCoverage:
         "file_path, epsilon, expected_min_cover", data_test_with_custom_epsilon_file
     )
     def test_with_custom_epsilon_file(
-            self, file_path, epsilon, expected_min_cover, tmpdir, monkeypatch
+        self, file_path, epsilon, expected_min_cover, tmpdir, monkeypatch
     ):
         file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)

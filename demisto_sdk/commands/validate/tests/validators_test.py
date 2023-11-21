@@ -39,15 +39,6 @@ INTEGRATION = create_integration_object()
 INTEGRATION.path = Path(
     f"{CONTENT_PATH}/Packs/pack_0/Integrations/integration_0/integration_0.yml"
 )
-from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
-    PackMetadataNameValidator,
-)
-from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equal_name import (
-    IDNameValidator,
-)
-from TestSuite.test_tools import str_in_call_args_list
-
-INTEGRATION = create_integration_object()
 
 
 def get_validate_manager(mocker):

@@ -63,16 +63,16 @@ class PlaybookRunner:
         if self.should_wait:
             logger.info(
                 f"Waiting for the playbook to finish running.. \n"
-                f"To see the playbook run in real-time visit: {work_plan_link}"
+                f"To see the playbook run in real-time, visit: {work_plan_link}"
             )
             try:
                 playbook_state_raw_response = (
                     self.instance_api_client.poll_playbook_state(
                         incident_id,
-                        expected_states={
+                        expected_states=(
                             InvestigationPlaybookState.COMPLETED,
                             InvestigationPlaybookState.FAILED,
-                        },
+                        ),
                         timeout=self.timeout,
                     )
                 )

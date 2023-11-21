@@ -2,7 +2,7 @@ import contextlib
 import re
 import time
 import urllib.parse
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import dateparser
 import demisto_client
@@ -892,7 +892,9 @@ class XsoarClient(BaseModel):
     def poll_playbook_state(
         self,
         incident_id: str,
-        expected_states: Optional[Set[InvestigationPlaybookState]] = None,
+        expected_states: Tuple[InvestigationPlaybookState, ...] = (
+            InvestigationPlaybookState.COMPLETED,
+        ),
         timeout: int = 120,
     ):
         """
@@ -906,9 +908,6 @@ class XsoarClient(BaseModel):
         Returns:
             the raw response of the state of the playbook
         """
-        if not expected_states:
-            expected_states = {InvestigationPlaybookState.COMPLETED}
-
         if timeout <= 0:
             raise ValueError("timeout argument must be larger than 0")
 

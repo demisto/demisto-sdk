@@ -1936,10 +1936,6 @@ class ImagesFolderNames(str, Enum):
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
 
 
-class PreCommitModes(str, Enum):
-    NIGHTLY = "nightly"
-
-
 class InvestigationPlaybookState(str, Enum):
     NEW = "new"  # indicates that playbook not executed yet
     IN_PROGRESS = "inprogress"  # indicates that playbook in progress

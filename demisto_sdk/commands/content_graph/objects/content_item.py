@@ -20,11 +20,12 @@ if TYPE_CHECKING:
 
 from pydantic import DirectoryPath, Field, fields, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
+    get_pack_name,
     replace_incident_to_alert,
     write_dict,
 )
@@ -95,7 +96,7 @@ class ContentItem(BaseContent):
         return self.in_pack.pack_version if self.in_pack else None
 
     @property
-    def in_pack(self) -> "Pack":
+    def in_pack(self) -> Optional["Pack"]:
         """
         This returns the Pack which the content item is in.
 

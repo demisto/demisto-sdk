@@ -785,8 +785,6 @@ def validate(ctx, config, file_paths: str, **kwargs):
     from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-    start_time = time.time()
-
     if is_sdk_defined_working_offline():
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)

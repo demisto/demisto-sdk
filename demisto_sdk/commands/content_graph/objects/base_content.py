@@ -88,6 +88,7 @@ class BaseContentMetaclass(ModelMetaclass):
             model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
         return model_cls
 
+
 class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")

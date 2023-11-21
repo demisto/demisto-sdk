@@ -254,7 +254,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
         logger.debug(f"Parsing {self.node_id}")
         self.parse_pack_folders()
         self.parse_ignored_errors()
-        self.parse_support_level()
 
         logger.debug(f"Successfully parsed {self.node_id}")
 
@@ -301,7 +300,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 content_item_path, [MarketplaceVersions(mp) for mp in self.marketplaces]
             )
             content_item.add_to_pack(self.object_id)
-            content_item.pack = self
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
         except NotAContentItemException:

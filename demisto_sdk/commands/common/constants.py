@@ -1934,3 +1934,10 @@ SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 class ImagesFolderNames(str, Enum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
+
+
+class IncidentState(str, Enum):
+    NEW = 0  # the incident is new
+    IN_PROGRESS = 1  # the incident is in progress
+    CLOSED = 2  # the incident is closed
+    ACKNOWLEDGED = 3  # the incident is archived

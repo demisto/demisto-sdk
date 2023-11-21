@@ -1,8 +1,9 @@
 import contextlib
 import re
+import time
 import urllib.parse
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import dateparser
 import demisto_client
@@ -18,7 +19,7 @@ from demisto_sdk.commands.common.clients.configs import (
     XsoarClientConfig,
 )
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import IncidentState, MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
@@ -456,7 +457,9 @@ class XsoarClient(BaseModel):
             otherwise all module configs of all integrations
         """
         if response_type != "object" and _id:
-            raise ValueError('response_type be equal to "object" when providing _id')
+            raise ValueError(
+                'response_type must be equal to "object" when providing _id'
+            )
 
         raw_response = self.search_integrations(response_type=response_type)
         if not _id:
@@ -575,6 +578,56 @@ class XsoarClient(BaseModel):
             response_type=response_type,
         )
         return raw_response
+
+    def poll_incident_state(
+        self,
+        incident_id: str,
+        expected_states: Optional[Set[IncidentState]] = None,
+        timeout: int = 120,
+    ):
+        """
+        Polls for an incident state
+
+        Args:
+            incident_id: the incident ID to poll its state
+            expected_states: which states are considered to be valid for the incident to reach
+            timeout: how long to query until incidents reaches the expected state
+
+        Returns:
+
+        """
+        if not expected_states:
+            expected_states = {IncidentState.CLOSED}
+
+        if timeout <= 0:
+            raise ValueError("timeout argument must be larger than 0")
+
+        elapsed_time = 0
+        start_time = time.time()
+        interval = timeout / 10
+        incident_name = None
+        incident_status = None
+
+        while elapsed_time < timeout:
+            try:
+                incident = self.search_incidents(incident_id).get("data", [])[0]
+            except Exception as e:
+                raise ValueError(
+                    f"Could not find incident ID {incident_id}, error:\n{e}"
+                )
+
+            incident_status = incident.get("status")
+            incident_name = incident.get("name")
+            logger.debug(f"status of the incident {incident_name} is {incident_status}")
+            if incident_status in expected_states:
+                return incident_status
+            else:
+                time.sleep(interval)
+                elapsed_time = int(time.time() - start_time)
+
+        raise RuntimeError(
+            f"status of incident {incident_name} running is {incident_status}"
+        )
 
     @retry(exceptions=ApiException)
     def delete_incidents(

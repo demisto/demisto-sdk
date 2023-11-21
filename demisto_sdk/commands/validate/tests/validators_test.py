@@ -289,7 +289,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
     ) as temp_file:
         temp_file_path = temp_file.name
         validation_results = ResultWriter(json_file_path=temp_file_path)
-        validation_results.results = results
+        validation_results.validation_results = results
         validation_results.fixing_results = fixing_results
         validation_results.write_results_to_json_file()
         with open(temp_file_path, "r") as file:
@@ -379,7 +379,7 @@ def test_post_results(
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     validation_results = ResultWriter()
-    validation_results.results = results
+    validation_results.validation_results = results
     exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
     assert exit_code == expected_exit_code
     assert logger_warning.call_count == expected_warnings_call_count

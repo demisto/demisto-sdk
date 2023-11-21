@@ -25,9 +25,9 @@ class ValidSubtypeValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.type),
+                message=self.error_message.format(content_item.subtype),
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.type not in PYTHON_SUBTYPES
+            if content_item.type == "python" and content_item.subtype not in PYTHON_SUBTYPES
         ]

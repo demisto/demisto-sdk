@@ -36,10 +36,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
-        self.type = self.script_info.get("subtype") or self.script_info.get("type")
         self.is_long_running = self.script_info.get("longRunning", False)
-        if self.type == "python":
-            self.type += "2"
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
@@ -51,7 +48,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             {
                 "display_name": "display",
                 "docker_image": "script.dockerimage",
-                "type": ["script.subtype", "script.type"],
+                "type": "type",
+                "subtype": "subtype",
             }
         )
         return super().field_mapping

@@ -11,7 +11,7 @@ from typing import (
     get_args,
 )
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -52,9 +52,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_initialized: ClassVar[bool] = False
-    graph_interface: ClassVar[ContentGraphInterface] = Field(
-        None, exclude=True, repr=False
-    )
+    graph_interface: ClassVar[ContentGraphInterface] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -118,12 +116,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             )
         return BaseValidator.graph_interface
 
-    def __repr__(self):
-        # Exclude 'full_name' from the representation
-        fields = ", ".join(
-            f"{k}={v!r}" for k, v in self.dict(exclude={"graph"}).items()
-        )
-        return f"{self.__class__.__name__}({fields})"
+    def __dir__(self):
+        # Exclude specific properties from being displayed when hovering over 'self'
+        return [attr for attr in dir(type(self)) if attr != "graph"]
 
     class Config:
         arbitrary_types_allowed = (

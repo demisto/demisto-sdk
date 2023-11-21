@@ -31,5 +31,5 @@ class DockerImageExistValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not content_item.docker_image
+            if not content_item.type == "javascript" and not content_item.docker_image
         ]

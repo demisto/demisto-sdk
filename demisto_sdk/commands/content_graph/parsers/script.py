@@ -28,11 +28,8 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.is_test: bool = is_test_script
-        self.type = self.yml_data.get("subtype") or self.yml_data.get("type")
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.skip_prepare: List[str] = self.yml_data.get("skipprepare", [])
-        if self.type == "python":
-            self.type += "2"
 
         self.connect_to_dependencies()
         self.connect_to_tests()
@@ -43,6 +40,8 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
             {
                 "docker_image": "dockerimage",
                 "description": "comment",
+                "type": "type",
+                "subtype": "subtype",
             }
         )
         return super().field_mapping

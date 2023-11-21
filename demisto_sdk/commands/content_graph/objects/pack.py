@@ -238,7 +238,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
         metadata.update(
-            self._format_metadata(marketplace, self.content_items, self.depends_on)
+            self._format_metadata(
+                marketplace, self.content_items, self.depends_on, self.relationships
+            )
         )
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 

@@ -7,18 +7,26 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    PACKS_FOLDER,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
     LANDING_PAGE_SECTIONS_PATH,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.common import ContentType, PackTags
+from demisto_sdk.commands.content_graph.common import (
+    PACK_METADATA_FILENAME,
+    ContentType,
+    PackTags,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.content_graph.parsers.pack import PackMetadataParser
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
@@ -92,6 +100,7 @@ class PackMetadata(BaseModel):
         marketplace: MarketplaceVersions,
         content_items: PackContentItems,
         dependencies: List[RelationshipData],
+        relationships: Dict[RelationshipType, Dict],
     ) -> dict:
         """
         Enhancing the pack metadata properties after dumping into a dictionary. (properties that can't be calculating before)
@@ -119,7 +128,9 @@ class PackMetadata(BaseModel):
             {
                 "contentItems": collected_content_items,
                 "contentDisplays": content_displays,
-                "dependencies": self._enhance_dependencies(marketplace, dependencies),
+                "dependencies": self._enhance_dependencies(
+                    marketplace, dependencies, relationships
+                ),
                 "supportDetails": self._get_support_details(),
             }
         )
@@ -174,7 +185,10 @@ class PackMetadata(BaseModel):
         return collected_content_items, content_displays
 
     def _enhance_dependencies(
-        self, marketplace: MarketplaceVersions, dependencies: List[RelationshipData]
+        self,
+        marketplace: MarketplaceVersions,
+        dependencies: List[RelationshipData],
+        relationships: Dict[RelationshipType, Dict],
     ):
         """
         Gathers the first level pack's dependencies details to a list to add to the pack's metadata.
@@ -187,7 +201,8 @@ class PackMetadata(BaseModel):
         Returns:
             dict: The dependencies of the pack.
         """
-        return {
+
+        dependencies = {
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
                 "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
@@ -201,6 +216,27 @@ class PackMetadata(BaseModel):
             for r in dependencies
             if r.is_direct
         }
+        #TODOexplenation here, and dockstrings
+        if relationships:
+            for dep in relationships.get(RelationshipType.DEPENDS_ON, []):
+                target = dep.get("target")
+                if target not in dependencies:
+                    target_path =CONTENT_PATH / PACKS_FOLDER / target / PACK_METADATA_FILENAME
+                    target_metadata_dict = get_json(target_path)
+                    
+                    if not isinstance(target_metadata_dict, dict):
+                        continue
+                    target_metadata= PackMetadataParser(target_path, target_metadata_dict)
+                    dependencies[target] = {
+                        "mandatory": dep.get("mandatorily"),
+                        "minVersion": target_metadata.current_version,
+                        "author": self._get_author(
+                            target_metadata.author, marketplace
+                        ),
+                        "name": target_metadata.name,
+                        "certification": target_metadata.certification or ""
+                }
+        return dependencies
 
     def _get_pack_tags(
         self,

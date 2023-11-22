@@ -219,7 +219,8 @@ class PackMetadata(BaseModel):
             for r in dependencies
             if r.is_direct
         }
-        # Adding the custom dependencies to the dependencies list, this is useful when custom packs are uploaded by the user via SDK command.
+        # Adding the custom dependencies to the dependencies list. 
+        # This is useful when custom packs are uploaded by the user via SDK command, and the user wants to add his dependencies to the pack.
         if relationships:
             for dep in relationships.get(RelationshipType.DEPENDS_ON, []):
                 target = dep.get("target")

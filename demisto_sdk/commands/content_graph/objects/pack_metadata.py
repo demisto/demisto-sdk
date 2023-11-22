@@ -113,6 +113,7 @@ class PackMetadata(BaseModel):
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
             content_items (PackContentItems): The pack content items object.
             dependencies (list[RelationshipData]): List of the pack dependencies.
+            relationships (dict[RelationshipType, dict]): The pack relationships, including custom dependencies if written in the metadata.
 
         Returns:
             dict: The update metadata dictionary.
@@ -197,6 +198,8 @@ class PackMetadata(BaseModel):
 
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+            dependencies (list[RelationshipData]): List of the pack dependencies.
+            relationships (Dict[RelationshipType, Dict]): The pack relationships dictionary, including custom dependencies defined at the metadata.
 
         Returns:
             dict: The dependencies of the pack.
@@ -216,7 +219,7 @@ class PackMetadata(BaseModel):
             for r in dependencies
             if r.is_direct
         }
-        #TODOexplenation here, and dockstrings
+        # Adding the custom dependencies to the dependencies list, this is useful when custom packs are uploaded by the user via SDK command.
         if relationships:
             for dep in relationships.get(RelationshipType.DEPENDS_ON, []):
                 target = dep.get("target")

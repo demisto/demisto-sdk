@@ -33,6 +33,7 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.widget import Widget
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -86,6 +87,7 @@ def mock_pack(
         node_id=f"{ContentType.PACK}:{name}",
         path=path,
         name=name,
+        display_name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
         hidden=False,
         server_min_version="5.5.0",
@@ -1152,6 +1154,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_relationships_from_metadata(
         self,
+        mocker,
         repo: Repo,
     ):
         """
@@ -1170,6 +1173,7 @@ class TestCreateContentGraph:
         pack_core = repo.create_pack("Core")
         repo.create_pack("NonCorePack")
         pack_core.pack_metadata.write_json(core_metadata)
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
@@ -1218,6 +1222,7 @@ class TestCreateContentGraph:
 
         pack = repo.create_pack()
         pack.create_integration(docker_image=docker_image)
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface)

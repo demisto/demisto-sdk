@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
@@ -12,17 +13,21 @@ class IndicatorTypeParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_TYPE
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.connect_to_dependencies()
         self.regex = self.json_data.get("regex")
         self.reputation_script_name = self.json_data.get("reputationScriptName") or ""
         self.enhancement_script_names = self.json_data.get("enhancementScriptNames")
 
-    @property
-    def name(self) -> Optional[str]:
-        return self.json_data.get("details")
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update({"name": "details", "description": "details"})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
@@ -32,10 +37,6 @@ class IndicatorTypeParser(
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
-
-    @property
-    def description(self) -> Optional[str]:
-        return self.json_data.get("details")
 
     def connect_to_dependencies(self) -> None:
         """Collects scripts and the reputation command used as optional dependencies,

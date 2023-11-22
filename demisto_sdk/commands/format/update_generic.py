@@ -33,7 +33,7 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
     VERSION_KEY,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
 
@@ -88,7 +88,7 @@ class BaseUpdate:
         self.interactive = interactive
         self.updated_ids: Dict = {}
         if not self.no_validate:
-            self.validate_manager = ValidateManager(
+            self.validate_manager = OldValidateManager(
                 silence_init_prints=True,
                 skip_conf_json=True,
                 skip_dependencies=True,

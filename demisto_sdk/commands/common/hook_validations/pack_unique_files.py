@@ -40,6 +40,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
+    PARTNER_SUPPORT,
     VERSION_REGEX,
     MarketplaceVersions,
 )
@@ -345,7 +346,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("IM109")
     def validate_author_image_exists(self):
-        if self.metadata_content.get(PACK_METADATA_SUPPORT) == "partner":
+        if self.metadata_content.get(PACK_METADATA_SUPPORT) == PARTNER_SUPPORT:
             author_image_path = os.path.join(self.pack_path, "Author_image.png")
             if not Path(author_image_path).exists():
                 if self._add_error(
@@ -366,7 +367,7 @@ class PackUniqueFilesValidator(BaseValidator):
             Path(playbooks_path).exists() and len(os.listdir(playbooks_path)) != 0
         )
         if (
-            self.support == "partner" or contains_playbooks
+            self.support == PARTNER_SUPPORT or contains_playbooks
         ) and self._check_if_file_is_empty(self.readme_file):
             if self._add_error(Errors.empty_readme_error(), self.readme_file):
                 return False

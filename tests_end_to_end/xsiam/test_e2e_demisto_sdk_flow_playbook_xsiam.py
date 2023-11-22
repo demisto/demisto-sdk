@@ -12,7 +12,7 @@ from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from tests_end_to_end import e2e_tests_utils
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -77,7 +77,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
             assume_answer=True,
         )
         logger.info(f"Validating playbook {source_playbook_path}")
-        ValidateManager(file_path=str(source_playbook_path)).run_validation()
+        OldValidateManager(file_path=str(source_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {source_playbook_path}")
         Uploader(input=source_pack_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
@@ -160,7 +160,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
             assume_answer=True,
         )
         logger.info(f"Validating playbook {source_playbook_path}.")
-        ValidateManager(file_path=str(source_playbook_path)).run_validation()
+        OldValidateManager(file_path=str(source_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {source_playbook_path}.")
         Uploader(input=Path(source_playbook_path), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()

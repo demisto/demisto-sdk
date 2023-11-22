@@ -16,16 +16,3 @@ class AssetsModelingRuleParser(
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
-
-    # def __init__(
-    #     self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    # ) -> None:
-    #     super().__init__(path, pack_marketplaces)
-    #
-    # @property
-    # def object_id(self) -> Optional[str]:
-    #     return self.yml_data.get("id")
-    #
-    # @property
-    # def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-    #     return {MarketplaceVersions.MarketplaceV2}

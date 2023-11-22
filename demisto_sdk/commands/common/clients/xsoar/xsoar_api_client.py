@@ -727,6 +727,7 @@ class XsoarClient(BaseModel):
         response_type: str = "object",
     ):
         """
+        Deletes indicators from xsoar/xsiam
 
         Args:
             indicator_ids: the indicator IDs to remove

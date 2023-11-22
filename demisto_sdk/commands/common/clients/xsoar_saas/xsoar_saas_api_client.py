@@ -1,7 +1,6 @@
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
-from demisto_client.demisto_api import DefaultApi
 from pydantic import Field, validator
 from requests import Response, Session
 from requests.exceptions import RequestException
@@ -20,9 +19,8 @@ class XsoarSaasClient(XsoarClient):
         if v:
             return v
         config = values["config"]
-        client: DefaultApi = values["client"]
         session = Session()
-        session.verify = client.api_client.configuration.verify_ssl
+        session.verify = config.verify_ssl
         session.headers.update(
             {
                 "x-xdr-auth-id": config.auth_id,

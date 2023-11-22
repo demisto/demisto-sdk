@@ -31,6 +31,7 @@ class XsoarClientConfig(BaseModel):
     password: SecretStr = Field(
         default=SecretStr(os.getenv(DEMISTO_PASSWORD, "")), description="XSOAR Password"
     )
+    verify_ssl: Optional[bool] = None
 
     @root_validator()
     def validate_auth_params(cls, values: Dict[str, Any]):

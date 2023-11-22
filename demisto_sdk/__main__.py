@@ -1296,6 +1296,9 @@ def coverage_analyze(ctx, **kwargs):
             or no_min_coverage_enforcement
         ):
             return 0
+    except FileNotFoundError as e:
+        logger.warning(e)
+        return 0
     except Exception as error:
         logger.error(error)
 

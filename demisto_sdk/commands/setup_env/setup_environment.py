@@ -95,7 +95,7 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
     return docker_python_path
 
 
-def update_dotenv(values: Dict[str, str], quote_mode="always"):
+def update_dotenv(values: Dict[str, str], quote_mode="never"):
     env_vars = dotenv.dotenv_values(DOTENV_PATH)
     env_vars.update(values)
     for key, value in env_vars.items():

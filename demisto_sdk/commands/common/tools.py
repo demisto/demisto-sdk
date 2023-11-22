@@ -266,7 +266,7 @@ def generate_xsiam_normalized_name(file_name, prefix):
     elif file_name.startswith(f"{prefix}-"):
         return file_name.replace(f"{prefix}-", f"external-{prefix}-")
     else:
-        return f"external-{prefix}-{file_name}"  # todo: why do we add external?
+        return f"external-{prefix}-{file_name}"
 
 
 def get_mp_tag_parser():
@@ -1661,11 +1661,6 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XDRC_TEMPLATE
         elif MODELING_RULES_DIR in path.parts and "testdata" in path.stem.casefold():
             return FileType.MODELING_RULE_TEST_DATA
-        # elif any(
-        #     dir_name in path.parts
-        #     for dir_name in [MODELING_RULES_DIR, ASSETS_MODELING_RULES_DIR]
-        # ):
-        #     return FileType.MODELING_RULE_SCHEMA
         elif ASSETS_MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith(
             "_schema"
         ):
@@ -1704,12 +1699,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".js":
         return FileType.JAVASCRIPT_FILE
 
-    elif path.suffix == ".xif":  # todo: split to 2 conditions
-        # if any(
-        #     dir_name in path.parts
-        #     for dir_name in [MODELING_RULES_DIR, ASSETS_MODELING_RULES_DIR]
-        # ):
-        #     return FileType.MODELING_RULE_XIF
+    elif path.suffix == ".xif":
         if ASSETS_MODELING_RULES_DIR in path.parts:
             return FileType.ASSETS_MODELING_RULE_XIF
         if MODELING_RULES_DIR in path.parts:
@@ -1738,12 +1728,6 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
         elif PARSING_RULES_DIR in path.parts:
             return FileType.PARSING_RULE
-
-        # elif any(
-        #     dir_name in path.parts
-        #     for dir_name in [MODELING_RULES_DIR, ASSETS_MODELING_RULES_DIR]
-        # ):
-        #     return FileType.MODELING_RULE
 
         elif MODELING_RULES_DIR in path.parts:
             return FileType.MODELING_RULE

@@ -6,7 +6,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
 
 
-class TestScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
+class TestScriptParser(BaseScriptParser, content_type=ContentType.TEST_SCRIPT):
     def __init__(
         self,
         path: Path,

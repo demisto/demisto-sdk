@@ -56,3 +56,18 @@
   files: poetry.lock
   require_serial: true
   pass_filenames: false
+
+- id: coverage-analyze
+  name: coverage-analyze
+  entry: demisto-sdk coverage-analyze
+  description: Running demisto-sdk coverage-analyze and showing a coverage report.
+  language: python
+  pass_filenames: false
+  args: ["-i", ".coverage"]
+
+- id: merge-coverage-report
+  name: merge-coverage-report
+  entry: merge-coverage-report
+  language: python
+  require_serial: true
+  pass_filenames: false

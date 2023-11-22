@@ -1,8 +1,9 @@
 import contextlib
 import re
+import time
 import urllib.parse
-from abc import ABC
-from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import dateparser
 import demisto_client
@@ -17,12 +18,16 @@ from requests.exceptions import RequestException
 from demisto_sdk.commands.common.clients.configs import (
     XsoarClientConfig,
 )
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.clients.errors import UnAuthorized
+from demisto_sdk.commands.common.constants import (
+    InvestigationPlaybookState,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.utils.utils import retry
+from demisto_sdk.commands.common.tools import retry
 
 
-class XsoarClient(BaseModel, ABC):
+class XsoarClient(BaseModel):
     """
     api client for xsoar-on-prem
     """
@@ -42,18 +47,28 @@ class XsoarClient(BaseModel, ABC):
         """
         Get basic information about XSOAR server.
         """
-        raw_response, _, _ = client.generic_request(
-            "/about", "GET", response_type="object"
-        )
-        return raw_response
+        try:
+            raw_response, _, response_headers = client.generic_request(
+                "/about", "GET", response_type="object"
+            )
+            if "text/html" in response_headers.get("Content-Type"):
+                raise ValueError(
+                    f"the {client.api_client.configuration.host} URL is not the api-url",
+                )
+
+            return raw_response
+        except ApiException as err:
+            if err.status == requests.codes.unauthorized:
+                raise UnAuthorized(
+                    message=f"Could not connect to {client.api_client.configuration.host}, check credentials are valid",
+                    status_code=err.status,
+                )
+            raise
 
     @validator("client", always=True, pre=True)
     def validate_client_configured_correctly(
         cls, v: Optional[DefaultApi]
     ) -> DefaultApi:
-        """
-        Validates the provided client is valid, by checking if XSOAR server is healthy.
-        """
         return v or demisto_client.configure()
 
     @validator("about_xsoar", always=True)
@@ -61,8 +76,10 @@ class XsoarClient(BaseModel, ABC):
         return v or cls.get_xsoar_about(values["client"])
 
     @property
-    def containers_health(self):
-        raw_response, _, _ = self.client.generic_request("/health/containers", "GET")
+    def containers_health(self) -> Dict[str, int]:
+        raw_response, _, _ = self.client.generic_request(
+            "/health/containers", "GET", response_type="object"
+        )
         return raw_response
 
     @property
@@ -75,7 +92,7 @@ class XsoarClient(BaseModel, ABC):
         raise RuntimeError(f"Could not get version from instance {self.xsoar_host_url}")
 
     @property
-    def build_number(self):
+    def build_number(self) -> str:
         if build_number := self.about_xsoar.get("buildNum"):
             return build_number
         raise RuntimeError(
@@ -83,7 +100,7 @@ class XsoarClient(BaseModel, ABC):
         )
 
     @property
-    def xsoar_host_url(self):
+    def xsoar_host_url(self) -> str:
         """
         Returns the base api url used for api requests to xsoar endpoints
         """
@@ -97,7 +114,7 @@ class XsoarClient(BaseModel, ABC):
         return re.sub(r"api-|/xsoar", "", self.xsoar_host_url)
 
     @property
-    def external_base_url(self):
+    def external_base_url(self) -> str:
         # url that its purpose is to expose apis of integrations outside from xsoar/xsiam
         return self.config.base_api_url
 
@@ -121,16 +138,6 @@ class XsoarClient(BaseModel, ABC):
         )
         return raw_response
 
-    def search_integrations(self, response_type: str = "object"):
-        raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
-            method="POST",
-            path="/settings/integration/search",
-            response_type=response_type,
-            body={},
-        )
-        return raw_response
-
     def search_marketplace_packs(self, filters: Dict):
         """
         Searches for packs in a marketplace
@@ -139,7 +146,7 @@ class XsoarClient(BaseModel, ABC):
             filters: whether there are any filters to apply
 
         Returns:
-            raw response
+            raw response of the found packs
         """
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,
@@ -147,6 +154,98 @@ class XsoarClient(BaseModel, ABC):
             path="/contentpacks/marketplace/search",
             response_type="object",
             body=filters,
+        )
+        return raw_response
+
+    def get_marketplace_pack(self, pack_id: str):
+        """
+        Retrives a marketplace pack metadata
+
+        Args:
+            pack_id: the pack ID to retrieve.
+
+        Returns:
+            raw response of the found pack request
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="GET",
+            path=f"/contentpacks/marketplace/{pack_id}",
+            response_type="object",
+        )
+        return raw_response
+
+    def delete_marketplace_packs(self, pack_ids: List[str]):
+        """
+        Deletes installed packs from the marketplace.
+
+        Args:
+            pack_ids: list of pack IDs to delete
+
+        Returns:
+            raw response of the deleted packs request
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/contentpacks/installed/delete",
+            response_type="object",
+            body={"IDs": pack_ids},
+        )
+        return raw_response
+
+    def upload_marketplace_packs(
+        self, zipped_packs_path: Union[Path, str], skip_validation: bool = True
+    ):
+        """
+        Uploads packs to the marketplace.
+
+        Args:
+            pack_ids: list of pack IDs to upload
+            skip_validation: whether to skip packs validations, True if yes, False if not.
+
+        Returns:
+            raw response of the upload packs request
+        """
+        params = {}
+        if skip_validation:
+            params["skip_validation"] = "true"
+
+        raw_response = self.client.upload_content_packs(
+            str(zipped_packs_path), **params
+        )
+
+        return raw_response
+
+    def install_marketplace_packs(
+        self, packs: List[Dict[str, Any]], ignore_warnings: bool = True
+    ):
+        """
+        Installs packs from the marketplace.
+
+        Args:
+            packs: the packs metadata to install
+            ignore_warnings: whether to ignore warnings when installing, True if yes, False if not.
+
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/contentpacks/marketplace/install",
+            response_type="object",
+            body={"packs": packs, "ignoreWarnings": ignore_warnings},
+        )
+        return raw_response
+
+    def sync_marketplace(self):
+        """
+        Syncs up the marketplace.
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/contentpacks/marketplace/sync",
+            response_type="object",
         )
         return raw_response
 
@@ -273,6 +372,23 @@ class XsoarClient(BaseModel, ABC):
         return raw_response
 
     @retry(exceptions=ApiException)
+    def search_integrations(self, response_type: str = "object"):
+        """
+        Searches for integrations
+
+        Args:
+            response_type: the response type to return
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="POST",
+            path="/settings/integration/search",
+            response_type=response_type,
+            body={},
+        )
+        return raw_response
+
+    @retry(exceptions=ApiException)
     def test_module(self, _id: str, instance_name: str, response_type: str = "object"):
         """
         Runs test module for an integration instance
@@ -360,7 +476,7 @@ class XsoarClient(BaseModel, ABC):
         Get the integration(s) module configuration(s)
 
         Args:
-            _id: the module configuration of a specific integration
+            instance_name: the instance name of the integration
             response_type: the response type to return
 
         Returns:
@@ -403,9 +519,14 @@ class XsoarClient(BaseModel, ABC):
 
         create_incident_request.name = name
 
-        return self.client.create_incident(
-            create_incident_request=create_incident_request
-        )
+        try:
+            return self.client.create_incident(
+                create_incident_request=create_incident_request
+            )
+        except ApiException as err:
+            if err.status == requests.codes.bad_request and attached_playbook_id:
+                raise ValueError(f"playbook-id {attached_playbook_id} does not exist.")
+            raise
 
     @retry(exceptions=ApiException)
     def search_incidents(
@@ -865,3 +986,57 @@ class XsoarClient(BaseModel, ABC):
             response_type=response_type,
         )
         return raw_response
+
+    def poll_playbook_state(
+        self,
+        incident_id: str,
+        expected_states: Tuple[InvestigationPlaybookState, ...] = (
+            InvestigationPlaybookState.COMPLETED,
+        ),
+        timeout: int = 120,
+    ):
+        """
+        Polls for a playbook state until it reaches into an expected state.
+
+        Args:
+            incident_id: incident ID that the playbook is running on
+            expected_states: which states are considered to be valid for the playbook to reach
+            timeout: how long to query until the playbook reaches the expected state
+
+        Returns:
+            the raw response of the state of the playbook
+        """
+        if timeout <= 0:
+            raise ValueError("timeout argument must be larger than 0")
+
+        elapsed_time = 0
+        start_time = time.time()
+        interval = timeout / 10
+        playbook_id = None
+        playbook_state = None
+
+        while elapsed_time < timeout:
+            playbook_state_raw_response = self.get_playbook_state(incident_id)
+            playbook_state = playbook_state_raw_response.get("state")
+            playbook_id = playbook_state_raw_response.get("playbookId")
+            logger.debug(
+                f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
+            )
+            if playbook_state in expected_states:
+                return playbook_state_raw_response
+            else:
+                time.sleep(interval)
+                elapsed_time = int(time.time() - start_time)
+
+        raise RuntimeError(
+            f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
+        )
+
+    def get_incident_work_plan_url(self, incident_id: str) -> str:
+        """
+        Returns the URL of the work-plan of the incident ID.
+
+        Args:
+            incident_id: incident ID.
+        """
+        return f"{self.base_url}/#/WorkPlan/{incident_id}"

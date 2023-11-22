@@ -6,11 +6,11 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
 
 
-class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
+class TestScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
     def __init__(
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path=path, pack_marketplaces=pack_marketplaces, is_test_script=False, git_sha=git_sha)
+        super().__init__(path=path, pack_marketplaces=pack_marketplaces, is_test_script=True, git_sha=git_sha)

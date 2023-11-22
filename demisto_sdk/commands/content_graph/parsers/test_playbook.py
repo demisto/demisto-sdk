@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+from demisto_sdk.commands.content_graph.parsers.test_script import TestScriptParser
 
 NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
@@ -38,7 +39,7 @@ class TestPlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYB
 
         if self.yml_data.get("script"):
             raise IncorrectParserException(
-                correct_parser=ScriptParser, is_test_script=True
+                correct_parser=TestScriptParser
             )
 
     @property

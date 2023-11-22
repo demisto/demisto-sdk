@@ -22,7 +22,9 @@ __all__ = [
     "Playbook",
     "BasePlaybook",
     "Report",
+    "BaseScript",
     "Script",
+    "TestScript",
     "TestPlaybook",
     "Trigger",
     "Widget",
@@ -35,6 +37,7 @@ __all__ = [
     "PreProcessRule",
 ]
 from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
+from demisto_sdk.commands.content_graph.objects.base_script import BaseScript
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -63,6 +66,7 @@ from demisto_sdk.commands.content_graph.objects.relationship import Relationship
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard

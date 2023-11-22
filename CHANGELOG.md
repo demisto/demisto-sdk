@@ -2,7 +2,7 @@
 ## Unreleased
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
-* Updated demisto-sdk coverage-analyze to print a warning and exit with exit code 0 in case that the .coverage file doesn't exist.
+* Fixed an issue in **coverage-analyze** to exit gracefully in case that the .coverage file doesn't exist.
 * fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
 * Fixed an issue where **run-playbook** command did not work.
 

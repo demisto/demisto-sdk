@@ -13,4 +13,9 @@ class TestScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
         pack_marketplaces: List[MarketplaceVersions],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path=path, pack_marketplaces=pack_marketplaces, is_test_script=True, git_sha=git_sha)
+        super().__init__(
+            path=path,
+            pack_marketplaces=pack_marketplaces,
+            is_test_script=True,
+            git_sha=git_sha,
+        )

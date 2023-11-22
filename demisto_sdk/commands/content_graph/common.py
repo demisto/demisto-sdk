@@ -103,7 +103,12 @@ class ContentType(str, enum.Enum):
         if self.value in [ContentType.SCRIPT.value, ContentType.TEST_SCRIPT.value]:
             labels.add(ContentType.BASE_SCRIPT.value)
 
-        if self in [ContentType.SCRIPT, ContentType.COMMAND, ContentType.BASE_SCRIPT, ContentType.TEST_SCRIPT]:
+        if self in [
+            ContentType.SCRIPT,
+            ContentType.COMMAND,
+            ContentType.BASE_SCRIPT,
+            ContentType.TEST_SCRIPT,
+        ]:
             labels.add(ContentType.COMMAND_OR_SCRIPT.value)
 
         return list(labels)

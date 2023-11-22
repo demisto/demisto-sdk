@@ -86,6 +86,7 @@ class PackContentItems:
         self.preprocess_rule = ContentItemsList(
             content_type=ContentType.PREPROCESS_RULE
         )
+        self.test_script = ContentItemsList(content_type=ContentType.TEST_SCRIPT)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()

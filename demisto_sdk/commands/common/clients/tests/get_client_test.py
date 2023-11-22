@@ -1,4 +1,3 @@
-import os
 from typing import Type
 
 import pytest
@@ -17,17 +16,8 @@ from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
-def getenv_side_effect(key: str, default=None):
-    if key in {"DEMISTO_BASE_URL", "DEMISTO_API_KEY"}:
-        return "test"
-    elif key == "XSIAM_AUTH_ID":
-        return "1"
-    return default
-
-
 @pytest.fixture()
 def api_requests_mocker(mocker):
-    mocker.patch.object(os, "getenv", side_effect=getenv_side_effect)
     mocker.patch.object(XsoarClient, "get_xsoar_about", return_value={})
     mocker.patch.object(XsiamClient, "is_xsiam_server_healthy", return_value=True)
     return mocker
@@ -110,7 +100,11 @@ def test_get_client_from_marketplace(
     from demisto_sdk.commands.common.clients import get_client_from_marketplace
 
     assert (
-        type(get_client_from_marketplace(marketplace, base_url=base_api_url))
+        type(
+            get_client_from_marketplace(
+                marketplace, base_url=base_api_url, api_key="test", auth_id="1"
+            )
+        )
         == expected_client_type
     )
 
@@ -153,7 +147,12 @@ def test_get_xsoar_client_from_server_type(
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect
     )
     assert (
-        type(get_client_from_server_type(base_url=base_api_url)) == expected_client_type
+        type(
+            get_client_from_server_type(
+                base_url=base_api_url, api_key="test", auth_id="1"
+            )
+        )
+        == expected_client_type
     )
 
 
@@ -178,7 +177,12 @@ def test_get_xsiam_client_from_server_type(api_requests_mocker):
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect
     )
     assert (
-        type(get_client_from_server_type(base_url="https://test3.com")) == XsiamClient
+        type(
+            get_client_from_server_type(
+                base_url="https://test3.com", api_key="test", auth_id="1"
+            )
+        )
+        == XsiamClient
     )
 
 
@@ -207,7 +211,9 @@ def test_get_client_from_server_type_unauthorized_exception(api_requests_mocker)
         XsoarClient, "get_xsoar_about", side_effect=UnAuthorized("error")
     )
     with pytest.raises(UnAuthorized):
-        get_client_from_server_type(base_url="https://test4.com")
+        get_client_from_server_type(
+            base_url="https://test4.com", api_key="test", auth_id="1"
+        )
 
 
 def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
@@ -232,10 +238,10 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
         if path == "/about" and method == "GET" and response_type == "object":
             return {}, 200, {"Content-Type": "text/html"}
 
-    mocker.patch.object(os, "getenv", side_effect=getenv_side_effect)
-
     mocker.patch.object(
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect
     )
     with pytest.raises(ValueError):
-        get_client_from_server_type(base_url="https://test5.com")
+        get_client_from_server_type(
+            base_url="https://test5.com", api_key="test", auth_id="1"
+        )

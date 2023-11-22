@@ -14,6 +14,7 @@ import urllib3
 from docker.types import Mount
 from packaging.version import Version
 from requests import JSONDecodeError
+from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
@@ -26,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import retry
 
 DOCKER_CLIENT = None
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
@@ -443,6 +445,7 @@ def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
     return None
 
 
+@retry(times=5, exceptions=(RuntimeError, RequestException))
 def _get_docker_hub_token(repo: str) -> str:
     auth = None
 

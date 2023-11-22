@@ -8,7 +8,7 @@ from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.utils.utils import retry
+from demisto_sdk.commands.common.tools import retry
 
 
 class XsoarSaasClient(XsoarClient):
@@ -42,3 +42,6 @@ class XsoarSaasClient(XsoarClient):
         response = self.session.post(url)
         response.raise_for_status()
         return response
+
+    def get_incident_work_plan_url(self, incident_id: str) -> str:
+        return f"{self.base_url}/WorkPlan/{incident_id}"

@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.clients import (
     XsoarSaasClient,
     XsoarSaasClientConfig,
 )
+from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
@@ -68,7 +69,7 @@ def test_get_client_from_config(
      - running get_client_from_config function
 
     Then:
-     - Case A: make sure XsoarOnPremClient is returned
+     - Case A: make sure Xsoarclient is returned
      - Case B: make sure XsoarSaasClient is returned
      - Case C: make sure XsiamClient is returned
     """
@@ -179,3 +180,62 @@ def test_get_xsiam_client_from_server_type(api_requests_mocker):
     assert (
         type(get_client_from_server_type(base_url="https://test3.com")) == XsiamClient
     )
+
+
+def test_get_client_from_server_type_unauthorized_exception(api_requests_mocker):
+    """
+    Given:
+     - /ioc-rules endpoint that is not valid
+     - unauthorized exception when querying /about
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure an exception of UnAuthorized is raised
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(path: str, method: str):
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException(status=500, reason="error")
+
+    api_requests_mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    api_requests_mocker.patch.object(
+        XsoarClient, "get_xsoar_about", side_effect=UnAuthorized("error")
+    )
+    with pytest.raises(UnAuthorized):
+        get_client_from_server_type(base_url="https://test4.com")
+
+
+def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
+    """
+    Given:
+     - /ioc-rules endpoint that is not valid
+     - /about that returns content-type of text/html
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure an exception of ValueError is raised
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException(status=500, reason="error")
+        if path == "/about" and method == "GET" and response_type == "object":
+            return {}, 200, {"Content-Type": "text/html"}
+
+    mocker.patch.object(os, "getenv", side_effect=getenv_side_effect)
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    with pytest.raises(ValueError):
+        get_client_from_server_type(base_url="https://test5.com")

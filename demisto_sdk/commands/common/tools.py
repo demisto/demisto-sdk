@@ -4295,7 +4295,10 @@ def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> 
     except google.api_core.exceptions.NotFound:
         logger.warning("The secret is not found in the secret manager")
         raise SecretManagerException
-    except google.api_core.exceptions.PermissionDenied:
+    except (
+        google.api_core.exceptions.PermissionDenied,
+        google.auth.exceptions.DefaultCredentialsError,
+    ):
         logger.warning(
             "Insufficient permissions for gcloud. run `gcloud auth application-default login`"
         )

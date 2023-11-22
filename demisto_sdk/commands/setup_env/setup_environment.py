@@ -324,7 +324,7 @@ def install_virtualenv(
     docker_client = docker_helper.init_global_docker_client()
     requirements = (
         docker_client.containers.run(
-            test_docker_image, command="pip list --format=freeze", remove=True
+            test_docker_image, command=["pip list --format=freeze"], remove=True
         )
         .decode()
         .split("\n")
@@ -488,7 +488,8 @@ def configure_integration(
         pack = integration_script.in_pack
         assert isinstance(pack, Pack), "Expected pack"
         ide_folder = pack.path / IDE_TO_FOLDER[ide]
-        (pack.path / ".env").symlink_to(DOTENV_PATH)
+        if not (pack.path / ".env").exists():
+            (pack.path / ".env").symlink_to(DOTENV_PATH)
         if create_virtualenv and integration_script.type.startswith("python"):
             interpreter_path = install_virtualenv(
                 integration_script, test_docker_image, overwrite_virtualenv

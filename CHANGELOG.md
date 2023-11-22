@@ -4,6 +4,7 @@
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
 * fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
 * Fixed an issue where **run-playbook** command did not work.
+* Added support for *Assets Modeling Rule* as a new content item.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

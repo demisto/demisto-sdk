@@ -3,6 +3,7 @@
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
 * Fixed an issue in **coverage-analyze** to exit gracefully in case that the .coverage file doesn't exist.
+* Breaking changes: **ValidateManager** was renamed to **OldValidateManager** and can now be found at the following [path],(demisto_sdk/commands/validate/old_validate_manager.py)
 * fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
 * Fixed an issue where **run-playbook** command did not work.
 

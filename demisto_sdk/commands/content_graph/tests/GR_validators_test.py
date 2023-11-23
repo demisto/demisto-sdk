@@ -20,10 +20,10 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.tests.graph_validator_test import mock_pack
+from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_duplicated_script_name import (
     DuplicatedScriptNameValidator,
 )
-from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 
 GIT_PATH = Path(git_path())
 

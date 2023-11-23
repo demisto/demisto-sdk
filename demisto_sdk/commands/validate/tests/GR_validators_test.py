@@ -23,6 +23,7 @@ from demisto_sdk.commands.content_graph.tests.graph_validator_test import mock_p
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_duplicated_script_name import (
     DuplicatedScriptNameValidator,
 )
+from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 
 GIT_PATH = Path(git_path())
 
@@ -178,6 +179,8 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
     for pack in repository.packs:
         scripts.extend(pack.content_items.script)
     create_content_graph(ContentGraphInterface())
+    BaseValidator.graph_initialized = True
+    BaseValidator.graph_interface = ContentGraphInterface()
     results = DuplicatedScriptNameValidator().is_valid(scripts)
 
     assert len(results) == 1

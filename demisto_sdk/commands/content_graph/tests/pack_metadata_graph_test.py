@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import pytest
+from demisto_sdk.commands.content_graph.common import RelationshipType
 
+from demisto_sdk.commands.content_graph.objects import pack_metadata
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -17,6 +19,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
@@ -291,3 +294,86 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
     assert metadata_modeling_rule.get("fromversion") == "6.10.0"
     assert metadata_modeling_rule.get("id") == "my_ModelingRule"
     assert metadata_modeling_rule.get("name") == "My Modeling Rule"
+
+
+
+@pytest.fixture
+def sample_pack_metadata():
+    # Create an instance of PackMetadata with sample data
+    return PackMetadata(
+        name="Sample Pack",
+        display_name="Sample Display",
+        description= None,
+    created= None,
+    updated= None,
+    legacy= None,
+    support= None,
+    url= None,
+    email= None,
+    eulaLink= None,
+    author= None,
+    authorImage= None,
+    certification= None,
+    price= None,
+    hidden= None,
+    serverMinVersion= None,
+    currentVersion= None,
+    versionInfo= None,
+    commit= None,
+    downloads= None,
+    tags= None,
+    categories= None,
+    useCases= None,
+    keywords= None,
+    searchRank= None,
+    excludedDependencies= None,
+    videos= None,
+    modules= None,
+    integrations= None,
+    premium= None,
+    vendorId= None,
+    partnerId= None,
+    partnerName= None,
+    previewOnly= None,
+    disableMonthly= None,
+    contentCommitHash= None
+    )
+
+@pytest.fixture
+def sample_marketplace_versions():
+    return MarketplaceVersions.XSOAR
+
+@pytest.mark.parametrize("get_json_response, expected", [
+    ({"name": "test_name", "description": "test_description","support": "tst_support","keywords": "test_keywords","currentVersion": "test_current_version","author": "test_author"},
+    {'test_target1': {'mandatory': True, 'minVersion': 'test_current_version', 'author': 'test_author', 'name': 'test_name', 'certification': ''},
+    'test_target2':{'mandatory': False, 'minVersion': 'test_current_version', 'author': 'test_author', 'name': 'test_name', 'certification': ''}}
+    ),
+    (["a","b"], {}
+                 )])
+def test_enhance_dependencies(mocker, sample_pack_metadata, sample_marketplace_versions ,get_json_response, expected):
+    """
+    Test the _enhance_dependencies method of the PackMetadata class
+    Given:
+        - A pack metadata object
+        - A marketplace version
+    When:
+        - Calling the _enhance_dependencies method
+    Then:
+        - Ensure the returned dependencies dictionary is as expected
+        case 1:
+            - The target_path contains a valid pack metadata dictionary so the returned dictionary is as a non empty dictionary
+        case 2:
+            - The target_path contains a list instead of a dictionary, so the returned dictionary is empty
+    """
+    
+    # Arrange
+    dependencies_list = []
+    relationships_dict = {RelationshipType.DEPENDS_ON: [{'source': 'test_source', 'target': 'test_target1', 'mandatorily': True},
+                                                        {'source': 'test_source', 'target': 'test_target2', 'mandatorily': False}
+                                                    ]}
+    mocker.patch.object(pack_metadata, "get_json", return_value=get_json_response)
+    # Act
+    enhanced_dependencies = sample_pack_metadata._enhance_dependencies(
+        sample_marketplace_versions, dependencies_list, relationships_dict
+    )
+    assert enhanced_dependencies== expected

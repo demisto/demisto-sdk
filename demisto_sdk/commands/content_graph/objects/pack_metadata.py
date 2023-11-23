@@ -220,7 +220,8 @@ class PackMetadata(BaseModel):
             if r.is_direct and r.content_item_to.object_id not in self.excluded_dependencies and not r.content_item_to.hidden  # type: ignore
         }
         # Adding the custom dependencies to the dependencies list. 
-        # This is useful when custom packs are uploaded by the user via SDK command, and the user wants to add his dependencies to the pack.
+        # This is useful when custom packs are uploaded by the user via SDK command, and the user wants to add his dependencies
+        # from the pack_metadata.json to the his marketplace.
         if relationships:
             for dep in relationships.get(RelationshipType.DEPENDS_ON, []):
                 target = dep.get("target")

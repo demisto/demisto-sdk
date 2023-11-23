@@ -7,6 +7,7 @@
 * fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
+* Added support for custom packs to include dependencies when uploaded via SDK command.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

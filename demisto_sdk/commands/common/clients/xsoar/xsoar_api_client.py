@@ -72,6 +72,9 @@ class XsoarClient(BaseModel):
     def get_xsoar_client(
         cls, v: Optional[DefaultApi], values: Dict[str, Any]
     ) -> DefaultApi:
+        """
+        Returns the client for xsoar endpoints.
+        """
         if v:
             return v
         config: XsoarClientConfig = values["config"]

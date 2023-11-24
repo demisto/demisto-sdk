@@ -3,6 +3,10 @@ import sys
 
 import click
 
+from demisto_sdk.commands.validate.config_reader import ConfigReader
+from demisto_sdk.commands.validate.initializer import Initializer
+from demisto_sdk.commands.validate.validation_results import ResultWriter
+
 try:
     import git
 except ImportError:
@@ -575,7 +579,7 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Skip conf.json validation.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip conf.json validation.",
 )
 @click.option(
     "-s",
@@ -583,12 +587,12 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Perform validations using the id_set file.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Perform validations using the id_set file.",
 )
 @click.option(
     "-idp",
     "--id-set-path",
-    help="The path of the id-set.json used for validations.",
+    help="Relevant only for the old validate flow and will be removed in a future release. The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True),
 )
 @click.option(
@@ -597,7 +601,7 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Perform validations on content graph.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Perform validations on content graph.",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
@@ -606,7 +610,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "--no-backward-comp",
     is_flag=True,
     show_default=True,
-    help="Whether to check backward compatibility or not.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to check backward compatibility or not.",
 )
 @click.option(
     "-g",
@@ -638,7 +642,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "-iu",
     "--include-untracked",
     is_flag=True,
-    help="Whether to include untracked files in the validation. "
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to include untracked files in the validation. "
     "This applies only when the -g flag is supplied.",
 )
 @click.option(
@@ -660,31 +664,37 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--skip-pack-release-notes",
     is_flag=True,
-    help="Skip validation of pack release notes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack release notes.",
 )
 @click.option(
-    "--print-ignored-errors", is_flag=True, help="Print ignored errors as warnings."
+    "--print-ignored-errors",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Print ignored errors as warnings.",
 )
 @click.option(
     "--print-ignored-files",
     is_flag=True,
-    help="Print which files were ignored by the command.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Print which files were ignored by the command.",
 )
 @click.option(
-    "--no-docker-checks", is_flag=True, help="Whether to run docker image validation."
+    "--no-docker-checks",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to run docker image validation.",
 )
 @click.option(
     "--silence-init-prints",
     is_flag=True,
-    help="Whether to skip the initialization prints.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to skip the initialization prints.",
 )
 @click.option(
     "--skip-pack-dependencies",
     is_flag=True,
-    help="Skip validation of pack dependencies.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack dependencies.",
 )
 @click.option(
-    "--create-id-set", is_flag=True, help="Whether to create the id_set.json file."
+    "--create-id-set",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to create the id_set.json file.",
 )
 @click.option(
     "-j",
@@ -692,35 +702,79 @@ def zip_packs(ctx, **kwargs) -> int:
     help="The JSON file path to which to output the command results.",
 )
 @click.option(
-    "--skip-schema-check", is_flag=True, help="Whether to skip the file schema check."
+    "--skip-schema-check",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to skip the file schema check.",
 )
 @click.option(
-    "--debug-git", is_flag=True, help="Whether to print debug logs for git statuses."
+    "--debug-git",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to print debug logs for git statuses.",
 )
 @click.option(
-    "--print-pykwalify", is_flag=True, help="Whether to print the pykwalify log errors."
+    "--print-pykwalify",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to print the pykwalify log errors.",
 )
 @click.option(
     "--quiet-bc-validation",
-    help="Set backwards compatibility validation's errors as warnings.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Set backwards compatibility validation's errors as warnings.",
     is_flag=True,
 )
 @click.option(
     "--allow-skipped",
-    help="Don't fail on skipped integrations or when all test playbooks are skipped.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True,
 )
 @click.option(
     "--no-multiprocessing",
-    help="run validate all without multiprocessing, for debugging purposes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. run validate all without multiprocessing, for debugging purposes.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "-sv",
     "--run-specific-validations",
-    help="Run specific validations by stating the error codes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Run specific validations by stating the error codes.",
     is_flag=False,
+)
+@click.option(
+    "--category-to-run",
+    help="Run specific validations by stating category they're listed under in the config file.",
+    is_flag=False,
+)
+@click.option(
+    "-f",
+    "--fix",
+    help="Wether to autofix failing validations with an available auto fix or not.",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--config-path",
+    help="Path for a config file to run, if not given - will run the default config at https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/default_config.toml",
+    is_flag=False,
+)
+@click.option(
+    "--ignore-support-level",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to skip validations based on their support level or not.",
+)
+@click.option(
+    "--skip-old-validate",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to skip the old validate flow.",
+)
+@click.option(
+    "--run-new-validate",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to run the new validate flow.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
@@ -728,6 +782,7 @@ def zip_packs(ctx, **kwargs) -> int:
 @logging_setup_decorator
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
+    from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
     if is_sdk_defined_working_offline():
@@ -754,36 +809,65 @@ def validate(ctx, config, file_paths: str, **kwargs):
         if not kwargs.get("validate_all") and not kwargs["use_git"] and not file_path:
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
-        validator = ValidateManager(
-            is_backward_check=not kwargs["no_backward_comp"],
-            only_committed_files=kwargs["post_commit"],
-            prev_ver=kwargs["prev_ver"],
-            skip_conf_json=kwargs["no_conf_json"],
-            use_git=kwargs["use_git"],
-            file_path=file_path,
-            validate_all=kwargs.get("validate_all"),
-            validate_id_set=kwargs["id_set"],
-            validate_graph=kwargs.get("graph"),
-            skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
-            print_ignored_errors=kwargs["print_ignored_errors"],
-            is_external_repo=is_external_repo,
-            print_ignored_files=kwargs["print_ignored_files"],
-            no_docker_checks=kwargs["no_docker_checks"],
-            silence_init_prints=kwargs["silence_init_prints"],
-            skip_dependencies=kwargs["skip_pack_dependencies"],
-            id_set_path=kwargs.get("id_set_path"),
-            staged=kwargs["staged"],
-            create_id_set=kwargs.get("create_id_set"),
-            json_file_path=kwargs.get("json_file"),
-            skip_schema_check=kwargs.get("skip_schema_check"),
-            debug_git=kwargs.get("debug_git"),
-            include_untracked=kwargs.get("include_untracked"),
-            quiet_bc=kwargs.get("quiet_bc_validation"),
-            multiprocessing=run_with_mp,
-            check_is_unskipped=not kwargs.get("allow_skipped", False),
-            specific_validations=kwargs.get("run_specific_validations"),
-        )
-        return validator.run_validation()
+        exit_code = 0
+        if not kwargs["skip_old_validate"]:
+            validator = OldValidateManager(
+                is_backward_check=not kwargs["no_backward_comp"],
+                only_committed_files=kwargs["post_commit"],
+                prev_ver=kwargs["prev_ver"],
+                skip_conf_json=kwargs["no_conf_json"],
+                use_git=kwargs["use_git"],
+                file_path=file_path,
+                validate_all=kwargs.get("validate_all"),
+                validate_id_set=kwargs["id_set"],
+                validate_graph=kwargs.get("graph"),
+                skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
+                print_ignored_errors=kwargs["print_ignored_errors"],
+                is_external_repo=is_external_repo,
+                print_ignored_files=kwargs["print_ignored_files"],
+                no_docker_checks=kwargs["no_docker_checks"],
+                silence_init_prints=kwargs["silence_init_prints"],
+                skip_dependencies=kwargs["skip_pack_dependencies"],
+                id_set_path=kwargs.get("id_set_path"),
+                staged=kwargs["staged"],
+                create_id_set=kwargs.get("create_id_set"),
+                json_file_path=kwargs.get("json_file"),
+                skip_schema_check=kwargs.get("skip_schema_check"),
+                debug_git=kwargs.get("debug_git"),
+                include_untracked=kwargs.get("include_untracked"),
+                quiet_bc=kwargs.get("quiet_bc_validation"),
+                multiprocessing=run_with_mp,
+                check_is_unskipped=not kwargs.get("allow_skipped", False),
+                specific_validations=kwargs.get("run_specific_validations"),
+            )
+            exit_code += validator.run_validation()
+        if kwargs["run_new_validate"]:
+            validation_results = ResultWriter(
+                json_file_path=kwargs.get("json_file"),
+            )
+            config_reader = ConfigReader(
+                config_file_path=kwargs.get("config_path"),
+                category_to_run=kwargs.get("category_to_run"),
+            )
+            initializer = Initializer(
+                use_git=kwargs["use_git"],
+                staged=kwargs["staged"],
+                committed_only=kwargs["post_commit"],
+                prev_ver=kwargs["prev_ver"],
+                file_path=file_path,
+                all_files=kwargs.get("validate_all"),
+            )
+            validator_v2 = ValidateManager(
+                file_path=file_path,
+                validate_all=kwargs.get("validate_all"),
+                initializer=initializer,
+                validation_results=validation_results,
+                config_reader=config_reader,
+                allow_autofix=kwargs.get("fix"),
+                ignore_support_level=kwargs.get("ignore_support_level"),
+            )
+            exit_code += validator_v2.run_validations()
+        return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.info(f"[red]{e}[/red]")
         logger.info(
@@ -1210,6 +1294,9 @@ def coverage_analyze(ctx, **kwargs):
             or no_min_coverage_enforcement
         ):
             return 0
+    except FileNotFoundError as e:
+        logger.warning(e)
+        return 0
     except Exception as error:
         logger.error(error)
 
@@ -1670,7 +1757,7 @@ def run(ctx, **kwargs):
 @click.option(
     "--url",
     "-u",
-    help="URL to a Demisto instance. You can also specify the URL as an environment variable named: DEMISTO_BASE_URL",
+    help="URL to a Demisto instance. If not provided, the url will be taken from DEMISTO_BASE_URL environment variable.",
 )
 @click.option("--playbook_id", "-p", help="The playbook ID to run.", required=True)
 @click.option(
@@ -1684,7 +1771,7 @@ def run(ctx, **kwargs):
     "-t",
     default=90,
     show_default=True,
-    help="Timeout for the command. The playbook will continue to run in Demisto",
+    help="Timeout to query for playbook's state. Relevant only if --wait has been passed.",
 )
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.pass_context
@@ -1698,7 +1785,13 @@ def run_playbook(ctx, **kwargs):
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
     check_configuration_file("run-playbook", kwargs)
-    playbook_runner = PlaybookRunner(**kwargs)
+    playbook_runner = PlaybookRunner(
+        playbook_id=kwargs.get("playbook_id", ""),
+        url=kwargs.get("url", ""),
+        wait=kwargs.get("wait", False),
+        timeout=kwargs.get("timeout", 90),
+        insecure=kwargs.get("insecure", False),
+    )
     return playbook_runner.run_playbook()
 
 

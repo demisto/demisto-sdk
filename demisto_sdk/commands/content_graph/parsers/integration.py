@@ -37,6 +37,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.type = self.script_info.get("subtype") or self.script_info.get("type")
+        self.is_long_running = self.script_info.get("longRunning", False)
         if self.type == "python":
             self.type += "2"
         self.commands: List[CommandParser] = []

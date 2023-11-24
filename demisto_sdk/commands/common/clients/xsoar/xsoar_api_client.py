@@ -416,7 +416,7 @@ class XsoarClient(BaseModel):
             instance_name: the instance integration name
 
         """
-        logger.info(f"Running test-module on {_id}")
+        logger.info(f"Running test-module on integration {_id}")
         instance = self.get_integration_instance(instance_name)
         response_data, response_code, _ = demisto_client.generic_request_func(
             self=self.client,

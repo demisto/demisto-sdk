@@ -100,7 +100,7 @@ class XsoarClient(BaseModel):
         Returns XSOAR version
         """
         if xsoar_version := self.about_xsoar.get("demistoVersion"):
-            logger.debug(f"{self.base_url} version is {xsoar_version}")
+            logger.debug(f"{self.base_url} xsoar-server version is {xsoar_version}")
             return Version(xsoar_version)
         raise RuntimeError(f"Could not get version from instance {self.xsoar_host_url}")
 

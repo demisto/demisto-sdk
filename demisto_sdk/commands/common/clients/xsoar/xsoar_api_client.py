@@ -63,7 +63,7 @@ class XsoarClient(BaseModel):
         except ApiException as err:
             if err.status == requests.codes.unauthorized:
                 raise UnAuthorized(
-                    message=f"Could not connect to {client.api_client.configuration.host}, check credentials are valid",
+                    message=f"Could not connect to {client.api_client.configuration.host}, credentials are invalid",
                     status_code=err.status,
                 )
             raise
@@ -159,7 +159,7 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
-    def search_marketplace_packs(self, filters: Dict):
+    def search_marketplace_packs(self, filters: Optional[Dict] = None):
         """
         Searches for packs in a marketplace
 
@@ -174,7 +174,7 @@ class XsoarClient(BaseModel):
             method="POST",
             path="/contentpacks/marketplace/search",
             response_type="object",
-            body=filters,
+            body=filters or {},
         )
         return raw_response
 
@@ -223,7 +223,7 @@ class XsoarClient(BaseModel):
         Uploads packs to the marketplace.
 
         Args:
-            pack_ids: list of pack IDs to upload
+            zipped_packs_path: zipped packs path
             skip_validation: whether to skip packs validations, True if yes, False if not.
 
         Returns:
@@ -418,7 +418,7 @@ class XsoarClient(BaseModel):
         """
         logger.info(f"Running test-module on integration {_id}")
         instance = self.get_integration_instance(instance_name)
-        response_data, response_code, _ = demisto_client.generic_request_func(
+        raw_response, status_code, _ = demisto_client.generic_request_func(
             self=self.client,
             method="POST",
             path="/settings/integration/test",
@@ -426,9 +426,9 @@ class XsoarClient(BaseModel):
             response_type="object",
             _request_timeout=240,
         )
-        if response_code >= 300 or not response_data.get("success"):
+        if status_code >= 300 or not raw_response.get("success"):
             raise ApiException(
-                f"Test connection failed - {response_data.get('message')}"
+                f"Test connection failed - {raw_response.get('message')}, status code: {status_code}"
             )
 
     @retry(exceptions=ApiException)
@@ -450,7 +450,7 @@ class XsoarClient(BaseModel):
             response_type=response_type,
         )
         logger.debug(
-            f"Successfully removed instance {instance_id} from {self.base_url}"
+            f"Successfully removed integration instance {instance_id} from {self.base_url}"
         )
 
     @retry(exceptions=ApiException)

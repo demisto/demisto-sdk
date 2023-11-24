@@ -159,6 +159,7 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
+    @retry(exceptions=ApiException)
     def search_marketplace_packs(self, filters: Optional[Dict] = None):
         """
         Searches for packs in a marketplace
@@ -178,6 +179,7 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
+    @retry(exceptions=ApiException)
     def get_marketplace_pack(self, pack_id: str):
         """
         Retrives a marketplace pack metadata
@@ -196,6 +198,7 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
+    @retry(exceptions=ApiException)
     def uninstall_marketplace_packs(self, pack_ids: List[str]):
         """
         Deletes installed packs from the marketplace.
@@ -216,6 +219,7 @@ class XsoarClient(BaseModel):
         logger.debug(f"Successfully removed packs {pack_ids} from {self.base_url}")
         return raw_response
 
+    @retry(exceptions=ApiException)
     def upload_marketplace_packs(
         self, zipped_packs_path: Union[Path, str], skip_validation: bool = True
     ):
@@ -235,6 +239,7 @@ class XsoarClient(BaseModel):
 
         return self.client.upload_content_packs(str(zipped_packs_path), **params)
 
+    @retry(exceptions=ApiException)
     def install_marketplace_packs(
         self, packs: List[Dict[str, Any]], ignore_warnings: bool = True
     ):
@@ -255,6 +260,7 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
+    @retry(exceptions=ApiException)
     def sync_marketplace(self):
         """
         Syncs up the marketplace.
@@ -409,7 +415,9 @@ class XsoarClient(BaseModel):
     @retry(exceptions=ApiException)
     def test_module(self, _id: str, instance_name: str):
         """
-        Runs test module for an integration instance
+        Runs test module for an integration instance, if an exception isn't raised, the test was successful.
+
+        Raises ApiException in case the test-module was not successful.
 
         Args:
             _id: the ID of the integration

@@ -127,11 +127,11 @@ class XsoarClient(BaseModel):
         return re.sub(r"api-|/xsoar", "", self.xsoar_host_url)
 
     @property
-    def fqdn(self):
+    def fqdn(self) -> str:
         return urlparse(self.base_url).netloc
 
     @property
-    def ip(self):
+    def ip(self) -> str:
         return socket.gethostbyname(self.fqdn)
 
     @property

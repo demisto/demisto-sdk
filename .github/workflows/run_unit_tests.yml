@@ -1,4 +1,4 @@
-name: Run-Unit-Tests
+name: General
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ "3.8", "3.9", "3.10" ]
-        group: [ 1, 2, 3, 4, 5 ]
+        group: [ 1, 2 ]
       fail-fast: false
     defaults:
       run:

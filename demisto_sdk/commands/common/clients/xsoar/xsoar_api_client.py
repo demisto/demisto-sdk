@@ -1,9 +1,11 @@
 import contextlib
 import re
+import socket
 import time
 import urllib.parse
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
+from urllib.parse import urlparse
 
 import dateparser
 import demisto_client
@@ -123,6 +125,14 @@ class XsoarClient(BaseModel):
         Returns the base URL of the xsoar/xsiam instance (not the api URL!)
         """
         return re.sub(r"api-|/xsoar", "", self.xsoar_host_url)
+
+    @property
+    def fqdn(self):
+        return urlparse(self.base_url).netloc
+
+    @property
+    def ip(self):
+        return socket.gethostbyname(self.fqdn)
 
     @property
     def external_base_url(self) -> str:

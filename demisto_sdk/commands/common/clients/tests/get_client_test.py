@@ -196,7 +196,7 @@ def test_get_client_from_server_type_unauthorized_exception(api_requests_mocker)
      - running get_client_from_server_type function
 
     Then:
-     - make sure an exception of UnAuthorized is raised
+     - make sure UnAuthorized exception is raised
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 
@@ -226,7 +226,7 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
      - running get_client_from_server_type function
 
     Then:
-     - make sure an exception of ValueError is raised
+     - make sure ValueError exception is raised
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 

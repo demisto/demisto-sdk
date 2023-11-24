@@ -69,7 +69,7 @@ class XsoarClient(BaseModel):
             raise
 
     @validator("client", always=True, pre=True)
-    def validate_client_configured_correctly(
+    def get_xsoar_client(
         cls, v: Optional[DefaultApi], values: Dict[str, Any]
     ) -> DefaultApi:
         if v:

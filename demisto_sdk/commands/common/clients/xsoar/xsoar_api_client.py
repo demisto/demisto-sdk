@@ -412,7 +412,6 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
-    @retry(exceptions=ApiException)
     def test_module(self, _id: str, instance_name: str):
         """
         Runs test module for an integration instance, if an exception isn't raised, the test was successful.

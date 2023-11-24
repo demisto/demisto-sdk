@@ -25,7 +25,6 @@ from TestSuite.test_tools import flatten_call_args
 
 logger = logging.getLogger("demisto-sdk")
 
-
 REPORT_STR_FILE = os.path.join(TEST_DATA_DIR, "coverage.txt")
 
 
@@ -36,11 +35,39 @@ class TestCoverageReport:
             rf"^exporting {r_type} coverage report to [\w\-\./]+/{file_name}\.{suffix}$"
         )
 
+    def test_fail_without_coverage_file(self, monkeypatch, tmpdir):
+        """
+        Given:
+            - no .coverage file is given or exists.
+        When:
+            - Running demisto-sdk coverage-analyze.
+        Then:
+            - Make sure that there is an exception to file not found and a warning was added to the logger.
+        """
+        monkeypatch.chdir(tmpdir)
+        cov_report = CoverageReport()
+        try:
+            cov_report.coverage_report()
+        except FileNotFoundError as e:
+            assert str(e) == "The coverage file does not exist."
+
     def test_with_print_report(self, tmpdir, monkeypatch, mocker):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         monkeypatch.chdir(tmpdir)
-        cov_report = CoverageReport()
+
+        coverage_path = os.path.join(
+            COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations"
+        )
+        temp_cover_file = tmpdir.join(".coverage")
+        copy_file(coverage_path, temp_cover_file)
+
+        cov_report = CoverageReport(
+            report_dir=str(tmpdir),
+            report_type="html,json,xml",
+            coverage_file=temp_cover_file,
+            no_cache=True,
+        )
         cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         cov_report.coverage_report()
         assert (

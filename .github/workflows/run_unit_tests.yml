@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ "3.8", "3.9", "3.10" ]
-        group: [ 1, 2 ]
+        group: [ 1, 2, 3, 4, 5 ]
       fail-fast: false
     defaults:
       run:
@@ -71,11 +71,16 @@ jobs:
           
           echo "test-files are: $TEST_FILES"
 
-          poetry run pytest --store-durations
-          poetry run pytest -v --cov --splits 5 --group ${{ matrix.group }} $TEST_FILES
+          poetry run pytest $TEST_FILES --store-durations
+          poetry run pytest $TEST_FILES -v --cov --splits 5 --group ${{ matrix.group }}
           kill $node_pid
       - name: Upload coverage
         uses: actions/upload-artifact@v2
         with:
           name: coverage-${{ matrix.os }}-${{ matrix.python_version }}${{ matrix.group }}
           path: .coverage
+      - name: Upload durations
+        uses: actions/upload-artifact@v2
+        with:
+          name: .test_durations
+          path: .test_durations

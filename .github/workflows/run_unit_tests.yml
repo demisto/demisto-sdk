@@ -72,7 +72,7 @@ jobs:
           
           echo "test-files are: $TEST_FILES"
 
-#          poetry run pytest $TEST_FILES --store-durations
+          # poetry run pytest $TEST_FILES --store-durations
           poetry run pytest $TEST_FILES -v --cov --splits 5 --group ${{ matrix.group }}
           kill $node_pid
       - name: Upload coverage

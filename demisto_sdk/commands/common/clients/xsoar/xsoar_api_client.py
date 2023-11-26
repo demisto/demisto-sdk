@@ -440,6 +440,7 @@ class XsoarClient(BaseModel):
             raise ApiException(
                 f"Test connection failed - {raw_response.get('message')}, status code: {status_code}"
             )
+        logger.debug(f'The test-module was successful for integration {_id}')
 
     @retry(exceptions=ApiException)
     def delete_integration_instance(

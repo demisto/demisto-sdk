@@ -3,18 +3,20 @@
 # Get repositories path list from argument
 repositories=("$@")
 
-# Validate repositories path list
+# Verify the repositories argument was provided
 if [ ${#repositories[@]} -eq 0 ]; then
-  echo "Usage: $0 <repository1> <repository2> ..."
+  echo "Please provide at least one repository to be updated, for example:
+$0 <repository1> <repository2> ..."
   exit 1
 fi
 
 valid_repositories=()
 invalid_repositories=()
 
+# Go over the repositories and divide them between valid and invalid
 for repository in "${repositories[@]}"
 do
-  # Validate path
+  # Verify the repository is actually a directory
   if [ ! -d "$repository" ]; then
     invalid_repositories+=("$repository")
   else
@@ -22,9 +24,9 @@ do
   fi
 done
 
-# Validate repositories path list
+# Make sure there are valid repositories
 if [ ${#valid_repositories[@]} -eq 0 ]; then
-  echo "No valid repositories are found"
+  echo "There are no valid repositories found"
   exit 1
 fi
 

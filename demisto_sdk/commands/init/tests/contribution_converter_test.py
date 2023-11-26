@@ -1271,7 +1271,7 @@ class TestReadmes:
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
-        modified_readme = Path(os.path.join(contribution_temp_dir, INTEGRATIONS_DIR, self.existing_pack_name, PACKS_README_FILE_NAME))
+        modified_readme = Path(contrib_converter.readme_files[0])
 
         actual_integration_yml_path = Path(contribution_temp_dir / INTEGRATIONS_DIR / self.existing_integration_name / f"{self.existing_integration_name}.yml")
 
@@ -1355,7 +1355,7 @@ class TestReadmes:
         contrib_converter.convert_contribution_to_pack()
 
         # Check that the generated readme exists
-        generated_readme = Path(contribution_temp_dir, INTEGRATIONS_DIR, self.new_integration_name, PACKS_README_FILE_NAME)
+        generated_readme = Path(contrib_converter.readme_files[0])
         assert generated_readme.exists()
 
     def test_process_new_pack(
@@ -1423,7 +1423,7 @@ class TestReadmes:
         assert Path(contrib_converter.working_dir_path, PACKS_README_FILE_NAME).exists()
 
         # Check new Integration README exists
-        assert Path(contrib_converter.working_dir_path, INTEGRATIONS_DIR, contrib_converter.name, PACKS_README_FILE_NAME).exists()
+        assert Path(contrib_converter.readme_files[0]).exists()
 
     def test_new_content_map(
             self,

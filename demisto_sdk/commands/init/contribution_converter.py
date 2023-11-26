@@ -158,7 +158,7 @@ class ContributionConverter:
         self.author = author
         self.update_type = update_type or "revision"
         self.release_notes = release_notes
-        self.detected_content_items = detected_content_items
+        self.detected_content_items = detected_content_items or []
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new

@@ -438,7 +438,7 @@ class XsoarClient(BaseModel):
         )
         if status_code >= 300 or not raw_response.get("success"):
             raise ApiException(
-                f"Test connection failed - {raw_response.get('message')}, status code: {status_code}"
+                f"Test module failed - {raw_response.get('message')}, status code: {status_code}"
             )
         logger.debug(f'The test-module was successful for integration {_id}')
 

@@ -81,7 +81,9 @@ class ContentType(str, enum.Enum):
     PLAYBOOK = "Playbook"
     PREPROCESS_RULE = "PreProcessRule"
     REPORT = "Report"
+    BASE_SCRIPT = "BaseScript"
     SCRIPT = "Script"
+    TEST_SCRIPT = "TestScript"
     TEST_PLAYBOOK = "TestPlaybook"
     TRIGGER = "Trigger"
     WIDGET = "Widget"
@@ -99,8 +101,15 @@ class ContentType(str, enum.Enum):
             labels.add(ContentType.BASE_CONTENT.value)
         if self.value in [ContentType.TEST_PLAYBOOK.value, ContentType.PLAYBOOK.value]:
             labels.add(ContentType.BASE_PLAYBOOK.value)
+        if self.value in [ContentType.SCRIPT.value, ContentType.TEST_SCRIPT.value]:
+            labels.add(ContentType.BASE_SCRIPT.value)
 
-        if self in [ContentType.SCRIPT, ContentType.COMMAND]:
+        if self in [
+            ContentType.SCRIPT,
+            ContentType.COMMAND,
+            ContentType.BASE_SCRIPT,
+            ContentType.TEST_SCRIPT,
+        ]:
             labels.add(ContentType.COMMAND_OR_SCRIPT.value)
 
         return list(labels)

@@ -33,6 +33,7 @@ from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProce
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
@@ -89,6 +90,7 @@ class PackContentItems(BaseModel):
     preprocess_rule: List[PreProcessRule] = Field(
         [], alias=ContentType.PREPROCESS_RULE.value
     )
+    test_script: List[TestScript] = Field([], alias=ContentType.TEST_SCRIPT.value)
     assets_modeling_rule: List[AssetsModelingRule] = Field(
         [], alias=ContentType.ASSETS_MODELING_RULE.value
     )

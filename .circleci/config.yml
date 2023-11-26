@@ -320,26 +320,6 @@ jobs:
               neo4j start
               # poll for neo4j status until available
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
-
-              ./Tests/scripts/validate.sh
-              
-        - store_artifacts:
-            path: /home/circleci/project/artifacts
-  validate-files-new-validate:
-      docker:
-        - image: << pipeline.parameters.global-docker-image >>
-      resource_class: large
-      <<: *environment
-      steps:
-        - checkout
-        - <<: *install_poetry
-        - <<: *install_neo4j
-        - attach_workspace:
-            at: ~/project
-        - <<: *install_build_dependencies
-        - node/install-packages:
-            cache-version: << pipeline.parameters.cache-version >>
-            app-dir: content
         - run:
             name: Test validate files and yaml - new validate
             when: always

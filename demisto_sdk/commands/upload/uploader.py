@@ -65,7 +65,7 @@ class Uploader:
         detached_files: bool = False,
         reattach: bool = False,
         override_existing: bool = False,
-        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        marketplace: MarketplaceVersions | None = None,
         zip: bool = False,
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
@@ -83,6 +83,7 @@ class Uploader:
             Tuple[Union[ContentItem, Pack], str]
         ] = []
         self._failed_upload_version_mismatch: List[ContentItem] = []
+        self._skipped_upload_marketplace_mismatch: List[ContentItem] = []
         self._failed_upload_zips: List[str] = []
         self.failed_parsing: List[Tuple[Path, str]] = []
 
@@ -268,7 +269,9 @@ class Uploader:
             )
             self.failed_parsing.append((path, reason))
             return False
-
+        if self.marketplace and self.marketplace not in content_item.marketplaces and isinstance(content_item, ContentItem):
+            self._skipped_upload_marketplace_mismatch.append(content_item)
+            return True
         try:
             content_item.upload(
                 client=self.client,
@@ -420,6 +423,29 @@ class Uploader:
             )
 
             logger.info(f"[green]SUCCESSFUL UPLOADS:\n{uploaded_str}\n[/green]")
+            
+        if self._skipped_upload_marketplace_mismatch:
+            marketplace_mismatch_str = tabulate(
+                (
+                    (
+                        item.path.name,
+                        item.content_type,
+                        self.marketplace,
+                        item.marketplaces
+                    )
+                    for item in self._skipped_upload_marketplace_mismatch
+                ),
+                headers=[
+                    "NAME",
+                    "TYPE",
+                    "MARKETPLACE",
+                    "FILE_MARKETPLACES",
+                ],
+                tablefmt="fancy_grid",
+            )
+            logger.info(
+                f"[yellow]SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:\n{marketplace_mismatch_str}\n[/yellow]"
+            )
 
         if self._failed_upload_version_mismatch:
             version_mismatch_str = tabulate(

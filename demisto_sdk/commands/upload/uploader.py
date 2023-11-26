@@ -65,7 +65,7 @@ class Uploader:
         detached_files: bool = False,
         reattach: bool = False,
         override_existing: bool = False,
-        marketplace: MarketplaceVersions | None = None,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         zip: bool = False,
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
@@ -269,7 +269,11 @@ class Uploader:
             )
             self.failed_parsing.append((path, reason))
             return False
-        if self.marketplace and self.marketplace not in content_item.marketplaces and isinstance(content_item, ContentItem):
+        if (
+            self.marketplace
+            and self.marketplace not in content_item.marketplaces
+            and isinstance(content_item, ContentItem)
+        ):
             self._skipped_upload_marketplace_mismatch.append(content_item)
             return True
         try:
@@ -423,7 +427,7 @@ class Uploader:
             )
 
             logger.info(f"[green]SUCCESSFUL UPLOADS:\n{uploaded_str}\n[/green]")
-            
+
         if self._skipped_upload_marketplace_mismatch:
             marketplace_mismatch_str = tabulate(
                 (
@@ -431,7 +435,7 @@ class Uploader:
                         item.path.name,
                         item.content_type,
                         self.marketplace,
-                        item.marketplaces
+                        item.marketplaces,
                     )
                     for item in self._skipped_upload_marketplace_mismatch
                 ),

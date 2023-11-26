@@ -114,7 +114,6 @@ references:
       requires:
             - precommit-checks
             - validate-files
-            - validate-files-new-validate
             - create-content-artifacts
             - test-lint
             - run-integration-tests
@@ -532,9 +531,6 @@ workflows:
               pythonversion: ["3.8", "3.9", "3.10"]   
           name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
-          <<: *tag_filter
-          <<: *reqs_content_checkout
-      - validate-files-new-validate:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - test-lint:

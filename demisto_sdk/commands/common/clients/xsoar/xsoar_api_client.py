@@ -426,7 +426,7 @@ class XsoarClient(BaseModel):
             instance_name: the instance integration name
 
         """
-        logger.info(f"Running test-module on integration {_id}")
+        logger.info(f"Running test-module on integration {_id} and {instance_name=}")
         instance = self.get_integration_instance(instance_name)
         raw_response, status_code, _ = demisto_client.generic_request_func(
             self=self.client,
@@ -440,7 +440,7 @@ class XsoarClient(BaseModel):
             raise ApiException(
                 f"Test module failed - {raw_response.get('message')}, status code: {status_code}"
             )
-        logger.debug(f"The test-module was successful for integration {_id}")
+        logger.debug(f"The test-module was successful for integration {_id} and {instance_name=}")
 
     @retry(exceptions=ApiException)
     def delete_integration_instance(

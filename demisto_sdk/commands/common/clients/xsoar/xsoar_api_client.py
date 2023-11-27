@@ -638,6 +638,8 @@ class XsoarClient(BaseModel):
         incident_name = None
         incident_status = None
 
+        expected_state_names = {state.name for state in expected_states}
+
         while elapsed_time < timeout:
             try:
                 incident = self.search_incidents(incident_id).get("data", [])[0]
@@ -645,11 +647,10 @@ class XsoarClient(BaseModel):
                 raise ValueError(
                     f"Could not find incident ID {incident_id}, error:\n{e}"
                 )
-
-            incident_status = incident.get("status")
+            incident_status = IncidentState(str(incident_status)).name
             incident_name = incident.get("name")
             logger.debug(f"status of the incident {incident_name} is {incident_status}")
-            if incident_status in expected_states:
+            if incident_status in expected_state_names:
                 return incident
             else:
                 time.sleep(interval)

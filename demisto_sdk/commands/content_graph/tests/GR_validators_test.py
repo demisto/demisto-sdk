@@ -162,7 +162,7 @@ def mock_script(
     )
 
 
-def test_validate_unique_script_name(repository: ContentDTO, mocker):
+def test_DuplicatedScriptNameValidator_is_valid(repository: ContentDTO, mocker):
     """
     Given
         - A content repo with 8 scripts:

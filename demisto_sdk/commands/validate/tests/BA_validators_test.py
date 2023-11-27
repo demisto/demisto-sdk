@@ -13,7 +13,7 @@ from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equa
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures",
+    "content_items, expected_number_of_failures, expected_msgs",
     [
         (
             [
@@ -23,6 +23,9 @@ from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equa
                 create_integration_object(),
             ],
             1,
+            [
+                "The name attribute (currently TestIntegration) should be identical to its `id` attribute (changedName)"
+            ],
         ),
         (
             [
@@ -30,78 +33,188 @@ from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equa
                 create_classifier_object(paths=["id"], values=["Github Classifier"]),
             ],
             1,
+            [
+                "The name attribute (currently Github Classifier) should be identical to its `id` attribute (changedName)"
+            ],
         ),
         (
             [
                 create_dashboard_object(),
             ],
             0,
+            [],
         ),
         (
             [
                 create_incident_type_object(),
             ],
             0,
+            [],
         ),
         (
             [
                 create_wizard_object(),
             ],
             0,
+            [],
         ),
         (
             [
                 create_wizard_object({"id": "should_fail"}),
             ],
             1,
+            [
+                "The name attribute (currently test_wizard) should be identical to its `id` attribute (should_fail)"
+            ],
         ),
     ],
 )
-def test_IDNameValidator_is_valid(content_items, expected_number_of_failures):
+def test_IDNameValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
     """
     Given
-    content_items and old_content_items iterables.
-        - Case 1: content_items with 2 integrations where the first one has its subtype altered, and two integration with no changes in old_content_items.
-        - Case 2: content_items with 1 integration where the first one has its subtype altered and one script with no subtype altered, and old_content_items with one script and integration with no changes.
-        - Case 3: content_items with 1 integration where the first one has its subtype altered and 1 script where that has its subtype altered, and old_content_items with one script and integration with no changes.
-        - Case 4: content_items and old_content_items with 1 integration and 1 script both with no changes
+    content_items list.
+        - Case 1: content_items with 2 integrations where the first one has its ID altered.
+        - Case 2: content_items with 2 classifiers where the first one has its ID altered.
+        - Case 3: content_items with 1 Dashboard without changes.
+        - Case 3: content_items with 1 IncidentType without changes.
+        - Case 3: content_items with 1 Wizard without changes.
+        - Case 2: content_items with 1 Wizard with its ID altered.
     When
-    - Calling the BreakingBackwardsSubtypeValidator is valid function.
+    - Calling the IDNameValidator is_valid function.
     Then
-        - Make sure the right amount of failures return.
+        - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Should fail 1 integration.
-        - Case 2: Should fail 1 integration.
-        - Case 3: Should fail both the integration and the script
-        - Case 4: Shouldn't fail any content item.
+        - Case 2: Should fail 1 classifier.
+        - Case 3: Should fail anything.
+        - Case 4: Should fail anything.
+        - Case 5: Should fail anything.
+        - Case 6: Should fail the Wizard.
     """
-    assert len(IDNameValidator().is_valid(content_items)) == expected_number_of_failures
+    results = IDNameValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
 
 
 @pytest.mark.parametrize(
-    "content_item, expected_name",
+    "content_item, expected_name, expected_fix_msg",
     [
         (
             create_wizard_object({"id": "should_fix"}),
             "should_fix",
+            "Changing name to be equal to id (should_fix).",
+        ),
+        (
+            create_incident_type_object(["id"], ["should_fix"]),
+            "should_fix",
+            "Changing name to be equal to id (should_fix).",
+        ),
+        (
+            create_integration_object(["commonfields.id"], ["should_fix"]),
+            "should_fix",
+            "Changing name to be equal to id (should_fix).",
         ),
     ],
 )
-def test_IDNameValidator_fix(content_item, expected_name):
+def test_IDNameValidator_fix(content_item, expected_name, expected_fix_msg):
     """
     Given
-    content_items and old_content_items iterables.
-        - Case 1: content_items with 2 integrations where the first one has its subtype altered, and two integration with no changes in old_content_items.
-        - Case 2: content_items with 1 integration where the first one has its subtype altered and one script with no subtype altered, and old_content_items with one script and integration with no changes.
-        - Case 3: content_items with 1 integration where the first one has its subtype altered and 1 script where that has its subtype altered, and old_content_items with one script and integration with no changes.
-        - Case 4: content_items and old_content_items with 1 integration and 1 script both with no changes
+    content_item.
+        - Case 1: a Wizard content item where the id is different from name.
+        - Case 2: an IncidentType content item where the id is different from name.
+        - Case 3: an Integration content item where the id is different from name.
     When
-    - Calling the BreakingBackwardsSubtypeValidator is valid function.
+    - Calling the IDNameValidator_fix fix function.
     Then
-        - Make sure the right amount of failures return.
-        - Case 1: Should fail 1 integration.
-        - Case 2: Should fail 1 integration.
-        - Case 3: Should fail both the integration and the script
-        - Case 4: Shouldn't fail any content item.
+        - Make sure the the object name was changed to match the id, and that the right fix msg is returned.
     """
-    IDNameValidator().fix(content_item)
+    assert IDNameValidator().fix(content_item).message == expected_fix_msg
     assert content_item.name == expected_name
+
+
+# @pytest.mark.parametrize(
+#     "content_items, expected_number_of_failures, expected_msgs",
+#     [
+#         (
+#             [
+#                 create_indicator_field_object(), create_incident_field_object()
+#             ],
+#             0,
+#             []
+#         ),
+#         (
+#             [
+#                 create_indicator_field_object(paths=["cliName"], values=["changed_cliName"]), create_incident_field_object(["cliName"], ["changed_cliName"])
+#             ],
+#             2,
+#             ["The cli name cve doesn't match the object id changed_id", "The cli name cve doesn't match the object id changed_id"]
+#         ),
+#     ],
+# )
+# def test_CliNameMatchIdValidator_is_valid(content_items, expected_number_of_failures, expected_msgs):
+#     """
+#     Given
+#     content_items list.
+#         - Case 1: content_items with 2 integrations where the first one has its ID altered.
+#         - Case 2: content_items with 2 classifiers where the first one has its ID altered.
+#         - Case 3: content_items with 1 Dashboard without changes.
+#         - Case 3: content_items with 1 IncidentType without changes.
+#         - Case 3: content_items with 1 Wizard without changes.
+#         - Case 2: content_items with 1 Wizard with its ID altered.
+#     When
+#     - Calling the CliNameMatchIdValidator is_valid function.
+#     Then
+#         - Make sure the right amount of failures return and that the error msg is correct.
+#         - Case 1: Should fail 1 integration.
+#         - Case 2: Should fail 1 classifier.
+#         - Case 3: Should fail anything.
+#         - Case 4: Should fail anything.
+#         - Case 5: Should fail anything.
+#         - Case 6: Should fail the Wizard.
+#     """
+#     results = CliNameMatchIdValidator().is_valid(content_items)
+#     assert len(results) == expected_number_of_failures
+#     assert all([result.message == expected_msg for result, expected_msg in zip(results, expected_msgs)])
+
+
+# @pytest.mark.parametrize(
+#     "content_item, expected_name, expected_fix_msg",
+#     [
+#         (
+#             create_wizard_object({"id": "should_fix"}),
+#             "should_fix",
+#             "Changing name to be equal to id (should_fix).",
+#         ),
+#         (
+#             create_incident_type_object(["id"], ["should_fix"]),
+#             "should_fix",
+#             "Changing name to be equal to id (should_fix).",
+
+#         ),
+#         (
+#             create_integration_object(["commonfields.id"], ["should_fix"]),
+#             "should_fix",
+#             "Changing name to be equal to id (should_fix).",
+#         ),
+#     ],
+# )
+# def test_CliNameMatchIdValidator_fix(content_item, expected_name, expected_fix_msg):
+#     """
+#     Given
+#     content_item.
+#         - Case 1: a Wizard content item where the id is different from name.
+#         - Case 2: an IncidentType content item where the id is different from name.
+#         - Case 3: an Integration content item where the id is different from name.
+#     When
+#     - Calling the CliNameMatchIdValidator fix function.
+#     Then
+#         - Make sure the the object name was changed to match the id, and that the right fix msg is returned.
+#     """
+#     assert CliNameMatchIdValidator().fix(content_item).message == expected_fix_msg
+#     assert content_item.name == expected_name

@@ -43,9 +43,9 @@ def test_pack_metadata_name_validator(
         - Case 5: One pack_metadata with name which is the default template, and one pack_metadata with name which is an empty string.
         - Case 6: One name which is the default template, one name which is just a space, and one name which is a valid name.
     When
-    - Calling the PackMetadataNameValidator is valid function.
+    - Calling the PackMetadataNameValidator is_valid function.
     Then
-        - Make sure the right amount of pack metadatas failed.
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Should fail 1 pack meta data.
         - Case 2: Should fail 1 pack meta data.
         - Case 3: Shouldn't fail any pack meta data.
@@ -53,7 +53,10 @@ def test_pack_metadata_name_validator(
         - Case 5: Should fail 2 pack metadatas.
         - Case 6: Should fail 2 pack metadatas.
     """
+    results = PackMetadataNameValidator().is_valid(packmetadatas_objects_list)
+    assert len(results) == expected_number_of_failures
     assert (
-        len(PackMetadataNameValidator().is_valid(packmetadatas_objects_list))
-        == expected_number_of_failures
+        not results
+        or results[0].message
+        == "Pack metadata name field is either missing or invalid. Please fill valid pack name."
     )

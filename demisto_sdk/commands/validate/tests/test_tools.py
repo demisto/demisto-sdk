@@ -130,6 +130,44 @@ def create_incident_type_object(
     return BaseContent.from_path(Path(pack.incident_types[0].path))
 
 
+def create_incident_field_object(
+    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+):
+    """Creating an incident_field object with altered fields from a default incident_field json structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+
+    Returns:
+        The incident_field object.
+    """
+    json_content = load_json("incident_field.json")
+    update_keys(json_content, paths, values)
+    pack = REPO.create_pack()
+    pack.create_incident_field(name="incident_field", content=json_content)
+    return BaseContent.from_path(Path(pack.incident_fields[0].path))
+
+
+def create_indicator_field_object(
+    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+):
+    """Creating an indicator_field object with altered fields from a default indicator_field json structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+
+    Returns:
+        The indicator_field object.
+    """
+    json_content = load_json("indicator_field.json")
+    update_keys(json_content, paths, values)
+    pack = REPO.create_pack()
+    pack.create_indicator_field(name="indicator_field", content=json_content)
+    return BaseContent.from_path(Path(pack.indicator_fields[0].path))
+
+
 def create_wizard_object(dict_to_update: Optional[Any] = None):
     """Creating a wizard object with altered fields from a default wizard json structure.
 

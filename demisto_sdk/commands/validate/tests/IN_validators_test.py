@@ -13,7 +13,7 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures",
+    "content_items, expected_number_of_failures, expected_msgs",
     [
         (
             [
@@ -21,6 +21,7 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration
                 create_integration_object(),
             ],
             1,
+            ["The subtype test is invalid, please change to python2 or python3."],
         ),
         (
             [
@@ -28,6 +29,7 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration
                 create_script_object(),
             ],
             1,
+            ["The subtype test is invalid, please change to python2 or python3."],
         ),
         (
             [
@@ -35,6 +37,7 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration
                 create_integration_object(),
             ],
             0,
+            [],
         ),
         (
             [
@@ -42,10 +45,16 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration
                 create_integration_object(paths=["script.subtype"], values=["test"]),
             ],
             2,
+            [
+                "The subtype test is invalid, please change to python2 or python3.",
+                "The subtype test is invalid, please change to python2 or python3.",
+            ],
         ),
     ],
 )
-def test_ValidSubtypeValidator_is_valid(content_items, expected_number_of_failures):
+def test_ValidSubtypeValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
     """
     Given
     content_items iterables.
@@ -62,9 +71,13 @@ def test_ValidSubtypeValidator_is_valid(content_items, expected_number_of_failur
         - Case 3: Should'nt fail at all.
         - Case 4: Should fail all content items.
     """
-    assert (
-        len(ValidSubtypeValidator().is_valid(content_items))
-        == expected_number_of_failures
+    results = ValidSubtypeValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
     )
 
 
@@ -157,14 +170,17 @@ def test_IsIntegrationRunnableValidator_is_valid(
     When
     - Calling the IsIntegrationRunnableValidator is valid function.
     Then
-        - Make sure the validation fail when it needs to.
+        - Make sure the validation fail when it needs to and the right error message is returned.
         - Case 1: Should fail.
         - Case 2: Should pass.
         - Case 3: Should pass.
         - Case 4: Should pass.
         - Case 5: Should pass.
     """
+    results = IsIntegrationRunnableValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
     assert (
-        len(IsIntegrationRunnableValidator().is_valid(content_items))
-        == expected_number_of_failures
+        not results
+        or results[0].message
+        == "Could not find any runnable command in the integration.\nMust have at least one of: a command under the `commands` section, `isFetch: true`, `feed: true`, or `longRunning: true`."
     )

@@ -48,9 +48,9 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         old_content_object = cast(ContentTypes, content_item.old_base_content_object)
-        content_item.type = old_content_object.type
+        content_item.subtype = old_content_object.subtype
         return FixResult(
             validator=self,
-            message=self.fix_message.format(old_content_object.type),
+            message=self.fix_message.format(old_content_object.subtype),
             content_object=content_item,
         )

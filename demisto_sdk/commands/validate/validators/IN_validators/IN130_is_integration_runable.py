@@ -14,7 +14,7 @@ ContentTypes = Integration
 class IsIntegrationRunnableValidator(BaseValidator[ContentTypes]):
     error_code = "IN130"
     description = "validate that the integration is runable"
-    error_message = "Could not find any runnable command in the integration.\nMust have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`."
+    error_message = "Could not find any runnable command in the integration.\nMust have at least one of: a command under the `commands` section, `isFetch: true`, `feed: true`, or `longRunning: true`."
     related_field = "commands, isfetch, feed, longRunning."
     is_auto_fixable = False
 

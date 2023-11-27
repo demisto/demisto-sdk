@@ -98,28 +98,28 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files_with_objects["2.7"]
+        in pre_commit.python_version_to_files["2.7"]
     )
     assert (
         Path(integration3.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files_with_objects["3.8"]
+        in pre_commit.python_version_to_files["3.8"]
     )
     assert (
         Path(integration1.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files_with_objects["3.9"]
+        in pre_commit.python_version_to_files["3.9"]
     )
     assert (
         Path(integration2.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files_with_objects["3.10"]
+        in pre_commit.python_version_to_files["3.10"]
     )
     assert all(
         Path(obj.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files_with_objects["3.10"]
+        in pre_commit.python_version_to_files["3.10"]
         for obj in (incident_field, classifier)
     )
     assert (
         Path(integration_deprecated.yml.path).relative_to(repo.path)
-        not in pre_commit.python_version_to_files_with_objects["3.10"]
+        not in pre_commit.python_version_to_files["3.10"]
     )
 
     pre_commit.run(unit_test=is_test)
@@ -461,7 +461,7 @@ def test_filter_files_matching_hook_config(hook, expected_result):
         ]
     ]
 
-    assert {Path(x) for x in expected_result} == set(
+    assert {(Path(x), None) for x in expected_result} == set(
         DockerHook(**base_hook).filter_files_matching_hook_config(files)
     )
 

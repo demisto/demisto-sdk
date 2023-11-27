@@ -180,8 +180,16 @@ class DockerHook(Hook):
         if not run_docker_hooks:
             return
         start_time = time.time()
+        filtered_files = self.filter_files_matching_hook_config(
+            (file for file, _ in files_to_run_with_objects)
+        )
+        filtered_files_with_objects = {
+            (file, obj)
+            for file, obj in files_to_run_with_objects
+            if file in filtered_files
+        }
         tag_to_files_objs = docker_tag_to_runfiles(
-            self.filter_files_matching_hook_config(files_to_run_with_objects),
+            filtered_files_with_objects,
             self._get_property("docker_image", "from-yml"),
         )
         end_time = time.time()

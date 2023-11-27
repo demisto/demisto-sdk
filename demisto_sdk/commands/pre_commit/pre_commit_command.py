@@ -250,7 +250,7 @@ class PreCommitRunner:
         for (
             python_version,
             changed_files_by_version,
-        ) in self.python_version_to_files_with_objects.items():
+        ) in self.python_version_to_files.items():
             changed_files_string = ", ".join(
                 sorted(str(file) for file in changed_files_by_version)
             )
@@ -369,7 +369,10 @@ def group_by_python_version(
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
-            (integrations_scripts_mapping[code_file_path], integration_script),
+            {
+                (path, integration_script)
+                for path in integrations_scripts_mapping[code_file_path]
+            },
             {(integration_script.path.relative_to(CONTENT_PATH), integration_script)},
         )
 

@@ -53,7 +53,7 @@ def get_relationships(
         help="The type of relationships to inspect.",
     ),
     content_type: ContentType = typer.Option(
-        ContentType.BASE_CONTENT,
+        ContentType.BASE_NODE,
         "-ct",
         "--content-type",
         show_default=True,

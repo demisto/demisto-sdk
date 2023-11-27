@@ -1,7 +1,9 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -12,18 +14,26 @@ class IndicatorFieldParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_FIELD
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.cli_name = self.json_data.get("cliName")
         self.type = self.json_data.get("type")
         self.associated_to_all = self.json_data.get("associatedToAll")
 
         self.connect_to_dependencies()
 
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "cliName"})
+        return super().field_mapping
+
     @property
     def object_id(self) -> Optional[str]:
-        return self.json_data.get("cliName")
+        return get_value(self.json_data, self.field_mapping.get("object_id", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

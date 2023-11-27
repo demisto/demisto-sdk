@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.format.format_constants import VERSION_6_0_0
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
 DESCRIPTION_TEST = (
     pytest.param("", "", id="empty string"),
@@ -331,10 +331,10 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
     base_update.no_validate = False
     base_update.prev_ver = ""
     base_update.output_file = "output_file_path"
-    base_update.validate_manager = ValidateManager
+    base_update.validate_manager = OldValidateManager
     mocker.patch.object(BaseUpdate, "is_old_file", return_value=is_old_file)
 
-    result = mocker.patch.object(ValidateManager, function_validate)
+    result = mocker.patch.object(OldValidateManager, function_validate)
 
     base_update.initiate_file_validator()
     assert result.call_count == 1

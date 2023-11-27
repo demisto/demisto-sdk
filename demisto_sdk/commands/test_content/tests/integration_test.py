@@ -8,6 +8,11 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import (
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext,
     Integration,
+    TestConfiguration,
+    TestPlaybook,
+)
+from demisto_sdk.commands.test_content.tests.build_context_test import (
+    generate_test_configuration,
 )
 
 CONFIGURATION = {
@@ -57,8 +62,21 @@ INCIDENT_CASES = [
 ]
 
 
+@pytest.fixture
+def playbook(mocker):
+    test_playbook_configuration = TestConfiguration(
+        generate_test_configuration(
+            playbook_id="playbook_with_context", integrations=["integration"]
+        ),
+        default_test_timeout=30,
+    )
+    pb_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    pb_instance.build_context.logging_module = mocker.MagicMock()
+    return pb_instance
+
+
 @pytest.mark.parametrize("incident_configuration, expected", INCIDENT_CASES)
-def test_create_module(mocker, incident_configuration, expected):
+def test_create_module(mocker, playbook, incident_configuration, expected):
     """
     Given:
         incident configuration with only incident type
@@ -85,11 +103,13 @@ def test_create_module(mocker, incident_configuration, expected):
         "circleci": "",
         "slack": "",
         "server_type": "XSOAR",
+        "product_type": "XSOAR",
         "build_number": "",
         "branch_name": "",
         "is_ami": "",
         "mem_check": "",
         "server_version": "",
+        "artifacts_path": ".",
     }
     mocker.patch.object(
         BuildContext, "_load_conf_files", return_value=(Dummyconf(), "")
@@ -107,6 +127,7 @@ def test_create_module(mocker, incident_configuration, expected):
         BuildContext(test_build_params, ParallelLoggingManager("temp_log")),
         "example_integration",
         [],
+        playbook,
     )
 
     res_module = test_integration.create_module(

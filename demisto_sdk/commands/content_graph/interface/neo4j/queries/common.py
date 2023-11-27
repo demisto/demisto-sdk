@@ -97,7 +97,7 @@ def to_neo4j_predicates(
 def to_node_pattern(
     properties: dict,
     varname: str = "node",
-    content_type: ContentType = ContentType.BASE_CONTENT,
+    content_type: ContentType = ContentType.BASE_NODE,
     list_properties: Optional[List[str]] = None,
 ) -> str:
     """
@@ -107,7 +107,7 @@ def to_node_pattern(
     Args:
         properties (dict): The properties to filter by.
         varname (str, optional): The varname of the node of the query. Defaults to "node".
-        content_type (ContentType, optional): The content type to filter on. Defaults to ContentType.BASE_CONTENT.
+        content_type (ContentType, optional): The content type to filter on. Defaults to ContentType.BASE_NODE.
         list_properties (Optional[List[str]], optional): List of list properties in the neo4j database. Defaults to None.
 
     Returns:

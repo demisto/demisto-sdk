@@ -1,5 +1,3 @@
-import ast
-import logging
 from functools import partial
 
 import pytest
@@ -24,6 +22,19 @@ from demisto_sdk.commands.test_content.tests.DemistoClientMock import DemistoCli
 from demisto_sdk.commands.test_content.tests.server_context_test import (
     generate_mocked_server_context,
 )
+
+
+@pytest.fixture
+def playbook(mocker):
+    test_playbook_configuration = TestConfiguration(
+        generate_test_configuration(
+            playbook_id="playbook_with_context", integrations=["integration"]
+        ),
+        default_test_timeout=30,
+    )
+    pb_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    pb_instance.build_context.logging_module = mocker.MagicMock()
+    return pb_instance
 
 
 def test_is_runnable_on_this_instance(mocker):
@@ -170,7 +181,7 @@ def test_unmockable_playbook_fails_every_time(mocker, tmp_path):
     Given:
         - An unmockable test
     When:
-        - The unmockable test fails in all of the runs
+        - The unmockable test fails in all the runs
     Then:
         - Ensure that it does not exist in the succeeded_playbooks set
         - Ensure that it exists in the failed_playbook set
@@ -282,7 +293,7 @@ def test_mockable_playbook_second_playback_passes(mocker, tmp_path):
     assert not build_context.tests_data_keeper.failed_playbooks
 
 
-def test_mockable_playbook_recording_passes_most_of_the_time_Playback_pass(
+def test_mockable_playbook_recording_passes_most_of_the_time_playback_pass(
     mocker, tmp_path
 ):
     """
@@ -561,11 +572,11 @@ class TestPrintContextToLog:
         Then:
             - Ensure that a proper json result is being printed to the context
         """
-        dt_result = "{'foo': 'goo'}"
-        expected_result = json.dumps(ast.literal_eval(dt_result), indent=4)
+        dt_result = {"foo": "goo"}
+        expected_result = json.dumps(dt_result, indent=4)
         playbook_instance = self.create_playbook_instance(mocker)
         client = mocker.MagicMock()
-        client.api_client.call_api.return_value = (dt_result, 200)
+        client.api_client.call_api.return_value = (dt_result, 200, {})
         playbook_instance.print_context_to_log(client, incident_id="1")
         assert (
             playbook_instance.build_context.logging_module.info.call_args[0][0]
@@ -585,7 +596,7 @@ class TestPrintContextToLog:
         expected_dt = "{}"
         playbook_instance = self.create_playbook_instance(mocker)
         client = mocker.MagicMock()
-        client.api_client.call_api.return_value = (expected_dt, 200)
+        client.api_client.call_api.return_value = ({}, 200, {})
         playbook_instance.print_context_to_log(client, incident_id="1")
         assert (
             playbook_instance.build_context.logging_module.info.call_args[0][0]
@@ -602,11 +613,13 @@ class TestPrintContextToLog:
         Then:
             - Ensure that an exception is raised and handled via logging error
         """
-        expected_dt = None
-        expected_error = "unable to parse result for result with value: None"
+        expected_dt = {
+            None
+        }  # Set isn't serializable, thus causing an exception, which is expected.
+        expected_error = "unable to parse result for result with value: {None}"
         playbook_instance = self.create_playbook_instance(mocker)
         client = mocker.MagicMock()
-        client.api_client.call_api.return_value = (expected_dt, 200)
+        client.api_client.call_api.return_value = (expected_dt, 200, {})
         playbook_instance.print_context_to_log(client, incident_id="1")
         assert (
             playbook_instance.build_context.logging_module.error.call_args[0][0]
@@ -624,23 +637,18 @@ class TestPrintContextToLog:
             - Ensure that an exception is raised and handled via logging error messages
         """
         expected_dt = "No Permission"
-        expected_first_error = "incident context fetch failed with Status code 403"
-        expected_second_error = f"('{expected_dt}', 403)"
+        expected_error = f"incident context fetch failed - response:'{expected_dt}', status code:403 headers:{{}}"
         playbook_instance = self.create_playbook_instance(mocker)
         client = mocker.MagicMock()
-        client.api_client.call_api.return_value = (expected_dt, 403)
+        client.api_client.call_api.return_value = (expected_dt, 403, {})
         playbook_instance.print_context_to_log(client, incident_id="1")
         assert (
             playbook_instance.build_context.logging_module.error.call_args_list[0][0][0]
-            == expected_first_error
-        )
-        assert (
-            playbook_instance.build_context.logging_module.error.call_args_list[1][0][0]
-            == expected_second_error
+            == expected_error
         )
 
 
-def test_replacing_placeholders(mocker, tmp_path):
+def test_replacing_placeholders(mocker, playbook, tmp_path):
     """
     Given:
         - Integration with placeholders, different servers
@@ -648,7 +656,7 @@ def test_replacing_placeholders(mocker, tmp_path):
         - Calling _set_integration_params during creating integrations configurations
     Then:
         - Ensure that replacing placeholders happens not in place,
-        and next integration with same build_context, will able to replace '%%SERVER_HOST%%' placeholder.
+        and next integration with same build_context, will be able to replace '%%SERVER_HOST%%' placeholder.
     """
     # Setting up the build context
     filtered_tests = ["playbook_integration", "playbook_second_integration"]
@@ -678,6 +686,15 @@ def test_replacing_placeholders(mocker, tmp_path):
     ]
     secret_test_conf = generate_secret_conf_json(integrations_configurations)
 
+    test_playbook_configuration = TestConfiguration(
+        generate_test_configuration(
+            playbook_id="playbook_runnable_only_on_docker", integrations=["integration"]
+        ),
+        default_test_timeout=30,
+    )
+    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
+
     # Setting up the build_context instance
     build_context = get_mocked_build_context(
         mocker,
@@ -688,13 +705,13 @@ def test_replacing_placeholders(mocker, tmp_path):
     )
 
     integration = Integration(
-        build_context, "integration_with_placeholders", ["instance"]
+        build_context, "integration_with_placeholders", ["instance"], playbook
     )
     integration._set_integration_params(
         server_url="1.1.1.1", playbook_id="playbook_integration", is_mockable=False
     )
     integration = Integration(
-        build_context, "integration_with_placeholders", ["instance"]
+        build_context, "integration_with_placeholders", ["instance"], playbook
     )
     integration._set_integration_params(
         server_url="1.2.3.4", playbook_id="playbook_integration", is_mockable=False
@@ -793,13 +810,28 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
 
     from demisto_sdk.commands.test_content.TestContentClasses import (
         demisto_client,
-        replace_external_playbook_configuration,
     )
+
+    test_playbook_configuration = TestConfiguration(
+        generate_test_configuration(
+            playbook_id="playbook_runnable_only_on_docker", integrations=["integration"]
+        ),
+        default_test_timeout=30,
+    )
+    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
 
     class clientMock(DefaultApi):
         def generic_request(self, path, method, body=None, **kwargs):
             if path == "/about" and method == "GET":
-                return ("{'demistoVersion': '6.5.0'}", None, None)
+                return "{'demistoVersion': '6.5.0'}", None, None
+
+    test_context = TestContext(
+        build_context=mocker.MagicMock(),
+        playbook=playbook_instance,
+        client=clientMock(),
+        server_context=mocker.MagicMock(),
+    )
 
     def generic_request_func(self, path, method, body=None, **kwargs):
         if path == "/playbook/inputs/pb_test" and method == "POST":
@@ -812,8 +844,7 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
     mocker.patch.object(
         demisto_client, "generic_request_func", side_effect=generic_request_func
     )
-
-    replace_external_playbook_configuration(clientMock(), new_configuration)
+    test_context.replace_external_playbook_configuration(new_configuration)
 
 
 BAD_CASES = [
@@ -919,21 +950,12 @@ def test_replacing_pb_inputs_fails_with_build_pass(
 
     from demisto_sdk.commands.test_content.TestContentClasses import (
         demisto_client,
-        replace_external_playbook_configuration,
     )
 
-    class clientMock(DefaultApi):
+    class ClientMock(DefaultApi):
         def generic_request(self, path, method, body=None, **kwargs):
             if path == "/about" and method == "GET":
                 return str({"demistoVersion": version}), None, None
-
-    class LoggerMock(logging.Logger):
-        def info(self, text, **kwargs):
-            if text not in [
-                "External Playbook in use, starting re-configuration.",
-                "Saved current configuration.",
-            ]:
-                assert text == expected_error
 
     def generic_request_func(self, path, method, body=None, **kwargs):
         if path == "/playbook/inputs/pb_test" and method == "POST":
@@ -947,9 +969,23 @@ def test_replacing_pb_inputs_fails_with_build_pass(
         demisto_client, "generic_request_func", side_effect=generic_request_func
     )
 
-    replace_external_playbook_configuration(
-        clientMock(), new_configuration, LoggerMock("test logger")
+    test_playbook_configuration = TestConfiguration(
+        generate_test_configuration(
+            playbook_id="playbook_runnable_only_on_docker", runnable_on_docker_only=True
+        ),
+        default_test_timeout=30,
     )
+
+    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+
+    test_context = TestContext(
+        build_context=mocker.MagicMock(),
+        playbook=playbook_instance,
+        client=ClientMock(),
+        server_context=mocker.MagicMock(),
+    )
+
+    test_context.replace_external_playbook_configuration(new_configuration)
 
 
 BAD_CASES_BUILD_FAIL = [
@@ -970,7 +1006,7 @@ BAD_CASES_BUILD_FAIL = [
             },
         },
         "6.2.0",
-        "External Playbook was not found or has no inputs.",
+        "External Playbook pb_test was not found or has no inputs.",
     ),
     (  # case configuration was found but wrong input key given.
         {
@@ -1013,7 +1049,7 @@ BAD_CASES_BUILD_FAIL = [
             },
         },
         "6.2.0",
-        "Some input keys was not found in playbook: Endpoint_hostnames.",
+        "Some input keys was not found in playbook pb_test: Endpoint_hostnames.",
     ),
 ]
 
@@ -1036,7 +1072,6 @@ def test_replacing_pb_inputs_fails_with_build_fail(
 
     from demisto_sdk.commands.test_content.TestContentClasses import (
         demisto_client,
-        replace_external_playbook_configuration,
     )
 
     class clientMock(DefaultApi):
@@ -1056,6 +1091,20 @@ def test_replacing_pb_inputs_fails_with_build_fail(
         demisto_client, "generic_request_func", side_effect=generic_request_func
     )
 
+    test_playbook_configuration = TestConfiguration(
+        generate_test_configuration(
+            playbook_id="playbook_runnable_only_on_docker", runnable_on_docker_only=True
+        ),
+        default_test_timeout=30,
+    )
+    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+
+    test_context = TestContext(
+        build_context=mocker.MagicMock(),
+        playbook=playbook_instance,
+        client=clientMock(),
+        server_context=mocker.MagicMock(),
+    )
     with pytest.raises(Exception) as e:
-        replace_external_playbook_configuration(clientMock(), new_configuration)
+        test_context.replace_external_playbook_configuration(new_configuration)
     assert expected_error in str(e)

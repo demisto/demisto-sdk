@@ -23,6 +23,11 @@ class EventLog(BaseModel):
     event_data: Optional[Dict[str, Any]] = {}
     expected_values: Optional[Dict[str, Any]] = {}
 
+    @validator("test_data_event_id")
+    def validate_test_data(cls, v):
+        v = uuid4()
+        return v
+
 
 class TestData(BaseModel):
     data: List[EventLog] = Field(default_factory=lambda: [EventLog()])

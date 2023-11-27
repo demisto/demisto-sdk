@@ -110,13 +110,12 @@ class PreCommitRunner:
         hooks = {}
         for repo in pre_commit_config["repos"]:
             for hook in repo["hooks"]:
+                if Hook.get_property(hook, self.mode, "skip"):
+                    continue
                 hooks[hook["id"]] = {
                     "repo": repo,
                     "hook": hook,
                 }
-                # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
-                if hook.pop("skip", None):
-                    SKIPPED_HOOKS.add(hook["id"])
         return hooks
 
     def exclude_python2_of_non_supported_hooks(self) -> None:

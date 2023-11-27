@@ -30,7 +30,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 )
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
-    get_previous_nonempty_line
+    get_previous_nonempty_line,
 )
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
@@ -1425,7 +1425,7 @@ class TestReadmes:
         # Check new Integration README exists
         assert Path(contrib_converter.readme_files[0]).exists()
 
-    def test_new_content_map(
+    def test_get_contributed_content(
             self,
             tmp_path: TempPathFactory
     ):
@@ -1524,7 +1524,7 @@ class TestReadmes:
         )
 
 
-        actual = contrib_converter.get_new_content_tuple()
+        actual = contrib_converter.get_contributed_content()
         assert actual == expected
 
 @pytest.mark.helper

@@ -344,12 +344,15 @@ class ContributionConverter:
 
     def generate_readme_for_pack_content_item(
         self, yml_path: str, is_contribution: bool = False
-    ) -> None:
+    ) -> str:
         """Runs the demisto-sdk's generate-docs command on a pack content item
 
         Args:
             yml_path: str: Content item yml path.
             is_contribution: bool: Check if the content item is a new integration contribution or not.
+
+        Returns:
+            `str` path to the generated `README.md`.
         """
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
@@ -365,12 +368,18 @@ class ContributionConverter:
             readme_path = yml_path.replace(".yml", "_README.md")
         else:
             readme_path = os.path.join(dir_output, "README.md")
-        self.readme_files.append(readme_path)
+        
+        return readme_path
 
-    def generate_readmes_for_new_content_pack(self, is_contribution=False):
+    def generate_readmes_for_new_content_pack(self, is_contribution=False) -> List[str]:
         """
         Generate the readme files for a new content pack.
+
+        Returns:
+        - `List[str]` with the paths to all the generated `README`s.
         """
+
+        readmes_generated: List[str] = []
         for pack_subdir in get_child_directories(str(self.working_dir_path)):
             basename = Path(pack_subdir).name
             if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
@@ -385,7 +394,7 @@ class ContributionConverter:
                             or file_name.startswith("automation-")
                         ):
                             unified_file = file
-                            self.generate_readme_for_pack_content_item(
+                            readme = self.generate_readme_for_pack_content_item(
                                 unified_file, is_contribution
                             )
                             Path(unified_file).unlink()
@@ -394,15 +403,18 @@ class ContributionConverter:
                 for file in files:
                     file_name = Path(file).name
                     if file_name.startswith("playbook") and file_name.endswith(".yml"):
-                        self.generate_readme_for_pack_content_item(file)
+                        readme = self.generate_readme_for_pack_content_item(file)
+
+            readmes_generated.append(readme)
+
+        return readmes_generated
 
     def rearranging_before_conversion(self) -> None:
         """
         Rearrange content items that were mapped incorrectly by the server zip
           - indicatorfields rearranged to be under indicatorfield directory instead of incidentfields.
         """
-        unpacked_contribution_dirs = get_child_directories(
-            str(self.working_dir_path))
+        unpacked_contribution_dirs = get_child_directories(str(self.working_dir_path))
         for unpacked_contribution_dir in unpacked_contribution_dirs:
 
             dir_name = Path(unpacked_contribution_dir).name
@@ -419,12 +431,9 @@ class ContributionConverter:
 
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
-                        Path(dst_ioc_fields_dir).mkdir(
-                            parents=True, exist_ok=True)
-                        file_path = str(
-                            Path(self.working_dir_path, dir_name, file))
-                        # type: ignore
-                        shutil.move(file_path, dst_ioc_fields_dir)
+                        Path(dst_ioc_fields_dir).mkdir(parents=True, exist_ok=True)
+                        file_path = str(Path(self.working_dir_path, dir_name, file))
+                        shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it
                 if len(os.listdir(src_path)) == 0:
@@ -479,28 +488,40 @@ class ContributionConverter:
             self.create_contribution_items_version_note()
 
             # Create documentation
+
+            generated_readmes: List[str] = []
+
             # If it's a new Pack, we recursively create READMEs for all content items
             if self.create_new:
-                self.generate_readmes_for_new_content_pack(
-                    is_contribution=True
-                )
+                generated_readmes = self.generate_readmes_for_new_content_pack(is_contribution=True)
 
             # If it's an existing Pack, we need to generate the map
             # to check if the contributed content item is new or not
-            # and merge its README with the existing one if it's not
+            # and merge its README with the existing one if it is.
             else:
-                for contributed_yml, content_yml, exists in self.get_new_content_tuple():
-                    self.generate_readme_for_pack_content_item(
+
+                # We get the path to contributed content item yml
+                # the same item in the content repo and whether the item exists in the 
+                # content repo.
+                for contributed_yml, content_yml, exists in self.get_contributed_content():
+
+                    # We use the path to the yml to generate a README for the contributed content item
+                    generated_readme = self.generate_readme_for_pack_content_item(
                         yml_path=contributed_yml.__str__(),
                         is_contribution=True
                     )
 
+                    # If the contributed content item exists, we need to
+                    # merge the READMEs and add them to the state
                     if exists:
                         generated_readme_path = contributed_yml.parent / PACKS_README_FILE_NAME
                         existing_readme_path = content_yml.parent / PACKS_README_FILE_NAME
                         
-                        merge_files(generated_readme_path, existing_readme_path, generated_readme_path.__str__())
-
+                        generated_readme = merge_files(generated_readme_path, existing_readme_path, generated_readme_path.__str__()).__str__()
+                        
+                    generated_readmes.append(generated_readme)
+                        
+            self.readme_files = generated_readmes
 
         except Exception as e:
             logger.info(
@@ -1004,7 +1025,7 @@ class ContributionConverter:
 
         Path(self.contribution).unlink()
 
-    def get_new_content_tuple(self) -> List[Tuple[Path, Path, bool]]:
+    def get_contributed_content(self) -> List[Tuple[Path, Path, bool]]:
         """
         A helper method to check whether the contributed content items (Integration, Playbook, Script only)
         are new (doesn't exist in the `content` repo).

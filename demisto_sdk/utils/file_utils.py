@@ -65,7 +65,7 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
         logger.warn(f"File '{f2.__str__()}' doesn't exist. Returning '{f1.__str__()}'")
         return f1
     elif not f1.exists() and not f2.exists():
-        logger.error(f"Neither file '{f1.__str__()}' not '{f2.__str__()}' Exists.")
+        logger.error(f"Neither file '{f1.__str__()}' nor '{f2.__str__()}' exist.")
         return None
     
     # Check if the files are identical and return the original if they are

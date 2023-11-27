@@ -35,7 +35,7 @@ def get_docker_python_path() -> str:
     """
     path_to_replace = str(Path(CONTENT_PATH))
     docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
-    path = ":".join(sorted(docker_path))
+    path = ":".join(docker_path)
     logger.debug(f"pythonpath in docker being set to {path}")
     return path
 

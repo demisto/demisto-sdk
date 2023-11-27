@@ -2,7 +2,9 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 
 import demisto_client
 
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseNode,
+)
 
 if TYPE_CHECKING:
     # avoid circular imports
@@ -18,7 +20,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 
 
-class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
+class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
 
     # From HAS_COMMAND relationship
@@ -47,6 +49,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = False
     is_feed: bool = False
+    long_running: bool = False
     category: str
     commands: List[Command] = []
 

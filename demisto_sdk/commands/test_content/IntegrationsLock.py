@@ -6,7 +6,7 @@ from typing import Generator
 import pytz
 import requests
 from google.api_core.exceptions import NotFound, PreconditionFailed
-from google.cloud import storage
+from google.cloud import storage  # type: ignore[attr-defined]
 from google.resumable_media.common import InvalidResponse
 
 LOCKS_PATH = "content-locks"

@@ -28,6 +28,7 @@ json = JSON_Handler()
 
 class PackMetadata(BaseModel):
     name: str
+    display_name: str
     description: Optional[str]
     created: Optional[str]
     updated: Optional[str] = Field("")
@@ -51,7 +52,7 @@ class PackMetadata(BaseModel):
     use_cases: Optional[List[str]] = Field(alias="useCases")
     keywords: Optional[List[str]]
     search_rank: Optional[int] = Field(alias="searchRank")
-    excluded_dependencies: Optional[List[str]] = Field(alias="excludedDependencies")
+    excluded_dependencies: Optional[List[str]] = Field([], alias="excludedDependencies")
     videos: Optional[List[str]] = Field([])
     modules: Optional[List[str]] = Field([])
     integrations: Optional[List[str]] = Field([])
@@ -198,7 +199,7 @@ class PackMetadata(BaseModel):
                 or "",
             }
             for r in dependencies
-            if r.is_direct
+            if r.is_direct and r.content_item_to.object_id not in self.excluded_dependencies and not r.content_item_to.hidden  # type: ignore
         }
 
     def _get_pack_tags(
@@ -229,6 +230,7 @@ class PackMetadata(BaseModel):
                 [
                     playbook.name.startswith("TIM ")
                     for playbook in content_items.playbook
+                    if not playbook.is_test
                 ]
             )
             else set()
@@ -236,12 +238,24 @@ class PackMetadata(BaseModel):
         tags |= {PackTags.USE_CASE} if self.use_cases else set()
         tags |= (
             {PackTags.TRANSFORMER}
-            if any(["transformer" in script.tags for script in content_items.script])
+            if any(
+                [
+                    "transformer" in script.tags
+                    for script in content_items.script
+                    if not script.is_test
+                ]
+            )
             else set()
         )
         tags |= (
             {PackTags.FILTER}
-            if any(["filter" in script.tags for script in content_items.script])
+            if any(
+                [
+                    "filter" in script.tags
+                    for script in content_items.script
+                    if not script.is_test
+                ]
+            )
             else set()
         )
         tags |= (

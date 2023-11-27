@@ -1,5 +1,36 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the error was not clear when trying to retrieve the server version.
+* Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
+* Fixed an issue in **coverage-analyze** to exit gracefully in case that the .coverage file doesn't exist.
+* Breaking change: **ValidateManager** was renamed to **OldValidateManager** and can now be found at the following [path](demisto_sdk/commands/validate/old_validate_manager.py).
+* fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
+* Fixed an issue where **run-playbook** command did not work.
+* Fixed an issue in **setup-env** command where the virtual environment failed to set up.
+
+## 1.23.0
+* Added support for inputs sections and outputs sections in a playbook.
+* Added a new service for file management, allowing to write files and read files from specific git branches, local file system, or from any remote api.
+* Added a new flag `--docker/--no-docker` to demisto-sdk pre-commit, in order to enable the option to run the pre-commit command without docker hooks.
+* Added support for xsoar, xsoar-saas and xsiam wrapper clients to ease the integration via their apis.
+* Added the command demisto-sdk coverage-analyze to the pre-commit hooks.
+* Updated merge_coverage_report to be a hook in the pre-commit.
+* Updated the mode option to be free text. for more details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#modes
+* Added a new command **setup-env** to setup the environment for integrations and scripts in vs code IDE, XSOAR and XSIAM.
+* Fixed an issue where the SDK failed to retrieve docker hub token when there were temporary connection errors.
+* Internal: Added a welcome comment to contributions PRs.
+* Fixed metadata dependencies dumping in **prepare-content** command.
+* Fixed an issue where the TagParser didn't work properly on all edge cases.
+
+## 1.22.0
+* Added Docker Hook support to **pre-commit**; for details see https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md#docker-hooks
+* Removed **-use-local-import** flag to **graph update** command.
+* Perfomance improvements to **graph** commands.
+* Adjust graph structure to accommodate anticipated changes in infrastructure for the **validate** command.
+* Fixed an issue where the **lint** command with docker, would not give unique container names to different image runs.
+* Added a new `display_name` field to `Pack` entity in graph.
+
+## 1.21.0
 * Added the argument `--commited-only` to **pre-commit** to skip collecting on staged files.
 * Fixed an issue where the **pre-commit** command runs even in the case of deprecated or powershell integrations or scripts.
 * Fixed an issue where **validate** falsely failed with error `PB101` and `PB123` due to condition names discrepancy

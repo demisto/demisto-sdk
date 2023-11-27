@@ -111,6 +111,7 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
     search_and_delete_from_conf,
     server_version_compare,
+    set_value,
     str2bool,
     string_to_bool,
     to_kebab_case,
@@ -849,7 +850,7 @@ def test_has_remote(mocker, git_value, response):
     :param git_value: Git string from `git remotes -v`
     """
     mocker.patch(
-        "demisto_sdk.commands.common.tools.run_command", return_value=git_value
+        "demisto_sdk.commands.common.tools.git_remote_v", return_value=git_value
     )
     test_remote = has_remote_configured()
     assert response == test_remote
@@ -874,7 +875,7 @@ def test_origin_content(mocker, git_value, response):
     :param git_value: Git string from `git remotes -v`
     """
     mocker.patch(
-        "demisto_sdk.commands.common.tools.run_command", return_value=git_value
+        "demisto_sdk.commands.common.tools.git_remote_v", return_value=git_value
     )
     test_remote = is_origin_content_repo()
     assert response == test_remote
@@ -2432,6 +2433,38 @@ class TestMarketplaceTagParser:
 {XSOAR_SAAS_INLINE_PREFIX} xsoar_saas inline test {XSOAR_SAAS_INLINE_SUFFIX}
 {XSOAR_ON_PREM_INLINE_PREFIX} xsoar_on_prem inline test {XSOAR_ON_PREM_INLINE_SUFFIX}"""
 
+    @pytest.mark.parametrize(
+        "res_file, marketplace_version",
+        [
+            ("EDL_xsoar_res.md", MarketplaceVersions.XSOAR.value),
+            ("EDL_xsiam_res.md", MarketplaceVersions.MarketplaceV2.value),
+        ],
+    )
+    def test_xsoar_tag_only_on_edl_description(self, res_file, marketplace_version):
+        """
+        Given:
+            - Am example of a real complex file with tags of xsoar and xsiam.
+        When:
+            - Parsing with the tag parser for xsoar mp
+            - Parsing with the tag parser for xsiam mp
+        Then:
+            - Validate the results fit the prepared marketplace
+        """
+        test_files_folder = Path(os.path.abspath(__file__)).parent / "test_files"
+        edl_test_file = test_files_folder / "EDL_description.md"
+        res_text_after_filter_by_mp = test_files_folder / res_file
+
+        self.MARKETPLACE_TAG_PARSER.marketplace = marketplace_version
+        with open(edl_test_file, "r") as f:
+            edl_content = f.read()
+
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(edl_content)
+
+        with open(res_text_after_filter_by_mp, "r") as f:
+            res = f.read()
+
+        assert actual == res
+
     def check_prefix_not_in_text(self, actual):
         assert self.XSOAR_PREFIX not in actual
         assert self.XSIAM_PREFIX not in actual
@@ -3236,3 +3269,37 @@ def test_is_epoch_datetime(string: str, expected_result: bool):
     from demisto_sdk.commands.common.tools import is_epoch_datetime
 
     assert is_epoch_datetime(string) == expected_result
+
+
+@pytest.mark.parametrize(
+    "dict, paths, value, expected_dict",
+    [
+        ({"test": "1"}, ["test"], 2, {"test": 2}),
+        ({"test": [1, 2, 3, 4]}, ["test[3]"], 2, {"test": [1, 2, 3, 2]}),
+        ({"test1": "1"}, ["test2", "test1"], 2, {"test1": 2}),
+        ({"test": "1"}, ["test2", "test1"], 2, {"test": "1", "test1": 2}),
+        ({"test": {"test2": 1}}, ["test.test2"], 2, {"test": {"test2": 2}}),
+    ],
+)
+def test_set_value(dict, paths, value, expected_dict):
+    """
+    Given:
+        a dictionary, path / list of paths, and a value to insert to the dict.
+        - Case 1: dict with items only in the root, a list with a path that exist in the dict, and a value to set there.
+        - Case 2: dict with a list in the root, a list with a path with the index in the list to replace, and a value to set there.
+        - Case 3: dict with items only in the root, a list of possible paths where one of them is in the dict, and a value to set there.
+        - Case 4: dict with items only in the root, a list of possible paths where none of them is in the dict, and a value to set there.
+        - Case 5: dict with items not only in the root, a list with a path not to the root that exist in the dict, and a value to set there.
+
+    When:
+        - run set_value
+    Then:
+        - Ensure that the value was inserted in the right place.
+        - Case 1: the dict should replce the value in the key.
+        - Case 2: the dict will have the value in the right index in the list.
+        - Case 3: the dict has the value changed in the key that existed and will not add keys in paths that doesn't exist.
+        - Case 4: the dict has the value added in the last given key.
+        - Case 5: the dict should replce the value in the key.
+    """
+    set_value(dict, paths, value)
+    assert expected_dict == dict

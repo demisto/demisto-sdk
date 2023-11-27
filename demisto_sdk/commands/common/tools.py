@@ -7,15 +7,17 @@ import os
 import re
 import shlex
 import sys
+import time
 import traceback
 import urllib.parse
+from abc import ABC
 from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
-from functools import lru_cache
+from functools import lru_cache, wraps
 from hashlib import sha1
 from io import StringIO, TextIOWrapper
 from pathlib import Path, PosixPath
@@ -32,15 +34,18 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 
 import demisto_client
 import git
 import giturlparse
+import google
 import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
+from google.cloud import secretmanager
 from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
@@ -50,6 +55,7 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     CLASSIFIERS_DIR,
     CONF_JSON_FILE_NAME,
+    CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEF_DOCKER,
@@ -61,6 +67,8 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ENV_SDK_WORKING_OFFLINE,
+    GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR,
     ID_IN_COMMONFIELDS,
     ID_IN_ROOT,
     INCIDENT_FIELDS_DIR,
@@ -115,11 +123,13 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     IdSetKeys,
     MarketplaceVersions,
+    PathLevel,
     urljoin,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import (
@@ -156,9 +166,9 @@ class TagParser:
             Text with no wrapper tags.
         """
         if remove_tag:
-            text = re.sub(self.pattern, "", text)
+            text = re.sub(self.pattern, "", text, flags=re.DOTALL)
 
-        text = re.sub(self.only_tags_pattern, "", text)
+        text = re.sub(self.only_tags_pattern, "", text, flags=re.DOTALL)
         return text
 
 
@@ -719,6 +729,11 @@ def get_child_files(directory):
     return child_files
 
 
+@lru_cache
+def git_remote_v():
+    return run_command("git remote -v")
+
+
 def has_remote_configured():
     """
     Checks to see if a remote named "upstream" is configured. This is important for forked
@@ -726,8 +741,7 @@ def has_remote_configured():
     opposed to the master branch of the fork.
     :return: bool : True if remote is configured, False if not.
     """
-    remotes = run_command("git remote -v")
-    if re.search(GitContentConfig.CONTENT_GITHUB_UPSTREAM, remotes):
+    if re.search(GitContentConfig.CONTENT_GITHUB_UPSTREAM, git_remote_v()):
         return True
     else:
         return False
@@ -739,8 +753,7 @@ def is_origin_content_repo():
     validation needs to be ran against the origin master branch or the upstream master branch
     :return: bool : True if remote is configured, False if not.
     """
-    remotes = run_command("git remote -v")
-    if re.search(GitContentConfig.CONTENT_GITHUB_ORIGIN, remotes):
+    if re.search(GitContentConfig.CONTENT_GITHUB_ORIGIN, git_remote_v()):
         return True
     else:
         return False
@@ -834,24 +847,28 @@ def get_file(
     return_content: bool = False,
     keep_order: bool = False,
     raise_on_error: bool = False,
+    git_sha: Optional[str] = None,
 ):
     """
     Get file contents.
-
     if raise_on_error = False, this function will return empty dict
     """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
+    if git_sha:
+        if file_path.is_absolute():
+            file_path = file_path.relative_to(get_content_path())
+        return get_remote_file(
+            str(file_path), tag=git_sha, return_content=return_content
+        )
 
     type_of_file = file_path.suffix.lower()
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
-
     if not file_path.exists():
         raise FileNotFoundError(file_path)
-
     try:
         file_content = safe_read_unicode(file_path.read_bytes())
         if return_content:
@@ -865,7 +882,6 @@ def get_file(
             replaced = StringIO(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
-
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
             result = json.load(StringIO(file_content))
@@ -908,16 +924,23 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path: str | Path, cache_clear=False, keep_order: bool = False):
+def get_yaml(
+    file_path: str | Path,
+    cache_clear=False,
+    keep_order: bool = False,
+    git_sha: Optional[str] = None,
+):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
+    return get_file(
+        file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
+    )
 
 
-def get_json(file_path: str | Path, cache_clear=False):
+def get_json(file_path: str | Path, cache_clear=False, git_sha: Optional[str] = None):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear, git_sha=git_sha)
 
 
 def get_script_or_integration_id(file_path):
@@ -2533,7 +2556,8 @@ def get_demisto_version(client: demisto_client) -> Version:
         resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
         return Version(Version(about_data.get("demistoVersion")).base_version)
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to fetch server version. Error: {e}")
         logger.warning(
             "Could not parse server version, please make sure the environment is properly configured."
         )
@@ -3974,3 +3998,318 @@ def parse_int_or_default(value: Any, default: int) -> int:
 
 def get_all_repo_pack_ids() -> list:
     return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]
+
+
+def get_value(obj: dict, paths: Union[str, List[str]], defaultParam=None):
+    """Extracts field value from nested object
+    Args:
+      obj (dict): The object to extract the field from
+      field (Union[str,List[str]]): The field or a list of possible fields to extract from the object, given in dot notation
+      defaultParam (object): The default value to return in case the field doesn't exist in obj
+    Returns:
+      str: The value of the extracted field
+    """
+    if isinstance(paths, str):
+        paths = [paths]
+    for path in paths:
+        keys = path.split(".")
+        temp_obj = obj
+        success = True
+        for key in keys:
+            try:
+                if "[" in key and "]" in key:
+                    # Handle list indexing
+                    list_key, index = key.split("[")
+                    index = int(index.strip("]"))  # type: ignore
+                    temp_obj = temp_obj[list_key][index]
+                else:
+                    temp_obj = temp_obj[key]
+            except (AttributeError, KeyError, IndexError):
+                success = False
+                continue
+        if success:
+            return temp_obj
+    return defaultParam
+
+
+def find_correct_key(data: dict, keys: List[str]) -> str:
+    """Given a data object and a list of possible paths, finding the path where the object holds a value in that path.
+    Args:
+        data (dict): The object that holds the keys.
+        keys (List[str]) List of possible paths.
+    Returns:
+        str: Either the path where the given data object has a value at or the last option.
+    """
+    for key in keys:
+        if get_value(data, key, None):
+            return key
+    return keys[-1]
+
+
+def set_value(data: dict, paths: Union[str, List[str]], value) -> None:
+    """Updating a data object with given value in the given key.
+    If a list of keys is given, will find the right path to update based on which path acctually has a value.
+    Args:
+        data (dict): the data object to update.
+        keys (Union[str,List[str]]): the path or list of possible paths to update.
+        value (_type_): the value to update.
+    """
+    if isinstance(paths, list):
+        path = find_correct_key(data, paths)
+    else:
+        path = paths
+    current_dict = data
+    keys = path.split(".")
+    for key in keys[:-1]:
+        if "[" in key and "]" in key:
+            # Handle list indexing
+            list_key, index = key.split("[")
+            index = int(index.strip("]"))
+            current_dict = current_dict[list_key]
+            current_dict = current_dict[index]
+        else:
+            # Handle dictionary keys
+            current_dict = current_dict[key]
+
+    # Set the value in the dictionary at the specified path
+    last_key = keys[-1]
+    if "[" in last_key and "]" in last_key:
+        list_key, index = last_key.split("[")  # type: ignore
+        index = int(index.strip("]"))  # type: ignore
+        current_dict[list_key][index] = value
+    else:
+        current_dict[last_key] = value
+
+
+def detect_file_level(file_path: str) -> PathLevel:
+    """
+    Detect the whether the path points to a file, a content entity dir, a content generic entity dir
+    (i.e GenericFields or GenericTypes), a pack dir or package dir
+
+    Args:
+            file_path(str): the path to check.
+
+    Returns:
+        PathLevel. File, ContentDir, ContentGenericDir, Pack or Package - depending on the file path level.
+    """
+    if Path(file_path).is_file():
+        return PathLevel.FILE
+
+    file_path = file_path.rstrip("/")
+    dir_name = Path(file_path).name
+    if dir_name in CONTENT_ENTITIES_DIRS:
+        return PathLevel.CONTENT_ENTITY_DIR
+
+    if str(os.path.dirname(file_path)).endswith(GENERIC_TYPES_DIR) or str(
+        os.path.dirname(file_path)
+    ).endswith(GENERIC_FIELDS_DIR):
+        return PathLevel.CONTENT_GENERIC_ENTITY_DIR
+
+    if Path(file_path).parent.name == PACKS_DIR:
+        return PathLevel.PACK
+
+    else:
+        return PathLevel.PACKAGE
+
+
+def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
+    """Filter a set of file paths to only include ones which are from a specified directory.
+
+    Args:
+        file_set(Set): A set of file paths - could be stings or tuples for rename files.
+        directory_path(str): the directory path in which to check for the files.
+
+    Returns:
+        Set. A set of all the paths of files that appear in the given directory.
+    """
+    filtered_set: Set = set()
+    for file in file_set:
+        if isinstance(file, str) and directory_path in file:
+            filtered_set.add(file)
+
+        # handle renamed files
+        elif isinstance(file, tuple) and directory_path in file[1]:
+            filtered_set.add(file)
+
+    return filtered_set
+
+
+def get_file_by_status(
+    modified_files: Set,
+    old_format_files: Optional[Set],
+    file_path: str,
+    renamed_files: Optional[Set] = None,
+) -> Tuple[Set, Set, Set]:
+    """Given a specific file path identify in which git status set
+    it exists and return a set containing that file and 2 additional empty sets.
+
+    Args:
+        modified_files(Set): A set of modified and renamed files.
+        old_format_files(Optional[Set]): A set of old format files.
+        file_path(str): The file path to check.
+        renamed_files(Optional[Set]): A set of renamed files.
+
+    Returns:
+        Tuple[Set, Set, Set]. 3 sets representing modified, added and old format or renamed files respectively
+        where the file path is in the appropriate set
+    """
+    filtered_modified_files: Set = set()
+    filtered_added_files: Set = set()
+    filtered_old_format_or_renamed_files: Set = set()
+
+    # go through modified files and try to identify if the file is there
+    for file in modified_files:
+        if isinstance(file, str) and file == file_path:
+            filtered_modified_files.add(file_path)
+            return (
+                filtered_modified_files,
+                filtered_added_files,
+                filtered_old_format_or_renamed_files,
+            )
+
+        # handle renamed files which are in tuples
+        elif file_path in file:
+            filtered_modified_files.add(file)
+            return (
+                filtered_modified_files,
+                filtered_added_files,
+                filtered_old_format_or_renamed_files,
+            )
+    if renamed_files:
+        for file in renamed_files:
+            if file_path in file:
+                filtered_old_format_or_renamed_files.add(file)
+                return (
+                    filtered_modified_files,
+                    filtered_added_files,
+                    filtered_old_format_or_renamed_files,
+                )
+
+    # if the file is not modified check if it is in old format files
+    if old_format_files and file_path in old_format_files:
+        filtered_old_format_or_renamed_files.add(file_path)
+
+    else:
+        # if not found in either modified or old format consider the file newly added
+        filtered_added_files.add(file_path)
+
+    return (
+        filtered_modified_files,
+        filtered_added_files,
+        filtered_old_format_or_renamed_files,
+    )
+
+
+def pascal_to_snake(pascal_string):
+    """Convert the given string from pascal case to snake case.
+
+    Args:
+        pascal_string(str): A string in pascal case format
+
+    Returns:
+        str: The givn string converted to snake_case format.
+    """
+    result = [pascal_string[0].lower()]
+    for char in pascal_string[1:]:
+        if char.isupper():
+            result.extend(["_", char.lower()])
+        else:
+            result.append(char)
+    return "".join(result)
+
+
+def retry(
+    times: int = 3,
+    delay: int = 1,
+    exceptions: Union[Tuple[Type[Exception], ...], Type[Exception]] = Exception,
+):
+    """
+    retries to execute a function until an exception isn't raised anymore.
+
+    Args:
+        times: the amount of times to try and execute the function
+        delay: the number of seconds to wait between each time
+        exceptions: the exceptions that should be caught when executing the function
+
+    Returns:
+        Any: the decorated function result
+    """
+
+    def _retry(func: Callable):
+        func_name = func.__name__
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(1, times + 1):
+                logger.debug(f"trying to run func {func_name} for the {i} time")
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as error:
+                    logger.debug(
+                        f"error when executing func {func_name}, error: {error}, time {i}"
+                    )
+                    if i == times:
+                        raise
+                    time.sleep(delay)
+
+        return wrapper
+
+    return _retry
+
+
+def is_abstract_class(cls):
+    return ABC in getattr(cls, "__bases__", ())
+
+
+class SecretManagerException(Exception):
+    pass
+
+
+def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> dict:
+    """This function retrieves the parameters of an integration from Google Secret Manager
+    *Note*: This function will not run if the `DEMISTO_SDK_GCP_PROJECT_ID` env variable is not set.
+
+    Args:
+        project_id (str): GSM project id
+        secret_id (str): The secret id in GSM
+
+    Returns:
+        dict: The integration params
+    """
+    if not project_id:
+        project_id = os.getenv("DEMISTO_SDK_GCP_PROJECT_ID")
+    if not project_id:
+        raise ValueError(
+            "Either provide the project id or set the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable"
+        )
+
+    # Create the Secret Manager client.
+    client = secretmanager.SecretManagerServiceClient()
+
+    # Build the resource name of the secret version.
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+
+    # Access the secret version.
+    try:
+        response = client.access_secret_version(name=name)
+    except google.api_core.exceptions.NotFound:
+        logger.warning("The secret is not found in the secret manager")
+        raise SecretManagerException
+    except (
+        google.api_core.exceptions.PermissionDenied,
+        google.auth.exceptions.DefaultCredentialsError,
+    ):
+        logger.warning(
+            "Insufficient permissions for gcloud. run `gcloud auth application-default login`"
+        )
+        raise SecretManagerException
+    except Exception:
+        logger.warning(f"Failed to get secret {secret_id} from Secret Manager.")
+        raise SecretManagerException
+    # Return the decoded payload.
+    payload = json5.loads(response.payload.data.decode("UTF-8"))
+    if "params" not in payload:
+        logger.warning(f"Parameters are not found in {secret_id} from Secret Manager.")
+
+        raise SecretManagerException
+    return payload["params"]

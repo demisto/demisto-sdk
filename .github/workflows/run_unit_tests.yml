@@ -95,4 +95,5 @@ jobs:
             echo "There are unit-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE"
           else
             echo "All unit-tests have passed"
+          exit $PYTEST_EXIT_CODE
           fi

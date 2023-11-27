@@ -440,7 +440,9 @@ class XsoarClient(BaseModel):
             raise ApiException(
                 f"Test module failed - {raw_response.get('message')}, status code: {status_code}"
             )
-        logger.debug(f"The test-module was successful for integration {_id} and {instance_name=}")
+        logger.debug(
+            f"The test-module was successful for integration {_id} and {instance_name=}"
+        )
 
     @retry(exceptions=ApiException)
     def delete_integration_instance(
@@ -687,6 +689,15 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
+    def get_incident_work_plan_url(self, incident_id: str) -> str:
+        """
+        Returns the URL of the work-plan of the incident ID.
+
+        Args:
+            incident_id: incident ID.
+        """
+        return f"{self.base_url}/#/WorkPlan/{incident_id}"
+
     """
     #############################
     indicators related methods
@@ -858,6 +869,12 @@ class XsoarClient(BaseModel):
                 f"Could not delete indicators with the following IDs: {indicator_ids.difference(raw_response)}"
             )
         return raw_response
+
+    """
+    #############################
+    long-running methods
+    #############################
+    """
 
     @retry(times=20, exceptions=RequestException)
     def do_long_running_instance_request(
@@ -1106,12 +1123,3 @@ class XsoarClient(BaseModel):
         raise RuntimeError(
             f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
         )
-
-    def get_incident_work_plan_url(self, incident_id: str) -> str:
-        """
-        Returns the URL of the work-plan of the incident ID.
-
-        Args:
-            incident_id: incident ID.
-        """
-        return f"{self.base_url}/#/WorkPlan/{incident_id}"

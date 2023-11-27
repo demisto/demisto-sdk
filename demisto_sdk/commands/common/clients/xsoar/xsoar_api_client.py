@@ -647,7 +647,7 @@ class XsoarClient(BaseModel):
                 raise ValueError(
                     f"Could not find incident ID {incident_id}, error:\n{e}"
                 )
-            incident_status = IncidentState(str(incident_status)).name
+            incident_status = IncidentState(str(incident.get("status"))).name
             incident_name = incident.get("name")
             logger.debug(f"status of the incident {incident_name} is {incident_status}")
             if incident_status in expected_state_names:

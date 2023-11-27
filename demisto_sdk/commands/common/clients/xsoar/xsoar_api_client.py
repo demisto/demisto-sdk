@@ -654,9 +654,7 @@ class XsoarClient(BaseModel):
                 time.sleep(interval)
                 elapsed_time = int(time.time() - start_time)
 
-        raise RuntimeError(
-            f"status of incident {incident_name} is {incident_status}"
-        )
+        raise RuntimeError(f"status of incident {incident_name} is {incident_status}")
 
     @retry(exceptions=ApiException)
     def delete_incidents(

@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_KEY,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
+    DEMISTO_VERIFY_SSL
 )
 from demisto_sdk.commands.common.logger import logger
 
@@ -51,7 +52,7 @@ def get_client_from_marketplace(
     base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL),
     api_key: Optional[str] = os.getenv(DEMISTO_KEY),
     auth_id: Optional[str] = os.getenv(AUTH_ID),
-    verify_ssl: Optional[bool] = None,
+    verify_ssl: bool = os.getenv(DEMISTO_VERIFY_SSL, False),
 ) -> XsoarClient:
     """
     Returns the client based on the marketplace.
@@ -93,7 +94,7 @@ def get_client_from_server_type(
     base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL),
     api_key: Optional[str] = os.getenv(DEMISTO_KEY),
     auth_id: Optional[str] = os.getenv(AUTH_ID),
-    verify_ssl: Optional[bool] = None,
+    verify_ssl: bool = os.getenv(DEMISTO_VERIFY_SSL, False),
 ) -> XsoarClient:
     """
     Returns the client based on the server type by doing api requests to determine which server it is

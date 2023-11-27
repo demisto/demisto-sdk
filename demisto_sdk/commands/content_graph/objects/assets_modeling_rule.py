@@ -1,14 +1,12 @@
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     ContentItemXSIAM,
 )
 from demisto_sdk.commands.prepare_content.rule_unifier import RuleUnifier
-
-json = JSON_Handler()
 
 
 class AssetsModelingRule(ContentItemXSIAM, content_type=ContentType.ASSETS_MODELING_RULE):  # type: ignore[call-arg]

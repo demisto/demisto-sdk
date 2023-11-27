@@ -6,7 +6,6 @@ import regex
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
-    ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
     CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
@@ -47,7 +46,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool,
-    AssetsModelingRule,
     AuthorImage,
     Classifier,
     ClassifierMapper,
@@ -341,12 +339,6 @@ class Pack:
     def modeling_rules(self) -> Iterator[ModelingRule]:
         return self._content_files_list_generator_factory(
             dir_name=MODELING_RULES_DIR, suffix="yml"
-        )
-
-    @property
-    def assets_modeling_rules(self) -> Iterator[AssetsModelingRule]:
-        return self._content_files_list_generator_factory(
-            dir_name=ASSETS_MODELING_RULES_DIR, suffix="yml"
         )
 
     @property

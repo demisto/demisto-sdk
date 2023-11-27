@@ -208,13 +208,8 @@ class ModelingRule(YAMLContentUnifiedObject):
     TESTDATA_FILE_SUFFIX = "_testdata.json"
     SCHEMA_FILE_SUFFIX = "_schema.json"
 
-    def __init__(
-        self,
-        path: Union[Path, str],
-        file_type: FileType = FileType.MODELING_RULE,
-        entity_name: str = MODELING_RULE,
-    ):
-        super().__init__(path, file_type, entity_name)
+    def __init__(self, path: Union[Path, str]):
+        super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
         self._rules: List[SingleModelingRule] = []
         self.rules_dict: dict = {}
 

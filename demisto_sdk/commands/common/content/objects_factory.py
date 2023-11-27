@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.general_object
 )
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool,
-    AssetsModelingRule,
     AuthorImage,
     ChangeLog,
     Classifier,
@@ -104,7 +103,6 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.WIZARD: Wizard,
     FileType.XDRC_TEMPLATE: XDRCTemplate,
     FileType.LAYOUT_RULE: LayoutRule,
-    FileType.ASSETS_MODELING_RULE: AssetsModelingRule,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

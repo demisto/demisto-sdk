@@ -18,8 +18,7 @@ for repository in "${repositories[@]}"
 do
   # Verify the repository is actually a directory
   if [ ! -d "$repository" ]; then
-    echo "$repository is not a valid directory"
-    invalid_repositories+=("$repository")
+    invalid_repositories+=("$repository - is not a valid directory.")
   else
     valid_repositories+=("$repository")
   fi

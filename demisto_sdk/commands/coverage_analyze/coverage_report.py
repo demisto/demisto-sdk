@@ -105,6 +105,7 @@ class CoverageReport:
             logger.debug(
                 f"coverage report {self.cov.config.data_file} file not found. "
             )
+            raise FileNotFoundError("The coverage file does not exist.")
 
         logger.info(f"\n{self.report_str}")
 

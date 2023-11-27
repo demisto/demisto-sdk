@@ -86,6 +86,7 @@ class PackContentItems:
         self.preprocess_rule = ContentItemsList(
             content_type=ContentType.PREPROCESS_RULE
         )
+        self.test_script = ContentItemsList(content_type=ContentType.TEST_SCRIPT)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()
@@ -319,7 +320,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = get_pack_ignore_content(self.path.name) or {}  # type: ignore
+        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name)) or {}  # type: ignore
 
     @cached_property
     def field_mapping(self):

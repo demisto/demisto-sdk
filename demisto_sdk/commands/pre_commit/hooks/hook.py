@@ -113,7 +113,7 @@ class Hook:
             key = full_key.split(":")[0]
             if hook.get(key):
                 continue
-            if prop := self._get_property(key):
+            if (prop := self._get_property(key)) is not None:
                 hook[key] = prop
         self.base_hook = hook
 

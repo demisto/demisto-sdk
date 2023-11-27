@@ -197,11 +197,11 @@ class TestFileUtils:
             o.writelines(original_lines)
             m.writelines(modified_lines)
 
-        actual = merge_files(self.original, self.modified, tmp_path.__str__())
+        actual: Path = merge_files(self.original, self.modified, tmp_path.__str__())
 
-        if actual:
-            assert actual.exists()
-            assert actual.name == f"{self.original.name}-merged"
+        assert actual.exists()
+        assert actual.name == f"{self.original.name}-merged"
+        # assert actual.read_text() == 
 
     def test_merge_files_identical(self, tmp_path: TempPathFactory):
 

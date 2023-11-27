@@ -11,7 +11,6 @@ TOKEN_ADDED = "+ "
 TOKEN_NOT_PRESENT = "? "
 TOKEN_BOTH = " "
 
-
 def get_file_diff(original: Path, modified: Path) -> List[str]:
         """
         Helper function to generate a list of differences between 2 files.
@@ -105,6 +104,7 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
     # Lines that have '-' means that the line was removed from f2.
     # Lines that have '+' means that the line was added to f2.
     try:
+        lines_to_append = []
         for i, line in enumerate(diff):
 
             # If the text is found in both, we want to add it.
@@ -124,9 +124,10 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
                     elif diff[i+1].startswith(TOKEN_NOT_PRESENT) and diff[i+2].startswith(TOKEN_ADDED):
                         diff.pop(i+1)
                     else:
-                        output_text.append(line.replace(TOKEN_REMOVED, "", 2))
+                        lines_to_append.append(line.replace(TOKEN_REMOVED, "", 2))
+                        # output_text.append()
                 except IndexError:
-                    # If the next 2 lines don't exist, it means that the line was 
+                    # If the next 2 lines don't exist, it means that the line was
                     # removed and needs to be added
                     output_text.append(line.replace(TOKEN_REMOVED, "", 2))
 
@@ -143,6 +144,9 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
             # Can be ignored
             elif line.startswith(TOKEN_NOT_PRESENT) and line.endswith("\n"):
                 pass
+
+        if lines_to_append:
+            output_text.extend(lines_to_append)
 
     # If there are any errors during the processing of the diff
     # we return f2

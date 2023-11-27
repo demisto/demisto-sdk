@@ -88,4 +88,6 @@ jobs:
             node_versions_info.json
             coverage_html_report
       - name: Exit after pytest execution
-        run: exit ${{ env.PYTEST_EXIT_CODE }}
+        run: |
+          echo ${{ env.PYTEST_EXIT_CODE }}
+          exit ${{ env.PYTEST_EXIT_CODE }}

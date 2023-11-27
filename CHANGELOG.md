@@ -7,6 +7,7 @@
 * fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
+* Fixed an issue in **pre-commit** command where `False` properties were deleted.
 * Added support for *Assets Modeling Rule* as a new content item.
 
 ## 1.23.0

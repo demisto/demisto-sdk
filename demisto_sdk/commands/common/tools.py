@@ -1921,11 +1921,11 @@ def find_type(
 
         if LayoutRuleParser.match(_dict, path):
             return FileType.LAYOUT_RULE
-        
-            if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
-            _dict.keys()
-        ):
-            return FileType.LISTS
+
+        #     if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
+        #     _dict.keys()
+        # ):
+        #     return FileType.LISTS
 
         # When using it for all files validation- sometimes 'id' can be integer
         if GenericFieldParser.match(_dict, path):

@@ -75,9 +75,10 @@ jobs:
           # poetry run pytest $TEST_FILES --store-durations
           mkdir test-results
           
-          set +e
           poetry run pytest $TEST_FILES -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
+          
+          echo "test"
           
           kill $node_pid
       - name: Upload artifacts

@@ -436,8 +436,7 @@ class Uploader:
                         item.path.name,
                         item.content_type,
                         self.marketplace,
-                        [marketplace.value for marketplace in
-                         item.marketplaces],
+                        [marketplace.value for marketplace in item.marketplaces],
                     )
                     for item in self._skipped_upload_marketplace_mismatch
                 ),

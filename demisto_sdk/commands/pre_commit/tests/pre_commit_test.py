@@ -461,7 +461,7 @@ def test_filter_files_matching_hook_config(hook, expected_result):
         ]
     ]
 
-    assert {(Path(x), None) for x in expected_result} == set(
+    assert {Path(x) for x in expected_result} == set(
         DockerHook(**base_hook).filter_files_matching_hook_config(files)
     )
 

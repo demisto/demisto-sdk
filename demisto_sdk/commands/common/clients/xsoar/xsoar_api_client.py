@@ -84,6 +84,7 @@ class XsoarClient(BaseModel):
             auth_id=config.auth_id,
             username=config.user,
             password=config.password.get_secret_value(),
+            verify_ssl=config.verify_ssl,
         )
 
     @validator("about_xsoar", always=True)

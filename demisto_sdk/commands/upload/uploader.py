@@ -252,7 +252,8 @@ class Uploader:
         Upload a content item, a pack, or a zip containing packs.
 
         Returns:
-            bool: whether the item is uploaded succesfully.
+            bool: whether the item is uploaded succesfully to the relevant
+            given marketplace.
 
         Raises:
             NotIndivitudallyUploadedException (see exception class)
@@ -435,7 +436,8 @@ class Uploader:
                         item.path.name,
                         item.content_type,
                         self.marketplace,
-                        item.marketplaces,
+                        [marketplace.value for marketplace in
+                         item.marketplaces],
                     )
                     for item in self._skipped_upload_marketplace_mismatch
                 ),

@@ -18,6 +18,7 @@ for repository in "${repositories[@]}"
 do
   # Verify the repository is actually a directory
   if [ ! -d "$repository" ]; then
+    echo "$repository is not a valid directory"
     invalid_repositories+=("$repository")
   else
     valid_repositories+=("$repository")
@@ -26,7 +27,7 @@ done
 
 # Make sure there are valid repositories
 if [ ${#valid_repositories[@]} -eq 0 ]; then
-  echo "There are no valid repositories found"
+  echo "Error, No valid repositories were found"
   exit 1
 fi
 

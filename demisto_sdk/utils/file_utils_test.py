@@ -1,7 +1,8 @@
+import os
 from pathlib import Path
-from typing import Tuple
 
-from pytest import TempPathFactory, fixture
+from pytest import TempPathFactory, fixture, raises
+from pytest_mock import MockerFixture
 
 from demisto_sdk.utils.file_utils import (
     TOKEN_ADDED,
@@ -201,7 +202,6 @@ class TestFileUtils:
         if actual:
             assert actual.exists()
             assert actual.name == f"{self.original.name}-merged"
-            # FIXME merged includes only section 2.
 
     def test_merge_files_identical(self, tmp_path: TempPathFactory):
 
@@ -312,7 +312,7 @@ class TestFileUtils:
 
     def test_merge_files_f1_f2_dne(self, tmp_path: TempPathFactory):
         """
-        Test when neigher the original or modifed files exist we return `None`.
+        Test when neither the original or modifed files exist we return `None`.
 
         Given:
         - 2 files, original and modified.
@@ -333,4 +333,92 @@ class TestFileUtils:
 
         assert not actual
 
+    def test_merge_files_f1_unreadable(self, tmp_path: TempPathFactory):
+        """
+        Test when the original file is unreadable.
 
+        Given:
+        - 2 files, original and modified.
+
+        When:
+        - The modified file is unreadable.
+
+        Then:
+        - The modified file will be returned.
+        """
+
+        original_lines = [
+            "# Title\n\n",
+            "## Section 1\n"
+        ]
+
+        modified_lines = [
+            original_lines[0],
+            original_lines[1].replace("1", "2")
+        ]
+        
+        with self.original.open("w") as o, self.modified.open("w") as m:
+            o.writelines(original_lines)
+            m.writelines(modified_lines)
+
+        # Set original file as write only
+        os.chmod(self.original.__str__(), os.O_WRONLY)
+
+        output = merge_files(self.original, self.modified, tmp_path.__str__())
+
+        assert output == self.modified
+
+    def test_merge_files_diff_none(self, mocker: MockerFixture, tmp_path: TempPathFactory):
+
+        # TODO figure out how to mock get_file_diff
+        mocker.patch("file_utils.get_file_diff", return_value=[])
+
+        original_lines = [
+            "# Title\n\n",
+            "## Section 1\n"
+        ]
+
+        modified_lines = [
+            original_lines[0],
+            original_lines[1].replace("1", "2")
+        ]
+        
+        with self.original.open("w") as o, self.modified.open("w") as m:
+            o.writelines(original_lines)
+            m.writelines(modified_lines)
+
+        output = merge_files(self.original, self.modified, tmp_path.__str__())
+
+        assert output == self.modified
+
+    def test_merge_files_exception_process(self, tmp_path: TempPathFactory):
+        """
+        Test when there's an exception while processing the merge.
+
+        Given:
+        - 2 files, original and modified.
+
+        When:
+        - The processing throws an `Exception`.
+
+        Then:
+        - The modified file will be returned.
+        """
+
+        original_lines = [
+            "# Title\n\n",
+            "## Section 1\n"
+        ]
+
+        modified_lines = [
+            original_lines[0],
+            original_lines[1].replace("1", "2")
+        ]
+        
+        with self.original.open("w") as o, self.modified.open("w") as m:
+            o.writelines(original_lines)
+            m.writelines(modified_lines)
+
+        with raises(Exception):
+            output = merge_files(self.original, self.modified, tmp_path.__str__())
+            assert output == self.modified

@@ -271,8 +271,8 @@ class Uploader:
             return False
         if (
             self.marketplace
-            and self.marketplace not in content_item.marketplaces
             and isinstance(content_item, ContentItem)
+            and self.marketplace not in content_item.marketplaces
         ):
             self._skipped_upload_marketplace_mismatch.append(content_item)
             return True

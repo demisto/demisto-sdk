@@ -7,7 +7,7 @@
 * fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
-*  Fixed an issue in **upload** command where the `marketplace` field was not used when upload specific pack.
+*  Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

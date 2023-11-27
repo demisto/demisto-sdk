@@ -1,4 +1,3 @@
-from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
@@ -20,14 +19,3 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
-
-    @cached_property
-    def field_mapping(self):
-        super().field_mapping.update(
-            {
-                "docker_image": "dockerimage",
-                "description": "comment",
-                "alt_docker_images": "alt_dockerimages",
-            }
-        )
-        return super().field_mapping

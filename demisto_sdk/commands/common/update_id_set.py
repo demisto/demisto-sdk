@@ -251,7 +251,8 @@ def add_item_to_exclusion_dict(
 
     """
     pack_name = get_pack_name(file_path)
-    item_type = find_type(file_path, ignore_sub_categories=True).value
+    if type_enum := find_type(file_path, ignore_sub_categories=True):
+        item_type = type_enum.value
 
     item_type = "classifier" if item_type == "classifier_5_9_9" else item_type
     excluded_items_from_id_set[pack_name] = {(item_type, item_id)}  # set of tuples

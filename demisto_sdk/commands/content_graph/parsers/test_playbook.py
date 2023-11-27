@@ -49,5 +49,5 @@ class TestPlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYB
         }
 
     @staticmethod
-    def match(_dict) -> bool:
+    def match(_dict: dict, path: str) -> bool:
         return "tasks" in _dict

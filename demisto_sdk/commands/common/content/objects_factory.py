@@ -141,8 +141,8 @@ def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
         object_type = Documentation
     # find_type handling
     if not object_type:
-        file_type = find_type(str(path))
-        object_type = TYPE_CONVERSION_BY_FileType.get(file_type)
+        if file_type := find_type(str(path)):
+            object_type = TYPE_CONVERSION_BY_FileType.get(file_type)
     # Raise exception if not succeed
     if not object_type:
         raise ContentFactoryError(None, path, "Unable to get object type from path.")

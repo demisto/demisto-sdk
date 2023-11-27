@@ -299,7 +299,8 @@ def split(ctx, config, **kwargs):
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 
     check_configuration_file("split", kwargs)
-    file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+    file_type_enum = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+    file_type = file_type_enum.value if file_type_enum else ""
     if file_type not in [
         FileType.INTEGRATION,
         FileType.SCRIPT,
@@ -319,7 +320,7 @@ def split(ctx, config, **kwargs):
         FileType.PARSING_RULE,
     ]:
         yml_splitter = YmlSplitter(
-            configuration=config.configuration, file_type=file_type.value, **kwargs
+            configuration=config.configuration, file_type=file_type, **kwargs
         )
         return yml_splitter.extract_to_package_format()
 
@@ -361,12 +362,14 @@ def extract_code(ctx, config, **kwargs):
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     check_configuration_file("extract-code", kwargs)
-    file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+    file_type_enum = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+    file_type = file_type_enum.value if file_type_enum else ""
+
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         logger.info("[red]File is not an Integration or Script.[/red]")
         return 1
     extractor = YmlSplitter(
-        configuration=config.configuration, file_type=file_type.value, **kwargs
+        configuration=config.configuration, file_type=file_type, **kwargs
     )
     return extractor.extract_code(kwargs["outfile"])
 
@@ -1992,7 +1995,8 @@ def generate_test_playbook(ctx, **kwargs):
     )
 
     check_configuration_file("generate-test-playbook", kwargs)
-    file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+    file_type_enum = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+    file_type = file_type_enum.value if file_type_enum else ""
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         logger.info(
             "[red]Generating test playbook is possible only for an Integration or a Script.[/red]"
@@ -2000,7 +2004,7 @@ def generate_test_playbook(ctx, **kwargs):
         return 1
 
     try:
-        generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
+        generator = PlaybookTestsGenerator(file_type=file_type, **kwargs)
         if generator.run():
             sys.exit(0)
         sys.exit(1)

@@ -41,9 +41,10 @@ class DescriptionFormat(BaseUpdate):
         )
         description_type = input.replace("_description.md", ".yml")
         self.is_beta = False
-        file_type = find_type(description_type)
+        file_type_enum = find_type(description_type)
+        file_type = file_type_enum.value if file_type_enum else ""
         if file_type:
-            self.is_beta = find_type(description_type).value == "betaintegration"
+            self.is_beta = find_type(description_type) == "betaintegration"
         with open(self.source_file) as f:
             self.description_content = f.read()
 

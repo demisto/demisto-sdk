@@ -65,9 +65,10 @@ class IntegrationYMLFormat(BaseUpdateYML):
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = "5.5.0"
         self.is_beta = False
-        integration_type = find_type(input, clear_cache=clear_cache)
-        if integration_type:
-            self.is_beta = find_type(input).value == "betaintegration"
+        entity_type_enum = find_type(input, clear_cache=clear_cache)
+        entity_type = entity_type_enum.value if entity_type_enum else ""
+        if entity_type:
+            self.is_beta = entity_type == "betaintegration"
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""

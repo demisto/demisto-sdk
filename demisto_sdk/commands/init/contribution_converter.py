@@ -570,8 +570,8 @@ class ContributionConverter:
                 (SCRIPT, AUTOMATION, INTEGRATION)
             ) and cf_name_lower.endswith("yml"):
                 content_item_file_path = child_file
-                file_type = find_type(content_item_file_path)
-                file_type = file_type.value if file_type else file_type
+                file_type_enum = find_type(content_item_file_path)
+                file_type = file_type_enum.value if file_type_enum else ""
                 try:
                     child_file_name = Path(child_file).name
                     if source_mapping and child_file_name in source_mapping.keys():

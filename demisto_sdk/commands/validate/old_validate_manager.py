@@ -2607,7 +2607,7 @@ class OldValidateManager:
                 old_path = old_path.replace("_testdata.json", ".yml")
 
         # check for old file format
-        if self.is_old_file_format(file_path, file_type):
+        if file_type and self.is_old_file_format(file_path, file_type):
             old_format_files.add(file_path)
             return irrelevant_file_output
 

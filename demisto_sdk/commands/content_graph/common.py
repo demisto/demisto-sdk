@@ -7,9 +7,9 @@ from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Set
 from neo4j import graph
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
-from demisto_sdk.commands.common.tools import FileType
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.tools import (
+    FileType,
     get_json,
     get_remote_file,
 )

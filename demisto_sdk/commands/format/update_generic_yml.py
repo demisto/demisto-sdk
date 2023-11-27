@@ -160,7 +160,7 @@ class BaseUpdateYML(BaseUpdate):
             self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
         if self.deprecate:
-            if (
+            if self.source_file_type and (
                 self.source_file_type.value == "integration"
                 or self.source_file_type.value == "script"
             ):
@@ -185,11 +185,12 @@ class BaseUpdateYML(BaseUpdate):
             )
             test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
             test_playbook_ids = []
-            file_entity_type = find_type(
+            file_type_enum = find_type(
                 self.source_file, _dict=self.data, file_type="yml"
             )
+            file_entity_type = file_type_enum.value if file_type_enum else ""
             file_id = get_entity_id_by_entity_type(
-                self.data, ENTITY_TYPE_TO_DIR.get(file_entity_type.value, "")
+                self.data, ENTITY_TYPE_TO_DIR.get(file_entity_type, "")
             )
             commands, scripts = get_scripts_and_commands_from_yml_data(
                 self.data, file_entity_type

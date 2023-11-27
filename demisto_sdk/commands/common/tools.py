@@ -1799,8 +1799,7 @@ def find_type(
     Returns:
         FileType | None: Enum representation of the content file type, None otherwise.
     """
-    type_by_path = find_type_by_path(path)
-    if type_by_path:
+    if type_by_path := find_type_by_path(path):
         return type_by_path
     try:
         if not _dict and not file_type:
@@ -1880,10 +1879,10 @@ def find_type(
         if "brandName" in _dict and "transformer" in _dict:
             return FileType.OLD_CLASSIFIER
 
-        if ClassifierParser.match(_dict):
+        if ClassifierParser.match(_dict, path):
             return FileType.CLASSIFIER
 
-        if MapperParser.match(_dict):
+        if MapperParser.match(_dict, path):
             return FileType.MAPPER
 
         if "canvasContextConnections" in _dict:

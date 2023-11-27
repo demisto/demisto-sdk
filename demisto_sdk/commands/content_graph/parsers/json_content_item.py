@@ -98,7 +98,7 @@ class JSONContentItemParser(ContentItemParser):
                 raise NotAContentItemException(
                     f"Directory {self.path} must have a single JSON file."
                 )
-            self.path = Path(json_files_in_dir[0])
+            self.path: Path = Path(json_files_in_dir[0])
         return get_json(self.path.as_posix(), git_sha=git_sha)
 
     @staticmethod

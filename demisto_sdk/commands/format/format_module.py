@@ -218,7 +218,8 @@ def format_manager(
                 graph = False
         for file in files:
             file_path = str(Path(file))
-            file_type = find_type(file_path, clear_cache=clear_cache)
+            entity_type_enum = find_type(file_path, clear_cache=clear_cache)
+            file_type = entity_type_enum.value if entity_type_enum else ""
 
             # Check if this is an unskippable file
             if not any(
@@ -231,8 +232,7 @@ def format_manager(
                 if Path(file_path).name in SKIP_FORMATTING_FILES:
                     continue
 
-            if file_type and file_type.value not in UNFORMATTED_FILES:
-                file_type = file_type.value
+            if file_type not in UNFORMATTED_FILES:
                 info_res, err_res, skip_res = run_format_on_file(
                     input=file_path,
                     file_type=file_type,
@@ -256,7 +256,7 @@ def format_manager(
                 log_list.append(
                     (
                         [
-                            f"Ignoring format for {file_path} as {file_type.value} is currently not "
+                            f"Ignoring format for {file_path} as {file_type} is currently not "
                             f"supported by format command"
                         ],
                         "yellow",
@@ -463,8 +463,8 @@ def is_graph_related_files(files: List[str], clear_cache: bool) -> bool:
     """
     for file in files:
         file_path = str(Path(file))
-        if file_type := find_type(file_path, clear_cache=clear_cache):
-            file_type = file_type.value
+        if file_type_enum := find_type(file_path, clear_cache=clear_cache):
+            file_type = file_type_enum.value
             if file_type in CONTENT_ITEMS_WITH_GRAPH:
                 return True
     return False

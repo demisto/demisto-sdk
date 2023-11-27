@@ -73,13 +73,18 @@ jobs:
           echo "test-files are: $TEST_FILES"
 
           # poetry run pytest $TEST_FILES --store-durations
-          poetry run pytest $TEST_FILES -v --cov --splits 5 --group ${{ matrix.group }}
+          mkdir test-results
+          poetry run pytest $TEST_FILES -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml --splits 5 --group ${{ matrix.group }}
           kill $node_pid
-      - name: Upload coverage
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: coverage-${{ matrix.os }}-${{ matrix.python_version }}${{ matrix.group }}
-          path: .coverage
+          path: |
+            .test_durations
+            test-results/junit.xml
+            node_versions_info.json
+            coverage_html_report
       - name: Upload durations
         uses: actions/upload-artifact@v2
         with:

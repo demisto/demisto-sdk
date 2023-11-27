@@ -56,7 +56,7 @@ jobs:
           shopt -u globstar
           source "$(poetry env info --path)/bin/activate"
 
-          TEST_FILES=$(find . -type f -name "*_test.py")
+          TEST_FILES=$(find . -type f -name "*_test.py" | grep -v '^$')
           # filter out files which are in .venv directory
           TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
           TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')

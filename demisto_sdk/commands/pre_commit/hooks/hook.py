@@ -1,7 +1,7 @@
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Iterable, List, Set
 
 from demisto_sdk.commands.common.logger import logger
 
@@ -47,7 +47,10 @@ class Hook:
 
         return len(files_to_run_on_hook)
 
-    def filter_files_matching_hook_config(self, files):
+    def filter_files_matching_hook_config(
+        self,
+        files: Iterable[Path],
+    ):
         """
         returns files that should be run in this hook according to the provided regexs in files and exclude
         Note, we could easily support glob syntax here too in the future.
@@ -104,7 +107,7 @@ class Hook:
             key = full_key.split(":")[0]
             if hook.get(key):
                 continue
-            if prop := self._get_property(key):
+            if (prop := self._get_property(key)) is not None:
                 hook[key] = prop
         self.base_hook = hook
 

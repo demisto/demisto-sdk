@@ -6,6 +6,7 @@ import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -68,16 +69,15 @@ class PreCommitRunner:
     input_mode: bool
     all_files: bool
     mode: str
-    python_version_to_files: Dict[str, Set[Path]]
+    python_version_to_files_with_objects: Dict[
+        str, Set[Tuple[Path, Optional[IntegrationScript]]]
+    ]
     demisto_sdk_commit_hash: str
 
     def __post_init__(self):
         """
         We initialize the hooks and all_files for later use.
         """
-        self.files_to_run = set(
-            itertools.chain.from_iterable(self.python_version_to_files.values())
-        )
         self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:
@@ -98,6 +98,27 @@ class PreCommitRunner:
             "https://github.com/demisto/demisto-sdk"
         ]["rev"] = self.demisto_sdk_commit_hash
         self.hooks = self._get_hooks(self.precommit_template)
+
+    @cached_property
+    def files_to_run_with_objects(
+        self,
+    ) -> Set[Tuple[Path, Optional[IntegrationScript]]]:
+        return set(
+            itertools.chain.from_iterable(
+                self.python_version_to_files_with_objects.values()
+            )
+        )
+
+    @cached_property
+    def files_to_run(self) -> Set[Path]:
+        return {file for file, _ in self.files_to_run_with_objects}
+
+    @cached_property
+    def python_version_to_files(self) -> Dict[str, Set[Path]]:
+        return {
+            version: {path for path, _ in paths_with_objects}
+            for version, paths_with_objects in self.python_version_to_files_with_objects.items()
+        }
 
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
@@ -124,7 +145,9 @@ class PreCommitRunner:
         This function handles the python2 files.
         Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
         """
-        python2_files = self.python_version_to_files.get(DEFAULT_PYTHON2_VERSION)
+        python2_files = self.python_version_to_files_with_objects.get(
+            DEFAULT_PYTHON2_VERSION
+        )
         if not python2_files:
             return
 
@@ -175,7 +198,8 @@ class PreCommitRunner:
             )
         [
             DockerHook(**hook, **kwargs).prepare_hook(
-                files_to_run=self.files_to_run, run_docker_hooks=run_docker_hooks
+                files_to_run_with_objects=self.files_to_run_with_objects,
+                run_docker_hooks=run_docker_hooks,
             )
             for hook_id, hook in hooks.items()
             if hook_id.endswith("in-docker")
@@ -275,7 +299,9 @@ class PreCommitRunner:
         return ret_val
 
 
-def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]]:
+def group_by_python_version(
+    files: Set[Path],
+) -> Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
     """This function groups the files to run pre-commit on by the python version.
 
     Args:
@@ -343,12 +369,17 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
-            integrations_scripts_mapping[code_file_path],
-            {integration_script.path.relative_to(CONTENT_PATH)},
+            {
+                (path, integration_script)
+                for path in integrations_scripts_mapping[code_file_path]
+            },
+            {(integration_script.path.relative_to(CONTENT_PATH), integration_script)},
         )
 
     if infra_files:
-        python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
+        python_versions_to_files[DEFAULT_PYTHON_VERSION].update(
+            [(infra, None) for infra in infra_files]
+        )
 
     if exclude_integration_script:
         logger.info(
@@ -418,13 +449,19 @@ def pre_commit_manager(
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files, exclude_files = group_by_python_version(files_to_run)
-    if not python_version_to_files:
+    python_version_to_files_with_objects, exclude_files = group_by_python_version(
+        files_to_run
+    )
+    if not python_version_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return None
 
     pre_commit_runner = PreCommitRunner(
-        bool(input_files), all_files, mode, python_version_to_files, sdk_ref
+        bool(input_files),
+        all_files,
+        mode,
+        python_version_to_files_with_objects,
+        sdk_ref,
     )
     return pre_commit_runner.run(
         unit_test,

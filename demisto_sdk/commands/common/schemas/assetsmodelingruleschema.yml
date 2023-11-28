@@ -1,6 +1,6 @@
 type: map
 mapping:
-  regex;(.+_raw):
+  regex;(.+assets_raw):
     type: map
     mapping:
       regex;(.+):

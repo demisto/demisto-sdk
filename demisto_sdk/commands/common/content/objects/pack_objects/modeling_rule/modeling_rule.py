@@ -146,8 +146,6 @@ class SingleModelingRule:
             try:
                 splitted_dataset = self.dataset.split("_")[1:]
                 splitted_dataset.remove("raw")
-                if "assets" in splitted_dataset:
-                    splitted_dataset.remove("assets")
                 self.product = "_".join(splitted_dataset)
             except ValueError:
                 pass

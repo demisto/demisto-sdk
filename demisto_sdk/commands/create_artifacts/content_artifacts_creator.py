@@ -147,7 +147,6 @@ XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.README,
     FileType.AUTHOR_IMAGE,
     FileType.LAYOUT_RULE,
-    FileType.ASSETS_MODELING_RULE,
 ]
 XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.INCIDENT_FIELD,
@@ -1335,8 +1334,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     items_to_dump = MARKETPLACE_TO_ITEMS_MAPPING.get(
         artifact_manager.marketplace, XSOAR_MARKETPLACE_ITEMS_TO_DUMP
     )
-
-    # items_to_dump = [FileType.ASSETS_MODELING_RULE, FileType.MODELING_RULE]  # todo: just testing, remove
     for item in items_to_dump:
         content_items_to_handler[item](
             content_items_handler=content_items_handler,

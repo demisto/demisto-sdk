@@ -10,7 +10,7 @@
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
 * Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
-* Added support for *Assets Modeling Rule* as a new content item in *content-graph*, *schemas* and all *demisto-sdk* commands.
+* Added support for *Assets Modeling Rule* new content item in all `demisto-sdk` commands.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

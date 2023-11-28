@@ -479,7 +479,7 @@ def test_no_docker_flag_docker_hook():
     docker_hook = create_hook({"args": ["test"]})
     kwargs = {"mode": None, "all_files": False, "input_mode": True}
     DockerHook(**docker_hook, **kwargs).prepare_hook(
-        files_to_run=[file_path], run_docker_hooks=False
+        files_to_run_with_objects=[file_path], run_docker_hooks=False
     )
 
     assert len(docker_hook["repo"]["hooks"]) == 0

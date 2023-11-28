@@ -1046,7 +1046,10 @@ class Initiator:
             hello_world_raw = schema_json.get("hello_world_raw") or schema_json.get(
                 "hello_world_assets_raw"
             )
-            dict_for_schema = {f"{vendor}_{product}_raw": hello_world_raw}
+            if "hello_world_assets_raw" in schema_json:
+                dict_for_schema = {f"{vendor}_{product}_assets_raw": hello_world_raw}
+            else:
+                dict_for_schema = {f"{vendor}_{product}_raw": hello_world_raw}
             with open(schema_json_path, "w") as f:
                 json.dump(dict_for_schema, f, indent=4)
 
@@ -1085,7 +1088,7 @@ class Initiator:
             self.HELLO_WORLD_PACK_NAME, self.dir_name
         )
 
-        content_item = "modeling ru[les" if is_modeling_rules else "parsing rules"
+        content_item = "modeling rules" if is_modeling_rules else "parsing rules"
         content_item = (
             "assets modeling rules" if is_assets_modeling_rules else content_item
         )

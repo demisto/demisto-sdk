@@ -11,8 +11,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class IndicatorIncidentField(ContentItem):
     cli_name: str = Field(alias="cliName")
-    id: str = Field(alias="id")
-    object_id: str = Field(alias="cliName")
+    object_id: str = Field(alias="id")
     field_type: str = Field(alias="type")
 
     def _upload(

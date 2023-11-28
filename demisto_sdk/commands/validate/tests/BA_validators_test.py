@@ -152,20 +152,11 @@ def test_IDNameValidator_fix(content_item, expected_name, expected_fix_msg):
                 create_indicator_field_object(
                     paths=["cliName"], values=["changed_cliName"]
                 ),
-                create_incident_field_object(["id"], ["cve"]),
             ],
             1,
             [
-                "The cli name changed_cliName doesn't match the IndicatorField id indicator_email"
+                "The cli name changed_cliName doesn't match the standards. the cliName should be: email."
             ],
-        ),
-        (
-            [
-                create_indicator_field_object(paths=["id"], values=["email"]),
-                create_incident_field_object(["id"], ["incident-cve"]),
-            ],
-            0,
-            [],
         ),
     ],
 )
@@ -176,15 +167,14 @@ def test_CliNameMatchIdValidator_is_valid(
     Given
     content_items list.
         - Case 1: content_items with 1 indicator field and 1 incident field.
-        - Case 2: content_items with 1 indicator field and 1 incident field, where the indicator field cliName is different from id, and the incident field id is without the incident_ prefix.
-        - Case 3: content_items with 1 indicator field and 1 incident field, where the indicator field id is without the indicator prefix, and the incident field id is with - rather than _.
+        - Case 2: content_items with 1 indicator field, where the cliName is different from id.
+
     When
     - Calling the CliNameMatchIdValidator is_valid function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail the indicator field.
-        - Case 3: Shouldn't fail anything.
     """
     results = CliNameMatchIdValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
@@ -204,12 +194,12 @@ def test_CliNameMatchIdValidator_is_valid(
                 paths=["cliName"], values=["changed_cliName"]
             ),
             "email",
-            "Changing the cli name to be equal to id (email).",
+            "Changing the cli name to (email).",
         ),
         (
-            create_incident_field_object(paths=["id"], values=["domain"]),
+            create_incident_field_object(paths=["id"], values=["incident_domain"]),
             "domain",
-            "Changing the cli name to be equal to id (domain).",
+            "Changing the cli name to (domain).",
         ),
     ],
 )

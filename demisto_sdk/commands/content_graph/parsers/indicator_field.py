@@ -27,9 +27,7 @@ class IndicatorFieldParser(
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update(
-            {"object_id": "cliName", "cli_name": "cliName", "id": "id"}
-        )
+        super().field_mapping.update({"object_id": "id", "cli_name": "cliName"})
         return super().field_mapping
 
     @property
@@ -38,11 +36,8 @@ class IndicatorFieldParser(
 
     @property
     def object_id(self) -> Optional[str]:
-        return get_value(self.json_data, self.field_mapping.get("object_id", ""))
-
-    @property
-    def id(self) -> Optional[str]:
-        return get_value(self.json_data, self.field_mapping.get("id", ""))
+        id = get_value(self.json_data, self.field_mapping.get("object_id", ""))
+        return (id.lower().replace("_", "").replace("-", ""))[len("indicator") :]
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

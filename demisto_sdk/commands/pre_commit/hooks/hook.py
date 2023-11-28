@@ -6,10 +6,6 @@ from typing import Any, Dict, Iterable, List, Set
 from demisto_sdk.commands.common.logger import logger
 
 
-class SkippedHook(Exception):
-    pass
-
-
 class Hook:
     def __init__(
         self,

@@ -103,6 +103,71 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     )
 
 
+def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, mocker):
+    """
+    Given
+    - Content pack named FeedAzure to upload.
+
+    When
+    - Uploading the pack.
+
+    Then
+    - Ensure upload runs successfully.
+    - Ensure success upload message is printed.
+    """
+    import demisto_sdk.commands.content_graph.objects.content_item as content_item
+
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    pack_path = Path(
+        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/HelloWorld/Integrations"
+    )
+    mocker.patch.object(
+        content_item,
+        "CONTENT_PATH",
+        Path(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example"),
+    )
+
+    for content_class in (
+        IncidentField,
+        Integration,
+        Playbook,
+        Script,
+    ):
+        mock_upload_method(mocker, content_class)
+
+    runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
+    result = runner.invoke(
+        main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--marketplace", "xsoar"]
+    )
+    assert result.exit_code == 0
+    logged = flatten_call_args(logger_info.call_args_list)
+    assert logged[-1] == "\n".join(
+        (
+            "[yellow]SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:",
+            "╒══════════════════════════════╤═════════════╤═══════════════╤═════════════════════╕",
+            "│ NAME                         │ TYPE        │ MARKETPLACE   │ FILE_MARKETPLACES   │",
+            "╞══════════════════════════════╪═════════════╪═══════════════╪═════════════════════╡",
+            "│ HelloWorldEventCollector.yml │ Integration │ xsoar         │ ['marketplacev2']   │",
+            "╘══════════════════════════════╧═════════════╧═══════════════╧═════════════════════╛",
+            "[/yellow]"
+        )
+    )
+    assert logged[-2] == "\n".join(
+        (
+            "[green]SUCCESSFUL UPLOADS:",
+            "╒════════════════════╤═════════════╤═════════════╤════════════════╕",
+            "│ NAME               │ TYPE        │ PACK NAME   │ PACK VERSION   │",
+            "╞════════════════════╪═════════════╪═════════════╪════════════════╡",
+            "│ HelloWorld.yml     │ Integration │ HelloWorld  │ 3.0.0          │",
+            "├────────────────────┼─────────────┼─────────────┼────────────────┤",
+            "│ FeedHelloWorld.yml │ Integration │ HelloWorld  │ 3.0.0          │",
+            "╘════════════════════╧═════════════╧═════════════╧════════════════╛",
+            "[/green]"
+        )
+    )
+    
+
 METADATA_DISPLAYS = {
     "automation": "Automation",
     "classifier": "Classifiers",

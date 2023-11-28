@@ -36,8 +36,8 @@ class Changelog:
         """
         Checks the following:
             - If the PR is a release:
-                - checks that the `.changelog` folder is empty
-                - checks that the `CHANGELOG.md` file has changed
+                - checks that the `.changelog` folder is empty ????
+                - checks that the `CHANGELOG.md` file has changed ????
             - If the PR is normal:
                 - checks that the `CHANGELOG.md` file has not changed
                 - checks that a log file has been added and its name is the same as the PR name
@@ -71,18 +71,36 @@ class Changelog:
     """ RELEASE """
 
     def release(self, branch_name: str) -> None:
+        """
+        Generates a new CHANGELOG.md file by combining all the individual
+        changelog files from the .changelog folder.
+
+        It checks that the PR name matches the release format, reads all the log files,
+        compiles them into a CHANGELOG.md, updates CHANGELOG.md,
+        clears the .changelog folder, commits and pushes the CHANGELOG.md changes.
+
+        Args:
+            branch_name: The git branch name to use for committing/pushing CHANGELOG.md
+
+        """
         if not is_release(self.pr_name):
             raise ValueError("The PR name should match `v0.0.0` to start a release.")
+
         # get all log files as `LogFileObject`
         logs = read_log_files()
+
         # get a dict sorted by type of log entry
         new_log_entries = get_new_log_entries(logs)
+
         new_changelog = compile_changelog_md(
             branch_name, new_log_entries, read_old_changelog()[1:]
         )
+
         update_changelog_md(new_changelog)
         logger.info("The changelog.md file has been successfully updated")
+
         clear_changelogs_folder()
+
         # commit and push CHANGELOG.md
         commit_and_push(branch_name=branch_name)
         logger.info(f"Combined {len(logs)} changelog files into CHANGELOG.md")
@@ -107,7 +125,8 @@ def validate_log_yml(pr_number: str) -> None:
     - ensure that the log file added to the PR is valid
       according to the conventions of the 'LogFileObject' model
     """
-    data = get_yaml(CHANGELOG_FOLDER / f"{pr_number}.yml")
+    if not isinstance(data := get_yaml(CHANGELOG_FOLDER / f"{pr_number}.yml"), dict):
+        raise ValueError(f"The {pr_number}.yml log file is not valid")  # ????
 
     try:
         LogFileObject(**data)
@@ -117,16 +136,20 @@ def validate_log_yml(pr_number: str) -> None:
 
 def read_log_files() -> List[LogFileObject]:
     """
-    Get all the log files under the .changelog folder,
+    Get all log files under the .changelog folder,
     in case that one of the logs is not valid, an error is raised
     """
     changelogs: List[LogFileObject] = []
     errors: Dict[str, str] = {}
     for path in CHANGELOG_FOLDER.iterdir():
-        if path.suffix.endswith(".md"):
+        if path.suffix.endswith(".md"):  # exclude README file
             continue
+
+        if not isinstance(log_file := get_yaml(path), dict):
+            raise ValueError(f"{path} is not a valid YAML file")
+
         try:
-            changelogs.append(LogFileObject(**get_yaml(path)))
+            changelogs.append(LogFileObject(**log_file))
         except ValidationError as e:
             errors[f"{path}"] = e.json()
 

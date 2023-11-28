@@ -1,10 +1,11 @@
 from subprocess import CalledProcessError
 
 from demisto_sdk.commands.test_content.tools import is_redhat_instance
+from demisto_sdk.commands.test_content.constants import SSH_USER
 
 
 def raise_exception():
-    raise CalledProcessError(1, "ls -l /home/ec2-user/rhel_ami".split())
+    raise CalledProcessError(1, f"ls -l /home/{SSH_USER}/rhel_ami".split())
 
 
 class CheckOutputMock:

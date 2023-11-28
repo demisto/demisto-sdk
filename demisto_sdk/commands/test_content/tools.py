@@ -73,7 +73,7 @@ def update_server_configuration(
 
 def is_redhat_instance(instance_ip: str) -> bool:
     """
-    As part of the AMI creation - in case the AMI is RHEL a file named '/home/ec2-user/rhel_ami' is created as
+    As part of the AMI creation - in case the AMI is RHEL a file named '/home/gcp-user/rhel_ami' is created as
     an indication.
     If not
     Args:

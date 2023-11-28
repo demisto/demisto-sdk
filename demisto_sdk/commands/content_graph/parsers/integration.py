@@ -51,6 +51,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             {
                 "display_name": "display",
                 "docker_image": "script.dockerimage",
+                "alt_docker_images": "script.alt_dockerimages",
                 "type": ["script.subtype", "script.type"],
             }
         )
@@ -59,10 +60,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
     @property
     def display_name(self) -> Optional[str]:
         return get_value(self.yml_data, self.field_mapping.get("display_name", ""))
-
-    @property
-    def docker_image(self) -> str:
-        return get_value(self.yml_data, self.field_mapping.get("docker_image", ""))
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

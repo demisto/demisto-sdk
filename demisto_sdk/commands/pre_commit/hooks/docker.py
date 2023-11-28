@@ -1,5 +1,4 @@
 import functools
-import os
 import time
 from collections import defaultdict
 from copy import deepcopy
@@ -19,7 +18,10 @@ from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
-from demisto_sdk.commands.common.tools import get_yaml, logger
+from demisto_sdk.commands.common.tools import logger
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
@@ -41,8 +43,9 @@ def get_docker_python_path() -> str:
 
 
 def with_native_tags(
-    tags_to_files: Dict[str, List[Tuple[str, Dict]]], docker_image_flag: str
-) -> Dict[str, List[Tuple[str, Dict]]]:
+    tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]],
+    docker_image_flag: str,
+) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
     Adds the native image images into the dict with the files that should be run on them
     Args:
@@ -53,82 +56,48 @@ def with_native_tags(
 
     """
     docker_flags = set(docker_image_flag.split(","))
-    all_tags_to_files = defaultdict(list)
+    all_tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]] = defaultdict(
+        list
+    )
     native_image_config = NativeImageConfig.get_instance()
 
     for image, scripts in tags_to_files.items():
-        for file, yml in scripts:
+        for file, obj in scripts:
 
             supported_native_images = ScriptIntegrationSupportedNativeImages(
-                _id=yml.get("commonfields", {}).get("id", ""),
+                _id=obj.object_id,
                 native_image_config=native_image_config,
                 docker_image=image,
             ).get_supported_native_docker_tags(docker_flags)
             for native_image in supported_native_images:
-                all_tags_to_files[native_image].append((file, yml))
+                all_tags_to_files[native_image].append((file, obj))
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
             } & docker_flags:
-                all_tags_to_files[image].append((file, yml))
+                all_tags_to_files[image].append((file, obj))
     return all_tags_to_files
 
 
-@functools.lru_cache
-def get_yml_for_code(code_file) -> Optional[dict]:
-    yml_in_directory = [f for f in os.listdir(code_file.parent) if f.endswith(".yml")]
-    if (
-        len(yml_in_directory) == 1
-        and (yml_file := code_file.parent / yml_in_directory[0]).is_file()
-    ):
-        try:
-            return get_yaml(yml_file)
-        except Exception:
-            logger.debug(f"Could not parse file {code_file}")
-    return None
-    # could be reasonable cant parse. We have some non-parsable ymls for tests
-
-
 def docker_tag_to_runfiles(
-    files_to_run: Iterable, docker_image_flag
-) -> Dict[str, List[Tuple[str, Dict]]]:
+    files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]], docker_image_flag
+) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
-    Iterates over all files and finds the files assosciated yml. Groups the files by the dockerimages
+    Iterates over all files snf groups the files by the dockerimages
     Args:
         files_to_run: PosixFiles to run the command on
         docker_image_flag: the docker_image config value
 
-    Returns: A dict of image to List of files(Tuple[path, yml]) including native images
+    Returns: A dict of image to List of files(Tuple[path, obj]) including native images
 
     """
-    tags_to_files = defaultdict(list)
-    for file in files_to_run:
-        yml: Optional[dict] = get_yml_for_code(file)
-        if not yml:
+    tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]] = defaultdict(list)
+    for file, obj in files_to_run:
+        if not obj:
             continue
-        for docker_image in docker_images_for_file(yml):
-            tags_to_files[docker_image].append((file, yml))
+        for docker_image in obj.docker_images:
+            tags_to_files[docker_image].append((file, obj))
     return with_native_tags(tags_to_files, docker_image_flag)
-
-
-def docker_images_for_file(yml: dict) -> set:
-    """
-    Args:
-        yml: the yml representation of the content item
-
-    Returns: all docker images (without native) that a file should tested on
-
-    """
-    images_to_return = set()
-    if image := yml.get("dockerimage"):
-        images_to_return.add(image)
-    script = yml.get("script", {})
-    if isinstance(script, dict):
-        if image := script.get("dockerimage", ""):
-            images_to_return.add(image)
-    if images := yml.get("alt_dockerimages"):
-        images_to_return.update(images)
-    return images_to_return
 
 
 @functools.lru_cache(maxsize=512)
@@ -194,7 +163,11 @@ class DockerHook(Hook):
     This class will make common manipulations on commands that need to run in docker
     """
 
-    def prepare_hook(self, files_to_run: Iterable, run_docker_hooks):
+    def prepare_hook(
+        self,
+        files_to_run_with_objects: Iterable[Tuple[Path, Optional[IntegrationScript]]],
+        run_docker_hooks,
+    ):
         """
         Group all the files by dockerimages
         Split those images by config files
@@ -207,8 +180,16 @@ class DockerHook(Hook):
         if not run_docker_hooks:
             return
         start_time = time.time()
-        tag_to_files_ymls = docker_tag_to_runfiles(
-            self.filter_files_matching_hook_config(files_to_run),
+        filtered_files = self.filter_files_matching_hook_config(
+            (file for file, _ in files_to_run_with_objects)
+        )
+        filtered_files_with_objects = {
+            (file, obj)
+            for file, obj in files_to_run_with_objects
+            if file in filtered_files
+        }
+        tag_to_files_objs = docker_tag_to_runfiles(
+            filtered_files_with_objects,
             self._get_property("docker_image", "from-yml"),
         )
         end_time = time.time()
@@ -218,16 +199,16 @@ class DockerHook(Hook):
         config_arg = self._get_config_file_arg()
 
         start_time = time.time()
-        logger.info(f"{len(tag_to_files_ymls)} images were collected from files")
-        logger.debug(f'collected images: {" ".join(tag_to_files_ymls.keys())}')
-        for image, file_ymls in sorted(
-            tag_to_files_ymls.items(), key=lambda item: item[0]
+        logger.info(f"{len(tag_to_files_objs)} images were collected from files")
+        logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
+        for image, files_with_objects in sorted(
+            tag_to_files_objs.items(), key=lambda item: item[0]
         ):
 
-            paths = {file[0] for file in file_ymls}
+            paths = {file for file, obj in files_with_objects}
             folder_to_files = _split_by_config_file(paths, config_arg)
             image_is_powershell = any(
-                f[1].get("type") == "powershell" for f in file_ymls
+                obj.is_powershell for _, obj in files_with_objects
             )
 
             dev_image = devtest_image(  # consider moving to before loop and threading.

@@ -55,8 +55,6 @@ jobs:
         run: |
           shopt -u globstar
           source "$(poetry env info --path)/bin/activate"
-          echo "test-1"
-          exit 1
 
           TEST_FILES=$(find . -type f -name "*_test.py" | grep -v '^$')
           # filter out files which are in .venv directory

@@ -1092,7 +1092,7 @@ class TestParsersAndModels:
         )
 
         assets_modeling_rule = pack.create_assets_modeling_rule(
-            "TestAssetsModelingRule", load_yaml("assets_modeling_rule.yml")
+            "TestAssetsModelingRule"
         )
         modeling_rule_path = Path(assets_modeling_rule.path)
         parser = AssetsModelingRuleParser(modeling_rule_path, list(MarketplaceVersions))
@@ -1100,8 +1100,8 @@ class TestParsersAndModels:
         model = AssetsModelingRule.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
-            expected_id="duo_assets_modeling_rule",
-            expected_name="Duo Assets Modeling Rule",
+            expected_id="assets-modeling-rule",
+            expected_name="Assets Modeling Rule",
             expected_content_type=ContentType.ASSETS_MODELING_RULE,
             expected_fromversion="6.8.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,

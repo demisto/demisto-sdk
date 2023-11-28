@@ -188,6 +188,8 @@ class DockerHook(Hook):
             for file, obj in files_to_run_with_objects
             if file in filtered_files
         }
+        if not filtered_files_with_objects:
+            return
         tag_to_files_objs = docker_tag_to_runfiles(
             filtered_files_with_objects,
             self._get_property("docker_image", "from-yml"),

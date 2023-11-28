@@ -138,6 +138,25 @@ class XsoarClient(BaseModel):
         )
         return raw_response
 
+    @retry(exceptions=ApiException)
+    def get_installed_pack(self, pack_id: str) -> dict:
+        """
+        Returns all the installed packs in xsoar/xsiam
+        """
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self.client,
+            method="GET",
+            path="/contentpacks/metadata/installed",
+            response_type="object",
+        )
+        for pack in raw_response or []:
+            if pack.get("id") == pack_id:
+                return pack
+
+        raise ValueError(
+            f"Could not find installed pack for pack ID '{pack_id}'"
+        )
+
     def search_marketplace_packs(self, filters: Dict):
         """
         Searches for packs in a marketplace

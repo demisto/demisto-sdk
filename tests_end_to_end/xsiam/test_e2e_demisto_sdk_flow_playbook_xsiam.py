@@ -14,6 +14,11 @@ from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from tests_end_to_end import e2e_tests_utils
+from tests_end_to_end.e2e_tests_constansts import (
+    DEFAULT_MODELING_RULES_SCHEMA_STRING,
+    DEFAULT_MODELING_RULES_STRING,
+    DEFAULT_TEST_DATA_STRING,
+)
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -21,7 +26,7 @@ from TestSuite.test_tools import ChangeCWD
 def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = False):
     """This flow checks:
         1. Creates a new playbook and uploads it demisto-sdk upload command.
-        2. Downloads the playbook using demisto-sdk upload command.
+        2. Downloads the playbook using demisto-sdk download command.
         3. Generates docs for the playbook using demisto-sdk generate-docs command.
         4. Formatting the playbook using the demisto-sdk format command.
         5. Validates the playbook using the demisto-sdk validate command.
@@ -33,8 +38,6 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
         destination_folder=f"{tmpdir}/git/demisto-sdk",
         sdk_git_branch=DEMISTO_GIT_PRIMARY_BRANCH,
     )
-
-    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
     
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
@@ -171,13 +174,24 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         logger.info(f"*** Failed to delete playbook {playbook_name}, reason: {ae}.")
 
 
-def test_e2e_demisto_sdk_flow_modeling_rules():
+def test_e2e_demisto_sdk_flow_modeling_rules(tmpdir, verify_ssl: bool = False):
     """This flow checks:
     1. Uploads the pack HelloWorld with the modeling rules HelloWorldModelingRule using the demisto-sdk upload command
     2. Tests the modeling rules using the demisto-sdk modeling-rules test command
     """
+    repo = Repo(tmpdir)
+    pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
     
+    e2e_tests_utils.create_modeling_rules_folder(source_pack_path, f"{pack_name}ModelingRules", f"{pack_name}ModelingRules",DEFAULT_MODELING_RULES_STRING,DEFAULT_TEST_DATA_STRING,DEFAULT_MODELING_RULES_SCHEMA_STRING)
+    Path(f"{source_pack_path}/ModelingRules/{pack_name}ModelingRules/").exists()
+    
+    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
+
     # Uploads the HelloWorld pack
-    Uploader(input=Path('Packs/HelloWorld'), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
+    Uploader(input=Path(source_pack_path), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2, destination_zip_dir=tmpdir).upload()
     
-    e2e_tests_utils.cli('demisto-sdk modeling-rules test Packs/HelloWorld/ModelingRules/HelloWorldModelingRules')
+    #check if the pack was installed
+    demisto_client.get_installed_pack(pack_name)
+
+    #test the created modeling rules
+    e2e_tests_utils.cli(f'demisto-sdk modeling-rules test {source_pack_path}/ModelingRules/{pack_name}ModelingRules')

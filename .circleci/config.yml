@@ -319,6 +319,8 @@ jobs:
               neo4j start
               # poll for neo4j status until available
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+
+              ./Tests/scripts/validate.sh
         - run:
             name: Test validate files and yaml - new validate
             when: always
@@ -333,10 +335,6 @@ jobs:
               cd content
               demisto-sdk -v
               echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
-
-              neo4j start
-              # poll for neo4j status until available
-              while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
               ./Tests/scripts/new_validate.sh
               

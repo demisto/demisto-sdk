@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRul
 class AssetsModelingRuleParser(
     ModelingRuleParser, content_type=ContentType.ASSETS_MODELING_RULE
 ):
+
     def __init__(
         self,
         path: Path,

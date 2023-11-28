@@ -32,9 +32,14 @@ class IntegrationScriptParser(YAMLContentItemParser):
         return super().field_mapping
 
     @property
-    @abstractmethod
     def docker_image(self) -> str:
-        ...
+        return get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
+
+    @property
+    def alt_docker_images(self) -> List[str]:
+        return get_value(
+            self.yml_data, self.field_mapping.get("alt_dockerimages", []), []
+        )
 
     @property
     @abstractmethod

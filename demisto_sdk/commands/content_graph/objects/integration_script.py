@@ -26,6 +26,7 @@ class IntegrationScript(ContentItem):
     type: str
     subtype: Optional[str]
     docker_image: Optional[str]
+    alt_docker_images: List[str] = []
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
@@ -40,6 +41,14 @@ class IntegrationScript(ContentItem):
             return str(python_version)
 
         return None
+
+    @property
+    def docker_images(self) -> List[str]:
+        return [self.docker_image] + self.alt_docker_images if self.docker_image else []
+
+    @property
+    def is_powershell(self) -> bool:
+        return self.type == "powershell"
 
     def prepare_for_upload(
         self,

@@ -8,6 +8,7 @@
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
+* Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
 
 ## 1.23.0

@@ -32,6 +32,7 @@ class CoverageReport:
             str
         ] = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
     ):
+        Path(report_dir).mkdir(parents=True, exist_ok=True)
         self.report_dir = report_dir
         self._cov: Optional[coverage.Coverage] = None
         self._report_str: Optional[str] = None

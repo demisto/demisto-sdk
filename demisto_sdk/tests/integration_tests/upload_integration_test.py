@@ -106,7 +106,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
 def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, mocker):
     """
     Given
-    - Content pack named FeedAzure to upload.
+    - Content pack named ExmaplePack to upload.
 
     When
     - Uploading the pack.
@@ -114,12 +114,14 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
     Then
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
+    - Ensure Skipped message is printed.
     """
     import demisto_sdk.commands.content_graph.objects.content_item as content_item
 
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     pack_path = Path(
-        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/HelloWorld/Integrations"
+        DEMISTO_SDK_PATH,
+        "tests/test_files/content_repo_example/Packs/ExamplePack/Integrations",
     )
     mocker.patch.object(
         content_item,
@@ -145,28 +147,26 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
     assert logged[-1] == "\n".join(
         (
             "[yellow]SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:",
-            "╒══════════════════════════════╤═════════════╤═══════════════╤═════════════════════╕",
-            "│ NAME                         │ TYPE        │ MARKETPLACE   │ FILE_MARKETPLACES   │",
-            "╞══════════════════════════════╪═════════════╪═══════════════╪═════════════════════╡",
-            "│ HelloWorldEventCollector.yml │ Integration │ xsoar         │ ['marketplacev2']   │",
-            "╘══════════════════════════════╧═════════════╧═══════════════╧═════════════════════╛",
-            "[/yellow]"
+            "╒════════════════════════════════════════╤═════════════╤═══════════════╤═════════════════════╕",
+            "│ NAME                                   │ TYPE        │ MARKETPLACE   │ FILE_MARKETPLACES   │",
+            "╞════════════════════════════════════════╪═════════════╪═══════════════╪═════════════════════╡",
+            "│ integration-sample_event_collector.yml │ Integration │ xsoar         │ ['marketplacev2']   │",
+            "╘════════════════════════════════════════╧═════════════╧═══════════════╧═════════════════════╛",
+            "[/yellow]",
         )
     )
     assert logged[-2] == "\n".join(
         (
             "[green]SUCCESSFUL UPLOADS:",
-            "╒════════════════════╤═════════════╤═════════════╤════════════════╕",
-            "│ NAME               │ TYPE        │ PACK NAME   │ PACK VERSION   │",
-            "╞════════════════════╪═════════════╪═════════════╪════════════════╡",
-            "│ HelloWorld.yml     │ Integration │ HelloWorld  │ 3.0.0          │",
-            "├────────────────────┼─────────────┼─────────────┼────────────────┤",
-            "│ FeedHelloWorld.yml │ Integration │ HelloWorld  │ 3.0.0          │",
-            "╘════════════════════╧═════════════╧═════════════╧════════════════╛",
-            "[/green]"
+            "╒══════════════════════════════╤═════════════╤═════════════╤════════════════╕",
+            "│ NAME                         │ TYPE        │ PACK NAME   │ PACK VERSION   │",
+            "╞══════════════════════════════╪═════════════╪═════════════╪════════════════╡",
+            "│ integration-sample_packs.yml │ Integration │ ExamplePack │ 3.0.0          │",
+            "╘══════════════════════════════╧═════════════╧═════════════╧════════════════╛",
+            "[/green]",
         )
     )
-    
+
 
 METADATA_DISPLAYS = {
     "automation": "Automation",

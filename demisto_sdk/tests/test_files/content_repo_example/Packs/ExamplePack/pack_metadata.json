@@ -1,6 +1,6 @@
 {
-    "name": "HelloWorld",
-    "description": "This is the Hello World integration for getting started.",
+    "name": "ExamplePack",
+    "description": "This is example.",
     "support": "community",
     "currentVersion": "3.0.0",
     "author": "Cortex XSOAR",
@@ -17,14 +17,6 @@
     "useCases": [],
     "keywords": [],
     "dependencies": {
-        "CommonScripts": {
-            "mandatory": true,
-            "display_name": "Common Scripts"
-        },
-        "CommonPlaybooks": {
-            "mandatory": true,
-            "display_name": "Common Playbooks"
-        }
     },
     "marketplaces": [
         "xsoar",

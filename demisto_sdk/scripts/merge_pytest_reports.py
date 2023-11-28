@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 import coverage
+from junitparser import JUnitXml
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -73,14 +74,28 @@ def merge_coverage_report():
     fixed_files = [file for file in files if fix_coverage_report_path(Path(file))]
     cov.combine(fixed_files)
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
+    for file in files:
+        Path(file).unlink(missing_ok=True)
     logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
+
+
+def merge_junit_reports():
+    report_files = CONTENT_PATH.rglob(".report_pytest.xml")
+    if reports := [JUnitXml.fromfile(str(file)) for file in report_files]:
+        report = reports[0]
+        for rep in reports[1:]:
+            report += rep
+        report.write(str(CONTENT_PATH / ".report_pytest.xml"))
+        for file in report_files:
+            Path(file).unlink(missing_ok=True)
 
 
 def main():
     try:
         merge_coverage_report()
+        merge_junit_reports()
     except Exception as e:
-        logger.warning(f"Failed to merge coverage report: {e}")
+        logger.warning(f"Failed to merge reports: {e}")
 
 
 if __name__ == "__main__":

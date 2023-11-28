@@ -19,7 +19,7 @@ exclude = ["TestSuite/**", "*/tests/*", "tests"]
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
 update-additional-dependencies = "demisto_sdk.scripts.update_additional_dependencies:main"
-merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
+merge-pytest-report = "demisto_sdk.scripts.merge_pytest_report:main"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"

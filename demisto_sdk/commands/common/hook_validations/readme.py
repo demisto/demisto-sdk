@@ -406,9 +406,7 @@ class ReadMeValidator(BaseValidator):
             bool: True if the daemon is accessible
         """
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(
-                log_prompt="DockerPing"
-            )
+            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="DockerPing")  # type: ignore
             docker_client.ping()
             return True
         except Exception:

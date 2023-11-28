@@ -1,4 +1,5 @@
 from datetime import datetime
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -13,7 +14,11 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import capital_case, get_json
+from demisto_sdk.commands.common.tools import (
+    capital_case,
+    get_json,
+    get_pack_ignore_content,
+)
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
     PACK_METADATA_FILENAME,
@@ -81,6 +86,7 @@ class PackContentItems:
         self.preprocess_rule = ContentItemsList(
             content_type=ContentType.PREPROCESS_RULE
         )
+        self.test_script = ContentItemsList(content_type=ContentType.TEST_SCRIPT)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()
@@ -113,6 +119,7 @@ class PackMetadataParser:
 
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata["name"]
+        self.display_name: str = metadata["name"]
         self.description: str = metadata["description"]
         self.created: str = metadata.get("created") or NOW
         self.updated: str = metadata.get("updated") or NOW
@@ -217,16 +224,18 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     content_type = ContentType.PACK
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, git_sha: Optional[str] = None) -> None:
         """Parses a pack and its content items.
 
         Args:
             path (Path): The pack path.
         """
+        if path.name == PACK_METADATA_FILENAME:
+            path = path.parent
         BaseContentParser.__init__(self, path)
 
         try:
-            metadata = get_json(path / PACK_METADATA_FILENAME)
+            metadata = get_json(path / PACK_METADATA_FILENAME, git_sha=git_sha)
         except FileNotFoundError:
             raise NotAContentItemException(
                 f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
@@ -238,11 +247,15 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.relationships: Relationships = Relationships()
         self.connect_pack_dependencies(metadata)
         try:
-            self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
+            self.contributors: List[str] = get_json(
+                path / PACK_CONTRIBUTORS_FILENAME, git_sha=git_sha
+            )
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")
         self.parse_pack_folders()
+        self.parse_ignored_errors()
+
         logger.debug(f"Successfully parsed {self.node_id}")
 
     @property
@@ -304,3 +317,33 @@ class PackParser(BaseContentParser, PackMetadataParser):
         ):
             return True
         return False
+
+    def parse_ignored_errors(self):
+        """Sets the pack's ignored_errors field."""
+        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name)) or {}  # type: ignore
+
+    @cached_property
+    def field_mapping(self):
+        return {
+            "name": "name",
+            "description": "description",
+            "created": "created",
+            "support": "support",
+            "email": "email",
+            "price": "price",
+            "hidden": "hidden",
+            "server_min_version": "serverMinVersion",
+            "current_version": "currentVersion",
+            "tags": "tags",
+            "keywords": "keywords",
+            "videos": "videos",
+            "marketplaces": "marketplaces",
+            "vendor_id": "vendorId",
+            "partner_id": "partnerId",
+            "partner_name": "partnerName",
+            "preview_only": "previewOnly",
+            "excluded_dependencies": "excludedDependencies",
+            "modules": "modules",
+            "disable_monthly": "disableMonthly",
+            "content_commit_hash": "contentCommitHash",
+        }

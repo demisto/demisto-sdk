@@ -13,7 +13,10 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    BaseNode,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -115,19 +118,27 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
+    def import_graph(
+        self,
+        imported_path: Optional[Path] = None,
+        download: bool = False,
+        fail_on_error: bool = False,
+    ) -> bool:
         pass
 
     @abstractmethod
     def export_graph(
-        self, output_path: Optional[Path] = None, override_commit: bool = True
+        self,
+        output_path: Optional[Path] = None,
+        override_commit: bool = True,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     ) -> None:
         pass
 
     @abstractmethod
     def get_unknown_content_uses(
         self, file_paths: List[str], raises_error: bool
-    ) -> List[BaseContent]:
+    ) -> List[BaseNode]:
         pass
 
     @abstractmethod
@@ -139,19 +150,19 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def find_uses_paths_with_invalid_fromversion(
         self, file_paths: List[str], for_supported_versions=False
-    ) -> List[BaseContent]:
+    ) -> List[BaseNode]:
         pass
 
     @abstractmethod
     def find_uses_paths_with_invalid_toversion(
         self, file_paths: List[str], for_supported_versions=False
-    ) -> List[BaseContent]:
+    ) -> List[BaseNode]:
         pass
 
     @abstractmethod
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]
-    ) -> List[BaseContent]:
+    ) -> List[BaseNode]:
         pass
 
     @abstractmethod
@@ -160,13 +171,13 @@ class ContentGraphInterface(ABC):
         pack_ids: List[str],
         marketplace: MarketplaceVersions,
         core_pack_list: List[str],
-    ) -> List[BaseContent]:
+    ) -> List[BaseNode]:
         pass
 
     @abstractmethod
     def validate_duplicate_ids(
         self, file_paths: List[str]
-    ) -> List[Tuple[BaseContent, List[BaseContent]]]:
+    ) -> List[Tuple[BaseNode, List[BaseNode]]]:
         pass
 
     @abstractmethod
@@ -198,23 +209,23 @@ class ContentGraphInterface(ABC):
     def search(
         self,
         marketplace: Union[MarketplaceVersions, str] = None,
-        content_type: ContentType = ContentType.BASE_CONTENT,
+        content_type: ContentType = ContentType.BASE_NODE,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
-    ) -> List[BaseContent]:
+    ) -> List[BaseNode]:
         """
         This searches the database for content items and returns a list of them, including their relationships
 
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
-            content_type (ContentType]): The content_type to filter. Defaults to ContentType.BASE_CONTENT.
+            content_type (ContentType]): The content_type to filter. Defaults to ContentType.BASE_NODE.
             ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 
         Returns:
-            List[BaseContent]: The search results
+            List[BaseNode]: The search results
         """
         if not marketplace and all_level_dependencies:
             raise ValueError(
@@ -280,5 +291,9 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def find_mandatory_hidden_packs_dependencies(
         self, pack_ids: List[str]
-    ) -> List[BaseContent]:
+    ) -> List[BaseNode]:
         pass
+
+    @abstractmethod
+    def is_alive(self):
+        ...

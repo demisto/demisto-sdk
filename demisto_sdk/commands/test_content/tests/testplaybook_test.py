@@ -46,7 +46,7 @@ def test_set_prev_server_keys(mocker, tmp_path):
 
     test_playbook = TestPlaybook(build_context, test_playbook_configuration)
     integration = Integration(
-        build_context, "integration_with_server_keys", ["instance"]
+        build_context, "integration_with_server_keys", ["instance"], test_playbook
     )
     integration.configuration = IntegrationConfiguration(
         {

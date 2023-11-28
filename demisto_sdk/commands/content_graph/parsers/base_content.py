@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
@@ -21,6 +22,10 @@ class BaseContentParser(ABC):
 
     def __init__(self, path: Path) -> None:
         self.path: Path = path
+
+    @cached_property
+    def field_mapping(self):
+        return {}
 
     @property
     @abstractmethod

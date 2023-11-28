@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
@@ -21,16 +23,21 @@ class CommandParser:
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
         self.is_feed = self.script_info.get("feed", False)
+        self.long_running = self.script_info.get("longRunning", False)
         self.type = self.script_info.get("subtype") or self.script_info.get("type")
+        self.is_long_running = self.script_info.get("longRunning", False)
         if self.type == "python":
             self.type += "2"
         self.commands: List[CommandParser] = []
@@ -38,13 +45,21 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_dependencies()
         self.connect_to_tests()
 
-    @property
-    def display_name(self) -> Optional[str]:
-        return self.yml_data.get("display")
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "display_name": "display",
+                "docker_image": "script.dockerimage",
+                "alt_docker_images": "script.alt_dockerimages",
+                "type": ["script.subtype", "script.type"],
+            }
+        )
+        return super().field_mapping
 
     @property
-    def docker_image(self) -> str:
-        return self.script_info.get("dockerimage", "")
+    def display_name(self) -> Optional[str]:
+        return get_value(self.yml_data, self.field_mapping.get("display_name", ""))
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

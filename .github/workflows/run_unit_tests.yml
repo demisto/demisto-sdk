@@ -56,7 +56,7 @@ jobs:
           shopt -u globstar
           source "$(poetry env info --path)/bin/activate"
 
-          TEST_FILES=$(find . -type f -name "*_test.py" | grep -v '^$')
+          TEST_FILES=$(find . -type f -name "*_test.py")
           # filter out files which are in .venv directory
           TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
           TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
@@ -96,5 +96,6 @@ jobs:
             echo "There are unit-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE"
           else
             echo "All unit-tests have passed"
+          exit 1
           exit $PYTEST_EXIT_CODE
           fi

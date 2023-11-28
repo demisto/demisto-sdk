@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_USE_CASES,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
+    PARTNER_SUPPORT,
     XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.common.errors import Errors
@@ -26,7 +27,7 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PackUniqueFilesValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
@@ -187,7 +188,7 @@ class TestPackUniqueFilesValidator:
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         pack_metadata_no_email_and_url["email"] = ""
         pack_metadata_no_email_and_url["url"] = ""
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -254,7 +255,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             PackUniqueFilesValidator, "validate_pack_name", return_value=True
         )
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator,
             "get_master_private_repo_meta_file",
@@ -322,7 +323,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
@@ -800,6 +801,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     raise GitCommandError("A", "B")
@@ -852,6 +857,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     return None
@@ -899,6 +908,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 remote_file_path = (
                     "remote_path/prev_ver:Packs/PackName/pack_metadata.json"
@@ -942,7 +955,7 @@ class TestPackUniqueFilesValidator:
              - Ensure result is False for empty README.md file and True otherwise.
         """
         self.validator = PackUniqueFilesValidator(self.FAKE_PACK_PATH)
-        self.validator.support = "partner"
+        self.validator.support = PARTNER_SUPPORT
         mocker.patch.object(
             PackUniqueFilesValidator, "_read_file_content", return_value=text
         )

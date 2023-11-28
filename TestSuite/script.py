@@ -59,8 +59,12 @@ class Script(Integration):
         description: Optional[str] = None,
         changelog: Optional[str] = None,
         image: Optional[bytes] = None,
+        commands_txt: Optional[str] = None,
+        test: Optional[str] = None,
     ):
-        super().build(code, yml, readme, description, changelog, image)
+        super().build(
+            code, yml, readme, description, changelog, image, commands_txt, test
+        )
         if self.create_unified:
             script_yml_path = Path(self.path).with_name(
                 Path(self.path).name.replace("integration-", "script-")

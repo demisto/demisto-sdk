@@ -2,7 +2,11 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Set
 
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import (
+    Hook,
+    join_files,
+    safe_update_hook_args,
+)
 
 
 class RuffHook(Hook):
@@ -35,11 +39,10 @@ class RuffHook(Hook):
                 "name": f"ruff-py{python_version}",
             }
             hook.update(deepcopy(self.base_hook))
-            hook["args"] = [
-                f"--target-version={self._python_version_to_ruff(python_version)}",
-            ]
-            if not self.all_files:
-                hook["args"].append("--fix")
+            target_version = (
+                f"--target-version={self._python_version_to_ruff(python_version)}"
+            )
+            safe_update_hook_args(hook, target_version)
             if github_actions:
                 hook["args"].append("--format=github")
             hook["files"] = join_files(python_version_to_files[python_version])

@@ -117,6 +117,7 @@ Supported commands:
 21. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
 22. [pre-commit (experimental)](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md)
 ---
+23. [setup-env](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/setup_env/README.md)
 
 ### Customizable command configuration
 
@@ -152,23 +153,6 @@ include_untracked=true
 ```INI
 [update-release-notes]
 update_type=minor
-```
-
----
-
-### Autocomplete
-
-Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
-for zsh users run in the terminal
-
-```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
-```
-
-for regular bashrc users run in the terminal
-
-```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
 ```
 
 ---

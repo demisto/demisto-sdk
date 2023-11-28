@@ -413,6 +413,7 @@ def mock_pack(name, marketplaces, hidden=False):
         node_id=f"{ContentType.PACK}:{name}",
         path=Path("Packs"),
         name="pack_name",
+        display_name="pack_name",
         marketplaces=marketplaces,
         hidden=hidden,
         server_min_version="5.5.0",

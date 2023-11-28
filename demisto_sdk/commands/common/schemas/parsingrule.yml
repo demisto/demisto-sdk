@@ -22,3 +22,7 @@ mapping:
     type: str
   samples:
     type: str
+  comment:
+    type: str
+  deprecated:
+    type: bool

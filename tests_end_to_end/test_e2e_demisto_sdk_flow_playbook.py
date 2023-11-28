@@ -9,7 +9,7 @@ from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -45,7 +45,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_testsuite",
-        input=[playbook_name],
+        input=(playbook_name,),
         insecure=True,
     ).download()
     dest_playbook_path = Path(
@@ -66,7 +66,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
             assume_answer=True,
         )
         logger.info(f"Validating playbook {dest_playbook_path}")
-        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+        OldValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {dest_playbook_path}")
         Uploader(
@@ -129,7 +129,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_client",
-        input=[playbook_name],
+        input=(playbook_name,),
         insecure=True,
     ).download()
     dest_playbook_path = Path(
@@ -153,7 +153,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
             assume_answer=True,
         )
         logger.info(f"Validating playbook {dest_playbook_path}")
-        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+        OldValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {dest_playbook_path}")
         Uploader(

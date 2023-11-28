@@ -1,0 +1,20 @@
+category: "test"
+name: name
+name_x2: name_x2
+commonfields:
+  id: SampleEventCollector
+  version: -1
+id: id
+display: My display name
+script:
+  script: >2
+    pass
+  subtype: python3
+  type: python
+type: python
+subtype: python3
+defaultEnabled: false
+defaultEnabled_x2: true
+marketplaces:
+- marketplacev2
+fromversion: 8.4.0

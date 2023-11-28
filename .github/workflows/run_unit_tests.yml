@@ -55,6 +55,8 @@ jobs:
         run: |
           shopt -u globstar
           source "$(poetry env info --path)/bin/activate"
+          echo "test-1"
+          exit 1
 
           TEST_FILES=$(find . -type f -name "*_test.py" | grep -v '^$')
           # filter out files which are in .venv directory
@@ -78,7 +80,7 @@ jobs:
           poetry run pytest $TEST_FILES -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           
-          echo "test"
+          echo "test-2"
           
           kill $node_pid
       - name: Upload artifacts

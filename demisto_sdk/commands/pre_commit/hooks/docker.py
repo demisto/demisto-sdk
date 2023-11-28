@@ -178,18 +178,22 @@ class DockerHook(Hook):
 
         """
         if not run_docker_hooks:
+            logger.debug("Skipping docker preparation since run_docker_hooks is False")
             return
         start_time = time.time()
         filtered_files = self.filter_files_matching_hook_config(
             (file for file, _ in files_to_run_with_objects)
         )
+        if not filtered_files:
+            logger.debug(
+                "No files matched docker hook filter, skipping docker preparation"
+            )
+            return
         filtered_files_with_objects = {
             (file, obj)
             for file, obj in files_to_run_with_objects
             if file in filtered_files
         }
-        if not filtered_files_with_objects:
-            return
         tag_to_files_objs = docker_tag_to_runfiles(
             filtered_files_with_objects,
             self._get_property("docker_image", "from-yml"),

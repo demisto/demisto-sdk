@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where when using a match case to select the command function in an integration, the error `unimplemented-test-module` was raised.
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
 * Fixed an issue in **coverage-analyze** to exit gracefully in case that the .coverage file doesn't exist.

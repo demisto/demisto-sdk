@@ -9,9 +9,11 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_KEY,
     DEMISTO_PASSWORD,
     DEMISTO_USERNAME,
+    DEMISTO_VERIFY_SSL,
     XSIAM_COLLECTOR_TOKEN,
     XSIAM_TOKEN,
 )
+from demisto_sdk.commands.common.tools import string_to_bool
 
 
 class XsoarClientConfig(BaseModel):
@@ -31,7 +33,7 @@ class XsoarClientConfig(BaseModel):
     password: SecretStr = Field(
         default=SecretStr(os.getenv(DEMISTO_PASSWORD, "")), description="XSOAR Password"
     )
-    verify_ssl: Optional[bool] = None
+    verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))
 
     @root_validator()
     def validate_auth_params(cls, values: Dict[str, Any]):

@@ -1,0 +1,1 @@
+This content pack example

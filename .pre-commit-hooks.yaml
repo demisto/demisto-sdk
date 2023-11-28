@@ -65,9 +65,9 @@
   pass_filenames: false
   args: ["-i", ".coverage"]
 
-- id: merge-pytest-report
-  name: merge-pytest-report
-  entry: merge-pytest-report
+- id: merge-pytest-reports
+  name: merge-pytest-reports
+  entry: merge-pytest-reports
   language: python
   require_serial: true
   pass_filenames: false

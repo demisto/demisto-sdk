@@ -238,7 +238,7 @@ class PreCommitRunner:
         if secrets and "secrets" in skipped_hooks:
             skipped_hooks.remove("secrets")
         precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
-        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
+        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
         precommit_env["MYPYPATH"] = ":".join(
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)

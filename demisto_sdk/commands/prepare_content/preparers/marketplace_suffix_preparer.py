@@ -36,13 +36,20 @@ class MarketplaceSuffixPreparer:
                     value = datum[key]
                     if isinstance(key, str) and key.casefold().endswith(suffix):
                         clean_key = key[:-suffix_len]  # without suffix
+                        if clean_key not in datum:
+                            logger.info(
+                                "Deleting field %s as it has no counterpart without suffix",
+                                key,
+                            )
+                            datum.pop(key, None)
+                            continue
                         logger.debug(
                             f"Replacing {clean_key}={datum[clean_key]} to {value}."
                         )
                         datum[clean_key] = value
                         datum.pop(key, None)
                     elif ":" in key:
-                        # we don't allow ":" in keys, but do allow in the schema
+                        # we don't allow ":" in keys, so we can simply delete them
                         datum.pop(key, None)
                     else:
                         datum[key] = fix_recursively(value)

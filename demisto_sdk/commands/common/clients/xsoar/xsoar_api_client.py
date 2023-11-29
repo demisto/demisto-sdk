@@ -141,7 +141,7 @@ class XsoarClient(BaseModel):
     @retry(exceptions=ApiException)
     def get_installed_pack(self, pack_id: str) -> dict:
         """
-        Returns all the installed packs in xsoar/xsiam
+        Returns the installed pack by pack_id
         """
         raw_response, _, _ = demisto_client.generic_request_func(
             self=self.client,

@@ -174,20 +174,21 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         logger.info(f"*** Failed to delete playbook {playbook_name}, reason: {ae}.")
 
 
-def test_e2e_demisto_sdk_flow_modeling_rules(tmpdir, verify_ssl: bool = False):
+def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(tmpdir, verify_ssl: bool = False):
     """This flow checks:
-    1. Uploads the pack HelloWorld with the modeling rules HelloWorldModelingRule using the demisto-sdk upload command
+    1. Creates a new pack with modeling rules.
+    2. Uploads the pack using the demisto-sdk Upload command
     2. Tests the modeling rules using the demisto-sdk modeling-rules test command
     """
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
     
     e2e_tests_utils.create_modeling_rules_folder(source_pack_path, f"{pack_name}ModelingRules", f"{pack_name}ModelingRules",DEFAULT_MODELING_RULES_STRING,DEFAULT_TEST_DATA_STRING,DEFAULT_MODELING_RULES_SCHEMA_STRING)
-    Path(f"{source_pack_path}/ModelingRules/{pack_name}ModelingRules/").exists()
+    assert Path(f"{source_pack_path}/ModelingRules/{pack_name}ModelingRules/{pack_name}ModelingRules.yml").exists()
     
     demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
 
-    # Uploads the HelloWorld pack
+    # Uploads the pack
     Uploader(input=Path(source_pack_path), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2, destination_zip_dir=tmpdir).upload()
     
     #check if the pack was installed

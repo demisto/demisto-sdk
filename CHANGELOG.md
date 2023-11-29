@@ -9,7 +9,7 @@
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
 * Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
-* Added support for json5, allowing to write files and read files from specific git branches, local file system, or from any remote api .
+* Added support for json5 file, allowing to write files and read files from specific git branches, local file system, or from any remote api .
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
 
 ## 1.23.0

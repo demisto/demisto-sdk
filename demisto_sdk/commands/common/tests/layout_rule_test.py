@@ -64,20 +64,20 @@ def test_is_valid_file_complicated_schema(repo):
                                         {
                                             "SEARCH_FIELD": "alert_name",
                                             "SEARCH_TYPE": "EQ",
-                                            "SEARCH_VALUE": "test1"
+                                            "SEARCH_VALUE": "test1",
                                         },
                                         {
                                             "SEARCH_FIELD": "alert_name",
                                             "SEARCH_TYPE": "EQ",
-                                            "SEARCH_VALUE": "test2"
-                                        }
+                                            "SEARCH_VALUE": "test2",
+                                        },
                                     ]
                                 },
                                 {
                                     "SEARCH_FIELD": "alert_name",
                                     "SEARCH_TYPE": "Contains",
-                                    "SEARCH_VALUE": "test3"
-                                }
+                                    "SEARCH_VALUE": "test3",
+                                },
                             ]
                         }
                     ]

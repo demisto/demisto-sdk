@@ -37,7 +37,7 @@ class TestJsonFile(FileTesting):
         """
         json5_file_path, _ = input_files
 
-        expected_file_content = json5.loads(json5_file_path).read_text()
+        expected_file_content = json5.loads(json5_file_path.read_text())
         actual_file_content = Json5File.read_from_local_path(json5_file_path)
         assert (
             actual_file_content == expected_file_content

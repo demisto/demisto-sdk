@@ -1,9 +1,14 @@
 type: map
 mapping:
+  regex;(.+:.+):
+    type: any
+
   commonfields:
     type: map
     required: True
     mapping:
+      regex;(.+:.+):
+        type: any
       id:
         type: str
         required: True
@@ -93,14 +98,22 @@ mapping:
   engineinfo:
     type: map
     mapping:
+      regex;(.+:.+):
+        type: any
       engine:
         type: str
   contentitemexportablefields:
     type: map
     mapping:
+      regex;(.+:.+):
+        type: any
+
       contentitemfields:
         type: map
         mapping:
+          regex;(.+:.+):
+            type: any
+
           fromServerVersion:
             type: str
   polling:
@@ -122,6 +135,9 @@ mapping:
 schema;argument_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     name:
       type: str
       required: True
@@ -158,6 +174,9 @@ schema;argument_schema:
 schema;output_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     contentPath:
       type: str
     contextPath:
@@ -174,6 +193,8 @@ schema;output_schema:
 schema;important_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
     contextPath:
       type: str
       required: True

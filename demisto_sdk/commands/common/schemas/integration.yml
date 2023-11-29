@@ -1,9 +1,15 @@
 type: map
 mapping:
+  regex;(.+:.+):
+    type: any
+
   commonfields:
     type: map
     required: true
     mapping:
+      regex;(.+:.+):
+        type: any
+
       id:
         type: str
         required: true
@@ -68,6 +74,9 @@ mapping:
     type: map
     required: true
     mapping:
+      regex;(.+:.+):
+        type: any
+
       script:
         type: str
         required: true
@@ -153,6 +162,9 @@ schema;configuration_schema:
   type: map
   required: true
   mapping:
+    regex;(.+:.+):
+      type: any
+
     display:
       type: str
     section:
@@ -192,6 +204,9 @@ schema;configuration_schema:
 schema;command_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     name:
       type: str
       required: true
@@ -229,6 +244,8 @@ schema;command_schema:
 schema;argument_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
     name:
       type: str
       required: true
@@ -264,6 +281,8 @@ schema;argument_schema:
 schema;output_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
     contentPath:
       type: str
     contextPath:
@@ -282,6 +301,8 @@ schema;output_schema:
 schema;important_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
     contextPath:
       type: str
       required: true

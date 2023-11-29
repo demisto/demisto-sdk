@@ -21,6 +21,7 @@ demisto-sdk = "demisto_sdk.__main__:main"
 update-additional-dependencies = "demisto_sdk.scripts.update_additional_dependencies:main"
 sdk-changelog = "demisto_sdk.scripts.changelog.changelog:main"
 merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
+merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"

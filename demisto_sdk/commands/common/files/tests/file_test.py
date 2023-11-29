@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import pytest
 
@@ -72,7 +72,7 @@ class FileTesting(ABC):
         pass
 
     @staticmethod
-    def get_requests_mock(mocker, path: str):
+    def get_requests_mock(mocker, path: Union[str, Path]):
         import requests
 
         api_response = requests.Response()

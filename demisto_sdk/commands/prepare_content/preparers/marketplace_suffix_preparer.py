@@ -22,37 +22,42 @@ class MarketplaceSuffixPreparer:
 
         """
         suffix = f":{current_marketplace.value}"
-        suffix_len = len(suffix)
+        suffixes = [suffix]
+        if current_marketplace == MarketplaceVersions.XSOAR_ON_PREM:
+            suffixes.append(f":{MarketplaceVersions.XSOAR.value}")
+        if current_marketplace == MarketplaceVersions.XSOAR_SAAS:
+            suffixes.append(f":{MarketplaceVersions.XSOAR_SAAS.value}")
 
         def fix_recursively(datum: Any) -> Any:
             if isinstance(datum, list):
                 return [fix_recursively(item) for item in datum]
 
             elif isinstance(datum, dict):
-                # performs the actual fix, without accessing the MARKETPLACE_TO_SUFFIX dictionary.
-                for key in tuple(
-                    datum.keys()
-                ):  # deliberately not iterating over .items(), as the dict changes during iteration
-                    value = datum[key]
-                    if isinstance(key, str) and key.casefold().endswith(suffix):
-                        clean_key = key[:-suffix_len]  # without suffix
-                        if clean_key not in datum:
-                            logger.info(
-                                "Deleting field %s as it has no counterpart without suffix",
-                                key,
+                for suffix in suffixes:
+                    suffix_len = len(suffix)
+                    for key in tuple(
+                        datum.keys()
+                    ):  # deliberately not iterating over .items(), as the dict changes during iteration
+                        value = datum[key]
+                        if isinstance(key, str) and key.casefold().endswith(suffix):
+                            clean_key = key[:-suffix_len]  # without suffix
+                            if clean_key not in datum:
+                                logger.info(
+                                    "Deleting field %s as it has no counterpart without suffix",
+                                    key,
+                                )
+                                datum.pop(key, None)
+                                continue
+                            logger.debug(
+                                f"Replacing {clean_key}={datum[clean_key]} to {value}."
                             )
+                            datum[clean_key] = value
                             datum.pop(key, None)
-                            continue
-                        logger.debug(
-                            f"Replacing {clean_key}={datum[clean_key]} to {value}."
-                        )
-                        datum[clean_key] = value
-                        datum.pop(key, None)
-                    elif ":" in key:
-                        # we don't allow ":" in keys, so we can simply delete them
-                        datum.pop(key, None)
-                    else:
-                        datum[key] = fix_recursively(value)
+                        elif ":" in key:
+                            # we don't allow ":" in keys, so we can simply delete them
+                            datum.pop(key, None)
+                        else:
+                            datum[key] = fix_recursively(value)
 
             return datum
 

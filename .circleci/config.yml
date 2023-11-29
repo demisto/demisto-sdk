@@ -322,7 +322,7 @@ jobs:
 
               ./Tests/scripts/validate.sh
 
-        - run-new-validate:
+        - run:
             name: Test validate files and yaml - new validate
             when: always
             no_output_timeout: 20m

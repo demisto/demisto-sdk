@@ -410,7 +410,9 @@ class CustomBaseChecker(BaseChecker):
                     self.test_module_implemented = True
 
             # for if command in ['command1','command2'] or for if command in {'command1','command2'}
-            if isinstance(comp_with, astroid.List) or isinstance(comp_with, astroid.Set):
+            if isinstance(comp_with, astroid.List) or isinstance(
+                comp_with, astroid.Set
+            ):
                 for var_lst in comp_with.itered():
                     commands = self._infer_name(var_lst)
 

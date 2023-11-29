@@ -607,12 +607,12 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that nothing being added to the message errors of pylint for each appearance.
         """
-        
-        self.checker.commands = ["test-1", "test2", "test3"]
+
+        self.checker.commands = ["test-1", "test-2", "test-3"]
         node_a = astroid.extract_node(
             """
             match command:
-                case 'test-1' | 'test3': #@
+                case 'test-1' | 'test-2': #@
                     return true
                 case 'test-3': #@
                     return false
@@ -875,7 +875,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         node_a = astroid.extract_node(
             """
             A = 'integration-name'
-            match demisto.command():
+            match command:
                 case f'{A}-test1':  #@
                     pass
                 case f'{A}-test2':  #@

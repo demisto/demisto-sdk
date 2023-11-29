@@ -21,52 +21,39 @@ from demisto_sdk.commands.common.constants import (
     AUTH_ID,
     DEMISTO_BASE_URL,
     DEMISTO_KEY,
+    DEMISTO_VERIFY_SSL,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import string_to_bool
 
 
 @lru_cache
-def get_client_from_config(
-    client_config: XsoarClientConfig, verify_ssl: Optional[bool] = None
-) -> XsoarClient:
+def get_client_from_config(client_config: XsoarClientConfig) -> XsoarClient:
     """
     Returns the correct Client (xsoar on prem, xsoar saas or xsiam) based on the clients config object
 
     Args:
         client_config: clients configuration
-        verify_ssl: whether in each request SSL should be verified, True if yes, False if not
-                    if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
 
     Returns:
         the correct api clients based on the clients config
     """
-    base_url = client_config.base_api_url
-    api_key = client_config.api_key
-    auth_id = client_config.auth_id
-
-    _client = demisto_client.configure(
-        base_url=base_url,
-        api_key=api_key.get_secret_value(),
-        auth_id=auth_id,
-        verify_ssl=verify_ssl,
-    )
-
     if isinstance(client_config, XsiamClientConfig):
-        return XsiamClient(client=_client, config=client_config)
+        return XsiamClient(config=client_config)
     elif isinstance(client_config, XsoarSaasClientConfig):
-        return XsoarSaasClient(client=_client, config=client_config)
+        return XsoarSaasClient(config=client_config)
     else:
-        return XsoarClient(client=_client, config=client_config)
+        return XsoarClient(config=client_config)
 
 
 def get_client_from_marketplace(
     marketplace: MarketplaceVersions,
-    base_url: Optional[str] = None,
-    api_key: Optional[str] = None,
-    auth_id: Optional[str] = None,
-    verify_ssl: Optional[bool] = None,
+    base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL),
+    api_key: Optional[str] = os.getenv(DEMISTO_KEY),
+    auth_id: Optional[str] = os.getenv(AUTH_ID),
+    verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False)),
 ) -> XsoarClient:
     """
     Returns the client based on the marketplace.
@@ -82,29 +69,33 @@ def get_client_from_marketplace(
     Returns:
         the correct client according to the marketplace provided
     """
-    _base_api_url = base_url or os.getenv(DEMISTO_BASE_URL)
-    _api_key = api_key or os.getenv(DEMISTO_KEY, "")
-    _auth_id = auth_id or os.getenv(AUTH_ID)
-
     if marketplace in (MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR):
-        config = XsoarClientConfig(base_api_url=_base_api_url, api_key=_api_key)
+        config = XsoarClientConfig(
+            base_api_url=base_url, api_key=api_key, verify_ssl=verify_ssl
+        )
     elif marketplace == MarketplaceVersions.XSOAR_SAAS:
         config = XsoarSaasClientConfig(
-            base_api_url=_base_api_url, api_key=_api_key, auth_id=_auth_id
+            base_api_url=base_url,
+            api_key=api_key,
+            auth_id=auth_id,
+            verify_ssl=verify_ssl,
         )
     else:
         config = XsiamClientConfig(
-            base_api_url=_base_api_url, api_key=_api_key, auth_id=_auth_id
+            base_api_url=base_url,
+            api_key=api_key,
+            auth_id=auth_id,
+            verify_ssl=verify_ssl,
         )
-    return get_client_from_config(config, verify_ssl=verify_ssl)
+    return get_client_from_config(config)
 
 
 @lru_cache
 def get_client_from_server_type(
-    base_url: Optional[str] = None,
-    api_key: Optional[str] = None,
-    auth_id: Optional[str] = None,
-    verify_ssl: Optional[bool] = None,
+    base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL),
+    api_key: Optional[str] = os.getenv(DEMISTO_KEY),
+    auth_id: Optional[str] = os.getenv(AUTH_ID),
+    verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False)),
 ) -> XsoarClient:
     """
     Returns the client based on the server type by doing api requests to determine which server it is
@@ -119,14 +110,10 @@ def get_client_from_server_type(
     Returns:
         the correct client based on querying the type of the server
     """
-    _base_api_url = base_url or os.getenv(DEMISTO_BASE_URL)
-    _api_key = api_key or os.getenv(DEMISTO_KEY, "")
-    _auth_id = auth_id or os.getenv(AUTH_ID)
-
     _client = demisto_client.configure(
-        base_url=_base_api_url,
-        api_key=_api_key,
-        auth_id=_auth_id,
+        base_url=base_url,
+        api_key=api_key,
+        auth_id=auth_id,
         verify_ssl=verify_ssl,
     )
 
@@ -146,11 +133,11 @@ def get_client_from_server_type(
         return XsiamClient(
             client=_client,
             config=XsiamClientConfig(
-                base_api_url=_base_api_url, api_key=_api_key, auth_id=_auth_id
+                base_api_url=base_url, api_key=api_key, auth_id=auth_id
             ),
         )
     except ApiException as e:
-        logger.debug(f"got exception when querying /ioc-rules: {e}")
+        logger.debug(f"instance is not XSIAM instance, error:{e}")
         about_raw_response = XsoarClient.get_xsoar_about(_client)
         if server_version := about_raw_response.get("demistoVersion"):
             if Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION):
@@ -158,14 +145,12 @@ def get_client_from_server_type(
                     client=_client,
                     about_xsoar=about_raw_response,
                     config=XsoarSaasClientConfig(
-                        base_api_url=_base_api_url, api_key=_api_key, auth_id=_auth_id
+                        base_api_url=base_url, api_key=api_key, auth_id=auth_id
                     ),
                 )
             return XsoarClient(
                 client=_client,
                 about_xsoar=about_raw_response,
-                config=XsoarClientConfig(base_api_url=_base_api_url, api_key=_api_key),
+                config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
             )
-        raise RuntimeError(
-            f"Could not determine the correct api-client for {_client.api_client.configuration.host}"
-        )
+        raise RuntimeError(f"Could not determine the correct api-client for {base_url}")

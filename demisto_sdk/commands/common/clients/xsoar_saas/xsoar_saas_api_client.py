@@ -1,7 +1,6 @@
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
-from demisto_client.demisto_api import DefaultApi
 from pydantic import Field, validator
 from requests import Response, Session
 from requests.exceptions import RequestException
@@ -20,9 +19,8 @@ class XsoarSaasClient(XsoarClient):
         if v:
             return v
         config = values["config"]
-        client: DefaultApi = values["client"]
         session = Session()
-        session.verify = client.api_client.configuration.verify_ssl
+        session.verify = config.verify_ssl
         session.headers.update(
             {
                 "x-xdr-auth-id": config.auth_id,
@@ -38,10 +36,19 @@ class XsoarSaasClient(XsoarClient):
 
     @retry(exceptions=RequestException)
     def get_tenant_info(self) -> Response:
+        """
+        Returns tenant info on SaaS based xsoar/xsiam.
+        """
         url = urljoin(self.config.base_api_url, "public_api/v1/system/get_tenant_info")
         response = self.session.post(url)
         response.raise_for_status()
         return response
 
     def get_incident_work_plan_url(self, incident_id: str) -> str:
+        """
+        Returns the URL link to the work-plan of an incident
+
+        Args:
+            incident_id: incident ID
+        """
         return f"{self.base_url}/WorkPlan/{incident_id}"

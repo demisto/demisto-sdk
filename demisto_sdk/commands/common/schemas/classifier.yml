@@ -1,8 +1,5 @@
 type: map
 mapping:
-  regex;(.+:.+):
-    type: any
-
   feed:
     type: bool
   incidentSamples:

@@ -1,5 +1,6 @@
 type: map
 mapping:
+
   canvasContextConnections:
     type: seq
     required: True

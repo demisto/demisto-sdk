@@ -1,8 +1,12 @@
 type: map
 mapping:
+  regex;(.+:.+):
+    type: any
+
   contentitemexportablefields:
     type: map
     mapping:
+
       contentitemfields:
         type: map
         mapping:
@@ -76,9 +80,15 @@ mapping:
     required: true
     matching-rule: 'all'
     mapping:
+      regex;(.+:.+):
+        type: any
+
       regex;(^[0-9]+$):
         type: map
         mapping:
+          regex;(.+:.+):
+            type: any
+
           id:
             type: text
             required: true
@@ -133,10 +143,16 @@ mapping:
             required: false
             type: map
             mapping:
+              regex;(.+:.+):
+                type: any
+
               description:
                 type: map
                 required: false
                 mapping:
+                  regex;(.+:.+):
+                    type: any
+
                   simple:
                     type: text
               customfields:
@@ -148,6 +164,9 @@ mapping:
                 type: map
                 allowempty: True
                 mapping:
+                  regex;(.+:.+):
+                    type: any
+
                   simple:
                     type: text
               tags:
@@ -155,12 +174,18 @@ mapping:
                 required: false
                 allowempty: True
                 mapping:
+                  regex;(.+:.+):
+                    type: any
+
                   simple:
                     type: text
           task:
             type: map
             required: true
             mapping:
+              regex;(.+:.+):
+                type: any
+
               id:
                 type: text
                 required: true
@@ -224,6 +249,9 @@ mapping:
           loop:
             type: map
             mapping:
+              regex;(.+:.+):
+                type: any
+
               iscommand:
                 type: bool
               builtincondition:
@@ -304,6 +332,9 @@ schema;task_schema:
 schema;input_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     key:
       type: str
       required: true
@@ -323,6 +354,9 @@ schema;input_schema:
 schema;inputsSection_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     name:
       type: str
       required: true
@@ -338,6 +372,9 @@ schema;inputsSection_schema:
 schema;output_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     contextPath:
       type: str
       required: true
@@ -353,6 +390,9 @@ schema;output_schema:
 schema;outputsSection_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     name:
       type: str
       required: true
@@ -368,6 +408,9 @@ schema;outputsSection_schema:
 schema;condition_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     label:
       type: str
       required: true
@@ -385,6 +428,9 @@ schema;arg_filters_schema:
 schema;arg_filter_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     operator:
       type: str
       required: true
@@ -394,6 +440,9 @@ schema;arg_filter_schema:
       type: map
       required: true
       mapping:
+        regex;(.+:.+):
+          type: any
+
         value:
           type: any
           required: true
@@ -404,6 +453,9 @@ schema;arg_filter_schema:
     right:
       type: map
       mapping:
+        regex;(.+:.+):
+          type: any
+
         value:
           type: any
           required: true
@@ -415,6 +467,9 @@ schema;arg_filter_schema:
 schema;timertriggers_schema:
   type: map
   mapping:
+    regex;(.+:.+):
+      type: any
+
     fieldname:
       type: str
     action:

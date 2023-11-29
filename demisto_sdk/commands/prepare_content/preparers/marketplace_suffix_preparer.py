@@ -1,19 +1,14 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 
 
 class MarketplaceSuffixPreparer:
-    MARKETPLACE_TO_SUFFIX: Dict[MarketplaceVersions, str] = {
-        MarketplaceVersions.MarketplaceV2: "_x2",
-    }
-
     @staticmethod
     def prepare(
         data: dict,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        supported_marketplaces: Optional[List] = None,
     ) -> dict:
         """
         Iterate over all of the given content item fields and if there is a field with an alternative name,
@@ -26,14 +21,7 @@ class MarketplaceSuffixPreparer:
         Returns: A (possibliy) modified content item data
 
         """
-        if supported_marketplaces is None:
-            supported_marketplaces = list(MarketplaceVersions)
-        if not (
-            suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(
-                current_marketplace, ""
-            )
-        ):
-            return data
+        suffix = f":{current_marketplace.value}"
         suffix_len = len(suffix)
 
         def fix_recursively(datum: Any) -> Any:
@@ -53,7 +41,9 @@ class MarketplaceSuffixPreparer:
                         )
                         datum[clean_key] = value
                         datum.pop(key, None)
-
+                    elif ":" in key:
+                        # we don't allow ":" in keys, but do allow in the schema
+                        datum.pop(key, None)
                     else:
                         datum[key] = fix_recursively(value)
 

@@ -321,7 +321,8 @@ jobs:
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
               ./Tests/scripts/validate.sh
-        - run:
+
+        - run-new-validate:
             name: Test validate files and yaml - new validate
             when: always
             no_output_timeout: 20m

@@ -3,11 +3,11 @@ mapping:
   dashboards_data:
     type: seq
     sequence:
-      - include: dashboards_data_schema
+    - include: dashboards_data_schema
   widgets_data:
     type: seq
     sequence:
-      - include: widgets_data_schema
+    - include: widgets_data_schema
   fromVersion:
     type: str
   toVersion:
@@ -24,6 +24,22 @@ mapping:
         required: false
 
 
+      regex;lazy_load:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+        type: bool
+      regex;cache_ttl:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+        type: number
+  regex;dashboards_data:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: dashboards_data_schema
+  regex;widgets_data:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: widgets_data_schema
+  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
 schema;dashboards_data_schema:
   type: map
   mapping:
@@ -45,7 +61,7 @@ schema;dashboards_data_schema:
       type: seq
       required: true
       sequence:
-        - include: layout_schema
+      - include: layout_schema
     metadata:
       type: map
       required: false
@@ -62,7 +78,7 @@ schema;layout_schema:
       type: seq
       required: true
       sequence:
-        - include: layout_data_schema
+      - include: layout_data_schema
 
 
 schema;layout_data_schema:
@@ -74,7 +90,7 @@ schema;layout_data_schema:
     data:
       type: map
       required: true
-      allowempty: True
+      allowempty: true
 
 
 schema;widgets_data_schema:
@@ -95,7 +111,7 @@ schema;widgets_data_schema:
     data:
       type: map
       required: true
-      allowempty: True
+      allowempty: true
     support_time_range:
       type: bool
       required: true

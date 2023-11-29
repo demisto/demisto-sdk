@@ -2,31 +2,31 @@ type: map
 mapping:
   id:
     type: str
-    required: True
+    required: true
   name:
     type: str
-    required: True
+    required: true
   name_x2:
     type: str
   type:
     type: str
-    required: True
+    required: true
   description:
     type: str
-    required: True
+    required: true
   description_x2:
     type: str
   version:
     type: number
-    required: True
+    required: true
   fromVersion:
     type: str
   toVersion:
     type: str
   mapping:
     type: map
-    required: True
-    allowempty: True
+    required: true
+    allowempty: true
   defaultIncidentType:
     type: str
   feed:
@@ -36,5 +36,32 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem' ]
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+  regex;name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;name_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;type:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;description_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: number
+  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;defaultIncidentType:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;feed:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;definitionId:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;marketplaces:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']

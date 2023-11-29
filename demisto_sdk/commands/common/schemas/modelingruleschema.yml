@@ -13,3 +13,8 @@ mapping:
           is_array:
             type: bool
             required: true
+          regex;type:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: str
+            enum: ["string", "int", "float", "datetime", "boolean"]
+          regex;is_array:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool

@@ -25,14 +25,34 @@ mapping:
             type: seq
             required: false
             sequence:
-              - include: filter_schema
+            - include: filter_schema
           AND:
             type: seq
             required: false
             sequence:
-              - include: filter_schema
+            - include: filter_schema
 
 
+          regex;OR:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: seq
+            sequence:
+            - include: filter_schema
+          regex;AND:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: seq
+            sequence:
+            - include: filter_schema
+
+
+  regex;rule_id:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;rule_name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;layout_id:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
 schema;filter_schema:
   type: map
   mapping:

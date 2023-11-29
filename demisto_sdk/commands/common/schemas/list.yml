@@ -7,32 +7,32 @@ mapping:
   data:
     type: str
   dbotCreatedBy:
-      type: str
+    type: str
   description:
     type: str
   fromVersion:
     type: str
-    required: True
+    required: true
   hasRole:
     type: bool
   id:
     type: str
-    required: True
+    required: true
   itemVersion:
     type: str
-    required: True
+    required: true
   locked:
     type: bool
-    required: True
+    required: true
   name:
     type: str
-    required: True
+    required: true
   nameLocked:
     type: bool
-    required: True
+    required: true
   packID:
     type: str
-    required: True
+    required: true
   previousAllRead:
     type: bool
   previousAllWrite:
@@ -40,29 +40,79 @@ mapping:
   previousRoles:
     type: seq
     sequence:
-      - includes: previousRoles_schema
+    - includes: previousRoles_schema
   roles:
     type: seq
     sequence:
-      - includes: roles_schema
+    - includes: roles_schema
   system:
     type: bool
-    required: True
+    required: true
   tags:
     type: seq
     sequence:
-      - type: str
+    - type: str
   toVersion:
     type: str
   truncated:
     type: bool
   type:
     type: str
-    required: True
+    required: true
   version:
     type: number
-    required: True
+    required: true
 
+  regex;allRead:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;allReadWrite:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;data:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;dbotCreatedBy:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;hasRole:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;itemVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;locked:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;nameLocked:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;packID:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;previousAllRead:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;previousAllWrite:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;previousRoles:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - includes: previousRoles_schema
+  regex;roles:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - includes: roles_schema
+  regex;system:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;tags:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;truncated:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;type:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: number
 schema;previousRoles_schema:
   type: any
 

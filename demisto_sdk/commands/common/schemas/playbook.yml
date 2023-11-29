@@ -8,11 +8,13 @@ mapping:
         mapping:
           propagationLabels:
             type: any
+          regex;propagationLabels:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: any
   beta:
     type: bool
   elasticcommonfields:
     type: map
-    allowempty: True
+    allowempty: true
   id:
     type: str
     required: true
@@ -51,26 +53,28 @@ mapping:
       propagationLabels:
         type: any
         required: false
+      regex;propagationLabels:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+        type: any
   outputs:
-      type: seq
-      sequence:
-        - include: output_schema
+    type: seq
+    sequence:
+    - include: output_schema
   outputsSections:
     type: seq
     sequence:
-      - include: outputsSection_schema
+    - include: outputsSection_schema
   inputs:
     type: seq
     sequence:
-      - include: input_schema
+    - include: input_schema
   inputsSections:
     type: seq
     sequence:
-      - include: inputsSection_schema
+    - include: inputsSection_schema
   tags:
     type: seq
     sequence:
-      - type: str
+    - type: str
   tasks:
     type: map
     required: true
@@ -91,28 +95,28 @@ mapping:
             enum: ['regular', 'playbook', 'condition', 'start', 'title', 'section', 'standard', 'collection']
           form:
             type: map
-            allowempty: True
+            allowempty: true
           message:
             type: map
-            allowempty: True
+            allowempty: true
           defaultassigneecomplex:
             type: map
-            allowempty: True
+            allowempty: true
           sla:
             type: map
-            allowempty: True
+            allowempty: true
           slareminder:
             type: map
-            allowempty: True
+            allowempty: true
           quietmode:
             type: int
           restrictedcompletion:
             type: bool
           scriptarguments:
             type: map
-            allowempty: True
+            allowempty: true
           timertriggers:
-            allowempty: True
+            allowempty: true
             type: seq
             sequence:
             - include: timertriggers_schema
@@ -139,23 +143,29 @@ mapping:
                 mapping:
                   simple:
                     type: text
+                  regex;simple:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                    type: text
               customfields:
                 type: map
                 required: false
-                allowempty: True
+                allowempty: true
               occurred:
                 required: false
                 type: map
-                allowempty: True
+                allowempty: true
                 mapping:
                   simple:
+                    type: text
+                  regex;simple:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
                     type: text
               tags:
                 type: map
                 required: false
-                allowempty: True
+                allowempty: true
                 mapping:
                   simple:
+                    type: text
+                  regex;simple:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
                     type: text
           task:
             type: map
@@ -204,13 +214,53 @@ mapping:
                 required: true
               elasticcommonfields:
                 type: map
-                allowempty: True
+                allowempty: true
               brand:
                 type: text
                 required: true
               issystemtask:
                 type: bool
               clonedfrom:
+                type: str
+              regex;version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: int
+              regex;name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;name_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;playbookName:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;playbookName_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;playbookId:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;playbookId_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;description_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;scriptName:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;scriptName_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;script:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;script_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;tags:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                sequence:
+                - type: str
+              regex;type:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+                enum: ['regular', 'playbook', 'condition', 'start', 'title', 'section', 'standard', 'collection']
+              regex;iscommand:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: bool
+              regex;brand:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: text
+              regex;issystemtask:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: bool
+              regex;clonedfrom:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
                 type: str
           note:
             type: bool
@@ -220,7 +270,11 @@ mapping:
               regex;(.+):
                 type: seq
                 sequence:
-                  - type: str
+                - type: str
+              regex;regex;(.+):(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: seq
+                sequence:
+                - type: str
           loop:
             type: map
             mapping:
@@ -229,14 +283,14 @@ mapping:
               builtincondition:
                 type: seq
                 sequence:
-                  - include: arg_filters_schema
+                - include: arg_filters_schema
               scriptId:
                 type: str
               scriptId_x2:
                 type: str
               scriptArguments:
                 type: map
-                allowempty: True
+                allowempty: true
               exitCondition:
                 type: str
               max:
@@ -245,17 +299,35 @@ mapping:
                 type: int
               forEach:
                 type: bool
+              regex;iscommand:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: bool
+              regex;builtincondition:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: seq
+                sequence:
+                - include: arg_filters_schema
+              regex;scriptId:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;scriptId_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;exitCondition:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: str
+              regex;max:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: int
+              regex;wait:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: int
+              regex;forEach:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+                type: bool
           conditions:
             type: seq
             sequence:
-              - include: condition_schema
+            - include: condition_schema
           view:
             type: str
             required: true
           results:
             type: seq
             sequence:
-              - type: str
+            - type: str
           continueonerror:
             type: bool
           continueonerrortype:
@@ -268,8 +340,59 @@ mapping:
           fieldMapping:
             type: seq
             sequence:
-              - type: map
-                allowempty: True
+            - type: map
+              allowempty: true
+
+          regex;taskid:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: str
+          regex;type:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: str
+            enum: ['regular', 'playbook', 'condition', 'start', 'title', 'section', 'standard', 'collection']
+          regex;quietmode:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: int
+          regex;restrictedcompletion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;timertriggers:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            allowempty: true
+            type: seq
+            sequence:
+            - include: timertriggers_schema
+          regex;ignoreworker:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;skipunavailable:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;isoversize:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;isautoswitchedtoquietmode:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;quiet:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;note:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;conditions:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: seq
+            sequence:
+            - include: condition_schema
+          regex;view:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: str
+          regex;results:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: seq
+            sequence:
+            - type: str
+          regex;continueonerror:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;continueonerrortype:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: str
+            enum: ["errorPath", ""]
+          regex;reputationcalc:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: int
+          regex;separatecontext:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: bool
+          regex;fieldMapping:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: seq
+            sequence:
+            - type: map
+              allowempty: true
 
   system:
     type: bool
@@ -291,14 +414,82 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+
+
+# playbook->tasks
+  regex;beta:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;id_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: int
+  regex;sourceplaybookid:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;name_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;description_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;hidden:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;deprecated:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;starttaskid:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;view:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;outputs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: output_schema
+  regex;outputsSections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: outputsSection_schema
+  regex;inputs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: input_schema
+  regex;inputsSections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: inputsSection_schema
+  regex;tags:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;system:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;fromversion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: text
+  regex;toversion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: text
+  regex;quiet:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;tests:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;rolename:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;marketplaces:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
 
 
 # playbook->tasks
 schema;task_schema:
   type: map
-  allowempty: True
+  allowempty: true
 
 # playbook->inputs
 schema;input_schema:
@@ -332,7 +523,7 @@ schema;inputsSection_schema:
     inputs:
       type: seq
       sequence:
-        - type: str
+      - type: str
 
 # playbook->outputs
 schema;output_schema:
@@ -362,7 +553,7 @@ schema;outputsSection_schema:
     outputs:
       type: seq
       sequence:
-        - type: str
+      - type: str
 
 # playbook->tasks->conditions
 schema;condition_schema:
@@ -374,13 +565,13 @@ schema;condition_schema:
     condition:
       type: seq
       sequence:
-        - include: arg_filters_schema
+      - include: arg_filters_schema
 
 
 schema;arg_filters_schema:
   type: seq
   sequence:
-    - include: arg_filter_schema
+  - include: arg_filter_schema
 
 schema;arg_filter_schema:
   type: map

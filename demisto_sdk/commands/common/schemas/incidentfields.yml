@@ -7,26 +7,35 @@ mapping:
   incidentFields:
     type: seq
     sequence:
-      - include: field_schema
+    - include: field_schema
+
+  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;incidentFields:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: field_schema
 
 schema;field_schema:
   type: map
   mapping:
     id:
       type: str
-      required: True
+      required: true
     version:
       type: number
     modified:
       type: str
     name:
       type: str
-      required: True
+      required: true
     name_x2:
       type: str
     prettyName:
       type: str
-      required: False
+      required: false
     ownerOnly:
       type: bool
     placeholder:
@@ -37,10 +46,10 @@ schema;field_schema:
       type: str
     cliName:
       type: str
-      required: True
+      required: true
     type:
       type: str
-      required: True
+      required: true
     closeForm:
       type: bool
     editForm:
@@ -94,12 +103,12 @@ schema;field_schema:
     marketplaces:
       type: seq
       sequence:
-        - type: str
-          enum: [ 'xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem' ]
+      - type: str
+        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
     Aliases:
       type: seq
       sequence:
-        - include: aliases_schema
+      - include: aliases_schema
     aliasTo:
       type: str
 
@@ -110,5 +119,4 @@ schema;aliases_schema:
       type: str
     type:
       type: str
-      enum: [ 'shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number',
-              'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html' ]
+      enum: ['shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number', 'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html']

@@ -18,41 +18,90 @@ mapping:
   definitionIds:
     type: seq
     sequence:
-      - type: str
+    - type: str
     required: true
   views:
     type: seq
     sequence:
-      - type: map
-        mapping:
-          icon:
-            type: str
-          name:
-            type: str
-          title:
-            type: str
-          id:
-            type: str
-            required: true
-          tabs:
-            type: seq
-            sequence:
-              - type: map
-                mapping:
-                  name:
-                    type: str
-                  newButtonDefinitionId:
-                    type: str
-                  tableView:
-                    type: bool
-                  tableViewWidgetGroups:
-                    type: seq
-                    sequence:
-                      - type: str
-                  tableViewColumns:
-                    type: seq
-                    sequence:
-                      - type: str
-                  dashboard:
-                    type: any
+    - type: map
+      mapping:
+        icon:
+          type: str
+        name:
+          type: str
+        title:
+          type: str
+        id:
+          type: str
+          required: true
+        tabs:
+          type: seq
+          sequence:
+          - type: map
+            mapping:
+              name:
+                type: str
+              newButtonDefinitionId:
+                type: str
+              tableView:
+                type: bool
+              tableViewWidgetGroups:
+                type: seq
+                sequence:
+                - type: str
+              tableViewColumns:
+                type: seq
+                sequence:
+                - type: str
+              dashboard:
+                type: any
     required: true
+  regex;version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: int
+  regex;locked:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;system:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;definitionIds:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;views:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: map
+      mapping:
+        icon:
+          type: str
+        name:
+          type: str
+        title:
+          type: str
+        id:
+          type: str
+          required: true
+        tabs:
+          type: seq
+          sequence:
+          - type: map
+            mapping:
+              name:
+                type: str
+              newButtonDefinitionId:
+                type: str
+              tableView:
+                type: bool
+              tableViewWidgetGroups:
+                type: seq
+                sequence:
+                - type: str
+              tableViewColumns:
+                type: seq
+                sequence:
+                - type: str
+              dashboard:
+                type: any

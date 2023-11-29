@@ -2,12 +2,21 @@ type: map
 mapping:
   canvasContextConnections:
     type: seq
-    required: True
+    required: true
     sequence:
-      - include: canvas_context_conncetion
+    - include: canvas_context_conncetion
   fromVersion:
     type: str
   toVersion:
+    type: str
+
+  regex;canvasContextConnections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: canvas_context_conncetion
+  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
     type: str
 
 schema;canvas_context_conncetion:
@@ -15,13 +24,13 @@ schema;canvas_context_conncetion:
   mapping:
     contextKey1:
       type: str
-      required: True
+      required: true
     contextKey2:
       type: str
-      required: True
+      required: true
     connectionDescription:
       type: str
-      required: True
+      required: true
     parentContextKey:
       type: str
-      required: True
+      required: true

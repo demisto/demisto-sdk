@@ -2,35 +2,39 @@ type: map
 mapping:
   commonfields:
     type: map
-    required: True
+    required: true
     mapping:
       id:
         type: str
-        required: True
+        required: true
       id_x2:
         type: str
       version:
         type: int
-        required: True
+        required: true
+      regex;id_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+        type: str
+      regex;version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+        type: int
   name:
     type: str
-    required: True
+    required: true
   name_x2:
     type: str
   script:
     type: str
-    required: True
+    required: true
   type:
     type: str
-    required: True
+    required: true
     enum: ['javascript', 'python', 'powershell']
   tags:
     type: seq
     sequence:
-      - type: str
+    - type: str
   comment:
     type: str
-    required: True
+    required: true
   comment_x2:
     type: str
   enabled:
@@ -42,25 +46,25 @@ mapping:
   args:
     type: seq
     sequence:
-      - include: argument_schema
+    - include: argument_schema
   scripttarget:
     type: int
   timeout:
     type: text
   dependson:
     type: map
-    allowempty: True
+    allowempty: true
   dependson_x2:
     type: map
-    allowempty: True
+    allowempty: true
   outputs:
     type: seq
     sequence:
-      - include: output_schema
+    - include: output_schema
   important:
     type: seq
     sequence:
-      - include: important_schema
+    - include: important_schema
   fromversion:
     type: text
   toversion:
@@ -95,6 +99,8 @@ mapping:
     mapping:
       engine:
         type: str
+      regex;engine:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+        type: str
   contentitemexportablefields:
     type: map
     mapping:
@@ -103,6 +109,8 @@ mapping:
         mapping:
           fromServerVersion:
             type: str
+          regex;fromServerVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+            type: str
   polling:
     type: bool
   autoUpdateDockerImage:
@@ -110,13 +118,97 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
   skipprepare:
     type: seq
     sequence:
-      - type: str
-        enum: ['script-name-incident-to-alert']
+    - type: str
+      enum: ['script-name-incident-to-alert']
+
+# script->args
+  regex;name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;name_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;script:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;type:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+    enum: ['javascript', 'python', 'powershell']
+  regex;tags:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;comment:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;comment_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;enabled:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;system:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;deprecated:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;args:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: argument_schema
+  regex;scripttarget:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: int
+  regex;timeout:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: text
+  regex;outputs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: output_schema
+  regex;important:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: important_schema
+  regex;fromversion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: text
+  regex;toversion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: text
+  regex;dockerimage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;dockerimage45:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;alt_dockerimages:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;nativeImage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;runonce:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;tests:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+  regex;sensitive:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;runas:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;subtype:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+    enum: ['python2', 'python3']
+  regex;polling:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;autoUpdateDockerImage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;marketplaces:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+  regex;skipprepare:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - type: str
+      enum: ['script-name-incident-to-alert']
 
 # script->args
 schema;argument_schema:
@@ -124,10 +216,10 @@ schema;argument_schema:
   mapping:
     name:
       type: str
-      required: True
+      required: true
     description:
       type: str
-      required: True
+      required: true
     description_x2:
       type: str
     defaultValue:
@@ -164,7 +256,7 @@ schema;output_schema:
       type: scalar
     description:
       type: str
-      required: True
+      required: true
     description_x2:
       type: str
     type:
@@ -176,10 +268,10 @@ schema;important_schema:
   mapping:
     contextPath:
       type: str
-      required: True
+      required: true
     description:
       type: str
-      required: True
+      required: true
     description_x2:
       type: str
     related:

@@ -2,35 +2,35 @@ type: map
 mapping:
   action:
     type: str
-    required: True
+    required: true
   enabled:
     type: bool
-    required: True
+    required: true
   existingEventsFilters:
     type: seq
     sequence:
     - include: existingEventsFilters_schema
   fromVersion:
     type: str
-    required: True
+    required: true
   id:
     type: str
-    required: True
+    required: true
   index:
     type: number
-    required: True
+    required: true
   itemVersion:
     type: str
-    required: True
+    required: true
   linkTo:
     type: str
-    required: True
+    required: true
   locked:
     type: bool
-    required: True
+    required: true
   name:
     type: str
-    required: True
+    required: true
   description:
     type: str
     required: false
@@ -40,7 +40,7 @@ mapping:
     - include: newEventFilters_schema
   packID:
     type: str
-    required: True
+    required: true
   period:
     type: seq
     sequence:
@@ -55,20 +55,70 @@ mapping:
     - include: readyNewEventFilters_schema
   scriptName:
     type: number
-    required: True
+    required: true
   searchClosed:
     type: bool
-    required: True
+    required: true
   system:
     type: bool
-    required: True
+    required: true
   toServerVersion:
     type: str
-    required: True
+    required: true
   version:
     type: number
-    required: True
+    required: true
 
+  regex;action:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;enabled:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;existingEventsFilters:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: existingEventsFilters_schema
+  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;index:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: number
+  regex;itemVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;linkTo:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;locked:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;newEventFilters:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: newEventFilters_schema
+  regex;packID:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;period:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: period_schema
+  regex;readyExistingEventsFilters:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: readyExistingEventsFilters_schema
+  regex;readyNewEventFilters:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: seq
+    sequence:
+    - include: readyNewEventFilters_schema
+  regex;scriptName:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: number
+  regex;searchClosed:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;system:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: bool
+  regex;toServerVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: str
+  regex;version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+    type: number
 schema;existingEventsFilters_schema:
   type: any
 

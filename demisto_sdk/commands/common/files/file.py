@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
@@ -23,11 +23,13 @@ from demisto_sdk.commands.common.files.errors import (
     GitFileReadError,
     HttpFileReadError,
     LocalFileReadError,
+    UnknownFileError,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.common import ContentType
 
 
 class File(ABC, BaseModel):
@@ -102,6 +104,29 @@ class File(ABC, BaseModel):
         )
 
     @classmethod
+    @abstractmethod
+    def is_class_type_by_content_type(cls, content_type: ContentType) -> bool:
+        """
+        Returns the content-types that represent the File type.
+        """
+        pass
+
+    @classmethod
+    def __file_factory(cls, path: Path, content_type: ContentType) -> Type["File"]:
+        def _file_factory(_cls):
+            for subclass in _cls.__subclasses__():
+                if subclass.is_class_type_by_content_type(content_type):
+                    return subclass
+                if _subclass := _file_factory(subclass):
+                    return _subclass
+            return None
+
+        if file_object := _file_factory(cls):
+            return file_object
+
+        raise UnknownFileError(f"Could not identify file {path}")
+
+    @classmethod
     @lru_cache
     def from_path(
         cls,
@@ -119,11 +144,6 @@ class File(ABC, BaseModel):
         Returns:
             File: any subclass of the File model.
         """
-        if cls is File:
-            raise ValueError(
-                "when reading from file content please specify concrete class"
-            )
-
         input_path = Path(input_path)
 
         model_attributes: Dict[str, Any] = {
@@ -133,9 +153,17 @@ class File(ABC, BaseModel):
 
         model_attributes.update(kwargs)
 
-        model = cls.parse_obj(model_attributes)
+        if cls is File:
+            try:
+                content_type: ContentType = ContentType.by_path(input_path)
+            except ValueError as e:
+                logger.error(f"Could not determine content type for {input_path}: {e}")
+                raise
+            model = cls.__file_factory(input_path, content_type=content_type)
+        else:
+            model = cls
         logger.debug(f"Using model {model} for file {input_path}")
-        return model
+        return model.parse_obj(model_attributes)
 
     @classmethod
     @lru_cache

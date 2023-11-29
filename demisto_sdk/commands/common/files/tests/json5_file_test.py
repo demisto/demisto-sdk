@@ -143,13 +143,13 @@ class TestJsonFile(FileTesting):
     def test_read_from_http_request(self, mocker, input_files: Tuple[Path, str]):
         """
         Given:
-         - valid json files
+         - valid json5 file
 
         When:
-         - Running read_from_http_request method from JsonFile object
+         - Running read_from_http_request method from Json5File object
 
         Then:
-         - make sure reading the json files from http request is successful.
+         - make sure reading the json5 file from http request is successful.
         """
         json5_file_path, _ = input_files
         self.get_requests_mock(mocker, path=json5_file_path)
@@ -160,13 +160,13 @@ class TestJsonFile(FileTesting):
     def test_write_file(self, git_repo: Repo):
         """
         Given:
-         - json file path to write
+         - json5 file path to write
 
         When:
-         - Running write_file method from JsonFile object
+         - Running write_file method from Json5File object
 
         Then:
-         - make sure writing json file is successful.
+         - make sure writing json5 file is successful.
         """
         _path = Path(git_repo.path) / "file.json5"
         Json5File.write_file({"test": "test"}, output_path=_path)

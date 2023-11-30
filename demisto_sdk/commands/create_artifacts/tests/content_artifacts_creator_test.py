@@ -475,5 +475,5 @@ def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
         for current_key_path in keys_paths:
             assert get_value_from_dict(
                 original_data,
-                current_key_path + MarketplaceVersions.MarketplaceV2.value,
+                current_key_path + ":" + MarketplaceVersions.MarketplaceV2.value,
             ) == get_value_from_dict(modified_data, current_key_path)

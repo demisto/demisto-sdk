@@ -4,10 +4,76 @@ from typing import List, Tuple, Union
 
 import pytest
 
+from demisto_sdk.commands.common.files import JsonFile, YmlFile
 from demisto_sdk.commands.common.files.file import File
+from TestSuite.repo import Repo
 
 
 class TestFile:
+    def test_from_path_valid_json_based_content_items(self, git_repo: Repo):
+        """
+        Given:
+         - json based content items
+
+        When:
+         - Running from_path method
+
+        Then:
+         - make sure the returned model is JsonFile
+        """
+        file_content = {"test": "test"}
+        pack = git_repo.create_pack("test")
+        indicator_field = pack.create_indicator_field("test", content=file_content)
+        indicator_type = pack.create_indicator_type("test", content=file_content)
+        incident_field = pack.create_incident_field("test", content=file_content)
+        incident_type = pack.create_incident_type("test", content=file_content)
+        layout = pack.create_layout("test", content=file_content)
+        _list = pack.create_list("test", content=file_content)
+
+        json_file_paths = [
+            indicator_field.path,
+            indicator_type.path,
+            incident_field.path,
+            incident_type.path,
+            layout.path,
+            _list.path,
+        ]
+
+        for path in json_file_paths:
+            assert type(File.from_path(path)) == JsonFile
+
+    def test_from_path_valid_yml_based_content_items(self, git_repo: Repo):
+        """
+        Given:
+         - yml based content items
+
+        When:
+         - Running from_path method
+
+        Then:
+         - make sure the returned model is YmlFile
+        """
+        file_content = {"test": "test"}
+        pack = git_repo.create_pack("test")
+        integration = pack.create_integration(yml=file_content)
+        script = pack.create_script(yml=file_content)
+        playbook = pack.create_playbook(yml=file_content)
+        modeling_rule = pack.create_modeling_rule(yml=file_content)
+        correlation_rule = pack.create_correlation_rule(
+            name="test", content=file_content
+        )
+
+        yml_file_paths = [
+            integration.yml.path,
+            script.yml.path,
+            playbook.yml.path,
+            modeling_rule.yml.path,
+            correlation_rule.path,
+        ]
+
+        for path in yml_file_paths:
+            assert type(File.from_path(path)) == YmlFile
+
     def test_read_from_local_path_error(self):
         """
         Given:

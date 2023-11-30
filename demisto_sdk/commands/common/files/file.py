@@ -29,7 +29,6 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType
 
 
 class File(ABC, BaseModel):
@@ -105,17 +104,14 @@ class File(ABC, BaseModel):
 
     @classmethod
     @abstractmethod
-    def is_class_type_by_content_type(cls, content_type: ContentType) -> bool:
-        """
-        Returns the content-types that represent the File type.
-        """
-        pass
+    def is_model_type_by_path(cls, path: Path) -> bool:
+        raise NotImplementedError
 
     @classmethod
-    def __file_factory(cls, path: Path, content_type: ContentType) -> Type["File"]:
+    def __file_factory(cls, path: Path) -> Type["File"]:
         def _file_factory(_cls):
             for subclass in _cls.__subclasses__():
-                if subclass.is_class_type_by_content_type(content_type):
+                if subclass.is_model_type_by_path(path):
                     return subclass
                 if _subclass := _file_factory(subclass):
                     return _subclass
@@ -135,6 +131,7 @@ class File(ABC, BaseModel):
         **kwargs,
     ) -> "File":
         """
+        Returns the correct file model
 
         Args:
             input_path: the file input path
@@ -154,12 +151,7 @@ class File(ABC, BaseModel):
         model_attributes.update(kwargs)
 
         if cls is File:
-            try:
-                content_type: ContentType = ContentType.by_path(input_path)
-            except ValueError as e:
-                logger.error(f"Could not determine content type for {input_path}: {e}")
-                raise
-            model = cls.__file_factory(input_path, content_type=content_type)
+            model = cls.__file_factory(input_path)
         else:
             model = cls
         logger.debug(f"Using model {model} for file {input_path}")

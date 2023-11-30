@@ -8,6 +8,8 @@ from pydantic import Field, validator
 
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.common import ContentType
 
 
 class StructuredFile(TextFile, ABC):
@@ -18,6 +20,21 @@ class StructuredFile(TextFile, ABC):
     @abstractmethod
     def validate_handler(cls, v: Type[XSOAR_Handler]) -> Type[XSOAR_Handler]:
         raise NotImplementedError("validate_handler must be implemented")
+
+    @classmethod
+    def is_model_type_by_path(cls, path: Path) -> bool:
+        try:
+            content_item = ContentType.by_path(path)
+        except (ValueError, IndexError):
+            logger.debug(f"path {path} is not a content item")
+            return False
+        return cls.is_model_type_by_content_type(content_item)
+
+    @classmethod
+    @abstractmethod
+    def is_model_type_by_content_type(cls, content_type: ContentType):
+        # all the content-items are yml/json based only.
+        raise NotImplementedError
 
     @classmethod
     @lru_cache

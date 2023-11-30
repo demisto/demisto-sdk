@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import Field, validator
 
 from demisto_sdk.commands.common.files.structured_file import StructuredFile
@@ -14,7 +16,14 @@ class YmlFile(StructuredFile):
         return v or yaml
 
     @classmethod
-    def is_class_type_by_content_type(cls, content_type: ContentType) -> bool:
+    def is_model_type_by_path(cls, path: Path) -> bool:
+        return path.suffix.lower() in {
+            ".yml",
+            ".yaml",
+        } or super().is_model_type_by_path(path)
+
+    @classmethod
+    def is_model_type_by_content_type(cls, content_type: ContentType) -> bool:
         return content_type in (
             ContentType.BASE_PLAYBOOK,
             ContentType.BASE_SCRIPT,

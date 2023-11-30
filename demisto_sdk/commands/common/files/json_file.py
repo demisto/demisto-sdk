@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import Field, validator
 
 from demisto_sdk.commands.common.files.structured_file import StructuredFile
@@ -14,7 +16,11 @@ class JsonFile(StructuredFile):
         return v or json
 
     @classmethod
-    def is_class_type_by_content_type(cls, content_type: ContentType) -> bool:
+    def is_model_type_by_path(cls, path: Path) -> bool:
+        return path.suffix.lower() == ".json" or super().is_model_type_by_path(path)
+
+    @classmethod
+    def is_model_type_by_content_type(cls, content_type: ContentType) -> bool:
         return content_type in (
             ContentType.INDICATOR_TYPE,
             ContentType.INDICATOR_FIELD,

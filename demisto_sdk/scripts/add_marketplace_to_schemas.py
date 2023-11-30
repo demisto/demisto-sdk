@@ -26,7 +26,7 @@ def add_key(mapping):
             if f"regex;{key}:" in key:
                 keys_to_delete.append(key)
                 continue
-            new_key = f"regex;{key}:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)"
+            new_key = f"regex;({key}:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas))"
             if new_key not in mapping:
                 keys_to_add.append((new_key, value))
         else:

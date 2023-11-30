@@ -37,29 +37,29 @@ mapping:
             - include: filter_schema
 
 
-          regex;OR:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+          regex;(OR:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
             type: seq
             sequence:
             - include: filter_schema
-          regex;AND:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+          regex;(AND:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
             type: seq
             sequence:
             - include: filter_schema
 
 
-  regex;trigger_id:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(trigger_id:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;trigger_name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(trigger_name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;playbook_id:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(playbook_id:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;suggestion_reason:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(suggestion_reason:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
 schema;filter_schema:
   type: map

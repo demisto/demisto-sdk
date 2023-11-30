@@ -12,9 +12,9 @@ mapping:
       version:
         type: int
         required: true
-      regex;id_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+      regex;(id_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
         type: str
-      regex;version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+      regex;(version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
         type: int
   name:
     type: str
@@ -99,7 +99,7 @@ mapping:
     mapping:
       engine:
         type: str
-      regex;engine:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+      regex;(engine:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
         type: str
   contentitemexportablefields:
     type: map
@@ -109,7 +109,7 @@ mapping:
         mapping:
           fromServerVersion:
             type: str
-          regex;fromServerVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+          regex;(fromServerVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
             type: str
   polling:
     type: bool
@@ -127,84 +127,84 @@ mapping:
       enum: ['script-name-incident-to-alert']
 
 # script->args
-  regex;name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;name_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(name_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;script:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(script:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;type:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(type:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
     enum: ['javascript', 'python', 'powershell']
-  regex;tags:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(tags:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - type: str
-  regex;comment:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(comment:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;comment_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(comment_x2:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;enabled:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(enabled:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: bool
-  regex;system:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(system:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: bool
-  regex;deprecated:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(deprecated:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: bool
-  regex;args:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(args:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - include: argument_schema
-  regex;scripttarget:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(scripttarget:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: int
-  regex;timeout:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(timeout:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: text
-  regex;outputs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(outputs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - include: output_schema
-  regex;important:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(important:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - include: important_schema
-  regex;fromversion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(fromversion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: text
-  regex;toversion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(toversion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: text
-  regex;dockerimage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(dockerimage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;dockerimage45:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(dockerimage45:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;alt_dockerimages:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(alt_dockerimages:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - type: str
-  regex;nativeImage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(nativeImage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - type: str
-  regex;runonce:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(runonce:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: bool
-  regex;tests:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(tests:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - type: str
-  regex;sensitive:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(sensitive:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: bool
-  regex;runas:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(runas:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;subtype:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(subtype:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
     enum: ['python2', 'python3']
-  regex;polling:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(polling:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: bool
-  regex;autoUpdateDockerImage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(autoUpdateDockerImage:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: bool
-  regex;marketplaces:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(marketplaces:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - type: str
       enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
-  regex;skipprepare:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(skipprepare:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - type: str

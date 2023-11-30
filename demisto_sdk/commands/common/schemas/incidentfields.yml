@@ -9,11 +9,11 @@ mapping:
     sequence:
     - include: field_schema
 
-  regex;fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;incidentFields:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas):
+  regex;(incidentFields:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: seq
     sequence:
     - include: field_schema

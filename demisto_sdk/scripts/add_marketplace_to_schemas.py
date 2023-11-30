@@ -1,8 +1,11 @@
 from copy import deepcopy
 from pathlib import Path
 
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_file, write_dict
 
+GIT_ROOT = Path(git_path())
+SCHEMA_FOLDER = GIT_ROOT / "demisto_sdk" / "commands" / "common" / "schemas"
 NON_SUPPORTED_KEYS = ["id"]
 
 
@@ -36,9 +39,13 @@ def add_key(mapping):
 
 def main():
     schema_files = [
-        schema for schema in Path(__file__).parent.iterdir() if schema.suffix == ".yml"
+        schema for schema in SCHEMA_FOLDER.iterdir() if schema.suffix == ".yml"
     ]
     for schema_file in schema_files:
         schema = get_file(schema_file, keep_order=True)
         add_key(schema["mapping"])
         write_dict(schema_file, schema)
+
+
+if __name__ == "__main__":
+    main()

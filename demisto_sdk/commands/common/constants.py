@@ -1955,3 +1955,10 @@ class InvestigationPlaybookState(str, Enum):
     COMPLETED = "completed"  # indicates that playbook completed
     FAILED = "failed"  # indicates that playbook failed
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
+
+
+class IncidentState(str, Enum):
+    NEW = 0  # the incident is new
+    IN_PROGRESS = 1  # the incident is in progress
+    CLOSED = 2  # the incident is closed
+    ACKNOWLEDGED = 3  # the incident is archived

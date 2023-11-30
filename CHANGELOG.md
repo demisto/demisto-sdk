@@ -4,11 +4,12 @@
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
 * Fixed an issue in **coverage-analyze** to exit gracefully in case that the .coverage file doesn't exist.
 * Breaking change: **ValidateManager** was renamed to **OldValidateManager** and can now be found at the following [path](demisto_sdk/commands/validate/old_validate_manager.py).
-* fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
+* Fixed an issue where to_id_set_entity method failed on id extraction due to missing pack.
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
 * Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
+* Added support for json5 file, allowing to write files and read files from specific git branches, local file system, or from any remote api .
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
 * Added support for *Assets Modeling Rule* new content item in all `demisto-sdk` commands.
 

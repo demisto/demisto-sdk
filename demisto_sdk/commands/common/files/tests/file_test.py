@@ -4,13 +4,20 @@ from typing import List, Tuple, Union
 
 import pytest
 
-from demisto_sdk.commands.common.files import JsonFile, YmlFile
+from demisto_sdk.commands.common.files import (
+    BinaryFile,
+    IniFile,
+    JsonFile,
+    TextFile,
+    YmlFile,
+)
+from demisto_sdk.commands.common.files.errors import UnknownFileError
 from demisto_sdk.commands.common.files.file import File
 from TestSuite.repo import Repo
 
 
 class TestFile:
-    def test_from_path_valid_json_based_content_items(self, git_repo: Repo):
+    def test_from_path_valid_json_based_content_items(self, repo: Repo):
         """
         Given:
          - json based content items
@@ -22,7 +29,7 @@ class TestFile:
          - make sure the returned model is JsonFile
         """
         file_content = {"test": "test"}
-        pack = git_repo.create_pack("test")
+        pack = repo.create_pack("test")
         indicator_field = pack.create_indicator_field("test", content=file_content)
         indicator_type = pack.create_indicator_type("test", content=file_content)
         incident_field = pack.create_incident_field("test", content=file_content)
@@ -42,7 +49,7 @@ class TestFile:
         for path in json_file_paths:
             assert type(File.from_path(path)) == JsonFile
 
-    def test_from_path_valid_yml_based_content_items(self, git_repo: Repo):
+    def test_from_path_valid_yml_based_content_items(self, repo: Repo):
         """
         Given:
          - yml based content items
@@ -54,7 +61,7 @@ class TestFile:
          - make sure the returned model is YmlFile
         """
         file_content = {"test": "test"}
-        pack = git_repo.create_pack("test")
+        pack = repo.create_pack("test")
         integration = pack.create_integration(yml=file_content)
         script = pack.create_script(yml=file_content)
         playbook = pack.create_playbook(yml=file_content)
@@ -73,6 +80,110 @@ class TestFile:
 
         for path in yml_file_paths:
             assert type(File.from_path(path)) == YmlFile
+
+    def test_from_path_valid_text_based_files(self, repo: Repo):
+        """
+        Given:
+         - text based content items
+
+        When:
+         - Running from_path method
+
+        Then:
+         - make sure the returned model is TextFile
+        """
+        pack = repo.create_pack("test")
+        integration = pack.create_integration(
+            commands_txt="hello-world-command",
+            readme="this is the readme",
+            description="This is the description",
+            code="print('hello_world')",
+            test="print('hello_world')",
+        )
+        release_notes = pack.create_release_notes(
+            version="1.1.1", content="\n#### Integrations\n##### test\n- added feature"
+        )
+
+        text_file_paths = [
+            release_notes.path,
+            integration.commands_txt.path,
+            integration.readme.path,
+            integration.description.path,
+            integration.code.path,
+            integration.test.path,
+        ]
+
+        for path in text_file_paths:
+            assert type(File.from_path(path)) == TextFile
+
+    def test_from_path_valid_ini_based_files(self, repo: Repo):
+        """
+        Given:
+         - ini based files
+
+        When:
+         - Running from_path method
+
+        Then:
+         - make sure the returned model is IniFile
+        """
+        pack = repo.create_pack()
+        pack.pack_ignore.write_list(
+            [
+                "[file:IntegrationTest.yml]\nignore=IN122,RM110",
+            ]
+        )
+        _ini_file_path = str(Path(repo.path) / "file.ini")
+
+        IniFile.write_file(
+            {
+                "test": {
+                    "test": "1,2,3",
+                },
+                "test2": {"test1": None},
+            },
+            output_path=_ini_file_path,
+        )
+
+        ini_file_paths = [pack.pack_ignore.path, _ini_file_path]
+        for path in ini_file_paths:
+            assert type(File.from_path(path)) == IniFile
+
+    def test_from_path_valid_binary_files(self, repo: Repo):
+        """
+        Given:
+         - binary based files
+
+        When:
+         - Running from_path method
+
+        Then:
+         - make sure the returned model is BinaryFile
+        """
+        pack = repo.create_pack("test")
+        integration = pack.create_integration()
+        _bin_file_path = str(Path(repo.path) / "file.bin")
+        BinaryFile.write_file("test".encode(), output_path=_bin_file_path)
+
+        binary_file_paths = [integration.image.path, _bin_file_path]
+        for path in binary_file_paths:
+            assert type(File.from_path(path)) == BinaryFile
+
+    def test_from_path_unknown_file_error(self, repo: Repo):
+        """
+        Given:
+         - file with unknown-suffix
+
+        When:
+         - Running from_path method
+
+        Then:
+         - make sure UnknownFileError exception is raised
+        """
+        _path = Path(repo.path) / "file.unknown-suffix"
+        TextFile.write_file("text", output_path=_path)
+        with pytest.raises(UnknownFileError):
+            File.from_path(_path)
 
     def test_read_from_local_path_error(self):
         """

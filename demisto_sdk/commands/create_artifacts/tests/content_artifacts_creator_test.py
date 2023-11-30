@@ -456,7 +456,7 @@ def get_value_from_dict(object, path):
         (
             "demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/"
             "DummyPackAlternativeFields/Scripts/script-sample_packs.yml",
-            ["commonfields.id", "name", "comment"],
+            ["name", "comment"],
         ),
     ],
 )

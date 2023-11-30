@@ -3,6 +3,8 @@ from typing import Any
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 
+SEPARATOR = ":"
+
 
 class MarketplaceSuffixPreparer:
     @staticmethod
@@ -21,12 +23,12 @@ class MarketplaceSuffixPreparer:
         Returns: A (possibliy) modified content item data
 
         """
-        suffix = f":{current_marketplace.value}"
+        suffix = f"{SEPARATOR}{current_marketplace.value}"
         suffixes = [suffix]
         if current_marketplace == MarketplaceVersions.XSOAR_ON_PREM:
-            suffixes.append(f":{MarketplaceVersions.XSOAR.value}")
+            suffixes.append(f"{SEPARATOR}{MarketplaceVersions.XSOAR.value}")
         if current_marketplace == MarketplaceVersions.XSOAR_SAAS:
-            suffixes.append(f":{MarketplaceVersions.XSOAR.value}")
+            suffixes.append(f"{SEPARATOR}{MarketplaceVersions.XSOAR.value}")
 
         def fix_recursively(datum: Any) -> Any:
             if isinstance(datum, list):
@@ -40,29 +42,32 @@ class MarketplaceSuffixPreparer:
                     if isinstance(value, (list, dict)):
                         fix_recursively(value)
                         continue
-                    if ":" in key:
-                        for suffix in suffixes:
-                            suffix_len = len(suffix)
-                            if isinstance(key, str) and key.casefold().endswith(suffix):
-                                clean_key = key[:-suffix_len]  # without suffix
-                                if clean_key not in datum:
-                                    logger.info(
-                                        "Deleting field %s as it has no counterpart without suffix",
-                                        key,
-                                    )
-                                    datum.pop(key, None)
-                                    continue
-                                logger.debug(
-                                    f"Replacing {clean_key}={datum[clean_key]} to {value}."
+                    if SEPARATOR not in key:
+                        continue
+                    for suffix in suffixes:
+                        # iterate each suffix to see if it's relevant for the key.
+                        # the order of the suffixes matter!
+                        suffix_len = len(suffix)
+                        if isinstance(key, str) and key.casefold().endswith(suffix):
+                            clean_key = key[:-suffix_len]  # without suffix
+                            if clean_key not in datum:
+                                logger.info(
+                                    "Deleting field %s as it has no counterpart without suffix",
+                                    key,
                                 )
-                                datum[clean_key] = value
                                 datum.pop(key, None)
-                                break
-                        else:
+                                continue
                             logger.debug(
-                                f"Field {key} does not end with any relevant suffix, deleting"
+                                f"Replacing {clean_key}={datum[clean_key]} to {value}."
                             )
+                            datum[clean_key] = value
                             datum.pop(key, None)
+                            break
+                    else:
+                        logger.debug(
+                            f"Field {key} does not end with any relevant suffix, deleting"
+                        )
+                        datum.pop(key, None)
             return datum
 
         if not isinstance(result := fix_recursively(data), dict):  # to calm mypy

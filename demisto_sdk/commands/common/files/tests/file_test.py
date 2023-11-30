@@ -194,9 +194,9 @@ class TestFile:
          - Running read_from_local_path method from File object
 
         Then:
-         - make sure ValueError is raised
+         - make sure UnknownFileError is raised
         """
-        with pytest.raises(ValueError):
+        with pytest.raises(UnknownFileError):
             File.read_from_local_path("path_does_not_exist")
 
     def test_read_from_file_content_error(self):

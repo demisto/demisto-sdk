@@ -74,15 +74,9 @@ jobs:
 
           # poetry run pytest $TEST_FILES --store-durations
           mkdir test-results
-          
-          unset DEMISTO_API_KEY
-          unset XSIAM_AUTH_ID
-          
           poetry run pytest $TEST_FILES -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
-          
-          echo "pytest_exit_code=$pytest_exit_code"
-          
+                    
           kill $node_pid
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
@@ -95,11 +89,9 @@ jobs:
             coverage_html_report
       - name: Validate if pytest has passed
         run: |
-          echo "pytest_exit_code=$PYTEST_EXIT_CODE"
           if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
             echo "There are unit-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE"
-            exit $PYTEST_EXIT_CODE
           else
             echo "All unit-tests have passed"
-          exit $PYTEST_EXIT_CODE
           fi
+          exit $PYTEST_EXIT_CODE

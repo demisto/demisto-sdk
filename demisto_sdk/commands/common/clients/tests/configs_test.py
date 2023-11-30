@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.clients import (
     XsoarClientConfig,
     XsoarSaasClientConfig,
 )
+from demisto_sdk.commands.common.constants import DEMISTO_KEY
 
 
 def test_init_xsoar_client_config_with_api_key():
@@ -18,12 +19,14 @@ def test_init_xsoar_client_config_username_password():
     )
 
 
-def test_init_xsoar_client_config_no_api_key_and_user_and_password():
+def test_init_xsoar_client_config_no_api_key_and_user_and_password(monkeypatch):
+    monkeypatch.delenv(DEMISTO_KEY, raising=False)
     with pytest.raises(ValueError):
         XsoarClientConfig(base_api_url="https://test1.com")
 
 
-def test_init_xsoar_client_config_no_values():
+def test_init_xsoar_client_config_no_values(monkeypatch):
+    monkeypatch.delenv(DEMISTO_KEY, raising=False)
     with pytest.raises(ValidationError):
         XsoarClientConfig()
 
@@ -44,7 +47,8 @@ def test_init_xsoar_saas_client_config_with_api_key_without_auth_id():
         XsoarSaasClientConfig(base_api_url="https://test1.com", api_key="test")
 
 
-def test_init_xsoar_saas_client_config_with_auth_id_without_api_key():
+def test_init_xsoar_saas_client_config_with_auth_id_without_api_key(monkeypatch):
+    monkeypatch.delenv(DEMISTO_KEY, raising=False)
     with pytest.raises(ValueError):
         XsoarSaasClientConfig(base_api_url="https://test1.com", auth_id="1")
 

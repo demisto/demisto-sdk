@@ -66,3 +66,14 @@ class IntegrationScriptParser(YAMLContentItemParser):
             self.add_relationship(
                 RelationshipType.IMPORTS, api_module, ContentType.SCRIPT
             )
+
+    @property
+    def type(self):
+        return get_value(self.yml_data, self.field_mapping.get("type", ""))
+
+    @property
+    def subtype(self):
+        subtype = get_value(self.yml_data, self.field_mapping.get("subtype", ""))
+        if not subtype and self.type == "python":
+            subtype = "python2"
+        return subtype

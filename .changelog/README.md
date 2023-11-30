@@ -3,11 +3,17 @@ Each modification or addition in the Demisto SDK repository necessitates corresp
 
 - Commit and push your alterations to the remote branch.
 - Initiate a pull request.
-- Execute the command `sdk-changelog —init —pr_number <pr number>`, This will create a YAML file with the following starting template:
-```
-
-```
-- Amend the generated YAML file to incorporate the documentation for your changes.
+- Execute the command `sdk-changelog —init —pr_number <pr number>`.
+  - It will create `<pr number>.yml` file with the following starting template:
+    ```
+    logs:
+    - description: enter description about this PR
+      type: <fix|feature|breaking|internal>
+    pr_number: 'xxxx'
+    ```
+- Go to the generated YAML file:
+  - Add a description for the changes made in the PR
+  - Update the type field based on the type of changes made
 
 #### Types:
 

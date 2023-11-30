@@ -26,39 +26,43 @@ class MarketplaceSuffixPreparer:
         if current_marketplace == MarketplaceVersions.XSOAR_ON_PREM:
             suffixes.append(f":{MarketplaceVersions.XSOAR.value}")
         if current_marketplace == MarketplaceVersions.XSOAR_SAAS:
-            suffixes.append(f":{MarketplaceVersions.XSOAR_SAAS.value}")
+            suffixes.append(f":{MarketplaceVersions.XSOAR.value}")
 
         def fix_recursively(datum: Any) -> Any:
             if isinstance(datum, list):
                 return [fix_recursively(item) for item in datum]
 
             elif isinstance(datum, dict):
-                for suffix in suffixes:
-                    suffix_len = len(suffix)
-                    for key in tuple(
-                        datum.keys()
-                    ):  # deliberately not iterating over .items(), as the dict changes during iteration
-                        value = datum[key]
-                        if isinstance(key, str) and key.casefold().endswith(suffix):
-                            clean_key = key[:-suffix_len]  # without suffix
-                            if clean_key not in datum:
-                                logger.info(
-                                    "Deleting field %s as it has no counterpart without suffix",
-                                    key,
+                for key in tuple(
+                    datum.keys()
+                ):  # deliberately not iterating over .items(), as the dict changes during iteration
+                    value = datum[key]
+                    if isinstance(value, (list, dict)):
+                        fix_recursively(value)
+                        continue
+                    if ":" in key:
+                        for suffix in suffixes:
+                            suffix_len = len(suffix)
+                            if isinstance(key, str) and key.casefold().endswith(suffix):
+                                clean_key = key[:-suffix_len]  # without suffix
+                                if clean_key not in datum:
+                                    logger.info(
+                                        "Deleting field %s as it has no counterpart without suffix",
+                                        key,
+                                    )
+                                    datum.pop(key, None)
+                                    continue
+                                logger.debug(
+                                    f"Replacing {clean_key}={datum[clean_key]} to {value}."
                                 )
+                                datum[clean_key] = value
                                 datum.pop(key, None)
-                                continue
-                            logger.debug(
-                                f"Replacing {clean_key}={datum[clean_key]} to {value}."
-                            )
-                            datum[clean_key] = value
-                            datum.pop(key, None)
-                        elif ":" in key:
-                            # we don't allow ":" in keys, so we can simply delete them
-                            datum.pop(key, None)
+                                break
                         else:
-                            datum[key] = fix_recursively(value)
-
+                            logger.debug(
+                                f"Field {key} does not end with any relevant suffix, deleting"
+                            )
+                            datum.pop(key, None)
             return datum
 
         if not isinstance(result := fix_recursively(data), dict):  # to calm mypy

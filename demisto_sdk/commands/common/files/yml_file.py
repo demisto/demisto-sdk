@@ -20,4 +20,3 @@ class YmlFile(StructuredFile):
             ".yml",
             ".yaml",
         }
-

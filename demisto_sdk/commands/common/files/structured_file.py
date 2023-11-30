@@ -31,7 +31,6 @@ class StructuredFile(TextFile, ABC):
         return cls.is_model_type_by_content_type(content_item)
 
     @classmethod
-    @abstractmethod
     def is_model_type_by_content_type(cls, content_type: ContentType) -> bool:
         """
         Returns if the model represents a content-item.

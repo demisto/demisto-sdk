@@ -13,7 +13,7 @@ from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 
-class TestJsonFile(FileTesting):
+class TestJson5File(FileTesting):
     @pytest.fixture()
     def input_files(self, git_repo: Repo):
         json5_file_path = Path(git_repo.path) / "test.json5"

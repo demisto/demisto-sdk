@@ -32,9 +32,15 @@ class StructuredFile(TextFile, ABC):
 
     @classmethod
     @abstractmethod
-    def is_model_type_by_content_type(cls, content_type: ContentType):
+    def is_model_type_by_content_type(cls, content_type: ContentType) -> bool:
+        """
+        Returns if the model represents a content-item.
+
+        Args:
+            content_type: the content type to validate
+        """
         # all the content-items are yml/json based only.
-        raise NotImplementedError
+        return False
 
     @classmethod
     @lru_cache

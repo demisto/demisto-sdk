@@ -1,3 +1,4 @@
+import inspect
 import shutil
 import urllib.parse
 from abc import ABC, abstractmethod
@@ -111,7 +112,9 @@ class File(ABC, BaseModel):
     def __file_factory(cls, path: Path) -> Type["File"]:
         def _file_factory(_cls):
             for subclass in _cls.__subclasses__():
-                if subclass.is_model_type_by_path(path):
+                if not inspect.isabstract(subclass) and subclass.is_model_type_by_path(
+                    path
+                ):
                     return subclass
                 if _subclass := _file_factory(subclass):
                     return _subclass

@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
@@ -29,7 +31,7 @@ DATA = {
 
 
 def test_remove_xsoar():
-    data = MarketplaceSuffixPreparer.prepare(DATA, MarketplaceVersions.XSOAR)
+    data = MarketplaceSuffixPreparer.prepare(deepcopy(DATA), MarketplaceVersions.XSOAR)
     assert data == {
         "id": "TestXsoar",
         "name": "Test",
@@ -46,7 +48,9 @@ def test_remove_xsoar():
 
 
 def test_remove_marketplacev2():
-    data = MarketplaceSuffixPreparer.prepare(DATA, MarketplaceVersions.MarketplaceV2)
+    data = MarketplaceSuffixPreparer.prepare(
+        deepcopy(DATA), MarketplaceVersions.MarketplaceV2
+    )
     assert data == {
         "id": "Test",
         "name": "Test",
@@ -63,7 +67,7 @@ def test_remove_marketplacev2():
 
 
 def test_remove_xpanse():
-    data = MarketplaceSuffixPreparer.prepare(DATA, MarketplaceVersions.XPANSE)
+    data = MarketplaceSuffixPreparer.prepare(deepcopy(DATA), MarketplaceVersions.XPANSE)
     assert data == {
         "id": "Test",
         "name": "Test",
@@ -80,7 +84,9 @@ def test_remove_xpanse():
 
 
 def test_remove_xsoar_saas():
-    data = MarketplaceSuffixPreparer.prepare(DATA, MarketplaceVersions.XSOAR_SAAS)
+    data = MarketplaceSuffixPreparer.prepare(
+        deepcopy(DATA), MarketplaceVersions.XSOAR_SAAS
+    )
     assert data == {
         "id": "TestXsoar",
         "name": "Test",

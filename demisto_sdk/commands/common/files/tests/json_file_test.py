@@ -112,7 +112,7 @@ class TestJsonFile(FileTesting):
          - valid json files
 
         When:
-         - Running read_from_github_api method from IniFile object
+         - Running read_from_github_api method from JsonFile object
 
         Then:
          - make sure reading the json files from the github api is successful.

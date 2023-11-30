@@ -1,7 +1,9 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -18,15 +20,24 @@ class IncidentFieldParser(
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
-        self.cli_name = self.json_data.get("cliName")
         self.field_type = self.json_data.get("type")
         self.associated_to_all = self.json_data.get("associatedToAll")
 
         self.connect_to_dependencies()
 
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update({"object_id": "id", "cli_name": "cliName"})
+        return super().field_mapping
+
+    @property
+    def cli_name(self) -> Optional[str]:
+        return get_value(self.json_data, self.field_mapping.get("cli_name", ""))
+
     @property
     def object_id(self) -> Optional[str]:
-        return self.json_data.get("cliName")
+        id = get_value(self.json_data, self.field_mapping.get("object_id", ""))
+        return (id.lower().replace("_", "").replace("-", ""))[len("incident") :]
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

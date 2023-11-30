@@ -66,7 +66,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             try:
                 test_docker_image, errors = docker_base.pull_or_create_test_image(
                     docker_image,
-                    integration_script.type,
+                    integration_script.subtype or integration_script.type,
                     log_prompt=f"Unit test {integration_script.name}",
                 )
                 if errors:

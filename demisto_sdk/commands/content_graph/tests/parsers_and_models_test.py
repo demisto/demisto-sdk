@@ -782,7 +782,8 @@ class TestParsersAndModels:
         assert model.docker_image == "demisto/bs4:1.0.0.7863"
         assert not model.is_fetch
         assert not model.is_feed
-        assert model.type == "python2"
+        assert model.type == "python"
+        assert model.subtype == "python2"
 
     def test_job_parser(self, pack: Pack):
         """
@@ -1210,7 +1211,8 @@ class TestParsersAndModels:
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
-        assert model.type == "python3"
+        assert model.type == "python"
+        assert model.subtype == "python3"
         assert model.docker_image == "demisto/python3:3.8.3.8715"
         assert model.tags == ["transformer"]
         assert not model.is_test

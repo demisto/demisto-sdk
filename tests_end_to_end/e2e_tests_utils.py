@@ -68,7 +68,7 @@ def create_playbook(pack, pack_name):
 def create_xif_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_string):
 
     with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}.xif", 'w') as file:
-    # Write data to the file using the 'write()' method
+
         file.write(modeling_rules_string)
 def create_yml_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_id):
     
@@ -81,7 +81,7 @@ schema: ''
     """
     
     with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}.yml", 'w') as file:
-    # Write data to the file using the 'write()' method
+
         file.write(yml_file_string)
 
 def create_schema_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_schema_string):
@@ -89,13 +89,23 @@ def create_schema_file_modeling_rules(pack_path, modeling_rules_name, modeling_r
     with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}_schema.json", 'w') as file:
     # Write data to the file using the 'write()' method
         file.write(modeling_rules_schema_string)
+
 def create_testdata_file_modeling_rules(pack_path, modeling_rules_name, test_data_string):
 
     with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}_testdata.json", 'w') as file:
-    # Write data to the file using the 'write()' method
         file.write(test_data_string)
+
 def create_modeling_rules_folder(pack_path, modeling_rules_name, modeling_rules_id, modeling_rules_string, test_data_string, modeling_rules_schema_string):
-    
+    """Creating the modeling rules folder, consists of modeling rules file. schema, yml and testdata file
+
+    Args:
+        pack_path (str): The path of the pack to add modeling rules to
+        modeling_rules_name (str): The name of the modeling rules.
+        modeling_rules_id (str): The ID of the modeling rules.
+        modeling_rules_string (str): The data of the modeling rules xif file.
+        test_data_string (str): The data of the testdata.
+        modeling_rules_schema_string (str): The data
+    """
     cli(f"mkdir -p {pack_path}/ModelingRules/{modeling_rules_name}")
 
     create_testdata_file_modeling_rules(pack_path, modeling_rules_name, test_data_string)

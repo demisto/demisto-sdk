@@ -149,7 +149,7 @@ def test_handle_error(caplog):
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
-    caplog.set_level(logging.NOTSET)
+    # caplog.set_level(logging.NOTSET)
     base_validator = BaseValidator(
         ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True
     )
@@ -173,7 +173,9 @@ def test_handle_error(caplog):
     assert formatted_error is None
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
+    logging.warning("blabla")
     assert "path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
+    print(caplog.text)
 
     formatted_error = base_validator.handle_error(
         "Error-message", "ST109", "path/to/file_name"

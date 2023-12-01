@@ -13,6 +13,8 @@ import pytest
 from urllib3.response import HTTPResponse
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_BASE_URL,
+    DEMISTO_KEY,
     JOBS_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
@@ -29,8 +31,8 @@ TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
 TESTS_ENV_FOLDER = Path(__file__).parent / "tests_env"
 
 # Avoid missing environment variables errors
-os.environ["DEMISTO_BASE_URL"] = "https://fake-xsoar-server.com"
-os.environ["DEMISTO_API_KEY"] = "fake_api_key"
+os.environ[DEMISTO_BASE_URL] = "https://fake-xsoar-server.com"
+os.environ[DEMISTO_KEY] = "fake_api_key"
 
 
 def load_test_data(file_name: str, folder: str | None = None) -> dict:
@@ -1399,3 +1401,7 @@ def test_invalid_regex_error(mocker):
         logger_error.call_args_list,
         "Error: Invalid regex pattern provided: '*invalid-regex*'.",
     )
+
+
+os.environ.pop(DEMISTO_BASE_URL, None)
+os.environ.pop(DEMISTO_KEY, None)

@@ -37,7 +37,6 @@ class XsoarClientConfig(BaseModel):
 
     @root_validator()
     def validate_auth_params(cls, values: Dict[str, Any]):
-        print(values)
         if not values.get("api_key") and not (
             values.get("user") and values.get("password")
         ):

@@ -94,7 +94,7 @@ jobs:
         with:
           path: test-results/junit.xml
           summary: true
-          display-options: fEX
+          display-options: fsEX
           fail-on-empty: true
       - name: Check if tests have passed
         if: always()

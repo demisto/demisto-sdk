@@ -89,6 +89,28 @@ jobs:
             test-results/junit.xml
             node_versions_info.json
             coverage_html_report
+      - name: Surface failing tests
+        if: always()
+        uses: pmeier/pytest-results-action@main
+        with:
+          # A list of JUnit XML files, directories containing the former, and wildcard
+          # patterns to process.
+          # See @actions/glob for supported patterns.
+          path: test-results.xml
+
+          # Add a summary of the results at the top of the report
+          # Default: true
+          summary: true
+
+          # Select which results should be included in the report.
+          # Follows the same syntax as
+          # `pytest -r`
+          # Default: fEX
+          display-options: fEX
+
+          # Fail the workflow if no JUnit XML was found.
+          # Default: true
+          fail-on-empty: true
       - name: Print summary of the unit-tests
         if: always()
         run: |

@@ -100,7 +100,7 @@ jobs:
         if: always()
         run:
           if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
-            echo "There are unit-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_number }}?pr=${{ github.event.pull_request.number }}"
+            echo "There are unit-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
           else
             echo "All unit-tests have passed"
           fi

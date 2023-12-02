@@ -51,7 +51,6 @@ jobs:
         run: npm install
 
       - name: Run pytest
-        continue-on-error: true
         run: |
           shopt -u globstar
           source "$(poetry env info --path)/bin/activate"
@@ -93,23 +92,9 @@ jobs:
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
-          # A list of JUnit XML files, directories containing the former, and wildcard
-          # patterns to process.
-          # See @actions/glob for supported patterns.
           path: test-results/junit.xml
-
-          # Add a summary of the results at the top of the report
-          # Default: true
           summary: true
-
-          # Select which results should be included in the report.
-          # Follows the same syntax as
-          # `pytest -r`
-          # Default: fEX
           display-options: fEX
-
-          # Fail the workflow if no JUnit XML was found.
-          # Default: true
           fail-on-empty: true
       - name: Check if tests have passed
         if: always()

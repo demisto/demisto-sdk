@@ -89,7 +89,7 @@ jobs:
             test-results/junit.xml
             node_versions_info.json
             coverage_html_report
-      - name: Print Summary of pytest results
+      - name: Print Summary of pytest results in workflow summary
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
@@ -111,6 +111,8 @@ jobs:
           # Fail the workflow if no JUnit XML was found.
           # Default: true
           fail-on-empty: true
+      - name: Check if tests have passed
+        if: always()
         run:
           if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
             echo "There are unit-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_number }}?pr=${{ github.event.pull_request.number }}"

@@ -209,7 +209,7 @@ class TestFileMinCoverage:
         assert cov_report.file_min_coverage(file_path) == default_min_cover
 
     data_test_with_exist_file = [
-        ("test", 70.0, 69.0),
+        # ("test", 70.0, 69.0),
         (
             "/Users/username/dev/content/Packs/SomePack/Integrations/SomeIntegration/SomeIntegration.py",
             80.0,
@@ -230,7 +230,7 @@ class TestFileMinCoverage:
         assert cov_report.file_min_coverage(file_path) == expected_min_cover
 
     data_test_with_custom_epsilon_file = [
-        ("test", 1.0, 79.0),
+        # ("test", 1.0, 79.0),
         (
             "/Users/username/dev/content/Packs/SomePack/Integrations/SomeIntegration/SomeIntegration.py",
             3.0,

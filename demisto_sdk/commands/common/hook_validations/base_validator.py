@@ -235,7 +235,8 @@ class BaseValidator:
             or warning
         ):
             if self.print_as_warnings or warning:
-                print("printing warning")
+                if "path/to/file_name: [BA101] - ignore-file-specific" in formatted_error_str():
+                    print("got inside the warning")
                 logger.warning(f"[yellow]{formatted_error_str()}[/yellow]")
                 self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(

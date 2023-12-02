@@ -693,6 +693,7 @@ class Pack:
         )
         rule.build(yml=yml, rules=rules, schema=schema)
         self.assets_modeling_rules.append(rule)
+
         return rule
 
     def create_correlation_rule(self, name, content: dict = None) -> CorrelationRule:

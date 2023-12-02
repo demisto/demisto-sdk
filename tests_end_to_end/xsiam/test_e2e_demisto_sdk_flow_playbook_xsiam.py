@@ -199,4 +199,4 @@ def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(tmpdir, verify_ssl: bool
     e2e_tests_utils.cli(f'demisto-sdk modeling-rules test {source_pack_path}/ModelingRules/{pack_name}ModelingRules')
 
     #deletes the pack from the machine
-    demisto_client.uninstall_marketplace_packs(pack_name)
+    demisto_client.uninstall_marketplace_packs([pack_name])

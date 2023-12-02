@@ -19,12 +19,12 @@ def test_init_xsoar_client_config_username_password():
     )
 
 
-def test_init_xsoar_client_config_no_api_key_and_user_and_password(monkeypatch):
+def test_init_xsoar_client_config_no_api_key_and_user_and_password():
     with pytest.raises(ValueError):
         XsoarClientConfig(base_api_url="https://test1.com")
 
 
-def test_init_xsoar_client_config_no_values(monkeypatch):
+def test_init_xsoar_client_config_no_values():
     with pytest.raises(ValidationError):
         XsoarClientConfig()
 
@@ -45,7 +45,7 @@ def test_init_xsoar_saas_client_config_with_api_key_without_auth_id():
         XsoarSaasClientConfig(base_api_url="https://test1.com", api_key="test")
 
 
-def test_init_xsoar_saas_client_config_with_auth_id_without_api_key(monkeypatch):
+def test_init_xsoar_saas_client_config_with_auth_id_without_api_key():
     with pytest.raises(ValueError):
         XsoarSaasClientConfig(base_api_url="https://test1.com", auth_id="1")
 

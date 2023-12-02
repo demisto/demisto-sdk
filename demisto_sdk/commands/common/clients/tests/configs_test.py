@@ -6,7 +6,6 @@ from demisto_sdk.commands.common.clients import (
     XsoarClientConfig,
     XsoarSaasClientConfig,
 )
-from demisto_sdk.commands.common.constants import DEMISTO_KEY
 
 
 def test_init_xsoar_client_config_with_api_key():

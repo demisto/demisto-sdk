@@ -235,6 +235,7 @@ class BaseValidator:
             or warning
         ):
             if self.print_as_warnings or warning:
+                print("printing warning")
                 logger.warning(f"[yellow]{formatted_error_str()}[/yellow]")
                 self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(

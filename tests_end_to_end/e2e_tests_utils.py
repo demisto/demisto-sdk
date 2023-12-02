@@ -68,8 +68,8 @@ def create_playbook(pack, pack_name):
 def create_xif_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_string):
 
     with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}.xif", 'w') as file:
-
         file.write(modeling_rules_string)
+
 def create_yml_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_id):
     
     yml_file_string = f"""
@@ -81,13 +81,11 @@ schema: ''
     """
     
     with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}.yml", 'w') as file:
-
         file.write(yml_file_string)
 
 def create_schema_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_schema_string):
 
     with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}_schema.json", 'w') as file:
-    # Write data to the file using the 'write()' method
         file.write(modeling_rules_schema_string)
 
 def create_testdata_file_modeling_rules(pack_path, modeling_rules_name, test_data_string):

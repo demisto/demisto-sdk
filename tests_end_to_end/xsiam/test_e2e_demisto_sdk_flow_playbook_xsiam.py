@@ -179,6 +179,7 @@ def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(tmpdir, verify_ssl: bool
     1. Creates a new pack with modeling rules.
     2. Uploads the pack using the demisto-sdk Upload command
     2. Tests the modeling rules using the demisto-sdk modeling-rules test command
+    3. deletes the pack from the machine
     """
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
@@ -196,3 +197,6 @@ def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(tmpdir, verify_ssl: bool
 
     #test the created modeling rules
     e2e_tests_utils.cli(f'demisto-sdk modeling-rules test {source_pack_path}/ModelingRules/{pack_name}ModelingRules')
+
+    #deletes the pack from the machine
+    demisto_client.uninstall_marketplace_packs(pack_name)

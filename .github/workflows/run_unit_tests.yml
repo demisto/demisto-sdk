@@ -96,7 +96,7 @@ jobs:
           # A list of JUnit XML files, directories containing the former, and wildcard
           # patterns to process.
           # See @actions/glob for supported patterns.
-          path: test-results.xml
+          path: test-results/junit.xml
 
           # Add a summary of the results at the top of the report
           # Default: true

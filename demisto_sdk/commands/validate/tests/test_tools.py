@@ -1,9 +1,11 @@
 import tempfile
 from pathlib import Path
 from typing import Any, List, Optional
+from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.repo import Repo
 
@@ -51,7 +53,8 @@ def create_script_object(
 
 
 def create_metadata_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
 ):
     """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
 
@@ -65,8 +68,9 @@ def create_metadata_object(
     json_content = load_json("pack_metadata.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
+    PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
-    return BaseContent.from_path(Path(pack.pack_metadata.path))
+    return PackParser(Path(pack.path))
 
 
 def create_classifier_object(
@@ -124,6 +128,44 @@ def create_incident_type_object(
     pack = REPO.create_pack()
     pack.create_incident_type(name="incident_type", content=json_content)
     return BaseContent.from_path(Path(pack.incident_types[0].path))
+
+
+def create_incident_field_object(
+    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+):
+    """Creating an incident_field object with altered fields from a default incident_field json structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+
+    Returns:
+        The incident_field object.
+    """
+    json_content = load_json("incident_field.json")
+    update_keys(json_content, paths, values)
+    pack = REPO.create_pack()
+    pack.create_incident_field(name="incident_field", content=json_content)
+    return BaseContent.from_path(Path(pack.incident_fields[0].path))
+
+
+def create_indicator_field_object(
+    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+):
+    """Creating an indicator_field object with altered fields from a default indicator_field json structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+
+    Returns:
+        The indicator_field object.
+    """
+    json_content = load_json("indicator_field.json")
+    update_keys(json_content, paths, values)
+    pack = REPO.create_pack()
+    pack.create_indicator_field(name="indicator_field", content=json_content)
+    return BaseContent.from_path(Path(pack.indicator_fields[0].path))
 
 
 def create_wizard_object(dict_to_update: Optional[Any] = None):

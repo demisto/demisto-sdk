@@ -4,6 +4,7 @@ from pathlib import Path
 from pytest import TempPathFactory, fixture, raises
 from pytest_mock import MockerFixture
 
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.utils.file_utils import (
     TOKEN_ADDED,
     TOKEN_BOTH,
@@ -11,6 +12,11 @@ from demisto_sdk.utils.file_utils import (
     TOKEN_REMOVED,
     get_file_diff,
     merge_files,
+)
+
+DEMISTO_SDK_PATH = os.path.join(git_path(), "demisto_sdk")
+TEST_FILES = os.path.join(
+    DEMISTO_SDK_PATH, "utils", "test_files"
 )
 
 
@@ -146,7 +152,62 @@ class TestFileUtils:
 
         assert True
 
-    def test_merge_files(self, tmp_path: TempPathFactory):
+    def test_merge_files_replaced_section(self, tmp_path: TempPathFactory):
+        """
+        Take 2 files and merge them to check if the output file is
+        as expected.
+
+        Given:
+        - An original file with the following contents:
+
+        ```
+        # Title
+
+        # Section 1
+        ```
+
+        - A modified file with the following contents:
+
+        ```
+        # Title
+
+        # Section 2
+        ```
+
+        When:
+        - Merging 2 files with a removed and an added section
+
+        Then:
+        - The merged file should be:
+
+        ```
+        # Title
+
+        # Section 2
+        ```
+        """
+
+        original_lines = [
+            "# Title\n\n",
+            "## Section 1\n"
+        ]
+
+        modified_lines = [
+            original_lines[0],
+            original_lines[1].replace("1", "2")
+        ]
+        
+        with self.original.open("w") as o, self.modified.open("w") as m:
+            o.writelines(original_lines)
+            m.writelines(modified_lines)
+
+        actual: Path = merge_files(self.original, self.modified, tmp_path.__str__())
+
+        assert actual.exists()
+        assert actual.name == f"{self.original.name}-merged"
+        assert actual.read_text() == "# Title\n\n## Section 2\n"
+
+    def test_merge_files_new_section(self, tmp_path: TempPathFactory):
         """
         Take 2 files and merge them to check if the output file is
         as expected.
@@ -190,6 +251,7 @@ class TestFileUtils:
 
         modified_lines = [
             original_lines[0],
+            original_lines[1],
             original_lines[1].replace("1", "2")
         ]
         
@@ -197,11 +259,47 @@ class TestFileUtils:
             o.writelines(original_lines)
             m.writelines(modified_lines)
 
-        actual: Path = merge_files(self.original, self.modified, tmp_path.__str__())
+        actual = merge_files(self.original, self.modified, tmp_path.__str__())
 
-        assert actual.exists()
-        assert actual.name == f"{self.original.name}-merged"
-        # assert actual.read_text() == 
+        if actual:
+            assert actual.exists()
+            assert actual.name == f"{self.original.name}-merged"
+            assert actual.read_text() == "# Title\n\n## Section 1\n## Section 2\n"
+
+    def test_merge_files_readmes(self, tmp_path: TempPathFactory):
+        """
+        Take 2 README files and merge them to check if the output file is
+        as expected.
+
+        Given:
+        - An original README file with 2 commands and their respective
+        Command example, Command Context, Human Readable Output sections
+        - A generated README file with 3 commands
+        and removed Command example, Command Context, Human Readable Output sections.
+
+        When:
+        - Merging both files.
+
+        Then:
+        - The merged file will include 3 commands and the respective
+        Command example, Command Context, Human Readable Output sections
+        """
+
+        original = Path(os.path.join(TEST_FILES, "simple_original.md"))
+        generated = Path(os.path.join(TEST_FILES, "simple_generated.md"))
+
+        output = merge_files(original, generated, tmp_path.__str__())
+
+        if output:
+            assert "helloworld-say-hello" in output.read_text()
+            assert "helloworld-alert-list" in output.read_text()
+            assert "helloworld-alert-note-create" in output.read_text()
+
+            assert output.read_text().count("Base Command") == 3
+            assert output.read_text().count("Input") == 3
+            assert output.read_text().count("Command example") == 3
+            assert output.read_text().count("Context Example") == 3
+            assert output.read_text().count("Human Readable Output") == 3
 
     def test_merge_files_identical(self, tmp_path: TempPathFactory):
 
@@ -363,29 +461,6 @@ class TestFileUtils:
 
         # Set original file as write only
         os.chmod(self.original.__str__(), os.O_WRONLY)
-
-        output = merge_files(self.original, self.modified, tmp_path.__str__())
-
-        assert output == self.modified
-
-    def test_merge_files_diff_none(self, mocker: MockerFixture, tmp_path: TempPathFactory):
-
-        # TODO figure out how to mock get_file_diff
-        mocker.patch("file_utils.get_file_diff", return_value=[])
-
-        original_lines = [
-            "# Title\n\n",
-            "## Section 1\n"
-        ]
-
-        modified_lines = [
-            original_lines[0],
-            original_lines[1].replace("1", "2")
-        ]
-        
-        with self.original.open("w") as o, self.modified.open("w") as m:
-            o.writelines(original_lines)
-            m.writelines(modified_lines)
 
         output = merge_files(self.original, self.modified, tmp_path.__str__())
 

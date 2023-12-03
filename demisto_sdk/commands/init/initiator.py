@@ -1092,6 +1092,7 @@ class Initiator:
         content_item = (
             "assets modeling rules" if is_assets_modeling_rules else content_item
         )
+
         if from_version := input(
             f"\nThe fromversion value that will be used for {content_item} (optional): "
         ):

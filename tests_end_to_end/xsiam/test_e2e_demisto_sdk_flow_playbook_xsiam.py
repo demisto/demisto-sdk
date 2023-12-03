@@ -2,7 +2,7 @@ from pathlib import Path
 
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.clients import get_client_from_server_type
+from demisto_sdk.commands.common.clients import get_client_from_marketplace
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     MarketplaceVersions,
@@ -97,13 +97,14 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         7. Uploads the playbook using the demisto-sdk upload command.
         8. Deletes the playbook using an http request.
     """
-    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
+    demisto_client = get_client_from_marketplace(MarketplaceVersions.MarketplaceV2, verify_ssl=verify_ssl)
 
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
     playbook, playbook_name, source_playbook_path = e2e_tests_utils.create_playbook(pack, pack_name)
 
     try:
+        # uploads the playbook using API to emulate a playbook that has been created through the UI
         demisto_client.client.import_playbook(file=source_playbook_path)
     except ApiException as ae:
         if "already exists" in str(ae):
@@ -187,7 +188,7 @@ def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(tmpdir, verify_ssl: bool
     e2e_tests_utils.create_modeling_rules_folder(source_pack_path, f"{pack_name}ModelingRules", f"{pack_name}ModelingRules",DEFAULT_MODELING_RULES_STRING,DEFAULT_TEST_DATA_STRING,DEFAULT_MODELING_RULES_SCHEMA_STRING)
     assert Path(f"{source_pack_path}/ModelingRules/{pack_name}ModelingRules/{pack_name}ModelingRules.yml").exists()
     
-    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
+    demisto_client = get_client_from_marketplace(MarketplaceVersions.MarketplaceV2, verify_ssl=verify_ssl)
 
     # Uploads the pack
     Uploader(input=Path(source_pack_path), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2, destination_zip_dir=tmpdir).upload()

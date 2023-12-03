@@ -7,6 +7,7 @@ alter
     xdm.target.port = t_port,
     xdm.network.protocol_layers = arraycreate(protocol);
 """
+
 DEFAULT_MODELING_RULES_SCHEMA_STRING = """
 {
     "hello_world_raw": {
@@ -33,6 +34,7 @@ DEFAULT_MODELING_RULES_SCHEMA_STRING = """
     }
 }
 """
+
 DEFAULT_TEST_DATA_STRING = """
 {
     "data": [
@@ -64,7 +66,6 @@ DEFAULT_TEST_DATA_STRING = """
                 "xdm.target.port": 22
             }
         }
-        
     ],
     "ignored_validations": []
 }

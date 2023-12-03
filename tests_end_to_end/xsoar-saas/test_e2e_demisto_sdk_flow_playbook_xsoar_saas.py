@@ -2,8 +2,11 @@ from pathlib import Path
 
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.clients import get_client_from_server_type
-from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.clients import get_client_from_marketplace
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.format.format_module import format_manager
@@ -88,13 +91,14 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         7. Uploads the playbook using the demisto-sdk upload command.
         8. Deletes the playbook using an http request.
     """
-    demisto_client = get_client_from_server_type(verify_ssl=verify_ssl)
+    demisto_client = get_client_from_marketplace(MarketplaceVersions.XSOAR_SAAS, verify_ssl=verify_ssl)
 
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
     playbook, playbook_name, dest_playbook_path, = e2e_tests_utils.create_playbook(pack, pack_name)
 
     try:
+        # uploads the playbook using API to emulate a playbook that has been created through the UI
         demisto_client.client.import_playbook(file=dest_playbook_path)
     except ApiException as ae:
         if "already exists" in str(ae):

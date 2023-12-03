@@ -94,7 +94,7 @@ def create_testdata_file_modeling_rules(pack_path, modeling_rules_name, test_dat
         file.write(test_data_string)
 
 def create_modeling_rules_folder(pack_path, modeling_rules_name, modeling_rules_id, modeling_rules_string, test_data_string, modeling_rules_schema_string):
-    """Creating the modeling rules folder, consists of modeling rules file. schema, yml and testdata file
+    """Creating the modeling rules folder, consists of modeling rules file, schema, yml and testdata file
 
     Args:
         pack_path (str): The path of the pack to add modeling rules to
@@ -102,7 +102,7 @@ def create_modeling_rules_folder(pack_path, modeling_rules_name, modeling_rules_
         modeling_rules_id (str): The ID of the modeling rules.
         modeling_rules_string (str): The data of the modeling rules xif file.
         test_data_string (str): The data of the testdata.
-        modeling_rules_schema_string (str): The data
+        modeling_rules_schema_string (str): The data of the schema
     """
     cli(f"mkdir -p {pack_path}/ModelingRules/{modeling_rules_name}")
 

@@ -59,6 +59,7 @@ PYTHON2_SUPPORTED_HOOKS = {
     "run-unit-tests",
     "validate",
     "format",
+    "pylint-in-docker",
 }
 
 
@@ -145,9 +146,7 @@ class PreCommitRunner:
         This function handles the python2 files.
         Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
         """
-        python2_files = self.python_version_to_files_with_objects.get(
-            DEFAULT_PYTHON2_VERSION
-        )
+        python2_files = self.python_version_to_files.get(DEFAULT_PYTHON2_VERSION)
         if not python2_files:
             return
 

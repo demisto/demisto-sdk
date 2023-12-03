@@ -53,6 +53,7 @@ from requests.exceptions import HTTPError
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
+    ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
     CONF_JSON_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
@@ -1660,6 +1661,10 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XDRC_TEMPLATE
         elif MODELING_RULES_DIR in path.parts and "testdata" in path.stem.casefold():
             return FileType.MODELING_RULE_TEST_DATA
+        elif ASSETS_MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith(
+            "_schema"
+        ):
+            return FileType.MODELING_RULE_SCHEMA
         elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith(
             "_schema"
         ):
@@ -1695,6 +1700,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         return FileType.JAVASCRIPT_FILE
 
     elif path.suffix == ".xif":
+        if ASSETS_MODELING_RULES_DIR in path.parts:
+            return FileType.ASSETS_MODELING_RULE_XIF
         if MODELING_RULES_DIR in path.parts:
             return FileType.MODELING_RULE_XIF
         elif PARSING_RULES_DIR in path.parts:
@@ -1724,6 +1731,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
         elif MODELING_RULES_DIR in path.parts:
             return FileType.MODELING_RULE
+
+        elif ASSETS_MODELING_RULES_DIR in path.parts:
+            return FileType.ASSETS_MODELING_RULE
 
         elif CORRELATION_RULES_DIR in path.parts:
             return FileType.CORRELATION_RULE

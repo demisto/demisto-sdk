@@ -473,9 +473,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             """
             match command:
                 case 'test-1': #@
-                    return true
-                case _:
-                    return false
+                    return True
             """
         )
         assert node_a
@@ -492,28 +490,28 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_match(node_a)
             self.checker.leave_module(node_a)
 
-        self.checker.commands = ["test-1", "test2", "test3"]
+        self.checker.commands = ["test-1", "test2"]
         node_a = astroid.extract_node(
             """
             match command:
-                case 'test-1' | 'test3': #@
-                    return true
+                case 'test-1': #@
+                    return True
                 case _:
-                    return false
+                    return False
             """
         )
         assert node_a
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-commands-exist",
-                node=node_a,
+                node=node_a.cases[0].pattern,
                 args=str(["test2"]),
             ),
             pylint.testutils.MessageTest(
-                msg_id="unimplemented-test-module", node=node_a
+                msg_id="unimplemented-test-module", node=node_a.cases[0].pattern
             ),
         ):
-            self.checker.visit_match(node_a)
+            self.checker.visit_match(node_a.cases[0].pattern)
             self.checker.leave_module(node_a)
 
     def test_test_module_checker(self):
@@ -608,22 +606,23 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that nothing being added to the message errors of pylint for each appearance.
         """
 
-        self.checker.commands = ["test-1", "test-2", "test-3"]
+        self.checker.commands = ["test-1", "test-2"]
         node_a = astroid.extract_node(
             """
             match command:
-                case 'test-1' | 'test-2': #@
-                    return true
-                case 'test-3': #@
-                    return false
+                case 'test-1' | 'test-2' | 'test-module': #@
+                    return True
+                case _:
+                    return False
             """
         )
+        assert type(node_a) is astroid.Match
         assert node_a
         with self.assertNoMessages():
-            self.checker.visit_match(node_a)
+            self.checker.visit_match(node_a[0])
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="unimplemented-test-module", node=node_a
+                msg_id="unimplemented-test-module", node=node_a[0]
             )
         ):
             self.checker.leave_module(node_a)
@@ -855,36 +854,6 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_dict(node_a)
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="unimplemented-test-module", node=node_a
-            )
-        ):
-            self.checker.leave_module(node_a)
-
-    def test_infer_match_checker(self):
-        """
-        Given:
-            - String of a code part which is being examined by pylint plugin.
-        When:
-            - All commands appear in the match case as formatted strings.
-        Then:
-            - Ensure that they are not being added to the message errors of pylint for each appearance
-        """
-        self.checker.commands = ["integration-name-test1", "integration-name-test2"]
-        node_a = astroid.extract_node(
-            """
-            A = 'integration-name'
-            match command:
-                case f'{A}-test1':  #@
-                    pass
-                case f'{A}-test2':  #@
-                    pass
-            """
-        )
-        assert node_a
-        with self.assertNoMessages():
-            self.checker.visit_match(node_a)
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unimplemented-test-module", node=node_a

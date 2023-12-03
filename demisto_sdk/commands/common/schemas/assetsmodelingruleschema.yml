@@ -1,0 +1,15 @@
+type: map
+mapping:
+  regex;(.+assets_raw):
+    type: map
+    mapping:
+      regex;(.+):
+        type: map
+        mapping:
+          type:
+            type: str
+            required: true
+            enum: ["string", "int", "float", "datetime", "boolean"]
+          is_array:
+            type: bool
+            required: true

@@ -38,9 +38,7 @@ def update_additional_dependencies(
             for hook in repo["hooks"]:
                 if hook["id"] in hooks:
                     hook["additional_dependencies"] = requirements
-        if yaml.dumps(pre_commit, sort_keys=True) != yaml.dumps(
-            pre_commit_orig, sort_keys=True
-        ):
+        if pre_commit != pre_commit_orig:
             logger.info(
                 f"Detected changes in pre-commit config:{pre_commit_config_path}, updating it"
             )

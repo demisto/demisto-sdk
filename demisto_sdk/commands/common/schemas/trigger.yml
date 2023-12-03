@@ -29,53 +29,107 @@ mapping:
             type: seq
             required: false
             sequence:
-              - include:
-                - filter_schema
-                - and_schema
-                - or_schema
+              - include: filter_schema
+              - type: map
+                mapping:
+                  OR:
+                    type: seq
+                    required: false
+                    sequence:
+                      - include: filter_schema
+                      - type: map
+                        mapping:
+                          OR:
+                            type: seq
+                            required: false
+                            sequence:
+                              - include: filter_schema
+                      - type: map
+                        mapping:
+                          AND:
+                            type: seq
+                            required: false
+                            sequence:
+                              - include: filter_schema
+              - type: map
+                mapping:
+                  AND:
+                    type: seq
+                    required: false
+                    sequence:
+                      - include: filter_schema
+                      - type: map
+                        mapping:
+                          OR:
+                            type: seq
+                            required: false
+                            sequence:
+                              - include: filter_schema
+                      - type: map
+                        mapping:
+                          AND:
+                            type: seq
+                            required: false
+                            sequence:
+                              - include: filter_schema
           AND:
             type: seq
             required: false
             sequence:
-              - include:
-                - filter_schema
-                - and_schema
-                - or_schema
+              - include: filter_schema
+              - type: map
+                mapping:
+                  OR:
+                    type: seq
+                    required: false
+                    sequence:
+                      - include: filter_schema
+                      - type: map
+                        mapping:
+                          OR:
+                            type: seq
+                            required: false
+                            sequence:
+                              - include: filter_schema
+                      - type: map
+                        mapping:
+                          AND:
+                            type: seq
+                            required: false
+                            sequence:
+                              - include: filter_schema
+              - type: map
+                mapping:
+                  AND:
+                    type: seq
+                    required: false
+                    sequence:
+                      - include: filter_schema
+                      - type: map
+                        mapping:
+                          OR:
+                            type: seq
+                            required: false
+                            sequence:
+                              - include: filter_schema
+                      - type: map
+                        mapping:
+                          AND:
+                            type: seq
+                            required: false
+                            sequence:
+                              - include: filter_schema
 
 
-schema;filter_schema:
-  type: map
-  mapping:
-    SEARCH_FIELD:
-      type: str
-      required: true
-    SEARCH_TYPE:
-      type: str
-      required: true
-    SEARCH_VALUE:
-      type: str
-      required: true
-
-schema;and_schema:
-  type: map
-  mapping:
-    AND:
-      type: seq
-      required: false
-      sequence:
-        - include:
-          - filter_schema
-          - and_schema
-          - or_schema
-
-schema;or_schema:
-  type: map
-  mapping:
-    AND:
-      type: seq
-      required: false
-      sequence:
-        - include:
-          - filter_schema
-          - and_schema
-          - or_schema
+  schema;filter_schema:
+    type: map
+    mapping:
+      SEARCH_FIELD:
+        type: str
+        required: true
+      SEARCH_TYPE:
+        type: str
+        required: true
+      SEARCH_VALUE:
+        type: str
+        required: true

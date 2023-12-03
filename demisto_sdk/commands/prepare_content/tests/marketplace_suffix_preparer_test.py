@@ -7,25 +7,25 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer 
 
 DATA = {
     "id": "Test",
-    "id:xsoar": "TestXsoar",
+    "id:xsoar": "xsoar",
     "name": "Test",
     "image": "testregular",
-    "image:marketplacev2": "testimage",
+    "image:marketplacev2": "marketplacev2",
     "some": "some",
-    "some:xpanse": "testsome",
-    "some:xsoar_on_prem": "testsome3",
-    "some:xsoar_saas": "testsome4",
+    "some:xpanse": "xpanse",
+    "some:xsoar_on_prem": "xsoar_on_prem",
+    "some:xsoar_saas": "xsoar_saas",
     "properties": {
         "ab": "test",
-        "ab:xsoar": "testab",
+        "ab:xsoar": "xsoar",
         "cd": "test2",
-        "cd:xpanse": "testcd",
+        "cd:xpanse": "xpanse",
         "ef": "test3",
-        "ef:xsoar_on_prem": "testef",
+        "ef:xsoar_on_prem": "xsoar_on_prem",
         "gh": "test4",
-        "gh:xsoar_saas": "testgh",
+        "gh:xsoar_saas": "xsoar_saas",
         "ij": "test5",
-        "ij:marketplacev2": "testij",
+        "ij:marketplacev2": "marketplacev2",
     },
 }
 
@@ -33,12 +33,12 @@ DATA = {
 def test_remove_xsoar():
     data = MarketplaceSuffixPreparer.prepare(deepcopy(DATA), MarketplaceVersions.XSOAR)
     assert data == {
-        "id": "TestXsoar",
+        "id": "xsoar",
         "name": "Test",
         "image": "testregular",
         "some": "some",
         "properties": {
-            "ab": "testab",
+            "ab": "xsoar",
             "cd": "test2",
             "ef": "test3",
             "gh": "test4",
@@ -54,14 +54,14 @@ def test_remove_marketplacev2():
     assert data == {
         "id": "Test",
         "name": "Test",
-        "image": "testimage",
+        "image": "marketplacev2",
         "some": "some",
         "properties": {
             "ab": "test",
             "cd": "test2",
             "ef": "test3",
             "gh": "test4",
-            "ij": "testij",
+            "ij": "marketplacev2",
         },
     }
 
@@ -72,10 +72,10 @@ def test_remove_xpanse():
         "id": "Test",
         "name": "Test",
         "image": "testregular",
-        "some": "testsome",
+        "some": "xpanse",
         "properties": {
             "ab": "test",
-            "cd": "testcd",
+            "cd": "xpanse",
             "ef": "test3",
             "gh": "test4",
             "ij": "test5",
@@ -88,15 +88,15 @@ def test_remove_xsoar_saas():
         deepcopy(DATA), MarketplaceVersions.XSOAR_SAAS
     )
     assert data == {
-        "id": "TestXsoar",
+        "id": "xsoar",
         "name": "Test",
         "image": "testregular",
-        "some": "testsome4",
+        "some": "xsoar_saas",
         "properties": {
-            "ab": "testab",
+            "ab": "xsoar",
             "cd": "test2",
             "ef": "test3",
-            "gh": "testgh",
+            "gh": "xsoar_saas",
             "ij": "test5",
         },
     }
@@ -105,14 +105,14 @@ def test_remove_xsoar_saas():
 def test_remove_xsoar_on_prem():
     data = MarketplaceSuffixPreparer.prepare(DATA, MarketplaceVersions.XSOAR_ON_PREM)
     assert data == {
-        "id": "TestXsoar",
+        "id": "xsoar",
         "name": "Test",
         "image": "testregular",
-        "some": "testsome3",
+        "some": "xsoar_on_prem",
         "properties": {
-            "ab": "testab",
+            "ab": "xsoar",
             "cd": "test2",
-            "ef": "testef",
+            "ef": "xsoar_on_prem",
             "gh": "test4",
             "ij": "test5",
         },

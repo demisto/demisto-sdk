@@ -87,6 +87,9 @@ class PackContentItems:
             content_type=ContentType.PREPROCESS_RULE
         )
         self.test_script = ContentItemsList(content_type=ContentType.TEST_SCRIPT)
+        self.assets_modeling_rule = ContentItemsList(
+            content_type=ContentType.ASSETS_MODELING_RULE
+        )
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()

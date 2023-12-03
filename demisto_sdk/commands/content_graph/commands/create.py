@@ -43,6 +43,7 @@ def create_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
     builder.init_database()
     builder.create_graph()
+
     if dependencies:
         content_graph_interface.create_pack_dependencies()
     content_graph_interface.export_graph(

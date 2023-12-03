@@ -1,4 +1,5 @@
 import argparse
+from copy import deepcopy
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -32,7 +33,7 @@ def update_additional_dependencies(
         requirements = requirements_path.read_text().splitlines()
         logger.info(f"Updating additional dependencies of {hooks} to {requirements}")
         pre_commit = get_file(pre_commit_config_path)
-        pre_commit_orig = pre_commit.copy()
+        pre_commit_orig = deepcopy(pre_commit)
         for repo in pre_commit["repos"]:
             for hook in repo["hooks"]:
                 if hook["id"] in hooks:

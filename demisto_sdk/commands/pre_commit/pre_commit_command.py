@@ -2,6 +2,7 @@ import itertools
 import multiprocessing
 import os
 import re
+import shutil
 import subprocess
 import sys
 from collections import defaultdict
@@ -46,6 +47,7 @@ PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
+PRE_COMMIT_FOLDER = CONTENT_PATH / ".pre_commit"
 
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
@@ -56,9 +58,10 @@ PYTHON2_SUPPORTED_HOOKS = {
     "check-yaml",
     "check-ast",
     "check-merge-conflict",
-    "run-unit-tests",
     "validate",
     "format",
+    "pytest-in-docker",
+    "pylint-in-docker",
 }
 
 
@@ -78,6 +81,8 @@ class PreCommitRunner:
         """
         We initialize the hooks and all_files for later use.
         """
+        shutil.rmtree(PRE_COMMIT_FOLDER, ignore_errors=True)
+        PRE_COMMIT_FOLDER.mkdir(parents=True, exist_ok=True)
         self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:
@@ -145,9 +150,7 @@ class PreCommitRunner:
         This function handles the python2 files.
         Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
         """
-        python2_files = self.python_version_to_files_with_objects.get(
-            DEFAULT_PYTHON2_VERSION
-        )
+        python2_files = self.python_version_to_files.get(DEFAULT_PYTHON2_VERSION)
         if not python2_files:
             return
 
@@ -228,7 +231,6 @@ class PreCommitRunner:
         skipped_hooks: set = SKIPPED_HOOKS
         skipped_hooks.update(set(skip_hooks or ()))
         if not unit_test:
-            skipped_hooks.add("run-unit-tests")
             skipped_hooks.add("coverage-analyze")
             skipped_hooks.add("merge-pytest-reports")
         if validate and "validate" in skipped_hooks:

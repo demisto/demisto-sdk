@@ -1,4 +1,5 @@
 import functools
+import os
 import time
 from collections import defaultdict
 from copy import deepcopy
@@ -127,11 +128,17 @@ def devtest_image(image_tag, is_powershell) -> str:
     raise DockerException(all_errors)
 
 
-def get_environment_flag() -> str:
+def get_environment_flag(env: Optional[dict]) -> str:
     """
     The env flag needed to run python scripts in docker
     """
-    return f'--env "PYTHONPATH={get_docker_python_path()}"'
+    environment_str = f'--env "PYTHONPATH={get_docker_python_path()}"'
+    if env:
+        for env_variable, env_value in env.items():
+            environment_str += f' --env "{env_variable}={env_value}"'
+    if os.getenv("GITHUB_ACTIONS"):
+        environment_str += " --env GITHUB_ACTIONS=true"
+    return environment_str
 
 
 def _split_by_config_file(files, config_arg: Optional[Tuple]):
@@ -239,13 +246,15 @@ class DockerHook(Hook):
         Returns:
             All the hooks to be appended for this image
         """
+
         new_hook = deepcopy(self.base_hook)
         new_hook["id"] = f"{new_hook.get('id')}-{image}"
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
+        env = new_hook.get("env", {})
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag()} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {dev_image}'
 
         ret_hooks = []
         counter = 0

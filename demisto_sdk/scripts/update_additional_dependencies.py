@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import get_file, is_external_repository
 
 
@@ -21,6 +21,7 @@ def update_additional_dependencies(
     Returns:
         int: 1 if failed, 0 if succeeded (OR not in a content-likerepository)
     """
+    logging_setup()
     if is_external_repository():
         logger.warning("Cannot detect repo, skipping update_additional_dependencies")
         return 0

@@ -1,6 +1,6 @@
-from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
 
 
 def test_is_valid_file(repo):
@@ -34,7 +34,7 @@ def test_is_valid_file(repo):
     structure_validator = StructureValidator(dummy_trigger.path)
     assert structure_validator.is_valid_scheme()
     with ChangeCWD(repo.path):
-        trigger_validator = LayoutRuleValidator(structure_validator)
+        trigger_validator = TriggersValidator(structure_validator)
         assert trigger_validator.is_valid_file()
 
 
@@ -87,5 +87,54 @@ def test_is_valid_file_complicated_schema(repo):
     structure_validator = StructureValidator(dummy_trigger.path)
     assert structure_validator.is_valid_scheme()
     with ChangeCWD(repo.path):
-        trigger_validator = LayoutRuleValidator(structure_validator)
+        trigger_validator = TriggersValidator(structure_validator)
         assert trigger_validator.is_valid_file()
+
+
+def test_is_not_valid_file_complicated_schema(repo):
+    """
+    Given: A trigger json with nested "AND" AND "OR" and missing SEARCH_FIELD that match "test3".
+    When: running are_all_fields_exist
+    Then: Validate that the trigger is not valid
+    """
+    pack = repo.create_pack("TestPack")
+    dummy_trigger = pack.create_trigger(
+        "MyTrigger",
+        {
+            "trigger_id": "trigger_id",
+            "playbook_id": "playbook_id",
+            "suggestion_reason": "Reason",
+            "description": "Description",
+            "trigger_name": "trigger_name",
+            "alerts_filter": {
+                "filter": {
+                    "OR": [
+                        {
+                            "AND": [
+                                {
+                                    "OR": [
+                                        {
+                                            "SEARCH_FIELD": "alert_name",
+                                            "SEARCH_TYPE": "EQ",
+                                            "SEARCH_VALUE": "test1",
+                                        },
+                                        {
+                                            "SEARCH_FIELD": "alert_name",
+                                            "SEARCH_TYPE": "EQ",
+                                            "SEARCH_VALUE": "test2",
+                                        },
+                                    ]
+                                },
+                                {
+                                    "SEARCH_TYPE": "Contains",
+                                    "SEARCH_VALUE": "test3",
+                                },
+                            ]
+                        }
+                    ]
+                }
+            },
+        },
+    )
+    structure_validator = StructureValidator(dummy_trigger.path)
+    assert not structure_validator.is_valid_scheme()

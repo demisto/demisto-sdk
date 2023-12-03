@@ -270,11 +270,7 @@ mapping:
               regex;(.+):
                 type: seq
                 sequence:
-                - type: str
-              regex;(regex;(.+):(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-                type: seq
-                sequence:
-                - type: str
+                  - type: str
           loop:
             type: map
             mapping:

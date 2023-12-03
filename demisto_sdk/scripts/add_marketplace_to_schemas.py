@@ -21,20 +21,21 @@ def add_key(mapping):
                     keys_to_delete.append(key)
             continue
         if value.get("type") != "map":
+            if "regex;" in key and "(.+)" in key:
+                continue
             value = deepcopy(value)
             value.pop("required", None)
-            if f"regex;{key}:" in key:
+            if "regex;" in key:
                 keys_to_delete.append(key)
                 continue
             new_key = f"regex;({key}:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas))"
-            if new_key not in mapping:
-                keys_to_add.append((new_key, value))
+            keys_to_add.append((new_key, value))
         else:
             add_key(value.get("mapping"))
-    for new_key, new_value in keys_to_add:
-        mapping[new_key] = new_value
     for key in keys_to_delete:
         mapping.pop(key, None)
+    for new_key, new_value in keys_to_add:
+        mapping[new_key] = new_value
 
 
 def main():

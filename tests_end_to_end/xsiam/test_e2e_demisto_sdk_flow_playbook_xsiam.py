@@ -25,12 +25,12 @@ from TestSuite.test_tools import ChangeCWD
 
 def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = False):
     """This flow checks:
-        1. Creates a new playbook and uploads it demisto-sdk upload command.
-        2. Downloads the playbook using demisto-sdk download command.
-        3. Generates docs for the playbook using demisto-sdk generate-docs command.
-        4. Formatting the playbook using the demisto-sdk format command.
-        5. Validates the playbook using the demisto-sdk validate command.
-        6. Uploads the playbook using the demisto-sdk upload command.
+    1. Creates a new playbook and uploads it demisto-sdk upload command.
+    2. Downloads the playbook using demisto-sdk download command.
+    3. Generates docs for the playbook using demisto-sdk generate-docs command.
+    4. Formatting the playbook using the demisto-sdk format command.
+    5. Validates the playbook using the demisto-sdk validate command.
+    6. Uploads the playbook using the demisto-sdk upload command.
     """
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
     e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
@@ -38,15 +38,22 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
         destination_folder=f"{tmpdir}/git/demisto-sdk",
         sdk_git_branch=DEMISTO_GIT_PRIMARY_BRANCH,
     )
-    
+
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
-    playbook, playbook_name, source_playbook_path = e2e_tests_utils.create_playbook(pack, pack_name)
+    playbook, playbook_name, source_playbook_path = e2e_tests_utils.create_playbook(
+        pack, pack_name
+    )
     assert Path(source_playbook_path).exists()
 
     logger.info(f"Trying to upload pack from {source_pack_path}")
-    Uploader(input=source_pack_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
-    
+    Uploader(
+        input=source_pack_path,
+        insecure=True,
+        zip=True,
+        marketplace=MarketplaceVersions.MarketplaceV2,
+    ).upload()
+
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
 
@@ -58,7 +65,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
         input=(playbook_name,),
         insecure=True,
         system=True,
-        item_type='Playbook'
+        item_type="Playbook",
     ).download()
     dest_playbook_path = Path(
         f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
@@ -83,25 +90,34 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
         OldValidateManager(file_path=str(source_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {source_playbook_path}")
-        Uploader(input=source_pack_path, insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
+        Uploader(
+            input=source_pack_path,
+            insecure=True,
+            zip=True,
+            marketplace=MarketplaceVersions.MarketplaceV2,
+        ).upload()
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     """This flow checks:
-        1. Creates a new playbook and uploading it to the machine using an http request.
-        2. Downloads the playbook using demisto-sdk download command.
-        3. Downloads the script CommonServerUserPowerShell using demisto-sdk upload command.
-        4. Generates docs for the playbook using demisto-sdk generate-docs command.
-        5. Formatting the playbook using the demisto-sdk format command.
-        6. Validates the playbook using the demisto-sdk validate command.
-        7. Uploads the playbook using the demisto-sdk upload command.
-        8. Deletes the playbook using an http request.
+    1. Creates a new playbook and uploading it to the machine using an http request.
+    2. Downloads the playbook using demisto-sdk download command.
+    3. Downloads the script CommonServerUserPowerShell using demisto-sdk upload command.
+    4. Generates docs for the playbook using demisto-sdk generate-docs command.
+    5. Formatting the playbook using the demisto-sdk format command.
+    6. Validates the playbook using the demisto-sdk validate command.
+    7. Uploads the playbook using the demisto-sdk upload command.
+    8. Deletes the playbook using an http request.
     """
-    demisto_client = get_client_from_marketplace(MarketplaceVersions.MarketplaceV2, verify_ssl=verify_ssl)
+    demisto_client = get_client_from_marketplace(
+        MarketplaceVersions.MarketplaceV2, verify_ssl=verify_ssl
+    )
 
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
-    playbook, playbook_name, source_playbook_path = e2e_tests_utils.create_playbook(pack, pack_name)
+    playbook, playbook_name, source_playbook_path = e2e_tests_utils.create_playbook(
+        pack, pack_name
+    )
 
     try:
         # uploads the playbook using API to emulate a playbook that has been created through the UI
@@ -111,14 +127,12 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
             logger.info(f"*** Playbook {playbook_name} already exists.")
         else:
             logger.info(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
-            assert False
+            raise
 
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
 
-    logger.info(
-        f"Checking which files we can download from the machine."
-    )
+    logger.info(f"Checking which files we can download from the machine.")
     Downloader(
         list_files=True,
         insecure=True,
@@ -132,7 +146,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         input=(playbook_name,),
         insecure=True,
         system=True,
-        item_type='Playbook'
+        item_type="Playbook",
     ).download()
     dest_playbook_path = Path(
         f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
@@ -144,7 +158,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_client",
-        input=('CommonServerUserPowerShell',),
+        input=("CommonServerUserPowerShell",),
         insecure=True,
     ).download()
 
@@ -167,7 +181,12 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         OldValidateManager(file_path=str(source_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {source_playbook_path}.")
-        Uploader(input=Path(source_playbook_path), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2).upload()
+        Uploader(
+            input=Path(source_playbook_path),
+            insecure=True,
+            zip=True,
+            marketplace=MarketplaceVersions.MarketplaceV2,
+        ).upload()
 
     try:
         demisto_client.delete_playbook(playbook_name, playbook_name)
@@ -175,7 +194,9 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
         logger.info(f"*** Failed to delete playbook {playbook_name}, reason: {ae}.")
 
 
-def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(tmpdir, verify_ssl: bool = False):
+def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(
+    tmpdir, verify_ssl: bool = False
+):
     """This flow checks:
     1. Creates a new pack with modeling rules.
     2. Uploads the pack using the demisto-sdk Upload command
@@ -184,20 +205,39 @@ def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(tmpdir, verify_ssl: bool
     """
     repo = Repo(tmpdir)
     pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
-    
-    e2e_tests_utils.create_modeling_rules_folder(source_pack_path, f"{pack_name}ModelingRules", f"{pack_name}ModelingRules",DEFAULT_MODELING_RULES_STRING,DEFAULT_TEST_DATA_STRING,DEFAULT_MODELING_RULES_SCHEMA_STRING)
-    assert Path(f"{source_pack_path}/ModelingRules/{pack_name}ModelingRules/{pack_name}ModelingRules.yml").exists()
-    
-    demisto_client = get_client_from_marketplace(MarketplaceVersions.MarketplaceV2, verify_ssl=verify_ssl)
+
+    e2e_tests_utils.create_modeling_rules_folder(
+        source_pack_path,
+        f"{pack_name}ModelingRules",
+        f"{pack_name}ModelingRules",
+        DEFAULT_MODELING_RULES_STRING,
+        DEFAULT_TEST_DATA_STRING,
+        DEFAULT_MODELING_RULES_SCHEMA_STRING,
+    )
+    assert Path(
+        f"{source_pack_path}/ModelingRules/{pack_name}ModelingRules/{pack_name}ModelingRules.yml"
+    ).exists()
+
+    demisto_client = get_client_from_marketplace(
+        MarketplaceVersions.MarketplaceV2, verify_ssl=verify_ssl
+    )
 
     # Uploads the pack
-    Uploader(input=Path(source_pack_path), insecure=True, zip=True, marketplace=MarketplaceVersions.MarketplaceV2, destination_zip_dir=tmpdir).upload()
-    
-    #check if the pack was installed
+    Uploader(
+        input=Path(source_pack_path),
+        insecure=True,
+        zip=True,
+        marketplace=MarketplaceVersions.MarketplaceV2,
+        destination_zip_dir=tmpdir,
+    ).upload()
+
+    # check if the pack was installed
     demisto_client.get_installed_pack(pack_name)
 
-    #test the created modeling rules
-    e2e_tests_utils.cli(f'demisto-sdk modeling-rules test {source_pack_path}/ModelingRules/{pack_name}ModelingRules')
+    # test the created modeling rules
+    e2e_tests_utils.cli(
+        f"demisto-sdk modeling-rules test {source_pack_path}/ModelingRules/{pack_name}ModelingRules"
+    )
 
-    #deletes the pack from the machine
+    # deletes the pack from the machine
     demisto_client.uninstall_marketplace_packs([pack_name])

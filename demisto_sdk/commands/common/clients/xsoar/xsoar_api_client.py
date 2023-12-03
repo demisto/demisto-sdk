@@ -178,9 +178,7 @@ class XsoarClient(BaseModel):
             if pack.get("id") == pack_id:
                 return pack
 
-        raise ValueError(
-            f"Could not find installed pack for pack ID '{pack_id}'"
-        )
+        raise ValueError(f"'{pack_id}' is not installed in {self.base_url}")
 
     @retry(exceptions=ApiException)
     def search_marketplace_packs(self, filters: Optional[Dict] = None):

@@ -11,6 +11,7 @@ from TestSuite.repo import Repo
 from pathlib import Path
 import random
 
+
 def git_clone_demisto_sdk(
     destination_folder: str, sdk_git_branch: str = DEMISTO_GIT_PRIMARY_BRANCH
 ):
@@ -49,6 +50,7 @@ def connect_to_server(insecure: bool = False):
         )
     return client
 
+
 def create_pack(repo: Repo):
     unique_id = random.randint(1, 100)
     pack_name = "e2e_test_" + str(unique_id)
@@ -57,21 +59,29 @@ def create_pack(repo: Repo):
 
     return pack, pack_name, source_pack_path
 
+
 def create_playbook(pack, pack_name):
     playbook_name = "pb_e2e_test_" + pack_name
     playbook: Playbook = pack.create_playbook(name=playbook_name)
     playbook.create_default_playbook(name=playbook_name)
     playbook_path = Path(playbook.yml.path)
-    
+
     return playbook, playbook_name, playbook_path
 
-def create_xif_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_string):
 
-    with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}.xif", 'w') as file:
+def create_xif_file_modeling_rules(
+    pack_path, modeling_rules_name, modeling_rules_string
+):
+    with open(
+        f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}.xif",
+        "w",
+    ) as file:
         file.write(modeling_rules_string)
 
-def create_yml_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_id):
-    
+
+def create_yml_file_modeling_rules(
+    pack_path: str, modeling_rules_name: str, modeling_rules_id: str
+):
     yml_file_string = f"""
 fromversion: 8.4.0
 id: {modeling_rules_id}
@@ -79,21 +89,42 @@ name: {modeling_rules_name}
 rules: ''
 schema: ''
     """
-    
-    with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}.yml", 'w') as file:
+
+    with open(
+        f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}.yml",
+        "w",
+    ) as file:
         file.write(yml_file_string)
 
-def create_schema_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_schema_string):
 
-    with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}_schema.json", 'w') as file:
+def create_schema_file_modeling_rules(
+    pack_path: str, modeling_rules_name: str, modeling_rules_schema_string: str
+):
+    with open(
+        f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}_schema.json",
+        "w",
+    ) as file:
         file.write(modeling_rules_schema_string)
 
-def create_testdata_file_modeling_rules(pack_path, modeling_rules_name, test_data_string):
 
-    with open(f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}_testdata.json", 'w') as file:
+def create_testdata_file_modeling_rules(
+    pack_path: str, modeling_rules_name: str, test_data_string: str
+):
+    with open(
+        f"{pack_path}/ModelingRules/{modeling_rules_name}/{modeling_rules_name}_testdata.json",
+        "w",
+    ) as file:
         file.write(test_data_string)
 
-def create_modeling_rules_folder(pack_path, modeling_rules_name, modeling_rules_id, modeling_rules_string, test_data_string, modeling_rules_schema_string):
+
+def create_modeling_rules_folder(
+    pack_path: str,
+    modeling_rules_name: str,
+    modeling_rules_id: str,
+    modeling_rules_string: str,
+    test_data_string: str,
+    modeling_rules_schema_string: str,
+):
     """Creating the modeling rules folder, consists of modeling rules file, schema, yml and testdata file
 
     Args:
@@ -104,9 +135,16 @@ def create_modeling_rules_folder(pack_path, modeling_rules_name, modeling_rules_
         test_data_string (str): The data of the testdata.
         modeling_rules_schema_string (str): The data of the schema
     """
-    cli(f"mkdir -p {pack_path}/ModelingRules/{modeling_rules_name}")
+    directory_path = Path(f"{pack_path}/ModelingRules/{modeling_rules_name}")
+    directory_path.mkdir(parents=True, exist_ok=True)
 
-    create_testdata_file_modeling_rules(pack_path, modeling_rules_name, test_data_string)
-    create_schema_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_schema_string)
+    create_testdata_file_modeling_rules(
+        pack_path, modeling_rules_name, test_data_string
+    )
+    create_schema_file_modeling_rules(
+        pack_path, modeling_rules_name, modeling_rules_schema_string
+    )
     create_yml_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_id)
-    create_xif_file_modeling_rules(pack_path, modeling_rules_name, modeling_rules_string)
+    create_xif_file_modeling_rules(
+        pack_path, modeling_rules_name, modeling_rules_string
+    )

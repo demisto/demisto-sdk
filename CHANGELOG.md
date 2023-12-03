@@ -11,7 +11,6 @@
 * Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
 * Added support for json5 file, allowing to write files and read files from specific git branches, local file system, or from any remote api .
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
-* Added e2e tests to the demisto-sdk Nightly pipeline.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

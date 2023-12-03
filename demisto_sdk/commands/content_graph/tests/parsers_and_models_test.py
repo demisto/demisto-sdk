@@ -1074,6 +1074,40 @@ class TestParsersAndModels:
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
+    def test_assets_modeling_rule_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with an assets modeling rule.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify no relationships were collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
+            AssetsModelingRule,
+        )
+        from demisto_sdk.commands.content_graph.parsers.assets_modeling_rule import (
+            AssetsModelingRuleParser,
+        )
+
+        assets_modeling_rule = pack.create_assets_modeling_rule(
+            "TestAssetsModelingRule"
+        )
+        modeling_rule_path = Path(assets_modeling_rule.path)
+        parser = AssetsModelingRuleParser(modeling_rule_path, list(MarketplaceVersions))
+        assert not parser.relationships
+        model = AssetsModelingRule.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="assets-modeling-rule",
+            expected_name="Assets Modeling Rule",
+            expected_content_type=ContentType.ASSETS_MODELING_RULE,
+            expected_fromversion="6.8.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
+
     def test_parsing_rule_parser(self, pack: Pack):
         """
         Given:

@@ -517,7 +517,7 @@ class ContributionConverter:
                         generated_readme_path = contributed_yml.parent / PACKS_README_FILE_NAME
                         existing_readme_path = content_yml.parent / PACKS_README_FILE_NAME
                         
-                        generated_readme = merge_files(generated_readme_path, existing_readme_path, generated_readme_path.__str__()).__str__()
+                        generated_readme = merge_files(existing_readme_path, generated_readme_path, generated_readme_path.__str__()).__str__()
                         
                     generated_readmes.append(generated_readme)
                         

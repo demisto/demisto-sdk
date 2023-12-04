@@ -11,34 +11,37 @@ TOKEN_ADDED = "+ "
 TOKEN_NOT_PRESENT = "? "
 TOKEN_BOTH = " "
 
+
 def get_file_diff(original: Path, modified: Path) -> List[str]:
-        """
-        Helper function to generate a list of differences between 2 files.
+    """
+    Helper function to generate a list of differences between 2 files.
 
-        Args:
-            - `original` (``Path``): The path to the original file.
-            - `modified` (``Path``): The path to the modified file.
+    Args:
+        - `original` (``Path``): The path to the original file.
+        - `modified` (``Path``): The path to the modified file.
 
-        Returns:
-            - `List[str]` of the differences between the files. 
-            Each line that is different between the two has a +, - or ? depending
-            if the line was added, changed or removed.
-        """
+    Returns:
+        - `List[str]` of the differences between the files.
+        Each line that is different between the two has a +, - or ? depending
+        if the line was added, changed or removed.
+    """
 
-        d = Differ()
+    d = Differ()
 
-        file_diff: List[str] = []
-        try:
-            a = original.read_text().splitlines(keepends=True)
-            b = modified.read_text().splitlines(keepends=True)
+    file_diff: List[str] = []
+    try:
+        a = original.read_text().splitlines(keepends=True)
+        b = modified.read_text().splitlines(keepends=True)
 
-            file_diff.extend(list(d.compare(a, b)))
-        except FileNotFoundError as enoent:
-            logger.error(f"Unable to calculate file diff, file not found: {enoent.strerror}")
-        except Exception as e:
-            logger.error(f"Unable to calculate file diff: {e}")
-        finally:
-            return file_diff
+        file_diff.extend(list(d.compare(a, b)))
+    except FileNotFoundError as enoent:
+        logger.error(
+            f"Unable to calculate file diff, file not found: {enoent.strerror}"
+        )
+    except Exception as e:
+        logger.error(f"Unable to calculate file diff: {e}")
+    finally:
+        return file_diff
 
 
 def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
@@ -66,21 +69,27 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
     elif not f1.exists() and not f2.exists():
         logger.error(f"Neither file '{f1.__str__()}' nor '{f2.__str__()}' exist.")
         return None
-    
+
     # Check if the files are identical and return the original if they are
     try:
         if filecmp.cmp(f1, f2, shallow=False):
-            logger.debug(f"Files '{f1.__str__()}' and '{f2.__str__()}' are identical. Returning '{f1.__str__()}'")
+            logger.debug(
+                f"Files '{f1.__str__()}' and '{f2.__str__()}' are identical. Returning '{f1.__str__()}'"
+            )
             return f1
     except PermissionError as pe:
-        logger.error(f"Error comparing files '{f1.__str__()}' and '{f2.__str__()}': {str(pe)}. Returning '{f2.__str__()}'")
+        logger.error(
+            f"Error comparing files '{f1.__str__()}' and '{f2.__str__()}': {str(pe)}. Returning '{f2.__str__()}'"
+        )
         return f2
 
     diff = get_file_diff(f1, f2)
 
     # In case we can't create a file diff, we want to return f2
     if not diff:
-        logger.warning(f"Unable to calculate file diff between '{f1.__str__()}' and '{f2.__str__()}'. Returning '{f2.__str__()}'")
+        logger.warning(
+            f"Unable to calculate file diff between '{f1.__str__()}' and '{f2.__str__()}'. Returning '{f2.__str__()}'"
+        )
         return f2
 
     output_path = Path(output_dir)
@@ -98,13 +107,12 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
     # If it's neither, we create a temporary directory and dir
     else:
         output_file = Path(tempfile.mkstemp(suffix=f1.suffix, prefix=f1.name)[1])
-    
+
     # We iterate over each line
     # Lines that have '-' means that the line was removed from f2.
     # Lines that have '+' means that the line was added to f2.
     try:
         for i, line in enumerate(diff):
-
             # If the text is found in both, we want to add it.
             if line.startswith(TOKEN_BOTH):
                 diff[i] = line.replace(TOKEN_BOTH, "", 2)
@@ -116,11 +124,15 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
                     # + loremm
                     # ?      +
                     # We want to take the original text and skip the following line
-                    if diff[i+1].startswith(TOKEN_ADDED) and diff[i+2].startswith(TOKEN_NOT_PRESENT):
+                    if diff[i + 1].startswith(TOKEN_ADDED) and diff[i + 2].startswith(
+                        TOKEN_NOT_PRESENT
+                    ):
                         diff[i] = line.replace(TOKEN_REMOVED, "", 2)
-                    elif diff[i+1].startswith(TOKEN_NOT_PRESENT) and diff[i+2].startswith(TOKEN_ADDED):
-                        diff[i] = diff[i+2].replace(TOKEN_ADDED, "", 2)
-                        diff[i+2] = ""
+                    elif diff[i + 1].startswith(TOKEN_NOT_PRESENT) and diff[
+                        i + 2
+                    ].startswith(TOKEN_ADDED):
+                        diff[i] = diff[i + 2].replace(TOKEN_ADDED, "", 2)
+                        diff[i + 2] = ""
                     else:
                         diff[i] = line.replace(TOKEN_REMOVED, "", 2)
                 except IndexError:
@@ -158,7 +170,7 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
     # Filter out empty strings
     output_text = [s for s in diff if s]
 
-    with output_file.open("w", newline='\n') as out:
+    with output_file.open("w", newline="\n") as out:
         out.writelines(output_text)
 
     return output_file

@@ -114,7 +114,12 @@ class ContributionConverter:
     """
 
     DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-    SOURCE_FIELD_NAMES = {'sourcemoduleid', 'sourcescripid', 'sourceplaybookid', 'sourceClassifierId'}
+    SOURCE_FIELD_NAMES = {
+        "sourcemoduleid",
+        "sourcescripid",
+        "sourceplaybookid",
+        "sourceClassifierId",
+    }
 
     def __init__(
         self,
@@ -129,7 +134,7 @@ class ContributionConverter:
         release_notes: str = "",
         detected_content_items: list = [],
         base_dir: Optional[str] = None,
-        working_dir_path: str = ""
+        working_dir_path: str = "",
     ):
         """Initializes a ContributionConverter instance
 
@@ -265,12 +270,10 @@ class ContributionConverter:
     def unpack_contribution_to_dst_pack_directory(self) -> None:
         """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
         shutil.unpack_archive(
-            filename=self.contribution, extract_dir=str(
-                self.working_dir_path)
+            filename=self.contribution, extract_dir=str(self.working_dir_path)
         )
         # remove metadata.json file
         Path(self.working_dir_path, "metadata.json").unlink()
-        
 
     def convert_contribution_dir_to_pack_contents(
         self, unpacked_contribution_dir: str
@@ -368,7 +371,7 @@ class ContributionConverter:
             readme_path = yml_path.replace(".yml", "_README.md")
         else:
             readme_path = os.path.join(dir_output, "README.md")
-        
+
         return readme_path
 
     def generate_readmes_for_new_content_pack(self, is_contribution=False) -> List[str]:
@@ -416,19 +419,16 @@ class ContributionConverter:
         """
         unpacked_contribution_dirs = get_child_directories(str(self.working_dir_path))
         for unpacked_contribution_dir in unpacked_contribution_dirs:
-
             dir_name = Path(unpacked_contribution_dir).name
 
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
-
                 dst_ioc_fields_dir = str(
                     Path(self.working_dir_path, FileType.INDICATOR_FIELD.value)
                 )
                 src_path = str(Path(self.working_dir_path, dir_name))
 
                 for file in os.listdir(src_path):
-
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
                         Path(dst_ioc_fields_dir).mkdir(parents=True, exist_ok=True)
@@ -440,8 +440,7 @@ class ContributionConverter:
                     shutil.rmtree(src_path, ignore_errors=True)
 
     def convert_contribution_to_pack(self):
-        """Create or updates a pack in the content repo from the contents of a contribution zipfile
-        """
+        """Create or updates a pack in the content repo from the contents of a contribution zipfile"""
         try:
             # only create pack_metadata.json and base pack files if creating a new pack
             if self.create_new:
@@ -456,7 +455,6 @@ class ContributionConverter:
                 # create base files
                 self.create_pack_base_files()
 
-        
             # We need to fix the modified
             # content items paths and filenames and generate a new zip
             # with a mapping of the changes done.
@@ -493,34 +491,45 @@ class ContributionConverter:
 
             # If it's a new Pack, we recursively create READMEs for all content items
             if self.create_new:
-                generated_readmes = self.generate_readmes_for_new_content_pack(is_contribution=True)
+                generated_readmes = self.generate_readmes_for_new_content_pack(
+                    is_contribution=True
+                )
 
             # If it's an existing Pack, we need to generate the map
             # to check if the contributed content item is new or not
             # and merge its README with the existing one if it is.
             else:
-
                 # We get the path to contributed content item yml
-                # the same item in the content repo and whether the item exists in the 
+                # the same item in the content repo and whether the item exists in the
                 # content repo.
-                for contributed_yml, content_yml, exists in self.get_contributed_content():
-
+                for (
+                    contributed_yml,
+                    content_yml,
+                    exists,
+                ) in self.get_contributed_content():
                     # We use the path to the yml to generate a README for the contributed content item
                     generated_readme = self.generate_readme_for_pack_content_item(
-                        yml_path=contributed_yml.__str__(),
-                        is_contribution=True
+                        yml_path=contributed_yml.__str__(), is_contribution=True
                     )
 
                     # If the contributed content item exists, we need to
                     # merge the READMEs and add them to the state
                     if exists:
-                        generated_readme_path = contributed_yml.parent / PACKS_README_FILE_NAME
-                        existing_readme_path = content_yml.parent / PACKS_README_FILE_NAME
-                        
-                        generated_readme = merge_files(existing_readme_path, generated_readme_path, generated_readme_path.__str__()).__str__()
-                        
+                        generated_readme_path = (
+                            contributed_yml.parent / PACKS_README_FILE_NAME
+                        )
+                        existing_readme_path = (
+                            content_yml.parent / PACKS_README_FILE_NAME
+                        )
+
+                        generated_readme = merge_files(
+                            existing_readme_path,
+                            generated_readme_path,
+                            generated_readme_path.__str__(),
+                        ).__str__()
+
                     generated_readmes.append(generated_readme)
-                        
+
             self.readme_files = generated_readmes
 
         except Exception as e:
@@ -534,8 +543,7 @@ class ContributionConverter:
                     "The following errors occurred while converting unified content YAMLs to package structure:"
                 )
                 logger.info(
-                    textwrap.indent(
-                        "\n".join(self.contrib_conversion_errs), "\t")
+                    textwrap.indent("\n".join(self.contrib_conversion_errs), "\t")
                 )
 
     @staticmethod
@@ -550,8 +558,7 @@ class ContributionConverter:
                 ):
                     return pack_version_reg.groups()[0]
             except Exception as e:
-                logger.warning(
-                    f"Failed extracting pack version from script: {e}")
+                logger.warning(f"Failed extracting pack version from script: {e}")
         return "0.0.0"
 
     def create_contribution_items_version_note(self):
@@ -628,8 +635,7 @@ class ContributionConverter:
                 try:
                     child_file_name = Path(child_file).name
                     if source_mapping and child_file_name in source_mapping.keys():
-                        child_file_mapping = source_mapping.get(
-                            child_file_name, {})
+                        child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get("base_name", "")
                         containing_dir_name = child_file_mapping.get(
                             "containing_dir_name", ""
@@ -648,8 +654,7 @@ class ContributionConverter:
                             )
                         )
                         if not autocreate_dir:
-                            output_dir = os.path.join(
-                                output_dir, containing_dir_name)
+                            output_dir = os.path.join(output_dir, containing_dir_name)
                         os.makedirs(output_dir, exist_ok=True)
                         extractor = YmlSplitter(
                             input=content_item_file_path,
@@ -672,8 +677,7 @@ class ContributionConverter:
                         )
                         if isinstance(content_item, IntegrationScript):
                             script = content_item.code
-                            contributor_item_version = self.extract_pack_version(
-                                script)
+                            contributor_item_version = self.extract_pack_version(script)
                             current_pack_version = get_pack_metadata(
                                 file_path=str(self.pack_dir_path)
                             ).get("currentVersion", "0.0.0")
@@ -706,8 +710,7 @@ class ContributionConverter:
                         shutil.move(content_item_file_path, output_path)
                     if del_unified:
                         Path(content_item_file_path).unlink(missing_ok=True)
-                        moved_unified_dst = os.path.join(
-                            output_path, child_file_name)
+                        moved_unified_dst = os.path.join(output_path, child_file_name)
                         Path(moved_unified_dst).unlink(missing_ok=True)
 
     def create_pack_base_files(self):
@@ -736,8 +739,7 @@ class ContributionConverter:
             "description"
         )
         metadata_dict["name"] = self.name
-        metadata_dict["author"] = self.author or zipped_metadata.get(
-            "author", "")
+        metadata_dict["author"] = self.author or zipped_metadata.get("author", "")
         metadata_dict["support"] = "community"
         metadata_dict["url"] = zipped_metadata.get("supportDetails", {}).get(
             "url", MARKETPLACE_LIVE_DISCUSSIONS
@@ -751,19 +753,16 @@ class ContributionConverter:
             zipped_metadata.get("tags") if zipped_metadata.get("tags") else []
         )
         metadata_dict["useCases"] = (
-            zipped_metadata.get("useCases") if zipped_metadata.get(
-                "useCases") else []
+            zipped_metadata.get("useCases") if zipped_metadata.get("useCases") else []
         )
         metadata_dict["keywords"] = (
-            zipped_metadata.get("keywords") if zipped_metadata.get(
-                "keywords") else []
+            zipped_metadata.get("keywords") if zipped_metadata.get("keywords") else []
         )
         metadata_dict["githubUser"] = [self.gh_user] if self.gh_user else []
         metadata_dict["marketplaces"] = (
             zipped_metadata.get("marketplaces") or MARKETPLACES
         )
-        metadata_dict = ContributionConverter.create_pack_metadata(
-            data=metadata_dict)
+        metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
         metadata_path = str(Path(self.working_dir_path, "pack_metadata.json"))
         with open(metadata_path, "w") as pack_metadata_file:
             json.dump(metadata_dict, pack_metadata_file, indent=4)
@@ -881,8 +880,7 @@ class ContributionConverter:
                         template_entity = previous_line.lstrip(
                             entity_identifier
                         ).rstrip("\n")
-                    curr_content_items = rn_per_content_item.get(
-                        template_entity)
+                    curr_content_items = rn_per_content_item.get(template_entity)
                     if curr_content_items:
                         lines[index] = curr_content_items
 
@@ -890,7 +888,9 @@ class ContributionConverter:
             rn_file.writelines(lines)
             rn_file.truncate()
 
-    def get_source_integration_display_field(self, src_integration_yml_path: str) -> Optional[str]:
+    def get_source_integration_display_field(
+        self, src_integration_yml_path: str
+    ) -> Optional[str]:
         """Fetch the value of the 'display' field from the source integration yaml
 
         Args:
@@ -901,25 +901,26 @@ class ContributionConverter:
         """
         exists = Path(src_integration_yml_path).exists()
         is_file = Path(src_integration_yml_path).is_file()
-        is_yaml = os.path.splitext(src_integration_yml_path)[1] == '.yml'
+        is_yaml = os.path.splitext(src_integration_yml_path)[1] == ".yml"
         if exists and is_file and is_yaml:
             ryaml = YAML_Handler()
-            with open(src_integration_yml_path, 'r') as df:
+            with open(src_integration_yml_path, "r") as df:
                 data_obj = ryaml.load(df)
-                display_field = data_obj.get('display')
+                display_field = data_obj.get("display")
                 return display_field
         else:
             path_as_string = str(src_integration_yml_path)
             if not exists:
                 logger.warn(
-                    f'"{path_as_string}" was not found to exist in the local file system.')
+                    f'"{path_as_string}" was not found to exist in the local file system.'
+                )
             elif not is_file:
                 logger.warn(f'"{path_as_string}" was not found to be a file.')
             else:
-                logger.warn(
-                    f'"{path_as_string}" was not found to be a yaml file.')
+                logger.warn(f'"{path_as_string}" was not found to be a yaml file.')
             logger.warn(
-                'Therefore skipping fetching the "display" field from the source integration.')
+                'Therefore skipping fetching the "display" field from the source integration.'
+            )
             return None
 
     def fixup_detected_content_items(
@@ -931,89 +932,113 @@ class ContributionConverter:
             Tuple[str, Dict[str, Dict[str, str]]]: The path to the updated zip file, and the mapping of zip's content file
                 names to eachs associated basename and containing directory name
         """
-        id_to_data = {id_val: info_dict for info_dict in self.detected_content_items if (
-            id_val := info_dict.get('id'))}
+        id_to_data = {
+            id_val: info_dict
+            for info_dict in self.detected_content_items
+            if (id_val := info_dict.get("id"))
+        }
         integrations_path_pattern = r"^Packs/\S+?/Integrations/.*"
         for info_dict in id_to_data.values():
-            source_file_path = info_dict.get('source_file_name', '')
+            source_file_path = info_dict.get("source_file_name", "")
             if re.search(integrations_path_pattern, source_file_path):
                 fetched_display_field = self.get_source_integration_display_field(
                     os.path.join(get_content_path(), source_file_path)
-                    )
+                )
                 if fetched_display_field:
-                    info_dict['source_display'] = fetched_display_field
+                    info_dict["source_display"] = fetched_display_field
         ids_to_modify = id_to_data.keys()
 
         filename_to_basename_and_containing_dir = {}
 
         ryaml = YAML_Handler()
         modified_contribution_zip_path = os.path.join(
-            self.working_dir_path, 'modified_contribution.zip')
-        tmp_zf = ZipFile(modified_contribution_zip_path, 'w')
-        with ZipFile(self.contribution, 'r') as zf:
+            self.working_dir_path, "modified_contribution.zip"
+        )
+        tmp_zf = ZipFile(modified_contribution_zip_path, "w")
+        with ZipFile(self.contribution, "r") as zf:
             for item in zf.infolist():
-                if item.filename.endswith('.yml'):
+                if item.filename.endswith(".yml"):
                     data_worker: Any = ryaml
-                elif item.filename.endswith('.json'):
+                elif item.filename.endswith(".json"):
                     data_worker = json
                 else:
                     continue
-                with zf.open(item, 'r') as df:
+                with zf.open(item, "r") as df:
                     data_obj = data_worker.load(df)
-                content_id = data_obj['commonfields'].get(
-                    'id', '') if 'commonfields' in data_obj.keys() else data_obj.get(
-                    'id', '')
+                content_id = (
+                    data_obj["commonfields"].get("id", "")
+                    if "commonfields" in data_obj.keys()
+                    else data_obj.get("id", "")
+                )
                 # replace fields with originals
                 if content_id in ids_to_modify:
                     replacement_info = id_to_data.get(content_id, {})
-                    original_name = replacement_info.get('source_name', '')
-                    original_id = replacement_info.get('source_id', '')
-                    original_file_path = replacement_info.get(
-                        'source_file_name', '')
-                    original_display = replacement_info.get(
-                        'source_display', '')
-                    data_obj['name'] = original_name
-                    if (display := data_obj.get('display', '')) and original_display and display != original_display:
+                    original_name = replacement_info.get("source_name", "")
+                    original_id = replacement_info.get("source_id", "")
+                    original_file_path = replacement_info.get("source_file_name", "")
+                    original_display = replacement_info.get("source_display", "")
+                    data_obj["name"] = original_name
+                    if (
+                        (display := data_obj.get("display", ""))
+                        and original_display
+                        and display != original_display
+                    ):
                         # should only occur for integration yamls
-                        data_obj['display'] = original_display
-                    if 'commonfields' in data_obj.keys():
-                        data_obj['commonfields']['id'] = original_id
+                        data_obj["display"] = original_display
+                    if "commonfields" in data_obj.keys():
+                        data_obj["commonfields"]["id"] = original_id
                     else:
-                        data_obj['id'] = original_id
+                        data_obj["id"] = original_id
                     # wipe source fields
-                    for source_field in self.SOURCE_FIELD_NAMES.intersection(set(data_obj.keys())):
-                        if source_field == 'sourceClassifierId':
-                            data_obj[source_field] = ''
+                    for source_field in self.SOURCE_FIELD_NAMES.intersection(
+                        set(data_obj.keys())
+                    ):
+                        if source_field == "sourceClassifierId":
+                            data_obj[source_field] = ""
                         else:
                             del data_obj[source_field]
 
                     original_file_name = Path(original_file_path).name
-                    if any(original_file_name.startswith(prefix.value) for prefix in ContentItems):
+                    if any(
+                        original_file_name.startswith(prefix.value)
+                        for prefix in ContentItems
+                    ):
                         # deal with the prefixes that have '-' in the prefix themselves
-                        if original_file_name.startswith(('classifier-mapper-incoming-', 'classifier-mapper-outgoing-')):
-                            long_classifier_prefix = len(
-                                'classifier-mapper-incoming-')
-                            original_file_name = original_file_name[long_classifier_prefix - 1:]
+                        if original_file_name.startswith(
+                            (
+                                "classifier-mapper-incoming-",
+                                "classifier-mapper-outgoing-",
+                            )
+                        ):
+                            long_classifier_prefix = len("classifier-mapper-incoming-")
+                            original_file_name = original_file_name[
+                                long_classifier_prefix - 1 :
+                            ]
                         else:
                             prefix = f'{original_file_name.split("-")[0]}-'
-                            if any(prefix.casefold().startswith(item.value) for item in ContentItems):
+                            if any(
+                                prefix.casefold().startswith(item.value)
+                                for item in ContentItems
+                            ):
                                 original_file_name = original_file_name.replace(
-                                    prefix, '')
-                    file_name_prefix = Path(item.filename).name.split('-')[0].casefold()
+                                    prefix, ""
+                                )
+                    file_name_prefix = Path(item.filename).name.split("-")[0].casefold()
                     file_dir = os.path.dirname(item.filename)
                     # rename file
-                    new_file_name = f'{file_name_prefix}-{original_file_name}'
+                    new_file_name = f"{file_name_prefix}-{original_file_name}"
                     new_file_path = os.path.join(file_dir, new_file_name)
                     # map new file to source basename and source containing directory name
                     filename_to_basename_and_containing_dir[new_file_name] = {
-                        'base_name': original_file_name.replace('.yml', ''),
-                        'containing_dir_name': Path(os.path.dirname(original_file_path)).name
+                        "base_name": original_file_name.replace(".yml", ""),
+                        "containing_dir_name": Path(
+                            os.path.dirname(original_file_path)
+                        ).name,
                     }
 
                     formatted_data_dump = StringIO()
                     data_worker.dump(data_obj, formatted_data_dump)
-                    tmp_zf.writestr(
-                        new_file_path, formatted_data_dump.getvalue())
+                    tmp_zf.writestr(new_file_path, formatted_data_dump.getvalue())
                 else:
                     tmp_zf.writestr(item, zf.read(item.filename))
         return modified_contribution_zip_path, filename_to_basename_and_containing_dir
@@ -1040,10 +1065,14 @@ class ContributionConverter:
         result: List[Tuple[Path, Path, bool]] = []
 
         for dir in get_child_directories(self.working_dir_path):
-            new_content = namedtuple("new_content", ["contributed_yml", "content_yml", "exists"])
+            new_content = namedtuple(
+                "new_content", ["contributed_yml", "content_yml", "exists"]
+            )
             if Path(dir).name == INTEGRATIONS_DIR or Path(dir).name == SCRIPTS_DIR:
                 for sub_dir in get_child_directories(dir):
-                    logger.debug(f"Checking whether '{sub_dir}' exists in '{Path(self.pack_dir_path / dir / Path(sub_dir).name)}'...")
+                    logger.debug(
+                        f"Checking whether '{sub_dir}' exists in '{Path(self.pack_dir_path / dir / Path(sub_dir).name)}'..."
+                    )
 
                     # There should only be 1 YAML
                     try:
@@ -1052,14 +1081,25 @@ class ContributionConverter:
                         result.append(
                             new_content(
                                 yml,
-                                Path(self.pack_dir_path / Path(dir).name / Path(sub_dir).name / f"{Path(sub_dir).name}.yml"),
-                                Path(self.pack_dir_path / Path(dir).name / Path(sub_dir).name).exists()
+                                Path(
+                                    self.pack_dir_path
+                                    / Path(dir).name
+                                    / Path(sub_dir).name
+                                    / f"{Path(sub_dir).name}.yml"
+                                ),
+                                Path(
+                                    self.pack_dir_path
+                                    / Path(dir).name
+                                    / Path(sub_dir).name
+                                ).exists(),
                             )
                         )
                     except IndexError as ie:
-                        logger.warn(f"Couldn't find a YML in the directory '{sub_dir}': {str(ie)}. Skipping...")
+                        logger.warn(
+                            f"Couldn't find a YML in the directory '{sub_dir}': {str(ie)}. Skipping..."
+                        )
                         pass
-            # Since Playbooks are not put in a separate directory 
+            # Since Playbooks are not put in a separate directory
             # we need to parse the Playbook ID and check if it exists
             elif Path(dir).name == PLAYBOOKS_DIR:
                 contrib_ymls = Path(dir).glob("*.yml")
@@ -1077,11 +1117,7 @@ class ContributionConverter:
                             pb_id_existing = pb_data_existing.get("id")
 
                         result.append(
-                            new_content(
-                                pb_yml,
-                                pb_content_yml,
-                                pb_id == pb_id_existing
-                            )
+                            new_content(pb_yml, pb_content_yml, pb_id == pb_id_existing)
                         )
 
         return result

@@ -86,10 +86,7 @@ def util_open_file(path):
 @pytest.fixture
 def contrib_converter():
     return ContributionConverter(
-        contribution="contribution.zip",
-        name="",
-        pack_dir_name="",
-        base_dir="/tmp"
+        contribution="contribution.zip", name="", pack_dir_name="", base_dir="/tmp"
     )
 
 
@@ -109,16 +106,15 @@ def create_test_packs(request, tmp_path_factory):
 
 
 class TmpPack(os.PathLike):
-
     def __init__(self, pack_dir):
         self.pack_dir = pack_dir
 
-        self.default_integration_name = 'defaultintegration'
+        self.default_integration_name = "defaultintegration"
         self.integration_cnt = 0
-        self.integration_dir = self.pack_dir / 'Integrations'
+        self.integration_dir = self.pack_dir / "Integrations"
 
-        self.default_script_name = 'defaultscript'
-        self.script_dir = self.pack_dir / 'Scripts'
+        self.default_script_name = "defaultscript"
+        self.script_dir = self.pack_dir / "Scripts"
         self.script_cnt = 0
 
     def create_file(self, path, contents: Optional[str] = None):
@@ -132,15 +128,15 @@ class TmpPack(os.PathLike):
         if name:
             integration_name = name
         else:
-            integration_name = f'{self.default_integration_name}-{self.integration_cnt}'
+            integration_name = f"{self.default_integration_name}-{self.integration_cnt}"
             self.integration_cnt += 1
         integration_package_dir = self.integration_dir / integration_name
         integration_package_dir.mkdir()
         integration_files_to_make = {
-            f'{integration_name}.py',
-            f'{integration_name}.yml',
-            f'{integration_name}_image.png',
-            f'{integration_name}_description.md'
+            f"{integration_name}.py",
+            f"{integration_name}.yml",
+            f"{integration_name}_image.png",
+            f"{integration_name}_description.md",
         }
         file_contents = contents if contents else integration_name
         for integration_file in integration_files_to_make:
@@ -153,15 +149,15 @@ class TmpPack(os.PathLike):
         if name:
             script_name = name
         else:
-            script_name = f'{self.default_script_name}-{self.script_cnt}'
+            script_name = f"{self.default_script_name}-{self.script_cnt}"
             self.script_cnt += 1
         script_package_dir = self.script_dir / script_name
         script_package_dir.mkdir()
         script_files_to_make = {
-            f'{script_name}.py',
-            f'{script_name}.yml',
-            f'{script_name}_image.png',
-            f'{script_name}_description.md'
+            f"{script_name}.py",
+            f"{script_name}.yml",
+            f"{script_name}_image.png",
+            f"{script_name}_description.md",
         }
         file_contents = contents if contents else script_name
         for script_file in script_files_to_make:
@@ -175,12 +171,13 @@ class TmpPack(os.PathLike):
         return str(self.pack_dir)
 
 
-
 def create_contribution_converter(
     request: FixtureRequest, tmp_path_factory: TempPathFactory
 ) -> ContributionConverter:
     tmp_dir = _mk_tmp(request, tmp_path_factory)
-    return ContributionConverter(contribution="contrib.zip", name=request.param, base_dir=str(tmp_dir))
+    return ContributionConverter(
+        contribution="contrib.zip", name=request.param, base_dir=str(tmp_dir)
+    )
 
 
 @pytest.fixture
@@ -276,7 +273,7 @@ def test_convert_contribution_zip_updated_pack(tmp_path, mocker):
         description=description,
         author=author,
         create_new=False,
-        base_dir=repo.path
+        base_dir=repo.path,
     )
     contrib_converter_inst.convert_contribution_to_pack()
     converted_pack_path = repo_dir / "Packs" / "TestPack"
@@ -387,7 +384,7 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
         contribution=contribution_path,
         description=description,
         author=author,
-        base_dir=repo_dir
+        base_dir=repo_dir,
     )
     contrib_converter_inst.convert_contribution_to_pack()
     contrib_converter_inst.generate_readmes_for_new_content_pack()
@@ -506,7 +503,7 @@ def test_convert_contribution_zip(tmp_path, mocker):
         contribution=contribution_path,
         description=description,
         author=author,
-        base_dir=repo_dir
+        base_dir=repo_dir,
     )
     contrib_converter_inst.convert_contribution_to_pack()
     contrib_converter_inst.generate_readmes_for_new_content_pack()
@@ -637,7 +634,7 @@ def test_convert_contribution_zip_with_args(tmp_path, mocker):
         description=description,
         author=author,
         gh_user=gh_user,
-        base_dir=repo_dir
+        base_dir=repo_dir,
     )
     contrib_converter_inst.convert_contribution_to_pack()
     contrib_converter_inst.generate_readmes_for_new_content_pack()
@@ -660,11 +657,7 @@ def test_convert_contribution_zip_with_args(tmp_path, mocker):
 @pytest.mark.parametrize(
     "input_name,expected_output_name", name_reformatting_test_examples
 )
-def test_format_pack_dir_name(
-    contrib_converter,
-    input_name,
-    expected_output_name
-):
+def test_format_pack_dir_name(contrib_converter, input_name, expected_output_name):
     """Test the 'format_pack_dir_name' method with various inputs
 
     Args:
@@ -745,7 +738,7 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     converter = ContributionConverter(
         contribution="/tmp/contrib.zip",
         working_dir_path=str(tmp_path),
-        base_dir=fake_pack_subdir
+        base_dir=fake_pack_subdir,
     )
     converter.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
     assert json.loads(extant_file.read_text()) == new_json
@@ -801,8 +794,7 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
 
     """
     contribution_converter = ContributionConverter(
-        contribution=zip_path,
-        base_dir="/tmp/content"
+        contribution=zip_path, base_dir="/tmp/content"
     )
     contribution_converter.convert_contribution_to_pack()
     unpacked_contribution_dirs = get_child_directories(
@@ -845,16 +837,14 @@ def test_extract_pack_version(input_script: str, output_version: str):
 
     """
     contribution_converter = ContributionConverter(
-        contribution="contrib.zip",
-        base_dir="/tmp/content"
+        contribution="contrib.zip", base_dir="/tmp/content"
     )
     assert contribution_converter.extract_pack_version(input_script) == output_version
 
 
 def test_create_contribution_items_version_note():
     contribution_converter = ContributionConverter(
-        contribution="contrib.zip",
-        base_dir="/tmp/content"
+        contribution="contrib.zip", base_dir="/tmp/content"
     )
     contribution_converter.contribution_items_version = {
         "CortexXDRIR": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},
@@ -1191,7 +1181,6 @@ class TestReleaseNotes:
 
 
 class TestReadmes:
-
     repo_dir_name = "content_repo"
     existing_pack_name = "HelloWorld"
     new_pack_name = "HelloWorldNew"
@@ -1202,8 +1191,7 @@ class TestReadmes:
     gh_user = "kgal-pan"
 
     def test_process_existing_pack_existing_integration_readme(
-        self,
-        tmp_path: TempPathFactory
+        self, tmp_path: TempPathFactory
     ):
         """
         Test for an existing integration in an existing pack
@@ -1239,19 +1227,23 @@ class TestReadmes:
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
-
         repo.create_pack(self.existing_pack_name)
         repo.packs[0].create_integration(
             name=self.existing_integration_name,
             code=py_code,
             readme=readme,
-            yml=yml_code
+            yml=yml_code,
         )
-        
+
         # Read the contribution content mapping
-        with open(os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.json"), "r") as j:
+        with open(
+            os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.json"),
+            "r",
+        ) as j:
             contributed_content_mapping = json.load(j)
-            contributed_content_items = contributed_content_mapping.get(self.existing_pack_name, {}).get("detected_content_items", [])
+            contributed_content_items = contributed_content_mapping.get(
+                self.existing_pack_name, {}
+            ).get("detected_content_items", [])
 
         contribution_temp_dir = Path(str(tmp_path)) / "contribution"
         contribution_temp_dir.mkdir()
@@ -1260,12 +1252,14 @@ class TestReadmes:
             name=self.existing_pack_name,
             author=self.author,
             description="Test contrib-management process_pack",
-            contribution=os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.zip"),
+            contribution=os.path.join(
+                CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.zip"
+            ),
             gh_user=self.gh_user,
             create_new=False,
             detected_content_items=contributed_content_items,
             working_dir_path=contribution_temp_dir.__str__(),
-            base_dir=content_temp_dir.__str__()
+            base_dir=content_temp_dir.__str__(),
         )
 
         # Convert the contribution to a pack
@@ -1273,27 +1267,39 @@ class TestReadmes:
 
         modified_readme = Path(contrib_converter.readme_files[0])
 
-        actual_integration_yml_path = Path(contribution_temp_dir / INTEGRATIONS_DIR / self.existing_integration_name / f"{self.existing_integration_name}.yml")
+        actual_integration_yml_path = Path(
+            contribution_temp_dir
+            / INTEGRATIONS_DIR
+            / self.existing_integration_name
+            / f"{self.existing_integration_name}.yml"
+        )
 
         with actual_integration_yml_path.open("r") as stream:
             actual_integration_yml = yaml.load(stream)
 
-        actual_integration_python = Path(contribution_temp_dir / INTEGRATIONS_DIR / self.existing_integration_name / f"{self.existing_integration_name}.py")
-        
+        actual_integration_python = Path(
+            contribution_temp_dir
+            / INTEGRATIONS_DIR
+            / self.existing_integration_name
+            / f"{self.existing_integration_name}.py"
+        )
+
         # Verify the copied integration Python code, YAML and README are different than the one found in the
         # original integration path
         assert modified_readme.read_text() != readme
-        assert 'helloworld-new-cmd' in modified_readme.read_text()
+        assert "helloworld-new-cmd" in modified_readme.read_text()
 
         assert actual_integration_yml != yml_code
-        assert actual_integration_yml['script']['commands'][4]['name'] == 'helloworld-new-cmd'
+        assert (
+            actual_integration_yml["script"]["commands"][4]["name"]
+            == "helloworld-new-cmd"
+        )
 
         assert actual_integration_python.read_text() != py_code
-        assert 'helloworld-new-cmd' in actual_integration_python.read_text()
+        assert "helloworld-new-cmd" in actual_integration_python.read_text()
 
     def test_process_existing_pack_new_integration_readme(
-        self,
-        tmp_path: TempPathFactory
+        self, tmp_path: TempPathFactory
     ):
         """
         Test for a new integration in an existing pack
@@ -1334,7 +1340,7 @@ class TestReadmes:
             name=self.existing_integration_name,
             code=py_code,
             readme=readme,
-            yml=yml_code
+            yml=yml_code,
         )
 
         contribution_temp_dir = Path(str(tmp_path)) / "contribution"
@@ -1344,11 +1350,13 @@ class TestReadmes:
             name=self.existing_pack_name,
             author=self.author,
             description="Test contrib-management process_pack",
-            contribution=os.path.join(CONTRIBUTION_TESTS, "existing_pack_new_integration.zip"),
+            contribution=os.path.join(
+                CONTRIBUTION_TESTS, "existing_pack_new_integration.zip"
+            ),
             gh_user=self.gh_user,
             create_new=False,
             working_dir_path=contribution_temp_dir.__str__(),
-            base_dir=content_temp_dir.__str__()
+            base_dir=content_temp_dir.__str__(),
         )
 
         # Convert the contribution to a pack
@@ -1358,10 +1366,7 @@ class TestReadmes:
         generated_readme = Path(contrib_converter.readme_files[0])
         assert generated_readme.exists()
 
-    def test_process_new_pack(
-        self,
-        tmp_path: TempPathFactory
-    ):
+    def test_process_new_pack(self, tmp_path: TempPathFactory):
         """
         Test for a new Integration added to a new Pack.
         The Pack and the Integration READMEs should be generated.
@@ -1382,8 +1387,8 @@ class TestReadmes:
         content_temp_dir.mkdir()
         repo = Repo(tmpdir=content_temp_dir, init_git=True)
 
-         # Read integration python, yml code and README to create mock integration
-         # and Pack
+        # Read integration python, yml code and README to create mock integration
+        # and Pack
         py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
         py_code = py_code_path.read_text()
 
@@ -1399,21 +1404,23 @@ class TestReadmes:
             name=self.existing_integration_name,
             code=py_code,
             readme=readme,
-            yml=yml_code
+            yml=yml_code,
         )
 
         contribution_temp_dir = Path(str(tmp_path)) / "contribution"
         contribution_temp_dir.mkdir()
 
         contrib_converter = ContributionConverter(
-            name = self.new_pack_name,
+            name=self.new_pack_name,
             author=self.author,
             description="Test new Integration and Pack",
-            contribution=os.path.join(CONTRIBUTION_TESTS, "new_pack_new_integration.zip"),
+            contribution=os.path.join(
+                CONTRIBUTION_TESTS, "new_pack_new_integration.zip"
+            ),
             gh_user=self.gh_user,
             create_new=True,
             working_dir_path=contribution_temp_dir.__str__(),
-            base_dir=content_temp_dir.__str__()
+            base_dir=content_temp_dir.__str__(),
         )
 
         # Convert the contribution to a pack
@@ -1425,17 +1432,14 @@ class TestReadmes:
         # Check new Integration README exists
         assert Path(contrib_converter.readme_files[0]).exists()
 
-    def test_get_contributed_content(
-            self,
-            tmp_path: TempPathFactory
-    ):
+    def test_get_contributed_content(self, tmp_path: TempPathFactory):
         """
         Test whether the new content map works when we receive a contribution
         with an existing integration, an existing playbook but a new script.
 
         Given:
         - A contribution zip.
-        
+
         When:
         - The content repo has an integration and a playbook.
         - The contribution zip has an integration, playbook and script.
@@ -1466,10 +1470,7 @@ class TestReadmes:
             yml_code = yaml.load(stream)
 
         repo.packs[0].create_integration(
-            name="HelloWorldV3",
-            code=py_code,
-            readme=readme,
-            yml=yml_code
+            name="HelloWorldV3", code=py_code, readme=readme, yml=yml_code
         )
 
         # Create Playbook
@@ -1479,7 +1480,7 @@ class TestReadmes:
         repo.packs[0].create_playbook(
             name="HelloWorld Playbook",
             yml=pb_yml_code,
-            readme="#HelloWorld Playbook\n\n##Prints the README\n"
+            readme="#HelloWorld Playbook\n\n##Prints the README\n",
         )
 
         contribution_temp_dir = Path(str(tmp_path)) / "contribution"
@@ -1489,49 +1490,80 @@ class TestReadmes:
             name=self.existing_pack_name,
             author=self.author,
             description="Test contrib-management process_pack",
-            contribution=os.path.join(CONTRIBUTION_TESTS, "existing_pack_new_int_pb_scr.zip"),
+            contribution=os.path.join(
+                CONTRIBUTION_TESTS, "existing_pack_new_int_pb_scr.zip"
+            ),
             gh_user=self.gh_user,
             create_new=False,
             working_dir_path=contribution_temp_dir.__str__(),
-            base_dir=content_temp_dir.__str__()
+            base_dir=content_temp_dir.__str__(),
         )
 
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
         expected: List[Tuple[Path, Path, bool]] = []
-        new_content = namedtuple("new_content", ["contributed_yml", "content_yml", "exists"])
-        expected.append(
-            new_content(
-                Path(contrib_converter.working_dir_path / PLAYBOOKS_DIR / "playbook-CIAC-8757.yml"),
-                Path(contrib_converter.pack_dir_path / PLAYBOOKS_DIR / "HelloWorld Playbook.yml"),
-                True
-                )
+        new_content = namedtuple(
+            "new_content", ["contributed_yml", "content_yml", "exists"]
         )
         expected.append(
             new_content(
-                Path(contrib_converter.working_dir_path / INTEGRATIONS_DIR / "HelloWorldV3" /  "HelloWorldV3.yml"),
-                Path(contrib_converter.pack_dir_path / INTEGRATIONS_DIR / "HelloWorldV3" /  "HelloWorldV3.yml"),
-                True
+                Path(
+                    contrib_converter.working_dir_path
+                    / PLAYBOOKS_DIR
+                    / "playbook-CIAC-8757.yml"
+                ),
+                Path(
+                    contrib_converter.pack_dir_path
+                    / PLAYBOOKS_DIR
+                    / "HelloWorld Playbook.yml"
+                ),
+                True,
             )
         )
         expected.append(
             new_content(
-                Path(contrib_converter.working_dir_path / SCRIPTS_DIR / "CommonServerUserPython" /  "CommonServerUserPython.yml"),
-                Path(contrib_converter.pack_dir_path / SCRIPTS_DIR / "CommonServerUserPython" /  "CommonServerUserPython.yml"),
-                False
+                Path(
+                    contrib_converter.working_dir_path
+                    / INTEGRATIONS_DIR
+                    / "HelloWorldV3"
+                    / "HelloWorldV3.yml"
+                ),
+                Path(
+                    contrib_converter.pack_dir_path
+                    / INTEGRATIONS_DIR
+                    / "HelloWorldV3"
+                    / "HelloWorldV3.yml"
+                ),
+                True,
             )
         )
-
+        expected.append(
+            new_content(
+                Path(
+                    contrib_converter.working_dir_path
+                    / SCRIPTS_DIR
+                    / "CommonServerUserPython"
+                    / "CommonServerUserPython.yml"
+                ),
+                Path(
+                    contrib_converter.pack_dir_path
+                    / SCRIPTS_DIR
+                    / "CommonServerUserPython"
+                    / "CommonServerUserPython.yml"
+                ),
+                False,
+            )
+        )
 
         actual = contrib_converter.get_contributed_content()
         assert actual == expected
 
+
 @pytest.mark.helper
 class TestFixupDetectedContentItems:
-
     def test_fixup_detected_content_items_automation(self, tmp_path):
-        '''
+        """
         Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
 
         Given
@@ -1550,54 +1582,69 @@ class TestFixupDetectedContentItems:
         - Ensure that "automation-ok.yml" is renamed to "automation-TotallyAwesome.yml"
         - Ensure the name field of "automation-TotallyAwesome.yml" has been changed to "Totally Awesome"
         - Ensure the id field of "automation-TotallyAwesome.yml" has been changed to "TotallyAwesome"
-        '''
-        path_to_test_zip = (os.path.join(CONTRIBUTION_TESTS, 'test_fixup_detected_content_items_automation.zip'))
-        tmp_destination = tmp_path / 'ok_contribution_pack.zip'
+        """
+        path_to_test_zip = os.path.join(
+            CONTRIBUTION_TESTS, "test_fixup_detected_content_items_automation.zip"
+        )
+        tmp_destination = tmp_path / "ok_contribution_pack.zip"
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
 
-        file_id = 'ee41bb51-ad90-4740-8824-d364e936200b'
-        file_name = 'ok'
-        original_id = 'TotallyAwesome'
-        original_name = 'Totally Awesome'
+        file_id = "ee41bb51-ad90-4740-8824-d364e936200b"
+        file_name = "ok"
+        original_id = "TotallyAwesome"
+        original_name = "Totally Awesome"
         detected_content_items = [
             {
-                'id': file_id,
-                'name': file_name,
-                'source_id': original_id,
-                'source_name': original_name,
-                'source_file_name': 'Packs/AwesomePack/Scripts/TotallyAwesome/TotallyAwesome.yml'
+                "id": file_id,
+                "name": file_name,
+                "source_id": original_id,
+                "source_name": original_name,
+                "source_file_name": "Packs/AwesomePack/Scripts/TotallyAwesome/TotallyAwesome.yml",
             }
         ]
         ryaml = YAML_Handler()
         # verify original zip
-        with ZipFile(tmp_zip, 'r') as test_zip:
-            with test_zip.open('automation/automation-ok.yml', 'r') as script_yml:
+        with ZipFile(tmp_zip, "r") as test_zip:
+            with test_zip.open("automation/automation-ok.yml", "r") as script_yml:
                 data_obj = ryaml.load(script_yml)
-                assert data_obj.get('commonfields', {}).get('id', '') == file_id
-                assert data_obj.get('name', '') == file_name
+                assert data_obj.get("commonfields", {}).get("id", "") == file_id
+                assert data_obj.get("name", "") == file_name
 
-        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=path_to_test_zip, working_dir_path=str(tmp_path), base_dir="/tmp")
+        converter = ContributionConverter(
+            detected_content_items=detected_content_items,
+            contribution=path_to_test_zip,
+            working_dir_path=str(tmp_path),
+            base_dir="/tmp",
+        )
 
-        modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
+        (
+            modified_zip_file_path,
+            source_mapping,
+        ) = converter.fixup_detected_content_items()
 
         # verify source mapping
-        expected_base_name = expected_containing_dir_name = 'TotallyAwesome'
-        expected_modified_fn = 'automation-TotallyAwesome.yml'
+        expected_base_name = expected_containing_dir_name = "TotallyAwesome"
+        expected_modified_fn = "automation-TotallyAwesome.yml"
         assert expected_modified_fn in source_mapping.keys()
-        assert source_mapping.get(expected_modified_fn, {}).get('base_name', '') == expected_base_name
-        assert source_mapping.get(expected_modified_fn, {}).get(
-            'containing_dir_name', '') == expected_containing_dir_name
+        assert (
+            source_mapping.get(expected_modified_fn, {}).get("base_name", "")
+            == expected_base_name
+        )
+        assert (
+            source_mapping.get(expected_modified_fn, {}).get("containing_dir_name", "")
+            == expected_containing_dir_name
+        )
 
         # verify modified zip
-        expected_modified_file_path = 'automation/automation-TotallyAwesome.yml'
-        with ZipFile(modified_zip_file_path, 'r') as modified_zip:
-            with modified_zip.open(expected_modified_file_path, 'r') as script_yml:
+        expected_modified_file_path = "automation/automation-TotallyAwesome.yml"
+        with ZipFile(modified_zip_file_path, "r") as modified_zip:
+            with modified_zip.open(expected_modified_file_path, "r") as script_yml:
                 data_obj = ryaml.load(script_yml)
-                assert data_obj.get('commonfields', {}).get('id', '') == original_id
-                assert data_obj.get('name', '') == original_name
+                assert data_obj.get("commonfields", {}).get("id", "") == original_id
+                assert data_obj.get("name", "") == original_name
 
     def test_fixup_detected_content_items_servicenow(self, tmp_path):
-        '''
+        """
         Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
 
         Given
@@ -1618,9 +1665,11 @@ class TestFixupDetectedContentItems:
           contains the json file that raised errors in the past)
         - Ensure the name field of "incidenttype-ServiceNowTicket.json" has been changed to "Totally Awesome"
         - Ensure the id field of "incidenttype-ServiceNowTicket.json" has been changed to "TotallyAwesome"
-        '''
-        path_to_test_zip = (os.path.join(CONTRIBUTION_TESTS, 'uploads_edb61840-4575-406b-93ed-c20d30200c70_pack.zip'))
-        tmp_destination = tmp_path / 'uploads_edb.zip'
+        """
+        path_to_test_zip = os.path.join(
+            CONTRIBUTION_TESTS, "uploads_edb61840-4575-406b-93ed-c20d30200c70_pack.zip"
+        )
+        tmp_destination = tmp_path / "uploads_edb.zip"
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
 
         detected_content_items = [
@@ -1629,118 +1678,156 @@ class TestFixupDetectedContentItems:
                 "name": "ServiceNowIncidentStatus_copy",
                 "source_id": "ServiceNowIncidentStatus",
                 "source_name": "ServiceNowIncidentStatus",
-                "source_file_name": "Packs/ServiceNow/Scripts/ServiceNowIncidentStatus/ServiceNowIncidentStatus.yml"
+                "source_file_name": "Packs/ServiceNow/Scripts/ServiceNowIncidentStatus/ServiceNowIncidentStatus.yml",
             },
             {
                 "id": "ServiceNow v2_copy",
                 "name": "ServiceNow v2_copy",
                 "source_id": "ServiceNow v2",
                 "source_name": "ServiceNow v2",
-                "source_file_name": "Packs/ServiceNow/Integrations/ServiceNowv2/ServiceNowv2.yml"
+                "source_file_name": "Packs/ServiceNow/Integrations/ServiceNowv2/ServiceNowv2.yml",
             },
             {
                 "id": "ServiceNow Ticket_copy",
                 "name": "ServiceNow Ticket_copy",
                 "source_id": "ServiceNow Ticket",
                 "source_name": "ServiceNow Ticket",
-                "source_file_name": "Packs/ServiceNow/IncidentTypes/incidenttype-ServiceNowTicket.json"
-            }
+                "source_file_name": "Packs/ServiceNow/IncidentTypes/incidenttype-ServiceNowTicket.json",
+            },
         ]
-        contribution_zip_metadata_id = 'f6995816-2013-435f-8121-ca32cc03de52'
-        contribution_zip_metadata_name = 'Servicenow'
+        contribution_zip_metadata_id = "f6995816-2013-435f-8121-ca32cc03de52"
+        contribution_zip_metadata_name = "Servicenow"
 
         ryaml = YAML_Handler()
         # verify original zip
-        id_as_contributed = [content_item.get('id', '') for content_item in detected_content_items]
-        names_as_contributed = [content_item.get('name', '') for content_item in detected_content_items]
-        with ZipFile(tmp_zip, 'r') as test_zip:
-
+        id_as_contributed = [
+            content_item.get("id", "") for content_item in detected_content_items
+        ]
+        names_as_contributed = [
+            content_item.get("name", "") for content_item in detected_content_items
+        ]
+        with ZipFile(tmp_zip, "r") as test_zip:
             for item in test_zip.infolist():
-                if item.filename.endswith('.yml'):
+                if item.filename.endswith(".yml"):
                     data_worker = ryaml
-                elif item.filename.endswith('.json'):
+                elif item.filename.endswith(".json"):
                     data_worker = json
                 else:
                     continue
-                with test_zip.open(item, 'r') as df:
+                with test_zip.open(item, "r") as df:
                     data_obj = data_worker.load(df)
-                content_id = data_obj['commonfields'].get(
-                    'id', '') if 'commonfields' in data_obj.keys() else data_obj.get(
-                    'id', '')
-                content_name = data_obj.get('name', '')
-                assert content_id in id_as_contributed or content_id == contribution_zip_metadata_id
-                assert content_name in names_as_contributed or content_name == contribution_zip_metadata_name
+                content_id = (
+                    data_obj["commonfields"].get("id", "")
+                    if "commonfields" in data_obj.keys()
+                    else data_obj.get("id", "")
+                )
+                content_name = data_obj.get("name", "")
+                assert (
+                    content_id in id_as_contributed
+                    or content_id == contribution_zip_metadata_id
+                )
+                assert (
+                    content_name in names_as_contributed
+                    or content_name == contribution_zip_metadata_name
+                )
 
-        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=path_to_test_zip, working_dir_path=str(tmp_path), base_dir="/tmp")
+        converter = ContributionConverter(
+            detected_content_items=detected_content_items,
+            contribution=path_to_test_zip,
+            working_dir_path=str(tmp_path),
+            base_dir="/tmp",
+        )
 
-        modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
+        (
+            modified_zip_file_path,
+            source_mapping,
+        ) = converter.fixup_detected_content_items()
         # # verify source mapping
         expected_modified_file_names = [
-            'automation-ServiceNowIncidentStatus.yml',
-            'integration-ServiceNowv2.yml',
-            'incidenttype-ServiceNowTicket.json'
+            "automation-ServiceNowIncidentStatus.yml",
+            "integration-ServiceNowv2.yml",
+            "incidenttype-ServiceNowTicket.json",
         ]
         assert set(expected_modified_file_names) == set(source_mapping.keys())
 
         expected_data_per_file = {
-            'automation-ServiceNowIncidentStatus.yml': {
-                'base_name': 'ServiceNowIncidentStatus',
-                'containing_dir_name': 'ServiceNowIncidentStatus'
+            "automation-ServiceNowIncidentStatus.yml": {
+                "base_name": "ServiceNowIncidentStatus",
+                "containing_dir_name": "ServiceNowIncidentStatus",
             },
-            'incidenttype-ServiceNowTicket.json': {
-                'base_name': 'ServiceNowTicket.json',
-                'containing_dir_name': 'IncidentTypes'
+            "incidenttype-ServiceNowTicket.json": {
+                "base_name": "ServiceNowTicket.json",
+                "containing_dir_name": "IncidentTypes",
             },
-            'integration-ServiceNowv2.yml': {
-                'base_name': 'ServiceNowv2',
-                'containing_dir_name': 'ServiceNowv2'
-            }
+            "integration-ServiceNowv2.yml": {
+                "base_name": "ServiceNowv2",
+                "containing_dir_name": "ServiceNowv2",
+            },
         }
         for modified_file_name in expected_modified_file_names:
-            expected_base_name = expected_data_per_file[modified_file_name].get('base_name', '')
-            expected_containing_dir_name = expected_data_per_file[modified_file_name].get('containing_dir_name', '')
-            base_name = source_mapping.get(modified_file_name, {}).get('base_name', '')
-            containing_dir_name = source_mapping.get(modified_file_name, {}).get('containing_dir_name', '')
+            expected_base_name = expected_data_per_file[modified_file_name].get(
+                "base_name", ""
+            )
+            expected_containing_dir_name = expected_data_per_file[
+                modified_file_name
+            ].get("containing_dir_name", "")
+            base_name = source_mapping.get(modified_file_name, {}).get("base_name", "")
+            containing_dir_name = source_mapping.get(modified_file_name, {}).get(
+                "containing_dir_name", ""
+            )
             assert base_name == expected_base_name
             assert containing_dir_name == expected_containing_dir_name
 
         # # verify modified zip
         expected_modified_file_paths_to_source_values = {
-            'automation/automation-ServiceNowIncidentStatus.yml': {
+            "automation/automation-ServiceNowIncidentStatus.yml": {
                 "source_id": "ServiceNowIncidentStatus",
-                "source_name": "ServiceNowIncidentStatus"
+                "source_name": "ServiceNowIncidentStatus",
             },
-            'incidenttype/incidenttype-ServiceNowTicket.json': {
+            "incidenttype/incidenttype-ServiceNowTicket.json": {
                 "source_id": "ServiceNow Ticket",
-                "source_name": "ServiceNow Ticket"
+                "source_name": "ServiceNow Ticket",
             },
-            'integration/integration-ServiceNowv2.yml': {
+            "integration/integration-ServiceNowv2.yml": {
                 "source_id": "ServiceNow v2",
-                "source_name": "ServiceNow v2"
-            }
+                "source_name": "ServiceNow v2",
+            },
         }
-        with ZipFile(modified_zip_file_path, 'r') as modified_zip:
-            for expected_modified_file_path in expected_modified_file_paths_to_source_values.keys():
-                with modified_zip.open(expected_modified_file_path, 'r') as content_item_file:
+        with ZipFile(modified_zip_file_path, "r") as modified_zip:
+            for (
+                expected_modified_file_path
+            ) in expected_modified_file_paths_to_source_values.keys():
+                with modified_zip.open(
+                    expected_modified_file_path, "r"
+                ) as content_item_file:
                     expected_source_id = expected_modified_file_paths_to_source_values[
                         expected_modified_file_path
-                    ].get('source_id', '')
-                    expected_source_name = expected_modified_file_paths_to_source_values[
-                        expected_modified_file_path
-                    ].get('source_name', '')
-                    if os.path.splitext(expected_modified_file_path)[-1].lower() == 'json':
+                    ].get("source_id", "")
+                    expected_source_name = (
+                        expected_modified_file_paths_to_source_values[
+                            expected_modified_file_path
+                        ].get("source_name", "")
+                    )
+                    if (
+                        os.path.splitext(expected_modified_file_path)[-1].lower()
+                        == "json"
+                    ):
                         data_obj = json.load(content_item_file)
-                        assert data_obj.get('id', '') == expected_source_id
-                        assert data_obj.get('name', '') == expected_source_name
+                        assert data_obj.get("id", "") == expected_source_id
+                        assert data_obj.get("name", "") == expected_source_name
                     else:
                         data_obj = ryaml.load(content_item_file.read())
-                        content_item_id = data_obj.get('commonfields', {}).get('id', '') or data_obj.get('id', '')
+                        content_item_id = data_obj.get("commonfields", {}).get(
+                            "id", ""
+                        ) or data_obj.get("id", "")
                         assert content_item_id == expected_source_id
-                        assert data_obj.get('name', '') == expected_source_name
+                        assert data_obj.get("name", "") == expected_source_name
 
-    @pytest.mark.parametrize('create_test_packs', ['AbuseDB'], indirect=True)
-    def test_fixup_detected_content_items_integration(self, create_test_packs, tmp_path):
-        '''
+    @pytest.mark.parametrize("create_test_packs", ["AbuseDB"], indirect=True)
+    def test_fixup_detected_content_items_integration(
+        self, create_test_packs, tmp_path
+    ):
+        """
         Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
 
         Given
@@ -1761,72 +1848,91 @@ class TestFixupDetectedContentItems:
         - Ensure the name field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
         - Ensure the id field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
         - Ensure the display field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
-        '''
-        path_to_test_zip = os.path.join(CONTRIBUTION_TESTS, 'contentpack-abuse_Contribution_Pack.zip')
-        tmp_destination = tmp_path / 'abuse_contribution_pack.zip'
+        """
+        path_to_test_zip = os.path.join(
+            CONTRIBUTION_TESTS, "contentpack-abuse_Contribution_Pack.zip"
+        )
+        tmp_destination = tmp_path / "abuse_contribution_pack.zip"
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
 
-        tmp_packs_dir = tmp_path / 'Packs'
+        tmp_packs_dir = tmp_path / "Packs"
         tmp_packs_dir.mkdir()
         abusedb_pack = create_test_packs
-        abusedb_pack.create_integration(name='AbuseDB', contents='"display": "AbuseIPDB"')
+        abusedb_pack.create_integration(
+            name="AbuseDB", contents='"display": "AbuseIPDB"'
+        )
         # the created pack has a digit appended since the
         # (side-effect of using the tmp_path_factory the create_test_packs fixture)
         # move the created pack under the "Packs" dir and rename the pack dir from "AbuseDB0" to "AbuseDB"
-        shutil.move(str(abusedb_pack), tmp_packs_dir / 'AbuseDB')
-        containing_directory = os.path.normpath(os.path.join(tmp_packs_dir, '..'))
+        shutil.move(str(abusedb_pack), tmp_packs_dir / "AbuseDB")
+        containing_directory = os.path.normpath(os.path.join(tmp_packs_dir, ".."))
         os.chdir(containing_directory)
 
-        file_id = 'AbuseIPDB_copy'
-        file_name = 'AbuseIPDB_copy'
-        original_id = 'AbuseIPDB'
-        original_name = 'AbuseIPDB'
+        file_id = "AbuseIPDB_copy"
+        file_name = "AbuseIPDB_copy"
+        original_id = "AbuseIPDB"
+        original_name = "AbuseIPDB"
         detected_content_items = [
             {
-                'id': file_id,
-                'name': file_name,
-                'source_id': original_id,
-                'source_name': original_name,
-                'source_file_name': 'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.yml'
+                "id": file_id,
+                "name": file_name,
+                "source_id": original_id,
+                "source_name": original_name,
+                "source_file_name": "Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.yml",
             }
         ]
         ryaml = YAML_Handler()
         # verify original zip
-        with ZipFile(tmp_zip, 'r') as test_zip:
-            with test_zip.open('integration/integration-AbuseIPDB_copy.yml', 'r') as integration_yml:
+        with ZipFile(tmp_zip, "r") as test_zip:
+            with test_zip.open(
+                "integration/integration-AbuseIPDB_copy.yml", "r"
+            ) as integration_yml:
                 data_obj = ryaml.load(integration_yml)
-                assert data_obj.get('commonfields', {}).get('id', '') == file_id
-                assert data_obj.get('name', '') == file_name
-                assert data_obj.get('display', '') == file_name
+                assert data_obj.get("commonfields", {}).get("id", "") == file_id
+                assert data_obj.get("name", "") == file_name
+                assert data_obj.get("display", "") == file_name
 
-        converter = ContributionConverter(detected_content_items=detected_content_items, contribution=tmp_zip, working_dir_path=str(tmp_path), base_dir="/tmp")
+        converter = ContributionConverter(
+            detected_content_items=detected_content_items,
+            contribution=tmp_zip,
+            working_dir_path=str(tmp_path),
+            base_dir="/tmp",
+        )
 
-        modified_zip_file_path, source_mapping = converter.fixup_detected_content_items()
+        (
+            modified_zip_file_path,
+            source_mapping,
+        ) = converter.fixup_detected_content_items()
 
         # verify source mapping
-        expected_base_name = expected_containing_dir_name = 'AbuseDB'
-        expected_modified_fn = 'integration-AbuseDB.yml'
+        expected_base_name = expected_containing_dir_name = "AbuseDB"
+        expected_modified_fn = "integration-AbuseDB.yml"
         assert expected_modified_fn in source_mapping.keys()
-        assert source_mapping.get(expected_modified_fn, {}).get('base_name', '') == expected_base_name
-        assert source_mapping.get(expected_modified_fn, {}).get(
-            'containing_dir_name', '') == expected_containing_dir_name
+        assert (
+            source_mapping.get(expected_modified_fn, {}).get("base_name", "")
+            == expected_base_name
+        )
+        assert (
+            source_mapping.get(expected_modified_fn, {}).get("containing_dir_name", "")
+            == expected_containing_dir_name
+        )
 
         # verify modified zip
-        expected_modified_file_path = 'integration/integration-AbuseDB.yml'
-        with ZipFile(modified_zip_file_path, 'r') as modified_zip:
-            with modified_zip.open(expected_modified_file_path, 'r') as integration_yml:
+        expected_modified_file_path = "integration/integration-AbuseDB.yml"
+        with ZipFile(modified_zip_file_path, "r") as modified_zip:
+            with modified_zip.open(expected_modified_file_path, "r") as integration_yml:
                 data_obj = ryaml.load(integration_yml)
-                assert data_obj.get('commonfields', {}).get('id', '') == original_id
-                assert data_obj.get('name', '') == original_name
-                assert data_obj.get('display', '') == original_name
+                assert data_obj.get("commonfields", {}).get("id", "") == original_id
+                assert data_obj.get("name", "") == original_name
+                assert data_obj.get("display", "") == original_name
 
 
 @pytest.mark.helper
 class TestGetSourceIntegrationDisplayField:
-    valid_path = 'Packs/FakePack/Integrations/FakeIntegration/FakeIntegration.yml'
+    valid_path = "Packs/FakePack/Integrations/FakeIntegration/FakeIntegration.yml"
 
     def test_get_source_integration_display_field_valid(self, tmp_path):
-        '''
+        """
         Scenario: Get a source integration's display field value
 
         Given
@@ -1838,29 +1944,33 @@ class TestGetSourceIntegrationDisplayField:
 
         Then
         - Ensure calling the 'get_source_integration_display_field' function on the path returns "Fake Integration"
-        '''
+        """
 
         # setup
         path_to_file = tmp_path
-        path_split = self.valid_path.split('/')
+        path_split = self.valid_path.split("/")
         for path_part in path_split[:-1]:
             path_to_file = path_to_file / path_part
             path_to_file.mkdir()
         path_to_file = path_to_file / path_split[-1]
 
-        display_field_value = 'Fake Integration'
-        data_obj = {'display': display_field_value}
+        display_field_value = "Fake Integration"
+        data_obj = {"display": display_field_value}
         ryaml = yaml
-        with path_to_file.open('w') as df:
+        with path_to_file.open("w") as df:
             ryaml.dump(data_obj, df)
 
         # assertions
-        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
-        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        converter = ContributionConverter(
+            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+        )
+        fetched_display_field = converter.get_source_integration_display_field(
+            path_to_file
+        )
         assert fetched_display_field == display_field_value
 
     def test_get_source_integration_display_field_valid_but_no_field(self, tmp_path):
-        '''
+        """
         Scenario: Get a source integration's display field value
 
         Given
@@ -1872,29 +1982,32 @@ class TestGetSourceIntegrationDisplayField:
 
         Then
         - Ensure calling the 'get_source_integration_display_field' function on the path returns None
-        '''
-        
+        """
 
         # setup
         path_to_file = tmp_path
-        path_split = self.valid_path.split('/')
+        path_split = self.valid_path.split("/")
         for path_part in path_split[:-1]:
             path_to_file = path_to_file / path_part
             path_to_file.mkdir()
         path_to_file = path_to_file / path_split[-1]
 
-        data_obj = {'name': 'FakeName'}
+        data_obj = {"name": "FakeName"}
         ryaml = yaml
-        with path_to_file.open('w') as df:
+        with path_to_file.open("w") as df:
             ryaml.dump(data_obj, df)
 
         # assertions
-        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
-        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        converter = ContributionConverter(
+            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+        )
+        fetched_display_field = converter.get_source_integration_display_field(
+            path_to_file
+        )
         assert not fetched_display_field
 
     def test_get_source_integration_display_field_invalid_file_type(self, tmp_path):
-        '''
+        """
         Scenario: Get a source integration's display field value
 
         Given
@@ -1905,22 +2018,26 @@ class TestGetSourceIntegrationDisplayField:
 
         Then
         - Ensure calling the 'get_source_integration_display_field' function on the path returns None
-        '''
+        """
 
         # setup
         path_to_file = tmp_path
-        path_split = self.valid_path.split('/')
+        path_split = self.valid_path.split("/")
         for path_part in path_split:
             path_to_file = path_to_file / path_part
             path_to_file.mkdir()
 
         # assertions
-        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
-        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        converter = ContributionConverter(
+            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+        )
+        fetched_display_field = converter.get_source_integration_display_field(
+            path_to_file
+        )
         assert not fetched_display_field
 
     def test_get_source_integration_display_field_invalid_no_file(self, tmp_path):
-        '''
+        """
         Scenario: Get a source integration's display field value
 
         Given
@@ -1931,23 +2048,27 @@ class TestGetSourceIntegrationDisplayField:
 
         Then
         - Ensure calling the 'get_source_integration_display_field' function on the path returns None
-        '''
+        """
 
         # setup
         path_to_file = tmp_path
-        path_split = self.valid_path.split('/')
+        path_split = self.valid_path.split("/")
         for path_part in path_split[:-1]:
             path_to_file = path_to_file / path_part
             path_to_file.mkdir()
         path_to_file = path_to_file / path_split[-1]
 
         # assertions
-        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
-        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        converter = ContributionConverter(
+            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+        )
+        fetched_display_field = converter.get_source_integration_display_field(
+            path_to_file
+        )
         assert not fetched_display_field
 
     def test_get_source_integration_display_field_invalid_not_yaml(self, tmp_path):
-        '''
+        """
         Scenario: Get a source integration's display field value
 
         Given
@@ -1959,23 +2080,27 @@ class TestGetSourceIntegrationDisplayField:
 
         Then
         - Ensure calling the 'get_source_integration_display_field' function on the path returns None
-        '''
+        """
 
         # setup
         path_to_file = tmp_path
-        path_split = self.valid_path.split('/')
+        path_split = self.valid_path.split("/")
         for path_part in path_split[:-1]:
             path_to_file = path_to_file / path_part
             path_to_file.mkdir()
-        path_to_file = path_to_file / path_split[-1].replace('.yml', '.txt')
+        path_to_file = path_to_file / path_split[-1].replace(".yml", ".txt")
 
-        display_field_value = 'Fake Integration'
-        data_obj = {'display': display_field_value}
+        display_field_value = "Fake Integration"
+        data_obj = {"display": display_field_value}
         ryaml = yaml
-        with path_to_file.open('w') as df:
+        with path_to_file.open("w") as df:
             ryaml.dump(data_obj, df)
 
         # assertions
-        converter = ContributionConverter("contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp")
-        fetched_display_field = converter.get_source_integration_display_field(path_to_file)
+        converter = ContributionConverter(
+            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+        )
+        fetched_display_field = converter.get_source_integration_display_field(
+            path_to_file
+        )
         assert not fetched_display_field

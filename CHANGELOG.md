@@ -1,7 +1,6 @@
 # Changelog
 ## Unreleased
 * Added support to automatically detect the correct file model by file path when reading files.
-* Fixed an issue where **from_path** reached recursion limit when receiving git_status.
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.

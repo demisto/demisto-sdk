@@ -1,4 +1,5 @@
 import functools
+import os
 import subprocess
 import time
 from collections import defaultdict
@@ -184,6 +185,21 @@ class DockerHook(Hook):
         """
         if not run_docker_hooks:
             return
+        docker_user = os.getenv("DOCKERHUB_USER")
+        docker_pass = os.getenv("DOCKERHUB_PASSWORD")
+        if docker_user and docker_pass:
+            subprocess.run(
+                [
+                    "docker",
+                    "login",
+                    "--username",
+                    docker_user,
+                    "--password",
+                    docker_pass,
+                    "https://index.docker.io/v1",
+                ]
+            )
+
         start_time = time.time()
         filtered_files = self.filter_files_matching_hook_config(
             (file for file, _ in files_to_run_with_objects)

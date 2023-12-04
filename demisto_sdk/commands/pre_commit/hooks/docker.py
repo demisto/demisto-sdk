@@ -127,7 +127,7 @@ def devtest_image(image_tag, is_powershell) -> str:
         )
         if not errors:
             # pull the image in the background
-            subprocess.Popen(["docker", "pull", image])
+            subprocess.Popen(["docker", "pull", image], stdout=subprocess.DEVNULL)
             return image
         all_errors.append(errors)
     raise DockerException(all_errors)

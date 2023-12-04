@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 
 from bs4.dammit import UnicodeDammit
 
+from demisto_sdk.commands.common.constants import PACKS_WHITELIST_FILE_NAME
 from demisto_sdk.commands.common.files.errors import LocalFileReadError
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.logger import logger
@@ -13,6 +14,15 @@ class TextFile(File):
     @property
     def num_lines(self):
         return len(self.read_local_file().splitlines())
+
+    @classmethod
+    def is_model_type_by_path(cls, path: Path) -> bool:
+        return path.name.lower() in {
+            "command-examples",
+            "command_example",
+            "command_examples",
+            PACKS_WHITELIST_FILE_NAME,
+        } or path.suffix.lower() in {".md", ".py", ".txt"}
 
     def load(self, file_content: bytes) -> Any:
         try:

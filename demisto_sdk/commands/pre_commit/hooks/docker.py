@@ -3,6 +3,7 @@ import os
 import subprocess
 import time
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -127,18 +128,21 @@ def devtest_image(
     if additional_requirements:
         additional_requirements_list = additional_requirements.split("\n")
     all_errors: list = []
-
-    for _ in range(2):  # retry it once
-        logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
-        docker_base = get_docker()
-        image, errors = docker_base.get_or_create_test_image(
-            base_image=image_tag,
-            container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
-            push=docker_login(docker_client=init_global_docker_client()),
-            should_pull=False,
-            additional_requirements=additional_requirements_list,
-            log_prompt="DockerHook",
-        )
+    docker_base = get_docker()
+    with ProcessPoolExecutor() as pool:
+        futures = [
+            pool.submit(
+                docker_base.get_or_create_test_image,
+                base_image=image_tag,
+                container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
+                push=docker_login(docker_client=init_global_docker_client()),
+                should_pull=False,
+                additional_requirements=additional_requirements_list,
+                log_prompt="DockerHook",
+            )
+        ]
+    for future in futures:
+        image, errors = future.result()
         if not errors:
             # pull the image in the background
             subprocess.Popen(["docker", "pull", image], stdout=subprocess.DEVNULL)

@@ -332,6 +332,7 @@ class DockerBase:
         Returns:
             The test image name and errors to create it if any
         """
+
         errors = ""
         if (
             not python_version
@@ -357,7 +358,7 @@ class DockerBase:
             "\n".join(sorted(pip_requirements)).encode("utf-8")
         ).hexdigest()
         if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in base_image:
-            base_image = f"docker-io.art.code.pan/{base_image}"
+            base_image = f"docker-io.art.code.pan.run/{base_image}"
 
         test_docker_image = (
             f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'

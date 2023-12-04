@@ -33,7 +33,9 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
     6. Uploads the playbook using the demisto-sdk upload command.
     """
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
-    e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
+    git_path = Path(f"{tmpdir}/git")
+    git_path.mkdir(exist_ok=True)
+
     e2e_tests_utils.git_clone_demisto_sdk(
         destination_folder=f"{tmpdir}/git/demisto-sdk",
         sdk_git_branch=DEMISTO_GIT_PRIMARY_BRANCH,
@@ -55,7 +57,8 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, verify_ssl: bool = Fals
     ).upload()
 
     # Preparing updated pack folder
-    e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
+    directory_path = Path(f"{tmpdir}/Packs/{pack_name}_testsuite")
+    directory_path.mkdir(exist_ok=True, parents=True)
 
     logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_testsuite/Playbooks"
@@ -130,7 +133,8 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
             raise
 
     # Preparing updated pack folder
-    e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
+    directory_path = Path(f"{tmpdir}/Packs/{pack_name}_client")
+    directory_path.mkdir(exist_ok=True, parents=True)
 
     logger.info(f"Checking which files we can download from the machine.")
     Downloader(
@@ -232,7 +236,7 @@ def test_e2e_demisto_sdk_flow_modeling_rules_happy_path(
     ).upload()
 
     # check if the pack was installed
-    demisto_client.get_installed_pack(pack_name)
+    assert demisto_client.get_installed_pack(pack_name)
 
     # test the created modeling rules
     e2e_tests_utils.cli(

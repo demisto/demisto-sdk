@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from pathlib import Path
 
 import demisto_client
 
@@ -8,8 +9,6 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_demisto_version
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from pathlib import Path
-import random
 
 
 def git_clone_demisto_sdk(
@@ -52,7 +51,7 @@ def connect_to_server(insecure: bool = False):
 
 
 def create_pack(repo: Repo):
-    unique_id = random.randint(1, 100)
+    unique_id = 1
     pack_name = "e2e_test_" + str(unique_id)
     pack = repo.create_pack(name=pack_name)
     source_pack_path = Path(pack.path)

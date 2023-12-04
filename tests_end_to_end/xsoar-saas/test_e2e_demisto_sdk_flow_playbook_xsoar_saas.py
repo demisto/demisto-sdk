@@ -49,7 +49,8 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     Uploader(input=source_playbook_path, insecure=True).upload()
 
     # Preparing updated pack folder
-    e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
+    directory_path = Path(f"{tmpdir}/Packs/{pack_name}_testsuite")
+    directory_path.mkdir(exist_ok=True, parents=True)
 
     logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_testsuite/Playbooks"
@@ -120,7 +121,8 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
             raise
 
     # Preparing updated pack folder
-    e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
+    directory_path = Path(f"{tmpdir}/Packs/{pack_name}_client")
+    directory_path.mkdir(exist_ok=True, parents=True)
 
     Downloader(
         list_files=True,

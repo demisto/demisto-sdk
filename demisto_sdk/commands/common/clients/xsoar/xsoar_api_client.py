@@ -952,7 +952,7 @@ class XsoarClient(BaseModel):
             if self.version < Version(MINIMUM_XSOAR_SAAS_VERSION):
                 investigation_id = self.get_playground_id()
             else:
-                # Add here relevant ciac to why it doesn't work
+                # it is not possible to auto-detect playground-id, see CIAC-8766
                 raise ValueError(
                     "Investigation_id must be provided for xsoar-saas/xsiam"
                 )

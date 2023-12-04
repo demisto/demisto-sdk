@@ -28,6 +28,7 @@ from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
 NO_CONFIG_VALUE = None
+TEST_REQUIREMENTS_FILE = "test-requirements.txt"
 
 
 @functools.lru_cache
@@ -45,9 +46,9 @@ def get_docker_python_path() -> str:
 
 
 def with_native_tags(
-    tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]],
+    tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript, str]]],
     docker_image_flag: str,
-) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
+) -> Dict[str, List[Tuple[Path, IntegrationScript, str]]]:
     """
     Adds the native image images into the dict with the files that should be run on them
     Args:
@@ -58,13 +59,11 @@ def with_native_tags(
 
     """
     docker_flags = set(docker_image_flag.split(","))
-    all_tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]] = defaultdict(
-        list
-    )
+    all_tags_to_files = defaultdict(list)
     native_image_config = NativeImageConfig.get_instance()
 
     for image, scripts in tags_to_files.items():
-        for file, obj in scripts:
+        for file, obj, additional_requirements in scripts:
 
             supported_native_images = ScriptIntegrationSupportedNativeImages(
                 _id=obj.object_id,
@@ -72,18 +71,20 @@ def with_native_tags(
                 docker_image=image,
             ).get_supported_native_docker_tags(docker_flags)
             for native_image in supported_native_images:
-                all_tags_to_files[native_image].append((file, obj))
+                all_tags_to_files[native_image].append(
+                    (file, obj, additional_requirements)
+                )
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
             } & docker_flags:
-                all_tags_to_files[image].append((file, obj))
+                all_tags_to_files[image].append((file, obj, additional_requirements))
     return all_tags_to_files
 
 
 def docker_tag_to_runfiles(
     files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]], docker_image_flag
-) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
+) -> Dict[str, List[Tuple[Path, IntegrationScript, str]]]:
     """
     Iterates over all files snf groups the files by the dockerimages
     Args:
@@ -93,17 +94,23 @@ def docker_tag_to_runfiles(
     Returns: A dict of image to List of files(Tuple[path, obj]) including native images
 
     """
-    tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]] = defaultdict(list)
+    tags_to_files = defaultdict(list)
     for file, obj in files_to_run:
         if not obj:
             continue
+        additional_reqs = ""
+        if (obj.path.parent / TEST_REQUIREMENTS_FILE).exists():
+            additional_reqs = (obj.path.parent / TEST_REQUIREMENTS_FILE).read_text()
         for docker_image in obj.docker_images:
-            tags_to_files[docker_image].append((file, obj))
+
+            tags_to_files[docker_image].append((file, obj, additional_reqs))
     return with_native_tags(tags_to_files, docker_image_flag)
 
 
 @functools.lru_cache(maxsize=512)
-def devtest_image(image_tag, is_powershell) -> str:
+def devtest_image(
+    image_tag: str, is_powershell: bool, additional_requirements: str
+) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
     config arg and pass it through here
@@ -114,7 +121,11 @@ def devtest_image(image_tag, is_powershell) -> str:
     Returns: The build and pulled dev image
 
     """
+    additional_requirements_list = []
+    if additional_requirements:
+        additional_requirements_list = additional_requirements.split("\n")
     all_errors: list = []
+
     for _ in range(2):  # retry it once
         logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
         docker_base = get_docker()
@@ -123,6 +134,7 @@ def devtest_image(image_tag, is_powershell) -> str:
             container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
             push=docker_login(docker_client=init_global_docker_client()),
             should_pull=False,
+            additional_requirements=additional_requirements_list,
             log_prompt="DockerHook",
         )
         if not errors:
@@ -140,7 +152,7 @@ def get_environment_flag() -> str:
     return f'--env "PYTHONPATH={get_docker_python_path()}"'
 
 
-def _split_by_config_file(files, config_arg: Optional[Tuple]):
+def _split_by_config_file(files: Iterable[Path], config_arg: Optional[Tuple]):
     """
     Will group files into groups that share the same configuration file.
     If there is no config file, they get set to the NO_CONFIG_VALUE group
@@ -226,17 +238,24 @@ class DockerHook(Hook):
             tag_to_files_objs.items(), key=lambda item: item[0]
         ):
 
-            paths = {file for file, obj in files_with_objects}
+            paths = {file for file, _, _ in files_with_objects}
             folder_to_files = _split_by_config_file(paths, config_arg)
             image_is_powershell = any(
-                obj.is_powershell for _, obj in files_with_objects
+                obj.is_powershell for _, obj, _ in files_with_objects
             )
-
-            dev_image = devtest_image(  # consider moving to before loop and threading.
-                image, image_is_powershell
-            )
-            hooks = self.get_new_hooks(dev_image, image, folder_to_files, config_arg)
-            self.hooks.extend(hooks)
+            for additional_requirements in {
+                additional_requirements
+                for _, _, additional_requirements in files_with_objects
+            }:
+                dev_image = (
+                    devtest_image(  # consider moving to before loop and threading.
+                        image, image_is_powershell, additional_requirements
+                    )
+                )
+                hooks = self.get_new_hooks(
+                    dev_image, image, folder_to_files, config_arg
+                )
+                self.hooks.extend(hooks)
 
         end_time = time.time()
         logger.info(

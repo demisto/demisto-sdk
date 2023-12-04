@@ -364,7 +364,7 @@ class DockerBase:
                 sorted(
                     pip_requirements + additional_requirements
                     if additional_requirements
-                    else []
+                    else pip_requirements
                 )
             ).encode("utf-8")
         ).hexdigest()

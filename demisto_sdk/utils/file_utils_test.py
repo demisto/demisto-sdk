@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 
 from pytest import TempPathFactory, fixture, raises
-from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.utils.file_utils import (

@@ -1,5 +1,5 @@
-import demistomock as demisto  # noqa: F401
-from CommonServerPython import *  # noqa: F401
+import demistomock as demisto
+from CommonServerPython import *
 
 """HelloWorld Integration for Cortex XSOAR (aka Demisto)
 
@@ -232,9 +232,7 @@ import json
 from typing import Any
 
 import dateparser
-
 from CommonServerUserPython import *
-
 
 ''' CONSTANTS '''
 LOG_LINE = 'HelloWorldDebugLog: '  # Make sure to use a line easily to search and read in logs.

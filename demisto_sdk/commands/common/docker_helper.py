@@ -187,10 +187,13 @@ class DockerBase:
     ) -> Optional[docker.models.images.RegistryData]:
         docker_client = init_global_docker_client(log_prompt="get_image")
         try:
-            return docker_client.images.get_registry_data(image)
-        except docker.errors.APIError:
-            logger.debug("Docker doesn't exist in registry")
-            return None
+            return docker_client.images.get(image)
+        except docker.errors.ImageNotFound:
+            try:
+                return docker_client.images.get_registry_data(image)
+            except docker.errors.APIError:
+                logger.debug("Docker doesn't exist in registry")
+                return None
 
     @staticmethod
     def copy_files_container(

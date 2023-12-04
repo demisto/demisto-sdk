@@ -115,10 +115,11 @@ def devtest_image(image_tag, is_powershell) -> str:
     all_errors: list = []
     for _ in range(2):  # retry it once
         logger.info(f"getting devimage for {image_tag}, {is_powershell=}")
-        image, errors = get_docker().pull_or_create_test_image(
+        image, errors = get_docker().get_or_create_test_image(
             base_image=image_tag,
             container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
             push=docker_login(docker_client=init_global_docker_client()),
+            should_pull=False,
             log_prompt="DockerHook",
         )
         if not errors:

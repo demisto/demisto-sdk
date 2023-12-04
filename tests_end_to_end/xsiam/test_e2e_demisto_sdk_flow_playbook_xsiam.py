@@ -136,7 +136,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
     directory_path = Path(f"{tmpdir}/Packs/{pack_name}_client")
     directory_path.mkdir(exist_ok=True, parents=True)
 
-    logger.info(f"Checking which files we can download from the machine.")
+    logger.info("Checking which files we can download from the machine.")
     Downloader(
         list_files=True,
         insecure=True,

@@ -1,6 +1,6 @@
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
+from TestSuite.test_tools import ChangeCWD
 
 
 def test_is_valid_file(repo):

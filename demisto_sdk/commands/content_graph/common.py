@@ -92,6 +92,7 @@ class ContentType(str, enum.Enum):
     WIZARD = "Wizard"
     XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = "LayoutRule"
+    ASSETS_MODELING_RULE = "AssetsModelingRule"
 
     @property
     def labels(self) -> List[str]:

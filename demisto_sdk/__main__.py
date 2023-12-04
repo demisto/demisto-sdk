@@ -778,6 +778,13 @@ def zip_packs(ctx, **kwargs) -> int:
     default=False,
     help="Wether to run the new validate flow.",
 )
+@click.option(
+    "--format",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to run validate as format (i.e. only run validations that has fixes).",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
@@ -867,6 +874,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 config_reader=config_reader,
                 allow_autofix=kwargs.get("fix"),
                 ignore_support_level=kwargs.get("ignore_support_level"),
+                run_as_format=kwargs.get("format"),
             )
             exit_code += validator_v2.run_validations()
         return exit_code
@@ -1385,6 +1393,35 @@ def coverage_analyze(ctx, **kwargs):
     is_flag=True,
     default=True,
 )
+@click.option(
+    "--category-to-run",
+    help="Run specific validations by stating category they're listed under in the config file.",
+    is_flag=False,
+)
+@click.option(
+    "--config-path",
+    help="Path for a config file to run, if not given - will run the default path at: demisto_sdk/commands/validate/default_config.toml",
+    is_flag=False,
+)
+@click.option(
+    "--skip-old-format",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to skip the old format flow.",
+)
+@click.option(
+    "--run-new-format",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to run the new format flow.",
+)
+@click.option(
+    "-j",
+    "--json-file",
+    help="The JSON file path to which to output the command results.",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
 @logging_setup_decorator
@@ -1418,22 +1455,57 @@ def format(
     if file_paths and not input:
         input = ",".join(file_paths)
 
-    with ReadMeValidator.start_mdx_server():
-        return format_manager(
-            str(input) if input else None,
-            str(output) if output else None,
-            from_version=from_version,
-            no_validate=no_validate,
-            update_docker=update_docker,
-            assume_answer=assume_yes,
-            deprecate=deprecate,
-            use_git=use_git,
-            prev_ver=prev_ver,
-            include_untracked=include_untracked,
-            add_tests=add_tests,
-            id_set_path=id_set_path,
-            use_graph=kwargs.get("graph", True),
+     old_format_results, new_format_results = 0, 0
+
+    if not kwargs["skip_old_validate"]:
+        with ReadMeValidator.start_mdx_server():
+            old_format_results = format_manager(
+                str(input) if input else None,
+                str(output) if output else None,
+                from_version=from_version,
+                no_validate=no_validate,
+                update_docker=update_docker,
+                assume_answer=assume_yes,
+                deprecate=deprecate,
+                use_git=use_git,
+                prev_ver=prev_ver,
+                include_untracked=include_untracked,
+                add_tests=add_tests,
+                id_set_path=id_set_path,
+                use_graph=kwargs.get("graph", True),
+            )
+
+    if kwargs["run_new_format"]:
+        from demisto_sdk.commands.validate.validate_manager import ValidateManager
+        validation_results = ValidationResults(
+            json_file_path=kwargs.get("json_file"),
         )
+        config_reader = ConfigReader(
+            config_file_path=kwargs.get("config_path"),
+            category_to_run=kwargs.get("category_to_run"),
+        )
+        initializer = Initializer(
+            use_git=use_git,
+            staged=False,
+            committed_only=False,
+            prev_ver=prev_ver,
+            file_path=input,
+            all_files=False,
+        )
+        validator_v2 = ValidateManager(
+            file_path=input,
+            validate_all=False,
+            initializer=initializer,
+            validation_results=validation_results,
+            config_reader=config_reader,
+            allow_autofix=True,
+            ignore_support_level=False,
+            run_as_format=True,
+        )
+
+        new_format_results = validator_v2.run_format()
+
+    return new_format_results + old_format_results
 
 
 # ====================== upload ====================== #

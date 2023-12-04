@@ -36,10 +36,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
-        self.type = self.script_info.get("subtype") or self.script_info.get("type")
         self.is_long_running = self.script_info.get("longRunning", False)
-        if self.type == "python":
-            self.type += "2"
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
@@ -51,7 +48,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             {
                 "display_name": "display",
                 "docker_image": "script.dockerimage",
-                "type": ["script.subtype", "script.type"],
+                "type": "script.type",
+                "subtype": "script.subtype",
+                "alt_docker_images": "script.alt_dockerimages",
             }
         )
         return super().field_mapping
@@ -59,10 +58,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
     @property
     def display_name(self) -> Optional[str]:
         return get_value(self.yml_data, self.field_mapping.get("display_name", ""))
-
-    @property
-    def docker_image(self) -> str:
-        return get_value(self.yml_data, self.field_mapping.get("docker_image", ""))
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

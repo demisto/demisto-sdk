@@ -1,10 +1,11 @@
+import inspect
 import shutil
 import urllib.parse
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
@@ -23,6 +24,7 @@ from demisto_sdk.commands.common.files.errors import (
     GitFileReadError,
     HttpFileReadError,
     LocalFileReadError,
+    UnknownFileError,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -102,6 +104,28 @@ class File(ABC, BaseModel):
         )
 
     @classmethod
+    @abstractmethod
+    def is_model_type_by_path(cls, path: Path) -> bool:
+        raise NotImplementedError
+
+    @classmethod
+    def __file_factory(cls, path: Path) -> Type["File"]:
+        def _file_factory(_cls):
+            for subclass in _cls.__subclasses__():
+                if not inspect.isabstract(subclass) and subclass.is_model_type_by_path(
+                    path
+                ):
+                    return subclass
+                if _subclass := _file_factory(subclass):
+                    return _subclass
+            return None
+
+        if file_object := _file_factory(cls):
+            return file_object
+
+        raise UnknownFileError(f"Could not identify file {path}")
+
+    @classmethod
     @lru_cache
     def from_path(
         cls,
@@ -110,6 +134,7 @@ class File(ABC, BaseModel):
         **kwargs,
     ) -> "File":
         """
+        Returns the correct file model
 
         Args:
             input_path: the file input path
@@ -119,11 +144,6 @@ class File(ABC, BaseModel):
         Returns:
             File: any subclass of the File model.
         """
-        if cls is File:
-            raise ValueError(
-                "when reading from file content please specify concrete class"
-            )
-
         input_path = Path(input_path)
 
         model_attributes: Dict[str, Any] = {
@@ -133,9 +153,12 @@ class File(ABC, BaseModel):
 
         model_attributes.update(kwargs)
 
-        model = cls.parse_obj(model_attributes)
+        if cls is File:
+            model = cls.__file_factory(input_path)
+        else:
+            model = cls
         logger.debug(f"Using model {model} for file {input_path}")
-        return model
+        return model.parse_obj(model_attributes)
 
     @classmethod
     @lru_cache

@@ -130,7 +130,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
         tests_we_should_skip.add("coverage-analyze")
-        tests_we_should_skip.add("merge-coverage-report")
+        tests_we_should_skip.add("merge-pytest-reports")
     for m in mock_subprocess.call_args_list:
         assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
 
@@ -352,7 +352,7 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
     )
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
     mocker.patch.object(pre_commit_command, "logger")
-    python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
+    python_version_to_files = {"2.7": {("file1.py", None)}, "3.8": {("file2.py", None)}}
     pre_commit_runner = pre_commit_command.PreCommitRunner(
         None, None, None, python_version_to_files, ""
     )
@@ -479,7 +479,7 @@ def test_no_docker_flag_docker_hook():
     docker_hook = create_hook({"args": ["test"]})
     kwargs = {"mode": None, "all_files": False, "input_mode": True}
     DockerHook(**docker_hook, **kwargs).prepare_hook(
-        files_to_run=[file_path], run_docker_hooks=False
+        files_to_run_with_objects=[file_path], run_docker_hooks=False
     )
 
     assert len(docker_hook["repo"]["hooks"]) == 0

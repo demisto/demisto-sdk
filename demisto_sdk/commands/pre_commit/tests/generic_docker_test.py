@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,18 @@ from demisto_sdk.commands.pre_commit.hooks.docker import (
     docker_tag_to_runfiles,
 )
 from demisto_sdk.commands.pre_commit.tests.pre_commit_test import create_hook
+
+
+@dataclass
+class Obj:
+    path: Path = Path("somefile")
+    object_id: str = "id1"
+    is_powershell: bool = False
+    docker_image: str = "dockerimage"
+
+    @property
+    def docker_images(self):
+        return [self.docker_image]
 
 
 @pytest.fixture(autouse=True)
@@ -56,7 +69,7 @@ def test_moded_properties(mocker, mode, expected_text):
 
     """
     file_path = Path("SomeFile.py")
-    file = (file_path, {"commonfields": {"id": "id1"}})
+    file = (file_path, Obj())
     mocker.patch(
         "demisto_sdk.commands.pre_commit.hooks.docker.docker_tag_to_runfiles",
         return_value={"sometag": [file]},
@@ -71,7 +84,7 @@ def test_moded_properties(mocker, mode, expected_text):
     raw_hook["hook"]["args:nightly"] = ["i am the nightly args"]
     raw_hook["hook"]["args:other"] = ["i am some other argument"]
 
-    DockerHook(**raw_hook, mode=mode).prepare_hook([file_path], True)
+    DockerHook(**raw_hook, mode=mode).prepare_hook([(file_path, None)], True)
 
     hook = raw_hook["repo"]["hooks"][0]
     assert hook["args"] == expected_text
@@ -113,45 +126,21 @@ def test_get_property():
 
 def test_docker_tag_to_runfiles(mocker, native_image_config):
     mocked_responses = [
-        {
-            "yml": {"commonfields": {"id": "id1"}},
-            "docker_image": "demisto/python3:123.123.123.123",
-            "path": Path("file1.py"),
-        },
-        {
-            "yml": {"commonfields": {"id": "id2"}},
-            "docker_image": "image2",
-            "path": Path("file2.py"),
-        },
-        {
-            "yml": {"commonfields": {"id": "id3"}},
-            "docker_image": "demisto/python3:123.123.123.123",
-            "path": Path("file3.py"),
-        },
+        Obj(
+            object_id="id1",
+            docker_image="demisto/python3:123.123.123.123",
+            path=Path("file1.py"),
+        ),
+        Obj(object_id="id2", docker_image="image2", path=Path("file2.py")),
+        Obj(
+            object_id="id3",
+            docker_image="demisto/python3:123.123.123.123",
+            path=Path("file3.py"),
+        ),
     ]
     native_latest_tag = "nativelatesttag"
 
     def set_mocks():
-        def mock_yml_for_file(x):
-            return [res.get("yml") for res in mocked_responses if res.get("path") == x][
-                0
-            ]
-
-        def mock_docker_for_file(x):
-            return [
-                [res.get("docker_image")]
-                for res in mocked_responses
-                if res.get("yml") == x
-            ][0]
-
-        mocker.patch(
-            "demisto_sdk.commands.pre_commit.hooks.docker.get_yml_for_code",
-            side_effect=mock_yml_for_file,
-        )
-        mocker.patch(
-            "demisto_sdk.commands.pre_commit.hooks.docker.docker_images_for_file",
-            side_effect=mock_docker_for_file,
-        )
         mocker.patch(
             "demisto_sdk.commands.common.native_image.get_dev_native_image",
             return_value=native_latest_tag,
@@ -159,7 +148,7 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
 
     set_mocks()
     tag_to_files = docker_tag_to_runfiles(
-        [r.get("path") for r in mocked_responses], "from-yml"
+        [(obj.path, obj) for obj in mocked_responses], "from-yml"
     )
 
     assert {
@@ -170,11 +159,11 @@ def test_docker_tag_to_runfiles(mocker, native_image_config):
     }
     assert tag_to_files["image2"][0] == (
         Path("file2.py"),
-        {"commonfields": {"id": "id2"}},
+        mocked_responses[1],
     )
 
     tag_to_files = docker_tag_to_runfiles(
-        [r.get("path") for r in mocked_responses], "native:dev,from-yml"
+        [(obj.path, obj) for obj in mocked_responses], "native:dev,from-yml"
     )
     assert len(tag_to_files) == 3
     assert native_latest_tag in tag_to_files

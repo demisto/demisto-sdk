@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 class IniFile(TextFile):
     @classmethod
     def is_model_type_by_path(cls, path: Path) -> bool:
-        return path.name.lower() == PACKS_PACK_IGNORE_FILE_NAME or path.suffix == ".ini"
+        return path.name.lower() == PACKS_PACK_IGNORE_FILE_NAME or path.suffix.lower() == ".ini"
 
     def load(self, file_content: bytes) -> ConfigParser:
         config_parser = ConfigParser(allow_no_value=True)

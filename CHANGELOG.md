@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added support to automatically detect the correct file model by file path when reading files.
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.

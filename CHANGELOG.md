@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added support to detect automatically the playground-id when running commands in xsoar.
 * Added support to automatically detect the correct file model by file path when reading files.
 
 ## 1.24.0

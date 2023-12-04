@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.clients.configs import (
 )
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import (
+    MINIMUM_XSOAR_SAAS_VERSION,
     IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
@@ -947,6 +948,15 @@ class XsoarClient(BaseModel):
         Returns:
             the context after running the command
         """
+        if not investigation_id:
+            if self.version < Version(MINIMUM_XSOAR_SAAS_VERSION):
+                investigation_id = self.get_playground_id()
+            else:
+                # Add here relevant ciac to why it doesn't work
+                raise ValueError(
+                    "Investigation_id must be provided for xsoar-saas/xsiam"
+                )
+
         if should_delete_context:
             update_entry = {
                 "investigationId": investigation_id,
@@ -962,6 +972,53 @@ class XsoarClient(BaseModel):
         )
 
         return self.get_investigation_context(investigation_id, response_type)
+
+    def get_playground_id(self) -> str:
+        """
+        Returns a playground ID based on the user.
+        """
+        answer = self.client.search_investigations(
+            filter={"filter": {"type": [9], "page": 0}}
+        )
+        if answer.total == 0:
+            raise RuntimeError(f"No playgrounds were detected in {self.base_url}")
+        elif answer.total == 1:
+            playground_id = answer.data[0].id
+        else:
+            # if found more than one playground, try to filter to results against the current user
+            user_data, status_code, _ = self.client.generic_request(
+                path="/user",
+                method="GET",
+                content_type="application/json",
+                response_type="object",
+            )
+            if status_code != 200:
+                raise RuntimeError("Cannot find username")
+
+            username = user_data.get("username") or ""
+
+            def filter_by_creating_user_id(playground):
+                return playground.creating_user_id == username
+
+            playgrounds = list(filter(filter_by_creating_user_id, answer.data))
+            if playgrounds:
+                playground_id = playgrounds[0].id
+            else:
+                for page in range(int((answer.total - 1) / len(answer.data))):
+                    playgrounds.extend(
+                        filter(
+                            filter_by_creating_user_id,
+                            self.client.search_investigations(
+                                filter={"filter": {"type": [9], "page": page + 1}}
+                            ).data,
+                        )
+                    )
+                if not playgrounds:
+                    raise RuntimeError(f"Could not find playground for {self.base_url}")
+                playground_id = playgrounds[0].id
+
+        logger.debug(f"Found playground ID {playground_id} for {self.base_url}")
+        return playground_id
 
     @retry(exceptions=ApiException)
     def get_investigation_context(

@@ -1,5 +1,5 @@
 flake8==4.0.1
-pylint==2.13.9
+pylint==3.0.2
 pytest-mock==3.10.0
 vulture==2.7
 requests-mock==1.11.0

@@ -151,11 +151,16 @@ def devtest_image(
     raise DockerException(all_errors)
 
 
-def get_environment_flag() -> str:
+def get_environment_flag(env: dict) -> str:
     """
     The env flag needed to run python scripts in docker
     """
-    return f'--env "PYTHONPATH={get_docker_python_path()}"'
+    env_flag = f'--env "PYTHONPATH={get_docker_python_path()}"'
+    for key, value in env.items():
+        env_flag += f' --env "{key}={value}"'
+    if os.getenv("GITHUB_ACTIONS"):
+        env_flag += " --env GITHUB_ACTIONS=true"
+    return env_flag
 
 
 def _split_by_config_file(files: Iterable[Path], config_arg: Optional[Tuple]):
@@ -289,9 +294,10 @@ class DockerHook(Hook):
         new_hook["id"] = f"{new_hook.get('id')}-{image}"
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
+        env = new_hook.pop("env", {})
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag()} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {dev_image}'
 
         ret_hooks = []
         counter = 0

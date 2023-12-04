@@ -18,6 +18,8 @@ then
     apt-get update && apt-get install -y --no-install-recommends gcc python3-dev
 fi
 pip install --no-cache-dir --progress-bar off -r /test-requirements.txt
+pip install --no-cache-dir --progress-bar off -r /additonal-requirements.txt
+
 if [ "$ID" = "alpine" ]
 then
     # Cleanup

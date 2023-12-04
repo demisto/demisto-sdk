@@ -28,7 +28,7 @@ from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
 NO_CONFIG_VALUE = None
-TEST_REQUIREMENTS_FILE = "test-requirements.txt"
+ADDITIONAL_REQUIREMENTS_FILE = "additional-requirements.txt"
 
 
 @functools.lru_cache
@@ -99,8 +99,10 @@ def docker_tag_to_runfiles(
         if not obj:
             continue
         additional_reqs = ""
-        if (obj.path.parent / TEST_REQUIREMENTS_FILE).exists():
-            additional_reqs = (obj.path.parent / TEST_REQUIREMENTS_FILE).read_text()
+        if (obj.path.parent / ADDITIONAL_REQUIREMENTS_FILE).exists():
+            additional_reqs = (
+                obj.path.parent / ADDITIONAL_REQUIREMENTS_FILE
+            ).read_text()
         for docker_image in obj.docker_images:
 
             tags_to_files[docker_image].append((file, obj, additional_reqs))

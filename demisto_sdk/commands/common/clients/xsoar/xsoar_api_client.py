@@ -22,7 +22,6 @@ from demisto_sdk.commands.common.clients.configs import (
 )
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import (
-    MINIMUM_XSOAR_SAAS_VERSION,
     IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
@@ -949,10 +948,10 @@ class XsoarClient(BaseModel):
             the context after running the command
         """
         if not investigation_id:
-            if self.version < Version(MINIMUM_XSOAR_SAAS_VERSION):
+            if self.marketplace == MarketplaceVersions.XSOAR:
                 investigation_id = self.get_playground_id()
             else:
-                # it is not possible to auto-detect playground-id, see CIAC-8766,
+                # it is not possible to auto-detect playground-id in xsoar-8, see CIAC-8766,
                 # once its resolved this should be implemented
                 raise ValueError(
                     "Investigation_id must be provided for xsoar-saas/xsiam"

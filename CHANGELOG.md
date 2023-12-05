@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Added support to automatically detect the correct file model by file path when reading files.
+* Fixed an issue where **run-playbook** command didn't work if the *url* argument was not provided.
 * Fixed an issue in **validate** command, where layout_rules and trigger schemas will now handle complex structures.
 
 ## 1.24.0

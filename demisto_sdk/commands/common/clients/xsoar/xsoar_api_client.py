@@ -11,6 +11,7 @@ import dateparser
 import demisto_client
 import requests
 from demisto_client.demisto_api.api.default_api import DefaultApi
+from demisto_client.demisto_api.models.entry import Entry
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 from pydantic import BaseModel, Field, validator
@@ -936,7 +937,7 @@ class XsoarClient(BaseModel):
         investigation_id: Optional[str] = None,
         should_delete_context: bool = True,
         response_type: str = "object",
-    ):
+    ) -> Tuple[List[Entry], Dict[str, Any]]:
         """
         Args:
             command: the command to run
@@ -966,12 +967,16 @@ class XsoarClient(BaseModel):
             self.client.investigation_add_entries_sync(update_entry=update_entry)
 
         update_entry = {"investigationId": investigation_id, "data": command}
-        self.client.investigation_add_entries_sync(update_entry=update_entry)
+        war_room_entries: List[Entry] = self.client.investigation_add_entries_sync(
+            update_entry=update_entry
+        )
         logger.debug(
             f"Successfully run the command {command} in investigation {investigation_id}"
         )
 
-        return self.get_investigation_context(investigation_id, response_type)
+        return war_room_entries, self.get_investigation_context(
+            investigation_id, response_type
+        )
 
     def get_playground_id(self) -> str:
         """

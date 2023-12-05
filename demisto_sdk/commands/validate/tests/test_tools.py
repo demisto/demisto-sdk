@@ -5,16 +5,19 @@ from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
+from TestSuite.file import File
 from TestSuite.repo import Repo
 
 REPO = Repo(tmpdir=Path(tempfile.mkdtemp()))
 
 
 def create_integration_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
     Args:
@@ -29,7 +32,31 @@ def create_integration_object(
     pack = REPO.create_pack()
     integration = pack.create_integration(yml=yml_content)
     integration.code.write("from MicrosoftApiModule import *")
-    return BaseContent.from_path(Path(integration.path))
+    return BaseContent.from_path(Path(integration.path))  # type:ignore
+
+
+def create_ps_integration_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+) -> Integration:
+    """Creating an integration object with altered fields from a default integration yml structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+
+    Returns:
+        The integration object.
+    """
+    yml_content = load_yaml("integration.yml")
+    update_keys(yml_content, paths, values)
+    pack = REPO.create_pack()
+    integration = pack.create_integration(yml=yml_content)
+    integration.code = File(
+        Path(f"{integration.path}/integration_0.ps1"), integration.repo_path
+    )
+    integration.code.write(r". $PSScriptRoot\CommonServerPowerShell.ps1")
+    return BaseContent.from_path(Path(integration.path))  # type:ignore
 
 
 def create_script_object(

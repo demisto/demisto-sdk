@@ -2,10 +2,17 @@ import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
+    create_ps_integration_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subtype import (
     ValidSubtypeValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN119_feed_integration_from_version import (
+    FeedIntegrationFromVersionValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN120_ps_integration_from_version import (
+    PSIntegrationFromVersionValidator,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration_runable import (
     IsIntegrationRunnableValidator,
@@ -162,11 +169,11 @@ def test_IsIntegrationRunnableValidator_is_valid(
     """
     Given
     content_items iterables.
-        - Case 1: An integration without any commands, and isfetch, feeed, and longRunnings keys are set to false.
-        - Case 2: An integration without any commands, and feeed, and longRunnings keys are set to false, and isfetch is set to True.
-        - Case 3: An integration without any commands, and isfetch, feeed, and longRunnings keys are set to false, and feeed is set to True.
-        - Case 4: An integration without any commands, and isfetch, and feeed keys are set to false, and longRunnings is set to True.
-        - Case 5: An integration with one command, and isfetch, feeed, and longRunnings keys are set to false.
+        - Case 1: An integration without any commands, and isfetch, feed, and longRunnings keys are set to false.
+        - Case 2: An integration without any commands, and feed, and longRunnings keys are set to false, and isfetch is set to True.
+        - Case 3: An integration without any commands, and isfetch, feed, and longRunnings keys are set to false, and feed is set to True.
+        - Case 4: An integration without any commands, and isfetch, and feed keys are set to false, and longRunnings is set to True.
+        - Case 5: An integration with one command, and isfetch, feed, and longRunnings keys are set to false.
     When
     - Calling the IsIntegrationRunnableValidator is valid function.
     Then
@@ -184,3 +191,181 @@ def test_IsIntegrationRunnableValidator_is_valid(
         or results[0].message
         == "Could not find any runnable command in the integration.\nMust have at least one of: a command under the `commands` section, `isFetch: true`, `feed: true`, or `longRunning: true`."
     )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "script.feed",
+                        "fromversion",
+                    ],
+                    values=[True, "5.5.0"],
+                ),
+                create_integration_object(
+                    paths=[
+                        "script.feed",
+                        "fromversion",
+                    ],
+                    values=[False, "5.0.0"],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "script.feed",
+                        "fromversion",
+                    ],
+                    values=[True, "6.0.0"],
+                ),
+                create_integration_object(
+                    paths=[
+                        "script.feed",
+                        "fromversion",
+                    ],
+                    values=[True, "5.0.0"],
+                ),
+            ],
+            1,
+            [
+                "The integration is a feed integration and therefore require a fromversion field of at least 5.5.0, current version is: 5.0.0."
+            ],
+        ),
+    ],
+)
+def test_FeedIntegrationFromVersionValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: 2 integrations - one feed integration with high enough fromversion field and one none feed integration with fromversion lower than 5.5.0.
+        - Case 2: 2 integration - one feed integration with fromversion lower than 5.5.0 and one with a high enough fromversion field.
+    When
+    - Calling the FeedIntegrationFromVersionValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Shouldn't fail at all.
+        - Case 2: Should fail only one integration.
+    """
+    results = FeedIntegrationFromVersionValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_FeedIntegrationFromVersionValidator_fix():
+    """
+    Given
+        - an integration
+    When
+    - Calling the FeedIntegrationFromVersionValidator fix function.
+    Then
+        - Make sure the the integration fromversion was raised and that the right message was returned.
+    """
+    content_item = create_integration_object(paths=["fromversion"], values=["5.0.0"])
+    assert content_item.fromversion == "5.0.0"
+    assert (
+        FeedIntegrationFromVersionValidator().fix(content_item).message
+        == "Raised the fromversion field to 5.5.0"
+    )
+    assert content_item.fromversion == "5.5.0"
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_ps_integration_object(
+                    paths=[
+                        "script.type",
+                        "fromversion",
+                    ],
+                    values=["powershell", "5.5.0"],
+                ),
+                create_integration_object(
+                    paths=[
+                        "fromversion",
+                    ],
+                    values=["5.0.0"],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "fromversion",
+                    ],
+                    values=["6.0.0"],
+                ),
+                create_ps_integration_object(
+                    paths=[
+                        "script.type",
+                        "fromversion",
+                    ],
+                    values=["powershell", "5.0.0"],
+                ),
+            ],
+            1,
+            [
+                "The integration is a powershell integration and therefore require a fromversion field of at least 5.5.0, current version is: 5.0.0."
+            ],
+        ),
+    ],
+)
+def test_PSIntegrationFromVersionValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: 2 integrations - one ps integration with high enough fromversion field and one python integration with fromversion lower than 5.5.0.
+        - Case 2: 2 integration - one ps integration with fromversion lower than 5.5.0 and one with a high enough fromversion field.
+    When
+    - Calling the PSIntegrationFromVersionValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Shouldn't fail at all.
+        - Case 2: Should fail only one integration.
+    """
+    results = PSIntegrationFromVersionValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_PSIntegrationFromVersionValidator_fix():
+    """
+    Given
+        - a ps integration
+    When
+    - Calling the PSIntegrationFromVersionValidator fix function.
+    Then
+        - Make sure the the integration fromversion was raised and that the right message was returned.
+    """
+    content_item = create_ps_integration_object(paths=["fromversion"], values=["5.0.0"])
+    assert content_item.fromversion == "5.0.0"
+    assert (
+        PSIntegrationFromVersionValidator().fix(content_item).message
+        == "Raised the fromversion field to 5.5.0"
+    )
+    assert content_item.fromversion == "5.5.0"

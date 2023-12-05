@@ -3,6 +3,9 @@ from typing import Any, Generator, List
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
+    AssetsModelingRule,
+)
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
@@ -88,6 +91,9 @@ class PackContentItems(BaseModel):
         [], alias=ContentType.PREPROCESS_RULE.value
     )
     test_script: List[TestScript] = Field([], alias=ContentType.TEST_SCRIPT.value)
+    assets_modeling_rule: List[AssetsModelingRule] = Field(
+        [], alias=ContentType.ASSETS_MODELING_RULE.value
+    )
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""

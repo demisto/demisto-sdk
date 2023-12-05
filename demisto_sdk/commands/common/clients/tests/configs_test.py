@@ -63,6 +63,6 @@ def test_init_xsiam_client_config_with_api_key_and_auth_id_and_token():
 
 def test_init_xsiam_client_config_with_api_key_and_token_without_auth_id():
     with pytest.raises(ValueError):
-        assert XsiamClientConfig(
+        XsiamClientConfig(
             base_api_url="https://test1.com", api_key="test", token="test"
         )

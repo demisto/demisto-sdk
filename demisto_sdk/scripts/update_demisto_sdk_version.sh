@@ -42,8 +42,8 @@ do
   git checkout master
   git pull
   poetry install
-  git stash pop
   git checkout "$current_content_branch"
+  git stash pop
 done
 
 # Move back to original path

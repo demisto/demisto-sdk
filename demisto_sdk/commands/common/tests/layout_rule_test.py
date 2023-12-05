@@ -79,6 +79,11 @@ def test_is_valid_file_complicated_schema(repo):
                                     "SEARCH_VALUE": "test3",
                                 },
                             ]
+                        },
+                        {
+                            "SEARCH_FIELD": "alert_name1",
+                            "SEARCH_TYPE": "EQ",
+                            "SEARCH_VALUE": "test4",
                         }
                     ]
                 }
@@ -132,6 +137,11 @@ def test_is_not_valid_file_complicated_schema(repo):
                                     "SEARCH_VALUE": "test3",
                                 },
                             ]
+                        },
+                        {
+                            "SEARCH_FIELD": "alert_name1",
+                            "SEARCH_TYPE": "EQ",
+                            "SEARCH_VALUE": "test4",
                         }
                     ]
                 }

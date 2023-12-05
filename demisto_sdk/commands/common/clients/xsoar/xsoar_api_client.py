@@ -957,6 +957,8 @@ class XsoarClient(BaseModel):
                 raise ValueError(
                     "Investigation_id must be provided for xsoar-saas/xsiam"
                 )
+        if not command.startswith("!"):
+            command = f"!{command}"
 
         if should_delete_context:
             update_entry = {

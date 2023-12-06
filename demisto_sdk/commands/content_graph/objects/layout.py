@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Callable, List, Optional, Union
 
 import demisto_client
@@ -51,6 +52,16 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_layout
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if (
+            ("layout" in _dict or "kind" in _dict)
+            and "kind" in _dict
+            or "typeId" in _dict
+        ):
+            return ContentType.LAYOUT
+        return None
 
 
 def replace_layout_incident_alert(data: dict) -> dict:

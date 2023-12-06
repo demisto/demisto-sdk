@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from pydantic import DirectoryPath, Field
@@ -19,3 +20,14 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
             dir=dir / self.path.parent.name,
             marketplace=marketplace,
         )
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if "color" in _dict and "cliName" not in _dict and path.suffix == ".json":
+            if (
+                "definitionId" in _dict
+                and _dict["definitionId"]
+                and _dict["definitionId"].lower() not in ["incident", "indicator"]
+            ):
+                return ContentType.GENERIC_TYPE
+        return None

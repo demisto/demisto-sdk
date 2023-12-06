@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
@@ -60,6 +61,14 @@ class ContentItem(BaseContent):
         if not CONTENT_PATH.name:
             return CONTENT_PATH / v
         return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
+
+    @staticmethod
+    @abstractmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        """
+        This function checks whether the file in the given path is of the content item type.
+        """
+        pass
 
     @property
     def pack_id(self) -> str:

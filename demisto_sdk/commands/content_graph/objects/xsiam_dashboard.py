@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Optional
 
 from pydantic import DirectoryPath
@@ -32,3 +33,9 @@ class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD)
                 self.path.parent / f"{self.path.stem}_image.png",
                 dir / f"{self.path.stem}_image.png",
             )
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if "dashboards_data" in _dict:
+            return ContentType.XSIAM_DASHBOARD
+        return None

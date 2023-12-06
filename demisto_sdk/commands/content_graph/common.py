@@ -8,10 +8,6 @@ from neo4j import graph
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
-from demisto_sdk.commands.common.tools import (
-    get_json,
-    get_remote_file,
-)
 
 NEO4J_ADMIN_DOCKER = ""
 
@@ -345,6 +341,11 @@ def get_server_content_items() -> Dict[ContentType, list]:
     Returns:
         Dict[ContentType, list]: A mapping of content types to the list of server content items.
     """
+    from demisto_sdk.commands.common.tools import (
+        get_json,
+        get_remote_file,
+    )
+
     try:
         json_data: dict = get_json(SERVER_CONTENT_ITEMS_PATH)
     except FileNotFoundError:

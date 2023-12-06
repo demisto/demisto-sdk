@@ -1,4 +1,5 @@
-from typing import Set
+from pathlib import Path
+from typing import Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -36,3 +37,9 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
         data = super().prepare_for_upload(current_marketplace)
         data = XDRCTemplateUnifier.unify(self.path, data, current_marketplace)
         return data
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if "profile_type" in _dict and "yaml_template" in _dict:
+            return ContentType.XDRC_TEMPLATE
+        return None

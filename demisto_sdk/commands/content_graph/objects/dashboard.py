@@ -1,4 +1,5 @@
-from typing import Callable, Set
+from pathlib import Path
+from typing import Callable, Optional, Set
 
 import demisto_client
 
@@ -13,3 +14,13 @@ class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignor
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_dashboard
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if (
+            "layout" in _dict
+            or "kind" in _dict
+            and not ("kind" in _dict or "typeId" in _dict)
+        ):
+            return ContentType.DASHBOARD
+        return None

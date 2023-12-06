@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import TYPE_CHECKING, Callable, List, Optional
 
 import demisto_client
@@ -121,3 +122,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.integration_upload
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if "category" in _dict and path.suffix == ".yml":
+            return ContentType.INTEGRATION
+        return None

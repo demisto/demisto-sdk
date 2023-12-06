@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Optional
 
 import demisto_client
 from pydantic import Field
@@ -30,3 +31,13 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
                 files={"file": str(self.path)},
                 content_type="multipart/form-data",
             )
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if isinstance(_dict, dict) and {
+            "isAllFeeds",
+            "selectedFeeds",
+            "isFeed",
+        }.issubset(_dict.keys()):
+            return ContentType.JOB
+        return None

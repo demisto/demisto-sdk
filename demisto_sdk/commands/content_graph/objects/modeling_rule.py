@@ -1,6 +1,10 @@
+from pathlib import Path
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MODELING_RULES_DIR,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
@@ -32,3 +36,10 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
             data = self.data
         data = RuleUnifier.unify(self.path, data, current_marketplace)
         return data
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if "rules" in _dict:
+            if MODELING_RULES_DIR in Path(path).parts and Path(path).suffix == ".yml":
+                return ContentType.MODELING_RULE
+        return None

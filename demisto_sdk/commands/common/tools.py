@@ -137,6 +137,7 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.content_graph.common import ContentType
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -146,7 +147,6 @@ logger = logging.getLogger("demisto-sdk")
 yaml_safe_load = YAML_Handler(typ="safe")
 
 urllib3.disable_warnings()
-
 
 GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
@@ -181,7 +181,6 @@ class MarketplaceTagParser:
     XSOAR_ON_PREM_TAG = "XSOAR_ON_PREM"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
-
         self.marketplace = marketplace
 
         self._xsoar_parser = TagParser(marketplace_tag=self.XSOAR_TAG)
@@ -1778,6 +1777,24 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 # flake8: noqa: C901
 
 
+def find_content_type(path: Path) -> Optional[ContentType]:
+    """
+    Find the ContentType value of a path, without accessing the file, based on the file properties.
+    """
+    from demisto_sdk.commands.common.files.file import File
+    from demisto_sdk.commands.content_graph.objects.base_content import (
+        CONTENT_TYPE_TO_MODEL,
+    )
+    from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
+    _dict = File.read_from_local_path(path)
+    for content_type_obj in CONTENT_TYPE_TO_MODEL.values():
+        if issubclass(content_type_obj, ContentItem):
+            if matched_content_type := content_type_obj.match(_dict, path):
+                return matched_content_type
+    return None
+
+
 def find_type(
     path: str = "",
     _dict=None,
@@ -1801,6 +1818,40 @@ def find_type(
     Returns:
         FileType | None: Enum representation of the content file type, None otherwise.
     """
+    from demisto_sdk.commands.content_graph.objects import (
+        Classifier,
+        CorrelationRule,
+        Dashboard,
+        GenericDefinition,
+        GenericField,
+        GenericModule,
+        GenericType,
+        IncidentField,
+        IncidentType,
+        IndicatorField,
+        IndicatorType,
+        Integration,
+        Job,
+        Layout,
+        LayoutRule,
+        Mapper,
+        ModelingRule,
+        ParsingRule,
+        Playbook,
+        PreProcessRule,
+        Report,
+        Script,
+        TestPlaybook,
+        TestScript,
+        Trigger,
+        Widget,
+        Wizard,
+        XDRCTemplate,
+        XSIAMDashboard,
+        XSIAMReport,
+    )
+    from demisto_sdk.commands.content_graph.objects import List as List_obj
+
     type_by_path = find_type_by_path(path)
     if type_by_path:
         return type_by_path
@@ -1820,154 +1871,131 @@ def find_type(
             return None
         raise err
 
-    if file_type == "yml" or path.lower().endswith(".yml"):
-        if path.lower().endswith("_unified.yml"):
-            return FileType.UNIFIED_YML
+    if (file_type == "yml" or path.lower().endswith(".yml")) and path.lower().endswith(
+        "_unified.yml"
+    ):
+        return FileType.UNIFIED_YML
 
-        if "category" in _dict:
-            if _dict.get("beta") and not ignore_sub_categories:
-                return FileType.BETA_INTEGRATION
+    if (
+        (file_type == "yml" or path.lower().endswith(".yml"))
+        and "category" in _dict
+        and _dict.get("beta")
+        and not ignore_sub_categories
+    ):
+        return FileType.BETA_INTEGRATION
 
-            return FileType.INTEGRATION
+    if Integration.match(_dict, Path(path)):
+        return FileType.INTEGRATION
 
-        if "script" in _dict:
-            if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
-                return FileType.TEST_SCRIPT
+    if TestScript.match(_dict, Path(path)) and not ignore_sub_categories:
+        return FileType.TEST_SCRIPT
 
-            return FileType.SCRIPT
+    if Script.match(_dict, Path(path)):
+        return FileType.SCRIPT
 
-        if "tasks" in _dict:
-            if TEST_PLAYBOOKS_DIR in Path(path).parts:
-                return FileType.TEST_PLAYBOOK
+    if TestPlaybook.match(_dict, Path(path)):
+        return FileType.TEST_PLAYBOOK
 
-            return FileType.PLAYBOOK
+    if Playbook.match(_dict, Path(path)):
+        return FileType.PLAYBOOK
 
-        if "rules" in _dict:
-            if "samples" in _dict and PARSING_RULES_DIR in Path(path).parts:
-                return FileType.PARSING_RULE
+    if ParsingRule.match(_dict, Path(path)):
+        return FileType.PARSING_RULE
 
-            if MODELING_RULES_DIR in Path(path).parts:
-                return FileType.MODELING_RULE
+    if ModelingRule.match(_dict, Path(path)):
+        return FileType.MODELING_RULE
 
-        if "global_rule_id" in _dict or (
-            isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0]
-        ):
-            return FileType.CORRELATION_RULE
+    if CorrelationRule.match(_dict, Path(path)):
+        return FileType.CORRELATION_RULE
 
-    if file_type == "json" or path.lower().endswith(".json"):
-        if (
-            path.lower().endswith("_schema.json")
-            and MODELING_RULES_DIR in Path(path).parts
-        ):
-            return FileType.MODELING_RULE_SCHEMA
+    if (file_type == "json" or path.lower().endswith(".json")) and (
+        path.lower().endswith("_schema.json") and MODELING_RULES_DIR in Path(path).parts
+    ):
+        return FileType.MODELING_RULE_SCHEMA
 
-        if "widgetType" in _dict:
-            return FileType.WIDGET
+    if Widget.match(_dict, Path(path)):
+        return FileType.WIDGET
 
-        if "orientation" in _dict:
-            return FileType.REPORT
+    if Report.match(_dict, Path(path)):
+        return FileType.REPORT
 
-        if "color" in _dict and "cliName" not in _dict:
-            if (
-                "definitionId" in _dict
-                and _dict["definitionId"]
-                and _dict["definitionId"].lower() not in ["incident", "indicator"]
-            ):
-                return FileType.GENERIC_TYPE
-            return FileType.INCIDENT_TYPE
+    if GenericType.match(_dict, Path(path)):
+        return FileType.GENERIC_TYPE
 
-        # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
-        # located in reputations.json file.
-        if "regex" in _dict or "reputations" in _dict:
-            return FileType.REPUTATION
+    if IncidentType.match(_dict, Path(path)):
+        return FileType.INCIDENT_TYPE
 
-        if "brandName" in _dict and "transformer" in _dict:
-            return FileType.OLD_CLASSIFIER
+    # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
+    # located in reputations.json file.
+    if IndicatorType.match(_dict, Path(path)):
+        return FileType.REPUTATION
 
-        if ("transformer" in _dict and "keyTypeMap" in _dict) or "mapping" in _dict:
-            if _dict.get("type") and _dict.get("type") == "classification":
-                return FileType.CLASSIFIER
-            elif _dict.get("type") and "mapping" in _dict.get("type"):
-                return FileType.MAPPER
-            return None
+    if (
+        (file_type == "json" or path.lower().endswith(".json"))
+        and "brandName" in _dict
+        and "transformer" in _dict
+    ):
+        return FileType.OLD_CLASSIFIER
 
-        if "canvasContextConnections" in _dict:
-            return FileType.CONNECTION
+    if Classifier.match(_dict, Path(path)):
+        return FileType.CLASSIFIER
 
-        if (
-            "layout" in _dict or "kind" in _dict
-        ):  # it's a Layout or Dashboard but not a Generic Object
-            if "kind" in _dict or "typeId" in _dict:
-                return FileType.LAYOUT
+    if Mapper.match(_dict, Path(path)):
+        return FileType.MAPPER
 
-            return FileType.DASHBOARD
+    if (
+        file_type == "json" or path.lower().endswith(".json")
+    ) and "canvasContextConnections" in _dict:
+        return FileType.CONNECTION
 
-        if "group" in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
-            return FileType.LAYOUTS_CONTAINER
+    if Layout.match(_dict, Path(path)):
+        return FileType.LAYOUT
 
-        if (
-            "scriptName" in _dict
-            and "existingEventsFilters" in _dict
-            and "readyExistingEventsFilters" in _dict
-            and "newEventFilters" in _dict
-            and "readyNewEventFilters" in _dict
-        ):
-            return FileType.PRE_PROCESS_RULES
+    if Dashboard.match(_dict, Path(path)):
+        return FileType.DASHBOARD
 
-        if "definitionIds" in _dict and "views" in _dict:
-            return FileType.GENERIC_MODULE
+    if PreProcessRule.match(_dict, Path(path)):
+        return FileType.PRE_PROCESS_RULES
 
-        if "auditable" in _dict:
-            return FileType.GENERIC_DEFINITION
+    if GenericModule.match(_dict, Path(path)):
+        return FileType.GENERIC_MODULE
 
-        if isinstance(_dict, dict) and {
-            "isAllFeeds",
-            "selectedFeeds",
-            "isFeed",
-        }.issubset(_dict.keys()):
-            return FileType.JOB
+    if GenericDefinition.match(_dict, Path(path)):
+        return FileType.GENERIC_DEFINITION
 
-        if isinstance(_dict, dict) and "wizard" in _dict:
-            return FileType.WIZARD
+    if Job.match(_dict, Path(path)):
+        return FileType.JOB
 
-        if "dashboards_data" in _dict:
-            return FileType.XSIAM_DASHBOARD
+    if Wizard.match(_dict, Path(path)):
+        return FileType.WIZARD
 
-        if "templates_data" in _dict:
-            return FileType.XSIAM_REPORT
+    if XSIAMDashboard.match(_dict, Path(path)):
+        return FileType.XSIAM_DASHBOARD
 
-        if "trigger_id" in _dict:
-            return FileType.TRIGGER
+    if XSIAMReport.match(_dict, Path(path)):
+        return FileType.XSIAM_REPORT
 
-        if "profile_type" in _dict and "yaml_template" in _dict:
-            return FileType.XDRC_TEMPLATE
+    if Trigger.match(_dict, Path(path)):
+        return FileType.TRIGGER
 
-        if "rule_id" in _dict:
-            return FileType.LAYOUT_RULE
+    if XDRCTemplate.match(_dict, Path(path)):
+        return FileType.XDRC_TEMPLATE
 
-        if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
-            _dict.keys()
-        ):
-            return FileType.LISTS
+    if LayoutRule.match(_dict, Path(path)):
+        return FileType.LAYOUT_RULE
 
-        # When using it for all files validation- sometimes 'id' can be integer
-        if "id" in _dict:
-            if isinstance(_dict["id"], str):
-                if (
-                    "definitionId" in _dict
-                    and _dict["definitionId"]
-                    and _dict["definitionId"].lower() not in ["incident", "indicator"]
-                ):
-                    return FileType.GENERIC_FIELD
-                _id = _dict["id"].lower()
-                if _id.startswith("incident"):
-                    return FileType.INCIDENT_FIELD
-                if _id.startswith("indicator"):
-                    return FileType.INDICATOR_FIELD
-            else:
-                logger.info(
-                    f'The file {path} could not be recognized, please update the "id" to be a string'
-                )
+    if List_obj.match(_dict, Path(path)):
+        return FileType.LISTS
+
+    # When using it for all files validation- sometimes 'id' can be integer
+    if GenericField.match(_dict, Path(path)):
+        return FileType.GENERIC_FIELD
+
+    if IncidentField.match(_dict, Path(path)):
+        return FileType.INCIDENT_FIELD
+
+    if IndicatorField.match(_dict, Path(path)):
+        return FileType.INDICATOR_FIELD
 
     return None
 

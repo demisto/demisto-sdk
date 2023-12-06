@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, Optional
 
 import demisto_client
@@ -14,3 +15,14 @@ class Classifier(ContentItem, content_type=ContentType.CLASSIFIER):  # type: ign
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_classifier
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if ("transformer" in _dict and "keyTypeMap" in _dict) or "mapping" in _dict:
+            if (
+                _dict.get("type")
+                and _dict.get("type") == "classification"
+                and path.suffix == ".json"
+            ):
+                return ContentType.CLASSIFIER
+        return None

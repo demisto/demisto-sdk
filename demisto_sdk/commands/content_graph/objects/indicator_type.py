@@ -45,3 +45,9 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
                 # Wrapping the dictionary with a list, as that's what the server expects
                 json.dump([self.prepare_for_upload(marketplace=marketplace)], f)
             client.import_reputation_handler(str(file_path))
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if "regex" in _dict or "reputations" in _dict and path.suffix == ".json":
+            return ContentType.INDICATOR_TYPE
+        return None

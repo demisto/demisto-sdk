@@ -1,5 +1,7 @@
-from typing import Set
+from pathlib import Path
+from typing import Optional, Set
 
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 
@@ -9,3 +11,13 @@ class TestPlaybook(BasePlaybook, content_type=ContentType.TEST_PLAYBOOK):  # typ
 
     def metadata_fields(self) -> Set[str]:
         raise NotImplementedError("TestPlaybooks not included in metadata")
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+        if (
+            TEST_PLAYBOOKS_DIR in path.parts
+            and "tasks" in _dict
+            and path.suffix == ".yml"
+        ):
+            return ContentType.TEST_PLAYBOOK
+        return None

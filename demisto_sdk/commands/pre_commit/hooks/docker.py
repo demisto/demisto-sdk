@@ -29,27 +29,28 @@ from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
 NO_CONFIG_VALUE = None
-ADDITIONAL_REQUIREMENTS_FILE = "additional-requirements.txt"
 
 
-@functools.lru_cache
-def get_docker_python_path() -> str:
+def get_docker_python_path(objects_paths: Iterable[str]) -> str:
     """
     precommit by default mounts the content repo to source.
     This means CommonServerPython's path is /src/Packs/Base/...CSP.py
     Returns: A PYTHONPATH formatted string
     """
     path_to_replace = str(Path(CONTENT_PATH).absolute())
-    docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
+    docker_path = [
+        str(path).replace(path_to_replace, "/src")
+        for path in list(objects_paths) + PYTHONPATH
+    ]
     path = ":".join(docker_path)
     logger.debug(f"pythonpath in docker being set to {path}")
     return path
 
 
 def with_native_tags(
-    tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript, str]]],
+    tags_to_files: Dict[str, List[Tuple[Path, IntegrationScript]]],
     docker_image_flag: str,
-) -> Dict[str, List[Tuple[Path, IntegrationScript, str]]]:
+) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
     Adds the native image images into the dict with the files that should be run on them
     Args:
@@ -64,7 +65,7 @@ def with_native_tags(
     native_image_config = NativeImageConfig.get_instance()
 
     for image, scripts in tags_to_files.items():
-        for file, obj, additional_requirements in scripts:
+        for file, obj in scripts:
 
             supported_native_images = ScriptIntegrationSupportedNativeImages(
                 _id=obj.object_id,
@@ -72,20 +73,18 @@ def with_native_tags(
                 docker_image=image,
             ).get_supported_native_docker_tags(docker_flags)
             for native_image in supported_native_images:
-                all_tags_to_files[native_image].append(
-                    (file, obj, additional_requirements)
-                )
+                all_tags_to_files[native_image].append((file, obj))
             if {
                 DockerImageFlagOption.FROM_YML.value,
                 DockerImageFlagOption.ALL_IMAGES.value,
             } & docker_flags:
-                all_tags_to_files[image].append((file, obj, additional_requirements))
+                all_tags_to_files[image].append((file, obj))
     return all_tags_to_files
 
 
 def docker_tag_to_runfiles(
     files_to_run: Iterable[Tuple[Path, Optional[IntegrationScript]]], docker_image_flag
-) -> Dict[str, List[Tuple[Path, IntegrationScript, str]]]:
+) -> Dict[str, List[Tuple[Path, IntegrationScript]]]:
     """
     Iterates over all files snf groups the files by the dockerimages
     Args:
@@ -99,20 +98,17 @@ def docker_tag_to_runfiles(
     for file, obj in files_to_run:
         if not obj:
             continue
-        additional_reqs = ""
-        if (obj.path.parent / ADDITIONAL_REQUIREMENTS_FILE).exists():
-            additional_reqs = (
-                obj.path.parent / ADDITIONAL_REQUIREMENTS_FILE
-            ).read_text()
         for docker_image in obj.docker_images:
-
-            tags_to_files[docker_image].append((file, obj, additional_reqs))
+            tags_to_files[docker_image].append((file, obj))
     return with_native_tags(tags_to_files, docker_image_flag)
 
 
 @functools.lru_cache(maxsize=512)
 def devtest_image(
-    image_tag: str, is_powershell: bool, additional_requirements: str, dry_run: bool
+    image_tag: str,
+    is_powershell: bool,
+    dry_run: bool,
+    additional_requirements: Optional[List[str]] = None,
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -125,9 +121,6 @@ def devtest_image(
     Returns: The build and pulled dev image
 
     """
-    additional_requirements_list = []
-    if additional_requirements:
-        additional_requirements_list = additional_requirements.split("\n")
     all_errors: list = []
     docker_base = get_docker()
     with ProcessPoolExecutor() as pool:
@@ -138,7 +131,7 @@ def devtest_image(
                 container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
                 push=docker_login(docker_client=init_global_docker_client()),
                 should_pull=False,
-                additional_requirements=additional_requirements_list,
+                additional_requirements=additional_requirements,
                 log_prompt="DockerHook",
             )
         ]
@@ -157,11 +150,11 @@ def devtest_image(
     raise DockerException(all_errors)
 
 
-def get_environment_flag(env: dict) -> str:
+def get_environment_flag(env: dict, objects_paths: Iterable[str]) -> str:
     """
     The env flag needed to run python scripts in docker
     """
-    env_flag = f'--env "PYTHONPATH={get_docker_python_path()}"'
+    env_flag = f'--env "PYTHONPATH={get_docker_python_path(objects_paths)}"'
     for key, value in env.items():
         env_flag += f' --env "{key}={value}"'
     if os.getenv("GITHUB_ACTIONS"):
@@ -169,7 +162,10 @@ def get_environment_flag(env: dict) -> str:
     return env_flag
 
 
-def _split_by_config_file(files: Iterable[Path], config_arg: Optional[Tuple]):
+def _split_by_config_file(
+    files_with_objects: List[Tuple[Path, IntegrationScript]],
+    config_arg: Optional[Tuple],
+) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
     If there is no config file, they get set to the NO_CONFIG_VALUE group
@@ -181,14 +177,16 @@ def _split_by_config_file(files: Iterable[Path], config_arg: Optional[Tuple]):
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
     """
     if not config_arg:
-        return {NO_CONFIG_VALUE: files}
-    folder_to_files = defaultdict(set)
+        return {None: set(files_with_objects)}
+    folder_to_files: Dict[
+        Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
+    ] = defaultdict(set)
 
-    for file in files:
-        if (file.parent / config_arg[1]).exists():
-            folder_to_files[str(file.parent)].add(file)
+    for file, obj in files_with_objects:
+        if (obj.path.parent / config_arg[1]).exists() or obj.additional_dependencies:
+            folder_to_files[obj].add((file, obj))
         else:
-            folder_to_files[NO_CONFIG_VALUE].add(file)  # type:ignore
+            folder_to_files[None].add((file, obj))  # type:ignore
 
     return folder_to_files
 
@@ -241,29 +239,21 @@ class DockerHook(Hook):
         for image, files_with_objects in sorted(
             tag_to_files_objs.items(), key=lambda item: item[0]
         ):
-
-            paths = {file for file, _, _ in files_with_objects}
-            folder_to_files = _split_by_config_file(paths, config_arg)
+            folder_to_files = _split_by_config_file(files_with_objects, config_arg)
             image_is_powershell = any(
-                obj.is_powershell for _, obj, _ in files_with_objects
+                obj.is_powershell for _, obj in files_with_objects
             )
-            for additional_requirements in {
-                additional_requirements
-                for _, _, additional_requirements in files_with_objects
-            }:
-                dev_image = (
-                    devtest_image(  # consider moving to before loop and threading.
-                        image, image_is_powershell, additional_requirements, dry_run
-                    )
-                )
-                hooks = self.get_new_hooks(
-                    dev_image,
-                    image,
-                    folder_to_files,
-                    config_arg,
-                    additional_requirements,
-                )
-                self.hooks.extend(hooks)
+
+            dev_image = devtest_image(  # consider moving to before loop and threading.
+                image, image_is_powershell, dry_run
+            )
+            hooks = self.get_new_hooks(
+                dev_image,
+                image,
+                folder_to_files,
+                config_arg,
+            )
+            self.hooks.extend(hooks)
 
         end_time = time.time()
         logger.info(
@@ -274,9 +264,10 @@ class DockerHook(Hook):
         self,
         dev_image,
         image,
-        folder_to_files: Dict[str, Set[Path]],
+        folder_to_files_with_objects: Dict[
+            Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
+        ],
         config_arg: Optional[Tuple],
-        additional_requirements: Optional[str],
     ):
         """
         Given the docker image and files to run on it, create new hooks to insert
@@ -290,31 +281,37 @@ class DockerHook(Hook):
         """
         new_hook = deepcopy(self.base_hook)
         new_hook["id"] = f"{new_hook.get('id')}-{image}"
-        if additional_requirements:
-            new_hook["id"] += "-with-test-requirements"
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
+        objects_paths = {
+            str(integration_script.path.parent)
+            for file_set in folder_to_files_with_objects.values()
+            for _, integration_script in file_set
+        }
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env, objects_paths)} {dev_image}'
 
         ret_hooks = []
-        counter = 0
-        for folder, files in folder_to_files.items():
+        for (
+            integration_script,
+            files_with_objects,
+        ) in folder_to_files_with_objects.items():
+            files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
-            if config_arg and folder is not NO_CONFIG_VALUE:
+            if config_arg and integration_script is not None:
                 args = deepcopy(self._get_property("args", []))
                 args.extend(
-                    [
-                        config_arg[0],  # type:ignore
-                        str(list(files)[0].parent / config_arg[1]),  # type:ignore
-                    ]  # type:ignore
-                )  # type:ignore
+                    [config_arg[0], integration_script.path.parent / config_arg[1]]
+                )
                 hook["args"] = args
-                hook["id"] = f"{hook['id']}-{counter}"  # for uniqueness
-                hook["name"] = f"{hook['name']}-{counter}"
-                counter += 1
+                hook[
+                    "id"
+                ] = f"{hook['id']}-{integration_script.object_id}"  # for uniqueness
+                hook[
+                    "name"
+                ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
             if self._set_files_on_hook(hook, files):
                 ret_hooks.append(hook)
         for hook in ret_hooks:

@@ -2,6 +2,7 @@
 ## Unreleased
 * Added support to automatically detect the correct file model by file path when reading files.
 * Fixed an issue where **run-playbook** command didn't work if the *url* argument was not provided.
+* Fixed an issue where **validate** command failed on valid complex layout rules and triggers.
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.

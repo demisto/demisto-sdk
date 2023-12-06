@@ -395,6 +395,7 @@ class DockerBase:
                     test_docker_image,
                     container_type,
                     pip_requirements,
+                    additional_requirements,
                     push=push,
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:

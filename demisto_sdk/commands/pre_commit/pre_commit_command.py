@@ -325,9 +325,6 @@ def group_by_python_version(
             set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}
             and PACKS_FOLDER in file.parts
         ):
-            if file.name == "test_data" or file.parent.name == "test_data":
-                # skip test_data folder and its contents
-                continue
             find_path_index = (
                 i + 1
                 for i, part in enumerate(file.parts)
@@ -338,6 +335,8 @@ def group_by_python_version(
             code_file_path = CONTENT_PATH / Path(
                 *file.parts[: next(find_path_index) + 1]
             )
+            if not code_file_path.is_dir():
+                continue
             integrations_scripts_mapping[code_file_path].add(file)
         else:
             infra_files.append(file)
@@ -521,6 +520,10 @@ def preprocess_files(
                 py_file_path = file.with_suffix(".py")
                 if py_file_path.exists():
                     files_to_run.add(py_file_path)
+            if file.suffix == ".py":
+                test_file = file.with_name(f"{file.stem}_test{file.suffix}")
+                if test_file.exists():
+                    files_to_run.add(test_file)
 
     # convert to relative file to content path
     relative_paths = {

@@ -179,16 +179,14 @@ def _split_by_config_file(
     Returns:
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
     """
-    if not config_arg:
-        return {None: set(files_with_objects)}
     object_to_files: Dict[
         Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
     ] = defaultdict(set)
 
     for file, obj in files_with_objects:
         if (
-            obj.path.parent / config_arg[1]
-        ).exists() or obj.additional_test_requirements:
+            config_arg and (obj.path.parent / config_arg[1]).exists()
+        ) or obj.additional_test_requirements:
             object_to_files[obj].add((file, obj))
         else:
             object_to_files[None].add((file, obj))  # type:ignore

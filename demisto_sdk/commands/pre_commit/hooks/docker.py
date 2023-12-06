@@ -321,7 +321,7 @@ class DockerHook(Hook):
             if config_arg and integration_script is not None:
                 args = deepcopy(self._get_property("args", []))
                 args.extend(
-                    [config_arg[0], integration_script.path.parent / config_arg[1]]
+                    [config_arg[0], str(integration_script.path.parent / config_arg[1])]
                 )
                 hook["args"] = args
                 hook[

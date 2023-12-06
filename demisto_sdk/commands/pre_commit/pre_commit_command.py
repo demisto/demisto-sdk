@@ -101,7 +101,7 @@ class PreCommitRunner:
         ]["rev"] = self.demisto_sdk_commit_hash
         self.hooks = self._get_hooks(self.precommit_template)
         conftest_path = (
-            CONTENT_PATH / "Tests" / "scripts" / "dev_envs" "pytest" "conftest.py"
+            CONTENT_PATH / "Tests" / "scripts" / "dev_envs" / "pytest" / "conftest.py"
         )
         (CONTENT_PATH / "conftest.py").unlink(missing_ok=True)
         shutil.copy(conftest_path, CONTENT_PATH / "conftest.py")

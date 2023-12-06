@@ -163,11 +163,7 @@ class PreCommitRunner:
             else:
                 hook["hook"]["exclude"] = join_files_string
 
-    def prepare_hooks(
-        self,
-        hooks: dict,
-        run_docker_hooks,
-    ) -> None:
+    def prepare_hooks(self, hooks: dict, run_docker_hooks: bool, dry_run: bool) -> None:
         kwargs = {
             "mode": self.mode,
             "all_files": self.all_files,
@@ -199,6 +195,7 @@ class PreCommitRunner:
             DockerHook(**hook, **kwargs).prepare_hook(
                 files_to_run_with_objects=self.files_to_run_with_objects,
                 run_docker_hooks=run_docker_hooks,
+                dry_run=dry_run,
             )
             for hook_id, hook in hooks.items()
             if hook_id.endswith("in-docker")
@@ -257,7 +254,7 @@ class PreCommitRunner:
                 f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
 
-        self.prepare_hooks(self.hooks, run_docker_hooks)
+        self.prepare_hooks(self.hooks, run_docker_hooks, dry_run)
         if self.all_files:
             self.precommit_template["exclude"] += f"|{join_files(exclude_files or {})}"
         else:

@@ -112,7 +112,7 @@ def docker_tag_to_runfiles(
 
 @functools.lru_cache(maxsize=512)
 def devtest_image(
-    image_tag: str, is_powershell: bool, additional_requirements: str
+    image_tag: str, is_powershell: bool, additional_requirements: str, dry_run: bool
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -120,7 +120,8 @@ def devtest_image(
     Args:
         image_tag: the base image tag
         is_powershell: if the image is a powershell based image
-
+        additional_requirements: the additional requirements to install
+        dry_run: if true, don't pull images on background
     Returns: The build and pulled dev image
 
     """
@@ -144,8 +145,13 @@ def devtest_image(
     for future in futures:
         image, errors = future.result()
         if not errors:
-            # pull the image in the background
-            subprocess.Popen(["docker", "pull", image], stdout=subprocess.DEVNULL)
+            if not dry_run:
+                # pull the image in the background
+                subprocess.Popen(
+                    ["docker", "pull", image],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
             return image
         all_errors.append(errors)
     raise DockerException(all_errors)
@@ -195,7 +201,8 @@ class DockerHook(Hook):
     def prepare_hook(
         self,
         files_to_run_with_objects: Iterable[Tuple[Path, Optional[IntegrationScript]]],
-        run_docker_hooks,
+        run_docker_hooks: bool,
+        dry_run: bool,
     ):
         """
         Group all the files by dockerimages
@@ -204,24 +211,10 @@ class DockerHook(Hook):
         Args:
             files_to_run: all files to run on
             run_docker_hooks: bool - Whether to run docker based hooks or skip them.
-
+            dry_run: bool: Whether we are in dry run or not, affects pulling images.
         """
         if not run_docker_hooks:
             return
-        docker_user = os.getenv("DOCKERHUB_USER")
-        docker_pass = os.getenv("DOCKERHUB_PASSWORD")
-        if docker_user and docker_pass:
-            subprocess.run(
-                [
-                    "docker",
-                    "login",
-                    "--username",
-                    docker_user,
-                    "--password",
-                    docker_pass,
-                    "https://index.docker.io/v1",
-                ]
-            )
 
         start_time = time.time()
         filtered_files = self.filter_files_matching_hook_config(
@@ -260,11 +253,15 @@ class DockerHook(Hook):
             }:
                 dev_image = (
                     devtest_image(  # consider moving to before loop and threading.
-                        image, image_is_powershell, additional_requirements
+                        image, image_is_powershell, additional_requirements, dry_run
                     )
                 )
                 hooks = self.get_new_hooks(
-                    dev_image, image, folder_to_files, config_arg
+                    dev_image,
+                    image,
+                    folder_to_files,
+                    config_arg,
+                    additional_requirements,
                 )
                 self.hooks.extend(hooks)
 
@@ -279,6 +276,7 @@ class DockerHook(Hook):
         image,
         folder_to_files: Dict[str, Set[Path]],
         config_arg: Optional[Tuple],
+        additional_requirements: Optional[str],
     ):
         """
         Given the docker image and files to run on it, create new hooks to insert
@@ -292,6 +290,8 @@ class DockerHook(Hook):
         """
         new_hook = deepcopy(self.base_hook)
         new_hook["id"] = f"{new_hook.get('id')}-{image}"
+        if additional_requirements:
+            new_hook["id"] += "-with-test-requirements"
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})

@@ -39,7 +39,7 @@ def get_docker_python_path() -> str:
     This means CommonServerPython's path is /src/Packs/Base/...CSP.py
     Returns: A PYTHONPATH formatted string
     """
-    path_to_replace = str(Path(CONTENT_PATH))
+    path_to_replace = str(Path(CONTENT_PATH).absolute())
     docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
     path = ":".join(docker_path)
     logger.debug(f"pythonpath in docker being set to {path}")

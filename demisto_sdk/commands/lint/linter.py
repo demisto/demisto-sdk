@@ -416,7 +416,7 @@ class Linter:
                 else:
                     logger.info(f"{log_prompt} - Tests not found")
                 # Gather package requirements embedded in test-requirements.py file
-                test_requirements = self._pack_abs_dir / "additional-requirements.txt"
+                test_requirements = self._pack_abs_dir / "test-requirements.txt"
                 if test_requirements.exists():
                     try:
                         additional_req = (

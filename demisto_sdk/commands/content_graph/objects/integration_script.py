@@ -51,7 +51,7 @@ class IntegrationScript(ContentItem):
         return self.type == "powershell"
 
     @property
-    def additional_dependencies(self) -> Optional[List[str]]:
+    def additional_test_requirements(self) -> Optional[List[str]]:
         if (self.path.parent / "test-requirements.txt").exists():
             return (self.path.parent / "test-requirements.txt").read_text().splitlines()
         return None

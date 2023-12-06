@@ -108,7 +108,7 @@ def devtest_image(
     image_tag: str,
     is_powershell: bool,
     dry_run: bool,
-    additional_requirements: Optional[List[str]] = None,
+    additional_requirements: Optional[str] = None,
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -121,6 +121,9 @@ def devtest_image(
     Returns: The build and pulled dev image
 
     """
+    additional_requirements_lst = (
+        additional_requirements.split("\n") if additional_requirements else []
+    )
     all_errors: list = []
     docker_base = get_docker()
     with ProcessPoolExecutor() as pool:
@@ -131,7 +134,7 @@ def devtest_image(
                 container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
                 push=docker_login(docker_client=init_global_docker_client()),
                 should_pull=False,
-                additional_requirements=additional_requirements,
+                additional_requirements=additional_requirements_lst,
                 log_prompt="DockerHook",
             )
         ]
@@ -178,17 +181,19 @@ def _split_by_config_file(
     """
     if not config_arg:
         return {None: set(files_with_objects)}
-    folder_to_files: Dict[
+    object_to_files: Dict[
         Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
     ] = defaultdict(set)
 
     for file, obj in files_with_objects:
-        if (obj.path.parent / config_arg[1]).exists() or obj.additional_dependencies:
-            folder_to_files[obj].add((file, obj))
+        if (
+            obj.path.parent / config_arg[1]
+        ).exists() or obj.additional_test_requirements:
+            object_to_files[obj].add((file, obj))
         else:
-            folder_to_files[None].add((file, obj))  # type:ignore
+            object_to_files[None].add((file, obj))  # type:ignore
 
-    return folder_to_files
+    return object_to_files
 
 
 class DockerHook(Hook):
@@ -239,10 +244,25 @@ class DockerHook(Hook):
         for image, files_with_objects in sorted(
             tag_to_files_objs.items(), key=lambda item: item[0]
         ):
-            folder_to_files = _split_by_config_file(files_with_objects, config_arg)
+            object_to_files = _split_by_config_file(files_with_objects, config_arg)
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
             )
+            for obj in (
+                obj for _, obj in files_with_objects if obj.additional_test_requirements
+            ):
+                assert obj.additional_test_requirements
+                dev_image = (
+                    devtest_image(  # consider moving to before loop and threading.
+                        image,
+                        image_is_powershell,
+                        dry_run,
+                        "\n".join(obj.additional_test_requirements),
+                    )
+                )
+                self.get_new_hooks(
+                    dev_image, image, {obj: object_to_files[obj]}, config_arg
+                )
 
             dev_image = devtest_image(  # consider moving to before loop and threading.
                 image, image_is_powershell, dry_run
@@ -250,7 +270,7 @@ class DockerHook(Hook):
             hooks = self.get_new_hooks(
                 dev_image,
                 image,
-                folder_to_files,
+                object_to_files,
                 config_arg,
             )
             self.hooks.extend(hooks)
@@ -264,7 +284,7 @@ class DockerHook(Hook):
         self,
         dev_image,
         image,
-        folder_to_files_with_objects: Dict[
+        object_to_files_with_objects: Dict[
             Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
         ],
         config_arg: Optional[Tuple],
@@ -274,7 +294,7 @@ class DockerHook(Hook):
         Args:
             dev_image: The actual image to run on
             image: name of the base image (for naming)
-            folder_to_files: A dict where the key is the folder and value is the set of files to run together.
+            object_to_files_with_objects: A dict where the key is the object (or None) and value is the set of files to run together.
             config_arg: The config arg to set where relevant. This will be appended to the end of "args"
         Returns:
             All the hooks to be appended for this image
@@ -286,7 +306,7 @@ class DockerHook(Hook):
         env = new_hook.pop("env", {})
         objects_paths = {
             str(integration_script.path.parent)
-            for file_set in folder_to_files_with_objects.values()
+            for file_set in object_to_files_with_objects.values()
             for _, integration_script in file_set
         }
         new_hook[
@@ -297,7 +317,7 @@ class DockerHook(Hook):
         for (
             integration_script,
             files_with_objects,
-        ) in folder_to_files_with_objects.items():
+        ) in object_to_files_with_objects.items():
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
             if config_arg and integration_script is not None:

@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
+    PACKS_FOLDER,
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
@@ -320,7 +321,13 @@ def group_by_python_version(
     for file in files:
         if file.is_dir():
             continue
-        if set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}:
+        if (
+            set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}
+            and PACKS_FOLDER in file.parts
+        ):
+            if file.name == "test_data" or file.parent.name == "test_data":
+                # skip test_data folder and its contents
+                continue
             find_path_index = (
                 i + 1
                 for i, part in enumerate(file.parts)

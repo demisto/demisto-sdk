@@ -1951,6 +1951,9 @@ def find_type(
     if Layout.match(_dict, Path(path)):
         return FileType.LAYOUT
 
+    if "group" in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+        return FileType.LAYOUTS_CONTAINER
+
     if Dashboard.match(_dict, Path(path)):
         return FileType.DASHBOARD
 

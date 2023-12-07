@@ -137,15 +137,16 @@ class PreCommitRunner:
 
     def _get_hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
-        for i, repo in enumerate(pre_commit_config["repos"]):
-            for j, hook in enumerate(repo["hooks"]):
-                if Hook.get_property(hook, self.mode, "skip"):
-                    del pre_commit_config["repos"][i]["hooks"][j]
-                    continue
-                hooks[hook["id"]] = {
-                    "repo": repo,
-                    "hook": hook,
-                }
+
+        for repo in pre_commit_config["repos"]:
+            new_hooks = []
+            for hook in repo["hooks"]:
+                if not Hook.get_property(hook, self.mode, "skip"):
+                    new_hooks.append(hook)
+                    hooks[hook["id"]] = {"repo": repo, "hook": hook}
+
+            repo["hooks"] = new_hooks
+
         return hooks
 
     def exclude_python2_of_non_supported_hooks(self) -> None:

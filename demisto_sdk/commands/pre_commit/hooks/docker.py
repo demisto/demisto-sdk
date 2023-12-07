@@ -318,12 +318,19 @@ class DockerHook(Hook):
         ) in object_to_files_with_objects.items():
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
-            if config_arg and integration_script is not None:
-                args = deepcopy(self._get_property("args", []))
-                args.extend(
-                    [config_arg[0], str(integration_script.path.parent / config_arg[1])]
-                )
-                hook["args"] = args
+            if integration_script is not None:
+                if config_arg:
+                    args = deepcopy(self._get_property("args", []))
+                    args.extend(
+                        [
+                            config_arg[0],
+                            str(
+                                integration_script.path.parent
+                                / config_arg[1].relative_to(CONTENT_PATH)
+                            ),
+                        ]
+                    )
+                    hook["args"] = args
                 hook[
                     "id"
                 ] = f"{hook['id']}-{integration_script.object_id}"  # for uniqueness

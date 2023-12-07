@@ -184,16 +184,23 @@ class DockerBase:
     @staticmethod
     def get_image_from_registry(
         image: str,
-    ) -> Optional[docker.models.images.RegistryData]:
+    ) -> bool:
         docker_client = init_global_docker_client(log_prompt="get_image")
         try:
-            return docker_client.images.get(image)
-        except docker.errors.ImageNotFound:
-            try:
-                return docker_client.images.get_registry_data(image)
-            except docker.errors.APIError:
-                logger.debug("Docker doesn't exist in registry")
-                return None
+            docker_client.images.get(image)
+            return True
+        except docker.errors.ImageNotFound as e:
+            if ":" not in image:
+                repo = image
+                tag = "latest"
+            elif image.count(":") > 1:
+                raise ValueError(f"Invalid docker image: {image}") from e
+            else:
+                repo, tag = image.split(":")
+                token = _get_docker_hub_token(repo)
+                if _get_image_digest(repo, tag, token):
+                    return True
+        return False
 
     @staticmethod
     def copy_files_container(

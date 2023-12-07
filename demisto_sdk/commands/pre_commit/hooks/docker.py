@@ -344,10 +344,9 @@ class DockerHook(Hook):
             if self._set_files_on_hook(hook, files):
                 ret_hooks.append(hook)
         for hook in ret_hooks:
-            if hook.get("docker_image"):
-                hook.pop("docker_image")
-            if hook.get("config_file_arg"):
-                hook.pop("config_file_arg")
+            hook.pop("docker_image", None)
+            hook.pop("config_file_arg", None)
+            hook.pop("split_by_file", None)
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

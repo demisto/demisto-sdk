@@ -151,8 +151,6 @@ class DockerBase:
         }
         self.requirements = self.tmp_dir / "requirements.txt"
         self.additional_requirements = self.tmp_dir / "additional-requirements.txt"
-        self.additional_requirements.touch()
-        self.requirements.touch()
         self._files_to_push_on_installation: FILES_SRC_TARGET = [
             (self.requirements, "/test-requirements.txt"),
             (self.additional_requirements, "/additional-requirements.txt"),

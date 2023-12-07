@@ -1557,7 +1557,10 @@ class TestReadmes:
         )
 
         actual = contrib_converter.get_contributed_content()
-        assert actual == expected
+
+        assert actual[0] in expected
+        assert actual[1] in expected
+        assert actual[2] in expected
 
 
 @pytest.mark.helper

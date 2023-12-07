@@ -46,7 +46,45 @@ def get_file_diff(original: Path, modified: Path) -> List[str]:
 
 def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
     """
-    Merges 2 files into one.
+    Merges 2 files into one. The merged file will include all lines that were
+    removed from the original (`f1`) and append all lines added to the modified
+    (`f2`). For example, if we have a file `f1`:
+
+    ```markdown
+    # Title
+
+    # Section 1
+    lorem ipsum
+
+    # Section 2
+    dolor sit amet
+    ```
+
+    and `f2`:
+    ```markdown
+    # Title
+
+    # Section 1
+    lorem ipsum
+
+    # Section 3
+    consectetur adipiscing elit
+    ```
+
+    The merged file will contain:
+
+    ```markdown
+    # Title
+
+    # Section 1
+    lorem ipsum
+
+    # Section 2
+    dolor sit amet
+
+    # Section 3
+    consectetur adipiscing elit
+    ```
 
     Args:
     - `f1` (``Path``): The path to the original file.
@@ -109,7 +147,7 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
         output_file = Path(tempfile.mkstemp(suffix=f1.suffix, prefix=f1.name)[1])
 
     # We iterate over each line
-    # Lines that have '-' means that the line was removed from f2.
+    # Lines that have '-' means that the line was removed from f1.
     # Lines that have '+' means that the line was added to f2.
     try:
         for i, line in enumerate(diff):
@@ -123,16 +161,25 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
                     # - lorem
                     # + loremm
                     # ?      +
-                    # We want to take the original text and skip the following line
+                    # We want to take the original text
                     if diff[i + 1].startswith(TOKEN_ADDED) and diff[i + 2].startswith(
                         TOKEN_NOT_PRESENT
                     ):
                         diff[i] = line.replace(TOKEN_REMOVED, "", 2)
+
+                    # If the text has the following pattern:
+                    # - lore
+                    # ?     -
+                    # + lorem
+                    # We want to take the modified text and skip the following line
+
                     elif diff[i + 1].startswith(TOKEN_NOT_PRESENT) and diff[
                         i + 2
                     ].startswith(TOKEN_ADDED):
                         diff[i] = diff[i + 2].replace(TOKEN_ADDED, "", 2)
                         diff[i + 2] = ""
+
+                    # If no removal pattern found, add removed line
                     else:
                         diff[i] = line.replace(TOKEN_REMOVED, "", 2)
                 except IndexError:
@@ -140,14 +187,8 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
                     # removed and needs to be added
                     diff[i] = line.replace(TOKEN_REMOVED, "", 2)
 
-            # Case when there's more than one line added
-            # we treat it as a section and append it to the end of the file
+            # If the line was added, we append it to the end of the output file
             elif line.startswith(TOKEN_ADDED):
-                # In case when the next line is removed it means that
-                # this line in updated version of the file overwrote
-                # the original version. Therefore, we want to append it
-                # to the end.
-                # if diff[i+1].startswith(TOKEN_REMOVED):
                 diff[i] = ""
                 diff.append(line.replace(TOKEN_ADDED, "", 2))
 
@@ -162,7 +203,7 @@ def merge_files(f1: Path, f2: Path, output_dir: str) -> Optional[Path]:
                 diff[i] = ""
 
     # If there are any errors during the processing of the diff
-    # we return f2
+    # we return the modified file
     except Exception as e:
         logger.error(f"Erroring merging files: {str(e)}. Returning '{f2.__str__()}'...")
         return f2

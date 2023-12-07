@@ -400,15 +400,15 @@ class ContributionConverter:
                             readme = self.generate_readme_for_pack_content_item(
                                 unified_file, is_contribution
                             )
+                            readmes_generated.append(readme)
                             Path(unified_file).unlink()
-            elif basename == "Playbooks":
+            elif basename == PLAYBOOKS_DIR:
                 files = get_child_files(pack_subdir)
                 for file in files:
                     file_name = Path(file).name
                     if file_name.startswith("playbook") and file_name.endswith(".yml"):
                         readme = self.generate_readme_for_pack_content_item(file)
-
-            readmes_generated.append(readme)
+                        readmes_generated.append(readme)
 
         return readmes_generated
 

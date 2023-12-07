@@ -378,14 +378,16 @@ class DockerBase:
                 )
             ).encode("utf-8")
         ).hexdigest()
-        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in base_image:
-            base_image = f"docker-io.art.code.pan.run/{base_image}"
 
         test_docker_image = (
             f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
         )
         if not should_pull and self.get_image_from_registry(test_docker_image):
             return test_docker_image, errors
+
+        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in test_docker_image:
+            base_image = f"docker-io.art.code.pan.run/{base_image}"
+            test_docker_image = f"docker-io.art.code.pan.run/{test_docker_image}"
 
         try:
             logger.debug(

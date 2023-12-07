@@ -126,7 +126,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
 
     assert mock_subprocess.call_count == 1
 
-    tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
+    tests_we_should_skip = {"format", "validate", "secrets"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
         tests_we_should_skip.add("coverage-analyze")
@@ -483,3 +483,34 @@ def test_no_docker_flag_docker_hook():
     )
 
     assert len(docker_hook["repo"]["hooks"]) == 0
+
+
+def test_skip_hook_with_mode(mocker):
+    """
+    Given:
+        Pre commit template config with skipped hooks
+
+    When:
+        Calling pre-commit with nightly mode
+
+    Then:
+        Don't generate the skipped hooks
+    """
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_TEMPLATE_PATH",
+        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+    )
+    python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
+    pre_commit_runner = pre_commit_command.PreCommitRunner(
+        None, None, "nightly", python_version_to_files, ""
+    )
+    repos = pre_commit_runner._get_repos(pre_commit_runner.precommit_template)
+    assert not repos["https://github.com/charliermarsh/ruff-pre-commit"]["hooks"]
+    assert "is-gitlab-changed" not in {
+        hook.get("id") for hook in repos["local"]["hooks"]
+    }
+    assert "should_be_skipped" not in {
+        hook.get("id")
+        for hook in repos["https://github.com/demisto/demisto-sdk"]["hooks"]
+    }

@@ -5,6 +5,7 @@ import time
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -31,17 +32,15 @@ from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 NO_CONFIG_VALUE = None
 
 
-def get_docker_python_path(objects_paths: Iterable[str]) -> str:
+@lru_cache()
+def get_docker_python_path() -> str:
     """
     precommit by default mounts the content repo to source.
     This means CommonServerPython's path is /src/Packs/Base/...CSP.py
     Returns: A PYTHONPATH formatted string
     """
     path_to_replace = str(Path(CONTENT_PATH).absolute())
-    docker_path = [
-        str(path).replace(path_to_replace, "/src")
-        for path in list(objects_paths) + PYTHONPATH
-    ]
+    docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
     path = ":".join(docker_path)
     logger.debug(f"pythonpath in docker being set to {path}")
     return path
@@ -153,11 +152,11 @@ def devtest_image(
     raise DockerException(all_errors)
 
 
-def get_environment_flag(env: dict, objects_paths: Iterable[str]) -> str:
+def get_environment_flag(env: dict) -> str:
     """
     The env flag needed to run python scripts in docker
     """
-    env_flag = f'--env "PYTHONPATH={get_docker_python_path(objects_paths)}"'
+    env_flag = f'--env "PYTHONPATH={get_docker_python_path()}"'
     for key, value in env.items():
         env_flag += f' --env "{key}={value}"'
     if os.getenv("GITHUB_ACTIONS"):
@@ -302,14 +301,9 @@ class DockerHook(Hook):
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
-        objects_paths = {
-            str(integration_script.path.parent)
-            for file_set in object_to_files_with_objects.values()
-            for _, integration_script in file_set
-        }
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env, objects_paths)} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {dev_image}'
 
         ret_hooks = []
         for (

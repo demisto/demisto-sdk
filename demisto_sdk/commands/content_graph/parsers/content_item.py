@@ -104,6 +104,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         if not ContentItemParser.is_content_item(path):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
+            else:
+                raise NotAContentItemException
         try:
             content_type: ContentType = ContentType.by_path(path)
         except ValueError as e:

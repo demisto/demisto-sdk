@@ -29,8 +29,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
-NO_CONFIG_VALUE = None
-
 
 @lru_cache()
 def get_docker_python_path() -> str:
@@ -164,7 +162,7 @@ def get_environment_flag(env: dict) -> str:
     return env_flag
 
 
-def _split_by_config_file(
+def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
@@ -188,7 +186,7 @@ def _split_by_config_file(
         ) or obj.additional_test_requirements:
             object_to_files[obj].add((file, obj))
         else:
-            object_to_files[None].add((file, obj))  # type:ignore
+            object_to_files[None].add((file, obj))
 
     return object_to_files
 
@@ -241,7 +239,7 @@ class DockerHook(Hook):
         for image, files_with_objects in sorted(
             tag_to_files_objs.items(), key=lambda item: item[0]
         ):
-            object_to_files = _split_by_config_file(files_with_objects, config_arg)
+            object_to_files = _split_by_objects(files_with_objects, config_arg)
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
             )

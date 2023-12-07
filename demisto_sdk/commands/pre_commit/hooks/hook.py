@@ -85,6 +85,8 @@ class Hook:
         """
         Will get the given property from the base hook, taking mode into account
         Args:
+            hook: the hook dict
+            mode: the mode to use
             name: the key to get from the config
             default: the default value to return
         Returns: The value from the base hook
@@ -102,7 +104,7 @@ class Hook:
             default: the default value to return
         Returns: The value from the base hook
         """
-        return self.get_property(self.base_hook, self.mode, name)
+        return self.get_property(self.base_hook, self.mode, name, default=default)
 
     def _set_properties(self):
         """

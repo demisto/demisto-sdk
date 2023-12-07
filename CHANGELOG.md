@@ -8,7 +8,7 @@
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
-
+* Added support for `skip` property in **pre-commit** hooks.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

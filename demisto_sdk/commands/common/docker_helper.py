@@ -150,10 +150,9 @@ class DockerBase:
             TYPE_PYTHON3: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
         }
         self.requirements = self.tmp_dir / "requirements.txt"
-        self.additional_requirements = self.tmp_dir / "additional-requirements.txt"
+        self.requirements.touch()
         self._files_to_push_on_installation: FILES_SRC_TARGET = [
             (self.requirements, "/test-requirements.txt"),
-            (self.additional_requirements, "/additional-requirements.txt"),
         ]
 
     def __del__(self):
@@ -276,7 +275,6 @@ class DockerBase:
         image: str,
         container_type: str = TYPE_PYTHON,
         install_packages: Optional[List[str]] = None,
-        additional_packages: Optional[List[str]] = None,
         push: bool = False,
         log_prompt: str = "",
     ) -> docker.models.images.Image:
@@ -296,9 +294,6 @@ class DockerBase:
         """
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
-        )
-        self.additional_requirements.write_text(
-            "\n".join(additional_packages) if additional_packages else ""
         )
         logger.debug(f"Trying to pull image {base_image}")
         self.pull_image(base_image)
@@ -367,14 +362,10 @@ class DockerBase:
                 python_version, []
             )
 
+        if additional_requirements:
+            pip_requirements.extend(additional_requirements)
         identifier = hashlib.md5(
-            "\n".join(
-                sorted(
-                    pip_requirements + additional_requirements
-                    if additional_requirements
-                    else pip_requirements
-                )
-            ).encode("utf-8")
+            "\n".join(sorted(pip_requirements)).encode("utf-8")
         ).hexdigest()
 
         test_docker_image = (
@@ -402,7 +393,6 @@ class DockerBase:
                     test_docker_image,
                     container_type,
                     pip_requirements,
-                    additional_requirements,
                     push=push,
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:

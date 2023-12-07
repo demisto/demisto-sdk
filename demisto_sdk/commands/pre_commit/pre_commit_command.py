@@ -105,7 +105,8 @@ class PreCommitRunner:
             CONTENT_PATH / "Tests" / "scripts" / "dev_envs" / "pytest" / "conftest.py"
         )
         (CONTENT_PATH / "conftest.py").unlink(missing_ok=True)
-        shutil.copy(conftest_path, CONTENT_PATH / "conftest.py")
+        if conftest_path.exists():
+            shutil.copy(conftest_path, CONTENT_PATH / "conftest.py")
 
     @cached_property
     def files_to_run_with_objects(

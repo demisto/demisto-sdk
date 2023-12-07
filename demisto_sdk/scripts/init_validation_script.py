@@ -452,8 +452,8 @@ Fill the content types as the numbers they appear as: """
                 for content_type in self.content_types
             ]
             self.supported_content_types = (
-                f"ContentTypes = Union{str(supported_content_types)}"
-            )
+                f"ContentTypes = Union{(supported_content_types)}"
+            ).replace("'", "")
 
     def generate_is_valid_function(self):
         """

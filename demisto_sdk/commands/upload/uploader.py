@@ -83,6 +83,7 @@ class Uploader:
             Tuple[Union[ContentItem, Pack], str]
         ] = []
         self._failed_upload_version_mismatch: List[ContentItem] = []
+        self._skipped_upload_marketplace_mismatch: List[ContentItem] = []
         self._failed_upload_zips: List[str] = []
         self.failed_parsing: List[Tuple[Path, str]] = []
 
@@ -251,7 +252,8 @@ class Uploader:
         Upload a content item, a pack, or a zip containing packs.
 
         Returns:
-            bool: whether the item is uploaded succesfully.
+            bool: whether the item is uploaded succesfully to the relevant
+            given marketplace.
 
         Raises:
             NotIndivitudallyUploadedException (see exception class)
@@ -268,7 +270,13 @@ class Uploader:
             )
             self.failed_parsing.append((path, reason))
             return False
-
+        if (
+            self.marketplace
+            and isinstance(content_item, ContentItem)
+            and self.marketplace not in content_item.marketplaces
+        ):
+            self._skipped_upload_marketplace_mismatch.append(content_item)
+            return True
         try:
             content_item.upload(
                 client=self.client,
@@ -420,6 +428,29 @@ class Uploader:
             )
 
             logger.info(f"[green]SUCCESSFUL UPLOADS:\n{uploaded_str}\n[/green]")
+
+        if self._skipped_upload_marketplace_mismatch:
+            marketplace_mismatch_str = tabulate(
+                (
+                    (
+                        item.path.name,
+                        item.content_type,
+                        self.marketplace,
+                        [marketplace.value for marketplace in item.marketplaces],
+                    )
+                    for item in self._skipped_upload_marketplace_mismatch
+                ),
+                headers=[
+                    "NAME",
+                    "TYPE",
+                    "MARKETPLACE",
+                    "FILE_MARKETPLACES",
+                ],
+                tablefmt="fancy_grid",
+            )
+            logger.info(
+                f"[yellow]SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:\n{marketplace_mismatch_str}\n[/yellow]"
+            )
 
         if self._failed_upload_version_mismatch:
             version_mismatch_str = tabulate(

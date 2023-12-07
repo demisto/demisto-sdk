@@ -49,6 +49,7 @@ TRIGGER_DIR = "Triggers"
 WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
+ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
 
 # NAMES OF ENTITIES
 
@@ -96,6 +97,7 @@ XDRC_TEMPLATE = "xdrctemplate"
 LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 EVENT_COLLECTOR = "EventCollector"
+ASSETS_MODELING_RULE = "assetsmodelingrule"
 # ENV VARIABLES
 
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
@@ -205,6 +207,9 @@ class FileType(str, Enum):
     INI = "ini"
     PEM = "pem"
     VULTURE_WHITELIST = "vulture_whitelist"
+    ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
+    ASSETS_MODELING_RULE = "assetsmodelingrule"
+    ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -242,6 +247,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.WIZARD: "Wizards",
     FileType.XDRC_TEMPLATE: "XDRC Templates",
     FileType.LAYOUT_RULE: "Layout Rules",
+    FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -283,6 +289,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.TRIGGER.value: TRIGGER_DIR,
     FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
+    FileType.ASSETS_MODELING_RULE.value: ASSETS_MODELING_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -294,6 +301,7 @@ SIEM_ONLY_ENTITIES = [
     FileType.TRIGGER.value,
     FileType.XDRC_TEMPLATE.value,
     FileType.LAYOUT_RULE.value,
+    FileType.ASSETS_MODELING_RULE,
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]
@@ -339,6 +347,7 @@ CONTENT_ENTITIES_DIRS = [
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
+    ASSETS_MODELING_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -831,6 +840,7 @@ MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
+ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
@@ -1427,6 +1437,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
     FileType.XSIAM_DASHBOARD: "6.10.0",
+    FileType.ASSETS_MODELING_RULE: "6.2.1",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1708,6 +1719,7 @@ class ContentItems(Enum):
     WIZARDS = ("wizard",)
     XDRC_TEMPLATE = "xdrctemplate"
     LAYOUT_RULES = "layoutrule"
+    ASSETS_MODELING_RULES = "assetsmodelingrule"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1735,6 +1747,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
     LAYOUT_RULES_DIR,
+    ASSETS_MODELING_RULES_DIR,
 }
 
 
@@ -1943,3 +1956,10 @@ class InvestigationPlaybookState(str, Enum):
     COMPLETED = "completed"  # indicates that playbook completed
     FAILED = "failed"  # indicates that playbook failed
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
+
+
+class IncidentState(str, Enum):
+    NEW = 0  # the incident is new
+    IN_PROGRESS = 1  # the incident is in progress
+    CLOSED = 2  # the incident is closed
+    ACKNOWLEDGED = 3  # the incident is archived

@@ -35,7 +35,7 @@ class IDNameValidator(BaseValidator[ContentTypes], ABC):
     error_code = "BA101"
     description = "Validate that the file id and name fields are identical."
     error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
-    fixing_message = "Changing name to be equal to id ({0})."
+    fix_message = "Changing name to be equal to id ({0})."
     related_field = "name"
     is_auto_fixable = True
 
@@ -44,7 +44,7 @@ class IDNameValidator(BaseValidator[ContentTypes], ABC):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.object_id, content_item.name
+                    content_item.name, content_item.object_id
                 ),
                 content_object=content_item,
             )
@@ -56,6 +56,6 @@ class IDNameValidator(BaseValidator[ContentTypes], ABC):
         content_item.name = content_item.object_id
         return FixResult(
             validator=self,
-            message=self.fixing_message.format(content_item.object_id),
+            message=self.fix_message.format(content_item.object_id),
             content_object=content_item,
         )

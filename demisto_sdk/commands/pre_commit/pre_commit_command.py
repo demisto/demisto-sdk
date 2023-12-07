@@ -59,6 +59,7 @@ PYTHON2_SUPPORTED_HOOKS = {
     "run-unit-tests",
     "validate",
     "format",
+    "pylint-in-docker",
 }
 
 
@@ -145,9 +146,7 @@ class PreCommitRunner:
         This function handles the python2 files.
         Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
         """
-        python2_files = self.python_version_to_files_with_objects.get(
-            DEFAULT_PYTHON2_VERSION
-        )
+        python2_files = self.python_version_to_files.get(DEFAULT_PYTHON2_VERSION)
         if not python2_files:
             return
 
@@ -230,7 +229,7 @@ class PreCommitRunner:
         if not unit_test:
             skipped_hooks.add("run-unit-tests")
             skipped_hooks.add("coverage-analyze")
-            skipped_hooks.add("merge-coverage-report")
+            skipped_hooks.add("merge-pytest-reports")
         if validate and "validate" in skipped_hooks:
             skipped_hooks.remove("validate")
         if format and "format" in skipped_hooks:
@@ -238,7 +237,7 @@ class PreCommitRunner:
         if secrets and "secrets" in skipped_hooks:
             skipped_hooks.remove("secrets")
         precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
-        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
+        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
         precommit_env["MYPYPATH"] = ":".join(
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)

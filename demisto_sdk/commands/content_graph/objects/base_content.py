@@ -240,9 +240,10 @@ class BaseContent(BaseNode):
         logger.debug(f"Loading content item from path: {path}")
         # if the file was added or renamed - add a pointer to the object created from the old file content / path.
         if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
-            obj = BaseContent.from_path(path, git_status)
+            obj = BaseContent.from_path(path)
             if obj:
                 path = path if not old_file_path else old_file_path
+                obj.git_status = git_status
                 old_obj = BaseContent.from_path(path, git_sha=git_sha)
                 obj.old_base_content_object = old_obj
             return obj

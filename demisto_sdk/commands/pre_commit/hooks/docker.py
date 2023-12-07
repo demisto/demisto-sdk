@@ -3,7 +3,6 @@ import os
 import subprocess
 import time
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
@@ -28,6 +27,8 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+
+NO_SPLIT = None
 
 
 @lru_cache()
@@ -105,7 +106,6 @@ def devtest_image(
     image_tag: str,
     is_powershell: bool,
     dry_run: bool,
-    additional_requirements: Optional[str] = None,
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -113,41 +113,28 @@ def devtest_image(
     Args:
         image_tag: the base image tag
         is_powershell: if the image is a powershell based image
-        additional_requirements: the additional requirements to install
         dry_run: if true, don't pull images on background
     Returns: The build and pulled dev image
 
     """
-    additional_requirements_lst = (
-        additional_requirements.split("\n") if additional_requirements else []
-    )
-    all_errors: list = []
     docker_base = get_docker()
-    with ProcessPoolExecutor() as pool:
-        futures = [
-            pool.submit(
-                docker_base.get_or_create_test_image,
-                base_image=image_tag,
-                container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
-                push=docker_login(docker_client=init_global_docker_client()),
-                should_pull=False,
-                additional_requirements=additional_requirements_lst,
-                log_prompt="DockerHook",
+    image, errors = docker_base.get_or_create_test_image(
+        base_image=image_tag,
+        container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
+        push=docker_login(docker_client=init_global_docker_client()),
+        should_pull=False,
+        log_prompt="DockerHook",
+    )
+    if not errors:
+        if not dry_run:
+            # pull the image in the background
+            subprocess.Popen(
+                ["docker", "pull", image],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
-        ]
-    for future in futures:
-        image, errors = future.result()
-        if not errors:
-            if not dry_run:
-                # pull the image in the background
-                subprocess.Popen(
-                    ["docker", "pull", image],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-            return image
-        all_errors.append(errors)
-    raise DockerException(all_errors)
+        return image
+    raise DockerException(errors)
 
 
 def get_environment_flag(env: dict) -> str:
@@ -190,7 +177,7 @@ def _split_by_objects(
         ):
             object_to_files[obj].add((file, obj))
         else:
-            object_to_files[None].add((file, obj))
+            object_to_files[NO_SPLIT].add((file, obj))
 
     return object_to_files
 
@@ -255,25 +242,8 @@ class DockerHook(Hook):
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
             )
-            for obj in (
-                obj for _, obj in files_with_objects if obj.additional_test_requirements
-            ):
-                assert obj.additional_test_requirements
-                dev_image = (
-                    devtest_image(  # consider moving to before loop and threading.
-                        image,
-                        image_is_powershell,
-                        dry_run,
-                        "\n".join(obj.additional_test_requirements),
-                    )
-                )
-                self.get_new_hooks(
-                    dev_image, image, {obj: object_to_files[obj]}, config_arg
-                )
 
-            dev_image = devtest_image(  # consider moving to before loop and threading.
-                image, image_is_powershell, dry_run
-            )
+            dev_image = devtest_image(image, image_is_powershell, dry_run)
             hooks = self.get_new_hooks(
                 dev_image,
                 image,

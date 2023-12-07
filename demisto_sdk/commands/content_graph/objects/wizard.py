@@ -37,6 +37,6 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
 
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
-        if isinstance(_dict, dict) and "wizard" in _dict:
+        if isinstance(_dict, dict) and "wizard" in _dict and path.suffix == ".json":
             return ContentType.WIZARD
         return None

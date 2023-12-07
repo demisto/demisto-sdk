@@ -40,6 +40,10 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
 
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
-        if "profile_type" in _dict and "yaml_template" in _dict:
+        if (
+            "profile_type" in _dict
+            and "yaml_template" in _dict
+            and path.suffix == ".json"
+        ):
             return ContentType.XDRC_TEMPLATE
         return None

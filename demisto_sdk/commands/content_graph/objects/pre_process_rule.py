@@ -19,6 +19,7 @@ class PreProcessRule(ContentItem, content_type=ContentType.PREPROCESS_RULE):
             and "readyExistingEventsFilters" in _dict
             and "newEventFilters" in _dict
             and "readyNewEventFilters" in _dict
+            and path.suffix == ".json"
         ):
             return ContentType.PREPROCESS_RULE
         return None

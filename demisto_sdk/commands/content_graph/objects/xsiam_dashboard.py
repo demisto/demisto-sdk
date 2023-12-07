@@ -36,6 +36,6 @@ class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD)
 
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
-        if "dashboards_data" in _dict:
+        if "dashboards_data" in _dict and path.suffix == ".json":
             return ContentType.XSIAM_DASHBOARD
         return None

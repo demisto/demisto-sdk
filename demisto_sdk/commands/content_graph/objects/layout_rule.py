@@ -24,6 +24,6 @@ class LayoutRule(ContentItemXSIAM, content_type=ContentType.LAYOUT_RULE):  # typ
 
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
-        if "rule_id" in _dict:
+        if "rule_id" in _dict and path.suffix == ".json":
             return ContentType.LAYOUT_RULE
         return None

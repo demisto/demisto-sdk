@@ -33,6 +33,7 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
                     "definitionId" in _dict
                     and _dict["definitionId"]
                     and _dict["definitionId"].lower() not in ["incident", "indicator"]
+                    and path.suffix == ".json"
                 ):
                     return ContentType.GENERIC_FIELD
         return None

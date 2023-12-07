@@ -21,6 +21,7 @@ class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignor
             "layout" in _dict
             or "kind" in _dict
             and not ("kind" in _dict or "typeId" in _dict)
+            and path.suffix == ".json"
         ):
             return ContentType.DASHBOARD
         return None

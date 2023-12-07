@@ -34,10 +34,14 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
 
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
-        if isinstance(_dict, dict) and {
-            "isAllFeeds",
-            "selectedFeeds",
-            "isFeed",
-        }.issubset(_dict.keys()):
+        if (
+            isinstance(_dict, dict)
+            and {
+                "isAllFeeds",
+                "selectedFeeds",
+                "isFeed",
+            }.issubset(_dict.keys())
+            and path.suffix == ".json"
+        ):
             return ContentType.JOB
         return None

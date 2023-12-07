@@ -35,8 +35,10 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
 
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
-        if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
-            _dict.keys()
+        if (
+            isinstance(_dict, dict)
+            and {"data", "allRead", "truncated"}.intersection(_dict.keys())
+            and path.suffix == ".json"
         ):
             return ContentType.LIST
         return None

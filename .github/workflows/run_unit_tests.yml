@@ -52,7 +52,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          shopt -u globstar
+          # shopt -u globstar
           source "$(poetry env info --path)/bin/activate"
 
           TEST_FILES=$(find . -type f -name "*_test.py")

@@ -61,10 +61,10 @@ class IntegrationScriptParser(YAMLContentItemParser):
         """Creates IMPORTS relationships with the API modules used in the integration."""
         code = self.code
         if not code:
-            from demisto_sdk.commands.common.tools import get_file
-            code = get_file(str(self.path).replace("yml", "py"), return_content=True)
-            if not code:
-                raise ValueError("Integration code is not available")
+            # from demisto_sdk.commands.common.tools import get_file
+            # code = get_file(str(self.path).replace("yml", "py"), return_content=True)
+            # if not code:
+            raise ValueError("Integration code is not available")
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
         for api_module in api_modules:
             self.add_relationship(

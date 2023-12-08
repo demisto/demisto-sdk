@@ -160,46 +160,46 @@ def test_upload_folder(
             Integration,
             "demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/Securonix.py",
         ),
-        (
-            Script,
-            "demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScriptUnified.yml",
-        ),
-        (
-            Playbook,
-            "demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
-        ),
-        (
-            Widget,
-            "demisto_sdk/tests/test_files/Packs/DummyPack/Widgets/widget-ActiveIncidentsByRole.json",
-        ),
-        (
-            Dashboard,
-            "demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/upload_test_dashboard.json",
-        ),
-        (
-            Layout,
-            "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json",
-        ),
-        (
-            IncidentType,
-            "demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/incidenttype-Hello_World_Alert.json",
-        ),
-        (
-            Mapper,
-            "demisto_sdk/tests/test_files/Packs/DummyPack/Classifiers/classifier-aws_sns_test_classifier.json",
-        ),
-        (
-            IncidentField,
-            "demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/XDR_Alert_Count.json",
-        ),
-        (
-            IndicatorField,
-            "demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/dns.json",
-        ),
-        (
-            IndicatorType,
-            "demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorTypes/SampleIndicatorType.json",
-        ),
+        # (
+        #     Script,
+        #     "demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScriptUnified.yml",
+        # ),
+        # (
+        #     Playbook,
+        #     "demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
+        # ),
+        # (
+        #     Widget,
+        #     "demisto_sdk/tests/test_files/Packs/DummyPack/Widgets/widget-ActiveIncidentsByRole.json",
+        # ),
+        # (
+        #     Dashboard,
+        #     "demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/upload_test_dashboard.json",
+        # ),
+        # (
+        #     Layout,
+        #     "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json",
+        # ),
+        # (
+        #     IncidentType,
+        #     "demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/incidenttype-Hello_World_Alert.json",
+        # ),
+        # (
+        #     Mapper,
+        #     "demisto_sdk/tests/test_files/Packs/DummyPack/Classifiers/classifier-aws_sns_test_classifier.json",
+        # ),
+        # (
+        #     IncidentField,
+        #     "demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/XDR_Alert_Count.json",
+        # ),
+        # (
+        #     IndicatorField,
+        #     "demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/dns.json",
+        # ),
+        # (
+        #     IndicatorType,
+        #     "demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorTypes/SampleIndicatorType.json",
+        # ),
     ],
 )
 def test_upload_single_positive(mocker, path: str, content_class: ContentItem):

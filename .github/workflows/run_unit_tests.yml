@@ -52,16 +52,9 @@ jobs:
 
       - name: Run pytest
         run: |
-          # shopt -u globstar
           source "$(poetry env info --path)/bin/activate"
-
-          TEST_FILES=$(find . -type f -name "*_test.py")
-          # filter out files which are in .venv directory
-          TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
-          TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
-          TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
-          TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
-
+          shopt -u globstar
+  
           echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
 
           # Due to race conditions in the tests bringing up and down the node server, have the server available
@@ -73,7 +66,7 @@ jobs:
 
           # poetry run pytest $TEST_FILES --store-durations
           mkdir test-results
-          poetry run pytest $TEST_FILES -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
+          poetry run pytest -v --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph/tests} --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid

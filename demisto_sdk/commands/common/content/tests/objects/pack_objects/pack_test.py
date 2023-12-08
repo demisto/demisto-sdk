@@ -33,8 +33,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 )
 from demisto_sdk.commands.common.tools import src_root
 from TestSuite.test_tools import str_in_call_args_list
+from demisto_sdk.commands.common.logger import logger
 
-logger = logging.getLogger("demisto-sdk")
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"

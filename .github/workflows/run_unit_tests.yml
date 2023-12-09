@@ -93,7 +93,7 @@ jobs:
           if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
             echo "There are unit-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
           else
-            echo "All unit-tests have passed"
+            echo "All unit-tests have passed, congratulations!"
           fi
           exit $PYTEST_EXIT_CODE
 
@@ -135,8 +135,7 @@ jobs:
         run: |
           source "$(poetry env info --path)/bin/activate"
   
-          # Due to race conditions in the tests bringing up and down the node server, have the server available
-          # For all the tests.
+          echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
 
           mkdir integration-test-results
           poetry run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html --junitxml=integration-test-results/junit.xml || pytest_exit_code=$?
@@ -151,6 +150,7 @@ jobs:
           path: |
             .test_durations
             integration-test-results/junit.xml
+            node_versions_info.json
             coverage_html_report
       - name: Print Summary of pytest results in workflow summary
         if: always()
@@ -166,6 +166,6 @@ jobs:
           if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
             echo "There are integration-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
           else
-            echo "All unit-tests have passed"
+            echo "All integration-tests have passed, congratulations!"
           fi
           exit $PYTEST_EXIT_CODE

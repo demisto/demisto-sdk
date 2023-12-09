@@ -13,10 +13,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 
-env:
-  NODE_VERSION: 20
-
-
 jobs:
   unit-tests:
     name: Unit Tests / ${{ matrix.python-version }} (${{ matrix.group }})
@@ -49,7 +45,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: $NODE_VERSION
+          node-version: '18'
 
       - name: Install npm
         run: npm install
@@ -131,7 +127,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: $NODE_VERSION
+          node-version: '18'
 
       - name: Install npm
         run: npm install

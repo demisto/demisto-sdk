@@ -11,7 +11,6 @@ from functools import cached_property
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-import more_itertools
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
@@ -221,7 +220,10 @@ class PreCommitRunner:
         for hook in hooks_without_docker:
             Hook(**hook, **kwargs).prepare_hook()
 
-    def prepare_pre_commit_files(self):
+    def run_pre_commit(
+        self, precommit_env: dict, verbose: bool, show_diff_on_failure: bool
+    ) -> int:
+        return_code = 0
         local_repo = self._get_repos(self.precommit_template)["local"]
         local_repo_hooks = local_repo["hooks"]
         docker_hooks = [hook for hook in local_repo_hooks if "in-docker" in hook["id"]]
@@ -230,20 +232,7 @@ class PreCommitRunner:
         ]
         local_repo["hooks"] = no_docker_hooks
         num_processes = cpu_count()
-        docker_hooks_chunked = more_itertools.distribute(num_processes, docker_hooks)
-        write_dict(PRECOMMIT_CONFIG_MAIN_PATH, data=self.precommit_template)
-        self.precommit_template["repos"] = [local_repo]
-        for i, docker_hooks_slice in enumerate(docker_hooks_chunked):
-            docker_hooks = list(docker_hooks_slice)
-            if not docker_hooks:
-                break
-            local_repo["hooks"] = docker_hooks
-            path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
-            write_dict(path, data=self.precommit_template)
-
-    def run_pre_commit(
-        self, precommit_env: dict, verbose: bool, show_diff_on_failure: bool
-    ) -> int:
+        write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         main_p = subprocess.Popen(
             list(
                 filter(
@@ -264,7 +253,13 @@ class PreCommitRunner:
             cwd=CONTENT_PATH,
         )
         processes: List[subprocess.Popen] = []
-        for docker_config in PRECOMMIT_DOCKER_CONFIGS.iterdir():
+        i = 0
+        while i < len(docker_hooks) and len(processes) < num_processes:
+            self.precommit_template["repos"] = [local_repo]
+            local_repo["hooks"] = [docker_hooks[i]]
+            path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
+            write_dict(path, data=self.precommit_template)
+
             p = subprocess.Popen(
                 list(
                     filter(
@@ -276,7 +271,7 @@ class PreCommitRunner:
                             "run",
                             "-a",
                             "-c",
-                            str(docker_config),
+                            str(path),
                             "-v" if verbose else "",
                         ],
                     )
@@ -286,18 +281,19 @@ class PreCommitRunner:
                 env=precommit_env,
                 cwd=CONTENT_PATH,
             )
+            i += 1
             processes.append(p)
+        for process in processes:
+            p_return_code = process.poll()
+            if p_return_code is not None:
+                if p_return_code:
+                    return_code = 1
+                stdout, _ = process.communicate()
+                logger.info(stdout)
+                processes.remove(process)
         main_p.communicate()
-        return_code = main_p.returncode or 0
-        while processes:
-            for process in processes:
-                return_code = process.poll()
-                if return_code is not None:
-                    if return_code:
-                        return_code = 1
-                    stdout, _ = process.communicate()
-                    logger.info(stdout)
-                    processes.remove(process)
+        return_code = main_p.returncode and return_code
+
         if return_code and show_diff_on_failure:
             logger.info(
                 "Pre-Commit changed the following. If you experience this in CI, please run `demisto-sdk pre-commit`"
@@ -364,11 +360,11 @@ class PreCommitRunner:
             ] += f"|{join_files(exclude_files or set())}"
         else:
             self.precommit_template["files"] = join_files(self.files_to_run)
-        self.prepare_pre_commit_files()
 
         if dry_run:
+            write_dict(PRECOMMIT_CONFIG_MAIN_PATH, data=self.precommit_template)
             logger.info(
-                f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG}"
+                f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG_MAIN_PATH}"
             )
             return ret_val
         self.run_pre_commit(precommit_env, verbose, show_diff_on_failure)

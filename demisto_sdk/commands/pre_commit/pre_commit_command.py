@@ -11,6 +11,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import more_itertools
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
@@ -21,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -46,7 +48,10 @@ IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
 PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
-PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
+PRECOMMIT_FOLDER = CONTENT_PATH / ".pre-commit"
+PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
+PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / ".pre-commit-config-main.yaml"
+PRECOMMIT_DOCKER_CONFIGS = PRECOMMIT_CONFIG / "docker"
 SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
@@ -216,6 +221,90 @@ class PreCommitRunner:
         for hook in hooks_without_docker:
             Hook(**hook, **kwargs).prepare_hook()
 
+    def prepare_pre_commit_files(self):
+        local_repo = self._get_repos(self.precommit_template)["local"]
+        local_repo_hooks = local_repo["hooks"]
+        docker_hooks = [hook for hook in local_repo_hooks if "in-docker" in hook["id"]]
+        no_docker_hooks = [
+            hook for hook in local_repo_hooks if "in-docker" not in hook["id"]
+        ]
+        local_repo["hooks"] = no_docker_hooks
+        num_processes = cpu_count()
+        docker_hooks_chunked = more_itertools.distribute(num_processes, docker_hooks)
+        write_dict(PRECOMMIT_CONFIG_MAIN_PATH, data=self.precommit_template)
+        self.precommit_template["repos"] = [local_repo]
+        for i, docker_hooks_slice in enumerate(docker_hooks_chunked):
+            docker_hooks = list(docker_hooks_slice)
+            if not docker_hooks:
+                break
+            local_repo["hooks"] = docker_hooks
+            path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
+            write_dict(path, data=self.precommit_template)
+
+    def run_pre_commit(
+        self, precommit_env: dict, verbose: bool, show_diff_on_failure: bool
+    ) -> int:
+        main_p = subprocess.Popen(
+            list(
+                filter(
+                    None,
+                    [
+                        sys.executable,
+                        "-m",
+                        "pre_commit",
+                        "run",
+                        "-a",
+                        "-c",
+                        str(PRECOMMIT_CONFIG_MAIN_PATH),
+                        "-v" if verbose else "",
+                    ],
+                )
+            ),
+            env=precommit_env,
+            cwd=CONTENT_PATH,
+        )
+        processes: List[subprocess.Popen] = []
+        for docker_config in PRECOMMIT_DOCKER_CONFIGS.iterdir():
+            p = subprocess.Popen(
+                list(
+                    filter(
+                        None,
+                        [
+                            sys.executable,
+                            "-m",
+                            "pre_commit",
+                            "run",
+                            "-a",
+                            "-c",
+                            str(docker_config),
+                            "-v" if verbose else "",
+                        ],
+                    )
+                ),
+                stdout=subprocess.PIPE,
+                universal_newlines=True,
+                env=precommit_env,
+                cwd=CONTENT_PATH,
+            )
+            processes.append(p)
+        main_p.communicate()
+        return_code = main_p.returncode or 0
+        while processes:
+            for process in processes:
+                return_code = process.poll()
+                if return_code is not None:
+                    if return_code:
+                        return_code = 1
+                    stdout, _ = process.communicate()
+                    logger.info(stdout)
+                    processes.remove(process)
+        if return_code and show_diff_on_failure:
+            logger.info(
+                "Pre-Commit changed the following. If you experience this in CI, please run `demisto-sdk pre-commit`"
+            )
+            subprocess.run(["git", "--no-pager", "diff", "--no-ext-diff"], check=True)
+        return return_code
+
     def run(
         self,
         unit_test: bool = False,
@@ -229,6 +318,10 @@ class PreCommitRunner:
         dry_run: bool = False,
         run_docker_hooks: bool = True,
     ) -> int:
+        shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
+        PRECOMMIT_FOLDER.mkdir()
+        PRECOMMIT_CONFIG.mkdir()
+        PRECOMMIT_DOCKER_CONFIGS.mkdir()
         ret_val = 0
         precommit_env = os.environ.copy()
         skipped_hooks: set = SKIPPED_HOOKS
@@ -250,7 +343,7 @@ class PreCommitRunner:
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
-
+        precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
         self.exclude_python2_of_non_supported_hooks()
 
         for (
@@ -271,39 +364,14 @@ class PreCommitRunner:
             ] += f"|{join_files(exclude_files or set())}"
         else:
             self.precommit_template["files"] = join_files(self.files_to_run)
-
-        write_dict(PRECOMMIT_PATH, data=self.precommit_template)
+        self.prepare_pre_commit_files()
 
         if dry_run:
             logger.info(
-                "Dry run, skipping pre-commit.\nConfig file saved to .pre-commit-config-content.yaml"
+                f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG}"
             )
             return ret_val
-        response = subprocess.run(
-            list(
-                filter(
-                    None,
-                    [
-                        sys.executable,
-                        "-m",
-                        "pre_commit",
-                        "run",
-                        "-a",
-                        "-c",
-                        str(PRECOMMIT_PATH),
-                        "--show-diff-on-failure" if show_diff_on_failure else "",
-                        "-v" if verbose else "",
-                    ],
-                )
-            ),
-            env=precommit_env,
-            cwd=CONTENT_PATH,
-        )
-        if response.returncode:
-            ret_val = 1
-
-        # remove the config file in the end of the flow
-        PRECOMMIT_PATH.unlink(missing_ok=True)
+        self.run_pre_commit(precommit_env, verbose, show_diff_on_failure)
         return ret_val
 
 

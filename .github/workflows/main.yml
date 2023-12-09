@@ -186,13 +186,12 @@ jobs:
         with:
           python-version: "3.10"
       - name: Download all artifacts
-        # Downloads coverage1, coverage2, etc.
         uses: actions/download-artifact@v2
       - name: Run coverage
         run: |
           pip install coverage
-          # coverage combine coverage_html_report
-          # coverage report
-          # coverage xml
+          coverage combine **/.coverage
+          coverage report
+          coverage xml
       - name: Coveralls
         uses: coverallsapp/github-action@v2

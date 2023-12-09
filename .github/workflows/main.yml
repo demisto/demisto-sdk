@@ -73,7 +73,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: unit-tests-artifacts-${{ matrix.python-version }}-${{ matrix.group }}
+          name: unit-tests-artifacts-${{ matrix.python-version }}-group-${{ matrix.group }}
           path: |
             .test_durations
             test-results/junit.xml

@@ -2,7 +2,7 @@ import functools
 import os
 import time
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, wait
+from concurrent.futures import ProcessPoolExecutor
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
@@ -245,11 +245,10 @@ class DockerHook(Hook):
         if not dry_run:
             docker = get_docker()
             with ProcessPoolExecutor(cpu_count()) as executor:
-                futures = [
+                [
                     executor.submit(docker.pull_image, image)
                     for image in TEST_IMAGES_TO_RUN
                 ]
-                wait(futures)
 
         end_time = time.time()
         logger.info(

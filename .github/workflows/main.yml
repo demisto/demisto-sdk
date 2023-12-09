@@ -187,7 +187,7 @@ jobs:
       - name: Run coverage
         run: |
           pip install coverage
-          coverage combine coverage-Ubuntu-3.10/.coverage*
+          coverage combine
           coverage report
           coverage xml
       - name: Coveralls

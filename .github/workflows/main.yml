@@ -79,6 +79,7 @@ jobs:
             test-results/junit.xml
             node_versions_info.json
             coverage_html_report
+            .coverage
       - name: Print Summary of pytest results in workflow summary
         if: always()
         uses: pmeier/pytest-results-action@main
@@ -152,6 +153,7 @@ jobs:
             integration-test-results/junit.xml
             node_versions_info.json
             coverage_html_report
+            .coverage
       - name: Print Summary of pytest results in workflow summary
         if: always()
         uses: pmeier/pytest-results-action@main
@@ -169,3 +171,23 @@ jobs:
             echo "All integration-tests have passed, congratulations!"
           fi
           exit $PYTEST_EXIT_CODE
+
+  coverage:
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Download all artifacts
+        # Downloads coverage1, coverage2, etc.
+        uses: actions/download-artifact@v2
+      - name: Run coverage
+        run: |
+          coverage combine coverage-Ubuntu-3.10/.coverage*
+          coverage report
+          coverage xml
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2

@@ -122,7 +122,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         not in pre_commit.python_version_to_files["3.10"]
     )
 
-    pre_commit.run(unit_test=is_test)
+    pre_commit.prepare_and_run(unit_test=is_test)
 
     assert mock_subprocess.call_count == 1
 

@@ -3494,12 +3494,6 @@ def update_content_graph(
     help="Special mode to run the pre-commit with",
 )
 @click.option(
-    "-ut/--no-ut",
-    "--unit-test/--no-unit-test",
-    help="Whether to run unit tests for content items",
-    default=False,
-)
-@click.option(
     "--skip",
     help="A comma separated list of precommit hooks to skip",
 )
@@ -3563,7 +3557,6 @@ def pre_commit(
     git_diff: bool,
     all_files: bool,
     mode: Optional[str],
-    unit_test: bool,
     skip: str,
     validate: bool,
     format: bool,
@@ -3598,7 +3591,6 @@ def pre_commit(
             git_diff,
             all_files,
             mode,
-            unit_test,
             skip,
             validate,
             format,

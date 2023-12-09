@@ -5,6 +5,8 @@ from typing import Any, Dict, Iterable, List, Set
 
 from demisto_sdk.commands.common.logger import logger
 
+PROPERTIES_TO_DELETE = {"needs"}
+
 
 class Hook:
     def __init__(
@@ -116,12 +118,17 @@ class Hook:
         Update the base_hook accordingly.
         """
         hook: Dict = {}
+        keys_to_delete = []
         for full_key in self.base_hook:
             key = full_key.split(":")[0]
             if hook.get(key):
                 continue
+            if key in PROPERTIES_TO_DELETE:
+                keys_to_delete.append(key)
             if (prop := self._get_property(key)) is not None:
                 hook[key] = prop
+        for key in keys_to_delete:
+            del hook[key]
         self.base_hook = hook
 
 

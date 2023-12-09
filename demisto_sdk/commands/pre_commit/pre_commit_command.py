@@ -279,7 +279,9 @@ class PreCommitRunner:
                 )
             repo["hooks"].append(hook["hook"])
 
-    def _run_pre_commit_process(self, path: Path, precommit_env: dict, verbose: bool):
+    def _run_pre_commit_process(
+        self, path: Path, precommit_env: dict, verbose: bool, stdout=None
+    ):
         return subprocess.Popen(
             list(
                 filter(
@@ -298,7 +300,7 @@ class PreCommitRunner:
             ),
             env=precommit_env,
             cwd=CONTENT_PATH,
-            stdout=subprocess.PIPE,
+            stdout=stdout,
             universal_newlines=True,
         )
 
@@ -314,8 +316,9 @@ class PreCommitRunner:
         num_processes = cpu_count()
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         # first, run the hooks without docker hooks
+        stdout = subprocess.PIPE if docker_hooks else None
         main_p = self._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose
+            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
         )
         running_processes: List[subprocess.Popen] = [main_p]
         i = 0

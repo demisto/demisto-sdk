@@ -73,7 +73,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: coverage-${{ matrix.os }}-${{ matrix.python_version }}${{ matrix.group }}
+          name: unit-tests-artifacts-${{ matrix.python_version }}-${{ matrix.group }}
           path: |
             .test_durations
             test-results/junit.xml
@@ -99,7 +99,7 @@ jobs:
           exit $PYTEST_EXIT_CODE
 
   integration-tests:
-    name: Integration Tests / ${{ matrix.python-version }} (${{ matrix.group }})
+    name: Integration Tests / ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -147,7 +147,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: coverage-${{ matrix.os }}-${{ matrix.python_version }}
+          name: integration-tests-artifacts-${{ matrix.python_version }}
           path: |
             .test_durations
             integration-test-results/junit.xml
@@ -186,6 +186,7 @@ jobs:
         uses: actions/download-artifact@v2
       - name: Run coverage
         run: |
+          pip install coverage
           coverage combine coverage-Ubuntu-3.10/.coverage*
           coverage report
           coverage xml

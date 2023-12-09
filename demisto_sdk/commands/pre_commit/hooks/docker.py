@@ -1,8 +1,8 @@
 import functools
 import os
+import subprocess
 import time
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
@@ -12,7 +12,6 @@ from docker.errors import DockerException
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.docker_helper import (
     docker_login,
     get_docker,
@@ -30,7 +29,6 @@ from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
 NO_SPLIT = None
-TEST_IMAGES_TO_RUN = []
 
 
 @lru_cache()
@@ -107,6 +105,7 @@ def docker_tag_to_runfiles(
 def devtest_image(
     image_tag: str,
     is_powershell: bool,
+    dry_run: bool,
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -127,7 +126,13 @@ def devtest_image(
         log_prompt="DockerHook",
     )
     if not errors:
-        TEST_IMAGES_TO_RUN.append(image)
+        if not dry_run:
+            # pull images in background
+            subprocess.Popen(
+                ["docker", "pull", image],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
         return image
     raise DockerException(errors)
 
@@ -242,14 +247,6 @@ class DockerHook(Hook):
                 config_arg,
             )
             self.hooks.extend(hooks)
-        if not dry_run:
-            docker = get_docker()
-            with ProcessPoolExecutor(cpu_count()) as executor:
-                [
-                    executor.submit(docker.pull_image, image)
-                    for image in TEST_IMAGES_TO_RUN
-                ]
-
         end_time = time.time()
         logger.info(
             f"DockerHook - Elapsed time to prep all the images: {end_time - start_time} seconds"

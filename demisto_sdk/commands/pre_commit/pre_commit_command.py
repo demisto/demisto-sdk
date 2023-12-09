@@ -331,7 +331,9 @@ class PreCommitRunner:
                 path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
                 write_dict(path, data=self.precommit_template)
 
-                p = self._run_pre_commit_process(path, precommit_env, verbose=verbose)
+                p = self._run_pre_commit_process(
+                    path, precommit_env, verbose, subprocess.PIPE
+                )
                 i += 1
                 running_processes.append(p)
             return_code = self._poll_for_processes(running_processes, return_code)

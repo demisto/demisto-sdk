@@ -147,7 +147,7 @@ def get_environment_flag(env: dict) -> str:
 def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
-    split_by_file: Optional[str],
+    split_by_obj: Optional[bool],
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
@@ -155,7 +155,7 @@ def _split_by_objects(
     Args:
         files: the files to split
         config_arg: a tuple, argument_name, file_name
-        split_by_file: if this file exists, split it to a seperate hook
+        split_by_obj: If split all object to separate hook
 
     Returns:
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
@@ -165,11 +165,7 @@ def _split_by_objects(
     ] = defaultdict(set)
 
     for file, obj in files_with_objects:
-        if (
-            (config_arg and (obj.path.parent / config_arg[1]).exists())
-            or (split_by_file and (obj.path.parent / split_by_file).exists())
-            or obj.additional_test_requirements
-        ):
+        if split_by_obj or (config_arg and (obj.path.parent / config_arg[1]).exists()):
             object_to_files[obj].add((file, obj))
         else:
             object_to_files[NO_SPLIT].add((file, obj))
@@ -224,7 +220,7 @@ class DockerHook(Hook):
             f"Elapsed time to gather tags to files: {end_time - start_time} seconds"
         )
         config_arg = self._get_config_file_arg()
-        split_by_file = self._get_property("split_by_file")
+        split_by_obj = self._get_property("split_by_obj")
         start_time = time.time()
         logger.info(f"{len(tag_to_files_objs)} images were collected from files")
         logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
@@ -232,7 +228,7 @@ class DockerHook(Hook):
             tag_to_files_objs.items(), key=lambda item: item[0]
         ):
             object_to_files = _split_by_objects(
-                files_with_objects, config_arg, split_by_file
+                files_with_objects, config_arg, split_by_obj
             )
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
@@ -296,6 +292,9 @@ class DockerHook(Hook):
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
             if integration_script is not None:
+                new_hook[
+                    "entry"
+                ] = f"-w {integration_script.path.parent} {new_hook['entry']}"
                 if config_arg:
                     args = deepcopy(self._get_property("args", []))
                     args.extend(

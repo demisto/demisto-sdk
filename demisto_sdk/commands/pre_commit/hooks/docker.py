@@ -239,7 +239,7 @@ class DockerHook(Hook):
                 obj.is_powershell for _, obj in files_with_objects
             )
 
-            dev_image = devtest_image(image, image_is_powershell)
+            dev_image = devtest_image(image, image_is_powershell, dry_run)
             hooks = self.get_new_hooks(
                 dev_image,
                 image,

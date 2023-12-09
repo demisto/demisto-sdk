@@ -305,6 +305,8 @@ class DockerHook(Hook):
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
             if self._set_files_on_hook(hook, files):
+                # disable multiprocessing on hook
+                hook["require_serial"] = True
                 ret_hooks.append(hook)
         for hook in ret_hooks:
             hook.pop("docker_image", None)

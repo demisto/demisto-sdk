@@ -1,6 +1,5 @@
 import functools
 import os
-import subprocess
 import time
 from collections import defaultdict
 from copy import deepcopy
@@ -126,13 +125,6 @@ def devtest_image(
         log_prompt="DockerHook",
     )
     if not errors:
-        if not dry_run:
-            # pull the image in the background
-            subprocess.Popen(
-                ["docker", "pull", image],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
         return image
     raise DockerException(errors)
 

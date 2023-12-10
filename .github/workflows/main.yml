@@ -71,7 +71,7 @@ jobs:
           exit $pytest_exit_code
       - name: Upload artifacts
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: unit-tests-artifacts-${{ matrix.python-version }}-group-${{ matrix.group }}
           path: |

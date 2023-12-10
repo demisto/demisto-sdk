@@ -54,7 +54,7 @@ jobs:
         run: |
           source "$(poetry env info --path)/bin/activate"
           # shopt -u globstar
-  
+
           echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
 
           # Due to race conditions in the tests bringing up and down the node server, have the server available
@@ -135,7 +135,7 @@ jobs:
       - name: Run pytest
         run: |
           source "$(poetry env info --path)/bin/activate"
-  
+
           echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
 
           mkdir integration-test-results

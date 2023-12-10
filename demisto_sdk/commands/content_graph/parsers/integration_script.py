@@ -1,4 +1,3 @@
-import logging
 from abc import abstractmethod
 from functools import cached_property
 from pathlib import Path

@@ -1,7 +1,7 @@
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from demisto_sdk.commands.common.logger import logger
 
@@ -34,7 +34,9 @@ class Hook:
         """
         self.hooks.append(deepcopy(self.base_hook))
 
-    def _set_files_on_hook(self, hook: dict, files) -> int:
+    def _set_files_on_hook(
+        self, hook: dict, files: Iterable[Path], with_absolute: Optional[Path] = None
+    ) -> int:
         """
 
         Args:
@@ -46,6 +48,12 @@ class Hook:
         """
         files_to_run_on_hook = self.filter_files_matching_hook_config(files)
         hook["files"] = join_files(files_to_run_on_hook)
+        if with_absolute:
+            hook["pass_filenames"] = False
+            # check if subpath in path
+            hook["args"].extend(
+                (str(with_absolute / file) for file in files_to_run_on_hook)
+            )
 
         return len(files_to_run_on_hook)
 

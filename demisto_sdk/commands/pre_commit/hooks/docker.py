@@ -279,7 +279,6 @@ class DockerHook(Hook):
         new_hook[
             "entry"
         ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {dev_image}'
-
         ret_hooks = []
         for (
             integration_script,
@@ -290,7 +289,7 @@ class DockerHook(Hook):
             if integration_script is not None:
                 new_hook[
                     "entry"
-                ] = f"-w {integration_script.path.parent} {new_hook['entry']}"
+                ] = f"-w /src/{integration_script.path.parent.relative_to(CONTENT_PATH)} {new_hook['entry']}"
                 if config_arg:
                     args = deepcopy(self._get_property("args", []))
                     args.extend(
@@ -310,14 +309,14 @@ class DockerHook(Hook):
                 hook[
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
-            if self._set_files_on_hook(hook, files):
+            if self._set_files_on_hook(hook, files, with_absolute=Path("/src")):
                 # disable multiprocessing on hook
                 hook["require_serial"] = True
                 ret_hooks.append(hook)
         for hook in ret_hooks:
             hook.pop("docker_image", None)
             hook.pop("config_file_arg", None)
-            hook.pop("split_by_file", None)
+            hook.pop("split_by_obj", None)
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

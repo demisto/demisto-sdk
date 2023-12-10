@@ -1,23 +1,23 @@
-from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
 from TestSuite.test_tools import ChangeCWD
 
 
 def test_is_valid_file(repo):
     """
-    Given: A layout rule json
+    Given: A trigger json
     When: running are_all_fields_exist
-    Then: Validate that the layout rule is valid
-
+    Then: Validate that the trigger is valid
     """
     pack = repo.create_pack("TestPack")
-    dummy_layout_rule = pack.create_layout_rule(
-        "MyRule",
+    dummy_trigger = pack.create_trigger(
+        "MyTrigger",
         {
-            "rule_id": "test_rule",
-            "layout_id": "test_layout_id",
-            "description": "This trigger is test",
-            "rule_name": "test rule name",
+            "trigger_id": "trigger_id",
+            "playbook_id": "playbook_id",
+            "suggestion_reason": "Reason",
+            "description": "Description",
+            "trigger_name": "trigger_name",
             "alerts_filter": {
                 "filter": {
                     "AND": [
@@ -29,31 +29,30 @@ def test_is_valid_file(repo):
                     ]
                 }
             },
-            "fromVersion": "6.0.0",
         },
     )
-    structure_validator = StructureValidator(dummy_layout_rule.path)
+    structure_validator = StructureValidator(dummy_trigger.path)
     assert structure_validator.is_valid_scheme()
     with ChangeCWD(repo.path):
-        layout_rule_validator = LayoutRuleValidator(structure_validator)
-        assert layout_rule_validator.is_valid_file()
+        trigger_validator = TriggersValidator(structure_validator)
+        assert trigger_validator.is_valid_file()
 
 
 def test_is_valid_file_complicated_schema(repo):
     """
-    Given: A layout rule json with nested "AND" AND "OR".
+    Given: A trigger json with nested "AND" AND "OR".
     When: running are_all_fields_exist
-    Then: Validate that the layout rule is valid
-
+    Then: Validate that the trigger is valid
     """
     pack = repo.create_pack("TestPack")
-    dummy_layout_rule = pack.create_layout_rule(
-        "MyRule",
+    dummy_trigger = pack.create_trigger(
+        "MyTrigger",
         {
-            "rule_id": "test_rule",
-            "layout_id": "test_layout_id",
-            "description": "This trigger is test",
-            "rule_name": "test rule name",
+            "trigger_id": "trigger_id",
+            "playbook_id": "playbook_id",
+            "suggestion_reason": "Reason",
+            "description": "Description",
+            "trigger_name": "trigger_name",
             "alerts_filter": {
                 "filter": {
                     "OR": [
@@ -88,31 +87,30 @@ def test_is_valid_file_complicated_schema(repo):
                     ]
                 }
             },
-            "fromVersion": "6.0.0",
         },
     )
-    structure_validator = StructureValidator(dummy_layout_rule.path)
+    structure_validator = StructureValidator(dummy_trigger.path)
     assert structure_validator.is_valid_scheme()
     with ChangeCWD(repo.path):
-        layout_rule_validator = LayoutRuleValidator(structure_validator)
-        assert layout_rule_validator.is_valid_file()
+        trigger_validator = TriggersValidator(structure_validator)
+        assert trigger_validator.is_valid_file()
 
 
 def test_is_not_valid_file_complicated_schema(repo):
     """
-    Given: A layout rule json with nested "AND" AND "OR" and missing SEARCH_FIELD that match "test1".
+    Given: A trigger json with nested "AND" AND "OR" and missing SEARCH_FIELD that match "test3".
     When: running are_all_fields_exist
-    Then: Validate that the layout rule is not valid
-
+    Then: Validate that the trigger is not valid
     """
     pack = repo.create_pack("TestPack")
-    dummy_layout_rule = pack.create_layout_rule(
-        "MyRule",
+    dummy_trigger = pack.create_trigger(
+        "MyTrigger",
         {
-            "rule_id": "test_rule",
-            "layout_id": "test_layout_id",
-            "description": "This trigger is test",
-            "rule_name": "test rule name",
+            "trigger_id": "trigger_id",
+            "playbook_id": "playbook_id",
+            "suggestion_reason": "Reason",
+            "description": "Description",
+            "trigger_name": "trigger_name",
             "alerts_filter": {
                 "filter": {
                     "OR": [
@@ -121,6 +119,7 @@ def test_is_not_valid_file_complicated_schema(repo):
                                 {
                                     "OR": [
                                         {
+                                            "SEARCH_FIELD": "alert_name",
                                             "SEARCH_TYPE": "EQ",
                                             "SEARCH_VALUE": "test1",
                                         },
@@ -132,7 +131,6 @@ def test_is_not_valid_file_complicated_schema(repo):
                                     ]
                                 },
                                 {
-                                    "SEARCH_FIELD": "alert_name",
                                     "SEARCH_TYPE": "Contains",
                                     "SEARCH_VALUE": "test3",
                                 },
@@ -146,8 +144,7 @@ def test_is_not_valid_file_complicated_schema(repo):
                     ]
                 }
             },
-            "fromVersion": "6.0.0",
         },
     )
-    structure_validator = StructureValidator(dummy_layout_rule.path)
+    structure_validator = StructureValidator(dummy_trigger.path)
     assert not structure_validator.is_valid_scheme()

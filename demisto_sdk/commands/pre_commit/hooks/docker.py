@@ -152,7 +152,6 @@ def get_environment_flag(env: dict) -> str:
 def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
-    split_by_obj: Optional[bool],
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
@@ -160,7 +159,6 @@ def _split_by_objects(
     Args:
         files: the files to split
         config_arg: a tuple, argument_name, file_name
-        split_by_obj: If split all object to separate hook
 
     Returns:
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
@@ -170,7 +168,7 @@ def _split_by_objects(
     ] = defaultdict(set)
 
     for file, obj in files_with_objects:
-        if split_by_obj or (config_arg and (obj.path.parent / config_arg[1]).exists()):
+        if config_arg and (obj.path.parent / config_arg[1]).exists():
             object_to_files[obj].add((file, obj))
         else:
             object_to_files[NO_SPLIT].add((file, obj))
@@ -225,16 +223,13 @@ class DockerHook(Hook):
             f"Elapsed time to gather tags to files: {end_time - start_time} seconds"
         )
         config_arg = self._get_config_file_arg()
-        split_by_obj = self._get_property("split_by_obj")
         start_time = time.time()
         logger.info(f"{len(tag_to_files_objs)} images were collected from files")
         logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
         for image, files_with_objects in sorted(
             tag_to_files_objs.items(), key=lambda item: item[0]
         ):
-            object_to_files = _split_by_objects(
-                files_with_objects, config_arg, split_by_obj
-            )
+            object_to_files = _split_by_objects(files_with_objects, config_arg)
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
             )
@@ -279,8 +274,6 @@ class DockerHook(Hook):
         new_hook[
             "entry"
         ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {dev_image}'
-        if os.getenv("CI"):
-            new_hook["entry"] = f"--rm=false {new_hook['entry']}"
         ret_hooks = []
         for (
             integration_script,
@@ -318,7 +311,6 @@ class DockerHook(Hook):
         for hook in ret_hooks:
             hook.pop("docker_image", None)
             hook.pop("config_file_arg", None)
-            hook.pop("split_by_obj", None)
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

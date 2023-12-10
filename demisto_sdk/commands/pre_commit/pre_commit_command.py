@@ -145,7 +145,9 @@ class PreCommitRunner:
         for repo in pre_commit_config["repos"]:
             new_hooks = []
             for hook in repo["hooks"]:
-                if not Hook.get_property(hook, self.mode, "skip"):
+                if hook["id"] not in SKIPPED_HOOKS and not Hook.get_property(
+                    hook, self.mode, "skip"
+                ):
                     needs = Hook.get_property(hook, self.mode, "needs")
                     if needs and any(need not in hooks for need in needs):
                         continue

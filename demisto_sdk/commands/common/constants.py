@@ -1950,3 +1950,15 @@ class IncidentState(str, Enum):
     IN_PROGRESS = 1  # the incident is in progress
     CLOSED = 2  # the incident is closed
     ACKNOWLEDGED = 3  # the incident is archived
+
+
+class TypeList(str, Enum):
+    TEXT = "plain_text"
+    HTML = "html"
+    CSS = "css"
+    MD = "markdown"
+    JSON = "json"
+
+# Used to format the writing of the yml/json file
+JSON_INDENT_CONSTANT = 4
+YAML_INDENT_CONSTANT = 0

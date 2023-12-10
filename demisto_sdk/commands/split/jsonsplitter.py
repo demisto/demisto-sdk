@@ -1,15 +1,21 @@
 import os
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR,
     GENERIC_MODULES_DIR,
+    JSON_INDENT_CONSTANT,
+    LISTS_DIR,
     PACKS_DIR,
+    FileType,
+    TypeList,
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    get_file,
+    get_dict_from_file,
     get_pack_name,
     is_external_repository,
+    pascal_case,
     write_dict,
 )
 
@@ -28,27 +34,40 @@ class JsonSplitter:
 
     def __init__(
         self,
-        input: str,
-        output: str,
+        input: Path | str,
+        output: Path | str = "",
+        file_type: FileType = FileType.GENERIC_MODULE,
         no_auto_create_dir: bool = False,
         new_module_file: bool = False,
+        input_file_data: dict | None = None,
     ):
         self.input = input
+        self.output = output if output else Path(input).parent
         self.dashboard_dir = output if output else ""
         self.module_dir = output if output else ""
         self.autocreate_dir = not no_auto_create_dir
         self.new_module_file = new_module_file
-
-        self.module_json_data = get_file(self.input, raise_on_error=True)
+        self.json_data = (
+            input_file_data
+            if input_file_data is not None
+            else get_dict_from_file(path=str(self.input))[0]
+        )
+        self.type = file_type
 
     def split_json(self):
+        if self.type == FileType.LISTS:
+            self.split_list()
+        else:
+            self.split_dashboard()
+        return 0
+
+    def split_dashboard(self):
         logger.debug(
-            f"[cyan]Starting dashboard extraction from generic module {self.module_json_data.get('name')}[/cyan]"
+            f"[cyan]Starting dashboard extraction from generic module {self.json_data.get('name')}[/cyan]"
         )
         self.create_output_dirs()
         self.create_dashboards()
         self.create_module()
-        return 0
 
     def create_output_dir(self, path):
         try:
@@ -86,7 +105,7 @@ class JsonSplitter:
     def create_dashboards(self):
         logger.debug("Starting dashboard creation")
 
-        for view in self.module_json_data.get("views", []):
+        for view in self.json_data.get("views", []):
             for tab in view.get("tabs", []):
                 dashboard_data = tab.get("dashboard")
 
@@ -124,4 +143,62 @@ class JsonSplitter:
 
             module_file_path = os.path.join(self.module_dir, file_name)
 
-        write_dict(module_file_path, data=self.module_json_data, indent=4)
+        write_dict(module_file_path, data=self.json_data, indent=JSON_INDENT_CONSTANT)
+
+    def get_auto_output_path(self) -> tuple[Path, str, str]:
+        suffix_by_type = {
+            TypeList.TEXT: ".txt",
+            TypeList.HTML: ".html",
+            TypeList.CSS: ".css",
+            TypeList.MD: ".md",
+            TypeList.JSON: ".json",
+        }
+
+        suffix = suffix_by_type.get(self.json_data["type"], ".txt")
+
+        file_name = pascal_case(self.json_data["name"]) + ".json"
+        file_data_name = file_name[: -len(".json")] + "_data" + suffix
+
+        if self.autocreate_dir:
+            pack_name = get_pack_name(self.input)
+
+            if not pack_name:
+                return Path(self.input).parent, file_name, file_data_name
+
+            if not (lists_dir := Path(PACKS_DIR) / pack_name / LISTS_DIR).exists():
+                lists_dir.mkdir()
+
+            # create the specific list dir under the LISTS_DIR if it does not exist
+            # the dir name determine by the file name without the suffix
+            if not (list_name_dir := lists_dir / file_name[: -len(".json")]).exists():
+                list_name_dir.mkdir()
+
+            return list_name_dir, file_name, file_data_name
+
+        if not (output := Path(self.output)).is_dir():
+            output = output.parent
+
+        return output, file_name, file_data_name
+
+    def write_file_data(self, list_name_dir: Path, file_data_name: str):
+        if file_data_name.endswith("json"):
+            write_dict(
+                (list_name_dir / file_data_name),
+                self.json_data["data"],
+                indent=JSON_INDENT_CONSTANT,
+            )
+        else:
+            (list_name_dir / file_data_name).write_text(self.json_data["data"])
+
+    def write_list(self, list_name_dir: Path, file_name: str):
+        self.json_data["data"] = "-"
+        write_dict(
+            (list_name_dir / file_name), self.json_data, indent=JSON_INDENT_CONSTANT
+        )
+
+    def split_list(self):
+        list_name_dir, file_name, file_data_name = self.get_auto_output_path()
+
+        self.write_file_data(list_name_dir, file_data_name)
+
+        self.write_list(list_name_dir, file_name)

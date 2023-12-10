@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json, get_value
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -94,9 +95,14 @@ class JSONContentItemParser(ContentItemParser):
     def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
-            if len(json_files_in_dir) != 1:
-                raise NotAContentItemException(
-                    f"Directory {self.path} must have a single JSON file."
-                )
+            if len(json_files_in_dir) > 1:
+                if not (json_files_in_dir := [
+                    file
+                    for file in json_files_in_dir
+                    if Path(file).name.startswith(tuple(ContentType.server_names()))
+                ]):
+                    raise NotAContentItemException(
+                        f"Directory {self.path} must have a single JSON file."
+                    )
             self.path = Path(json_files_in_dir[0])
         return get_json(self.path.as_posix(), git_sha=git_sha)

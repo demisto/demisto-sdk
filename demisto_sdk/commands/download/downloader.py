@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     ENTITY_NAME_SEPARATORS,
     ENTITY_TYPE_TO_DIR,
     INTEGRATIONS_DIR,
+    LISTS_DIR,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -47,11 +48,13 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     get_yml_paths_in_dir,
     is_sdk_defined_working_offline,
+    pascal_case,
     safe_read_unicode,
     write_dict,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator
+from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 
@@ -989,7 +992,7 @@ class Downloader:
             if content_entity_path.is_dir():
                 directory_name = content_entity_path.name
 
-                if directory_name in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+                if directory_name in (INTEGRATIONS_DIR, SCRIPTS_DIR, LISTS_DIR):
                     # If entity is of type integration/script it will have dirs, otherwise files
                     directory_items = [
                         p for p in content_entity_path.iterdir() if p.is_dir()
@@ -1389,6 +1392,24 @@ class Downloader:
             extractor.extract_to_package_format()
 
             # Add items to downloaded_files
+            for file_path in download_path.iterdir():
+                if file_path.is_file():
+                    downloaded_files.append(file_path)
+
+        elif content_item_entity_directory == LISTS_DIR:
+            download_path = (
+                output_path / content_item_entity_directory / pascal_case(content_item_name)
+            )
+            download_path.mkdir(parents=True, exist_ok=True)
+
+            JsonSplitter(
+                input=content_item_file_name,
+                output=download_path,
+                no_auto_create_dir=True,
+                file_type=content_item_type,
+                input_file_data=content_object["data"],
+            ).split_json()
+
             for file_path in download_path.iterdir():
                 if file_path.is_file():
                     downloaded_files.append(file_path)

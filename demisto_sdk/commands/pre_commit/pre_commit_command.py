@@ -325,12 +325,6 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         # first, run the hooks without docker hooks
         stdout = subprocess.PIPE if docker_hooks else None
-        self._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH,
-            precommit_env,
-            verbose,
-            command=["install-hooks"],
-        ).communicate()
         main_p = self._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
         )

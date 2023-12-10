@@ -321,7 +321,7 @@ class PreCommitRunner:
         local_repo["hooks"] = no_docker_hooks
         hooks_needs_docker = self._filter_needs_docker(repos)
         num_processes = cpu_count()
-        logger.info(f"Pre-Commit will use {num_processes} process")
+        logger.info(f"Pre-Commit will use {num_processes} processes")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         # first, run the hooks without docker hooks
         stdout = subprocess.PIPE if docker_hooks else None
@@ -482,7 +482,7 @@ def group_by_python_version(
         ):
             continue
         if integration_script.deprecated:
-            if integration_script.is_unified or integration_script:
+            if integration_script.is_unified:
                 exclude_integration_script.add(
                     integration_script.path.relative_to(CONTENT_PATH)
                 )

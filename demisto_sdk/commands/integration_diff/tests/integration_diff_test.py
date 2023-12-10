@@ -256,10 +256,16 @@ class TestIntegrationDiffDetector:
         "commands": [
             {
                 "description": "",
+                "message": "New command added 'command_3'.",
+                "name": "command_3",
+                "type": "commands",
+            },
+            {
+                "description": "",
                 "type": "commands",
                 "name": "command_1",
                 "message": "Missing the command 'command_1'.",
-            }
+            },
         ],
         "arguments": [
             {
@@ -303,7 +309,7 @@ class TestIntegrationDiffDetector:
             new=new_integration.yml.path, old=old_integration.yml.path
         )
 
-        assert integration_detector.check_different()
+        assert not integration_detector.check_different()
 
     def test_invalid_integration_diff(self, pack):
         """

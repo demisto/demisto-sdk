@@ -1,5 +1,6 @@
 import functools
 import os
+import shutil
 import subprocess
 import time
 from collections import defaultdict
@@ -222,6 +223,11 @@ class DockerHook(Hook):
         logger.debug(
             f"Elapsed time to gather tags to files: {end_time - start_time} seconds"
         )
+        if copy_files := self._get_property("copy_files"):
+            all_objects = {obj for _, obj in filtered_files_with_objects if obj}
+            for obj in all_objects:
+                for file in copy_files:
+                    shutil.copy(CONTENT_PATH / file, obj.path.parent / Path(file).name)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.info(f"{len(tag_to_files_objs)} images were collected from files")
@@ -310,6 +316,7 @@ class DockerHook(Hook):
         for hook in ret_hooks:
             hook.pop("docker_image", None)
             hook.pop("config_file_arg", None)
+            hook.pop("copy_files", None)
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

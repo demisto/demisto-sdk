@@ -250,10 +250,13 @@ class PreCommitRunner:
         return docker_hooks, no_docker_hooks
 
     def _poll_for_processes(
-        self, running_processes: List[subprocess.Popen], return_code: int
+        self,
+        running_processes: List[subprocess.Popen],
+        return_code: int,
+        wait: bool = False,
     ):
         for process in running_processes:
-            p_return_code = process.poll()
+            p_return_code = process.wait() if wait else process.poll()
             if p_return_code is not None:
                 running_processes.remove(process)
                 if p_return_code:
@@ -344,7 +347,8 @@ class PreCommitRunner:
                 i += 1
                 running_processes.append(p)
             return_code = self._poll_for_processes(running_processes, return_code)
-
+            if running_processes and i >= len(docker_hooks):
+                self._poll_for_processes(running_processes, return_code, wait=True)
         if hooks_needs_docker:
             # run hooks that needs docker after all the docker hooks finished
             self._update_hooks_needs_docker(hooks_needs_docker)

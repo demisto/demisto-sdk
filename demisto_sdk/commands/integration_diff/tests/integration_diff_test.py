@@ -1,10 +1,15 @@
 import copy
 import logging
+import os
 
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
 from TestSuite.test_tools import str_in_call_args_list
+
+DEMISTO_SDK_PATH = os.path.join(git_path(), "demisto_sdk")
+TEST_FILES = os.path.join(DEMISTO_SDK_PATH, "commands", "integration_diff", "tests")
 
 
 class TestIntegrationDiffDetector:
@@ -711,3 +716,28 @@ class TestIntegrationDiffDetector:
                 for current_str in excepted_output
             ]
         )
+
+    def test_get_differences_from_files(self):
+        """
+        Test differences from 2 YAMLs created from a UI contribution
+        https://github.com/demisto/content/pull/31266
+
+        The new integration includes a new command
+        """
+
+        diff = IntegrationDiffDetector(
+            os.path.join(TEST_FILES, "HelloWorld_new.yml"),
+            os.path.join(TEST_FILES, "HelloWorld_old.yml"),
+        )
+
+        actual = diff.get_differences()
+
+        assert actual["commands"]
+        assert actual["commands"][0]["name"] == "helloworld-new-cmd"
+        assert "New command added" in actual["commands"][0]["message"]
+        assert (
+            actual["commands"][0]["description"]
+            == "New command to test out https://jira-dc.paloaltonetworks.com/browse/CIAC-4657"
+        )
+
+        assert 1

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.constants import (
     ARGUMENT_FIELDS_TO_CHECK,
@@ -82,7 +83,9 @@ class IntegrationDiffDetector:
 
         return differences_result
 
-    def get_different_commands(self, old_commands, new_commands) -> tuple:
+    def get_different_commands(
+        self, old_commands, new_commands
+    ) -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
         """
         Checks differences between two list of the integration commands.
 
@@ -96,6 +99,28 @@ class IntegrationDiffDetector:
         commands = []
         arguments = []
         outputs = []
+
+        new_cmds = [
+            {"name": cmd["name"], "description": cmd["description"]}
+            for cmd in new_commands
+        ]
+        old_cmds = [
+            {"name": cmd["name"], "description": cmd["description"]}
+            for cmd in old_commands
+        ]
+
+        # Check if any new commands were added
+        if new_cmds != old_cmds:
+            added_cmds = [cmd for cmd in new_cmds if cmd not in old_cmds]
+            for added_cmd in added_cmds:
+                commands.append(
+                    {
+                        "type": "commands",
+                        "name": added_cmd.get("name"),
+                        "message": f"New command added '{added_cmd.get('name')}'.",
+                        "description": added_cmd.get("description", ""),
+                    }
+                )
 
         # for each old integration command check if exist in the new, if not, check what is missing
         for old_command in old_commands:
@@ -350,8 +375,10 @@ class IntegrationDiffDetector:
                     parameters.append(
                         {
                             "type": "parameters",
-                            "name": old_param["display"],
-                            "message": f'Missing the parameter \'{old_param["display"]}\'.',
+                            "name": old_param["display"]
+                            if "display" in old_param
+                            else old_param["name"],
+                            "message": f'Missing the parameter \'{old_param["display"] if "display" in old_param else old_param["name"]}\'.',
                         }
                     )
 
@@ -392,7 +419,10 @@ class IntegrationDiffDetector:
 
         for element in list_of_elements:
 
-            if element[field_to_check] == element_to_check[field_to_check]:
+            if (
+                field_to_check in element_to_check
+                and element[field_to_check] == element_to_check[field_to_check]
+            ):
                 return element
 
         return {}

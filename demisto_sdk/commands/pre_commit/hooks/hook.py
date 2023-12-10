@@ -80,6 +80,22 @@ class Hook:
             and (not exclude_pattern or not re.search(exclude_pattern, str(file)))
         }  # only exclude if defined
 
+    @staticmethod
+    def get_property(hook: dict, mode: str, name: str, default=None):
+        """
+        Will get the given property from the base hook, taking mode into account
+        Args:
+            hook: the hook dict
+            mode: the mode to use
+            name: the key to get from the config
+            default: the default value to return
+        Returns: The value from the base hook
+        """
+        ret = None
+        if mode:
+            ret = hook.get(f"{name}:{mode}")
+        return ret or hook.get(name, default)
+
     def _get_property(self, name, default=None):
         """
         Will get the given property from the base hook, taking mode into account
@@ -88,10 +104,7 @@ class Hook:
             default: the default value to return
         Returns: The value from the base hook
         """
-        ret = None
-        if self.mode:
-            ret = self.base_hook.get(f"{name}:{self.mode}")
-        return ret or self.base_hook.get(name, default)
+        return self.get_property(self.base_hook, self.mode, name, default=default)
 
     def _set_properties(self):
         """

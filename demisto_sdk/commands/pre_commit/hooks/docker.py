@@ -279,6 +279,8 @@ class DockerHook(Hook):
         new_hook[
             "entry"
         ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {dev_image}'
+        if os.getenv("CI"):
+            new_hook["entry"] = f"--rm=false {new_hook['entry']}"
         ret_hooks = []
         for (
             integration_script,

@@ -193,10 +193,14 @@ class DockerBase:
             elif image.count(":") > 1:
                 raise ValueError(f"Invalid docker image: {image}") from e
             else:
-                repo, tag = image.split(":")
-                token = _get_docker_hub_token(repo)
-                if _get_image_digest(repo, tag, token):
-                    return True
+                try:
+                    repo, tag = image.split(":")
+                    token = _get_docker_hub_token(repo)
+                    if _get_image_digest(repo, tag, token):
+                        return True
+                except RuntimeError as e:
+                    logger.debug(f"Error getting image data {image}: {e}")
+                    return False
         return False
 
     @staticmethod

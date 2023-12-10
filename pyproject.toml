@@ -108,11 +108,11 @@ junitparser = "^3.1.0"
 google-cloud-secret-manager = "^2.16.2"
 json5 = "^0.9.14"
 types-protobuf = "^4.24.0.4"
+pre-commit = "^3.5.0"
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"
 mock = "^4.0.3"
-pre-commit = "^2.18.1"
 pytest = "^7.1.1"
 pytest-cov = "^4.0.0"
 pytest-datadir-ng = "^1.1.1"

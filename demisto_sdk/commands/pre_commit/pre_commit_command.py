@@ -259,7 +259,8 @@ class PreCommitRunner:
                 if p_return_code:
                     return_code = 1
                 stdout, _ = process.communicate()
-                logger.info(stdout)
+                if stdout:
+                    logger.info(stdout)
         return return_code
 
     def _update_hooks_needs_docker(self, hooks_needs_docker: dict):
@@ -320,7 +321,7 @@ class PreCommitRunner:
         local_repo["hooks"] = no_docker_hooks
         hooks_needs_docker = self._filter_needs_docker(repos)
         num_processes = cpu_count()
-        logger.info(f"Pre-Commit will use {num_processes}")
+        logger.info(f"Pre-Commit will use {num_processes} process")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         # first, run the hooks without docker hooks
         stdout = subprocess.PIPE if docker_hooks else None

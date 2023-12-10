@@ -282,9 +282,6 @@ class DockerHook(Hook):
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
             if integration_script is not None:
-                hook[
-                    "entry"
-                ] = f"-w /src/{integration_script.path.parent.relative_to(CONTENT_PATH)} {new_hook['entry']}"
                 if config_arg:
                     args = deepcopy(self._get_property("args", []))
                     args.extend(
@@ -304,7 +301,7 @@ class DockerHook(Hook):
                 hook[
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
-            if self._set_files_on_hook(hook, files, with_absolute=Path("/src")):
+            if self._set_files_on_hook(hook, files):
                 # disable multiprocessing on hook
                 hook["require_serial"] = True
                 ret_hooks.append(hook)

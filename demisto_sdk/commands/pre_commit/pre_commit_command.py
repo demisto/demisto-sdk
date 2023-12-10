@@ -288,7 +288,7 @@ class PreCommitRunner:
         command: Optional[List[str]] = None,
     ):
         if command is None:
-            command = ["run", "--all-files"]
+            command = ["run", "-a"]
         return subprocess.Popen(
             list(
                 filter(
@@ -298,7 +298,6 @@ class PreCommitRunner:
                         "-m",
                         "pre_commit",
                         *command,
-                        "-a",
                         "-c",
                         str(path),
                         "-v" if verbose else "",

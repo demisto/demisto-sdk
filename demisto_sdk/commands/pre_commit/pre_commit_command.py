@@ -285,8 +285,10 @@ class PreCommitRunner:
         precommit_env: dict,
         verbose: bool,
         stdout=None,
-        command: str = "run",
+        command: Optional[List[str]] = None,
     ):
+        if command is None:
+            command = ["run", "--all-files"]
         return subprocess.Popen(
             list(
                 filter(
@@ -295,7 +297,7 @@ class PreCommitRunner:
                         sys.executable,
                         "-m",
                         "pre_commit",
-                        command,
+                        *command,
                         "-a",
                         "-c",
                         str(path),
@@ -323,7 +325,10 @@ class PreCommitRunner:
         # first, run the hooks without docker hooks
         stdout = subprocess.PIPE if docker_hooks else None
         self._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, command="install-hooks"
+            PRECOMMIT_CONFIG_MAIN_PATH,
+            precommit_env,
+            verbose,
+            command=["install-hooks"],
         ).communicate()
         main_p = self._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout

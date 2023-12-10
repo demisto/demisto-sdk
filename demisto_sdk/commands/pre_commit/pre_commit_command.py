@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
+from demisto_sdk.commands.common.docker_helper import get_docker
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -326,10 +327,12 @@ class PreCommitRunner:
             # run docker hooks concurrently up to num_processes
             while i < len(docker_hooks) and len(running_processes) < num_processes:
                 # create a pre-commit file with one docker hook and run it
+                image = docker_hooks[i]["entry"].split()[-1]
                 self.precommit_template["repos"] = [local_repo]
                 local_repo["hooks"] = [docker_hooks[i]]
                 path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
                 write_dict(path, data=self.precommit_template)
+                get_docker().pull_image(image)
 
                 p = self._run_pre_commit_process(
                     path, precommit_env, verbose, subprocess.PIPE

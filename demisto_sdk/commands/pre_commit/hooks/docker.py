@@ -287,7 +287,7 @@ class DockerHook(Hook):
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
             if integration_script is not None:
-                new_hook[
+                hook[
                     "entry"
                 ] = f"-w /src/{integration_script.path.parent.relative_to(CONTENT_PATH)} {new_hook['entry']}"
                 if config_arg:

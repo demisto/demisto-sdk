@@ -329,7 +329,7 @@ class PreCommitRunner:
         logger.info(f"Pre-Commit will use {num_processes} processes")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         # first, run the hooks without docker hooks
-        stdout = subprocess.PIPE if docker_hooks else None
+        stdout = None  # for now
         main_p = self._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
         )

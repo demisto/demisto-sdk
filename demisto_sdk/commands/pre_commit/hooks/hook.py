@@ -145,7 +145,7 @@ def join_files(files: Set[Path], separator: str = "|") -> str:
         str: The joined string.
     """
     # qoute files to avoid issues with special characters
-    return separator.join(f"'{str(file)}'" for file in files)
+    return separator.join(f"({str(file)})" for file in files)
 
 
 def safe_update_hook_args(hook: Dict, value: Any) -> None:

@@ -301,7 +301,9 @@ class DockerHook(Hook):
                 hook[
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
-            if self._set_files_on_hook(hook, files):
+            if self._set_files_on_hook(
+                hook, files, should_filter=False
+            ):  # no need to filter again, we have only filtered files
                 # disable multiprocessing on hook
                 hook["require_serial"] = True
                 ret_hooks.append(hook)

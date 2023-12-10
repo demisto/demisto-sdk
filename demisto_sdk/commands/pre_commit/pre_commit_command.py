@@ -21,7 +21,6 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.docker_helper import get_docker
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
@@ -281,7 +280,7 @@ class PreCommitRunner:
             repo["hooks"].append(hook["hook"])
 
     def _run_pre_commit_process(
-        self, path: Path, precommit_env: dict, verbose: bool, stdout=None
+        self, path: Path, precommit_env: dict, verbose: bool, stdout=None, command="run"
     ):
         return subprocess.Popen(
             list(
@@ -314,10 +313,13 @@ class PreCommitRunner:
         docker_hooks, no_docker_hooks = self._get_docker_and_no_docker_hooks(local_repo)
         local_repo["hooks"] = no_docker_hooks
         hooks_needs_docker = self._filter_needs_docker(repos)
-        num_processes = cpu_count()
+        num_processes = multiprocessing.cpu_count()
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         # first, run the hooks without docker hooks
         stdout = subprocess.PIPE if docker_hooks else None
+        self._run_pre_commit_process(
+            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, command="install-hooks"
+        ).communicate()
         main_p = self._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
         )

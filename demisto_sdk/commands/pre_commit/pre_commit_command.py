@@ -280,7 +280,12 @@ class PreCommitRunner:
             repo["hooks"].append(hook["hook"])
 
     def _run_pre_commit_process(
-        self, path: Path, precommit_env: dict, verbose: bool, stdout=None, command="run"
+        self,
+        path: Path,
+        precommit_env: dict,
+        verbose: bool,
+        stdout=None,
+        command: str = "run",
     ):
         return subprocess.Popen(
             list(
@@ -290,7 +295,7 @@ class PreCommitRunner:
                         sys.executable,
                         "-m",
                         "pre_commit",
-                        "run",
+                        command,
                         "-a",
                         "-c",
                         str(path),

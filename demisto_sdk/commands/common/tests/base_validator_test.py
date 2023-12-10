@@ -134,7 +134,7 @@ def test_handle_error_github_annotation(
     assert captured.out == expected_result
 
 
-def test_handle_error():
+def test_handle_error(mocker, caplog):
     """
     Given
     - An ignore errors list associated with a file.
@@ -172,6 +172,7 @@ def test_handle_error():
     assert formatted_error is None
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
+    assert "path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
 
     formatted_error = base_validator.handle_error(
         "Error-message", "ST109", "path/to/file_name"

@@ -368,7 +368,7 @@ class PreCommitRunner:
                 path, precommit_env, verbose=verbose
             )
             stdout, _ = process_needs_docker.communicate()
-            return_code = return_code and process_needs_docker.returncode
+            return_code = return_code or process_needs_docker.returncode
 
         if return_code and show_diff_on_failure:
             logger.info(

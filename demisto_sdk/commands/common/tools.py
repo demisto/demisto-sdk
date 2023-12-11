@@ -1786,7 +1786,12 @@ def find_content_type(path: Path) -> Optional[ContentType]:
         CONTENT_TYPE_TO_MODEL,
     )
     from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+    from demisto_sdk.commands.content_graph.parsers.content_item import (
+        NotAContentItemException,
+    )
 
+    if not (".yml" in path.suffix or ".json" in path.suffix):
+        raise NotAContentItemException
     _dict = File.read_from_local_path(path)
     for content_type_obj in CONTENT_TYPE_TO_MODEL.values():
         if issubclass(content_type_obj, ContentItem):

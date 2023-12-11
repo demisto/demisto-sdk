@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import sys
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -81,7 +81,7 @@ class PreCommitRunner:
     ]
     demisto_sdk_commit_hash: str
     run_hook: Optional[str] = None
-    skipped_hooks: Set[str] = SKIPPED_HOOKS
+    skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
 
     def __post_init__(self):
@@ -147,10 +147,11 @@ class PreCommitRunner:
         for repo in pre_commit_config["repos"]:
             new_hooks = []
             for hook in repo["hooks"]:
-                if not self.run_docker_hooks and hook["language"] == "docker":
+                if not self.run_docker_hooks and hook["id"].endswith("in-docker"):
                     continue
                 if (self.run_hook and hook["id"] in self.run_hook) or (
-                    hook["id"] not in self.skipped_hooks
+                    not self.run_hook
+                    and hook["id"] not in self.skipped_hooks
                     and not Hook.get_property(hook, self.mode, "skip")
                 ):
                     needs = Hook.get_property(hook, self.mode, "needs")
@@ -220,10 +221,10 @@ class PreCommitRunner:
                 dry_run=dry_run,
             )
             for hook_id, hook in hooks.items()
-            if hook["language"] == "docker"
+            if hook_id.endswith("in-docker")
         ]
         hooks_without_docker = [
-            hook for hook_id, hook in hooks.items() if hook["language"] != "docker"
+            hook for hook_id, hook in hooks.items() if not hook_id.endswith("in-docker")
         ]
         for hook in hooks_without_docker:
             Hook(**hook, **kwargs).prepare_hook()
@@ -249,11 +250,9 @@ class PreCommitRunner:
         self, local_repo: dict
     ) -> Tuple[List[dict], List[dict]]:
         local_repo_hooks = local_repo["hooks"]
-        docker_hooks = [
-            hook for hook in local_repo_hooks if hook["language"] == "docker"
-        ]
+        docker_hooks = [hook for hook in local_repo_hooks if "in-docker" in hook["id"]]
         no_docker_hooks = [
-            hook for hook in local_repo_hooks if hook["language"] != "docker"
+            hook for hook in local_repo_hooks if "in-docker" not in hook["id"]
         ]
         return docker_hooks, no_docker_hooks
 
@@ -358,8 +357,6 @@ class PreCommitRunner:
                 i += 1
                 running_processes.append(p)
             return_code = self._poll_for_processes(running_processes, return_code)
-            if running_processes and i >= len(docker_hooks):
-                self._poll_for_processes(running_processes, return_code, wait=True)
         if hooks_needs_docker:
             # run hooks that needs docker after all the docker hooks finished
             self._update_hooks_needs_docker(hooks_needs_docker)

@@ -37,7 +37,7 @@ def get_docker_python_path() -> str:
     """
     path_to_replace = str(Path(CONTENT_PATH))
     docker_path = [str(path).replace(path_to_replace, "/src") for path in PYTHONPATH]
-    path = ":".join(sorted(docker_path))
+    path = ":".join(docker_path)
     logger.debug(f"pythonpath in docker being set to {path}")
     return path
 
@@ -178,11 +178,17 @@ class DockerHook(Hook):
 
         """
         if not run_docker_hooks:
+            logger.debug("Skipping docker preparation since run_docker_hooks is False")
             return
         start_time = time.time()
         filtered_files = self.filter_files_matching_hook_config(
             (file for file, _ in files_to_run_with_objects)
         )
+        if not filtered_files:
+            logger.debug(
+                "No files matched docker hook filter, skipping docker preparation"
+            )
+            return
         filtered_files_with_objects = {
             (file, obj)
             for file, obj in files_to_run_with_objects

@@ -327,6 +327,12 @@ class DockerBase:
             self.push_image(image, log_prompt=log_prompt)
         return image
 
+    @staticmethod
+    def get_image_registry(image: str) -> str:
+        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in image:
+            return f"docker-io.art.code.pan.run/{image}"
+        return image
+
     def get_or_create_test_image(
         self,
         base_image: str,
@@ -377,10 +383,8 @@ class DockerBase:
         )
         if not should_pull and self.is_image_available(test_docker_image):
             return test_docker_image, errors
-
-        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in test_docker_image:
-            base_image = f"docker-io.art.code.pan.run/{base_image}"
-            test_docker_image = f"docker-io.art.code.pan.run/{test_docker_image}"
+        base_image = self.get_image_registry(base_image)
+        test_docker_image = self.get_image_registry(test_docker_image)
 
         try:
             logger.debug(

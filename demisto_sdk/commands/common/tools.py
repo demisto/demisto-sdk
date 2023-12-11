@@ -1781,16 +1781,13 @@ def find_content_type(path: Path) -> Optional[ContentType]:
     """
     Find the ContentType value of a path, without accessing the file, based on the file properties.
     """
-    from demisto_sdk.commands.common.files.file import File
     from demisto_sdk.commands.content_graph.objects.base_content import (
         CONTENT_TYPE_TO_MODEL,
     )
     from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
-    # if not (".yml" in path.suffix or ".json" in path.suffix):
-    #     raise NotAContentItemException
-    _dict = File.read_from_local_path(path)
-    if isinstance(_dict, dict):
+    _dict = get_dict_from_file(str(path))
+    if _dict and isinstance(_dict, dict):
         for content_type_obj in CONTENT_TYPE_TO_MODEL.values():
             if issubclass(content_type_obj, ContentItem):
                 if matched_content_type := content_type_obj.match(_dict, path):
@@ -1855,8 +1852,6 @@ def find_type(
     )
     from demisto_sdk.commands.content_graph.objects import List as List_obj
 
-    # if not ContentItemParser.is_content_item(Path(path).parent):
-    #     raise NotAContentItemException
     type_by_path = find_type_by_path(path)
     if type_by_path:
         return type_by_path

@@ -40,14 +40,16 @@ class StructuredFile(TextFile, ABC):
         output_path: Union[Path, str],
         encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
+        **kwargs
     ):
         super().write_file(
             data,
             output_path=output_path,
             encoding=encoding,
             handler=cls.validate_handler(handler),
+            **kwargs
         )
 
-    def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
+    def _write(self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs) -> None:
         with path.open("w", encoding=encoding or self.default_encoding) as output_file:
-            self.handler.dump(data, output_file)
+            self.handler.dump(data, output_file, **kwargs)

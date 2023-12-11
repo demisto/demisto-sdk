@@ -46,7 +46,7 @@ class RUAMEL_Handler(XSOAR_Handler):
     def load(self, stream):
         return self.yaml.load(stream)
 
-    def dump(self, data, stream, indent=0, sort_keys=False, **kwargs):
+    def dump(self, data, stream, indent=4, sort_keys=False, **kwargs):
         if sort_keys:
             data = order_dict(data)
         yaml = self.yaml

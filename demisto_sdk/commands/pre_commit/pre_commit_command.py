@@ -257,15 +257,18 @@ class PreCommitRunner:
         return_code: int,
         wait: bool = False,
     ):
+        process_to_remove = []
         for process in running_processes:
             p_return_code = process.wait() if wait else process.poll()
             if p_return_code is not None:
-                running_processes.remove(process)
+                process_to_remove.append(process)
                 if p_return_code:
                     return_code = 1
                 stdout, _ = process.communicate()
                 if stdout:
                     logger.info(stdout)
+        for process in process_to_remove:
+            running_processes.remove(process)
         return return_code
 
     def _update_hooks_needs_docker(self, hooks_needs_docker: dict):
@@ -329,7 +332,7 @@ class PreCommitRunner:
         logger.info(f"Pre-Commit will use {num_processes} processes")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         # first, run the hooks without docker hooks
-        stdout = None  # for now
+        stdout = subprocess.PIPE if docker_hooks else None
         main_p = self._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
         )

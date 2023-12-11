@@ -1,4 +1,5 @@
 import itertools
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -40,8 +41,22 @@ def create_hook(hook: dict):
     return repo_and_hook
 
 
-@pytest.mark.parametrize("is_test", [True, False])
-def test_config_files(mocker, repo: Repo, is_test: bool):
+@dataclass
+class MockProcess:
+
+    returncode = 0
+
+    def poll(self):
+        return self.returncode
+
+    def wait(self):
+        return self.returncode
+
+    def communicate(self):
+        return "", ""
+
+
+def test_config_files(mocker, repo: Repo):
     """
     Given:
         A repository with different scripts and integration of different python versions
@@ -52,14 +67,32 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     Then:
         Categorize the scripts and integration by python version, and make sure that pre-commit configuration is created for each
     """
+    mocker.patch.object(DockerHook, "__init__", return_value=None)
+    mocker.patch.object(
+        DockerHook,
+        "prepare_hook",
+        return_value=[{"id": "run-in-docker"}],
+    )
     mocker.patch.object(
         pre_commit_command,
         "PRECOMMIT_TEMPLATE_PATH",
-        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+        TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
     pack1 = repo.create_pack("Pack1")
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
-
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_CONFIG_MAIN_PATH",
+        Path(repo.path) / ".pre-commit-config.yaml",
+    )
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_DOCKER_CONFIGS",
+        Path(repo.path) / "docker-config",
+    )
+    mocker.patch.object(
+        pre_commit_command, "PRECOMMIT_CONFIG", Path(repo.path) / "config"
+    )
     integration1 = pack1.create_integration(
         "integration1", docker_image="demisto/python3:3.9.1.14969"
     )
@@ -77,7 +110,8 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     incident_field = pack1.create_incident_field("incident_field")
     classifier = pack1.create_classifier("classifier")
     mocker.patch.object(yaml, "dump", side_effect=lambda *args: [])
-    mock_subprocess = mocker.patch.object(subprocess, "run")
+    mocker.patch.object(subprocess, "Popen", return_value=MockProcess())
+
     relative_paths = {
         path.relative_to(repo.path)
         for path in Path(pack1.path).rglob("*")
@@ -122,17 +156,10 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         not in pre_commit.python_version_to_files["3.10"]
     )
 
-    pre_commit.prepare_and_run(unit_test=is_test)
-
-    assert mock_subprocess.call_count == 1
-
-    tests_we_should_skip = {"format", "validate", "secrets"}
-    if not is_test:
-        tests_we_should_skip.add("run-unit-tests")
-        tests_we_should_skip.add("coverage-analyze")
-        tests_we_should_skip.add("merge-pytest-reports")
-    for m in mock_subprocess.call_args_list:
-        assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
+    pre_commit.prepare_and_run()
+    assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
+    assert list((Path(repo.path) / "docker-config").iterdir())
+    assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
 
 
 def test_mypy_hooks():

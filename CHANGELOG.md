@@ -6,7 +6,8 @@
 * Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
 * Added support for `skip` property in **pre-commit** hooks.
 * Added support for `env`, `copy_files` property in **pre-commit** docker hooks.
-* **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit` instead.
+* Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
+* **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.
 * **Breaking change**: Removed the `--unit-test` argument in **pre-commit**. To skip unit tests, run with `--no-docker` or with `skip=pytest-in-docker`,
 
 ## 1.24.0

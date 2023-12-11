@@ -17,7 +17,7 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Optional, Tuple, Union
+from typing import IO, Any, Dict, Optional, Tuple, Union
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
@@ -3457,6 +3457,7 @@ def update_content_graph(
 @click.option(
     "-i",
     "--input",
+    "--files",  # the precommit input
     help="The path to the input file to run the command on.",
     type=PathsParamType(
         exists=True, resolve_path=True
@@ -3536,18 +3537,13 @@ def update_content_graph(
     is_flag=True,
     default=False,
 )
-@click.argument(
-    "file_paths",
-    nargs=-1,
-    type=click.Path(exists=True, resolve_path=True, path_type=Path),
-)
 @click.option(
     "--docker/--no-docker",
     help="Whether to run docker based hooks or not.",
     default=True,
     is_flag=True,
 )
-@click.option("--run-hook", help="Specific hook to run")
+@click.argument("run-hook")
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
@@ -3565,7 +3561,6 @@ def pre_commit(
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
-    file_paths: Iterable[Path],
     dry_run: bool,
     docker: bool,
     run_hook: str,
@@ -3573,15 +3568,9 @@ def pre_commit(
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
-    if file_paths and input:
-        logger.info(
-            "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
-        )
     input_files = []
     if input:
         input_files = [Path(i) for i in input.split(",") if i]
-    elif file_paths:
-        input_files = list(file_paths)
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
 

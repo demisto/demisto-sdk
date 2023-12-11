@@ -103,10 +103,7 @@ class PreCommitRunner:
             raise TypeError(
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
-        if self.mode:
-            logger.info(
-                f"[yellow]Running pre-commit hooks in `{self.mode}` mode.[/yellow]"
-            )
+
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
         self._get_repos(self.precommit_template)[
@@ -327,6 +324,12 @@ class PreCommitRunner:
     def run(
         self, precommit_env: dict, verbose: bool, show_diff_on_failure: bool
     ) -> int:
+        if self.mode:
+            logger.info(
+                f"[yellow]Running pre-commit hooks in `{self.mode}` mode.[/yellow]"
+            )
+        if self.run_hook:
+            logger.info(f"[yellow]Running hook {self.run_hook}[/yellow]")
         return_code = 0
         repos = self._get_repos(self.precommit_template)
         local_repo = repos["local"]
@@ -421,7 +424,7 @@ class PreCommitRunner:
                 f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG_MAIN_PATH}"
             )
             return ret_val
-        self.run(precommit_env, verbose, show_diff_on_failure)
+        ret_val = self.run(precommit_env, verbose, show_diff_on_failure)
         return ret_val
 
 

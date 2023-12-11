@@ -448,7 +448,7 @@ class File(ABC, BaseModel):
         output_path: Union[Path, str],
         encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Writes a file into to the local file system.
@@ -478,12 +478,16 @@ class File(ABC, BaseModel):
             raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
-    def _write(self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs) -> None:
+    def _write(
+        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
+    ) -> None:
         raise NotImplementedError(
             "_write must be implemented for each File concrete object"
         )
 
-    def write(self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs) -> None:
+    def write(
+        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
+    ) -> None:
         def _write_safe_unicode():
             self._write(data, path=path)
 

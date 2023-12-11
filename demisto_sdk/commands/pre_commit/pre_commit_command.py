@@ -80,11 +80,19 @@ class PreCommitRunner:
         str, Set[Tuple[Path, Optional[IntegrationScript]]]
     ]
     demisto_sdk_commit_hash: str
+    run_hook: Optional[str] = None
+    skipped_hooks: Set[str] = SKIPPED_HOOKS
+    run_docker_hooks: bool = True
 
     def __post_init__(self):
         """
         We initialize the hooks and all_files for later use.
         """
+        shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
+        PRECOMMIT_FOLDER.mkdir()
+        PRECOMMIT_CONFIG.mkdir()
+        PRECOMMIT_DOCKER_CONFIGS.mkdir()
+
         self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:
@@ -105,12 +113,6 @@ class PreCommitRunner:
             "https://github.com/demisto/demisto-sdk"
         ]["rev"] = self.demisto_sdk_commit_hash
         self.hooks = self._get_hooks(self.precommit_template)
-        conftest_path = (
-            CONTENT_PATH / "Tests" / "scripts" / "dev_envs" / "pytest" / "conftest.py"
-        )
-        (CONTENT_PATH / "conftest.py").unlink(missing_ok=True)
-        if conftest_path.exists():
-            shutil.copy(conftest_path, CONTENT_PATH / "conftest.py")
 
     @cached_property
     def files_to_run_with_objects(
@@ -145,8 +147,11 @@ class PreCommitRunner:
         for repo in pre_commit_config["repos"]:
             new_hooks = []
             for hook in repo["hooks"]:
-                if hook["id"] not in SKIPPED_HOOKS and not Hook.get_property(
-                    hook, self.mode, "skip"
+                if not self.run_docker_hooks and hook["language"] == "docker":
+                    continue
+                if (self.run_hook and hook["id"] in self.run_hook) or (
+                    hook["id"] not in self.skipped_hooks
+                    and not Hook.get_property(hook, self.mode, "skip")
                 ):
                     needs = Hook.get_property(hook, self.mode, "needs")
                     if needs and any(need not in hooks for need in needs):
@@ -180,7 +185,7 @@ class PreCommitRunner:
             else:
                 hook["hook"]["exclude"] = join_files_string
 
-    def prepare_hooks(self, run_docker_hooks: bool, dry_run: bool) -> None:
+    def prepare_hooks(self, dry_run: bool) -> None:
         hooks = self.hooks
         kwargs = {
             "mode": self.mode,
@@ -212,14 +217,13 @@ class PreCommitRunner:
         [
             DockerHook(**hook, **kwargs).prepare_hook(
                 files_to_run_with_objects=self.files_to_run_with_objects,
-                run_docker_hooks=run_docker_hooks,
                 dry_run=dry_run,
             )
             for hook_id, hook in hooks.items()
-            if hook_id.endswith("in-docker")
+            if hook["language"] == "docker"
         ]
         hooks_without_docker = [
-            hook for hook_id, hook in hooks.items() if not hook_id.endswith("in-docker")
+            hook for hook_id, hook in hooks.items() if hook["language"] != "docker"
         ]
         for hook in hooks_without_docker:
             Hook(**hook, **kwargs).prepare_hook()
@@ -245,9 +249,11 @@ class PreCommitRunner:
         self, local_repo: dict
     ) -> Tuple[List[dict], List[dict]]:
         local_repo_hooks = local_repo["hooks"]
-        docker_hooks = [hook for hook in local_repo_hooks if "in-docker" in hook["id"]]
+        docker_hooks = [
+            hook for hook in local_repo_hooks if hook["language"] == "docker"
+        ]
         no_docker_hooks = [
-            hook for hook in local_repo_hooks if "in-docker" not in hook["id"]
+            hook for hook in local_repo_hooks if hook["language"] != "docker"
         ]
         return docker_hooks, no_docker_hooks
 
@@ -376,31 +382,14 @@ class PreCommitRunner:
 
     def prepare_and_run(
         self,
-        skip_hooks: Optional[List[str]] = None,
-        validate: bool = False,
-        format: bool = False,
-        secrets: bool = False,
         verbose: bool = False,
         show_diff_on_failure: bool = False,
         exclude_files: Optional[Set[Path]] = None,
         dry_run: bool = False,
-        run_docker_hooks: bool = True,
     ) -> int:
-        shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
-        PRECOMMIT_FOLDER.mkdir()
-        PRECOMMIT_CONFIG.mkdir()
-        PRECOMMIT_DOCKER_CONFIGS.mkdir()
+
         ret_val = 0
         precommit_env = os.environ.copy()
-        skipped_hooks: set = SKIPPED_HOOKS
-        skipped_hooks.update(set(skip_hooks or ()))
-        if validate and "validate" in skipped_hooks:
-            skipped_hooks.remove("validate")
-        if format and "format" in skipped_hooks:
-            skipped_hooks.remove("format")
-        if secrets and "secrets" in skipped_hooks:
-            skipped_hooks.remove("secrets")
-        precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
         precommit_env["MYPYPATH"] = ":".join(
@@ -421,7 +410,7 @@ class PreCommitRunner:
                 f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
 
-        self.prepare_hooks(run_docker_hooks, dry_run)
+        self.prepare_hooks(dry_run)
         if self.all_files:
             self.precommit_template[
                 "exclude"
@@ -549,6 +538,7 @@ def pre_commit_manager(
     sdk_ref: Optional[str] = None,
     dry_run: bool = False,
     run_docker_hooks: bool = True,
+    run_hook: Optional[str] = None,
 ) -> Optional[int]:
     """Run pre-commit hooks .
 
@@ -599,23 +589,30 @@ def pre_commit_manager(
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return None
 
+    skipped_hooks: set = SKIPPED_HOOKS
+    skipped_hooks.update(set(skip_hooks or ()))
+    if validate and "validate" in skipped_hooks:
+        skipped_hooks.remove("validate")
+    if format and "format" in skipped_hooks:
+        skipped_hooks.remove("format")
+    if secrets and "secrets" in skipped_hooks:
+        skipped_hooks.remove("secrets")
+
     pre_commit_runner = PreCommitRunner(
         bool(input_files),
         all_files,
         mode,
         python_version_to_files_with_objects,
         sdk_ref,
+        run_hook,
+        skipped_hooks,
+        run_docker_hooks,
     )
     return pre_commit_runner.prepare_and_run(
-        skip_hooks,
-        validate,
-        format,
-        secrets,
         verbose,
         show_diff_on_failure,
         exclude_files,
         dry_run,
-        run_docker_hooks,
     )
 
 

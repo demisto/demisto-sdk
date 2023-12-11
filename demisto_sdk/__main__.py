@@ -3547,6 +3547,7 @@ def update_content_graph(
     default=True,
     is_flag=True,
 )
+@click.option("--run-hook", help="Specific hook to run")
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
@@ -3567,6 +3568,7 @@ def pre_commit(
     file_paths: Iterable[Path],
     dry_run: bool,
     docker: bool,
+    run_hook: str,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
@@ -3600,6 +3602,7 @@ def pre_commit(
             run_docker_hooks=docker,
             sdk_ref=sdk_ref,
             dry_run=dry_run,
+            run_hook=run_hook,
         )
     )
 

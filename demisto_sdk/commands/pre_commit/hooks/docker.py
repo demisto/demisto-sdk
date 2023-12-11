@@ -185,7 +185,6 @@ class DockerHook(Hook):
     def prepare_hook(
         self,
         files_to_run_with_objects: Iterable[Tuple[Path, Optional[IntegrationScript]]],
-        run_docker_hooks: bool,
         dry_run: bool,
     ):
         """
@@ -194,12 +193,8 @@ class DockerHook(Hook):
         Get the devimage for each image
         Args:
             files_to_run: all files to run on
-            run_docker_hooks: bool - Whether to run docker based hooks or skip them.
             dry_run: bool: Whether we are in dry run or not, affects pulling images.
         """
-        if not run_docker_hooks:
-            logger.debug("Skipping docker preparation since run_docker_hooks is False")
-            return
 
         start_time = time.time()
         filtered_files = self.filter_files_matching_hook_config(

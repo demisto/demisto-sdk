@@ -44,7 +44,7 @@ def test_no_files(repo):
         There are no raw hooks added to the config
     """
     raw_hook = create_hook({"args": []})
-    DockerHook(**raw_hook).prepare_hook([], True, True)
+    DockerHook(**raw_hook).prepare_hook([], True)
 
     hooks = raw_hook["repo"]["hooks"]
     assert len(hooks) == 0
@@ -78,13 +78,13 @@ def test_moded_properties(mocker, mode, expected_text):
         "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
         return_value="devtestimg",
     )
-    raw_hook = create_hook({"args": []})
+    raw_hook = create_hook({"args": [], "language": "docker"})
 
     raw_hook["hook"]["args"] = ["i am some argument"]
     raw_hook["hook"]["args:nightly"] = ["i am the nightly args"]
     raw_hook["hook"]["args:other"] = ["i am some other argument"]
 
-    DockerHook(**raw_hook, mode=mode).prepare_hook([(file_path, None)], True, True)
+    DockerHook(**raw_hook, mode=mode).prepare_hook([(file_path, None)], True)
 
     hook = raw_hook["repo"]["hooks"][0]
     assert hook["args"] == expected_text

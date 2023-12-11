@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Dict, Iterable, List, Union
@@ -45,12 +44,40 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[GenericDefinition, GenericField, GenericModule, GenericType, LIST, Mapper, Classifier, Widget, Integration, Dashboard, IncidentType,
-                     Script, Playbook, Report, Wizard, Job, Layout, PreProcessRule, CorrelationRule, ParsingRule, ModelingRule, XSIAMDashboard,
-                     XDRCTemplate, Trigger, XSIAMReport, IncidentField, IndicatorField, AssetsModelingRule, LayoutRule]
+ContentTypes = Union[
+    GenericDefinition,
+    GenericField,
+    GenericModule,
+    GenericType,
+    LIST,
+    Mapper,
+    Classifier,
+    Widget,
+    Integration,
+    Dashboard,
+    IncidentType,
+    Script,
+    Playbook,
+    Report,
+    Wizard,
+    Job,
+    Layout,
+    PreProcessRule,
+    CorrelationRule,
+    ParsingRule,
+    ModelingRule,
+    XSIAMDashboard,
+    XDRCTemplate,
+    Trigger,
+    XSIAMReport,
+    IncidentField,
+    IndicatorField,
+    AssetsModelingRule,
+    LayoutRule,
+]
 
 
-FROM_VERSION_DICT: Dict[ContentType,str] = {
+FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.ASSETS_MODELING_RULE: "6.2.1",
     ContentType.XDRC_TEMPLATE: "6.10.0",
     ContentType.TRIGGER: "6.10.0",
@@ -81,7 +108,9 @@ FROM_VERSION_DICT: Dict[ContentType,str] = {
     ContentType.DASHBOARD: "5.0.0",
     ContentType.INCIDENT_TYPE: "5.0.0",
 }
-class FromVersionValidator(BaseValidator[ContentTypes]):
+
+
+class IsFromVersionSufficientValidator(BaseValidator[ContentTypes]):
     error_code = "BA106"
     description = "Validate that the item's fromversion field is sufficient."
     error_message = "The {0} from version field is either missing or insufficient, need at least {1}, current is {2}."
@@ -89,16 +118,20 @@ class FromVersionValidator(BaseValidator[ContentTypes]):
     related_field = "fromversion"
     is_auto_fixable = True
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.content_type, FROM_VERSION_DICT[content_item.content_type], content_item.fromversion),
+                message=self.error_message.format(
+                    content_item.content_type,
+                    FROM_VERSION_DICT[content_item.content_type],
+                    content_item.fromversion,
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if Version(content_item.fromversion) < Version(FROM_VERSION_DICT[content_item.content_type])
+            if Version(content_item.fromversion)
+            < Version(FROM_VERSION_DICT[content_item.content_type])
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
@@ -107,6 +140,5 @@ class FromVersionValidator(BaseValidator[ContentTypes]):
         return FixResult(
             validator=self,
             message=self.fix_message.format(version_to_set),
-            content_object=content_item
+            content_object=content_item,
         )
-            

@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_incident_field import 
 
 class IndicatorField(IndicatorIncidentField, content_type=ContentType.INDICATOR_FIELD):  # type: ignore[call-arg]
     associated_to_all: bool = Field(alias="associatedToAll")
+    type: str
 
     def summary(
         self,

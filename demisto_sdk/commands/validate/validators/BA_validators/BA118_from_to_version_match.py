@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List, Union
@@ -43,24 +42,57 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[GenericDefinition, GenericField, GenericModule, GenericType, LIST, Mapper, Classifier, Widget, Integration, Dashboard, IncidentType,
-                     Script, Playbook, Report, Wizard, Job, Layout, PreProcessRule, CorrelationRule, ParsingRule, ModelingRule, XSIAMDashboard,
-                     XDRCTemplate, Trigger, XSIAMReport, IncidentField, IndicatorField, AssetsModelingRule, LayoutRule]
+ContentTypes = Union[
+    GenericDefinition,
+    GenericField,
+    GenericModule,
+    GenericType,
+    LIST,
+    Mapper,
+    Classifier,
+    Widget,
+    Integration,
+    Dashboard,
+    IncidentType,
+    Script,
+    Playbook,
+    Report,
+    Wizard,
+    Job,
+    Layout,
+    PreProcessRule,
+    CorrelationRule,
+    ParsingRule,
+    ModelingRule,
+    XSIAMDashboard,
+    XDRCTemplate,
+    Trigger,
+    XSIAMReport,
+    IncidentField,
+    IndicatorField,
+    AssetsModelingRule,
+    LayoutRule,
+]
 
 
 class FromVersionValidator(BaseValidator[ContentTypes]):
     error_code = "BA118"
-    description = "Validate that the item's toversion is greater/equal then its fromversion."
+    description = (
+        "Validate that the item's toversion is greater/equal then its fromversion."
+    )
     error_message = "The {0} fromversion and toversion are not synchronized.\nThe toversion ({1}) should be greater than the fromversion ({2})."
     related_field = "fromversion, toversion"
     is_auto_fixable = True
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.content_type, content_item.toversion, content_item.fromversion),
+                message=self.error_message.format(
+                    content_item.content_type,
+                    content_item.toversion,
+                    content_item.fromversion,
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

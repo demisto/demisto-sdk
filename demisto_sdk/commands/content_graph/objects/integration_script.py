@@ -50,12 +50,6 @@ class IntegrationScript(ContentItem):
     def is_powershell(self) -> bool:
         return self.type == "powershell"
 
-    @property
-    def additional_test_requirements(self) -> Optional[List[str]]:
-        if (self.path.parent / "test-requirements.txt").exists():
-            return (self.path.parent / "test-requirements.txt").read_text().splitlines()
-        return None
-
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,

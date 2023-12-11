@@ -106,7 +106,7 @@ def docker_tag_to_runfiles(
 def devtest_image(
     image_tag: str,
     is_powershell: bool,
-    dry_run: bool,
+    should_pull: bool,
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -114,7 +114,7 @@ def devtest_image(
     Args:
         image_tag: the base image tag
         is_powershell: if the image is a powershell based image
-        dry_run: if true, don't pull images on background
+        should_pull: if true, don't pull images on background
     Returns: The build and pulled dev image
 
     """
@@ -127,7 +127,7 @@ def devtest_image(
         log_prompt="DockerHook",
     )
     if not errors:
-        if not dry_run:
+        if not should_pull:
             # pull images in background
             subprocess.Popen(
                 ["docker", "pull", image],

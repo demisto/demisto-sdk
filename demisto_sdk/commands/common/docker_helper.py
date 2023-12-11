@@ -179,7 +179,7 @@ class DockerBase:
             return ret
 
     @staticmethod
-    def get_image_from_registry(
+    def is_image_available(
         image: str,
     ) -> bool:
         docker_client = init_global_docker_client(log_prompt="get_image")
@@ -375,7 +375,7 @@ class DockerBase:
         test_docker_image = (
             f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
         )
-        if not should_pull and self.get_image_from_registry(test_docker_image):
+        if not should_pull and self.is_image_available(test_docker_image):
             return test_docker_image, errors
 
         if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in test_docker_image:

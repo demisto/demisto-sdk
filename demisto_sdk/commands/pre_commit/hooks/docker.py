@@ -106,7 +106,7 @@ def docker_tag_to_runfiles(
 def devtest_image(
     image_tag: str,
     is_powershell: bool,
-    dry_run: bool,
+    should_pull: bool,
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template

@@ -397,6 +397,7 @@ class PreCommitRunner:
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
         precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
+        precommit_env["PRE_COMMIT_COLOR"] = "always"
         self.exclude_python2_of_non_supported_hooks()
 
         for (

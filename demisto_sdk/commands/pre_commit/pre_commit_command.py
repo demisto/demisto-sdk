@@ -76,7 +76,7 @@ class PreCommitRunner:
     input_mode: bool
     all_files: bool
     mode: Optional[str]
-    python_version_to_files_with_objects: Dict[
+    language_version_to_files_with_objects: Dict[
         str, Set[Tuple[Path, Optional[IntegrationScript]]]
     ]
     demisto_sdk_commit_hash: str
@@ -117,7 +117,7 @@ class PreCommitRunner:
     ) -> Set[Tuple[Path, Optional[IntegrationScript]]]:
         return set(
             itertools.chain.from_iterable(
-                self.python_version_to_files_with_objects.values()
+                self.language_version_to_files_with_objects.values()
             )
         )
 
@@ -126,10 +126,18 @@ class PreCommitRunner:
         return {file for file, _ in self.files_to_run_with_objects}
 
     @cached_property
+    def language_to_files(self) -> Dict[str, Set[Path]]:
+        return {
+            version: {path for path, _ in paths_with_objects}
+            for version, paths_with_objects in self.language_version_to_files_with_objects.items()
+        }
+
+    @cached_property
     def python_version_to_files(self) -> Dict[str, Set[Path]]:
         return {
             version: {path for path, _ in paths_with_objects}
-            for version, paths_with_objects in self.python_version_to_files_with_objects.items()
+            for version, paths_with_objects in self.language_version_to_files_with_objects.items()
+            if version not in {"js", "powershell"}
         }
 
     @staticmethod
@@ -468,7 +476,7 @@ def group_by_language(
         else:
             infra_files.append(file)
 
-    python_versions_to_files: Dict[str, Set] = defaultdict(set)
+    language_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
             BaseContent.from_path, integrations_scripts_mapping.keys()
@@ -499,7 +507,7 @@ def group_by_language(
             language = f"{version.major}.{version.minor}"
         else:
             language = integration_script.type
-        python_versions_to_files[language].update(
+        language_to_files[language].update(
             {
                 (path, integration_script)
                 for path in integrations_scripts_mapping[code_file_path]
@@ -508,11 +516,11 @@ def group_by_language(
         )
 
     if infra_files:
-        python_versions_to_files[DEFAULT_PYTHON_VERSION].update(
+        language_to_files[DEFAULT_PYTHON_VERSION].update(
             [(infra, None) for infra in infra_files]
         )
 
-    return python_versions_to_files, exclude_integration_script
+    return language_to_files, exclude_integration_script
 
 
 def pre_commit_manager(
@@ -568,10 +576,8 @@ def pre_commit_manager(
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files_with_objects, exclude_files = group_by_language(
-        files_to_run
-    )
-    if not python_version_to_files_with_objects:
+    language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
+    if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0
 
@@ -588,7 +594,7 @@ def pre_commit_manager(
         bool(input_files),
         all_files,
         mode,
-        python_version_to_files_with_objects,
+        language_to_files_with_objects,
         sdk_ref,
         run_hook,
         skipped_hooks,

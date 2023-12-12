@@ -676,10 +676,6 @@ ERROR_CODE: Dict = {
         "code": "IN149",
         "related_field": "contextOutput",
     },
-    "invalid_siem_integration_name": {
-        "code": "IN150",
-        "related_field": "display",
-    },
     "empty_command_arguments": {
         "code": "IN151",
         "related_field": "arguments",
@@ -719,10 +715,6 @@ ERROR_CODE: Dict = {
     "invalid_integration_deprecation__only_display_name_suffix": {
         "code": "IN160",
         "related_field": "deprecated",
-    },
-    "invalid_siem_marketplaces_entry": {
-        "code": "IN161",
-        "related_field": "display",
     },
     "partner_collector_does_not_have_xsoar_support_level": {
         "code": "IN162",
@@ -2112,23 +2104,6 @@ class Errors:
             f"The display name of this v{version_number} integration is incorrect , "
             f"should be **name** v{version_number}.\n"
             f"e.g: Kenna v{version_number}, Jira v{version_number}"
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_siem_integration_name(display_name: str):
-        return (
-            f"The display name of this siem integration is incorrect , "
-            f'should end with "Event Collector".\n'
-            f"e.g: {display_name} Event Collector"
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_siem_marketplaces_entry():
-        return (
-            "The marketplaces field of this XSIAM integration is incorrect.\n"
-            'This field should have only the "marketplacev2" value.'
         )
 
     @staticmethod

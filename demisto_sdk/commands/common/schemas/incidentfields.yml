@@ -9,15 +9,6 @@ mapping:
     sequence:
     - include: field_schema
 
-  regex;(fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(incidentFields:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: seq
-    sequence:
-    - include: field_schema
-
 schema;field_schema:
   type: map
   mapping:
@@ -112,6 +103,12 @@ schema;field_schema:
     aliasTo:
       type: str
 
+    regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str
+    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str
+    regex;(required:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: bool
 schema;aliases_schema:
   type: map
   mapping:

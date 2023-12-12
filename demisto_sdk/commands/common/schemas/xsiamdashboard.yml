@@ -24,22 +24,6 @@ mapping:
         required: false
 
 
-      regex;(lazy_load:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: bool
-      regex;(cache_ttl:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: number
-  regex;(dashboards_data:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: seq
-    sequence:
-    - include: dashboards_data_schema
-  regex;(widgets_data:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: seq
-    sequence:
-    - include: widgets_data_schema
-  regex;(fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
 schema;dashboards_data_schema:
   type: map
   mapping:
@@ -68,6 +52,10 @@ schema;dashboards_data_schema:
       allowempty: true
 
 
+    regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str
+    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str
 schema;layout_schema:
   type: map
   mapping:
@@ -119,3 +107,5 @@ schema;widgets_data_schema:
       type: map
       required: true
       allowempty: true
+    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str

@@ -40,14 +40,6 @@ mapping:
         type: seq
         sequence:
         - include: section_schema
-      regex;(tabs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: tabs_schema
-      regex;(sections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: section_schema
   indicatorsDetails:
     type: map
     mapping:
@@ -56,14 +48,6 @@ mapping:
         sequence:
         - include: tabs_schema
       sections:
-        type: seq
-        sequence:
-        - include: section_schema
-      regex;(tabs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: tabs_schema
-      regex;(sections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
         type: seq
         sequence:
         - include: section_schema
@@ -78,14 +62,6 @@ mapping:
         type: seq
         sequence:
         - include: section_schema
-      regex;(tabs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: tabs_schema
-      regex;(sections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: section_schema
   quickView:
     type: map
     mapping:
@@ -94,14 +70,6 @@ mapping:
         sequence:
         - include: tabs_schema
       sections:
-        type: seq
-        sequence:
-        - include: section_schema
-      regex;(tabs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: tabs_schema
-      regex;(sections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
         type: seq
         sequence:
         - include: section_schema
@@ -116,14 +84,6 @@ mapping:
         type: seq
         sequence:
         - include: section_schema
-      regex;(tabs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: tabs_schema
-      regex;(sections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: section_schema
   details:
     type: map
     mapping:
@@ -135,14 +95,6 @@ mapping:
         type: seq
         sequence:
         - include: section_schema
-      regex;(tabs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: tabs_schema
-      regex;(sections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: section_schema
   detailsV2:
     type: map
     mapping:
@@ -151,14 +103,6 @@ mapping:
         sequence:
         - include: tabs_schema
       sections:
-        type: seq
-        sequence:
-        - include: section_schema
-      regex;(tabs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: tabs_schema
-      regex;(sections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
         type: seq
         sequence:
         - include: section_schema
@@ -174,37 +118,10 @@ mapping:
         sequence:
         - include: section_schema
 
-      regex;(tabs:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: tabs_schema
-      regex;(sections:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: seq
-        sequence:
-        - include: section_schema
-
-  regex;(group:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-    enum: ['incident', 'indicator']
-  regex;(definitionId:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(version:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: number
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(fromVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(toVersion:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
-  regex;(system:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: bool
-  regex;(marketplaces:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: seq
-    sequence:
-    - type: str
-      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+    type: str
 schema;tabs_schema:
   type: any
 
@@ -238,6 +155,10 @@ schema;section_schema:
       sequence:
       - include: field_schema
 
+    regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str
+    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str
 schema;field_schema:
   type: map
   mapping:

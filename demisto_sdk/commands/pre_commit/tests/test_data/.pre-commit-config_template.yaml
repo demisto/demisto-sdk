@@ -22,6 +22,7 @@ repos:
     rev: "v0.0.269"
     hooks:
       - id: ruff
+        skip:nightly: true
 
   - repo: https://github.com/pre-commit/mirrors-autopep8
     rev: "v2.0.1"
@@ -43,6 +44,7 @@ repos:
         entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
         language: script
         pass_filenames: false
+        skip:nightly: true
 
   - repo: https://github.com/demisto/demisto-sdk
     rev: ""

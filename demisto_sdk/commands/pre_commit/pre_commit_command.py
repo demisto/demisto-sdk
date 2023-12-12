@@ -130,15 +130,16 @@ class PreCommitRunner:
 
     def _get_hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
+
         for repo in pre_commit_config["repos"]:
+            new_hooks = []
             for hook in repo["hooks"]:
-                hooks[hook["id"]] = {
-                    "repo": repo,
-                    "hook": hook,
-                }
-                # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
-                if hook.pop("skip", None):
-                    SKIPPED_HOOKS.add(hook["id"])
+                if not Hook.get_property(hook, self.mode, "skip"):
+                    new_hooks.append(hook)
+                    hooks[hook["id"]] = {"repo": repo, "hook": hook}
+
+            repo["hooks"] = new_hooks
+
         return hooks
 
     def exclude_python2_of_non_supported_hooks(self) -> None:
@@ -165,9 +166,9 @@ class PreCommitRunner:
 
     def prepare_hooks(
         self,
-        hooks: dict,
         run_docker_hooks,
     ) -> None:
+        hooks = self.hooks
         kwargs = {
             "mode": self.mode,
             "all_files": self.all_files,
@@ -257,9 +258,11 @@ class PreCommitRunner:
                 f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
 
-        self.prepare_hooks(self.hooks, run_docker_hooks)
+        self.prepare_hooks(run_docker_hooks)
         if self.all_files:
-            self.precommit_template["exclude"] += f"|{join_files(exclude_files or {})}"
+            self.precommit_template[
+                "exclude"
+            ] += f"|{join_files(exclude_files or set())}"
         else:
             self.precommit_template["files"] = join_files(self.files_to_run)
 

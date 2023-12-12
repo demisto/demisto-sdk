@@ -1,5 +1,14 @@
 # Changelog
 ## Unreleased
+* Added support to detect automatically the playground-id when running cli commands in xsoar-6.
+* Added support to return war-room entries when running cli commands.
+* Added support to automatically detect the correct file model by file path when reading files.
+* Fixed an issue where **run-playbook** command didn't work if the *url* argument was not provided.
+* Fixed an issue where **validate** command failed on valid complex layout rules and triggers.
+* Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
+* Added support for `skip` property in **pre-commit** hooks.
+
+## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
 * Fixed an issue in **coverage-analyze** to exit gracefully in case that the .coverage file doesn't exist.
@@ -8,9 +17,9 @@
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
-* Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
 * Added support for json5 file, allowing to write files and read files from specific git branches, local file system, or from any remote api .
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
+* Added support for *Assets Modeling Rule* new content item in all `demisto-sdk` commands.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

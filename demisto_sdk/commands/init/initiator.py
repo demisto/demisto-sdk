@@ -11,6 +11,7 @@ from packaging.version import Version
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
     CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
@@ -111,6 +112,7 @@ class Initiator:
     HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION = "HelloWorldEventCollector"
     HELLO_WORLD_PARSING_RULES = "HelloWorldParsingRules"
     HELLO_WORLD_MODELING_RULES = "HelloWorldModelingRules"
+    HELLO_WORLD_ASSETS_MODELING_RULES = "HelloWorldAssetsModelingRules"
 
     INTEGRATION_TEMPLATE_OPTIONS = [
         HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
@@ -144,6 +146,12 @@ class Initiator:
         "HelloWorldModelingRules_schema.json",
         "HelloWorldModelingRules.xif",
         "HelloWorldModelingRules.yml",
+    }
+
+    TEMPLATE_ASSETS_MODELING_RULES_FILES = {
+        "HelloWorldAssetsModelingRules_schema.json",
+        "HelloWorldAssetsModelingRules.xif",
+        "HelloWorldAssetsModelingRules.yml",
     }
 
     TEMPLATE_PARSING_RULES_FILES = {
@@ -231,6 +239,7 @@ class Initiator:
         XSIAM_REPORTS_DIR,
         MODELING_RULES_DIR,
         PARSING_RULES_DIR,
+        ASSETS_MODELING_RULES_DIR,
     ]
 
     def __init__(
@@ -456,10 +465,23 @@ class Initiator:
             False,
             False,
         )
-        if not parsing_rules_initiator.modeling_parsing_rules_init(
-            is_parsing_rules=True,
-        ) or not modeling_rules_initiator.modeling_parsing_rules_init(
-            is_modeling_rules=True, product=product, vendor=vendor
+        assets_modeling_rules_initiator = self.create_initiator(
+            os.path.join(self.full_output_path, ASSETS_MODELING_RULES_DIR),
+            self.HELLO_WORLD_ASSETS_MODELING_RULES,
+            False,
+            False,
+            False,
+        )
+        if (
+            not parsing_rules_initiator.modeling_parsing_rules_init(
+                is_parsing_rules=True,
+            )
+            or not modeling_rules_initiator.modeling_parsing_rules_init(
+                is_modeling_rules=True, product=product, vendor=vendor
+            )
+            or not assets_modeling_rules_initiator.modeling_parsing_rules_init(
+                is_assets_modeling_rules=True, product=product, vendor=vendor
+            )
         ):
             return False
         return True
@@ -562,6 +584,7 @@ class Initiator:
         vendor: Optional[str] = None,
         is_parsing_rules: bool = False,
         is_modeling_rules: bool = False,
+        is_assets_modeling_rules: bool = False,
     ) -> bool:
         """Creates a parsing or modeling rules directory tree.
 
@@ -571,11 +594,15 @@ class Initiator:
         dirname = get_dir_name_for_xsiam_item(
             is_modeling_rules=is_modeling_rules,
             is_parsing_rules=is_parsing_rules,
+            is_assets_modeling_rules=is_assets_modeling_rules,
             name="",
         )
 
         xsiam_content_dir_name = get_dir_name_for_xsiam_item(
-            is_parsing_rules, is_modeling_rules, name=self.dir_name
+            is_parsing_rules,
+            is_modeling_rules,
+            is_assets_modeling_rules,
+            name=self.dir_name,
         )
         self.full_output_path = str(Path(self.output).joinpath(xsiam_content_dir_name))
         rules_template_files = self.get_template_files()
@@ -598,11 +625,13 @@ class Initiator:
                 current_suffix=self.template,
                 is_parsing_rules=is_parsing_rules,
                 is_modeling_rules=is_modeling_rules,
+                is_assets_modeling_rules=is_assets_modeling_rules,
             )
             self.modeling_or_parsing_rules_yml_reformatting(
                 current_suffix=self.dir_name,
                 is_modeling_rules=is_modeling_rules,
                 is_parsing_rules=is_parsing_rules,
+                is_assets_modeling_rules=is_assets_modeling_rules,
                 product=product,
                 vendor=vendor,
             )
@@ -1014,8 +1043,13 @@ class Initiator:
         )
         if schema_json_path.exists():
             schema_json = get_file(schema_json_path)
-            hello_world_raw = schema_json["hello_world_raw"]
-            dict_for_schema = {f"{vendor}_{product}_raw": hello_world_raw}
+            hello_world_raw = schema_json.get("hello_world_raw") or schema_json.get(
+                "hello_world_assets_raw"
+            )
+            if "hello_world_assets_raw" in schema_json:
+                dict_for_schema = {f"{vendor}_{product}_assets_raw": hello_world_raw}
+            else:
+                dict_for_schema = {f"{vendor}_{product}_raw": hello_world_raw}
             with open(schema_json_path, "w") as f:
                 json.dump(dict_for_schema, f, indent=4)
 
@@ -1026,6 +1060,7 @@ class Initiator:
         vendor: Optional[str] = None,
         is_modeling_rules: bool = False,
         is_parsing_rules: bool = False,
+        is_assets_modeling_rules: bool = False,
     ):
         """Formats the given yml to fit the newly created modeling/pursing rules.
 
@@ -1037,6 +1072,7 @@ class Initiator:
         yml_file_name = get_dir_name_for_xsiam_item(
             is_modeling_rules=is_modeling_rules,
             is_parsing_rules=is_parsing_rules,
+            is_assets_modeling_rules=is_assets_modeling_rules,
             name=current_suffix,
         )
         yml_path = (
@@ -1053,6 +1089,10 @@ class Initiator:
         )
 
         content_item = "modeling rules" if is_modeling_rules else "parsing rules"
+        content_item = (
+            "assets modeling rules" if is_assets_modeling_rules else content_item
+        )
+
         if from_version := input(
             f"\nThe fromversion value that will be used for {content_item} (optional): "
         ):
@@ -1188,6 +1228,7 @@ class Initiator:
         current_suffix: str,
         is_modeling_rules: bool = False,
         is_parsing_rules: bool = False,
+        is_assets_modeling_rules: bool = False,
     ):
         """Renames the python, description, test and image file in the path to fit the newly created integration/script
 
@@ -1225,10 +1266,11 @@ class Initiator:
                 )
             )
 
-        if is_parsing_rules or is_modeling_rules:
+        if is_parsing_rules or is_modeling_rules or is_assets_modeling_rules:
             name = get_dir_name_for_xsiam_item(
                 is_modeling_rules=is_modeling_rules,
                 is_parsing_rules=is_parsing_rules,
+                is_assets_modeling_rules=is_assets_modeling_rules,
                 name=self.dir_name,
             )
             current_file_path = full_output_path.joinpath(f"{current_suffix}")
@@ -1372,6 +1414,8 @@ class Initiator:
             template_files = set(self.TEMPLATE_MODELING_RULES_FILES)
         elif self.template == self.HELLO_WORLD_PARSING_RULES:
             template_files = set(self.TEMPLATE_PARSING_RULES_FILES)
+        elif self.template == self.HELLO_WORLD_ASSETS_MODELING_RULES:
+            template_files = set(self.TEMPLATE_ASSETS_MODELING_RULES_FILES)
 
         else:
             template_files = {
@@ -1467,17 +1511,22 @@ def get_suffix_xsiam_content(
 
 
 def get_dir_name_for_xsiam_item(
-    is_parsing_rules: bool = False, is_modeling_rules: bool = False, name: str = ""
+    is_parsing_rules: bool = False,
+    is_modeling_rules: bool = False,
+    is_assets_modeling_rules: bool = False,
+    name: str = "",
 ) -> str:
     """Gets the correct directory name to the xsiam content item
 
     Args:
         is_parsing_rules (bool): indicating whether the content type is parsing rule.
         is_modeling_rules (bool): indicating whether the content type is modeling rule.
+        is_assets_modeling_rule (bool): indicating whether the content type is assets modeling rule
+        name (bool): name of entity
     """
+    if is_parsing_rules:
+        return f"{name}{PARSING_RULES_DIR}"
+    if is_modeling_rules:
+        return f"{name}{MODELING_RULES_DIR}"
 
-    return (
-        f"{name}{PARSING_RULES_DIR}"
-        if is_parsing_rules
-        else f"{name}{MODELING_RULES_DIR}"
-    )
+    return f"{name}{ASSETS_MODELING_RULES_DIR}"

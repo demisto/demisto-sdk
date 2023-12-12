@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (
+    ASSETS_MODELING_RULES_DIR,
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
     LAYOUT_RULES_DIR,
@@ -87,6 +88,7 @@ class Pack:
         self.wizards: List[Wizard] = list()
         self.xdrc_templates: List[XDRCTemplate] = list()
         self.layout_rules: List[LayoutRule] = list()
+        self.assets_modeling_rules: List[Rule] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -210,6 +212,9 @@ class Pack:
         self._xsiam_layout_rules_path.mkdir()
 
         self.contributors: Optional[TextBased] = None
+
+        self._assets_modeling_rules_path = self._pack_path / ASSETS_MODELING_RULES_DIR
+        self._assets_modeling_rules_path.mkdir()
 
     def create_integration(
         self,
@@ -653,6 +658,41 @@ class Pack:
         )
         rule.build(yml=yml, rules=rules, schema=schema)
         self.modeling_rules.append(rule)
+        return rule
+
+    def create_assets_modeling_rule(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        rules: Optional[str] = None,
+        schema: Optional[dict] = None,
+    ) -> Rule:
+        if not name:
+            name = f"assetsmodelingrule_{len(self.assets_modeling_rules)}"
+        if not yml:
+            yml = {
+                "id": "assets-modeling-rule",
+                "name": "Assets Modeling Rule",
+                "fromversion": "6.8.0",
+                "tags": "tag",
+                "rules": "",
+                "schema": "",
+            }
+        if not rules:
+            rules = '[MODEL: dataset="assets_dataset", model="Model", version=0.1]'
+
+        if not schema:
+            schema = {
+                "test_assets_audit_raw": {"name": {"type": "string", "is_array": False}}
+            }
+
+        rule = Rule(
+            tmpdir=self._assets_modeling_rules_path,
+            name=name,
+            repo=self._repo,
+        )
+        rule.build(yml=yml, rules=rules, schema=schema)
+        self.assets_modeling_rules.append(rule)
         return rule
 
     def create_correlation_rule(self, name, content: dict = None) -> CorrelationRule:

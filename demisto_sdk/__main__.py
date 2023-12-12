@@ -3528,8 +3528,11 @@ pre_commit_app = typer.Typer(name="Pre-Commit")
 
 @pre_commit_app.command()
 def pre_commit(
-    input_files: Optional[List[Path]] = typer.Argument(
+    input_files: Optional[List[Path]] = typer.Option(
         None,
+        "-i",
+        "--input",
+        "--files",
         exists=True,
         dir_okay=True,
         resolve_path=True,
@@ -3567,7 +3570,7 @@ def pre_commit(
         True, "--secrets/--no-secrets", help="Whether to run demisto-sdk secrets"
     ),
     verbose: bool = typer.Option(
-        False, "--verbose", help="Verbose output of pre-commit"
+        False, "-v", "--verbose", help="Verbose output of pre-commit"
     ),
     show_diff_on_failure: bool = typer.Option(
         False, "--show-diff-on-failure", help="Show diff on failure"

@@ -137,7 +137,7 @@ class PreCommitRunner:
         return {
             version: {path for path, _ in paths_with_objects}
             for version, paths_with_objects in self.language_version_to_files_with_objects.items()
-            if version not in {"js", "powershell"}
+            if version not in {"javascript", "powershell"}
         }
 
     @staticmethod

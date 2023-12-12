@@ -46,7 +46,7 @@ class MarketplaceSuffixPreparer:
                         continue
                     for suffix in suffixes:
                         # iterate each suffix to see if it's relevant for the key.
-                        # the order of the suffixes matter!
+                        # the order of the suffixes matter, as XSOAR_SAAS and XSOAR_ON_PREM are more specific
                         suffix_len = len(suffix)
                         if isinstance(key, str) and key.casefold().endswith(suffix):
                             clean_key = key[:-suffix_len]  # without suffix

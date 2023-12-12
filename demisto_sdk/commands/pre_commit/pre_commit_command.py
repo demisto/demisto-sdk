@@ -40,6 +40,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.sdk_hook import DemistoSDKHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 
@@ -231,6 +232,11 @@ class PreCommitRunner:
         hooks_without_docker = [
             hook for hook_id, hook in hooks.items() if not hook_id.endswith("in-docker")
         ]
+        sdk_hooks = [
+            hook for hook_id, hook in hooks.items() if hook.get("type") == "demisto-sdk"
+        ]
+        for hook in sdk_hooks:
+            DemistoSDKHook(**hook, **kwargs).prepare_hook()
         for hook in hooks_without_docker:
             Hook(**hook, **kwargs).prepare_hook()
 
@@ -350,7 +356,10 @@ class PreCommitRunner:
         # first, run the hooks without docker hooks
         stdout = subprocess.PIPE if docker_hooks else None
         self._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, command=["install-hooks"]
+            PRECOMMIT_CONFIG_MAIN_PATH,
+            precommit_env,
+            verbose,
+            command=["install-hooks"],
         ).communicate()
         main_p = self._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
@@ -594,7 +603,7 @@ def pre_commit_manager(
         skipped_hooks.remove("secrets")
 
     pre_commit_runner = PreCommitRunner(
-        input_files,
+        list(input_files) if input_files else None,
         all_files,
         mode,
         language_to_files_with_objects,

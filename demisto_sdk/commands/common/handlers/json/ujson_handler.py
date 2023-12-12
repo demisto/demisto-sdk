@@ -31,7 +31,7 @@ class UJSON_Handler(XSOAR_Handler):
         except ValueError as e:
             raise JSONDecodeError(e)
 
-    def dump(self, data: Any, fp: IO[str], indent=4, sort_keys=False, **kwargs):
+    def dump(self, data: Any, fp: IO[str], indent=0, sort_keys=False, **kwargs):
         try:
             self.json.dump(
                 data,
@@ -45,7 +45,7 @@ class UJSON_Handler(XSOAR_Handler):
         except ValueError as e:
             raise JSONDecodeError(e) from e
 
-    def dumps(self, obj: Any, indent=4, sort_keys=False, **kwargs):
+    def dumps(self, obj: Any, indent=0, sort_keys=False, **kwargs):
         try:
             return self.json.dumps(
                 obj,

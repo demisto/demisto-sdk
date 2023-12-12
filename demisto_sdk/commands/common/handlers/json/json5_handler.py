@@ -33,7 +33,7 @@ class JSON5_Handler(XSOAR_Handler):
         self,
         data: Any,
         fp: IO[str],
-        indent: int = 4,
+        indent: int = 0,
         sort_keys: bool = False,
         quote_keys: bool = True,
         **kwargs,

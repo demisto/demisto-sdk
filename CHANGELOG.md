@@ -3,7 +3,6 @@
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.
 * Added support to return war-room entries when running cli commands.
 * Added support to send custom arguments when dumping json/yml files to the file model.
-* Updated that when writing json/yml files, an automatic default indent will be taken.
 * Added support to automatically detect the correct file model by file path when reading files.
 * Fixed an issue where **run-playbook** command didn't work if the *url* argument was not provided.
 * Fixed an issue where **validate** command failed on valid complex layout rules and triggers.

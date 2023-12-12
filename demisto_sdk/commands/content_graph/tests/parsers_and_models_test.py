@@ -559,7 +559,7 @@ class TestParsersAndModels:
             expected_name="CVE",
             expected_path=incident_field_path,
             expected_content_type=ContentType.INCIDENT_FIELD,
-            expected_fromversion="5.0.0",
+            expected_fromversion="5.5.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
         assert model.cli_name == "cve"
@@ -1070,7 +1070,7 @@ class TestParsersAndModels:
             expected_id="duo_modeling_rule",
             expected_name="Duo Modeling Rule",
             expected_content_type=ContentType.MODELING_RULE,
-            expected_fromversion="6.8.0",
+            expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -1136,7 +1136,7 @@ class TestParsersAndModels:
             expected_id="_parsing_rule_id",
             expected_name="My Rule",
             expected_content_type=ContentType.PARSING_RULE,
-            expected_fromversion="6.8.0",
+            expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 

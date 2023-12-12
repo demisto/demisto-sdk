@@ -34,7 +34,6 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
-from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -65,7 +64,6 @@ ContentTypes = Union[
     ParsingRule,
     ModelingRule,
     XSIAMDashboard,
-    XDRCTemplate,
     Trigger,
     XSIAMReport,
     IncidentField,
@@ -75,7 +73,7 @@ ContentTypes = Union[
 ]
 
 
-class FromVersionValidator(BaseValidator[ContentTypes]):
+class FromToVersionSyncedValidator(BaseValidator[ContentTypes]):
     error_code = "BA118"
     description = (
         "Validate that the item's toversion is greater/equal then its fromversion."

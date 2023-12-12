@@ -35,7 +35,6 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
-from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -67,7 +66,6 @@ ContentTypes = Union[
     ParsingRule,
     ModelingRule,
     XSIAMDashboard,
-    XDRCTemplate,
     Trigger,
     XSIAMReport,
     IncidentField,
@@ -79,7 +77,6 @@ ContentTypes = Union[
 
 FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.ASSETS_MODELING_RULE: "6.2.1",
-    ContentType.XDRC_TEMPLATE: "6.10.0",
     ContentType.TRIGGER: "6.10.0",
     ContentType.XSIAM_REPORT: "6.10.0",
     ContentType.INCIDENT_FIELD: "5.5.0",

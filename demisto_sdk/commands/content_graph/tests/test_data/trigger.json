@@ -4,6 +4,7 @@
     "suggestion_reason": "Recommended for NGFW scan related alerts",
     "description": "This trigger is responsible for handling alerts involving scanning activity identified by our NGFW",
     "trigger_name": "NGFW Scanning Alerts",
+    "fromVersion": "6.10.0",
     "alerts_filter": {
       "filter": {
         "AND": [

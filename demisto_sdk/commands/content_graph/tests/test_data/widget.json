@@ -27,7 +27,7 @@
     },
     "name": "Feed Integrations Errors",
     "query": "FeedIntegrationErrorWidget",
-    "fromVersion": "6.1.0",
+    "fromVersion": "6.2.0",
     "isPredefined": true,
     "version": -1,
     "id": "Feed Integrations Errors",

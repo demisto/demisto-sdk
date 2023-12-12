@@ -26,7 +26,6 @@ from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.list import List as LIST
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
-from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
@@ -63,7 +62,6 @@ ContentTypes = Union[
     PreProcessRule,
     CorrelationRule,
     ParsingRule,
-    ModelingRule,
     XSIAMDashboard,
     XSIAMReport,
     IncidentField,
@@ -80,7 +78,6 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.INDICATOR_FIELD: "5.0.0",
     ContentType.CORRELATION_RULE: "6.10.0",
     ContentType.PARSING_RULE: "6.10.0",
-    ContentType.MODELING_RULE: "6.10.0",
     ContentType.LAYOUT_RULE: "6.10.0",
     ContentType.XSIAM_DASHBOARD: "6.10.0",
     ContentType.SCRIPT: "5.0.0",

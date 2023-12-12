@@ -3575,9 +3575,6 @@ def pre_commit(
     show_diff_on_failure: bool = typer.Option(
         False, "--show-diff-on-failure", help="Show diff on failure"
     ),
-    sdk_ref: str = typer.Option(
-        "", "--sdk-ref", help="The demisto-sdk ref to use for the pre-commit hooks"
-    ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -3605,7 +3602,6 @@ def pre_commit(
             verbose,
             show_diff_on_failure,
             run_docker_hooks=docker,
-            sdk_ref=sdk_ref,
             dry_run=dry_run,
             run_hook=run_hook,
         )

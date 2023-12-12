@@ -26,7 +26,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
-    get_last_remote_release_version,
     get_remote_file,
     string_to_bool,
     write_dict,
@@ -40,8 +39,8 @@ from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
-from demisto_sdk.commands.pre_commit.hooks.sdk_hook import DemistoSDKHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
+from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
@@ -80,7 +79,6 @@ class PreCommitRunner:
     language_version_to_files_with_objects: Dict[
         str, Set[Tuple[Path, Optional[IntegrationScript]]]
     ]
-    demisto_sdk_commit_hash: str
     run_hook: Optional[str] = None
     skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
@@ -104,12 +102,6 @@ class PreCommitRunner:
             raise TypeError(
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
-
-        # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
-        # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
-        self._get_repos(self.precommit_template)[
-            "https://github.com/demisto/demisto-sdk"
-        ]["rev"] = self.demisto_sdk_commit_hash
         self.hooks = self._get_hooks(self.precommit_template)
 
     @cached_property
@@ -222,23 +214,25 @@ class PreCommitRunner:
                 self.input_files
             )
         [
-            DockerHook(**hook, **kwargs).prepare_hook(
+            DockerHook(**hooks.pop(hook_id), **kwargs).prepare_hook(
                 files_to_run_with_objects=self.files_to_run_with_objects,
                 dry_run=dry_run,
             )
-            for hook_id, hook in hooks.items()
+            for hook_id in hooks.copy()
             if hook_id.endswith("in-docker")
         ]
-        hooks_without_docker = [
-            hook for hook_id, hook in hooks.items() if not hook_id.endswith("in-docker")
+        system_hooks = [
+            hook_id
+            for hook_id, hook in hooks.items()
+            if hook["hook"].get("language") == "system"
         ]
-        sdk_hooks = [
-            hook for hook_id, hook in hooks.items() if hook.get("type") == "demisto-sdk"
-        ]
-        for hook in sdk_hooks:
-            DemistoSDKHook(**hook, **kwargs).prepare_hook()
-        for hook in hooks_without_docker:
-            Hook(**hook, **kwargs).prepare_hook()
+
+        for hook_id in system_hooks:
+            SystemHook(**hooks.pop(hook_id), **kwargs).prepare_hook()
+
+        for hook_id in hooks.copy():
+            # this is used to handle the mode property correctly
+            Hook(**hooks.pop(hook_id), **kwargs).prepare_hook()
 
     def _filter_needs_docker(self, repos: Dict[str, Dict]):
         hooks_needs_docker = {
@@ -548,7 +542,6 @@ def pre_commit_manager(
     secrets: bool = False,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
-    sdk_ref: Optional[str] = None,
     dry_run: bool = False,
     run_docker_hooks: bool = True,
     run_hook: Optional[str] = None,
@@ -586,8 +579,6 @@ def pre_commit_manager(
         logger.info("No files were changed, skipping pre-commit.")
         return 0
 
-    if not sdk_ref:
-        sdk_ref = f"v{get_last_remote_release_version()}"
     language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
     if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
@@ -607,7 +598,6 @@ def pre_commit_manager(
         all_files,
         mode,
         language_to_files_with_objects,
-        sdk_ref,
         run_hook,
         skipped_hooks,
         run_docker_hooks,

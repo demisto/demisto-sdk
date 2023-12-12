@@ -6,7 +6,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import (
 )
 
 
-class DemistoSDKHook(Hook):
+class SystemHook(Hook):
     def prepare_hook(self, **kwargs):
         """
         Prepares the Validate or the Format hook.
@@ -19,5 +19,4 @@ class DemistoSDKHook(Hook):
         entry = self.base_hook["entry"]
         bin_path = Path(sys.executable).parent
         self.base_hook["entry"] = f"{bin_path}/{entry}"
-        self.base_hook.pop("type", None)
         self.hooks.insert(self.hook_index, self.base_hook)

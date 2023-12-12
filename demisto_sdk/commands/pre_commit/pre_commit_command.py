@@ -73,7 +73,7 @@ PYTHON2_SUPPORTED_HOOKS = {
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
 
-    input_mode: bool
+    input_files: Optional[List[Path]]
     all_files: bool
     mode: Optional[str]
     language_version_to_files_with_objects: Dict[
@@ -196,7 +196,7 @@ class PreCommitRunner:
         kwargs = {
             "mode": self.mode,
             "all_files": self.all_files,
-            "input_mode": self.input_mode,
+            "input_mode": bool(self.input_files),
         }
         if "pycln" in hooks:
             PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
@@ -214,11 +214,11 @@ class PreCommitRunner:
             )
         if "validate" in hooks:
             ValidateFormatHook(**hooks.pop("validate"), **kwargs).prepare_hook(
-                self.files_to_run
+                self.input_files
             )
         if "format" in hooks:
             ValidateFormatHook(**hooks.pop("format"), **kwargs).prepare_hook(
-                self.files_to_run
+                self.input_files
             )
         [
             DockerHook(**hook, **kwargs).prepare_hook(
@@ -319,7 +319,7 @@ class PreCommitRunner:
                         *command,
                         "-c",
                         str(path),
-                        "-v" if verbose else "",
+                        "-v" if verbose and "run" in command else "",
                     ],
                 )
             ),
@@ -349,6 +349,9 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
         # first, run the hooks without docker hooks
         stdout = subprocess.PIPE if docker_hooks else None
+        self._run_pre_commit_process(
+            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, command=["install-hooks"]
+        ).communicate()
         main_p = self._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
         )
@@ -591,7 +594,7 @@ def pre_commit_manager(
         skipped_hooks.remove("secrets")
 
     pre_commit_runner = PreCommitRunner(
-        bool(input_files),
+        input_files,
         all_files,
         mode,
         language_to_files_with_objects,

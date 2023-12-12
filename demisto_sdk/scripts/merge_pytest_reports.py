@@ -65,9 +65,10 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
 
 def merge_coverage_report():
     coverage_path = CONTENT_PATH / ".pre-commit" / "coverage"
+    (CONTENT_PATH / ".coverage").unlink(missing_ok=True)
     cov = coverage.Coverage()
     cov.combine([str(coverage_file) for coverage_file in coverage_path.iterdir()])
-    fix_coverage_report_path(CONTENT_PATH / "coverage.xml")
+    fix_coverage_report_path((CONTENT_PATH / ".coverage"))
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
     shutil.rmtree(coverage_path, ignore_errors=True)
     logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")

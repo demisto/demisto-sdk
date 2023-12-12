@@ -7,6 +7,7 @@
 * Fixed an issue where **validate** command failed on valid complex layout rules and triggers.
 * Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
 * Added support for `skip` property in **pre-commit** hooks.
+* **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.

@@ -4993,17 +4993,17 @@ multidict = ">=4.0"
 
 [[package]]
 name = "z3-solver"
-version = "4.12.1.0"
+version = "4.12.4.0"
 description = "an efficient SMT solver library"
 optional = false
 python-versions = "*"
 files = [
-    {file = "z3-solver-4.12.1.0.tar.gz", hash = "sha256:c6b7c0f1c595ba47609d0e02b0cc263dc755def9f8d6f51c1943aec040a1eb2d"},
-    {file = "z3_solver-4.12.1.0-py2.py3-none-macosx_10_16_x86_64.whl", hash = "sha256:c4f1a53bce12b45698e8e49bd980cd3d3f0298c1ba4cf8c40525af86797565c8"},
-    {file = "z3_solver-4.12.1.0-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:553ec3cd0188420bc5f007dd873fb0d87075d1b93808eca8c02324eb3a5f6f68"},
-    {file = "z3_solver-4.12.1.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:41cb9ac460af30b193811eebf919d61cf51a8856bbd74b200cbe6b21e3e955e4"},
-    {file = "z3_solver-4.12.1.0-py2.py3-none-win32.whl", hash = "sha256:85ff9f59b0f87df4dc0cd52baebb247b8049f2df6aad623151f4c4a21d3d01ac"},
-    {file = "z3_solver-4.12.1.0-py2.py3-none-win_amd64.whl", hash = "sha256:aa0e06d42070774a2f89818c412514d41fc84578f32d617de618b214e5ed8154"},
+    {file = "z3-solver-4.12.4.0.tar.gz", hash = "sha256:f692c87437be8d585ebca124355cd6488d60331289f6bbebbde65cd497205128"},
+    {file = "z3_solver-4.12.4.0-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:956daa69d3c7017f704c64d11c9ed880e06f177923e9af695a03034fc0e2e36d"},
+    {file = "z3_solver-4.12.4.0-py2.py3-none-macosx_11_7_x86_64.whl", hash = "sha256:6ffffdb41d714b6683cd87d8cf7eaa0e94eb40a6d5eca3636cb90a95d4e6760e"},
+    {file = "z3_solver-4.12.4.0-py2.py3-none-manylinux2014_x86_64.whl", hash = "sha256:03ce2639eced8a4d4bd432ebab15a6b1cb36119ba6a2854c01768ee2cd596c37"},
+    {file = "z3_solver-4.12.4.0-py2.py3-none-win32.whl", hash = "sha256:50011e915e97c4d262a010ea0403081b2af71c8474b27c53185407beb30b6ac7"},
+    {file = "z3_solver-4.12.4.0-py2.py3-none-win_amd64.whl", hash = "sha256:fbd7faea88bd32e6ba362913d1108d0bcb298df57154538a9bb2684757c35d0b"},
 ]
 
 [[package]]
@@ -5086,4 +5086,4 @@ build = ["gsutil"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "8364a772e7e3b8df43bc31f1f36a94cdcefbd03a1cee59242549e71a54e0187a"
+content-hash = "5782ea2a294388b62bcfad79820b37b1f7a75c8f0f2c7e6f6d76f764377ff801"

@@ -79,7 +79,7 @@ def create_correlation_rule_object(
     Returns:
         The correlation_rule object.
     """
-    yml_content = load_yaml("correlation_rule.yml")
+    yml_content = load_yaml("correlation_rule_test.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     pack.create_correlation_rule(name="correlation_rule", content=yml_content)

@@ -1321,7 +1321,7 @@ class TestParsersAndModels:
             expected_name="NGFW Scanning Alerts",
             expected_path=trigger_path,
             expected_content_type=ContentType.TRIGGER,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -1390,7 +1390,7 @@ class TestParsersAndModels:
             expected_name="Feed Integrations Errors",
             expected_path=widget_path,
             expected_content_type=ContentType.WIDGET,
-            expected_fromversion="6.1.0",
+            expected_fromversion="6.2.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 

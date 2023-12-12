@@ -1,4 +1,4 @@
 logs:
-- description: test test test.
+- description: test test test internal.
   type: internal
 pr_number: '3677'

@@ -274,6 +274,21 @@ class PreCommitRunner:
             running_processes.remove(process)
         return return_code
 
+    def _filter_hooks_need_docker(self, repos: dict) -> dict:
+        full_hooks_need_docker = {}
+        for repo, repo_dict in repos.items():
+            hooks = []
+            for hook in repo_dict["hooks"]:
+                if hook["id"] not in self.hooks_need_docker:
+                    hooks.append(hook)
+                else:
+                    full_hooks_need_docker[hook["id"]] = {
+                        "repo": repo_dict,
+                        "hook": hook,
+                    }
+            repo_dict["hooks"] = hooks
+        return full_hooks_need_docker
+
     def _update_hooks_needs_docker(self, hooks_needs_docker: dict):
         self.precommit_template["repos"] = []
         for _, hook in hooks_needs_docker.items():
@@ -336,18 +351,7 @@ class PreCommitRunner:
         local_repo = repos["local"]
         docker_hooks, no_docker_hooks = self._get_docker_and_no_docker_hooks(local_repo)
         local_repo["hooks"] = no_docker_hooks
-        full_hooks_need_docker = {}
-        for repo, repo_dict in repos.items():
-            hooks = []
-            for hook in repo_dict["hooks"]:
-                if hook["id"] not in self.hooks_need_docker:
-                    hooks.append(hook)
-                else:
-                    full_hooks_need_docker[hook["id"]] = {
-                        "repo": repo_dict,
-                        "hook": hook,
-                    }
-            repo_dict["hooks"] = hooks
+        full_hooks_need_docker = self._filter_hooks_need_docker(repos)
 
         num_processes = cpu_count()
         logger.info(f"Pre-Commit will use {num_processes} processes")

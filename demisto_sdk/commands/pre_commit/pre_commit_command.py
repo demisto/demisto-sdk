@@ -103,6 +103,7 @@ class PreCommitRunner:
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
         self.hooks = self._get_hooks(self.precommit_template)
+        self.hooks_needs_docker = self.hooks_need_docker()
 
     @cached_property
     def files_to_run_with_objects(
@@ -234,22 +235,13 @@ class PreCommitRunner:
             # this is used to handle the mode property correctly
             Hook(**hooks.pop(hook_id), **kwargs).prepare_hook()
 
-    def _filter_needs_docker(self, repos: Dict[str, Dict]):
-        hooks_needs_docker = {
-            hook_id: hook
+    def hooks_need_docker(self):
+        return {
+            hook_id
             for hook_id, hook in self.hooks.items()
             if (needs := hook["hook"].pop("needs", None))
             and any("in-docker" in need for need in needs)
         }
-        for repo, repo_dict in repos.items():
-            hooks = []
-            for hook in repo_dict["hooks"]:
-                if hook["id"] not in hooks_needs_docker:
-                    hooks.append(hook)
-                else:
-                    hooks_needs_docker[hook["id"]]["hook"] = hook
-            repo_dict["hooks"] = hooks
-        return hooks_needs_docker
 
     def _get_docker_and_no_docker_hooks(
         self, local_repo: dict
@@ -343,7 +335,19 @@ class PreCommitRunner:
         local_repo = repos["local"]
         docker_hooks, no_docker_hooks = self._get_docker_and_no_docker_hooks(local_repo)
         local_repo["hooks"] = no_docker_hooks
-        hooks_needs_docker = self._filter_needs_docker(repos)
+        full_hooks_need_docker = {}
+        for repo, repo_dict in repos.items():
+            hooks = []
+            for hook in repo_dict["hooks"]:
+                if hook["id"] not in self.hooks_needs_docker:
+                    hooks.append(hook)
+                else:
+                    full_hooks_need_docker[hook["id"]] = {
+                        "repo": repo_dict,
+                        "hook": hook,
+                    }
+            repo_dict["hooks"] = hooks
+
         num_processes = cpu_count()
         logger.info(f"Pre-Commit will use {num_processes} processes")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
@@ -374,9 +378,9 @@ class PreCommitRunner:
                 i += 1
                 running_processes.append(p)
             return_code = self._poll_for_processes(running_processes, return_code)
-        if hooks_needs_docker:
+        if self.hooks_needs_docker:
             # run hooks that needs docker after all the docker hooks finished
-            self._update_hooks_needs_docker(hooks_needs_docker)
+            self._update_hooks_needs_docker(full_hooks_need_docker)
             path = PRECOMMIT_CONFIG_MAIN_PATH.with_name(
                 f"{PRECOMMIT_CONFIG_MAIN_PATH.stem}-needs.yaml"
             )

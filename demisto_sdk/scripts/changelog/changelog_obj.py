@@ -6,7 +6,7 @@ from pydantic import BaseModel, validator
 INITIAL_DESCRIPTION = "enter description about this PR"
 INITIAL_TYPE = "<breaking|feature|fix|internal>"
 
-INITIAL_LOG: Dict[str, Union[str, List[dict]]] = {
+INITIAL_LOG: Dict[str, Union[int, List[dict]]] = {
     "changes": [
         {
             "description": INITIAL_DESCRIPTION,
@@ -62,10 +62,10 @@ class LogEntry(BaseModel):
 
 class LogFileObject(BaseModel):
     changes: List[LogEntry]
-    pr_number: str
+    pr_number: int
 
     def get_log_entries(self) -> List[LogLine]:
         return [
-            LogLine(log_entry.description, self.pr_number, log_entry.type)
+            LogLine(log_entry.description, str(self.pr_number), log_entry.type)
             for log_entry in self.changes
         ]

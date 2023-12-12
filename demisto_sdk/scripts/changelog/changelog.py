@@ -61,7 +61,7 @@ class Changelog:
             )
 
         log = INITIAL_LOG
-        log["pr_number"] = self.pr_number
+        log["pr_number"] = int(self.pr_number)
 
         with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
             yaml.dump(log, f)

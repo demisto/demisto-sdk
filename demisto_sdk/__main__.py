@@ -3522,11 +3522,11 @@ def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
 
-# ====================== typer commands ====================== #
-app = typer.Typer()
+# ====================== Pre-Commit ====================== #
+pre_commit_app = typer.Typer(name="Pre-Commit")
 
 
-@app.command()
+@pre_commit_app.command()
 def pre_commit(
     input_files: Optional[List[Path]] = typer.Argument(
         None,
@@ -3609,7 +3609,7 @@ def pre_commit(
     )
 
 
-main.add_command(typer.main.get_command(app), "pre-commit")
+main.add_command(typer.main.get_command(pre_commit_app), "pre-commit")
 
 
 # ====================== modeling-rules command group ====================== #

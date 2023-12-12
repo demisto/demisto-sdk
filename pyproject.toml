@@ -109,7 +109,6 @@ google-cloud-secret-manager = "^2.16.2"
 json5 = "^0.9.14"
 types-protobuf = "^4.24.0.4"
 pre-commit = "^3.5.0"
-z3-solver = "^4.12.4"
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"

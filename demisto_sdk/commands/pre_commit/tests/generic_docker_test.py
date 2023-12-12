@@ -11,7 +11,7 @@ from demisto_sdk.commands.pre_commit.hooks.docker import (
 from demisto_sdk.commands.pre_commit.tests.pre_commit_test import create_hook
 
 
-@dataclass
+@dataclass(frozen=True)
 class Obj:
     path: Path = Path("somefile")
     object_id: str = "id1"

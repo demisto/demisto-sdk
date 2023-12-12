@@ -19,9 +19,10 @@ class ValidateFormatHook(Hook):
         Args:
             files_to_run (Optional[Iterable[Path]]): The input files to validate. Defaults to None.
         """
-        entry = self.base_hook["entry"]
-        bin_path = Path(sys.executable).parent
-        self.base_hook["entry"] = f"{bin_path}/{entry}"
+        if "entry" in self.base_hook:
+            entry = self.base_hook["entry"]
+            bin_path = Path(sys.executable).parent
+            self.base_hook["entry"] = f"{bin_path}/{entry}"
 
         if self.all_files:
             safe_update_hook_args(self.base_hook, "-a")

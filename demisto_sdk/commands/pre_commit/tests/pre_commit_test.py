@@ -11,6 +11,7 @@ from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     PYTHON2_SUPPORTED_HOOKS,
@@ -375,7 +376,7 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
     mocker.patch.object(
         pre_commit_command,
         "PRECOMMIT_TEMPLATE_PATH",
-        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+        TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
     mocker.patch.object(pre_commit_command, "logger")
@@ -493,25 +494,6 @@ def test_filter_files_matching_hook_config(hook, expected_result):
     )
 
 
-def test_no_docker_flag_docker_hook():
-    """
-    Given:
-        run_docker flag (--no-docker) is given.
-    When:
-        running pre-commit command.
-    Then:
-        Do not add the docker hook to the list of hooks.
-    """
-    file_path = Path("SomeFile.py")
-    docker_hook = create_hook({"args": ["test"]})
-    kwargs = {"mode": None, "all_files": False, "input_mode": True}
-    DockerHook(**docker_hook, **kwargs).prepare_hook(
-        files_to_run_with_objects=[file_path], run_docker_hooks=False
-    )
-
-    assert len(docker_hook["repo"]["hooks"]) == 0
-
-
 def test_skip_hook_with_mode(mocker):
     """
     Given:
@@ -526,7 +508,7 @@ def test_skip_hook_with_mode(mocker):
     mocker.patch.object(
         pre_commit_command,
         "PRECOMMIT_TEMPLATE_PATH",
-        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+        TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
     python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
     pre_commit_runner = pre_commit_command.PreCommitRunner(
@@ -541,3 +523,27 @@ def test_skip_hook_with_mode(mocker):
         hook.get("id")
         for hook in repos["https://github.com/demisto/demisto-sdk"]["hooks"]
     }
+
+
+def test_system_hooks():
+    """
+    Given:
+        hook with `system` language
+
+    When:
+        running pre-commit command.
+
+    Then:
+        The hook entry is updated with the path to the python interpreter that is running.
+    """
+    import sys
+
+    Path(sys.executable).parent
+    system_hook = create_hook(
+        {"args": [], "entry": "demisto-sdk", "language": "system"}
+    )
+    SystemHook(**system_hook).prepare_hook()
+    assert (
+        system_hook["repo"]["hooks"][0]["entry"]
+        == f"{Path(sys.executable).parent}/demisto-sdk"
+    )

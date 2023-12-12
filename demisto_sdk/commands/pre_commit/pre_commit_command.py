@@ -103,7 +103,7 @@ class PreCommitRunner:
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
         self.hooks = self._get_hooks(self.precommit_template)
-        self.hooks_needs_docker = self.hooks_need_docker()
+        self.hooks_need_docker = self._hooks_need_docker()
 
     @cached_property
     def files_to_run_with_objects(
@@ -222,20 +222,21 @@ class PreCommitRunner:
             for hook_id in hooks.copy()
             if hook_id.endswith("in-docker")
         ]
+        # iterate the rest of the hooks
+        for hook_id in hooks.copy():
+            # this is used to handle the mode property correctly
+            Hook(**hooks.pop(hook_id), **kwargs).prepare_hook()
+        # get the hooks again because we want to get all the hooks, including the once that already prepared
+        hooks = self._get_hooks(self.precommit_template)
         system_hooks = [
             hook_id
             for hook_id, hook in hooks.items()
             if hook["hook"].get("language") == "system"
         ]
-
-        for hook_id in system_hooks:
+        for hook_id in system_hooks.copy():
             SystemHook(**hooks.pop(hook_id), **kwargs).prepare_hook()
 
-        for hook_id in hooks.copy():
-            # this is used to handle the mode property correctly
-            Hook(**hooks.pop(hook_id), **kwargs).prepare_hook()
-
-    def hooks_need_docker(self):
+    def _hooks_need_docker(self):
         return {
             hook_id
             for hook_id, hook in self.hooks.items()
@@ -339,7 +340,7 @@ class PreCommitRunner:
         for repo, repo_dict in repos.items():
             hooks = []
             for hook in repo_dict["hooks"]:
-                if hook["id"] not in self.hooks_needs_docker:
+                if hook["id"] not in self.hooks_need_docker:
                     hooks.append(hook)
                 else:
                     full_hooks_need_docker[hook["id"]] = {
@@ -378,7 +379,7 @@ class PreCommitRunner:
                 i += 1
                 running_processes.append(p)
             return_code = self._poll_for_processes(running_processes, return_code)
-        if self.hooks_needs_docker:
+        if self.hooks_need_docker:
             # run hooks that needs docker after all the docker hooks finished
             self._update_hooks_needs_docker(full_hooks_need_docker)
             path = PRECOMMIT_CONFIG_MAIN_PATH.with_name(

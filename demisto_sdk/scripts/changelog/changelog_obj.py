@@ -4,10 +4,10 @@ from typing import Dict, List, Union
 from pydantic import BaseModel, validator
 
 INITIAL_DESCRIPTION = "enter description about this PR"
-INITIAL_TYPE = "<fix|feature|breaking|internal>"
+INITIAL_TYPE = "<breaking|feature|fix|internal>"
 
 INITIAL_LOG: Dict[str, Union[str, List[dict]]] = {
-    "logs": [
+    "changes": [
         {
             "description": INITIAL_DESCRIPTION,
             "type": INITIAL_TYPE,
@@ -61,11 +61,11 @@ class LogEntry(BaseModel):
 
 
 class LogFileObject(BaseModel):
-    logs: List[LogEntry]
+    changes: List[LogEntry]
     pr_number: str
 
     def get_log_entries(self) -> List[LogLine]:
         return [
             LogLine(log_entry.description, self.pr_number, log_entry.type)
-            for log_entry in self.logs
+            for log_entry in self.changes
         ]

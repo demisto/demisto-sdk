@@ -32,7 +32,6 @@ from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
@@ -66,7 +65,6 @@ ContentTypes = Union[
     ParsingRule,
     ModelingRule,
     XSIAMDashboard,
-    Trigger,
     XSIAMReport,
     IncidentField,
     IndicatorField,
@@ -77,9 +75,8 @@ ContentTypes = Union[
 
 FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.ASSETS_MODELING_RULE: "6.2.1",
-    ContentType.TRIGGER: "6.10.0",
     ContentType.XSIAM_REPORT: "6.10.0",
-    ContentType.INCIDENT_FIELD: "5.5.0",
+    ContentType.INCIDENT_FIELD: "5.0.0",
     ContentType.INDICATOR_FIELD: "5.0.0",
     ContentType.CORRELATION_RULE: "6.10.0",
     ContentType.PARSING_RULE: "6.10.0",
@@ -100,7 +97,7 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.LIST: "6.5.0",
     ContentType.MAPPER: "6.0.0",
     ContentType.CLASSIFIER: "6.0.0",
-    ContentType.WIDGET: "6.2.0",
+    ContentType.WIDGET: "5.0.0",
     ContentType.INTEGRATION: "5.0.0",
     ContentType.DASHBOARD: "5.0.0",
     ContentType.INCIDENT_TYPE: "5.0.0",

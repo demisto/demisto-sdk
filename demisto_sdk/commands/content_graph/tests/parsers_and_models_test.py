@@ -1390,7 +1390,7 @@ class TestParsersAndModels:
             expected_name="Feed Integrations Errors",
             expected_path=widget_path,
             expected_content_type=ContentType.WIDGET,
-            expected_fromversion="6.2.0",
+            expected_fromversion="6.1.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 

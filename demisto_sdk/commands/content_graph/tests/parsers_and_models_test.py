@@ -1538,6 +1538,7 @@ class TestParsersAndModels:
             - Verify the pack is modeled correctly.
         """
         from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
+        from TestSuite.test_tools import ChangeCWD
 
         pack = repo.create_pack("HelloWorld")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
@@ -1546,50 +1547,50 @@ class TestParsersAndModels:
         pack.create_incident_type("sample", load_json("incident_type.json"))
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
-        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
         with open(f"{pack.path}/.pack-ignore", "w") as f:
             f.write("[file:classifier-sample.json]\nignore=SC100")
-        pack_path = Path(pack.path)
-        parser = PackParser(pack_path)
-        expected_content_items = {
-            "Github_Classifier_v1": ContentType.CLASSIFIER,
-            "cve": ContentType.INCIDENT_FIELD,
-            "Traps": ContentType.INCIDENT_TYPE,
-            "email": ContentType.INDICATOR_FIELD,
-            "urlRep": ContentType.INDICATOR_TYPE,
-        }
-        PackRelationshipsVerifier.run(
-            parser.relationships,
-            expected_content_items=expected_content_items,
-        )
-        model = PackModel.from_orm(parser)
-        PackModelVerifier.run(
-            model,
-            expected_id="HelloWorld",
-            expected_name="HelloWorld",
-            expected_path=pack_path,
-            expected_description="This is the Hello World integration for getting started.",
-            expected_created="2020-03-10T08:37:18Z",
-            expected_author_image="content/packs/HelloWorld/Author_image.png",
-            expected_legacy=True,
-            expected_eulaLink="https://github.com/demisto/content/blob/master/LICENSE",
-            expected_support="community",
-            expected_url="https://www.paloaltonetworks.com/cortex",
-            expected_author="Cortex XSOAR",
-            expected_certification="verified",
-            expected_hidden=False,
-            expected_current_version="1.2.12",
-            expected_tags=["TIM"],
-            expected_categories=["Utilities"],
-            expected_use_cases=["Identity And Access Management"],
-            expected_keywords=[],
-            expected_marketplaces=[
-                MarketplaceVersions.MarketplaceV2,
-                MarketplaceVersions.XSOAR,
-                MarketplaceVersions.XSOAR_SAAS,
-            ],
-            expected_content_items=expected_content_items,
-            expected_deprecated=False,
+        with ChangeCWD(repo.path):
+            pack_path = Path(pack.path)
+            parser = PackParser(pack_path)
+            expected_content_items = {
+                "Github_Classifier_v1": ContentType.CLASSIFIER,
+                "cve": ContentType.INCIDENT_FIELD,
+                "Traps": ContentType.INCIDENT_TYPE,
+                "email": ContentType.INDICATOR_FIELD,
+                "urlRep": ContentType.INDICATOR_TYPE,
+            }
+            PackRelationshipsVerifier.run(
+                parser.relationships,
+                expected_content_items=expected_content_items,
+            )
+            model = PackModel.from_orm(parser)
+            PackModelVerifier.run(
+                model,
+                expected_id="HelloWorld",
+                expected_name="HelloWorld",
+                expected_path=pack_path,
+                expected_description="This is the Hello World integration for getting started.",
+                expected_created="2020-03-10T08:37:18Z",
+                expected_author_image="content/packs/HelloWorld/Author_image.png",
+                expected_legacy=True,
+                expected_eulaLink="https://github.com/demisto/content/blob/master/LICENSE",
+                expected_support="community",
+                expected_url="https://www.paloaltonetworks.com/cortex",
+                expected_author="Cortex XSOAR",
+                expected_certification="verified",
+                expected_hidden=False,
+                expected_current_version="1.2.12",
+                expected_tags=["TIM"],
+                expected_categories=["Utilities"],
+                expected_use_cases=["Identity And Access Management"],
+                expected_keywords=[],
+                expected_marketplaces=[
+                    MarketplaceVersions.MarketplaceV2,
+                    MarketplaceVersions.XSOAR,
+                    MarketplaceVersions.XSOAR_SAAS,
+                ],
+                expected_content_items=expected_content_items,
+                expected_deprecated=False,
         )
 
     def test_repo_parser(self, mocker, repo: Repo):

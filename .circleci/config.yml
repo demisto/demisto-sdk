@@ -92,7 +92,7 @@ references:
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
           pkg-manager: "poetry"
-          args: "--no-dev"
+          args: "--no-dev -E generate-unit-tests"
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
@@ -135,6 +135,7 @@ jobs:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
+            args: "-E generate-unit-tests"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
@@ -201,6 +202,7 @@ jobs:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
+            args: "-E generate-unit-tests"
             cache-version: << pipeline.parameters.cache-version >>
 
         - <<: *install_node_ci

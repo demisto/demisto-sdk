@@ -17,7 +17,7 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, Optional, Tuple, Union
+from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
@@ -3452,150 +3452,6 @@ def update_content_graph(
     )
 
 
-@main.command(short_help="Runs pre-commit hooks on the files in the repository")
-@click.help_option("-h", "--help")
-@click.option(
-    "-i",
-    "--input",
-    "--files",  # the precommit input
-    help="The path to the input file to run the command on.",
-    type=PathsParamType(
-        exists=True, resolve_path=True
-    ),  # PathsParamType allows passing a list of paths
-)
-@click.option(
-    "-s",
-    "--staged-only",
-    help="Whether to run only on staged files",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--commited-only",
-    help="Whether to run on commited files only",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "-g",
-    "--git-diff",
-    help="Whether to use git to determine which files to run on",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "-a",
-    "--all-files",
-    help="Whether to run on all files",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--mode",
-    help="Special mode to run the pre-commit with",
-)
-@click.option(
-    "--skip",
-    help="A comma separated list of precommit hooks to skip",
-)
-@click.option(
-    "--validate/--no-validate",
-    help="Whether to run demisto-sdk validate",
-    default=True,
-)
-@click.option(
-    "--format/--no-format",
-    help="Whether to run demisto-sdk format",
-    default=False,
-)
-@click.option(
-    "--secrets/--no-secrets",
-    help="Whether to run demisto-sdk secrets",
-    default=True,
-)
-@click.option(
-    "-v",
-    "--verbose",
-    help="Verbose output of pre-commit",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--show-diff-on-failure",
-    help="Show diff on failure",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--sdk-ref",
-    help="The demisto-sdk ref to use for the pre-commit hooks",
-    default="",
-)
-@click.option(
-    "--dry-run",
-    help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--docker/--no-docker",
-    help="Whether to run docker based hooks or not.",
-    default=True,
-    is_flag=True,
-)
-@click.argument("run-hook")
-@click.pass_context
-@logging_setup_decorator
-def pre_commit(
-    ctx,
-    input: str,
-    staged_only: bool,
-    commited_only: bool,
-    git_diff: bool,
-    all_files: bool,
-    mode: Optional[str],
-    skip: str,
-    validate: bool,
-    format: bool,
-    secrets: bool,
-    verbose: bool,
-    show_diff_on_failure: bool,
-    sdk_ref: str,
-    dry_run: bool,
-    docker: bool,
-    run_hook: str,
-    **kwargs,
-):
-    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
-
-    input_files = []
-    if input:
-        input_files = [Path(i) for i in input.split(",") if i]
-    if skip:
-        skip = skip.split(",")  # type: ignore[assignment]
-
-    sys.exit(
-        pre_commit_manager(
-            input_files,
-            staged_only,
-            commited_only,
-            git_diff,
-            all_files,
-            mode,
-            skip,
-            validate,
-            format,
-            secrets,
-            verbose,
-            show_diff_on_failure,
-            run_docker_hooks=docker,
-            sdk_ref=sdk_ref,
-            dry_run=dry_run,
-            run_hook=run_hook,
-        )
-    )
-
-
 @main.command(short_help="Setup integration environments")
 @click.option(
     "-i",
@@ -3666,11 +3522,107 @@ def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
 
+# ====================== typer commands ====================== #
+app = typer.Typer()
+
+
+@app.command()
+def pre_commit(
+    input_files: Optional[List[Path]] = typer.Argument(
+        None,
+        exists=True,
+        dir_okay=True,
+        resolve_path=True,
+        show_default=False,
+        help=("The paths to run pre-commit on. May pass multiple paths."),
+    ),
+    staged_only: bool = typer.Option(
+        False, "--staged-only", help="Whether to run only on staged files"
+    ),
+    commited_only: bool = typer.Option(
+        False, "--commited-only", help="Whether to run on commited files only"
+    ),
+    git_diff: bool = typer.Option(
+        False,
+        "--git-diff",
+        "-g",
+        help="Whether to use git to determine which files to run on",
+    ),
+    all_files: bool = typer.Option(
+        False, "--all-files", "-a", help="Whether to run on all files"
+    ),
+    mode: str = typer.Option(
+        "", "--mode", help="Special mode to run the pre-commit with"
+    ),
+    skip: Optional[List[str]] = typer.Option(
+        None, "--skip", help="A list of precommit hooks to skip"
+    ),
+    validate: bool = typer.Option(
+        True, "--validate/--no-validate", help="Whether to run demisto-sdk validate"
+    ),
+    format: bool = typer.Option(
+        False, "--format/--no-format", help="Whether to run demisto-sdk format"
+    ),
+    secrets: bool = typer.Option(
+        True, "--secrets/--no-secrets", help="Whether to run demisto-sdk secrets"
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", help="Verbose output of pre-commit"
+    ),
+    show_diff_on_failure: bool = typer.Option(
+        False, "--show-diff-on-failure", help="Show diff on failure"
+    ),
+    sdk_ref: str = typer.Option(
+        "", "--sdk-ref", help="The demisto-sdk ref to use for the pre-commit hooks"
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+    ),
+    docker: bool = typer.Option(
+        True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
+    ),
+    run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
+):
+    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
+
+    typer.Exit(
+        pre_commit_manager(
+            input_files,
+            staged_only,
+            commited_only,
+            git_diff,
+            all_files,
+            mode,
+            skip,
+            validate,
+            format,
+            secrets,
+            verbose,
+            show_diff_on_failure,
+            run_docker_hooks=docker,
+            sdk_ref=sdk_ref,
+            dry_run=dry_run,
+            run_hook=run_hook,
+        )
+    )
+
+
+main.add_command(typer.main.get_command(app), "pre-commit")
+
+
 # ====================== modeling-rules command group ====================== #
-app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
-app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
-app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)
-typer_click_object = typer.main.get_command(app)
+modeling_rules_app = typer.Typer(
+    name="modeling-rules", hidden=True, no_args_is_help=True
+)
+modeling_rules_app.command("test", no_args_is_help=True)(
+    test_modeling_rule.test_modeling_rule
+)
+modeling_rules_app.command("init-test-data", no_args_is_help=True)(
+    init_test_data.init_test_data
+)
+typer_click_object = typer.main.get_command(modeling_rules_app)
 main.add_command(typer_click_object, "modeling-rules")
 
 app_generate_modeling_rules = typer.Typer(

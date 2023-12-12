@@ -15,7 +15,7 @@ from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormat
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     PYTHON2_SUPPORTED_HOOKS,
     GitUtil,
-    group_by_python_version,
+    group_by_language,
     preprocess_files,
     subprocess,
 )
@@ -126,7 +126,7 @@ def test_config_files(mocker, repo: Repo):
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == relative_paths
 
-    python_version_to_files, _ = group_by_python_version(files_to_run)
+    python_version_to_files, _ = group_by_language(files_to_run)
     pre_commit = pre_commit_command.PreCommitRunner(
         None, None, None, python_version_to_files, ""
     )

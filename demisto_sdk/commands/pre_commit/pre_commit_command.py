@@ -75,7 +75,7 @@ class PreCommitRunner:
 
     input_mode: bool
     all_files: bool
-    mode: str
+    mode: Optional[str]
     python_version_to_files_with_objects: Dict[
         str, Set[Tuple[Path, Optional[IntegrationScript]]]
     ]
@@ -429,7 +429,7 @@ class PreCommitRunner:
         return ret_val
 
 
-def group_by_python_version(
+def group_by_language(
     files: Set[Path],
 ) -> Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
     """This function groups the files to run pre-commit on by the python version.
@@ -441,7 +441,7 @@ def group_by_python_version(
         Exception: If invalid files were given.
 
     Returns:
-        Dict[str, set]: The files grouped by their python version.
+        Dict[str, set]: The files grouped by their python version, and a set of excluded paths
     """
     integrations_scripts_mapping = defaultdict(set)
     infra_files = []
@@ -450,7 +450,7 @@ def group_by_python_version(
             continue
         if (
             set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}
-            and PACKS_FOLDER in file.parts
+            and file.parts[0] == PACKS_FOLDER  # this is relative path so it works
         ):
             find_path_index = (
                 i + 1
@@ -481,6 +481,8 @@ def group_by_python_version(
         ):
             continue
         if integration_script.deprecated:
+            # we exclude deprecate integrations and scripts from pre-commit.
+            # the reason we maintain this set is for performance when running with --all-files. It is much faster to exclude.
             if integration_script.is_unified:
                 exclude_integration_script.add(
                     integration_script.path.relative_to(CONTENT_PATH)
@@ -494,16 +496,10 @@ def group_by_python_version(
         code_file_path = integration_script.path.parent
         if python_version := integration_script.python_version:
             version = Version(python_version)
-            python_version_string = f"{version.major}.{version.minor}"
+            language = f"{version.major}.{version.minor}"
         else:
-            # Skip cases of powershell scripts
-            exclude_integration_script.add(
-                integration_script.path.relative_to(CONTENT_PATH)
-            )
-            continue
-        python_versions_to_files[
-            python_version_string or DEFAULT_PYTHON2_VERSION
-        ].update(
+            language = integration_script.type
+        python_versions_to_files[language].update(
             {
                 (path, integration_script)
                 for path in integrations_scripts_mapping[code_file_path]
@@ -516,10 +512,6 @@ def group_by_python_version(
             [(infra, None) for infra in infra_files]
         )
 
-    if exclude_integration_script:
-        logger.info(
-            f"Skipping deprecated or powershell integrations or scripts: {join_files(exclude_integration_script, ', ')}"
-        )
     return python_versions_to_files, exclude_integration_script
 
 
@@ -540,7 +532,7 @@ def pre_commit_manager(
     dry_run: bool = False,
     run_docker_hooks: bool = True,
     run_hook: Optional[str] = None,
-) -> Optional[int]:
+) -> int:
     """Run pre-commit hooks .
 
     Args:
@@ -572,23 +564,16 @@ def pre_commit_manager(
     )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
-        return None
-
-    files_to_run_string = ", ".join(
-        sorted((str(changed_path) for changed_path in files_to_run))
-    )
-
-    # This is the files that pre-commit received, but in fact it will run on files returned from group_by_python_version
-    logger.info(f"pre-commit received the following files: {files_to_run_string}")
+        return 0
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files_with_objects, exclude_files = group_by_python_version(
+    python_version_to_files_with_objects, exclude_files = group_by_language(
         files_to_run
     )
     if not python_version_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
-        return None
+        return 0
 
     skipped_hooks: set = SKIPPED_HOOKS
     skipped_hooks.update(set(skip_hooks or ()))

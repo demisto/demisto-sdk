@@ -396,7 +396,7 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
 
     for hook in pre_commit_runner.hooks.values():
         if hook["hook"]["id"] in PYTHON2_SUPPORTED_HOOKS:
-            assert hook["hook"].get("exclude") is None
+            assert "file1.py" not in hook["hook"].get("exclude")
         else:
             assert "file1.py" in hook["hook"]["exclude"]
 

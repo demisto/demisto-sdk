@@ -237,7 +237,10 @@ class PreCommitRunner:
         for hook_id in system_hooks.copy():
             SystemHook(**hooks.pop(hook_id), **kwargs).prepare_hook()
 
-    def _hooks_need_docker(self):
+    def _hooks_need_docker(self) -> Set[str]:
+        """
+        Get all the hook ids that needs docker based on the "needs" property
+        """
         return {
             hook_id
             for hook_id, hook in self.hooks.items()
@@ -248,6 +251,14 @@ class PreCommitRunner:
     def _get_docker_and_no_docker_hooks(
         self, local_repo: dict
     ) -> Tuple[List[dict], List[dict]]:
+        """This function separates the docker and no docker hooks of a local repo
+
+        Args:
+            local_repo (dict): The local repo
+
+        Returns:
+            Tuple[List[dict], List[dict]]: The first item is the list of docker hooks, the second is the list of no docker hooks
+        """
         local_repo_hooks = local_repo["hooks"]
         docker_hooks = [hook for hook in local_repo_hooks if "in-docker" in hook["id"]]
         no_docker_hooks = [
@@ -262,6 +273,18 @@ class PreCommitRunner:
         verbose: bool = False,
         stdout: Optional[int] = subprocess.PIPE,
     ):
+        """This function runs the pre-commit process and waits until finished.
+        We run this function in multithread.
+
+        Args:
+            index (Optional[int]): The index of the docker hook. if None, runs main pre-commit config
+            precommit_env (dict): The pre-commit environment variables
+            verbose (bool, optional): Whether print verbose output. Defaults to False.
+            stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
+
+        Returns:
+            _type_: _description_
+        """
         if not index:
             process = self._run_pre_commit_process(
                 PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
@@ -280,6 +303,9 @@ class PreCommitRunner:
         return process.returncode
 
     def _filter_hooks_need_docker(self, repos: dict) -> dict:
+        """
+        This filters the pre-commit config file the hooks that needed docker, so we will be able to execute them after the docker hooks are finished
+        """
         full_hooks_need_docker = {}
         for repo, repo_dict in repos.items():
             hooks = []
@@ -295,6 +321,10 @@ class PreCommitRunner:
         return full_hooks_need_docker
 
     def _update_hooks_needs_docker(self, hooks_needs_docker: dict):
+        """
+        This is to populate the pre-commit config file only for hooks that needs docker
+        This is needed because we need to execute this after all docker hooks are finished
+        """
         self.precommit_template["repos"] = []
         for _, hook in hooks_needs_docker.items():
             repos = {repo["repo"] for repo in self.precommit_template["repos"]}
@@ -318,7 +348,19 @@ class PreCommitRunner:
         verbose: bool,
         stdout=None,
         command: Optional[List[str]] = None,
-    ):
+    ) -> subprocess.CompletedProcess:
+        """Runs a process of pre-commit
+
+        Args:
+            path (Path): Pre commit path
+            precommit_env (dict): Environment variables set on pre-commit
+            verbose (bool): whether to print verbose output
+            stdout (optional): use `subprocess.PIPE` to capture stdout. Use None to print it. Defaults to None.
+            command (Optional[List[str]], optional): The pre-commit command to run. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
         if command is None:
             command = ["run", "-a"]
         return subprocess.run(
@@ -404,7 +446,12 @@ class PreCommitRunner:
             logger.info(
                 "Pre-Commit changed the following. If you experience this in CI, please run `demisto-sdk pre-commit`"
             )
-            subprocess.run(["git", "--no-pager", "diff", "--no-ext-diff"], check=True)
+            git_diff = subprocess.run(
+                ["git", "--no-pager", "diff", "--no-ext-diff"],
+                stdout=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            logger.info(git_diff.stdout)
         return return_code
 
     def prepare_and_run(

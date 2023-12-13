@@ -3492,6 +3492,20 @@ freezegun = ">0.3"
 pytest = ">=3.0.0"
 
 [[package]]
+name = "pytest-github-actions-annotate-failures"
+version = "0.2.0"
+description = "pytest plugin to annotate failed tests with a workflow command for GitHub Actions"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pytest-github-actions-annotate-failures-0.2.0.tar.gz", hash = "sha256:844ab626d389496e44f960b42f0a72cce29ae06d363426d17ea9ae1b4bef2288"},
+    {file = "pytest_github_actions_annotate_failures-0.2.0-py3-none-any.whl", hash = "sha256:8bcef65fed503faaa0524b59cfeccc8995130972dd7b008d64193cc41b9cde85"},
+]
+
+[package.dependencies]
+pytest = ">=4.0.0"
+
+[[package]]
 name = "pytest-mock"
 version = "3.10.0"
 description = "Thin-wrapper around the mock package for easier use with pytest"
@@ -3507,6 +3521,20 @@ pytest = ">=5.0"
 
 [package.extras]
 dev = ["pre-commit", "pytest-asyncio", "tox"]
+
+[[package]]
+name = "pytest-split"
+version = "0.8.1"
+description = "Pytest plugin which splits the test suite to equally sized sub suites based on test execution time."
+optional = false
+python-versions = ">=3.7.1,<4.0"
+files = [
+    {file = "pytest_split-0.8.1-py3-none-any.whl", hash = "sha256:74b110ea091bd147cc1c5f9665a59506e5cedfa66f96a89fb03e4ab447c2c168"},
+    {file = "pytest_split-0.8.1.tar.gz", hash = "sha256:2d88bd3dc528689a7a3f58fc12ea165c3aa62e90795e420dfad920afe5612d6d"},
+]
+
+[package.dependencies]
+pytest = ">=5,<8"
 
 [[package]]
 name = "pytest-subprocess"
@@ -5087,4 +5115,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "257fe8b92749c8d1499ebffc0d5b8a87b5c00728d60219e90c66202b3a0561f8"
+content-hash = "38bed940beb0d10e7affb6e6de5d112963ba2c3eb80a81d15cbfb6faca55b9ab"

@@ -86,7 +86,6 @@ types-six = "^1.16.12"
 types-PyMySQL = "^1.0.15"
 typing-extensions = "^4.1.1"
 gsutil = {version = "5.17", optional = true}
-klara = "^0.6.3"
 ordered-set = "^4.1.0"
 types-filelock = "^3.2.5"
 types-Markdown = "^3.3.21"
@@ -108,6 +107,10 @@ junitparser = "^3.1.0"
 google-cloud-secret-manager = "^2.16.2"
 json5 = "^0.9.14"
 types-protobuf = "^4.24.0.4"
+klara = { version = "^0.6.3", optional = true }
+
+
+
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"
@@ -127,6 +130,7 @@ pytest-github-actions-annotate-failures = "^0.2.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]
+generate-unit-tests = ["klara"]
 
 [tool.mypy]
 check_untyped_defs = true

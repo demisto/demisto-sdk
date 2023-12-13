@@ -5,6 +5,7 @@ mapping:
     required: true
   name:
     type: str
+    required: true
   name_x2:
     type: str
   type:
@@ -12,6 +13,7 @@ mapping:
     required: true
   description:
     type: str
+    required: true
   description_x2:
     type: str
   version:
@@ -36,10 +38,6 @@ mapping:
     sequence:
     - type: str
       enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   name:xsoar:
     type: str
   name:marketplacev2:

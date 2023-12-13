@@ -79,6 +79,7 @@ schema;widgets_data_schema:
       required: false
     description:
       type: str
+      required: false
     data:
       type: map
       required: false
@@ -90,8 +91,6 @@ schema;widgets_data_schema:
       type: map
       required: false
       allowempty: true
-    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
     description:xsoar:
       type: str
     description:marketplacev2:

@@ -26,6 +26,7 @@ mapping:
     required: true
   name:
     type: str
+    required: true
   nameLocked:
     type: bool
     required: true
@@ -62,10 +63,6 @@ mapping:
     type: number
     required: true
 
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   description:xsoar:
     type: str
   description:marketplacev2:

@@ -13,6 +13,7 @@ mapping:
     type: str
   name:
     type: str
+    required: true
   name_x2:
     type: str
   prettyName:
@@ -114,12 +115,6 @@ mapping:
   aliasTo:
     type: str
 
-  regex;(required:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: bool
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   name:xsoar:
     type: str
   name:marketplacev2:
@@ -158,12 +153,11 @@ schema;aliases_schema:
       required: true
     name:
       type: str
+      required: true
     type:
       type: str
       required: true
       enum: ['shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number', 'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html']
-    regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
     name:xsoar:
       type: str
     name:marketplacev2:

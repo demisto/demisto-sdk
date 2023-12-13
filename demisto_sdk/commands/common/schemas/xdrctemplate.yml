@@ -8,6 +8,7 @@ mapping:
     required: true
   name:
     type: str
+    required: true
   content_global_id:
     type: str
     required: true
@@ -20,8 +21,6 @@ mapping:
   fromVersion:
     type: str
   toVersion:
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
   name:xsoar:
     type: str

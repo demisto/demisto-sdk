@@ -35,6 +35,7 @@ schema;dashboards_data_schema:
       required: true
     name:
       type: str
+      required: true
     description:
       type: str
     default_dashboard_id:
@@ -51,10 +52,6 @@ schema;dashboards_data_schema:
       allowempty: true
 
 
-    regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
-    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
     name:xsoar:
       type: str
     name:marketplacev2:
@@ -114,6 +111,7 @@ schema;widgets_data_schema:
       required: true
     description:
       type: str
+      required: true
     data:
       type: map
       required: true
@@ -125,8 +123,6 @@ schema;widgets_data_schema:
       type: map
       required: true
       allowempty: true
-    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
     description:xsoar:
       type: str
     description:marketplacev2:

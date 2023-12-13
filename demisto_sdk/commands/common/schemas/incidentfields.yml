@@ -21,6 +21,7 @@ schema;field_schema:
       type: str
     name:
       type: str
+      required: true
     name_x2:
       type: str
     prettyName:
@@ -102,12 +103,6 @@ schema;field_schema:
     aliasTo:
       type: str
 
-    regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
-    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
-    regex;(required:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: bool
     name:xsoar:
       type: str
     name:marketplacev2:

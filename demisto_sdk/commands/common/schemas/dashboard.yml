@@ -12,8 +12,10 @@ mapping:
     type: str
   name:
     type: str
+    required: true
   description:
     type: str
+    required: true
   fromDateLicense:
     type: str
   isPredefined:
@@ -38,10 +40,6 @@ mapping:
 
 
 
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   name:xsoar:
     type: str
   name:marketplacev2:

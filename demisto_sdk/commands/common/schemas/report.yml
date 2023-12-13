@@ -5,8 +5,10 @@ mapping:
     required: true
   name:
     type: str
+    required: true
   description:
     type: str
+    required: true
   fromVersion:
     type: str
   toVersion:
@@ -111,8 +113,6 @@ mapping:
         type: seq
         sequence:
         - include: layout_schema
-      regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: str
       name:xsoar:
         type: str
       name:marketplacev2:
@@ -137,8 +137,6 @@ mapping:
             type: scalar
           description:
             type: str
-          regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-            type: str
           description:xsoar:
             type: str
           description:marketplacev2:
@@ -153,10 +151,6 @@ mapping:
     type: any
     required: true
 
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   name:xsoar:
     type: str
   name:marketplacev2:
@@ -239,8 +233,6 @@ schema;layout_schema:
                   type: int
                 field:
                   type: str
-        regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-          type: str
         name:xsoar:
           type: str
         name:marketplacev2:

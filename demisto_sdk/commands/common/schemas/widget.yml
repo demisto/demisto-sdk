@@ -12,8 +12,10 @@ mapping:
     type: str
   name:
     type: str
+    required: true
   description:
     type: str
+    required: true
   dataType:
     type: str
   widgetType:
@@ -40,10 +42,6 @@ mapping:
   category:
     type: str
   modified:
-    type: str
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
   name:xsoar:
     type: str

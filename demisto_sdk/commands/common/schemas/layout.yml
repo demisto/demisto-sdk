@@ -50,8 +50,6 @@ mapping:
         type: seq
         sequence:
         - include: section_schema
-      regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-        type: str
       name:xsoar:
         type: str
       name:marketplacev2:
@@ -65,8 +63,6 @@ mapping:
   definitionId:
     type: str
 
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   description:xsoar:
     type: str
   description:marketplacev2:
@@ -110,10 +106,6 @@ schema;section_schema:
       sequence:
       - include: field_schema
 
-    regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
-    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
     name:xsoar:
       type: str
     name:marketplacev2:

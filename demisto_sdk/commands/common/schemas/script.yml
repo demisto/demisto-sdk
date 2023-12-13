@@ -14,6 +14,7 @@ mapping:
         required: true
   name:
     type: str
+    required: true
   name_x2:
     type: str
   script:
@@ -118,8 +119,6 @@ mapping:
       enum: ['script-name-incident-to-alert']
 
 # script->args
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   name:xsoar:
     type: str
   name:marketplacev2:
@@ -135,8 +134,10 @@ schema;argument_schema:
   mapping:
     name:
       type: str
+      required: true
     description:
       type: str
+      required: true
     description_x2:
       type: str
     defaultValue:
@@ -164,14 +165,6 @@ schema;argument_schema:
       type: bool
 
 # script->outputs
-    regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
-    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
-    regex;(defaultValue:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
-    regex;(required:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: bool
     name:xsoar:
       type: str
     name:marketplacev2:
@@ -221,14 +214,13 @@ schema;output_schema:
       type: scalar
     description:
       type: str
+      required: true
     description_x2:
       type: str
     type:
       type: str
 
 # script->important
-    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-      type: str
     description:xsoar:
       type: str
     description:marketplacev2:
@@ -247,11 +239,10 @@ schema;important_schema:
       required: true
     description:
       type: str
+      required: true
     description_x2:
       type: str
     related:
-      type: str
-    regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
       type: str
     description:xsoar:
       type: str

@@ -36,7 +36,7 @@ def add_key(mapping):
 
             if key in NON_SUPPORTED_KEYS or (key not in SUPPORTED_KEYS):
                 continue
-
+            value = deepcopy(value)
             value.pop("required", None)
             if "regex;" in key:
                 keys_to_delete.append(key)

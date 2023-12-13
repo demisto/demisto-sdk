@@ -30,8 +30,10 @@ mapping:
     required: true
   name:
     type: str
+    required: true
   description:
     type: str
+    required: false
   newEventFilters:
     type: seq
     sequence:
@@ -67,10 +69,6 @@ mapping:
     type: number
     required: true
 
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   name:xsoar:
     type: str
   name:marketplacev2:

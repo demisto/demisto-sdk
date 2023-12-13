@@ -5,11 +5,13 @@ mapping:
     required: true
   name:
     type: str
+    required: true
   alert_name:
     type: str
     required: true
   description:
     type: str
+    required: true
   alert_description:
     type: str
     required: true
@@ -60,10 +62,6 @@ mapping:
   fromversion:
     type: str
   toversion:
-    type: str
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
-  regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
   name:xsoar:
     type: str

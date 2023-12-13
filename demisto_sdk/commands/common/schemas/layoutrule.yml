@@ -14,6 +14,7 @@ mapping:
     required: true
   description:
     type: str
+    required: false
   alerts_filter:
     type: map
     mapping:
@@ -36,8 +37,6 @@ mapping:
             - include: and_schema
 
 
-  regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
-    type: str
   description:xsoar:
     type: str
   description:marketplacev2:

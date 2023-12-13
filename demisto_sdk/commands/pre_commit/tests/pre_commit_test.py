@@ -46,6 +46,8 @@ def create_hook(hook: dict):
 class MockProcess:
 
     returncode = 0
+    stdout = "finished"
+    stderr = ""
 
     def poll(self):
         return self.returncode
@@ -111,7 +113,7 @@ def test_config_files(mocker, repo: Repo):
     incident_field = pack1.create_incident_field("incident_field")
     classifier = pack1.create_classifier("classifier")
     mocker.patch.object(yaml, "dump", side_effect=lambda *args: [])
-    mocker.patch.object(subprocess, "Popen", return_value=MockProcess())
+    mocker.patch.object(subprocess, "run", return_value=MockProcess())
 
     relative_paths = {
         path.relative_to(repo.path)

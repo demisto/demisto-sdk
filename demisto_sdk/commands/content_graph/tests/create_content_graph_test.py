@@ -1238,6 +1238,7 @@ class TestCreateContentGraph:
                 content_type=ContentType.INTEGRATION,
             )
         import logging
-        logging.info(f'{integrations[0].to_dict()=}')
+
+        logging.info(f"{integrations[0].to_dict()=}")
         assert expected_python_version == integrations[0].to_dict()["python_version"]
         assert dockerhub_api_mocker.called == is_taken_from_dockerhub

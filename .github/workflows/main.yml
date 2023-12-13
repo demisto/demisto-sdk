@@ -60,7 +60,7 @@ jobs:
           # For all the tests.
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
-          
+
           mkdir test-results
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations

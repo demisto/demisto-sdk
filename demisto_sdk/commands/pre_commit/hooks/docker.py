@@ -153,6 +153,7 @@ def get_environment_flag(env: dict) -> str:
 def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
+    split_by_obj: bool = False,
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
@@ -160,6 +161,7 @@ def _split_by_objects(
     Args:
         files: the files to split
         config_arg: a tuple, argument_name, file_name
+        split_by_obj: a boolean. If true it will split all the objects into separate hooks.
 
     Returns:
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
@@ -169,7 +171,7 @@ def _split_by_objects(
     ] = defaultdict(set)
 
     for file, obj in files_with_objects:
-        if config_arg and (obj.path.parent / config_arg[1]).exists():
+        if split_by_obj or (config_arg and (obj.path.parent / config_arg[1]).exists()):
             object_to_files[obj].add((file, obj))
         else:
             object_to_files[NO_SPLIT].add((file, obj))
@@ -228,6 +230,7 @@ class DockerHook(Hook):
                         shutil.copy(
                             CONTENT_PATH / file, obj.path.parent / Path(file).name
                         )
+        split_by_obj = self._get_property("split_by_object", False)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.info(f"{len(tag_to_files_objs)} images were collected from files")
@@ -235,7 +238,9 @@ class DockerHook(Hook):
         for image, files_with_objects in sorted(
             tag_to_files_objs.items(), key=lambda item: item[0]
         ):
-            object_to_files = _split_by_objects(files_with_objects, config_arg)
+            object_to_files = _split_by_objects(
+                files_with_objects, config_arg, split_by_obj
+            )
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
             )
@@ -317,6 +322,7 @@ class DockerHook(Hook):
             hook.pop("docker_image", None)
             hook.pop("config_file_arg", None)
             hook.pop("copy_files", None)
+            hook.pop("split_by_object", None)
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

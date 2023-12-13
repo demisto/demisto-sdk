@@ -283,9 +283,9 @@ class PreCommitRunner:
             stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
 
         Returns:
-            _type_: _description_
+            int: return code - 0 if hooks passed, 1 if failed
         """
-        if not index:
+        if index is None:
             process = self._run_pre_commit_process(
                 PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
             )
@@ -586,6 +586,10 @@ def group_by_language(
             [(infra, None) for infra in infra_files]
         )
 
+    if exclude_integration_script:
+        logger.info(
+            f"Skipping deprecated integrations or scripts: {join_files(exclude_integration_script, ', ')}"
+        )
     return language_to_files, exclude_integration_script
 
 
@@ -706,7 +710,10 @@ def preprocess_files(
                 if py_file_path.exists():
                     files_to_run.add(py_file_path)
             if file.suffix in (".py", ".ps1"):
-                test_file = file.with_name(f"{file.stem}_test{file.suffix}")
+                if file.suffix == ".py":
+                    test_file = file.with_name(f"{file.stem}_test.py")
+                else:
+                    test_file = file.with_name(f"{file.stem}.Tests.ps1")
                 if test_file.exists():
                     files_to_run.add(test_file)
 

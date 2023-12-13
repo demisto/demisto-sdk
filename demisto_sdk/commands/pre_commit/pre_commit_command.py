@@ -274,8 +274,7 @@ class PreCommitRunner:
                 stdout,
             )
         if process.stdout:
-            # we use print because our logger doens't support multiprocessing yet
-            print(process.stdout)  # noqa: T201
+            logger.info(process.stdout)
         return process.returncode
 
     def _filter_hooks_need_docker(self, repos: dict) -> dict:

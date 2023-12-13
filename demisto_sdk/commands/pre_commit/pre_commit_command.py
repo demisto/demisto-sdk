@@ -8,6 +8,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import cached_property, partial
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -372,7 +373,7 @@ class PreCommitRunner:
             path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
             write_dict(path, data=self.precommit_template)
 
-        with multiprocessing.Pool(num_processes) as pool:
+        with ThreadPool(num_processes) as pool:
             results = pool.map(
                 partial(
                     self.run_hooks,

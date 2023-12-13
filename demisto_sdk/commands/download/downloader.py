@@ -1131,6 +1131,12 @@ class Downloader:
                 return get_yaml(content_item_path)
 
         else:
+            if content_type == LISTS_DIR:
+                if content_item_path.is_dir():
+                    main_file_path = [path for path in content_item_path.iterdir() if path.suffix == ".json"]
+                    if not main_file_path:
+                        return None
+                    return get_json(main_file_path[0])
             if content_item_path.is_file() and content_item_path.suffix == ".json":
                 return get_json(content_item_path)
 
@@ -1456,7 +1462,10 @@ class Downloader:
         source_to_destination_mapping: dict[
             Path, Path
         ] = {}  # A mapping of temp file paths to target final paths
-        is_unified = content_item_entity_directory in (INTEGRATIONS_DIR, SCRIPTS_DIR)
+        is_unified = content_item_entity_directory in (INTEGRATIONS_DIR, SCRIPTS_DIR, LISTS_DIR)
+
+        if content_item_type == FileType.LISTS:
+            return self.download_new_content_items(content_object, output_path)
 
         # If content item is an integration / script, split the unified content item into separate files
         if is_unified:

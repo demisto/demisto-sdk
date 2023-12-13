@@ -2,6 +2,7 @@ import copy
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import LISTS_DIR, MarketplaceVersions
+from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
@@ -37,7 +38,7 @@ class ListUnifier(Unifier):
                 f"{file_content_data.with_name(f'{file_content_data.parent.name}.json')} file. "
                 "It should be blank or a dash(-)."
             )
-        json_unified["data"] = file_content_data.read_text()
+        json_unified["data"] = TextFile.read_from_local_path(file_content_data)
 
         return json_unified
 

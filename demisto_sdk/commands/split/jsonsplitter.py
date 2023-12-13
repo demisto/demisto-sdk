@@ -10,6 +10,9 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     TypeList,
 )
+from demisto_sdk.commands.common.files.json_file import JsonFile
+from demisto_sdk.commands.common.files.text_file import TextFile
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
@@ -50,7 +53,7 @@ class JsonSplitter:
         self.json_data = (
             input_file_data
             if input_file_data is not None
-            else get_dict_from_file(path=str(self.input))[0]
+            else JsonFile.read_from_local_path(path=str(self.input))
         )
         self.type = file_type
 
@@ -186,15 +189,14 @@ class JsonSplitter:
                 (list_name_dir / file_data_name),
                 self.json_data["data"],
                 indent=JSON_INDENT_CONSTANT,
-            )
+            )  #---
+            JsonFile.write_file(self.json_data["data"], (list_name_dir / file_data_name), handler=JSON_Handler())
         else:
-            (list_name_dir / file_data_name).write_text(self.json_data["data"])
+            TextFile.write_file(self.json_data["data"], (list_name_dir / file_data_name))
 
     def write_list(self, list_name_dir: Path, file_name: str):
         self.json_data["data"] = "-"
-        write_dict(
-            (list_name_dir / file_name), self.json_data, indent=JSON_INDENT_CONSTANT
-        )
+        JsonFile.write_file(self.json_data, (list_name_dir / file_name))
 
     def split_list(self):
         list_name_dir, file_name, file_data_name = self.get_auto_output_path()

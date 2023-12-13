@@ -705,7 +705,7 @@ def preprocess_files(
                 py_file_path = file.with_suffix(".py")
                 if py_file_path.exists():
                     files_to_run.add(py_file_path)
-            if file.suffix == ".py":
+            if file.suffix in (".py", ".ps1"):
                 test_file = file.with_name(f"{file.stem}_test{file.suffix}")
                 if test_file.exists():
                     files_to_run.add(test_file)

@@ -146,7 +146,7 @@ def join_files(files: Set[Path], separator: str = "|") -> str:
         str: The joined string.
     """
     return separator.join(
-        str(file) if file.is_file() else f"{str(file)}{os.sep}" for file in files
+        str(file) if Path(file).is_file() else f"{str(file)}{os.sep}" for file in files
     )
 
 

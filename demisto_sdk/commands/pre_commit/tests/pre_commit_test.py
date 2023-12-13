@@ -270,8 +270,8 @@ def test_validate_format_hook_all_files():
     )
 
     hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
-    assert "-a" not in hook_args
-    assert "-i" in hook_args
+    assert "-a" in hook_args
+    assert "-i" not in hook_args
 
 
 class TestPreprocessFiles:

@@ -62,13 +62,12 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
 
-          poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations || pytest_exit_code=$?
+          poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations
           mkdir test-results
           # poetry run pytest -v --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
-          echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
+          # echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
-          exit $pytest_exit_code
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v3

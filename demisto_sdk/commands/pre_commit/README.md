@@ -44,7 +44,7 @@ In order to skip certain hook from running, you can add a `skip` key to the hook
 ```
 This key could be use together with [mode](#modes), to skip certain hook when running in a specific mode.
 
-# Needs key
+### Needs key
 Needs keys allow to define dependencies between hooks. If a hook with `needs` is skipped, hooks that depend on it will also be skipped.
 In this example, both hooks will be skipped.
 ```yaml

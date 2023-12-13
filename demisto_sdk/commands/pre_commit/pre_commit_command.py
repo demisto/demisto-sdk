@@ -7,7 +7,7 @@ import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
-from functools import cached_property
+from functools import cached_property, partial
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -254,25 +254,28 @@ class PreCommitRunner:
         ]
         return docker_hooks, no_docker_hooks
 
-    def _poll_for_processes(
+    def run_hooks(
         self,
-        running_processes: List[subprocess.Popen],
-        return_code: int,
-        wait: bool = False,
+        index: Optional[int],
+        precommit_env: dict,
+        verbose: bool = False,
+        stdout: Optional[int] = subprocess.PIPE,
     ):
-        process_to_remove = []
-        for process in running_processes:
-            p_return_code = process.wait() if wait else process.poll()
-            if p_return_code is not None:
-                process_to_remove.append(process)
-                if p_return_code:
-                    return_code = 1
-                stdout, _ = process.communicate()
-                if stdout:
-                    logger.info(stdout)
-        for process in process_to_remove:
-            running_processes.remove(process)
-        return return_code
+        if not index:
+            process = self._run_pre_commit_process(
+                PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
+            )
+        else:
+            process = self._run_pre_commit_process(
+                PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{index}.yaml",
+                precommit_env,
+                verbose,
+                stdout,
+            )
+        if process.stdout:
+            # we use print because our logger doens't support multiprocessing yet
+            print(process.stdout)  # noqa: T201
+        return process.returncode
 
     def _filter_hooks_need_docker(self, repos: dict) -> dict:
         full_hooks_need_docker = {}
@@ -316,7 +319,7 @@ class PreCommitRunner:
     ):
         if command is None:
             command = ["run", "-a"]
-        return subprocess.Popen(
+        return subprocess.run(
             list(
                 filter(
                     None,
@@ -346,7 +349,6 @@ class PreCommitRunner:
             )
         if self.run_hook:
             logger.info(f"[yellow]Running hook {self.run_hook}[/yellow]")
-        return_code = 0
         repos = self._get_repos(self.precommit_template)
         local_repo = repos["local"]
         docker_hooks, no_docker_hooks = self._get_docker_and_no_docker_hooks(local_repo)
@@ -363,26 +365,24 @@ class PreCommitRunner:
             precommit_env,
             verbose,
             command=["install-hooks"],
-        ).communicate()
-        main_p = self._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
         )
-        running_processes: List[subprocess.Popen] = [main_p]
-        i = 0
-        while running_processes:
-            # run docker hooks concurrently up to num_processes
-            while i < len(docker_hooks) and len(running_processes) < num_processes:
-                # create a pre-commit file with one docker hook and run it
-                self.precommit_template["repos"] = [local_repo]
-                local_repo["hooks"] = [docker_hooks[i]]
-                path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
-                write_dict(path, data=self.precommit_template)
-                p = self._run_pre_commit_process(
-                    path, precommit_env, verbose, subprocess.PIPE
-                )
-                i += 1
-                running_processes.append(p)
-            return_code = self._poll_for_processes(running_processes, return_code)
+        for i, hook in enumerate(docker_hooks):
+            self.precommit_template["repos"] = [local_repo]
+            local_repo["hooks"] = [hook]
+            path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
+            write_dict(path, data=self.precommit_template)
+
+        with multiprocessing.Pool(num_processes) as pool:
+            results = pool.map(
+                partial(
+                    self.run_hooks,
+                    precommit_env=precommit_env,
+                    verbose=verbose,
+                    stdout=stdout,
+                ),
+                [None] + list(range(len(docker_hooks))),
+            )
+        return_code = int(any(results))
         if self.hooks_need_docker:
             # run hooks that needs docker after all the docker hooks finished
             self._update_hooks_needs_docker(full_hooks_need_docker)
@@ -393,7 +393,7 @@ class PreCommitRunner:
             process_needs_docker = self._run_pre_commit_process(
                 path, precommit_env, verbose=verbose
             )
-            stdout, _ = process_needs_docker.communicate()
+
             return_code = return_code or process_needs_docker.returncode
 
         if return_code and show_diff_on_failure:

@@ -222,7 +222,10 @@ class DockerHook(Hook):
             all_objects = {obj for _, obj in filtered_files_with_objects if obj}
             for obj in all_objects:
                 for file in copy_files:
-                    shutil.copy(CONTENT_PATH / file, obj.path.parent / Path(file).name)
+                    if (CONTENT_PATH / file).exists():
+                        shutil.copy(
+                            CONTENT_PATH / file, obj.path.parent / Path(file).name
+                        )
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.info(f"{len(tag_to_files_objs)} images were collected from files")

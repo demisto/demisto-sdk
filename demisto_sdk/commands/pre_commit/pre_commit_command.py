@@ -275,6 +275,8 @@ class PreCommitRunner:
             )
         if process.stdout:
             logger.info(process.stdout)
+        if process.stderr:
+            logger.error(process.stderr)
         return process.returncode
 
     def _filter_hooks_need_docker(self, repos: dict) -> dict:
@@ -337,6 +339,7 @@ class PreCommitRunner:
             env=precommit_env,
             cwd=CONTENT_PATH,
             stdout=stdout,
+            stderr=stdout,
             universal_newlines=True,
         )
 

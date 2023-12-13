@@ -5,7 +5,6 @@ mapping:
     required: true
   name:
     type: str
-    required: true
   fromversion:
     type: str
     required: true
@@ -22,4 +21,14 @@ mapping:
   deprecated:
     type: bool
   regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+    type: str
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
     type: str

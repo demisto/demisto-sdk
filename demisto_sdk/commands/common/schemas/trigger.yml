@@ -15,7 +15,6 @@ mapping:
     required: true
   description:
     type: str
-    required: true
   suggestion_reason:
     type: str
     required: true
@@ -29,18 +28,28 @@ mapping:
             type: seq
             required: false
             sequence:
-              - include: filter_schema
-              - include: or_schema
-              - include: and_schema
+            - include: filter_schema
+            - include: or_schema
+            - include: and_schema
           AND:
             type: seq
             required: false
             sequence:
-              - include: filter_schema
-              - include: or_schema
-              - include: and_schema
+            - include: filter_schema
+            - include: or_schema
+            - include: and_schema
 
   regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
     type: str
 schema;filter_schema:
   type: map
@@ -62,9 +71,9 @@ schema;and_schema:
       type: seq
       required: false
       sequence:
-        - include: filter_schema
-        - include: or_schema
-        - include: and_schema
+      - include: filter_schema
+      - include: or_schema
+      - include: and_schema
 
 schema;or_schema:
   type: map
@@ -73,6 +82,6 @@ schema;or_schema:
       type: seq
       required: false
       sequence:
-        - include: filter_schema
-        - include: or_schema
-        - include: and_schema
+      - include: filter_schema
+      - include: or_schema
+      - include: and_schema

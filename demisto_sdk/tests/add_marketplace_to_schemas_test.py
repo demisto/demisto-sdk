@@ -36,12 +36,16 @@ def test_add_key(mocker):
             "mapping": {
                 "key": {"type": "string"},
                 "mode": {"type": "string"},
-                "regex;(mode:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas))": {
-                    "type": "string"
-                },
+                "mode:xsoar": {"type": "string"},
+                "mode:xsoar_saas": {"type": "string"},
+                "mode:xsoar_on_prem": {"type": "string"},
+                "mode:marketplacev2": {"type": "string"},
+                "mode:xpanse": {"type": "string"},
             },
         },
-        "regex;(isfetch:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas))": {
-            "type": "string"
-        },
+        "is_fetch:xsoar": {"type": "string"},
+        "is_fetch:marketplacev2": {"type": "string"},
+        "is_fetch:xsoar_saas": {"type": "string"},
+        "is_fetch:xsoar_on_prem": {"type": "string"},
+        "is_fetch:xpanse": {"type": "string"},
     }

@@ -13,7 +13,6 @@ mapping:
     type: str
   name:
     type: str
-    required: true
   ownerOnly:
     type: bool
   placeholder:
@@ -106,3 +105,33 @@ mapping:
     type: str
   regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
+  required:xsoar:
+    type: bool
+  required:marketplacev2:
+    type: bool
+  required:xpanse:
+    type: bool
+  required:xsoar_saas:
+    type: bool
+  required:xsoar_on_prem:
+    type: bool

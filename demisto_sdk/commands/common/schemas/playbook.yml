@@ -26,12 +26,10 @@ mapping:
     required: false
   name:
     type: str
-    required: true
   name_x2:
     type: str
   description:
     type: str
-    required: true
   description_x2:
     type: str
   hidden:
@@ -169,7 +167,6 @@ mapping:
                 required: true
               name:
                 type: str
-                required: true
               name_x2:
                 type: str
               playbookName:
@@ -182,7 +179,6 @@ mapping:
                 type: str
               description:
                 type: str
-                required: true
               description_x2:
                 type: str
               scriptName:
@@ -215,6 +211,26 @@ mapping:
               regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
                 type: str
               regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+                type: str
+              name:xsoar:
+                type: str
+              name:marketplacev2:
+                type: str
+              name:xpanse:
+                type: str
+              name:xsoar_saas:
+                type: str
+              name:xsoar_on_prem:
+                type: str
+              description:xsoar:
+                type: str
+              description:marketplacev2:
+                type: str
+              description:xpanse:
+                type: str
+              description:xsoar_saas:
+                type: str
+              description:xsoar_on_prem:
                 type: str
           note:
             type: bool
@@ -304,6 +320,26 @@ mapping:
     type: str
   regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
     type: str
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
 schema;task_schema:
   type: map
   allowempty: true
@@ -319,7 +355,6 @@ schema;input_schema:
       type: any
     description:
       type: str
-      required: true
     description_x2:
       type: str
     required:
@@ -332,15 +367,33 @@ schema;input_schema:
       type: str
     regex;(required:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
       type: bool
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
+    required:xsoar:
+      type: bool
+    required:marketplacev2:
+      type: bool
+    required:xpanse:
+      type: bool
+    required:xsoar_saas:
+      type: bool
+    required:xsoar_on_prem:
+      type: bool
 schema;inputsSection_schema:
   type: map
   mapping:
     name:
       type: str
-      required: true
     description:
       type: str
-      required: true
     inputs:
       type: seq
       sequence:
@@ -350,6 +403,26 @@ schema;inputsSection_schema:
     regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
       type: str
     regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
       type: str
 schema;output_schema:
   type: map
@@ -361,22 +434,29 @@ schema;output_schema:
       type: text
     description:
       type: str
-      required: true
     description_x2:
       type: str
 
 # playbook->outputsSections
     regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
       type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
 schema;outputsSection_schema:
   type: map
   mapping:
     name:
       type: str
-      required: true
     description:
       type: str
-      required: true
     outputs:
       type: seq
       sequence:
@@ -386,6 +466,26 @@ schema;outputsSection_schema:
     regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
       type: str
     regex;(description:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+      type: str
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
       type: str
 schema;condition_schema:
   type: map

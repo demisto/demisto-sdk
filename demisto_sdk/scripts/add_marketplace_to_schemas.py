@@ -1,7 +1,8 @@
 from copy import deepcopy
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_file, write_dict
 
@@ -21,29 +22,29 @@ SUPPORTED_KEYS = [
 def add_key(mapping):
     if not mapping or not isinstance(mapping, dict):
         return
-    keys_to_add = []
+    keys_to_add: List[Tuple[str, ...]] = []
     keys_to_delete: List[str] = []
     for key, value in mapping.items():
-        if key in NON_SUPPORTED_KEYS or (SUPPORTED_KEYS and key not in SUPPORTED_KEYS):
+        if key in NON_SUPPORTED_KEYS or (key not in SUPPORTED_KEYS):
             keys_to_delete.extend(
-                k for k, _ in mapping.items() if f"regex;({key}:" in k
+                k
+                for k, _ in mapping.items()
+                for marketplace in MarketplaceVersions
+                if f"{key}:{marketplace.value}:" in k
             )
         if value.get("type") != "map":
 
-            if "regex;" in key and "(.+)" in key:
-                continue
-            if key in NON_SUPPORTED_KEYS or (
-                SUPPORTED_KEYS and key not in SUPPORTED_KEYS
-            ):
+            if key in NON_SUPPORTED_KEYS or (key not in SUPPORTED_KEYS):
                 continue
 
-            value = deepcopy(value)
             value.pop("required", None)
             if "regex;" in key:
                 keys_to_delete.append(key)
                 continue
-            new_key = f"regex;({key}:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas))"
-            keys_to_add.append((new_key, value))
+            keys_to_add.extend(
+                (f"{key}:{marketplace.value}", deepcopy(value))
+                for marketplace in MarketplaceVersions
+            )
         else:
             add_key(value.get("mapping"))
     for key in keys_to_delete:

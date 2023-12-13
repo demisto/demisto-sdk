@@ -12,7 +12,6 @@ mapping:
     type: bool
   name:
     type: str
-    required: true
   fromVersion:
     type: str
   definitionIds:
@@ -57,4 +56,14 @@ mapping:
                 type: any
     required: true
   regex;(name:(xsoar)|(marketplacev2)|(xpanse)|(xsoar_on_prem)|(xsoar_saas)):
+    type: str
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
     type: str

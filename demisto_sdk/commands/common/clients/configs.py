@@ -24,13 +24,13 @@ class XsoarClientConfig(BaseModel):
     base_api_url: AnyUrl = Field(
         default=os.getenv(DEMISTO_BASE_URL), description="XSOAR Tenant Base API URL"
     )
-    api_key: Optional[SecretStr] = Field(
+    api_key: SecretStr = Field(
         default=SecretStr(os.getenv(DEMISTO_KEY, "")), description="XSOAR API Key"
     )
     user: str = Field(
         default=os.getenv(DEMISTO_USERNAME, ""), description="XSOAR Username"
     )
-    password: Optional[SecretStr] = Field(
+    password: SecretStr = Field(
         default=SecretStr(os.getenv(DEMISTO_PASSWORD, "")), description="XSOAR Password"
     )
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))

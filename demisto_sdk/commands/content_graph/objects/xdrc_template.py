@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Set
+from typing import Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -39,11 +39,11 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
         return data
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if (
             "profile_type" in _dict
             and "yaml_template" in _dict
             and path.suffix == ".json"
         ):
-            return ContentType.XDRC_TEMPLATE
-        return None
+            return True
+        return False

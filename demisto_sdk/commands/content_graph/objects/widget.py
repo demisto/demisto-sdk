@@ -29,7 +29,7 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call
         return client.import_widget
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "widgetType" in _dict and path.suffix == ".json":
-            return ContentType.WIDGET
-        return None
+            return True
+        return False

@@ -23,9 +23,9 @@ class IndicatorField(IndicatorIncidentField, content_type=ContentType.INDICATOR_
         return summary
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "id" in _dict:
             _id = _dict["id"].lower()
             if _id.startswith("indicator"):
-                return ContentType.INDICATOR_FIELD
-        return None
+                return True
+        return False

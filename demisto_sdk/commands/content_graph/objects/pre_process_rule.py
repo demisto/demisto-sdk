@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -12,7 +11,7 @@ class PreProcessRule(ContentItem, content_type=ContentType.PREPROCESS_RULE):
         raise NotIndivitudallyUploadableException(self)
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if (
             "scriptName" in _dict
             and "existingEventsFilters" in _dict
@@ -21,5 +20,5 @@ class PreProcessRule(ContentItem, content_type=ContentType.PREPROCESS_RULE):
             and "readyNewEventFilters" in _dict
             and path.suffix == ".json"
         ):
-            return ContentType.PREPROCESS_RULE
-        return None
+            return True
+        return False

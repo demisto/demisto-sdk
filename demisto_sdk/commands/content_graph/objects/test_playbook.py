@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Set
+from typing import Set
 
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -13,11 +13,11 @@ class TestPlaybook(BasePlaybook, content_type=ContentType.TEST_PLAYBOOK):  # typ
         raise NotImplementedError("TestPlaybooks not included in metadata")
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if (
             TEST_PLAYBOOKS_DIR in path.parts
             and "tasks" in _dict
             and path.suffix == ".yml"
         ):
-            return ContentType.TEST_PLAYBOOK
-        return None
+            return True
+        return False

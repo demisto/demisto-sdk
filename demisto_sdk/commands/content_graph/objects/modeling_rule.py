@@ -37,7 +37,7 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
         return data
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if (
             "rules" in _dict
             and not (
@@ -47,5 +47,5 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
             and "samples" not in _dict
         ):
             if Path(path).suffix == ".yml":
-                return ContentType.MODELING_RULE
-        return None
+                return True
+        return False

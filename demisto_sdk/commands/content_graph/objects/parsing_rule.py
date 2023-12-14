@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -23,8 +22,8 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
         return data
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "rules" in _dict:
             if "samples" in _dict and path.suffix == ".yml":
-                return ContentType.PARSING_RULE
-        return None
+                return True
+        return False

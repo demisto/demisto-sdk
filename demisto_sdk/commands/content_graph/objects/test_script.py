@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -12,8 +11,8 @@ class TestScript(BaseScript, content_type=ContentType.TEST_SCRIPT):  # type: ign
     """Class to differ from script"""
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "script" in _dict:
             if TEST_PLAYBOOKS_DIR in path.parts and path.suffix == ".yml":
-                return ContentType.TEST_SCRIPT
-        return None
+                return True
+        return False

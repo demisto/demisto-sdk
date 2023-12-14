@@ -11,7 +11,7 @@ class GenericModule(ContentItem, content_type=ContentType.GENERIC_MODULE):  # ty
     definition_ids: Optional[List[str]] = Field(alias="definitionIds")
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "definitionIds" in _dict and "views" in _dict and path.suffix == ".json":
-            return ContentType.GENERIC_MODULE
-        return None
+            return True
+        return False

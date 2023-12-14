@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional
 
 import demisto_client
 
@@ -34,11 +33,11 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
             )
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if (
             isinstance(_dict, dict)
             and {"data", "allRead", "truncated"}.intersection(_dict.keys())
             and path.suffix == ".json"
         ):
-            return ContentType.LIST
-        return None
+            return True
+        return False

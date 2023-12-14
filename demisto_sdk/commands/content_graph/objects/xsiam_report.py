@@ -20,7 +20,7 @@ class XSIAMReport(ContentItemXSIAM, content_type=ContentType.XSIAM_REPORT):  # t
         return summary
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "templates_data" in _dict and path.suffix == ".json":
-            return ContentType.XSIAM_REPORT
-        return None
+            return True
+        return False

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 import demisto_client
 
@@ -13,7 +13,7 @@ class Report(ContentItem, content_type=ContentType.REPORT):  # type: ignore[call
         return client.upload_report
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "orientation" in _dict and path.suffix == ".json":
-            return ContentType.REPORT
-        return None
+            return True
+        return False

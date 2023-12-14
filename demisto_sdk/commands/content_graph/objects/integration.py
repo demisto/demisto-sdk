@@ -124,7 +124,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         return client.integration_upload
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "category" in _dict and path.suffix == ".yml":
-            return ContentType.INTEGRATION
-        return None
+            return True
+        return False

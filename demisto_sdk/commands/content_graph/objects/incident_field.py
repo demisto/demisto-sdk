@@ -26,10 +26,10 @@ class IncidentField(IndicatorIncidentField, content_type=ContentType.INCIDENT_FI
         return summary
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "id" in _dict:
             if isinstance(_dict["id"], str):
                 _id = _dict["id"].lower()
                 if _id.startswith("incident"):
-                    return ContentType.INCIDENT_FIELD
-        return None
+                    return True
+        return False

@@ -26,7 +26,7 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
         )
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "id" in _dict:
             if isinstance(_dict["id"], str):
                 if (
@@ -35,5 +35,5 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
                     and _dict["definitionId"].lower() not in ["incident", "indicator"]
                     and path.suffix == ".json"
                 ):
-                    return ContentType.GENERIC_FIELD
-        return None
+                    return True
+        return False

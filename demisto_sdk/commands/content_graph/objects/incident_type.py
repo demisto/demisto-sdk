@@ -46,12 +46,12 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
             client.import_incident_types_handler(str(file_path))
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "color" in _dict and "cliName" not in _dict and path.suffix == ".json":
             if not (
                 "definitionId" in _dict
                 and _dict["definitionId"]
                 and _dict["definitionId"].lower() not in ["incident", "indicator"]
             ):
-                return ContentType.INCIDENT_TYPE
-        return None
+                return True
+        return False

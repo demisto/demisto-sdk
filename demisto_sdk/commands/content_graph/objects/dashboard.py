@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Optional, Set
+from typing import Callable, Set
 
 import demisto_client
 
@@ -16,7 +16,7 @@ class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignor
         return client.import_dashboard
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if (
             ("layout" in _dict or "kind" in _dict)
             and "typeId" not in _dict
@@ -24,5 +24,5 @@ class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignor
             and "regex" not in _dict
             and path.suffix == ".json"
         ):
-            return ContentType.DASHBOARD
-        return None
+            return True
+        return False

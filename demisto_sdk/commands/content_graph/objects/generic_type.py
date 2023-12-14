@@ -22,12 +22,12 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
         )
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "color" in _dict and "cliName" not in _dict and path.suffix == ".json":
             if (
                 "definitionId" in _dict
                 and _dict["definitionId"]
                 and _dict["definitionId"].lower() not in ["incident", "indicator"]
             ):
-                return ContentType.GENERIC_TYPE
-        return None
+                return True
+        return False

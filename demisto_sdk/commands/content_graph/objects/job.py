@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional
 
 import demisto_client
 from pydantic import Field
@@ -33,7 +32,7 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
             )
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if (
             isinstance(_dict, dict)
             and {
@@ -43,5 +42,5 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
             }.issubset(_dict.keys())
             and path.suffix == ".json"
         ):
-            return ContentType.JOB
-        return None
+            return True
+        return False

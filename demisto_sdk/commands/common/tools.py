@@ -137,7 +137,6 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
-from demisto_sdk.commands.content_graph.common import ContentType
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -1775,28 +1774,6 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
 
 # flake8: noqa: C901
-
-
-def find_content_type(path: Path) -> Optional[ContentType]:
-    """
-    Find the ContentType value of a path, without accessing the file, based on the file properties.
-    """
-    from demisto_sdk.commands.content_graph.objects.base_content import (
-        CONTENT_TYPE_TO_MODEL,
-    )
-    from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-
-    parsed_dict = get_dict_from_file(str(path))
-    if parsed_dict and isinstance(parsed_dict, tuple):
-        _dict = parsed_dict[0]
-    else:
-        _dict = parsed_dict
-    if isinstance(_dict, dict):
-        for content_type_obj in CONTENT_TYPE_TO_MODEL.values():
-            if issubclass(content_type_obj, ContentItem):
-                if matched_content_type := content_type_obj.match(_dict, path):
-                    return matched_content_type
-    return None
 
 
 def find_type(

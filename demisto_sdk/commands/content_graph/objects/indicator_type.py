@@ -47,7 +47,7 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
             client.import_reputation_handler(str(file_path))
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if "regex" in _dict or "reputations" in _dict and path.suffix == ".json":
-            return ContentType.INDICATOR_TYPE
-        return None
+            return True
+        return False

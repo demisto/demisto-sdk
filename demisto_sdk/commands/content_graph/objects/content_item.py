@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersi
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    get_dict_from_file,
     get_file,
     get_pack_name,
     replace_incident_to_alert,
@@ -35,6 +36,7 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
+    CONTENT_TYPE_TO_MODEL,
     BaseContent,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
@@ -64,7 +66,7 @@ class ContentItem(BaseContent):
 
     @staticmethod
     @abstractmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         """
         This function checks whether the file in the given path is of the content item type.
         """
@@ -411,3 +413,24 @@ class ContentItem(BaseContent):
         ):
             raise IncompatibleUploadVersionException(self, target_demisto_version)
         self._upload(client, marketplace)
+
+    @staticmethod
+    def find_content_type(path: Path) -> "ContentType":
+        """
+        Find the ContentType value of a path, without accessing the file, based on the file properties.
+        """
+        from demisto_sdk.commands.content_graph.parsers.content_item import (
+            InvalidContentItemException,
+        )
+
+        parsed_dict = get_dict_from_file(str(path))
+        if parsed_dict and isinstance(parsed_dict, tuple):
+            _dict = parsed_dict[0]
+        else:
+            _dict = parsed_dict
+        if isinstance(_dict, dict):
+            for content_type_obj in CONTENT_TYPE_TO_MODEL.values():
+                if issubclass(content_type_obj, ContentItem):
+                    if content_type_obj.match(_dict, path):
+                        return content_type_obj.content_type
+        raise InvalidContentItemException

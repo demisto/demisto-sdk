@@ -19,7 +19,7 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
         return client.import_classifier
 
     @staticmethod
-    def match(_dict: dict, path: Path) -> Optional[ContentType]:
+    def match(_dict: dict, path: Path) -> bool:
         if (
             ("transformer" in _dict and "keyTypeMap" in _dict)
             or "mapping" in _dict
@@ -30,5 +30,5 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
                 and _dict.get("type")
                 and "mapping" in _dict.get("type", {})
             ):
-                return ContentType.MAPPER
-        return None
+                return True
+        return False

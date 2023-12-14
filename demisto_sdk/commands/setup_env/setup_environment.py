@@ -476,7 +476,7 @@ def configure_integration(
             "Failed to initialize docker client. Make sure Docker is running and configured correctly"
         )
         raise
-    (test_docker_image, errors,) = docker_helper.get_docker().pull_or_create_test_image(
+    (test_docker_image, errors,) = docker_helper.get_docker().get_or_create_test_image(
         docker_image, integration_script.type
     )
     if errors:

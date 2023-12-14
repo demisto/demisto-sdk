@@ -2,35 +2,35 @@ type: map
 mapping:
   action:
     type: str
-    required: True
+    required: true
   enabled:
     type: bool
-    required: True
+    required: true
   existingEventsFilters:
     type: seq
     sequence:
     - include: existingEventsFilters_schema
   fromVersion:
     type: str
-    required: True
+    required: true
   id:
     type: str
-    required: True
+    required: true
   index:
     type: number
-    required: True
+    required: true
   itemVersion:
     type: str
-    required: True
+    required: true
   linkTo:
     type: str
-    required: True
+    required: true
   locked:
     type: bool
-    required: True
+    required: true
   name:
     type: str
-    required: True
+    required: true
   description:
     type: str
     required: false
@@ -40,7 +40,7 @@ mapping:
     - include: newEventFilters_schema
   packID:
     type: str
-    required: True
+    required: true
   period:
     type: seq
     sequence:
@@ -55,20 +55,40 @@ mapping:
     - include: readyNewEventFilters_schema
   scriptName:
     type: number
-    required: True
+    required: true
   searchClosed:
     type: bool
-    required: True
+    required: true
   system:
     type: bool
-    required: True
+    required: true
   toServerVersion:
     type: str
-    required: True
+    required: true
   version:
     type: number
-    required: True
+    required: true
 
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
 schema;existingEventsFilters_schema:
   type: any
 

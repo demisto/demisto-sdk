@@ -20,7 +20,6 @@ from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
-from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
@@ -50,7 +49,6 @@ ContentTypes = Union[
     Mapper,
     Classifier,
     Widget,
-    Integration,
     Dashboard,
     IncidentType,
     Script,
@@ -95,7 +93,6 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.MAPPER: "6.0.0",
     ContentType.CLASSIFIER: "6.0.0",
     ContentType.WIDGET: "5.0.0",
-    ContentType.INTEGRATION: "5.0.0",
     ContentType.DASHBOARD: "5.0.0",
     ContentType.INCIDENT_TYPE: "5.0.0",
 }

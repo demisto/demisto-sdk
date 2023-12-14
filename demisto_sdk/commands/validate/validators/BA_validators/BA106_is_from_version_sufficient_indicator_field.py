@@ -10,6 +10,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,
     ValidationResult,
 )
+from demisto_sdk.commands.validate.validators.super_classes.BA106_is_from_version_sufficient import (
+    IsFromVersionSufficientValidator,
+)
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": "6.1.0",
@@ -19,15 +22,11 @@ INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
 ContentTypes = IndicatorField
 
 
-class IndicatorFieldFromVersionValidator(BaseValidator[ContentTypes]):
-    error_code = "IF112"
+class IsFromVersionSufficientIndicatorFieldValidator(IsFromVersionSufficientValidator, BaseValidator[ContentTypes]):
     description = (
         "Validate that the indicator fromversion is sufficient according to its type"
     )
     error_message = "The fromversion of IndicatorField with type {0} must be at least {1}, current is {2}."
-    fix_message = "Raised the fromversion field to {0}."
-    related_field = "fromversion"
-    is_auto_fixable = True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

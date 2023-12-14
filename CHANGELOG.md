@@ -9,6 +9,7 @@
 * Added support for `skip` property in **pre-commit** hooks.
 * **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
 * added the *IN150* and *IN161* errors to *allowed ignore errors* list.
+* Fixed an issue where SDK commands were failing to execute correctly when supplied a path outside the Content repository.
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.

@@ -103,7 +103,7 @@ references:
     install_build_dependencies: &install_build_dependencies
       - python/install-packages: 
           pkg-manager: "poetry"
-          args: "--extras build --extras generate-unit-tests"
+          args: "--extras build"
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:

@@ -30,7 +30,7 @@ class XsoarClientConfig(BaseModel):
     user: str = Field(
         default=os.getenv(DEMISTO_USERNAME, ""), description="XSOAR Username"
     )
-    password: SecretStr = Field(
+    password: Optional[SecretStr] = Field(
         default=SecretStr(os.getenv(DEMISTO_PASSWORD, "")), description="XSOAR Password"
     )
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))

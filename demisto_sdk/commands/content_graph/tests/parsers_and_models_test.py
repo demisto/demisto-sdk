@@ -1798,9 +1798,9 @@ class TestFindContentType:
     def test_playbook_outside_content_path(self, git_repo):
         """
         Given:
-            - An playbook JSON file outside the content repository path.
+            - An playbook YAML file outside the content repository path.
         When:
-            - Running from_path on the playbook JSON file.
+            - Running from_path on the playbook YAML file.
         Then:
             - Verify that the returned Parser is PlaybookParser.
         """

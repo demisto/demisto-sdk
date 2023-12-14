@@ -1960,7 +1960,7 @@ def find_type(
     ):
         return FileType.LAYOUT
 
-    if LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+    if isinstance(_dict, dict) and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
         if Layout.match(_dict, Path(path)):
             return FileType.LAYOUTS_CONTAINER
 

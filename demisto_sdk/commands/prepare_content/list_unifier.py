@@ -17,29 +17,29 @@ class ListUnifier(Unifier):
         if path.parent.name == LISTS_DIR:
             return data
         package_path = path.parent
-        path_file_data = ListUnifier.find_file_content_data(
+        file_content_data_path = ListUnifier.find_file_content_data(
             package_path / (package_path.name + "_data")
         )
-        if not path_file_data:
+        if not file_content_data_path:
             logger.warning(
                 f"No data file found for '{path}', assuming file is already unified."
             )
             return data
 
         json_unified = copy.deepcopy(data)
-        json_unified = ListUnifier.insert_data_to_json(json_unified, path_file_data)
+        json_unified = ListUnifier.insert_data_to_json(json_unified, file_content_data_path)
         logger.debug(f"[green]Created unified json: {path.name}[/green]")
         return json_unified
 
     @staticmethod
-    def insert_data_to_json(json_unified: Dict, file_content_data: Path):
+    def insert_data_to_json(json_unified: Dict, file_content_data_path: Path):
         if json_unified.get("data", "") not in ("", "-"):
             logger.warning(
                 "data section is not empty in "
-                f"{file_content_data.with_name(f'{file_content_data.parent.name}.json')} file. "
+                f"{file_content_data_path.with_name(f'{file_content_data_path.parent.name}.json')} file. "
                 "It should be blank or a dash(-)."
             )
-        json_unified["data"] = TextFile.read_from_local_path(file_content_data)
+        json_unified["data"] = TextFile.read_from_local_path(file_content_data_path)
 
         return json_unified
 

@@ -25,18 +25,28 @@ mapping:
             type: seq
             required: false
             sequence:
-              - include: filter_schema
-              - include: or_schema
-              - include: and_schema
+            - include: filter_schema
+            - include: or_schema
+            - include: and_schema
           AND:
             type: seq
             required: false
             sequence:
-              - include: filter_schema
-              - include: or_schema
-              - include: and_schema
+            - include: filter_schema
+            - include: or_schema
+            - include: and_schema
 
 
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
 schema;filter_schema:
   type: map
   mapping:
@@ -57,9 +67,9 @@ schema;and_schema:
       type: seq
       required: false
       sequence:
-        - include: filter_schema
-        - include: or_schema
-        - include: and_schema
+      - include: filter_schema
+      - include: or_schema
+      - include: and_schema
 
 schema;or_schema:
   type: map
@@ -68,6 +78,6 @@ schema;or_schema:
       type: seq
       required: false
       sequence:
-        - include: filter_schema
-        - include: or_schema
-        - include: and_schema
+      - include: filter_schema
+      - include: or_schema
+      - include: and_schema

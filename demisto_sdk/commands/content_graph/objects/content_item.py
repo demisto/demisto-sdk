@@ -230,9 +230,7 @@ class ContentItem(BaseContent):
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(
-            data, current_marketplace, self.marketplaces
-        )
+        return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
         self,

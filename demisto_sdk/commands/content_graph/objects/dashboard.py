@@ -18,9 +18,10 @@ class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignor
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
         if (
-            "layout" in _dict
-            or "kind" in _dict
-            and not ("kind" in _dict or "typeId" in _dict)
+            ("layout" in _dict or "kind" in _dict)
+            and "typeId" not in _dict
+            and "color" not in _dict
+            and "regex" not in _dict
             and path.suffix == ".json"
         ):
             return ContentType.DASHBOARD

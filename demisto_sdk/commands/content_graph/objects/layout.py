@@ -55,11 +55,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
 
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
-        if (
-            ("layout" in _dict or "kind" in _dict)
-            and ("kind" in _dict or "typeId" in _dict)
-            and path.suffix == ".json"
-        ):
+        if "group" in _dict and Path(path).suffix == ".json":
             return ContentType.LAYOUT
         return None
 

@@ -1786,8 +1786,12 @@ def find_content_type(path: Path) -> Optional[ContentType]:
     )
     from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
-    _dict = get_dict_from_file(str(path))
-    if _dict and isinstance(_dict, dict):
+    parsed_dict = get_dict_from_file(str(path))
+    if parsed_dict and isinstance(parsed_dict, tuple):
+        _dict = parsed_dict[0]
+    else:
+        _dict = parsed_dict
+    if isinstance(_dict, dict):
         for content_type_obj in CONTENT_TYPE_TO_MODEL.values():
             if issubclass(content_type_obj, ContentItem):
                 if matched_content_type := content_type_obj.match(_dict, path):
@@ -1948,14 +1952,14 @@ def find_type(
     ) and "canvasContextConnections" in _dict:
         return FileType.CONNECTION
 
-    if Layout.match(_dict, Path(path)):
-        return FileType.LAYOUT
-
     if (
-        "group" in _dict
-        and LAYOUT_CONTAINER_FIELDS.intersection(_dict)
+        ("layout" in _dict or "kind" in _dict)
+        and ("kind" in _dict or "typeId" in _dict)
         and Path(path).suffix == ".json"
     ):
+        return FileType.LAYOUT
+
+    if Layout.match(_dict, Path(path)):
         return FileType.LAYOUTS_CONTAINER
 
     if Dashboard.match(_dict, Path(path)):

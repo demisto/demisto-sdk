@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
-    MODELING_RULES_DIR,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -39,7 +38,14 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
 
     @staticmethod
     def match(_dict: dict, path: Path) -> Optional[ContentType]:
-        if "rules" in _dict:
-            if MODELING_RULES_DIR in Path(path).parts and Path(path).suffix == ".yml":
+        if (
+            "rules" in _dict
+            and not (
+                "global_rule_id" in _dict
+                or (isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0])
+            )
+            and "samples" not in _dict
+        ):
+            if Path(path).suffix == ".yml":
                 return ContentType.MODELING_RULE
         return None

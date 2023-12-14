@@ -1133,7 +1133,7 @@ class Downloader:
         else:
             if content_type == LISTS_DIR:
                 if content_item_path.is_dir():
-                    json_files = [str(path) for path in content_item_path.iterdir() if path.suffix == ".json"][0]
+                    json_files = [str(path) for path in content_item_path.iterdir() if path.suffix == ".json"]
                     if not json_files:
                         return None
                     return get_json(json_files[0])
@@ -1283,6 +1283,7 @@ class Downloader:
             for file_name, content_object in downloaded_content_objects.items():
                 content_item_name: str = content_object["name"]
                 content_item_entity: str = content_object["entity"]
+                content_item_type: FileType = content_object["type"]
 
                 content_item_exists = (  # Content item already exists in output pack
                     content_item_name
@@ -1299,7 +1300,8 @@ class Downloader:
                 downloaded_files: list[Path] = []
 
                 try:
-                    if content_item_exists:
+                    # We skip 'download_existing_content_items' logic for lists since 'smart-merge' is irrelevant for lists
+                    if content_item_exists and content_item_type != FileType.LISTS:
                         downloaded_files = self.download_existing_content_items(
                             content_object=content_object,
                             existing_pack_structure=existing_pack_structure,
@@ -1462,10 +1464,7 @@ class Downloader:
         source_to_destination_mapping: dict[
             Path, Path
         ] = {}  # A mapping of temp file paths to target final paths
-        is_unified = content_item_entity_directory in (INTEGRATIONS_DIR, SCRIPTS_DIR, LISTS_DIR)
-
-        if content_item_type == FileType.LISTS:
-            return self.download_new_content_items(content_object, output_path)
+        is_unified = content_item_entity_directory in (INTEGRATIONS_DIR, SCRIPTS_DIR)
 
         # If content item is an integration / script, split the unified content item into separate files
         if is_unified:

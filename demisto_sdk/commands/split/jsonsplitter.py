@@ -185,13 +185,13 @@ class JsonSplitter:
 
     def write_file_data(self, list_name_dir: Path, file_data_name: str):
         if file_data_name.endswith("json"):
-            JsonFile.write_file(self.json_data["data"], (list_name_dir / file_data_name), handler=JSON_Handler())
+            JsonFile.write_file(self.json_data["data"], (list_name_dir / file_data_name), indent=JSON_INDENT_CONSTANT)
         else:
             TextFile.write_file(self.json_data["data"], (list_name_dir / file_data_name))
 
     def write_list(self, list_name_dir: Path, file_name: str):
         self.json_data["data"] = "-"
-        JsonFile.write_file(self.json_data, (list_name_dir / file_name))
+        JsonFile.write_file(self.json_data, (list_name_dir / file_name), indent=JSON_INDENT_CONSTANT)
 
     def split_list(self):
         list_name_dir, file_name, file_data_name = self.get_auto_output_path()

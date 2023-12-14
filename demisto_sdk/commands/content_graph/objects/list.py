@@ -43,4 +43,4 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
             if kwargs.get("unify_only")
             else super().prepare_for_upload(current_marketplace)
         )
-        return ListUnifier.unify(self.path, self.data, marketplace=current_marketplace)
+        return ListUnifier.unify(self.path, data, marketplace=current_marketplace)

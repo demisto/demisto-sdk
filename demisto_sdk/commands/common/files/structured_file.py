@@ -14,6 +14,8 @@ class StructuredFile(TextFile, ABC):
 
     handler: XSOAR_Handler = Field(None, exclude=True)
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("handler", always=True)
     @abstractmethod
     def validate_handler(cls, v: Type[XSOAR_Handler]) -> Type[XSOAR_Handler]:

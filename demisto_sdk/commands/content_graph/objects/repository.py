@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import tqdm
-from pydantic import BaseModel, DirectoryPath
+from pydantic import BaseModel, ConfigDict, DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -82,6 +82,4 @@ class ContentDTO(BaseModel):
             shutil.make_archive(str(dir.parent / output_stem), "zip", dir)
             shutil.rmtree(dir)
 
-    class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)

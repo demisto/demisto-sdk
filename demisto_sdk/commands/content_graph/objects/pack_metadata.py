@@ -29,36 +29,36 @@ json = JSON_Handler()
 class PackMetadata(BaseModel):
     name: str
     display_name: str
-    description: Optional[str]
-    created: Optional[str]
+    description: Optional[str] = None
+    created: Optional[str] = None
     updated: Optional[str] = Field("")
-    legacy: Optional[bool]
-    support: Optional[str]
-    url: Optional[str]
-    email: Optional[str]
-    eulaLink: Optional[str]
+    legacy: Optional[bool] = None
+    support: Optional[str] = None
+    url: Optional[str] = None
+    email: Optional[str] = None
+    eulaLink: Optional[str] = None
     author: Optional[str] = Field("")
     author_image: Optional[str] = Field("", alias="authorImage")
     certification: Optional[str] = Field("")
-    price: Optional[int]
-    hidden: Optional[bool]
-    server_min_version: Optional[str] = Field(alias="serverMinVersion")
-    current_version: Optional[str] = Field(alias="currentVersion")
+    price: Optional[int] = None
+    hidden: Optional[bool] = None
+    server_min_version: Optional[str] = Field(None, alias="serverMinVersion")
+    current_version: Optional[str] = Field(None, alias="currentVersion")
     version_info: Optional[str] = Field("", alias="versionInfo")
-    commit: Optional[str]
-    downloads: Optional[int]
+    commit: Optional[str] = None
+    downloads: Optional[int] = None
     tags: Optional[List[str]] = Field([])
     categories: Optional[List[str]] = Field([])
-    use_cases: Optional[List[str]] = Field(alias="useCases")
-    keywords: Optional[List[str]]
-    search_rank: Optional[int] = Field(alias="searchRank")
+    use_cases: Optional[List[str]] = Field(None, alias="useCases")
+    keywords: Optional[List[str]] = None
+    search_rank: Optional[int] = Field(None, alias="searchRank")
     excluded_dependencies: Optional[List[str]] = Field([], alias="excludedDependencies")
     videos: Optional[List[str]] = Field([])
     modules: Optional[List[str]] = Field([])
     integrations: Optional[List[str]] = Field([])
 
     # For private packs
-    premium: Optional[bool]
+    premium: Optional[bool] = None
     vendor_id: Optional[str] = Field(None, alias="vendorId")
     partner_id: Optional[str] = Field(None, alias="partnerId")
     partner_name: Optional[str] = Field(None, alias="partnerName")

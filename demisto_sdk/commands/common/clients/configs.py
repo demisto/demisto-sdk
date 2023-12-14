@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict, Optional
 
-from pydantic import AnyUrl, BaseModel, Field, SecretStr, root_validator
+from pydantic import AnyUrl, BaseModel, Field, SecretStr, model_validator
 
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
@@ -35,7 +35,8 @@ class XsoarClientConfig(BaseModel):
     )
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))
 
-    @root_validator()
+    @model_validator()
+    @classmethod
     def validate_auth_params(cls, values: Dict[str, Any]):
         if not values.get("api_key") and not (
             values.get("user") and values.get("password")
@@ -73,7 +74,8 @@ class XsoarClientConfig(BaseModel):
 class XsoarSaasClientConfig(XsoarClientConfig):
     auth_id: str = Field(default=os.getenv(AUTH_ID), description="XSOAR/XSIAM Auth ID")
 
-    @root_validator()
+    @model_validator()
+    @classmethod
     def validate_auth_params(cls, values: Dict[str, Any]):
         if not values.get("api_key"):
             raise ValueError("api_key is required for xsoar-saas/xsiam")

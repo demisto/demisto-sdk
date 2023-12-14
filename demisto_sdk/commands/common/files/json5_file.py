@@ -11,6 +11,8 @@ class Json5File(StructuredFile):
 
     handler: JSON5_Handler = Field(None, exclude=True)
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("handler", always=True)
     def validate_handler(cls, v: JSON5_Handler) -> JSON5_Handler:
         return v or json5

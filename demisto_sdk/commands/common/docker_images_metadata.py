@@ -20,7 +20,7 @@ DOCKERFILES_INFO_IMAGE_REGEX = r"^demisto/([^\s:]+):(\d+(\.\d+)*)$"
 
 
 class DockerImageTagMetadata(BaseModel):
-    python_version: Optional[str]
+    python_version: Optional[str] = None
 
 
 class DockerImagesMetadata(PydanticSingleton, BaseModel):

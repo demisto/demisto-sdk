@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
-from pydantic import BaseModel, PrivateAttr, validator
+from pydantic import BaseModel, ConfigDict, PrivateAttr, validator
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
@@ -37,16 +37,20 @@ class File(ABC, BaseModel):
     input_path: Path
     _input_path_content: bytes = PrivateAttr(None)
     default_encoding: str = "utf-8"  # default encoding is utf-8
-
-    class Config:
-        arbitrary_types_allowed = (
+    model_config = ConfigDict(
+        arbitrary_types_allowed=(
             True  # allows having custom classes for properties in model
         )
+    )
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("git_util", pre=True, always=True)
     def get_git_util(cls, v: Optional[GitUtil]) -> GitUtil:
         return v or GitUtil.from_content_path()
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("input_path", always=True)
     def get_input_path(cls, v: Path, values: Dict) -> Path:
         input_path = v

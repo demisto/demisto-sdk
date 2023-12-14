@@ -8,8 +8,8 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class Classifier(ContentItem, content_type=ContentType.CLASSIFIER):  # type: ignore[call-arg]
-    type: Optional[str]
-    definition_id: Optional[str] = Field(alias="definitionId")
+    type: Optional[str] = None
+    definition_id: Optional[str] = Field(None, alias="definitionId")
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

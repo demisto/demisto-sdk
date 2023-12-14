@@ -26,6 +26,7 @@ repos:
     exclude: tests/.*|demisto_sdk/commands/init/templates/.*
     # This is auto-generated dependencies list taken from `poetry.lock`. DO NOT EDIT MANUALLY
     additional_dependencies:
+    - annotated-types==0.6.0 ; python_version >= "3.8" and python_version < "3.11"
     - astroid==2.9.3 ; python_version >= "3.8" and python_version < "3.11"
     - attrs==23.1.0 ; python_version >= "3.8" and python_version < "3.11"
     - autopep8==1.7.0 ; python_version >= "3.8" and python_version < "3.11"
@@ -115,7 +116,8 @@ repos:
     - pyasn1==0.5.0 ; python_version >= "3.8" and python_version < "3.11"
     - pycodestyle==2.10.0 ; python_version >= "3.8" and python_version < "3.11"
     - pycparser==2.21 ; python_version >= "3.8" and python_version < "3.11"
-    - pydantic==1.10.7 ; python_version >= "3.8" and python_version < "3.11"
+    - pydantic-core==2.14.5 ; python_version >= "3.8" and python_version < "3.11"
+    - pydantic==2.5.2 ; python_version >= "3.8" and python_version < "3.11"
     - pygments==2.15.1 ; python_version >= "3.8" and python_version < "3.11"
     - pykwalify==1.8.0 ; python_version >= "3.8" and python_version < "3.11"
     - pylint==2.12.2 ; python_version >= "3.8" and python_version < "3.11"
@@ -177,7 +179,7 @@ repos:
     - types-toml==0.10.8.7 ; python_version >= "3.8" and python_version < "3.11"
     - types-ujson==5.7.0.5 ; python_version >= "3.8" and python_version < "3.11"
     - types-urllib3==1.26.25.12 ; python_version >= "3.8" and python_version < "3.11"
-    - typing-extensions==4.5.0 ; python_version >= "3.8" and python_version < "3.11"
+    - typing-extensions==4.9.0 ; python_version >= "3.8" and python_version < "3.11"
     - tzdata==2023.3 ; python_version >= "3.8" and python_version < "3.11"
     - tzlocal==4.3 ; python_version >= "3.8" and python_version < "3.11"
     - ujson==5.7.0 ; python_version >= "3.8" and python_version < "3.11"

@@ -24,8 +24,8 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 class IntegrationScript(ContentItem):
     type: str
-    subtype: Optional[str]
-    docker_image: Optional[str]
+    subtype: Optional[str] = None
+    docker_image: Optional[str] = None
     alt_docker_images: List[str] = []
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)

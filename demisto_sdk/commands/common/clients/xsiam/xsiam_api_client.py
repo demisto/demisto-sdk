@@ -51,6 +51,8 @@ class XsiamClient(XsoarSaasClient):
             )
             return False
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("session", always=True)
     def get_xdr_session(cls, v: Optional[Session], values: Dict[str, Any]) -> Session:
         session = v or super().get_xdr_session(v, values)

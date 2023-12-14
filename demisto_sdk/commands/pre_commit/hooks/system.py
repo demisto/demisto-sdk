@@ -1,15 +1,13 @@
+import sys
 from pathlib import Path
-from typing import Iterable, Optional
 
 from demisto_sdk.commands.pre_commit.hooks.hook import (
     Hook,
-    join_files,
-    safe_update_hook_args,
 )
 
 
-class ValidateFormatHook(Hook):
-    def prepare_hook(self, files_to_run: Optional[Iterable[Path]], **kwargs):
+class SystemHook(Hook):
+    def prepare_hook(self, **kwargs):
         """
         Prepares the Validate or the Format hook.
         In case of nightly mode and all files, runs validate/format with the --all flag, (nightly mode is not supported on specific files).
@@ -18,12 +16,8 @@ class ValidateFormatHook(Hook):
         Args:
             files_to_run (Optional[Iterable[Path]]): The input files to validate. Defaults to None.
         """
-        if self.all_files:
-            safe_update_hook_args(self.base_hook, "-a")
-        elif self.input_mode:
-            safe_update_hook_args(self.base_hook, "-i")
-            self.base_hook["args"].append(join_files(files_to_run, ","))
-        else:
-            safe_update_hook_args(self.base_hook, "-g")
-
+        if "entry" in self.base_hook:
+            entry = self.base_hook["entry"]
+            bin_path = Path(sys.executable).parent
+            self.base_hook["entry"] = f"{bin_path}/{entry}"
         self.hooks.insert(self.hook_index, self.base_hook)

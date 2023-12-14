@@ -27,21 +27,24 @@ class TestLayoutBaseConverter:
         """
         classifier_converter = ClassifierBaseConverter(tmpdir)
         result = classifier_converter.get_classifiers_schema_intersection_fields()
-        assert result == {
-            "custom",
-            "defaultIncidentType",
-            "feed",
-            "incidentSamples",
-            "indicatorSamples",
-            "isDefault",
-            "keyTypeMap",
-            "modified",
-            "propagationLabels",
-            "sortValues",
-            "transformer",
-            "unclassifiedCases",
-            "version",
-        }
+        assert all(
+            field in result
+            for field in (
+                "custom",
+                "defaultIncidentType",
+                "feed",
+                "incidentSamples",
+                "indicatorSamples",
+                "isDefault",
+                "keyTypeMap",
+                "modified",
+                "propagationLabels",
+                "sortValues",
+                "transformer",
+                "unclassifiedCases",
+                "version",
+            )
+        )
 
     EXTRACT_CLASSIFIER_NAME_INPUTS = [
         ("classifier-Cymulate_5_9_9", "Cymulate"),

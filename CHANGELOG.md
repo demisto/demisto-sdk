@@ -13,6 +13,7 @@
 * Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
 * **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.
 * **Breaking change**: Removed the `--unit-test` argument in **pre-commit**. To skip unit tests, run with `--no-docker` or with `skip=pytest-in-docker`,
+* Fixed an issue where the build number appeared in the pack info when using SDK-upload via pipeline.
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.

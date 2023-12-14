@@ -400,14 +400,14 @@ def test_IsFromVersionSufficientValidator_fix(
         ),
         (
             [
-                create_incident_field_object(["toVersion"], ["5.0.0"]),
+                create_incident_type_object(["toVersion"], ["5.0.0"]),
                 create_incident_field_object(["toVersion"], ["4.5.0"]),
                 create_widget_object(["toVersion"], ["4.5.0"]),
                 create_wizard_object({"toVersion": "4.5.0"}),
             ],
             4,
             [
-                "The Incident fromversion and toversion are not synchronized.\nThe toversion (5.0.0) should be greater than the fromversion (5.0.0).",
+                "The IncidentType fromversion and toversion are not synchronized.\nThe toversion (5.0.0) should be greater than the fromversion (5.0.0).",
                 "The IncidentField fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (5.5.0).",
                 "The Widget fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (6.1.0).",
                 "The Wizard fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (6.8.0).",
@@ -422,7 +422,7 @@ def test_FromToVersionSyncedValidator_is_valid(
     Given
     content_items list.
         - Case 1: a list of content items with 1 item of each kind supported by the validation where the fromVersion < toVersion / toVersion field doesn't exist.
-        - Case 2: IncidentField with the fromVersion = toVersion = 5.0.0, IncidentField, Widget, and Wizard, all set to toVersion = 4.5.0 < fromVersion (insufficient).
+        - Case 2: IncidentType with the fromVersion = toVersion = 5.0.0, IncidentField, Widget, and Wizard, all set to toVersion = 4.5.0 < fromVersion (insufficient).
     When
     - Calling the FromToVersionSyncedValidator is_valid function.
     Then
@@ -495,13 +495,11 @@ def test_FromToVersionSyncedValidator_is_valid(
         ),
         (
             [
-                create_indicator_field_object(
-                    ["type", "fromVersion"], ["4.5.0"]
-                ),
+                create_indicator_field_object(["fromVersion"], ["4.5.0"]),
             ],
             1,
             [
-                "The fromversion of IndicatorField with type html must be at least 5.0.0, current is 4.5.0.",
+                "The fromversion of IndicatorField with type shortText must be at least 5.0.0, current is 4.5.0.",
             ],
         ),
     ],
@@ -544,6 +542,56 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "indicator_field, current_version, expected_msg, expected_fixed_version",
+    [
+        (
+            create_indicator_field_object(["type", "fromVersion"], ["html", "6.0.0"]),
+            "6.0.0",
+            "Raised the fromversion field to 6.1.0",
+            "6.1.0",
+        ),
+        (
+            create_indicator_field_object(["type", "fromVersion"], ["grid", "5.0.0"]),
+            "5.0.0",
+            "Raised the fromversion field to 5.5.0",
+            "5.5.0",
+        ),
+        (
+            create_indicator_field_object(paths=["fromVersion"], values=["4.5.0"]),
+            "4.5.0",
+            "Raised the fromversion field to 5.0.0",
+            "5.0.0",
+        ),
+    ],
+)
+def test_IsFromVersionSufficientIndicatorFieldValidator_fix(
+    indicator_field, current_version, expected_msg, expected_fixed_version
+):
+    """
+    Given
+        - an IndicatorField.
+        html type and fromVersion = 6.1.0.
+            - one with grid type
+        - Case 1: an Indicator field with type = html and fromversion = 6.0.0.
+        - Case 2: an Indicator field with type = grid and fromversion = 5.0.0.
+        - Case 3: an Indicator field with type = shortText and fromversion = 4.5.0.
+    When
+    - Calling the IsFromVersionSufficientIndicatorFieldValidator fix function.
+    Then
+        - Make sure the the integration fromversion was raised and that the right message was returned.
+        - Case 1: Should raise the version to 6.1.0.
+        - Case 2: Should raise the version to 5.5.0.
+        - Case 3: Should raise the version to 5.0.0.
+    """
+    assert indicator_field.fromversion == current_version
+    assert (
+        IsFromVersionSufficientIndicatorFieldValidator().fix(indicator_field).message
+        == expected_msg
+    )
+    assert indicator_field.fromversion == expected_fixed_version
 
 
 @pytest.mark.parametrize(
@@ -594,11 +642,8 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
         (
             [
                 create_ps_integration_object(
-                    paths=[
-                        "script.type",
-                        "fromversion",
-                    ],
-                    values=["powershell", "5.5.0"],
+                    paths=["fromversion"],
+                    values=["5.5.0"],
                 ),
                 create_integration_object(
                     paths=[
@@ -619,16 +664,33 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_is_valid(
                     values=["6.0.0"],
                 ),
                 create_ps_integration_object(
-                    paths=[
-                        "script.type",
-                        "fromversion",
-                    ],
-                    values=["powershell", "5.0.0"],
+                    paths=["fromversion"],
+                    values=["5.0.0"],
                 ),
             ],
             1,
             [
                 "The integration is a powershell integration and therefore require a fromversion field of at least 5.5.0, current version is: 5.0.0."
+            ],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=[
+                        "fromversion",
+                    ],
+                    values=["4.5.0"],
+                ),
+                create_integration_object(
+                    paths=[
+                        "fromversion",
+                    ],
+                    values=["5.0.0"],
+                ),
+            ],
+            1,
+            [
+                "The integration is a regular integration and therefore require a fromversion field of at least 5.0.0, current version is: 4.5.0."
             ],
         ),
     ],
@@ -643,6 +705,7 @@ def test_IsFromVersionSufficientIntegrationValidator_is_valid(
         - Case 2: 2 integration - one feed integration with fromversion lower than 5.5.0 and one with a high enough fromversion field.
         - Case 3: 2 integrations - one ps integration with high enough fromversion field and one python integration with fromversion lower than 5.5.0.
         - Case 4: 2 integration - one ps integration with fromversion lower than 5.5.0 and one with a high enough fromversion field.
+        - Case 5: 2 regular integrations - one with fromversion lower than 5.0.0 and one with fromversion = 5.0.0
     When
     - Calling the IsFromVersionSufficientIntegrationValidator is valid function.
     Then
@@ -651,6 +714,7 @@ def test_IsFromVersionSufficientIntegrationValidator_is_valid(
         - Case 2: Should fail only one integration.
         - Case 3: Shouldn't fail at all.
         - Case 4: Should fail only one integration.
+        - Case 5: Should fail only one integration.
     """
     results = IsFromVersionSufficientIntegrationValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
@@ -662,37 +726,51 @@ def test_IsFromVersionSufficientIntegrationValidator_is_valid(
     )
 
 
-def test_IsFromVersionSufficientIntegrationValidator_fix():
+@pytest.mark.parametrize(
+    "integration, current_version, expected_msg, expected_fixed_version",
+    [
+        (
+            create_ps_integration_object(paths=["fromversion"], values=["5.0.0"]),
+            "5.0.0",
+            "Raised the fromversion field to 5.5.0",
+            "5.5.0",
+        ),
+        (
+            create_integration_object(
+                paths=["fromversion", "script.feed"], values=["5.0.0", True]
+            ),
+            "5.0.0",
+            "Raised the fromversion field to 5.5.0",
+            "5.5.0",
+        ),
+        (
+            create_integration_object(paths=["fromversion"], values=["4.5.0"]),
+            "4.5.0",
+            "Raised the fromversion field to 5.0.0",
+            "5.0.0",
+        ),
+    ],
+)
+def test_IsFromVersionSufficientIntegrationValidator_fix(
+    integration, current_version, expected_msg, expected_fixed_version
+):
     """
     Given
-        - an integration
+        - an integration.
+        - Case 1: a ps integration with fromversion = 5.0.0.
+        - Case 2: a feed integration with fromversion = 5.0.0.
+        - Case 3: a regular integration with fromversion = 4.5.0.
     When
     - Calling the IsFromVersionSufficientIntegrationValidator fix function.
     Then
         - Make sure the the integration fromversion was raised and that the right message was returned.
+        - Case 1: Should raise the version to 5.5.0.
+        - Case 2: Should raise the version to 5.5.0.
+        - Case 3: Should raise the version to 5.0.0.
     """
-    content_item = create_integration_object(paths=["fromversion"], values=["5.0.0"])
-    assert content_item.fromversion == "5.0.0"
+    assert integration.fromversion == current_version
     assert (
-        IsFromVersionSufficientIntegrationValidator().fix(content_item).message
-        == "Raised the fromversion field to 5.5.0"
+        IsFromVersionSufficientIntegrationValidator().fix(integration).message
+        == expected_msg
     )
-    assert content_item.fromversion == "5.5.0"
-
-
-def test_PSIntegrationFromVersionValidator_fix():
-    """
-    Given
-        - a ps integration
-    When
-    - Calling the PSIntegrationFromVersionValidator fix function.
-    Then
-        - Make sure the the integration fromversion was raised and that the right message was returned.
-    """
-    content_item = create_ps_integration_object(paths=["fromversion"], values=["5.0.0"])
-    assert content_item.fromversion == "5.0.0"
-    assert (
-        PSIntegrationFromVersionValidator().fix(content_item).message
-        == "Raised the fromversion field to 5.5.0"
-    )
-    assert content_item.fromversion == "5.5.0"
+    assert integration.fromversion == expected_fixed_version

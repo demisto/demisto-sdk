@@ -65,7 +65,9 @@ ContentTypes = Union[
 ]
 
 
-class IsFromVersionSufficientAllItemsValidator(IsFromVersionSufficientValidator, BaseValidator[ContentTypes]):
+class IsFromVersionSufficientAllItemsValidator(
+    IsFromVersionSufficientValidator, BaseValidator[ContentTypes]
+):
     """
     This class is for cases where the IsFromVersionSufficientValidator need to run on items that are not dependent on the item's type.
     """

@@ -2,17 +2,10 @@ import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
-    create_ps_integration_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subtype import (
     ValidSubtypeValidator,
-)
-from demisto_sdk.commands.validate.validators.IN_validators.IN119_feed_integration_from_version import (
-    FeedIntegrationFromVersionValidator,
-)
-from demisto_sdk.commands.validate.validators.IN_validators.IN120_ps_integration_from_version import (
-    PSIntegrationFromVersionValidator,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration_runable import (
     IsIntegrationRunnableValidator,

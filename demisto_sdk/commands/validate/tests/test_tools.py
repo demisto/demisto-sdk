@@ -142,7 +142,7 @@ def create_ps_integration_object(
     Returns:
         The integration object.
     """
-    yml_content = load_yaml("integration.yml")
+    yml_content = load_yaml("ps_integration.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     integration = pack.create_integration(yml=yml_content)

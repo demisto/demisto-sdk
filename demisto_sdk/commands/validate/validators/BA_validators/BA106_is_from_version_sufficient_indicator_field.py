@@ -22,7 +22,9 @@ INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
 ContentTypes = IndicatorField
 
 
-class IsFromVersionSufficientIndicatorFieldValidator(IsFromVersionSufficientValidator, BaseValidator[ContentTypes]):
+class IsFromVersionSufficientIndicatorFieldValidator(
+    IsFromVersionSufficientValidator, BaseValidator[ContentTypes]
+):
     description = (
         "Validate that the indicator fromversion is sufficient according to its type"
     )
@@ -48,7 +50,7 @@ class IsFromVersionSufficientIndicatorFieldValidator(IsFromVersionSufficientVali
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         version_to_set: str = INDICATOR_FIELD_TYPE_TO_MIN_VERSION.get(
-            content_item.content_type, "5.0.0"
+            content_item.type, "5.0.0"
         )
         content_item.fromversion = version_to_set
         return FixResult(

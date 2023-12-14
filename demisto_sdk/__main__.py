@@ -3587,25 +3587,25 @@ def pre_commit(
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
-    typer.Exit(
-        pre_commit_manager(
-            input_files,
-            staged_only,
-            commited_only,
-            git_diff,
-            all_files,
-            mode,
-            skip,
-            validate,
-            format,
-            secrets,
-            verbose,
-            show_diff_on_failure,
-            run_docker_hooks=docker,
-            dry_run=dry_run,
-            run_hook=run_hook,
-        )
+    return_code = pre_commit_manager(
+        input_files,
+        staged_only,
+        commited_only,
+        git_diff,
+        all_files,
+        mode,
+        skip,
+        validate,
+        format,
+        secrets,
+        verbose,
+        show_diff_on_failure,
+        run_docker_hooks=docker,
+        dry_run=dry_run,
+        run_hook=run_hook,
     )
+    if return_code:
+        raise typer.Exit(1)
 
 
 main.add_command(typer.main.get_command(pre_commit_app), "pre-commit")

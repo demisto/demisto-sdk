@@ -1133,10 +1133,10 @@ class Downloader:
         else:
             if content_type == LISTS_DIR:
                 if content_item_path.is_dir():
-                    main_file_path = [str(path) for path in content_item_path.iterdir() if path.suffix == ".json"]
-                    if not main_file_path:
+                    json_files = [str(path) for path in content_item_path.iterdir() if path.suffix == ".json"][0]
+                    if not json_files:
                         return None
-                    return get_json(main_file_path[0])
+                    return get_json(json_files[0])
             if content_item_path.is_file() and content_item_path.suffix == ".json":
                 return get_json(content_item_path)
 

@@ -472,7 +472,7 @@ class File(ABC, BaseModel):
         # builds up the object without validations, when writing file, no need to init path and git_util
         model = cls.construct(**model_attributes)
         try:
-            model.write(data, path=output_path, encoding=encoding)
+            model.write(data, path=output_path, encoding=encoding, **kwargs)
         except Exception as e:
             logger.exception(f"Could not write {output_path} as {cls.__name__} file")
             raise FileWriteError(output_path, exc=e)
@@ -489,7 +489,7 @@ class File(ABC, BaseModel):
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         def _write_safe_unicode():
-            self._write(data, path=path)
+            self._write(data, path=path, **kwargs)
 
         if encoding:
             self._write(data, path=path, encoding=encoding, **kwargs)

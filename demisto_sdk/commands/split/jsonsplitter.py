@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR,
@@ -37,12 +37,12 @@ class JsonSplitter:
 
     def __init__(
         self,
-        input: Path | str,
-        output: Path | str = "",
+        input: Union[Path, str],
+        output: Union[Path, str] = "",
         file_type: FileType = FileType.GENERIC_MODULE,
         no_auto_create_dir: bool = False,
         new_module_file: bool = False,
-        input_file_data: dict | None = None,
+        input_file_data: Optional[Dict] = None,
     ):
         self.input = input
         self.output = output if output else Path(input).parent

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Tuple
 
 from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR,
@@ -15,7 +16,6 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    get_dict_from_file,
     get_pack_name,
     is_external_repository,
     pascal_case,
@@ -148,7 +148,7 @@ class JsonSplitter:
 
         write_dict(module_file_path, data=self.json_data, indent=JSON_INDENT_CONSTANT)
 
-    def get_auto_output_path(self) -> tuple[Path, str, str]:
+    def get_auto_output_path(self) -> Tuple[Path, str, str]:
         suffix_by_type = {
             TypeList.TEXT: ".txt",
             TypeList.HTML: ".html",
@@ -185,11 +185,6 @@ class JsonSplitter:
 
     def write_file_data(self, list_name_dir: Path, file_data_name: str):
         if file_data_name.endswith("json"):
-            write_dict(
-                (list_name_dir / file_data_name),
-                self.json_data["data"],
-                indent=JSON_INDENT_CONSTANT,
-            )  #---
             JsonFile.write_file(self.json_data["data"], (list_name_dir / file_data_name), handler=JSON_Handler())
         else:
             TextFile.write_file(self.json_data["data"], (list_name_dir / file_data_name))

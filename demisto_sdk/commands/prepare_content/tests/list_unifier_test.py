@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.common.constants import LISTS_DIR
-from demisto_sdk.commands.common.tools import get_dict_from_file, pascal_case
+from demisto_sdk.commands.common.tools import pascal_case
 from demisto_sdk.commands.prepare_content.list_unifier import ListUnifier, logger
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LIST,
@@ -19,7 +19,7 @@ def create_split_list():
     return list_json, list_data, list_dir_name
 
 
-def test_list_unify(repo):
+def test_list_unify(git_repo):
     '''
     Given:
         - A list json file.
@@ -28,7 +28,7 @@ def test_list_unify(repo):
     Then:
         - Ensure the list is unified as expected.
     '''
-    pack = repo.create_pack("PackName")
+    pack = git_repo.create_pack("PackName")
     list_json, list_data, list_dir_name = create_split_list()
     list_dir_path = Path(pack.path) / list_dir_name
     list_dir_path.mkdir(parents=True, exist_ok=True)

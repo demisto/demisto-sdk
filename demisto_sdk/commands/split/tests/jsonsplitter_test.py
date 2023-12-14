@@ -18,7 +18,7 @@ EXTRACTED_DASHBOARD = (
 )
 
 
-def test_split_json(repo):
+def test_split_json(git_repo):
     """
     Given
         - Valid a unified generic module.
@@ -30,7 +30,7 @@ def test_split_json(repo):
         - Ensure dashboard is extracted to the requested location.
         - Ensure the generic module file is edited properly in place.
     """
-    pack = repo.create_pack("PackName")
+    pack = git_repo.create_pack("PackName")
     generic_module = pack.create_generic_module(
         "generic-module", UNIFIED_GENERIC_MODULE
     )

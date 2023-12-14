@@ -11,7 +11,7 @@ from demisto_sdk.commands.pre_commit.hooks.docker import (
 from demisto_sdk.commands.pre_commit.tests.pre_commit_test import create_hook
 
 
-@dataclass
+@dataclass(frozen=True)
 class Obj:
     path: Path = Path("somefile")
     object_id: str = "id1"
@@ -78,7 +78,7 @@ def test_moded_properties(mocker, mode, expected_text):
         "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
         return_value="devtestimg",
     )
-    raw_hook = create_hook({"args": []})
+    raw_hook = create_hook({"args": [], "language": "docker"})
 
     raw_hook["hook"]["args"] = ["i am some argument"]
     raw_hook["hook"]["args:nightly"] = ["i am the nightly args"]

@@ -22,13 +22,19 @@ NATIVE_IMAGE_PATH = CONTENT_PATH / "Tests" / NATIVE_IMAGE_FILE_NAME
 
 
 PYTHONPATH = [
-    Path(CONTENT_PATH),
-    Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"),
-    Path(CONTENT_PATH / TESTS_DIR / "demistomock"),
+    Path(CONTENT_PATH).absolute(),
+    Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython").absolute(),
+    Path(CONTENT_PATH / TESTS_DIR / "demistomock").absolute(),
     Path(__file__).parent.parent / "lint" / "resources" / "pylint_plugins",
 ]
 try:
-    PYTHONPATH.extend(Path(CONTENT_PATH / "Packs" / "ApiModules" / "Scripts").iterdir())
+    PYTHONPATH.extend(
+        (
+            path.absolute()
+            for path in Path(
+                CONTENT_PATH / "Packs" / "ApiModules" / "Scripts"
+            ).iterdir()
+        )
+    )
 except FileNotFoundError:
     logger.info("ApiModules not found, skipping adding to PYTHONPATH")
-    pass

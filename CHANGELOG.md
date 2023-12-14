@@ -8,7 +8,8 @@
 * Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
 * Added support for `skip` property in **pre-commit** hooks.
 * **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
-* added the *IN150* and *IN161* errors to *allowed ignore errors* list.
+* Added the *IN150* and *IN161* errors to *allowed ignore errors* list.
+* Updated the output of the **pre-commit** command to improve the readability of collected files 
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.

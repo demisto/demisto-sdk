@@ -1906,8 +1906,9 @@ def find_type(
     if ParsingRule.match(_dict, Path(path)):
         return FileType.PARSING_RULE
 
-    if ModelingRule.match(_dict, Path(path)):
-        return FileType.MODELING_RULE
+    if MODELING_RULES_DIR in Path(path).parts:
+        if ModelingRule.match(_dict, Path(path)):
+            return FileType.MODELING_RULE
 
     if CorrelationRule.match(_dict, Path(path)):
         return FileType.CORRELATION_RULE
@@ -1959,8 +1960,9 @@ def find_type(
     ):
         return FileType.LAYOUT
 
-    if Layout.match(_dict, Path(path)):
-        return FileType.LAYOUTS_CONTAINER
+    if LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+        if Layout.match(_dict, Path(path)):
+            return FileType.LAYOUTS_CONTAINER
 
     if Dashboard.match(_dict, Path(path)):
         return FileType.DASHBOARD

@@ -1,9 +1,12 @@
+import os
 import re
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Set
 
 from demisto_sdk.commands.common.logger import logger
+
+PROPERTIES_TO_DELETE = {"needs"}
 
 
 class Hook:
@@ -32,7 +35,9 @@ class Hook:
         """
         self.hooks.append(deepcopy(self.base_hook))
 
-    def _set_files_on_hook(self, hook: dict, files) -> int:
+    def _set_files_on_hook(
+        self, hook: dict, files: Iterable[Path], should_filter: bool = True
+    ) -> int:
         """
 
         Args:
@@ -42,9 +47,10 @@ class Hook:
         Returns: the number of files that ultimately are set on the hook. Use this to decide if to run the hook at all
 
         """
-        files_to_run_on_hook = self.filter_files_matching_hook_config(files)
+        files_to_run_on_hook = set(files)
+        if should_filter:
+            files_to_run_on_hook = self.filter_files_matching_hook_config(files)
         hook["files"] = join_files(files_to_run_on_hook)
-
         return len(files_to_run_on_hook)
 
     def filter_files_matching_hook_config(
@@ -116,12 +122,17 @@ class Hook:
         Update the base_hook accordingly.
         """
         hook: Dict = {}
+        keys_to_delete = []
         for full_key in self.base_hook:
             key = full_key.split(":")[0]
             if hook.get(key):
                 continue
+            if key in PROPERTIES_TO_DELETE:
+                keys_to_delete.append(key)
             if (prop := self._get_property(key)) is not None:
                 hook[key] = prop
+        for key in keys_to_delete:
+            del hook[key]
         self.base_hook = hook
 
 
@@ -134,7 +145,9 @@ def join_files(files: Set[Path], separator: str = "|") -> str:
     Returns:
         str: The joined string.
     """
-    return separator.join(map(str, files))
+    return separator.join(
+        str(file) if Path(file).is_file() else f"{str(file)}{os.sep}" for file in files
+    )
 
 
 def safe_update_hook_args(hook: Dict, value: Any) -> None:

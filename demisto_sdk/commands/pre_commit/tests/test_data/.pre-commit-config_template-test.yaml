@@ -46,6 +46,18 @@ repos:
         pass_filenames: false
         skip:nightly: true
 
+      - id: pylint-in-docker
+        name: pylint-in-docker
+        description: Run pylint on the code in content packs
+        docker_image: from-yml
+        entry: pylint
+        files: Packs\/.*\.py$
+        exclude: _test\.py|.vulture_whitelist\.py|test_data
+        args: ['--ignore=demistomock.py,CommonServerPython.py,CommonServerUserPython.py,conftest.py,.venv', '-E', '--disable=bad-option-value,unsubscriptable-object', '-d duplicate-string-formatting-argument', "--msg-template='{path}:{line}:{column}: {msg_id} {obj}: {msg}'", '--generated-members=requests.packages.urllib3,requests.codes.ok']
+        config_file_arg:
+          arg_name: '--rcfile'
+          file_name: '.pylintrc'
+
   - repo: https://github.com/demisto/demisto-sdk
     rev: ""
     hooks:
@@ -77,6 +89,10 @@ repos:
 
       - id: should_be_skipped # only for the unit test
         skip: true
+
+      - id: hook_needs_docker
+        needs:
+          - pylint-in-docker
 
   - repo: https://github.com/sourcery-ai/sourcery
     rev: "v1.6.0"

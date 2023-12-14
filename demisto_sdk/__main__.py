@@ -212,8 +212,6 @@ def main(ctx, config, version, release_notes, **kwargs):
     import dotenv
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
-    from demisto_sdk.commands.common.clients import get_client_from_server_type
-    _cli = get_client_from_server_type()
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
     ) and not is_sdk_defined_working_offline():  # If the key exists/called to version

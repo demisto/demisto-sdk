@@ -23,7 +23,7 @@ def test_is_valid_all_inputs_in_use(playbook, mocker):
     assert result == []
 
 
-def test_is_valid_unused_inputs(playbook, mocker):
+def test_is_valid_unused_inputs(mocker):
     """
     Given:
     - A playbook with unused inputs
@@ -34,9 +34,10 @@ def test_is_valid_unused_inputs(playbook, mocker):
     Then:
     - Should return ValidationResult for unused inputs
     """
+    playbook = create_playbook_object(paths = ["inputs"],values=[{"name": "input1", "description": "input1 description"}])
     mocker.patch('demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks.collect_all_inputs_in_use', return_value={'input1'})
     mocker.patch('demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks.collect_all_inputs_from_inputs_section', return_value={'input2'})
     result = IsInputKeyNotInTasksValidator().is_valid([playbook])
 
     assert len(result) == 1
-    assert result[0].message == "The playbook 'path/to/playbook.yml' contains inputs that are not used in any of its tasks: input2"
+    assert result[0].message == "The playbook 'Phishing Investigation - Generic' contains inputs that are not used in any of its tasks: input2"

@@ -204,7 +204,9 @@ class ContentItem(BaseContent):
     @property
     def data(self) -> dict:
         return get_file(self.path, keep_order=False)
-
+    @property
+    def text(self) -> str:
+        return get_file(self.path, return_content=True)
     @property
     def ordered_data(self) -> dict:
         return get_file(self.path, keep_order=True)

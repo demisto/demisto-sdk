@@ -1,4 +1,3 @@
-import json
 from typing import Callable, Optional
 
 import demisto_client
@@ -35,10 +34,6 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             current_marketplace=current_marketplace,
             supported_marketplaces=self.marketplaces,
         )
-        
-        
-    def content_item_as_text(self):
-        return json.dumps(self.data, indent=4)
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

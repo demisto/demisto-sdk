@@ -90,7 +90,7 @@ jobs:
             
           if [[ "${{ inputs.should_split }}" == "true" ]]; then
             echo "ignored-files are ${{ inputs.ignored-file-paths }}"
-            poetry run pytest -v --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits ${{ length(matrix.group) }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
+            poetry run pytest -v --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits ${{ matrix.group.length }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           else
             poetry run pytest -v "${{ inputs.file-path }}" --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
           fi

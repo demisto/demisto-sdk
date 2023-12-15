@@ -27,6 +27,11 @@ on:
         required: false
         default: ""
         description: "The file path that from it tests will be executed"
+      groups:
+        type: string
+        required: false
+        default: "[]"
+        description: "The file path that from it tests will be executed"
 
 
 jobs:
@@ -36,7 +41,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ "3.8", "3.9", "3.10" ]
-        group: [ 1, 2, 3, 4, 5 ]
+        group: ${{ fromJson(inputs.groups) }}
       fail-fast: false
     defaults:
       run:
@@ -77,14 +82,13 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
           
-
           mkdir ${{inputs.test-type}}-test-results
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=${{inputs.test-type}}-test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations
           
           echo "Starting to run ${{inputs.test-type}} tests"
           
-          if [[ ${{inputs.should_split}} == "true" ]] then;
+          if [[ ${{inputs.should_split}} == true ]]; then
             poetry run pytest -v --ignore={${{inputs.ignored-file-paths}}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           else
             poetry run pytest -v ${{inputs.file-path}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results || pytest_exit_code=$?

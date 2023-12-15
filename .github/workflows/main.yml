@@ -20,7 +20,7 @@ jobs:
       test-type: "Unit"
       should-split: true
       ignored-file-paths: "demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph"
-      file-path: ""
+      groups: '["1", "2", "3", "4", "5"]'
 
   integration-tests:
     uses: ./.github/workflows/tests.yml

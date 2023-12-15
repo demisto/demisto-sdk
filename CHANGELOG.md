@@ -1,4 +1,10 @@
 # Changelog
+## 2.76.8
+* bla bla bla breaking [#3326](https://github.com/demisto/demisto-sdk/pull/3326)
+* Added the **changelog** new command for management the changelog.md file. [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+* bla bla bla fix [#3316](https://github.com/demisto/demisto-sdk/pull/3316)
+* test test test internal. [#3677](https://github.com/demisto/demisto-sdk/pull/3677)
+
 ## Unreleased
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.
 * Added support to return war-room entries when running cli commands.

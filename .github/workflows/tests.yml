@@ -14,8 +14,8 @@ on:
         description: "The node version to install"
       should-split:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
         description: "Whether to use pytest-split in order to split to tests"
       ignored-file-paths:
         type: string
@@ -30,8 +30,8 @@ on:
       groups:
         type: string
         required: false
-        default: "['All']"
-        description: "The file path that from it tests will be executed"
+        default: "['All-Tests']"
+        description: "The number of groups to split the tests into for concurrency"
 
 
 jobs:
@@ -87,8 +87,8 @@ jobs:
           # mv .test_durations test-results/test_durations
           
           echo "Starting to run ${{inputs.test-type}} tests"
-          
-          if [[ ${{inputs.should_split}} == true ]]; then
+            
+          if [[ ${{inputs.should_split}} == "true" ]]; then
             poetry run pytest -v --ignore={${{inputs.ignored-file-paths}}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           else
             poetry run pytest -v ${{inputs.file-path}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results || pytest_exit_code=$?

@@ -7,21 +7,26 @@ on:
         required: false
         type: string
         default: "16"
+        description: "The node version to install"
       test-type:
         required: true
         type: string
+        description: "The type of the test that will run"
       should-split:
         required: false
         type: boolean
         default: false
+        description: "Whether to use pytest-split in order to split to tests"
       ignored-file-paths:
         type: string
         required: false
         default: ""
-      file-paths-to-run:
+        description: "A comma separated of file-paths to ignore when running tests"
+      file-path:
         type: string
         required: false
         default: ""
+        description: "The file path that from it tests will be executed"
 
 
 jobs:
@@ -82,7 +87,7 @@ jobs:
           if [[ ${{inputs.should_split}} == "true" ]] then;
             poetry run pytest -v --ignore={${{inputs.ignored-file-paths}}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           else
-            poetry run pytest -v ${{file-paths-to-run}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results || pytest_exit_code=$?
+            poetry run pytest -v ${{file-path}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results || pytest_exit_code=$?
           fi
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           kill $node_pid

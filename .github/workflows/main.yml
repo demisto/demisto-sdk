@@ -25,13 +25,13 @@ jobs:
     uses: ./.github/workflows/tests.yml
     with:
       test-type: "Integration"
-      file-paths-to-run: "demisto_sdk/tests/integration_tests"
+      file-path: "demisto_sdk/tests/integration_tests"
 
   graph-tests:
     uses: ./.github/workflows/tests.yml
     with:
       test-type: "Graph"
-      file-paths-to-run: "demisto_sdk/commands/content_graph"
+      file-path: "demisto_sdk/commands/content_graph"
 
   coverage:
     needs: [unit-tests, integration-tests, graph-tests]

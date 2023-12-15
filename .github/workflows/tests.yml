@@ -24,7 +24,6 @@ on:
         default: ""
 
 
-
 jobs:
   tests:
     name: ${{inputs.test-type}} Tests / ${{ matrix.python-version }} (${{ matrix.group }})

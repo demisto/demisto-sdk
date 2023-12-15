@@ -3,15 +3,15 @@ name: Create and Publish Docker Image
 on:
   workflow_call:
     inputs:
+      test-type:
+        required: true
+        type: string
+        description: "The type of the test that will run"
       node-version:
         required: false
         type: string
         default: "16"
         description: "The node version to install"
-      test-type:
-        required: true
-        type: string
-        description: "The type of the test that will run"
       should-split:
         required: false
         type: boolean

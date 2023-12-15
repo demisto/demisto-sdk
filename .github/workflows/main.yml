@@ -15,20 +15,20 @@ concurrency:
 
 jobs:
   unit-tests:
-    uses: demisto-sdk/.github/workflows/tests.yml
+    uses: demisto-sdk/.github/workflows/tests.yml@master
     with:
       test-type: "Unit"
       should-split: true
       ignored-file-paths: "demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph"
 
   integration-tests:
-    uses: demisto-sdk/.github/workflows/tests.yml
+    uses: demisto-sdk/.github/workflows/tests.yml@master
     with:
       test-type: "Integration"
       file-paths-to-run: "demisto_sdk/tests/integration_tests"
 
   graph-tests:
-    uses: demisto-sdk/.github/workflows/tests.yml
+    uses: demisto-sdk/.github/workflows/tests.yml@master
     with:
       test-type: "Graph"
       file-paths-to-run: "demisto_sdk/commands/content_graph"

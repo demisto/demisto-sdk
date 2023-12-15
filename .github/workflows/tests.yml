@@ -83,9 +83,10 @@ jobs:
           
           echo "Starting to run ${{ inputs.test-type }} tests"  
           echo "ignored-files are ${{ inputs.ignored-file-paths }}"
-          echo "matrix: ${{ matrix.group.length }}, matrix content: ${{ matrix.group }}"
+          input_groups=${{ fromJson(inputs.groups) }}
+          echo "groups length: ${input_groups.length}, groups content: ${input_groups}"
           
-          poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${{ matrix.group.length }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
+          poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${input_groups.length}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           kill $node_pid
       - name: Upload artifacts

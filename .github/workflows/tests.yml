@@ -30,7 +30,7 @@ on:
       groups:
         type: string
         required: false
-        default: "[]"
+        default: "['All']"
         description: "The file path that from it tests will be executed"
 
 

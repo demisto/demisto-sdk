@@ -12,11 +12,6 @@ on:
         type: string
         default: "16"
         description: "The node version to install"
-      should-split:
-        required: false
-        type: string
-        default: "false"
-        description: "Whether to use pytest-split in order to split to tests"
       ignored-file-paths:
         type: string
         required: false
@@ -25,7 +20,7 @@ on:
       file-path:
         type: string
         required: false
-        default: ""
+        default: "."
         description: "The file path that from it tests will be executed"
       groups:
         type: string
@@ -86,24 +81,21 @@ jobs:
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=${{inputs.test-type}}-test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations
           
-          echo "Starting to run ${{ inputs.test-type }} tests"
-            
-          if [[ "${{ inputs.should_split }}" == "true" ]]; then
-            echo "ignored-files are ${{ inputs.ignored-file-paths }}"
-            poetry run pytest -v --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${{ matrix.group.length }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
-          else
-            poetry run pytest -v "${{ inputs.file-path }}" --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
-          fi
+          echo "Starting to run ${{ inputs.test-type }} tests"  
+          echo "ignored-files are ${{ inputs.ignored-file-paths }}"
+          echo "matrix: ${{ matrix.group.length }}, matrix content: ${{ matrix.group }}"
+          
+          poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${{ matrix.group.length }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           kill $node_pid
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: ${{inputs.test-type}}-tests-artifacts-${{ matrix.python-version }}-group-${{ matrix.group }}
+          name: ${{ inputs.test-type }}-tests-artifacts-${{ matrix.python-version }}-group-${{ matrix.group }}
           path: |
             .test_durations
-            "${{ inputs.test-type }}-test-results/junit.xml"
+            ${{ inputs.test-type }}-test-results/junit.xml
             node_versions_info.json
             coverage_html_report
             .coverage
@@ -111,16 +103,16 @@ jobs:
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
-          path: ${{inputs.test-type}}-test-results/junit.xml
+          path: ${{ inputs.test-type }}-test-results/junit.xml
           summary: true
           display-options: fsEX
           fail-on-empty: true
-      - name: Check if ${{inputs.test-type}}-tests have passed
+      - name: Check if ${{ inputs.test-type }}-tests have passed
         if: always()
         run: |
           if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
-            echo "There are ${{inputs.test-type}}-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
+            echo "There are ${{ inputs.test-type }}-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
           else
-            echo "All ${{inputs.test-type}}-tests have passed, congratulations!"
+            echo "All ${{ inputs.test-type }}-tests have passed, congratulations!"
           fi
           exit $PYTEST_EXIT_CODE

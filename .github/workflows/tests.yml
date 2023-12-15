@@ -80,14 +80,15 @@ jobs:
           mkdir ${{inputs.test-type}}-test-results
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=${{inputs.test-type}}-test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations
-             
+          
+          input_groups=${{ fromJson(inputs.groups) }}
+          
           echo "ignored-file-paths=${{ inputs.ignored-file-paths }}, file-path=${{ inputs.file-path }}"
-          if [[ "${my_array[@]}" = "All-Tests" ]]; then
+          if [[ "${input_groups[@]}" = "All-Tests" ]]; then
             echo "Running "${{ inputs.test-type }} tests without splitting"
             poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
           else
             echo "Running "${{ inputs.test-type }} tests without splitting the tests"
-            input_groups=${{ fromJson(inputs.groups) }}
             splits=${#input_groups[@]}
             poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${splits}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           fi

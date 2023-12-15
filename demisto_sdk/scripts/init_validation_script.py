@@ -250,7 +250,7 @@ class ValidationInitializer:
         pascal_case_pattern = r"^[A-Z][a-z]+(?:[A-Z][a-z]+)*$"
         validator_class_name = str(
             input(
-                "Please enter the validator's class name in PascalCase format (i.e each word with a capital letter): "
+                "Please enter the validator's class name in PascalCase format (i.e each word starts with a capital letter): "
             )
         )
         while not validator_class_name or not bool(

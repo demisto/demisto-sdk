@@ -27,14 +27,19 @@ class ValidateManager:
         file_path=None,
         allow_autofix=False,
         ignore_support_level=False,
+        run_as_format=False,
     ):
         self.ignore_support_level = ignore_support_level
         self.validate_all = validate_all
         self.file_path = file_path
-        self.allow_autofix = allow_autofix
+        self.run_as_format = run_as_format
+        self.allow_autofix = self.run_as_format or allow_autofix
         self.validation_results = validation_results
         self.config_reader = config_reader
         self.initializer = initializer
+        if self.run_as_format:
+            self.run_validations = self.run_format
+            self.filter_validators = self.filter_validators_for_format
         self.objects_to_run: Set[
             BaseContent
         ] = self.initializer.gather_objects_to_run_on()
@@ -42,7 +47,7 @@ class ValidateManager:
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
             self.config_reader.gather_validations_to_run(
-                use_git=self.use_git, ignore_support_level=self.ignore_support_level
+                use_git=self.use_git, ignore_support_level=self.ignore_support_level, run_as_format=self.run_as_format
             )
         )
         self.validators = self.filter_validators()
@@ -101,4 +106,48 @@ class ValidateManager:
                 in self.configured_validations.validations_to_run
             ):
                 validators.append(validator())
+        return validators
+
+    def run_format(self) -> int:
+        """
+            Running all the relevant validation on all the filtered files based on the should_run calculations,
+            calling the fix method if the validation fail, has an autofix, and the allow_autofix flag is given,
+            and calling the post_results at the end.
+        Returns:
+            int: the exit code to obtained from the calculations of post_results.
+        """
+        for validator in self.validators:
+            if filtered_content_objects_for_validator := list(
+                filter(
+                    lambda content_object: validator.should_run(
+                        content_object,
+                        self.configured_validations.ignorable_errors,
+                        self.configured_validations.support_level_dict,
+                    ),
+                    self.objects_to_run,
+                )
+            ):
+                validation_results: List[ValidationResult] = validator.is_valid(filtered_content_objects_for_validator)  # type: ignore
+                for validation_result in validation_results:
+                    self.validation_results.append_fix_results(
+                        validator.fix(validation_result.content_object)  # type: ignore
+                    )
+
+        return self.validation_results.post_results(
+        )
+
+    def filter_validators_for_format(self) -> List[BaseValidator]:
+        """
+        Filter the validations by their error code
+        according to the validations supported by the given flags according to the config file.
+        Returns:
+            List[BaseValidator]: the list of the filtered validators
+        """
+        # gather validator from validate package
+        validators: List[BaseValidator] = []
+        for validator in BaseValidator.__subclasses__():
+            if validator.is_auto_fixable and validator.error_code in self.configured_validations.validations_to_run:  # add validation to format.
+                validators.append(validator())
+                if validator.graph:
+                    self.validate_graph = True
         return validators

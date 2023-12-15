@@ -87,7 +87,7 @@ jobs:
           if [[ ${{inputs.should_split}} == "true" ]] then;
             poetry run pytest -v --ignore={${{inputs.ignored-file-paths}}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           else
-            poetry run pytest -v ${{file-path}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results || pytest_exit_code=$?
+            poetry run pytest -v ${{inputs.file-path}} --cov=demisto_sdk --cov-report=html --junitxml=${{inputs.test-type}}-test-results || pytest_exit_code=$?
           fi
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           kill $node_pid

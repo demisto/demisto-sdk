@@ -86,11 +86,11 @@ jobs:
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=${{inputs.test-type}}-test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations
           
-          echo "Starting to run ${{inputs.test-type}} tests"
+          echo "Starting to run ${{ inputs.test-type }} tests"
             
           if [[ "${{ inputs.should_split }}" == "true" ]]; then
             echo "ignored-files are ${{ inputs.ignored-file-paths }}"
-            poetry run pytest -v --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits ${{ matrix.group.length }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
+            poetry run pytest -v --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${{ matrix.group.length }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           else
             poetry run pytest -v "${{ inputs.file-path }}" --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
           fi

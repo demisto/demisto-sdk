@@ -77,24 +77,30 @@ jobs:
         run: |
           source "$(poetry env info --path)/bin/activate"
 
-          # Due to race conditions in the tests bringing up and down the node server, have the server available
-          # For all the tests.
           if [[ ${{ inputs.test-type }} == "Unit" ]]; then
+            # Due to race conditions in the tests bringing up and down the node server, have the server available
+            # For all the tests.
             echo "Running mdx server"
             node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
             node_pid=$!
           fi
-          
-          mkdir ${{inputs.test-type}}-test-results
+
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=${{inputs.test-type}}-test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations
+
+          mkdir ${{inputs.test-type}}-test-results
           echo "Running ${{ inputs.test-type }}-tests with the following arguments: file-path=${{ inputs.file-path }}, ignored-file-paths=${{ inputs.ignored-file-paths }}, group=${{ matrix.group }}, splits=${{ inputs.splits }}"
+
           if [[ ${{ inputs.splits }} == "1" ]]; then
+            # run tests without pytest-split
             poetry run pytest -v "${{ inputs.file-path }}" --ignore={${{ inputs.ignored-file-paths }}} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
           else
+            # run tests with pytest-split
             poetry run pytest -v "${{ inputs.file-path }}" --ignore={${{ inputs.ignored-file-paths }}} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${{ inputs.splits }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           fi
+
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
+
           if [[ ${{ inputs.test-type }} == "Unit" ]]; then
             kill $node_pid
           fi

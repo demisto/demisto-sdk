@@ -84,7 +84,7 @@ jobs:
           input_groups=${{ fromJson(inputs.groups) }}
           
           echo "ignored-file-paths=${{ inputs.ignored-file-paths }}, file-path=${{ inputs.file-path }}"
-          echo "input_groups=${input_groups}, input_groups_2=${input_groups[@]}"
+          echo "input_groups=${input_groups}, input_groups_2=${input_groups[*]}"
           if [[ "${input_groups}" = "All-Tests" ]]; then
             echo "Running ${{ inputs.test-type }} tests without splitting"
             poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?

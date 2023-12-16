@@ -77,6 +77,7 @@ jobs:
           # Due to race conditions in the tests bringing up and down the node server, have the server available
           # For all the tests.
           if [[ ${{ inputs.test-type }} == "Unit" ]]; then
+            echo "Running mdx server"
             node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
             node_pid=$!
           fi

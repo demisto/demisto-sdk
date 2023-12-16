@@ -84,12 +84,13 @@ jobs:
           input_groups=${{ fromJson(inputs.groups) }}
           
           echo "ignored-file-paths=${{ inputs.ignored-file-paths }}, file-path=${{ inputs.file-path }}"
-          if [[ "${input_groups[@]}" = "All-Tests" ]]; then
+          echo "input_groups=${input_groups}, input_groups_2=${input_groups[@]}"
+          if [[ "${input_groups}" = "All-Tests" ]]; then
             echo "Running ${{ inputs.test-type }} tests without splitting"
             poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
           else
-            echo "Running ${{ inputs.test-type }} tests without splitting the tests"
             splits="${#input_groups[@]}"
+            echo "Running ${{ inputs.test-type }} tests by splitting the tests into ${splits} splits"
             poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${splits}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           fi
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV

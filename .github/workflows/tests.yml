@@ -59,13 +59,13 @@ jobs:
           poetry install -E generate-unit-tests
 
       - name: Set up Node.js
-        if: ${{ inputs.test-type == "Unit" }}
+        if: ${{ inputs.test-type == 'Unit' }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ inputs.node-version }}
 
       - name: Install npm
-        if: ${{ inputs.test-type == "Unit" }}
+        if: ${{ inputs.test-type == 'Unit' }}
         run: |
           npm install
           echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
@@ -76,7 +76,7 @@ jobs:
 
           # Due to race conditions in the tests bringing up and down the node server, have the server available
           # For all the tests.
-          if [[ ${{ inputs.test-type }} == "Unit" ]]; then
+          if [[ ${{ inputs.test-type }} == Unit ]]; then
             echo "Running mdx server"
             node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
             node_pid=$!

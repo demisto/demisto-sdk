@@ -20,13 +20,18 @@ on:
       file-path:
         type: string
         required: false
-        default: "."
+        default: "."  # current directory
         description: "The file path that from it tests will be executed"
       groups:
         type: string
         required: false
-        default: "['1']"
+        default: "['All-Tests']"
         description: "The number of groups to split the tests into for concurrency"
+      splits:
+        type: string
+        required: false
+        default: "1"
+        description: "The number of splits for the tests"
 
 
 jobs:
@@ -83,11 +88,12 @@ jobs:
           mkdir ${{inputs.test-type}}-test-results
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=${{inputs.test-type}}-test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations
-          
-          input_groups=(${{ fromJson(inputs.groups) }})
-          splits=${#input_groups[@]}
-          echo "Running tests with the following arguments: file-path=${{ inputs.file-path }}, ignored-file-paths=${{ inputs.ignored-file-paths }}, splits=${splits}, input_groups=${input_groups[@]}, group=${{ matrix.group }}, first array: ${input_groups[0]}, second array: ${input_groups[1]}"
-          poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${splits}" --group "${{ matrix.group }}" || pytest_exit_code=$?
+          echo "Running ${{ inputs.test-type }}-tests with the following arguments: file-path=${{ inputs.file-path }}, ignored-file-paths=${{ inputs.ignored-file-paths }}, group=${{ matrix.group }}, splits=${{ inputs.splits }}"
+          if [[ ${{ inputs.splits }} == "1" ]]; then
+            poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
+          else
+            poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${{ inputs.splits }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
+          fi
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           if [[ ${{ inputs.test-type }} == "Unit" ]]; then
             kill $node_pid

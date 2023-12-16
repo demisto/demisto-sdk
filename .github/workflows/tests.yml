@@ -92,7 +92,7 @@ jobs:
           if [[ ${{ inputs.splits }} == "1" ]]; then
             poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
           else
-            poetry run pytest -v --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${{ inputs.splits }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
+            poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${{ inputs.splits }}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           fi
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           if [[ ${{ inputs.test-type }} == "Unit" ]]; then

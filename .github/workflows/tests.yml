@@ -74,7 +74,7 @@ jobs:
 
           # Due to race conditions in the tests bringing up and down the node server, have the server available
           # For all the tests.
-          if [[ ${{ inputs.test-type }} == Unit ]]; then
+          if [[ ${{ inputs.test-type }} == "Unit" ]]; then
             echo "Running mdx server"
             node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
             node_pid=$!
@@ -85,9 +85,9 @@ jobs:
           # mv .test_durations test-results/test_durations
           
           input_groups=${{ fromJson(inputs.groups) }}
-          splits="${#input_groups[@]}"
-          echo "Running tests with the following arguments: file-path=${{ inputs.file-path }}, ignored-file-paths=${{ inputs.ignored-file-paths }}, splits=${splits}, input_groups=${input_groups}, group=${{ matrix.group }}"
-          poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits 5 --group "${{ matrix.group }}" || pytest_exit_code=$?
+          splits=${#input_groups[@]}
+          echo "Running tests with the following arguments: file-path=${{ inputs.file-path }}, ignored-file-paths=${{ inputs.ignored-file-paths }}, splits=${splits}, input_groups=${input_groups[@]}, group=${{ matrix.group }}"
+          poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${splits}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           if [[ ${{ inputs.test-type }} == "Unit" ]]; then
             kill $node_pid

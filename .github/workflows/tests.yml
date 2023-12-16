@@ -84,6 +84,8 @@ jobs:
             node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
             node_pid=$!
           fi
+          
+          neo4j start
 
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=${{inputs.test-type}}-test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations

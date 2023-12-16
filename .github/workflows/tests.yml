@@ -25,7 +25,7 @@ on:
       groups:
         type: string
         required: false
-        default: "['All-Tests']"
+        default: "['1']"
         description: "The number of groups to split the tests into for concurrency"
 
 
@@ -82,17 +82,9 @@ jobs:
           # mv .test_durations test-results/test_durations
           
           input_groups=${{ fromJson(inputs.groups) }}
-          
-          echo "ignored-file-paths=${{ inputs.ignored-file-paths }}, file-path=${{ inputs.file-path }}"
-          echo "input_groups=${input_groups}, input_groups_2=${input_groups[0]}"
-          if [[ "${input_groups[0]}" = "All-Tests" ]]; then
-            echo "Running ${{ inputs.test-type }} tests without splitting"
-            poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" || pytest_exit_code=$?
-          else
-            splits="${#input_groups[@]}"
-            echo "Running ${{ inputs.test-type }} tests by splitting the tests into ${splits} splits"
-            poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${splits}" --group "${{ matrix.group }}" || pytest_exit_code=$?
-          fi
+          splits="${#input_groups[@]}"
+          echo "Running tests with the following arguments: file-path=${{ inputs.file-path }}, ignored-file-paths=${{ inputs.ignored-file-paths }}, splits=${splits}, input_groups=${input_groups}"
+          poetry run pytest -v "${{ inputs.file-path }}" --ignore={"${{ inputs.ignored-file-paths }}"} --cov=demisto_sdk --cov-report=html --junitxml="${{ inputs.test-type }}-test-results/junit.xml" --splits "${splits}" --group "${{ matrix.group }}" || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           kill $node_pid
       - name: Upload artifacts

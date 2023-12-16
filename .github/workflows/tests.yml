@@ -31,7 +31,7 @@ on:
 
 jobs:
   tests:
-    name: ${{ matrix.python-version }} (${{ matrix.group }})
+    name: Python ${{ matrix.python-version }} (${{ matrix.group }})
     runs-on: ubuntu-latest
     strategy:
       matrix:

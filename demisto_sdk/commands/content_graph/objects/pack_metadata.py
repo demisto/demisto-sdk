@@ -86,7 +86,9 @@ class PackMetadata(BaseModel):
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = self._get_author(self.author, marketplace)
         # We want to add the pipeline_id only if this is called within our repo.
-        self.version_info = "" if is_external_repository() else os.environ.get("CI_PIPELINE_ID", "")
+        self.version_info = (
+            "" if is_external_repository() else os.environ.get("CI_PIPELINE_ID", "")
+        )
 
     def _format_metadata(
         self,

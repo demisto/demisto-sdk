@@ -1,8 +1,10 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime
+import os
 from pathlib import Path
 from shutil import rmtree
+from pydantic import Field
 
 import pytest
 from packaging.version import parse
@@ -12,12 +14,15 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects import PackMetaData
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.content_graph.objects.pack_content_items import PackContentItems
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -390,3 +395,70 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
     assert "Failed loading Pack Number 1 user metadata." in caplog.text
+
+
+my_instance = PackMetadata(
+    name="test",
+    display_name="",
+    description="",
+    created="",
+    updated="",
+    legacy=False,
+    support="",
+    url="",
+    email="",
+    eulaLink="",
+    author="",
+    authorImage="",
+    certification="",
+    price=0,
+    hidden=False,
+    serverMinVersion="",
+    currentVersion="",
+    versionInfo="",
+    commit="",
+    downloads=0,
+    tags=[],
+    categories=[],
+    useCases=[],
+    keywords=[],
+    searchRank=0,
+    excludedDependencies=[],
+    videos=[],
+    modules=[],
+    integrations=[],
+    premium=False,
+    vendorId="",
+    partnerId="",
+    partnerName="",
+    previewOnly=False,
+    disableMonthly=False,
+    contentCommitHash="",
+)
+@pytest.mark.parametrize("is_external, expected", [
+    (True, ""),
+    (False, "123")
+])
+def test__enhance_pack_properties__internal_and_external(mocker, is_external, expected):
+    """Tests the _enhance_pack_properties method for internal and external packs.
+    Given:
+        - Pack object.
+    When:
+        - Calling the _enhance_pack_properties method.
+    Then:
+        - Verify that the version_info is set correctly.
+        Scenario 1: When the pack is external than the version_info should be empty.
+        Scenario 2: When the pack is internal than the version_info should be set to the CI_PIPELINE_ID env variable.
+    """
+
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.objects.pack_metadata.is_external_repository",
+        return_value=is_external,
+    )
+    os.environ["CI_PIPELINE_ID"] = "123"
+    my_instance._enhance_pack_properties(
+        marketplace=MarketplaceVersions.XSOAR,
+        pack_id="9",
+        content_items=PackContentItems(),
+    )
+    assert my_instance.version_info == expected

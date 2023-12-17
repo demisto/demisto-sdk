@@ -26,7 +26,8 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v3
+      - name: Unit Tests - Python ${{ matrix.python-version }} (${{ matrix.group }}) - Setup Environment
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -74,15 +75,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ./.github/actions/setup_environment
+      - name: Integration Tests - Python ${{ matrix.python-version }} - Setup Environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Run pytest
         run: |
           source "$(poetry env info --path)/bin/activate"
-
-          echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
 
           mkdir integration-test-results
           poetry run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html --junitxml=integration-test-results/junit.xml || pytest_exit_code=$?
@@ -118,7 +118,7 @@ jobs:
           fi
           exit $PYTEST_EXIT_CODE
   graph-tests:
-    name: Graph Tests / ${{ matrix.python-version }} (${{ matrix.group }})
+    name: Graph Tests - Python ${{ matrix.python-version }} - Setup Environment
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -132,7 +132,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ./.github/actions/setup_environment
+      - name: ./.github/actions/setup_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: ${{ matrix.python-version }}
 

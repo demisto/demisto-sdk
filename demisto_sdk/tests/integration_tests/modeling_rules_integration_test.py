@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 from TestSuite.test_tools import str_in_call_args_list
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -46,6 +47,7 @@ alter
 """
 DEFAULT_MODELING_RULE_NAME = "TestModelingRule"
 DEFAULT_MODELING_RULE_NAME_2 = "TestModelingRule2"
+TEST_DATA_FILE_PATH = Path(f"{git_path()}/demisto_sdk/commands/test_content/test_modeling_rule/tests/test_data/fake_test_data_file.json")
 
 
 class SetFakeXsiamClientEnvironmentVars:
@@ -129,10 +131,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
@@ -198,10 +197,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
@@ -277,10 +273,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
@@ -360,10 +354,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
@@ -457,10 +448,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
@@ -558,10 +547,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         # mocking Variables
@@ -698,10 +685,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
@@ -838,13 +823,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         modeling_rule_directory = Path(
             pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
 
         test_data_file = pack.modeling_rules[0].testdata
 
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_as_text(fake_test_data.json(indent=4))
         test_data_file.update(
             {"ignored_validations": [Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA]}
@@ -983,13 +965,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         modeling_rule_directory = Path(
             pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
 
         test_data_file = pack.modeling_rules[0].testdata
 
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_as_text(fake_test_data.json(indent=4))
         test_data_file.update({"ignored_validations": ["blabla"]})
 
@@ -1065,10 +1044,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
@@ -1200,12 +1176,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         modeling_rule_directory = Path(
             pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
 
         test_data_file = pack.modeling_rules[0].testdata
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_as_text(fake_test_data.json(indent=4))
         test_data_file.update(
             {"ignored_validations": [Validations.TEST_DATA_CONFIG_IGNORE]}
@@ -1333,10 +1306,7 @@ class TestTheTestModelingRuleCommandMultipleRules:
         test_data_file = (
             modeling_rule_directory_1 / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         # Create Pack 2 with Modeling Rule
@@ -1350,10 +1320,7 @@ class TestTheTestModelingRuleCommandMultipleRules:
         test_data_file = (
             modeling_rule_directory_2 / f"{DEFAULT_MODELING_RULE_NAME_2}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
@@ -1590,10 +1557,7 @@ class TestDeleteExistingDataset:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
-        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
         # mocking Variables
         id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"

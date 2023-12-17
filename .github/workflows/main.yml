@@ -46,7 +46,7 @@ jobs:
 
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations
-          
+
           mkdir unit-test-results
           poetry run pytest -v --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph} --cov=demisto_sdk --cov-report=html:unit-test-results/coverage --junitxml=unit-test-results/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV

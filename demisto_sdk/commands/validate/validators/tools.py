@@ -1,13 +1,14 @@
+from typing import Set
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 import re
-def collect_all_inputs_in_use(content_item: Playbook) -> set[str]:
+def collect_all_inputs_in_use(content_item: Playbook) -> Set[str]:
     """
     Args:
         - content_item (Playbook): The content item to collect inputs from.
     Returns:
         - Set of all inputs used in playbook.
     """
-    result: set = set()
+    result: Set = set()
     playbook_text = content_item.text
     all_inputs_occurrences = re.findall(r"inputs\.[-\w ?!():]+", playbook_text)
     for input in all_inputs_occurrences:
@@ -18,7 +19,7 @@ def collect_all_inputs_in_use(content_item: Playbook) -> set[str]:
     return result
 
 
-def collect_all_inputs_from_inputs_section(content_item: Playbook) -> set[str]:
+def collect_all_inputs_from_inputs_section(content_item: Playbook) -> Set[str]:
     """
     Args:
         - content_item (Playbook): The content item to collect inputs from.

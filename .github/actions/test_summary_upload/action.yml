@@ -43,7 +43,7 @@ runs:
         summary: true
         display-options: ${{ inputs.summary-display-options }}
         fail-on-empty: true
-    - name: Check if tests have passed
+    - name: Check if ${{ inputs.artifacts_folder_name }} have passed
       shell: bash
       if: always()
       run: |

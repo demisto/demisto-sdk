@@ -16,12 +16,12 @@ inputs:
 
 runs:
   using: 'composite'
-  shell: bash
   steps:
     - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
+      shell: bash
 
     - name: Setup Poetry
       run: |
@@ -29,6 +29,7 @@ runs:
         poetry --version
         poetry check --lock
         poetry install -E generate-unit-tests
+      shell: bash
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
@@ -39,3 +40,4 @@ runs:
       run: |
         npm install
         echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+      shell: bash

@@ -483,7 +483,7 @@ class PreCommitRunner:
                     sorted(str(file) for file in changed_files_by_version)
                 )
                 logger.info(
-                    f"Running pre-commit with Python {python_version} on:\n{changed_files_string}"
+                    f"Running pre-commit with Python {python_version} on {changed_files_string}"
                 )
 
         self.prepare_hooks(dry_run)
@@ -642,21 +642,10 @@ def pre_commit_manager(
     )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
-        return None
+        return 0
 
-    files_to_run_string = ", ".join(
-        sorted((str(changed_path) for changed_path in files_to_run))
-    )
-
-    # This is the files that pre-commit received, but in fact it will run on files returned from group_by_python_version
-    logger.info(f"pre-commit received the following files: {files_to_run_string}")
-
-    if not sdk_ref:
-        sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files_with_objects, exclude_files = group_by_python_version(
-        files_to_run
-    )
-    if not python_version_to_files_with_objects:
+    language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
+    if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0
 

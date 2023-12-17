@@ -9,7 +9,10 @@
 * Added support for `skip` property in **pre-commit** hooks.
 * **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
 * Added the *IN150* and *IN161* errors to *allowed ignore errors* list.
-* Updated the output of the **pre-commit** command to improve the readability of collected files 
+* Added support for `env`, `copy_files` property in **pre-commit** docker hooks.
+* Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
+* **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.
+* **Breaking change**: Removed the `--unit-test` argument in **pre-commit**. To skip unit tests, run with `--no-docker` or with `skip=pytest-in-docker`,
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.

@@ -448,6 +448,7 @@ class File(ABC, BaseModel):
         output_path: Union[Path, str],
         encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
+        **kwargs,
     ):
         """
         Writes a file into to the local file system.
@@ -456,10 +457,8 @@ class File(ABC, BaseModel):
             data: the data to write
             output_path: the output path to write to
             encoding: any custom encoding if needed
-            handler:
+            handler: whether a custom handler is required, if not takes the default.
 
-        Returns:
-            Any: the file content in the desired format
         """
         output_path = Path(output_path)
 
@@ -473,23 +472,27 @@ class File(ABC, BaseModel):
         # builds up the object without validations, when writing file, no need to init path and git_util
         model = cls.construct(**model_attributes)
         try:
-            model.write(data, path=output_path, encoding=encoding)
+            model.write(data, path=output_path, encoding=encoding, **kwargs)
         except Exception as e:
             logger.exception(f"Could not write {output_path} as {cls.__name__} file")
             raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
-    def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
+    def _write(
+        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
+    ) -> None:
         raise NotImplementedError(
             "_write must be implemented for each File concrete object"
         )
 
-    def write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
+    def write(
+        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
+    ) -> None:
         def _write_safe_unicode():
-            self._write(data, path=path)
+            self._write(data, path=path, **kwargs)
 
         if encoding:
-            self._write(data, path=path, encoding=encoding)
+            self._write(data, path=path, encoding=encoding, **kwargs)
         else:
             try:
                 _write_safe_unicode()

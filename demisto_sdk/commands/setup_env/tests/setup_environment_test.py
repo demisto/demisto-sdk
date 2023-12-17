@@ -45,7 +45,7 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     mocker.patch.object(content_item, "CONTENT_PATH", repo_path)
     mocker.patch.object(
         docker_helper.DockerBase,
-        "pull_or_create_test_image",
+        "get_or_create_test_image",
         return_value=(test_image, ""),
     )
     mocker.patch.object(

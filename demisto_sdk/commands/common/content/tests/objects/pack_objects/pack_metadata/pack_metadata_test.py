@@ -21,7 +21,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.content_graph.objects.pack_content_items import PackContentItems
+from demisto_sdk.commands.content_graph.objects.pack_content_items import (
+    PackContentItems,
+)
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 
 logger = logging.getLogger("demisto-sdk")
@@ -435,10 +437,9 @@ my_instance = PackMetadata(
     disableMonthly=False,
     contentCommitHash="",
 )
-@pytest.mark.parametrize("is_external, expected", [
-    (True, ""),
-    (False, "123")
-])
+
+
+@pytest.mark.parametrize("is_external, expected", [(True, ""), (False, "123")])
 def test__enhance_pack_properties__internal_and_external(mocker, is_external, expected):
     """Tests the _enhance_pack_properties method for internal and external packs.
     Given:

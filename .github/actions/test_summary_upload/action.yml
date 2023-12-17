@@ -44,7 +44,7 @@ runs:
       if: always()
       run: |
         if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
-          echo "There are graph-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
+          echo "There are ${{ inputs.artifacts_folder_name }} that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
         else
           echo "All graph-tests have passed, congratulations!"
         fi

@@ -220,8 +220,3 @@ def create_playbook_object(
     parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
     return Playbook.from_orm(parser)  # type:ignore
 
-
-
-
-
-

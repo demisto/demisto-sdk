@@ -27,4 +27,3 @@ def test_is_valid_all_inputs_in_use(mocker, input_in_task, input_in_section, exp
         assert result[0].message == expected_result
     else:
         assert result == expected_result
-

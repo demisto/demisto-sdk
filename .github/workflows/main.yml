@@ -57,7 +57,7 @@ jobs:
         uses: ./.github/actions/test_summary_upload
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts_folder_name: unit-test-results
+          artifacts_folder_name: unit-tests
           group: ${{ matrix.group }}
 
 

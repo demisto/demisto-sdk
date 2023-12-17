@@ -483,7 +483,7 @@ class PreCommitRunner:
                     sorted(str(file) for file in changed_files_by_version)
                 )
                 logger.info(
-                    f"Running pre-commit with Python {python_version} on {changed_files_string}"
+                    f"Running pre-commit with Python {python_version} on:\n{changed_files_string}"
                 )
 
         self.prepare_hooks(dry_run)

@@ -215,7 +215,7 @@ jobs:
               TEST_FILES=$(circleci tests glob "demisto_sdk/commands/content_graph/tests/*_test.py")
 
               mkdir graph-test-results
-              neo4j console
+              neo4j start
               # poll for neo4j status until available
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 

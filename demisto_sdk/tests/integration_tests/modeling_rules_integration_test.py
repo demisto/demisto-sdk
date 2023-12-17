@@ -6,9 +6,9 @@ import requests_mock
 import typer
 from typer.testing import CliRunner
 
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 from TestSuite.test_tools import str_in_call_args_list
-from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -47,7 +47,9 @@ alter
 """
 DEFAULT_MODELING_RULE_NAME = "TestModelingRule"
 DEFAULT_MODELING_RULE_NAME_2 = "TestModelingRule2"
-TEST_DATA_FILE_PATH = Path(f"{git_path()}/demisto_sdk/commands/test_content/test_modeling_rule/tests/test_data/fake_test_data_file.json")
+TEST_DATA_FILE_PATH = Path(
+    f"{git_path()}/demisto_sdk/commands/test_content/test_modeling_rule/tests/test_data/fake_test_data_file.json"
+)
 
 
 class SetFakeXsiamClientEnvironmentVars:

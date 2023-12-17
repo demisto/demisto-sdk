@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 from typing import Iterable, List
 
@@ -7,10 +6,13 @@ from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValida
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
-from demisto_sdk.commands.validate.validators.tools import collect_all_inputs_from_inputs_section, collect_all_inputs_in_use
+from demisto_sdk.commands.validate.validators.tools import (
+    collect_all_inputs_from_inputs_section,
+    collect_all_inputs_in_use,
+)
 
 ContentTypes = Playbook
 
@@ -23,8 +25,7 @@ class IsInputKeyNotInTasksValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
-    
-    
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         """Check whether all playbook inputs (defined in the "inputs" section) are in use in any of the tasks
         Args:
@@ -38,12 +39,14 @@ class IsInputKeyNotInTasksValidator(BaseValidator[ContentTypes]):
             inputs_in_section = collect_all_inputs_from_inputs_section(content_item)
 
             if inputs_not_in_use := inputs_in_section.difference(inputs_in_use):
-                results.append(ValidationResult(
-                validator=self,
-                message=self.error_message.format(
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
                             playbook_name=content_item.name,
-                            inputs_not_in_use=', '.join(inputs_not_in_use)
+                            inputs_not_in_use=", ".join(inputs_not_in_use),
                         ),
-                content_object=content_item
-                ))
+                        content_object=content_item,
+                    )
+                )
         return results

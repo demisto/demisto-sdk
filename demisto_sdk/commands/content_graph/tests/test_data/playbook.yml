@@ -1,47 +1,49 @@
 id: Phishing Investigation - Generic
 version: -1
 name: Phishing Investigation - Generic
-description: 'Use this playbook to investigate and remediate a potential phishing
+description:
+  "Use this playbook to investigate and remediate a potential phishing
   incident. The playbook simultaneously engages with the user that triggered the incident,
-  while investigating the incident itself.'
-starttaskid: '0'
+  while investigating the incident itself."
+starttaskid: "0"
 tasks:
-  '0':
-    id: '0'
+  "0":
+    id: "0"
     taskid:
     type: start
     task:
       id:
       version: -1
-      name: ''
+      name: ""
       iscommand: false
-      brand: ''
-      description: ''
+      brand: ""
+      description: ""
     nexttasks:
-      '#none#':
-      - '39'
+      "#none#":
+        - "39"
     separatecontext: false
     view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": -130\n  }\n}"
     note: false
     timertriggers: []
     ignoreworker: false
-  '2':
-    id: '2'
+  "2":
+    id: "2"
     taskid:
     type: regular
     task:
       id:
       version: -1
       name: Assign to analyst
-      description: Assign the incident to an analyst based on the analyst's organizational
+      description:
+        Assign the incident to an analyst based on the analyst's organizational
         role.
       scriptName: AssignAnalystToIncident
       type: regular
       iscommand: false
-      brand: ''
+      brand: ""
     nexttasks:
-      '#none#':
-      - '15'
+      "#none#":
+        - "15"
     scriptarguments:
       assignBy: {}
       email: {}
@@ -68,8 +70,8 @@ tasks:
       description: Description
       script: Builtin|||setIncident
       scriptarguments:
-        coverage: { }
-        filter_data: { }
+        coverage: {}
+        filter_data: {}
         id:
           complex:
             root: incident
@@ -77,7 +79,7 @@ tasks:
       iscommand: false
       brand: ""
     nexttasks:
-      '#none#':
+      "#none#":
         - "7"
     scriptarguments:
       CampaignIncidentType:
@@ -90,7 +92,7 @@ tasks:
     separatecontext: false
     view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 1230\n  }\n}"
     note: false
-    timertriggers: [ ]
+    timertriggers: []
     ignoreworker: false
     skipunavailable: false
     quietmode: 0
@@ -110,21 +112,21 @@ tasks:
       iscommand: false
       brand: ""
     nexttasks:
-      '#default#':
+      "#default#":
         - "8"
       "Yes":
         - "7"
     separatecontext: false
     view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 650\n  }\n}"
     note: false
-    timertriggers: [ ]
+    timertriggers: []
     ignoreworker: false
     message:
       to:
       subject:
       body:
         simple: ${incident.id}
-      methods: [ ]
+      methods: []
       format: ""
       bcc:
       cc:
@@ -137,22 +139,23 @@ tasks:
         - "No"
     skipunavailable: false
     quietmode: 0
-  '7':
-    id: '7'
+  "7":
+    id: "7"
     taskid: 89d7dd49-06a3-4397-8b72-f4428bf24805
     type: regular
     task:
       id: 89d7dd49-06a3-4397-8b72-f4428bf24805
       version: -1
       name: Manually review the <-incident->
-      description: Review the <-incident-> to determine if the email that the user reported
+      description:
+        Review the <-incident-> to determine if the email that the user reported
         is malicious.
       type: regular
       iscommand: false
-      brand: ''
+      brand: ""
     nexttasks:
-      '#none#':
-      - '33'
+      "#none#":
+        - "33"
     separatecontext: false
     view: "{\n  \"position\": {\n    \"x\": 60,\n    \"y\": 1535\n  }\n}"
     note: false
@@ -160,29 +163,31 @@ tasks:
     ignoreworker: false
 system: true
 inputs:
-- key: Role
-  value:
-    simple: Administrator
-  required: true
-  description: The default role to assign the incident to.
-- key: SearchAndDelete
-  value:
-    simple: 'False'
-  required: false
-  description: 'Enable the "Search and Delete" capability (can be either "True" or
-    "False").
-    In case of a malicious email, the "Search and Delete" sub-playbook will look for
-    other instances of the email and delete them pending analyst approval.'
-- key: BlockIndicators
-  value:
-    simple: 'False'
-  required: false
-  description: 'Enable the "Block Indicators" capability (can be either "True" or
-    "False").
+  - key: Role
+    value:
+      simple: Administrator
+    required: true
+    description: The default role to assign the incident to.
+  - key: SearchAndDelete
+    value:
+      simple: "False"
+    required: false
+    description:
+      'Enable the "Search and Delete" capability (can be either "True" or
+      "False").
+      In case of a malicious email, the "Search and Delete" sub-playbook will look for
+      other instances of the email and delete them pending analyst approval.'
+  - key: BlockIndicators
+    value:
+      simple: "False"
+    required: false
+    description:
+      'Enable the "Block Indicators" capability (can be either "True" or
+      "False").
 
-    In case of a malicious email, the "Block Indicators" sub-playbook will block all
-    malicious indicators in the relevant integrations.'
+      In case of a malicious email, the "Block Indicators" sub-playbook will block all
+      malicious indicators in the relevant integrations.'
 outputs:
-- contextPath: incident.fieldname
-  description: Security group name.
-  type: string
+  - contextPath: incident.fieldname
+    description: Security group name.
+    type: string

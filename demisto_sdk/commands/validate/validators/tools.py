@@ -1,6 +1,8 @@
 from typing import Set
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 import re
+
+
 def collect_all_inputs_in_use(content_item: Playbook) -> Set[str]:
     """
     Args:

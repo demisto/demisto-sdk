@@ -5,10 +5,17 @@ from demisto_sdk.commands.validate.validators.tools import (
     collect_all_inputs_in_use,
 )
 
-@pytest.mark.parametrize("input_name, expected_result", [
-    ({"0":{"inputs.hello":"test"}, "1":{"inputs.example":"test"}}, {'hello: test', 'example: test'}),
-    ({"0":{"inputs":"test"}, "1":{"inputs":"test"}}, set())
-])
+
+@pytest.mark.parametrize(
+    "input_name, expected_result",
+    [
+        (
+            {"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}},
+            {"hello: test", "example: test"},
+        ),
+        ({"0": {"inputs": "test"}, "1": {"inputs": "test"}}, set()),
+    ],
+)
 def test_collect_all_inputs_in_use(input_name, expected_result):
     """
     Given:
@@ -34,6 +41,18 @@ def test_collect_all_inputs_from_inputs_section():
     Then:
         - A set with all inputs defined in the inputs section with no duplicates or empty spaces are returned.
     """
-    playbook = create_playbook_object(paths=["inputs"], values=[[{"key": "inputs.test     ", "test text": "test"}, {"key": "inputs.test", "test text": "test"}, {"key": "inputs.test2", "test text": "test"}]])
+    playbook = create_playbook_object(
+        paths=["inputs"],
+        values=[
+            [
+                {"key": "inputs.test     ", "test text": "test"},
+                {"key": "inputs.test", "test text": "test"},
+                {"key": "inputs.test2", "test text": "test"},
+            ]
+        ],
+    )
 
-    assert collect_all_inputs_from_inputs_section(playbook) == {'inputs.test', 'inputs.test2'}
+    assert collect_all_inputs_from_inputs_section(playbook) == {
+        "inputs.test",
+        "inputs.test2",
+    }

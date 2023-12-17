@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.repo import Repo
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+
 REPO = Repo(tmpdir=Path(tempfile.mkdtemp()))
 
 
@@ -219,4 +220,3 @@ def create_playbook_object(
     playbook.yml.update(yml_content)
     parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
     return Playbook.from_orm(parser)  # type:ignore
-

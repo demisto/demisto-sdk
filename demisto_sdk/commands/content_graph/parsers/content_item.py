@@ -99,7 +99,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
-        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+        from demisto_sdk.commands.content_graph.common import ContentType
 
         logger.debug(f"Parsing content item {path}")
         if not ContentItemParser.is_content_item(path):
@@ -109,7 +109,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             content_type: ContentType = ContentType.by_path(path)
         except ValueError:
             try:
-                optional_content_type = ContentItem.by_schema(path)
+                optional_content_type = ContentType.by_schema(path)
             except ValueError as e:
                 logger.error(f"Could not determine content type for {path}: {e}")
                 raise InvalidContentItemException from e

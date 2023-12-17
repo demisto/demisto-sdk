@@ -27,13 +27,14 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        if "id" in _dict:
-            if isinstance(_dict["id"], str):
-                if (
-                    "definitionId" in _dict
-                    and _dict["definitionId"]
-                    and _dict["definitionId"].lower() not in ["incident", "indicator"]
-                    and path.suffix == ".json"
-                ):
+        if "id" in _dict and isinstance(_dict["id"], str):
+            if (
+                "definitionId" in _dict
+                and _dict["definitionId"]
+                and _dict["definitionId"].lower() not in ["incident", "indicator"]
+                and path.suffix == ".json"
+            ):
+                # we don't want to match the generic type
+                if "color" not in _dict:
                     return True
         return False

@@ -38,14 +38,18 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        if (
-            "rules" in _dict
-            and not (
-                "global_rule_id" in _dict
-                or (isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0])
-            )
-            and "samples" not in _dict
-        ):
-            if Path(path).suffix == ".yml":
+        if "rules" in _dict and Path(path).suffix == ".yml":
+            # we don't want to match the correlation rule
+            if (
+                not (
+                    "global_rule_id" in _dict
+                    or (
+                        isinstance(_dict, list)
+                        and _dict
+                        and "global_rule_id" in _dict[0]
+                    )
+                )
+                and "samples" not in _dict
+            ):
                 return True
         return False

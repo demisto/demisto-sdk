@@ -25,7 +25,6 @@ from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersi
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    get_dict_from_file,
     get_file,
     get_pack_name,
     replace_incident_to_alert,
@@ -36,7 +35,6 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    CONTENT_TYPE_TO_MODEL,
     BaseContent,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
@@ -413,19 +411,3 @@ class ContentItem(BaseContent):
         ):
             raise IncompatibleUploadVersionException(self, target_demisto_version)
         self._upload(client, marketplace)
-
-    @staticmethod
-    def by_schema(path: Path) -> "ContentType":
-        """
-        Determines a content type value of a given file by accessing it and making minimal checks on its schema.
-        """
-        parsed_dict = get_dict_from_file(str(path))
-        if parsed_dict and isinstance(parsed_dict, tuple):
-            _dict = parsed_dict[0]
-        else:
-            _dict = parsed_dict
-        for content_type in ContentType.content_items():
-            if content_type_obj := CONTENT_TYPE_TO_MODEL.get(content_type):
-                if content_type_obj.match(_dict, path):
-                    return content_type
-        raise ValueError(f"Could not find content type in path {path}")

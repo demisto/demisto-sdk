@@ -15,7 +15,12 @@ inputs:
     required: false
     type: string
     default: ""
-    description: "The group"
+    description: "The group of the pytest-split"
+  summary-display-options:
+    required: false
+    type: string
+    description: "The test-summary display options"
+    default: fsEX  # show all failed and skipped tests
 
 
 runs:
@@ -36,7 +41,7 @@ runs:
       with:
         path: ${{ inputs.artifacts_folder_name }}/junit.xml
         summary: true
-        display-options: fsEX
+        display-options: ${{ inputs.summary-display-options }}
         fail-on-empty: true
     - name: Check if tests have passed
       shell: bash

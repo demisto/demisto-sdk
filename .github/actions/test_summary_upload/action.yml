@@ -30,7 +30,7 @@ runs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ inputs.artifacts_folder_name }}-artifacts-${{ inputs.python-version }}-group(${{ inputs.group }})
+        name: ${{ inputs.artifacts_folder_name }}-artifacts-python-(${{ inputs.python-version }})-group(${{ inputs.group }})
         path: |
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json
@@ -48,7 +48,7 @@ runs:
       if: always()
       run: |
         if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
-          echo "There are ${{ inputs.artifacts_folder_name }} that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
+          echo "There are ${{ inputs.artifacts_folder_name }} that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the ${{ inputs.artifacts_folder_name }} summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
         else
           echo "All ${{ inputs.artifacts_folder_name }} have passed, congratulations!"
         fi

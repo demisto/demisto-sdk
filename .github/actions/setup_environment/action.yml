@@ -1,5 +1,5 @@
-name: 'Test'
-description: 'Test'
+name: 'Setup environment for demisto-sdk'
+description: 'Setup environment for every demisto-sdk workflow job'
 author: 'Demisto-SDK'
 
 inputs:

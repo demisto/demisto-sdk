@@ -1,5 +1,5 @@
-name: 'Test'
-description: 'Test'
+name: 'Test Summary Upload'
+description: 'Prints out a summary for all the tests of the demisto-sdk'
 author: 'Demisto-SDK'
 
 inputs:

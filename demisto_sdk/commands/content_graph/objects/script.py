@@ -14,7 +14,7 @@ class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-
     def match(_dict: dict, path: Path) -> bool:
         if (
             "script" in _dict
-            and "script" not in _dict["script"]
+            and isinstance(_dict["script"], str)
             and path.suffix == ".yml"
         ):
             if TEST_PLAYBOOKS_DIR not in path.parts:

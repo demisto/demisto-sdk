@@ -34,6 +34,8 @@ class XsiamApiClientConfig(BaseModel):
         description="XSIAM HTTP Collector Token",
     )
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("base_url", "api_key", "auth_id", always=True)
     def validate_client_config(cls, v, field: ModelField):
         if not v:
@@ -43,6 +45,8 @@ class XsiamApiClientConfig(BaseModel):
             )
         return v
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("collector_token", always=True)
     def validate_client_config_token(cls, v, values, field: ModelField):
         if not v:

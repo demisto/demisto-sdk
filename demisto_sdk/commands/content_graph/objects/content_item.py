@@ -53,6 +53,8 @@ class ContentItem(BaseContent):
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():

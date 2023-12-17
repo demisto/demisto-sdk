@@ -16,7 +16,7 @@ from typing import (
 
 import demisto_client
 from packaging.version import Version
-from pydantic import BaseModel, DirectoryPath, Field
+from pydantic import BaseModel, ConfigDict, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 import demisto_sdk.commands.content_graph.parsers.content_item
@@ -100,13 +100,13 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
-
-    class Config:
-        arbitrary_types_allowed = (
+    model_config = ConfigDict(
+        arbitrary_types_allowed=(
             True  # allows having custom classes for properties in model
-        )
-        orm_mode = True  # allows using from_orm() method
-        allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+        ),
+        from_attributes=True,
+        populate_by_name=True,
+    )
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
@@ -177,7 +177,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
 class BaseContent(BaseNode):
     field_mapping: dict = Field({}, exclude=True)
     path: Path
-    git_status: Optional[GitStatuses]
+    git_status: Optional[GitStatuses] = None
     old_base_content_object: Optional["BaseContent"] = None
 
     def _save(self, path: Path, data: dict):

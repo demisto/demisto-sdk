@@ -11,7 +11,7 @@ from typing import (
     get_args,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -120,11 +120,14 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         # Exclude specific properties from being displayed when hovering over 'self'
         return [attr for attr in dir(type(self)) if attr != "graph"]
 
-    class Config:
-        arbitrary_types_allowed = (
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=(
             True  # allows having custom classes for properties in model
-        )
-        fields = {"graph": {"exclude": True}}  # Exclude the property from the repr
+        ),
+        fields={"graph": {"exclude": True}},
+    )
 
 
 class BaseResult(BaseModel):

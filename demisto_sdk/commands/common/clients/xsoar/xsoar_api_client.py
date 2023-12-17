@@ -14,7 +14,7 @@ from demisto_client.demisto_api.api.default_api import DefaultApi
 from demisto_client.demisto_api.models.entry import Entry
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, validator
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 
@@ -41,9 +41,7 @@ class XsoarClient(BaseModel):
     client: DefaultApi = Field(None, exclude=True)
     about_xsoar: Dict = Field(None, exclude=True)
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @classmethod
     @retry(exceptions=ApiException)
@@ -69,6 +67,8 @@ class XsoarClient(BaseModel):
                 )
             raise
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("client", always=True, pre=True)
     def get_xsoar_client(
         cls, v: Optional[DefaultApi], values: Dict[str, Any]
@@ -88,6 +88,8 @@ class XsoarClient(BaseModel):
             verify_ssl=config.verify_ssl,
         )
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("about_xsoar", always=True)
     def get_xsoar_server_about(cls, v: Optional[Dict], values: Dict[str, Any]) -> Dict:
         return v or cls.get_xsoar_about(values["client"])

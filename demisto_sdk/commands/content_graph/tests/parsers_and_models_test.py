@@ -1670,7 +1670,7 @@ class TestFindContentType:
         Given:
             - An integration YAML file outside the content repository path.
         When:
-            - Running from_path on the integration YAML file.
+            - Running from_path() on the integration YAML file.
         Then:
             - Verify that the returned Parser is IntegrationParser.
         """
@@ -1695,9 +1695,9 @@ class TestFindContentType:
         Given:
             - An integration YAML file outside the content repository path.
         When:
-            - Running by_schema on the integration YAML file path, mocking the integration match method to False.
+            - Running by_schema() on the integration YAML file path, mocking the integration match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -1719,9 +1719,9 @@ class TestFindContentType:
     def test_integration_outside_content_path_on_python_path(self, git_repo):
         """
         Given:
-            - An integration Python and YAML file outside the content repository path.
+            - An integration Python and YAML files outside the content repository path.
         When:
-            - Running from_path on the integration Python file.
+            - Running from_path() on the integration Python file.
         Then:
             - Ensure InvaliadContentItemException is raised.
         """
@@ -1742,7 +1742,7 @@ class TestFindContentType:
         Given:
             - An integration YAML file outside the content repository path.
         When:
-            - Running from_path on the integration YAML file without existing Python file.
+            - Running from_path() on the integration YAML file without existing Python file.
         Then:
             - Ensure InvaliadContentItemException is raised.
         """
@@ -1761,7 +1761,7 @@ class TestFindContentType:
         Given:
             - An script YAML file outside the content repository path.
         When:
-            - Running from_path on the script YAML file.
+            - Running from_path() on the script YAML file.
         Then:
             - Verify that the returned Parser is ScriptParser.
         """
@@ -1784,9 +1784,9 @@ class TestFindContentType:
     def test_script_outside_content_path_on_python_path(self, git_repo):
         """
         Given:
-            - An script Python and YAML file outside the content repository path.
+            - An script Python and YAML files outside the content repository path.
         When:
-            - Running from_path on the script Python file.
+            - Running from_path() on the script Python file.
         Then:
             - Ensure InvaliadContentItemException is raised.
         """
@@ -1807,9 +1807,9 @@ class TestFindContentType:
         Given:
             - An script YAML file outside the content repository path.
         When:
-            - Running by_schema on the script YAML file path, mocking the script match method to False.
+            - Running by_schema() on the script YAML file path, mocking the script match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -1833,7 +1833,7 @@ class TestFindContentType:
         Given:
             - An script YAML file outside the content repository path.
         When:
-            - Running from_path on the script YAML file without existing Python file.
+            - Running from_path() on the script YAML file without existing Python file.
         Then:
             - Ensure InvaliadContentItemException is raised.
         """
@@ -1852,7 +1852,7 @@ class TestFindContentType:
         Given:
             - An playbook YAML file outside the content repository path.
         When:
-            - Running from_path on the playbook YAML file.
+            - Running from_path() on the playbook YAML file.
         Then:
             - Verify that the returned Parser is PlaybookParser.
         """
@@ -1875,7 +1875,7 @@ class TestFindContentType:
         Given:
             - An playbook ReadMe and YAML file outside the content repository path.
         When:
-            - Running from_path on the playbook ReadMe file.
+            - Running from_path() on the playbook ReadMe file.
         Then:
             - Ensure InvaliadContentItemException is raised.
         """
@@ -1896,9 +1896,9 @@ class TestFindContentType:
         Given:
             - An playbook YAML file outside the content repository path.
         When:
-            - Running by_schema on the playbook YAML file path, mocking the playbook match method to False.
+            - Running by_schema() on the playbook YAML file path, mocking the playbook match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -1922,7 +1922,7 @@ class TestFindContentType:
         Given:
             - An correlation rule YAML file outside the content repository path.
         When:
-            - Running from_path on the correlation rule YAML file.
+            - Running from_path() on the correlation rule YAML file.
         Then:
             - Verify that the returned Parser is CorrelationRuleParser.
         """
@@ -1949,9 +1949,9 @@ class TestFindContentType:
         Given:
             - An correlation rule YAML file outside the content repository path.
         When:
-            - Running by_schema on the correlation rule YAML file path, mocking the correlation rule match method to False.
+            - Running by_schema() on the correlation rule YAML file path, mocking the correlation rule match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -1974,7 +1974,7 @@ class TestFindContentType:
         Given:
             - An classifier JSON file outside the content repository path.
         When:
-            - Running from_path on the classifier JSON file.
+            - Running from_path() on the classifier JSON file.
         Then:
             - Verify that the returned Parser is ClassifierParser.
         """
@@ -1997,9 +1997,9 @@ class TestFindContentType:
         Given:
             - An classifier JSON file outside the content repository path.
         When:
-            - Running by_schema on the classifier JSON file path, mocking the classifier match method to False.
+            - Running by_schema() on the classifier JSON file path, mocking the classifier match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2022,7 +2022,7 @@ class TestFindContentType:
         Given:
             - An dashboard JSON file outside the content repository path.
         When:
-            - Running from_path on the dashboard JSON file.
+            - Running from_path() on the dashboard JSON file.
         Then:
             - Verify that the returned Parser is DashboardParser.
         """
@@ -2045,9 +2045,9 @@ class TestFindContentType:
         Given:
             - An dashboard JSON file outside the content repository path.
         When:
-            - Running by_schema on the dashboard JSON file path, mocking the dashboard match method to False.
+            - Running by_schema() on the dashboard JSON file path, mocking the dashboard match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2070,7 +2070,7 @@ class TestFindContentType:
         Given:
             - An generic definition JSON file outside the content repository path.
         When:
-            - Running from_path on the generic definition JSON file.
+            - Running from_path() on the generic definition JSON file.
         Then:
             - Verify that the returned Parser is GenericDefinitionParser.
         """
@@ -2097,9 +2097,9 @@ class TestFindContentType:
         Given:
             - An generic definition JSON file outside the content repository path.
         When:
-            - Running by_schema on the generic definition JSON file path, mocking the generic definition match method to False.
+            - Running by_schema() on the generic definition JSON file path, mocking the generic definition match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2123,7 +2123,7 @@ class TestFindContentType:
         Given:
             - An generic field JSON file outside the content repository path.
         When:
-            - Running from_path on the generic field JSON file.
+            - Running from_path() on the generic field JSON file.
         Then:
             - Verify that the returned Parser is GenericFieldParser.
         """
@@ -2147,9 +2147,9 @@ class TestFindContentType:
         Given:
             - An generic field JSON file outside the content repository path.
         When:
-            - Running by_schema on the generic field JSON file path, mocking the generic field match method to False.
+            - Running by_schema() on the generic field JSON file path, mocking the generic field match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2172,7 +2172,7 @@ class TestFindContentType:
         Given:
             - An generic module JSON file outside the content repository path.
         When:
-            - Running from_path on the generic module JSON file.
+            - Running from_path() on the generic module JSON file.
         Then:
             - Verify that the returned Parser is GenericModuleParser.
         """
@@ -2197,9 +2197,9 @@ class TestFindContentType:
         Given:
             - An generic module JSON file outside the content repository path.
         When:
-            - Running by_schema on the generic module JSON file path, mocking the generic module match method to False.
+            - Running by_schema() on the generic module JSON file path, mocking the generic module match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2223,7 +2223,7 @@ class TestFindContentType:
         Given:
             - An generic type JSON file outside the content repository path.
         When:
-            - Running from_path on the generic type JSON file.
+            - Running from_path() on the generic type JSON file.
         Then:
             - Verify that the returned Parser is GenericModuleParser.
         """
@@ -2248,9 +2248,9 @@ class TestFindContentType:
         Given:
             - An generic type JSON file outside the content repository path.
         When:
-            - Running by_schema on the generic type JSON file path, mocking the generic type match method to False.
+            - Running by_schema() on the generic type JSON file path, mocking the generic type match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2274,7 +2274,7 @@ class TestFindContentType:
         Given:
             - An incident field JSON file outside the content repository path.
         When:
-            - Running from_path on the incident field JSON file.
+            - Running from_path() on the incident field JSON file.
         Then:
             - Verify that the returned Parser is IncidentFieldParser.
         """
@@ -2299,9 +2299,9 @@ class TestFindContentType:
         Given:
             - An incident field JSON file outside the content repository path.
         When:
-            - Running by_schema on the incident field JSON file path, mocking the incident field match method to False.
+            - Running by_schema() on the incident field JSON file path, mocking the incident field match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2325,7 +2325,7 @@ class TestFindContentType:
         Given:
             - An incident type JSON file outside the content repository path.
         When:
-            - Running from_path on the incident type JSON file.
+            - Running from_path() on the incident type JSON file.
         Then:
             - Verify that the returned Parser is IncidentTypeParser.
         """
@@ -2349,9 +2349,9 @@ class TestFindContentType:
         Given:
             - An incident type JSON file outside the content repository path.
         When:
-            - Running by_schema on the incident type JSON file path, mocking the incident type match method to False.
+            - Running by_schema() on the incident type JSON file path, mocking the incident type match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2374,7 +2374,7 @@ class TestFindContentType:
         Given:
             - An indicator field JSON file outside the content repository path.
         When:
-            - Running from_path on the indicator field JSON file.
+            - Running from_path() on the indicator field JSON file.
         Then:
             - Verify that the returned Parser is IndicatorFieldParser.
         """
@@ -2399,9 +2399,9 @@ class TestFindContentType:
         Given:
             - An indicator field JSON file outside the content repository path.
         When:
-            - Running by_schema on the indicator field JSON file path, mocking the indicator field match method to False.
+            - Running by_schema() on the indicator field JSON file path, mocking the indicator field match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2425,7 +2425,7 @@ class TestFindContentType:
         Given:
             - An indicator type JSON file outside the content repository path.
         When:
-            - Running from_path on the indicator type JSON file.
+            - Running from_path() on the indicator type JSON file.
         Then:
             - Verify that the returned Parser is IndicatorTypeParser.
         """
@@ -2450,9 +2450,9 @@ class TestFindContentType:
         Given:
             - An indicator type JSON file outside the content repository path.
         When:
-            - Running by_schema on the indicator type JSON file path, mocking the indicator type match method to False.
+            - Running by_schema() on the indicator type JSON file path, mocking the indicator type match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2476,7 +2476,7 @@ class TestFindContentType:
         Given:
             - An layout JSON file outside the content repository path.
         When:
-            - Running from_path on the layout JSON file.
+            - Running from_path() on the layout JSON file.
         Then:
             - Verify that the returned Parser is LayoutParser.
         """
@@ -2499,9 +2499,9 @@ class TestFindContentType:
         Given:
             - An layout JSON file outside the content repository path.
         When:
-            - Running by_schema on the layout JSON file path, mocking the layout match method to False.
+            - Running by_schema() on the layout JSON file path, mocking the layout match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2524,7 +2524,7 @@ class TestFindContentType:
         Given:
             - An layout rule JSON file outside the content repository path.
         When:
-            - Running from_path on the layout rule JSON file.
+            - Running from_path() on the layout rule JSON file.
         Then:
             - Verify that the returned Parser is LayoutRuleParser.
         """
@@ -2547,9 +2547,9 @@ class TestFindContentType:
         Given:
             - An layout rule JSON file outside the content repository path.
         When:
-            - Running by_schema on the layout rule JSON file path, mocking the layout rule match method to False.
+            - Running by_schema() on the layout rule JSON file path, mocking the layout rule match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2572,7 +2572,7 @@ class TestFindContentType:
         Given:
             - An mapper JSON file outside the content repository path.
         When:
-            - Running from_path on the mapper rule JSON file.
+            - Running from_path() on the mapper rule JSON file.
         Then:
             - Verify that the returned Parser is MapperParser.
         """
@@ -2595,9 +2595,9 @@ class TestFindContentType:
         Given:
             - An mapper JSON file outside the content repository path.
         When:
-            - Running by_schema on the mapper JSON file path, mocking the mapper match method to False.
+            - Running by_schema() on the mapper JSON file path, mocking the mapper match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2620,7 +2620,7 @@ class TestFindContentType:
         Given:
             - An modeling rule YAML file outside the content repository path.
         When:
-            - Running from_path on the modeling rule YAML file.
+            - Running from_path() on the modeling rule YAML file.
         Then:
             - Verify that the returned Parser is ModelingRuleParser.
         """
@@ -2644,9 +2644,9 @@ class TestFindContentType:
         Given:
             - An modeling rule JSON file outside the content repository path.
         When:
-            - Running by_schema on the modeling rule JSON file path, mocking the modeling rule match method to False.
+            - Running by_schema() on the modeling rule JSON file path, mocking the modeling rule match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType
@@ -2669,7 +2669,7 @@ class TestFindContentType:
         Given:
             - An parsing rule YAML file outside the content repository path.
         When:
-            - Running from_path on the parsing rule YAML file.
+            - Running from_path() on the parsing rule YAML file.
         Then:
             - Verify that the returned Parser is ParsingRuleParser.
         """
@@ -2692,9 +2692,9 @@ class TestFindContentType:
         Given:
             - An parsing rule JSON file outside the content repository path.
         When:
-            - Running by_schema on the parsing rule JSON file path, mocking the parsing rule match method to False.
+            - Running by_schema() on the parsing rule JSON file path, mocking the parsing rule match method to False.
         Then:
-            - Ensure other content type match methods return False.
+            - Ensure other match() content types methods return False.
             - Ensure ValueError is raised.
         """
         from demisto_sdk.commands.content_graph.common import ContentType

@@ -56,12 +56,14 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         if "group" in _dict and Path(path).suffix == ".json":
-            if "id" in _dict and isinstance(_dict["id"], str):
-                if (
-                    "definitionId" not in _dict
-                    and not _dict["id"].startswith("incident")
-                    and not _dict["id"].startswith("indicator")
-                ):
+            if (
+                "cliName" not in _dict
+                and "id" in _dict
+                and isinstance(_dict["id"], str)
+            ):
+                if not _dict["id"].startswith("incident") and not _dict[
+                    "id"
+                ].startswith("indicator"):
                     return True
         return False
 

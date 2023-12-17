@@ -31,7 +31,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ./.github/actions/setup_environment
+      - name: Unit Tests - Python ${{ matrix.python-version }} (${{ matrix.group }}) - Setup Environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -132,7 +133,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: ./.github/actions/setup_environment
+      - name: Graph Tests - Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
           python-version: ${{ matrix.python-version }}

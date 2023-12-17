@@ -486,6 +486,11 @@ class PreCommitRunner:
                     f"Running pre-commit with Python {python_version} on:\n{changed_files_string}"
                 )
 
+        else:
+            logger.info(
+                f"Running pre-commit with on all files"
+            )
+
         self.prepare_hooks(dry_run)
         if self.all_files:
             self.precommit_template[

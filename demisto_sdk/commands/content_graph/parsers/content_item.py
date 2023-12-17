@@ -107,8 +107,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 path = path.parent
         try:
             content_type: ContentType = ContentType.by_path(path)
-        except ValueError as e:
-            if not (optional_content_type := ContentItem.find_content_type(path)):
+        except ValueError:
+            try:
+                optional_content_type = ContentItem.by_schema(path)
+            except ValueError as e:
                 logger.error(f"Could not determine content type for {path}: {e}")
                 raise InvalidContentItemException from e
             content_type = optional_content_type

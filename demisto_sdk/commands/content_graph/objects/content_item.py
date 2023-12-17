@@ -415,22 +415,17 @@ class ContentItem(BaseContent):
         self._upload(client, marketplace)
 
     @staticmethod
-    def find_content_type(path: Path) -> "ContentType":
+    def by_schema(path: Path) -> "ContentType":
         """
-        Find the ContentType value of a path, without accessing the file, based on the file properties.
+        Determines a content type value of a given file by accessing it and making minimal checks on its schema.
         """
-        from demisto_sdk.commands.content_graph.parsers.content_item import (
-            InvalidContentItemException,
-        )
-
         parsed_dict = get_dict_from_file(str(path))
         if parsed_dict and isinstance(parsed_dict, tuple):
             _dict = parsed_dict[0]
         else:
             _dict = parsed_dict
-        if isinstance(_dict, dict):
-            for content_type_obj in CONTENT_TYPE_TO_MODEL.values():
-                if issubclass(content_type_obj, ContentItem):
-                    if content_type_obj.match(_dict, path):
-                        return content_type_obj.content_type
-        raise InvalidContentItemException
+        for content_type in ContentType.content_items():
+            if content_type_obj := CONTENT_TYPE_TO_MODEL.get(content_type):
+                if content_type_obj.match(_dict, path):
+                    return content_type
+        raise ValueError(f"Could not find content type in path {path}")

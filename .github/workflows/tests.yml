@@ -50,32 +50,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: docker-practice/actions-setup-docker@master
-        timeout-minutes: 12
-        with:
-          docker_version: 20.10.14
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - uses: ./.github/actions/setup_environment
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Setup Poetry
-        run: |
-          sudo curl -sSL https://install.python-poetry.org | python3 -
-          poetry --version
-          poetry check --lock
-          poetry install -E generate-unit-tests
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ inputs.node-version }}
-
-      - name: Install npm
-        run: |
-          npm install
-          echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
-
       - name: Run pytest
         run: |
           source "$(poetry env info --path)/bin/activate"

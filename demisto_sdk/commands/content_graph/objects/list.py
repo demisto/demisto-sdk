@@ -16,6 +16,7 @@ logger = logging.getLogger("demisto-sdk")
 
 class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg]
     type: str
+    is_unified: bool
 
     def _upload(
         self,
@@ -43,4 +44,6 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
             if kwargs.get("unify_only")
             else super().prepare_for_upload(current_marketplace)
         )
+        if self.is_unified:
+            return data
         return ListUnifier.unify(self.path, data, marketplace=current_marketplace)

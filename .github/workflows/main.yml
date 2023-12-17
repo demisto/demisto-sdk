@@ -43,41 +43,21 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
 
-          mkdir test-results
           # poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests} --store-durations --junitxml=test-results/junit.xml || pytest_exit_code=$
           # mv .test_durations test-results/test_durations
+          
+          mkdir unit-test-results
           poetry run pytest -v --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph} --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v3
+
+      - uses: ./.github/actions/test_summary_upload
         with:
-          name: unit-tests-artifacts-${{ matrix.python-version }}-group-${{ matrix.group }}
-          path: |
-            test-results/test_durations
-            test-results/junit.xml
-            node_versions_info.json
-            coverage_html_report
-            .coverage
-      - name: Print Summary of pytest results in workflow summary
-        if: always()
-        uses: pmeier/pytest-results-action@main
-        with:
-          path: test-results/junit.xml
-          summary: true
-          display-options: fsEX
-          fail-on-empty: true
-      - name: Check if tests have passed
-        if: always()
-        run: |
-          if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
-            echo "There are unit-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
-          else
-            echo "All unit-tests have passed, congratulations!"
-          fi
-          exit $PYTEST_EXIT_CODE
+          python-version: ${{ matrix.python-version }}
+          artifacts_folder_name: unit-test-results
+          group: ${{ matrix.group }}
+
 
   integration-tests:
     name: Integration Tests / ${{ matrix.python-version }}

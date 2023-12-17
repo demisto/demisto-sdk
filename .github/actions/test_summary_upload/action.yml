@@ -1,0 +1,51 @@
+name: 'Test'
+description: 'Test'
+author: 'Demisto-SDK'
+
+inputs:
+  python-version:
+    required: true
+    type: string
+    description: "The python version"
+  artifacts_folder_name:
+    required: false
+    type: string
+    description: "The folder name to save artifacts"
+  group:
+    required: false
+    type: string
+    default: ""
+    description: "The group"
+
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.artifacts_folder_name }}-artifacts-${{ inputs.python-version }}-${{ inputs.group }}
+        path: |
+          ${{ inputs.artifacts_folder_name }}
+          node_versions_info.json
+          coverage_html_report
+          .coverage
+    - name: Print Summary of pytest results in workflow summary
+      if: always()
+      uses: pmeier/pytest-results-action@main
+      with:
+        path: ${{ inputs.artifacts_folder_name }}/junit.xml
+        summary: true
+        display-options: fsEX
+        fail-on-empty: true
+    - name: Check if tests have passed
+      shell: bash
+      if: always()
+      run: |
+        if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
+          echo "There are graph-tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
+        else
+          echo "All graph-tests have passed, congratulations!"
+        fi
+        exit $PYTEST_EXIT_CODE

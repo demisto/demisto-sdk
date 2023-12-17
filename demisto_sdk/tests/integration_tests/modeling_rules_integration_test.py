@@ -123,7 +123,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -189,7 +192,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -265,7 +271,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -346,7 +355,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -440,7 +452,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -539,7 +554,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -677,7 +695,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -818,7 +839,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -960,7 +984,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -1036,7 +1063,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -1171,7 +1201,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -1295,7 +1328,10 @@ class TestTheTestModelingRuleCommandMultipleRules:
         monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Pack 1 with Modeling Rule
         pack_1 = repo.create_pack("Pack1")
@@ -1465,7 +1501,10 @@ class TestTheTestModelingRuleCommandInteractive:
         monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Pack with Modeling Rule
         pack = repo.create_pack("Pack1")
@@ -1549,7 +1588,10 @@ class TestDeleteExistingDataset:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
-        mocker.patch("time.sleep", return_value=None)
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)

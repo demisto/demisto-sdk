@@ -14,7 +14,7 @@ inputs:
   group:
     required: false
     type: string
-    default: ""
+    default: "All-Tests"
     description: "The group of the pytest-split"
   summary-display-options:
     required: false
@@ -30,7 +30,7 @@ runs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ inputs.artifacts_folder_name }}-artifacts-${{ inputs.python-version }}-${{ inputs.group }}
+        name: ${{ inputs.artifacts_folder_name }}-artifacts-${{ inputs.python-version }}-group(${{ inputs.group }})
         path: |
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json

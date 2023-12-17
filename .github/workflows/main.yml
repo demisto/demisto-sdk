@@ -96,7 +96,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           artifacts_folder_name: integration-test-results
-          group: ${{ matrix.group }}
 
   graph-tests:
     name: Graph Tests / ${{ matrix.python-version }}
@@ -131,7 +130,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           artifacts_folder_name: graph-test-results
-          group: ${{ matrix.group }}
 
   coverage:
     needs: [unit-tests, integration-tests, graph-tests]

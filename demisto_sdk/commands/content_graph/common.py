@@ -251,16 +251,16 @@ class ContentType(str, enum.Enum):
         """
         Determines a content type value of a given file by accessing it and making minimal checks on its schema.
         """
+        from demisto_sdk.commands.content_graph.objects.base_content import (
+            CONTENT_TYPE_TO_MODEL,
+        )
+
         parsed_dict = get_dict_from_file(str(path))
         if parsed_dict and isinstance(parsed_dict, tuple):
             _dict = parsed_dict[0]
         else:
             _dict = parsed_dict
         for content_type in ContentType.content_items():
-            from demisto_sdk.commands.content_graph.objects.base_content import (
-                CONTENT_TYPE_TO_MODEL,
-            )
-
             if content_type_obj := CONTENT_TYPE_TO_MODEL.get(content_type):
                 if content_type_obj.match(_dict, path):
                     return content_type

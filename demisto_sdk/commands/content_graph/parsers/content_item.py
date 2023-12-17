@@ -328,6 +328,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             mandatorily=is_mandatory,
         )
 
+    def add_dependency_by_cli_name(
+        self,
+        dependency_name: str,
+        dependency_type: ContentType,
+        is_mandatory: bool = True,
+    ):
+        self.add_relationship(
+            RelationshipType.USES_BY_CLI_NAME,
+            target=dependency_name,
+            target_type=dependency_type,
+            mandatorily=is_mandatory,
+        )
+
     def add_command_or_script_dependency(
         self, dependency_id: str, is_mandatory: bool = True
     ) -> None:

@@ -194,6 +194,10 @@ def create_relationships_by_type(
         query = build_uses_relationships_query(
             target_identifier="name",
         )
+    elif relationship == RelationshipType.USES_BY_CLI_NAME:
+        query = build_uses_relationships_query(
+            target_identifier="cli_name",
+        )
     elif relationship == RelationshipType.USES_COMMAND_OR_SCRIPT:
         query = build_uses_relationships_query(
             target_type=ContentType.COMMAND_OR_SCRIPT,

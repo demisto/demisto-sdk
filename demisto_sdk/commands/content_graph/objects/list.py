@@ -47,3 +47,13 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
         if self.is_unified:
             return data
         return ListUnifier.unify(self.path, data, marketplace=current_marketplace)
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if (
+            isinstance(_dict, dict)
+            and {"data", "allRead", "truncated"}.intersection(_dict.keys())
+            and path.suffix == ".json"
+        ):
+            return True
+        return False

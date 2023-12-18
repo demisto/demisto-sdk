@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -22,7 +21,7 @@ class IsInputKeyNotInTasksValidator(BaseValidator[ContentTypes]):
     description = "Validate that all inputs described in the playbooks input section are used in tasks."
     error_message = "The playbook '{playbook_name}' contains the following inputs that are not used in any of its tasks: {inputs_not_in_use}"
     fix_message = ""
-    related_field = ""
+    related_field = "input"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 

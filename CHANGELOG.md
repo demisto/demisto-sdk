@@ -13,7 +13,7 @@
 * Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
 * **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.
 * **Breaking change**: Removed the `--unit-test` argument in **pre-commit**. To skip unit tests, run with `--no-docker` or with `skip=pytest-in-docker`,
-* Transformed the PB118 validation into the updated validation format and rectified the validation for both new and modified files.
+
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.

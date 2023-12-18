@@ -14,19 +14,28 @@ from demisto_sdk.commands.validate.validators.tools import (
             {"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}},
             {"hello: test", "example: test"},
         ),
-        ({"0": {"inputs": "test"}, "1": {"inputs": "test"}}, set()),
+        ({"0": {"inputs": "test"}, "1": {"inputs": "test2"}}, set()),
     ],
 )
 def test_collect_all_inputs_in_use(input_name, expected_result):
     """
     Given:
         - A playbook with inputs in some tasks
+          scenario 1:
+            The inputs for the first task are 'inputs.hello: test'
+            The inputs for the second task are 'inputs.example: test'
+          scenario 2:
+            The inputs for the first task are 'inputs: test'
+            The inputs for the second task are 'inputs: test2'
     When:
         - Running collect_all_inputs_in_use
     Then:
         - Return a set of input names and values from any task in the playbook, if the inputs match the pattern inputs.<input_name>
-        scenario 1: inputs.hello: test
-        scenario 2: inputs: test
+        scenario 1: The results should be A set object containing:
+            'hello: test'
+           'example: test'
+        scenario 2: The results should be:
+            An empty set object.
     """
     playbook = create_playbook_object(paths=["tasks"], values=[input_name])
 

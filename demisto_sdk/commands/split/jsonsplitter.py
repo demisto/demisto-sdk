@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
@@ -184,13 +185,22 @@ class JsonSplitter:
 
     def write_file_data(self, list_name_dir: Path, file_data_name: str):
         if file_data_name.endswith("json"):
-            JsonFile.write_file(self.json_data["data"], (list_name_dir / file_data_name), indent=JSON_INDENT_CONSTANT)
+            
+            JsonFile.write_file(
+                json.loads(self.json_data["data"]),
+                (list_name_dir / file_data_name),
+                indent=JSON_INDENT_CONSTANT,
+            )
         else:
-            TextFile.write_file(self.json_data["data"], (list_name_dir / file_data_name))
+            TextFile.write_file(
+                self.json_data["data"], (list_name_dir / file_data_name)
+            )
 
     def write_list(self, list_name_dir: Path, file_name: str):
         self.json_data["data"] = "-"
-        JsonFile.write_file(self.json_data, (list_name_dir / file_name), indent=JSON_INDENT_CONSTANT)
+        JsonFile.write_file(
+            self.json_data, (list_name_dir / file_name), indent=JSON_INDENT_CONSTANT
+        )
 
     def split_list(self):
         list_name_dir, file_name, file_data_name = self.get_auto_output_path()

@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.
 * Added support to return war-room entries when running cli commands.
 * Added support to automatically detect the correct file model by file path when reading files.
@@ -10,7 +12,7 @@
 * Added support of the `List` content-item to the **prepare-content** and **split** commands.
 * * **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
 * **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
-* added the *IN150* and *IN161* errors to *allowed ignore errors* list.
+* Added the *IN150* and *IN161* errors to *allowed ignore errors* list.
 * Added support for `env`, `copy_files` property in **pre-commit** docker hooks.
 * Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
 * **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.

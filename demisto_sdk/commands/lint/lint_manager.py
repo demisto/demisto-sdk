@@ -241,9 +241,7 @@ class LintManager:
         logger.debug("creating docker client from env")
 
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(
-                log_prompt="LintManager"
-            )
+            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="LintManager")  # type: ignore
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (

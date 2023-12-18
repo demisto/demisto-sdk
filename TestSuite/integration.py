@@ -50,6 +50,9 @@ class Integration:
         self.image = File(
             self._tmpdir_integration_path / f"{self.name}_image.png", self._repo.path
         )
+        self.commands_txt = File(
+            self._tmpdir_integration_path / "commands.txt", self._repo.path
+        )
 
     def build(
         self,
@@ -59,6 +62,8 @@ class Integration:
         description: Optional[str] = None,
         changelog: Optional[str] = None,
         image: Optional[bytes] = None,
+        commands_txt: Optional[str] = None,
+        test: Optional[str] = None,
     ):
         """Writes not None objects to files."""
         if code is not None:
@@ -80,6 +85,10 @@ class Integration:
             self.changelog.write(changelog)
         if image is not None:
             self.image.write_bytes(image)
+        if commands_txt is not None:
+            self.commands_txt.write(commands_txt)
+        if test is not None:
+            self.test.write(test)
 
         if self.create_unified:
             output_yml_path = Path(self.path).with_name(

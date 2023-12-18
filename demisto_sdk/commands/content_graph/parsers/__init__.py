@@ -18,9 +18,12 @@ __all__ = [
     "MapperParser",
     "ModelingRuleParser",
     "ParsingRuleParser",
+    "BasePlaybookParser",
     "PlaybookParser",
     "ReportParser",
+    "BaseScriptParser",
     "ScriptParser",
+    "TestScriptParser",
     "TestPlaybookParser",
     "TriggerParser",
     "WidgetParser",
@@ -30,8 +33,14 @@ __all__ = [
     "XDRCTemplateParser",
     "LayoutRuleParser",
     "PreProcessRuleParser",
+    "AssetsModelingRuleParser",
 ]
 
+from demisto_sdk.commands.content_graph.parsers.assets_modeling_rule import (
+    AssetsModelingRuleParser,
+)
+from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlaybookParser
+from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
 from demisto_sdk.commands.content_graph.parsers.correlation_rule import (
     CorrelationRuleParser,
@@ -70,6 +79,7 @@ from demisto_sdk.commands.content_graph.parsers.pre_process_rule import (
 from demisto_sdk.commands.content_graph.parsers.report import ReportParser
 from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
+from demisto_sdk.commands.content_graph.parsers.test_script import TestScriptParser
 from demisto_sdk.commands.content_graph.parsers.trigger import TriggerParser
 from demisto_sdk.commands.content_graph.parsers.widget import WidgetParser
 from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser

@@ -12,7 +12,7 @@ from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 UPDATE_RN_COMMAND = "update-release-notes"
@@ -73,9 +73,9 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
         "demisto_sdk.commands.common.tools.get_pack_name", return_value="FeedAzureValid"
     )
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(set(), added_files, set()),
     )
@@ -144,9 +144,9 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
         return_value="",
     )
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(modified_files, set(), set()),
     )
@@ -206,9 +206,9 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     }
     rn_path = join(RN_FOLDER, "1_0_1.md")
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(modified_files, set(), set()),
     )
@@ -270,12 +270,12 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     old_files = {join(VMWARE_PACK_PATH, "Integrations", "integration-VMware.yml")}
     rn_path = join(VMWARE_RN_PACK_PATH, "1_0_1.md")
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
     )
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(set(), old_files, set()),
     )
@@ -322,12 +322,12 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     runner = CliRunner(mix_stderr=False)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
     )
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         side_effect=FileNotFoundError,
     )
@@ -393,12 +393,12 @@ def test_update_release_notes_existing(demisto_client, mocker):
     runner = CliRunner(mix_stderr=False)
 
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
     )
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(modified_files, set(), set()),
     )
@@ -493,9 +493,9 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     runner = CliRunner(mix_stderr=False)
 
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(modified_files, set(), set()),
     )
@@ -546,7 +546,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     pack.pack_metadata.write_json(
         open("demisto_sdk/tests/test_files/1.pack_metadata.json").read()
     )
-    validate_manager = ValidateManager(
+    validate_manager = OldValidateManager(
         skip_pack_rn_validation=True,
         silence_init_prints=True,
         skip_conf_json=True,
@@ -556,7 +556,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
 
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=({pack.pack_metadata.path}, set(), set()),
     )
@@ -565,7 +565,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
         "setup_validate_manager",
         return_value=validate_manager,
     )
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
 
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
@@ -614,7 +614,7 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, re
         join(AZURE_FEED_PACK_PATH, "IncidentFields", "incidentfield-city.json")
     }
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
         UpdateReleaseNotesManager,
         "get_git_changed_files",
@@ -670,7 +670,7 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
         )
     }
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
         UpdateReleaseNotesManager,
         "get_git_changed_files",
@@ -770,7 +770,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
         )
     }
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
         UpdateReleaseNotesManager,
         "get_git_changed_files",
@@ -830,11 +830,11 @@ def test_force_update_release(demisto_client, mocker, repo):
     Path(rn_path).unlink(missing_ok=True)
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(set(), set(), set()),
     )
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
     )

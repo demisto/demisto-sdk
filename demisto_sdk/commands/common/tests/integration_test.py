@@ -13,6 +13,9 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     MAX_FETCH_PARAM,
+    PARTNER_SUPPORT,
+    SUPPORT_LEVEL_HEADER,
+    XSOAR_SUPPORT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
@@ -1946,6 +1949,59 @@ class TestIntegrationValidator:
                 )
             ).is_valid_hidden_params()
             == is_valid
+        )
+
+    @pytest.mark.parametrize(
+        "support_level_header, is_valid",
+        [
+            (XSOAR_SUPPORT, True),
+            (PARTNER_SUPPORT, False),
+        ],
+    )
+    def test_is_partner_collector_has_xsoar_support_level_header(
+        self, mocker, pack, support_level_header: str, is_valid: bool
+    ):
+        """
+        Given
+        - Case A: support_level_header = xsoar
+        - Case B: support_level_header = partner
+
+        When
+        - run is_partner_collector_has_xsoar_support_level_header
+
+        Then
+        - Case A: make sure the validation succeed
+        - Case B: make sure the validation fails
+        """
+        name = "test"
+        yml = {
+            "commonfields": {"id": name, "version": -1},
+            "name": name,
+            "display": name,
+            "description": name,
+            "category": "category",
+            "script": {
+                "type": "python",
+                "subtype": "python3",
+                "script": "",
+                "isfetchevents": True,
+                "commands": [],
+            },
+            "configuration": [],
+            SUPPORT_LEVEL_HEADER: support_level_header,
+        }
+
+        integration = pack.create_integration(name, yml=yml)
+        validator = IntegrationValidator(
+            mock_structure(integration.path, current_file=integration.yml.read_dict())
+        )
+        mocker.patch.object(
+            IntegrationValidator,
+            "get_metadata_file_content",
+            return_value={"support": PARTNER_SUPPORT},
+        )
+        assert (
+            validator.is_partner_collector_has_xsoar_support_level_header() == is_valid
         )
 
 

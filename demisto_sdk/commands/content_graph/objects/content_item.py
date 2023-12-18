@@ -1,6 +1,7 @@
+from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Callable, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
 
 import demisto_client
 from packaging.version import Version
@@ -10,9 +11,6 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
-from demisto_sdk.commands.content_graph.parsers.content_item import (
-    InvalidContentItemException,
-)
 from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
 from demisto_sdk.commands.upload.tools import parse_upload_response
 
@@ -21,7 +19,7 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
-from pydantic import DirectoryPath, validator
+from pydantic import DirectoryPath, Field, fields, validator
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -54,6 +52,7 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
+    pack: Any = Field(None, exclude=True, repr=False)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -63,9 +62,39 @@ class ContentItem(BaseContent):
             return CONTENT_PATH / v
         return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
 
+    @staticmethod
+    @abstractmethod
+    def match(_dict: dict, path: Path) -> bool:
+        """
+        This function checks whether the file in the given path is of the content item type.
+        """
+        pass
+
     @property
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
+
+    @property
+    def support_level(self) -> str:
+        return (
+            self.in_pack.support_level
+            if self.in_pack and self.in_pack.support_level
+            else ""
+        )
+
+    @property
+    def ignored_errors(self) -> list:
+        try:
+            return (
+                list(
+                    self.in_pack.ignored_errors_dict.get(  # type: ignore
+                        f"file:{self.path.name}", []
+                    ).items()
+                )[0][1].split(",")
+                or []
+            )
+        except:  # noqa: E722
+            return []
 
     @property
     def pack_name(self) -> str:
@@ -83,20 +112,22 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
-            return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
-        if pack_name := get_pack_name(self.path):
-            try:
-                return BaseContent.from_path(
+        # This function converts the pack attribute, which is a parser object to the pack model
+        # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
+        # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
+        pack = self.pack
+        if not pack or isinstance(pack, fields.FieldInfo):
+            pack = None
+            if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
+                pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if not pack:
+            if pack_name := get_pack_name(self.path):
+                pack = BaseContent.from_path(
                     CONTENT_PATH / PACKS_FOLDER / pack_name
-                )  # type: ignore[return-value]
-            except InvalidContentItemException:
-                logger.warning(
-                    f"Could not parse pack {pack_name} for content item {self.path}"
-                )
-                return None
-        logger.warning(f"Could not find pack for content item {self.path}")
-        return None
+                )  # type: ignore[assignment]
+        if pack:
+            self.pack = pack
+        return pack  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:
@@ -108,11 +139,11 @@ class ContentItem(BaseContent):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool
@@ -151,11 +182,11 @@ class ContentItem(BaseContent):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool
@@ -183,6 +214,13 @@ class ContentItem(BaseContent):
     def data(self) -> dict:
         return get_file(self.path, keep_order=False)
 
+    @property
+    def ordered_data(self) -> dict:
+        return get_file(self.path, keep_order=True)
+
+    def save(self):
+        super()._save(self.path, self.ordered_data)
+
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -192,9 +230,7 @@ class ContentItem(BaseContent):
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(
-            data, current_marketplace, self.marketplaces
-        )
+        return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
         self,

@@ -33,6 +33,7 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.widget import Widget
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -86,6 +87,7 @@ def mock_pack(
         node_id=f"{ContentType.PACK}:{name}",
         path=path,
         name=name,
+        display_name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
         hidden=False,
         server_min_version="5.5.0",
@@ -739,15 +741,19 @@ class TestCreateContentGraph:
                                 content_item_source.tested_by[0].object_id
                                 == content_item_target.object_id
                             )
+            sample_pack = next(p for p in packs if p.object_id == "SamplePack")
+            sample_pack2 = next(p for p in packs if p.object_id == "SamplePack2")
+            sample_pack3 = next(p for p in packs if p.object_id == "SamplePack3")
+            assert sample_pack.depends_on[0].content_item_to == sample_pack2
+            assert not sample_pack.depends_on[
+                0
+            ].is_test  # this is not a test dependency
 
-            assert packs[0].depends_on[0].content_item_to == packs[1]
-            assert not packs[0].depends_on[0].is_test  # this is not a test dependency
-
-            for p in packs[1].depends_on:
-                if p.content_item_to == packs[2]:
+            for p in sample_pack2.depends_on:
+                if p.content_item_to == sample_pack3:
                     # regular dependency
                     assert not p.is_test
-                elif p.content_item_to == packs[0]:
+                elif p.content_item_to == sample_pack:
                     # test dependency
                     assert p.is_test
                 else:
@@ -759,12 +765,15 @@ class TestCreateContentGraph:
                 content_type=ContentType.PACK,
                 all_level_dependencies=True,
             )
-            depends_on_pack1 = [r for r in packs[0].depends_on]
+            sample_pack = next(p for p in packs if p.object_id == "SamplePack")
+            sample_pack2 = next(p for p in packs if p.object_id == "SamplePack2")
+            sample_pack3 = next(p for p in packs if p.object_id == "SamplePack3")
+            depends_on_pack1 = [r for r in sample_pack.depends_on]
             assert depends_on_pack1
             for depends in depends_on_pack1:
-                if depends.content_item_to == packs[1]:
+                if depends.content_item_to == sample_pack2:
                     assert depends.is_direct
-                elif depends.content_item_to == packs[2]:
+                elif depends.content_item_to == sample_pack3:
                     assert not depends.is_direct
                 else:
                     assert False
@@ -1152,6 +1161,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_relationships_from_metadata(
         self,
+        mocker,
         repo: Repo,
     ):
         """
@@ -1170,6 +1180,7 @@ class TestCreateContentGraph:
         pack_core = repo.create_pack("Core")
         repo.create_pack("NonCorePack")
         pack_core.pack_metadata.write_json(core_metadata)
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
@@ -1218,6 +1229,7 @@ class TestCreateContentGraph:
 
         pack = repo.create_pack()
         pack.create_integration(docker_image=docker_image)
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface)

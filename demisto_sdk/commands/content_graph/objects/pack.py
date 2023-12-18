@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
+    get_file,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -113,9 +114,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
+    ignored_errors_dict: dict = Field({}, exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+
+    @classmethod
+    def from_orm(cls, obj) -> "Pack":
+        pack = super().from_orm(obj)
+        for content_item in pack.content_items:
+            content_item.pack = pack
+        return pack
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -134,12 +143,20 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.object_id
 
     @property
+    def ignored_errors(self) -> list:
+        return self.ignored_errors_dict.get(PACK_METADATA_FILENAME, [])
+
+    @property
     def pack_name(self) -> str:
         return self.name
 
     @property
     def pack_version(self) -> Optional[Version]:
         return Version(self.current_version) if self.current_version else None
+
+    @property
+    def support_level(self):
+        return self.support
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -151,11 +168,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool
@@ -336,7 +353,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
         destination_zip_dir: Optional[Path] = None,
-        zip: bool = False,
+        zip: bool = True,
         **kwargs,
     ):
         if destination_zip_dir is None:
@@ -497,3 +514,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
+
+    def save(self):
+        file_path = self.path / PACK_METADATA_FILENAME
+        data = get_file(file_path)
+        super()._save(file_path, data)

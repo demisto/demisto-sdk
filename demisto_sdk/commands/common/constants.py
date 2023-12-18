@@ -49,6 +49,7 @@ TRIGGER_DIR = "Triggers"
 WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
+ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
 
 # NAMES OF ENTITIES
 
@@ -96,6 +97,7 @@ XDRC_TEMPLATE = "xdrctemplate"
 LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 EVENT_COLLECTOR = "EventCollector"
+ASSETS_MODELING_RULE = "assetsmodelingrule"
 # ENV VARIABLES
 
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
@@ -105,6 +107,17 @@ DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "code.pan.run")
 DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "2596"
 )  # the default is the id of the content repo in code.pan.run
+
+# authentication ENV VARIABLES
+DEMISTO_BASE_URL = "DEMISTO_BASE_URL"
+DEMISTO_USERNAME = "DEMISTO_USERNAME"
+DEMISTO_PASSWORD = "DEMISTO_PASSWORD"  # guardrails-disable-line
+DEMISTO_KEY = "DEMISTO_API_KEY"
+AUTH_ID = "XSIAM_AUTH_ID"
+XSIAM_TOKEN = "XSIAM_TOKEN"
+XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
+DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
+
 
 # Marketplaces
 TEST_XDR_PREFIX = os.getenv("TEST_XDR_PREFIX", "")
@@ -194,6 +207,9 @@ class FileType(str, Enum):
     INI = "ini"
     PEM = "pem"
     VULTURE_WHITELIST = "vulture_whitelist"
+    ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
+    ASSETS_MODELING_RULE = "assetsmodelingrule"
+    ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -231,6 +247,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.WIZARD: "Wizards",
     FileType.XDRC_TEMPLATE: "XDRC Templates",
     FileType.LAYOUT_RULE: "Layout Rules",
+    FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -272,6 +289,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.TRIGGER.value: TRIGGER_DIR,
     FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
+    FileType.ASSETS_MODELING_RULE.value: ASSETS_MODELING_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -283,6 +301,7 @@ SIEM_ONLY_ENTITIES = [
     FileType.TRIGGER.value,
     FileType.XDRC_TEMPLATE.value,
     FileType.LAYOUT_RULE.value,
+    FileType.ASSETS_MODELING_RULE,
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]
@@ -328,6 +347,7 @@ CONTENT_ENTITIES_DIRS = [
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
+    ASSETS_MODELING_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -820,6 +840,7 @@ MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
+ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
@@ -1151,6 +1172,14 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     ".secrets-ignore",
 )
 
+
+class GitStatuses(str, Enum):
+    RENAMED = "R"
+    MODIFIED = "M"
+    ADDED = "A"
+    DELETED = "D"
+
+
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
 
 # python subtypes
@@ -1303,20 +1332,6 @@ DIR_TO_PREFIX = {
 }
 
 ENTITY_NAME_SEPARATORS = [" ", "_", "-"]
-
-DELETED_YML_FIELDS_BY_DEMISTO = [
-    "fromversion",
-    "toversion",
-    "alt_dockerimages",
-    "script.dockerimage45",
-    "tests",
-    "defaultclassifier",
-    "defaultmapperin",
-    "defaultmapperout",
-]
-
-DELETED_JSON_FIELDS_BY_DEMISTO = ["fromVersion", "toVersion"]
-
 FILE_EXIST_REASON = "File already exist"
 FILE_NOT_IN_CC_REASON = "File does not exist in Demisto instance"
 
@@ -1389,6 +1404,7 @@ IOC_OUTPUTS_DICT = {
     "endpoint": {"Endpoint.Hostname", "Endpoint.IPAddress", "Endpoint.ID"},
 }
 XSOAR_SUPPORT = "xsoar"
+PARTNER_SUPPORT = "partner"
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"
 PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
@@ -1401,6 +1417,7 @@ MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoa
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
+SUPPORT_LEVEL_HEADER = "supportlevelheader"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
@@ -1420,6 +1437,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
     FileType.XSIAM_DASHBOARD: "6.10.0",
+    FileType.ASSETS_MODELING_RULE: "6.2.1",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1431,6 +1449,7 @@ VERSION_5_5_0 = "5.5.0"
 DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
 MARKETPLACE_MIN_VERSION = "6.0.0"
+MINIMUM_XSOAR_SAAS_VERSION = "8.0.0"
 
 OLDEST_SUPPORTED_VERSION = "5.0.0"
 OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION = GENERAL_DEFAULT_FROMVERSION
@@ -1700,6 +1719,7 @@ class ContentItems(Enum):
     WIZARDS = ("wizard",)
     XDRC_TEMPLATE = "xdrctemplate"
     LAYOUT_RULES = "layoutrule"
+    ASSETS_MODELING_RULES = "assetsmodelingrule"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1727,6 +1747,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
     LAYOUT_RULES_DIR,
+    ASSETS_MODELING_RULES_DIR,
 }
 
 
@@ -1882,7 +1903,6 @@ TABLE_INCIDENT_TO_ALERT = {
     "INCIDENTS": "ALERTS",
 }
 
-NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 FORMATTING_SCRIPT = "indicator-format"
 
@@ -1929,5 +1949,17 @@ class ImagesFolderNames(str, Enum):
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
 
 
-class PreCommitModes(str, Enum):
-    NIGHTLY = "nightly"
+class InvestigationPlaybookState(str, Enum):
+    NEW = "new"  # indicates that playbook not executed yet
+    IN_PROGRESS = "inprogress"  # indicates that playbook in progress
+    PAUSED = "paused"  # indicates that playbook paused
+    COMPLETED = "completed"  # indicates that playbook completed
+    FAILED = "failed"  # indicates that playbook failed
+    WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
+
+
+class IncidentState(str, Enum):
+    NEW = 0  # the incident is new
+    IN_PROGRESS = 1  # the incident is in progress
+    CLOSED = 2  # the incident is closed
+    ACKNOWLEDGED = 3  # the incident is archived

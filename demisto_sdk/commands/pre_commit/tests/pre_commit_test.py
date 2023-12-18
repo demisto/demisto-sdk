@@ -1,20 +1,22 @@
 import itertools
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
-from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.pre_commit.hooks.hook import join_files
+from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     PYTHON2_SUPPORTED_HOOKS,
     GitUtil,
-    group_by_python_version,
+    group_by_language,
     preprocess_files,
     subprocess,
 )
@@ -40,8 +42,24 @@ def create_hook(hook: dict):
     return repo_and_hook
 
 
-@pytest.mark.parametrize("is_test", [True, False])
-def test_config_files(mocker, repo: Repo, is_test: bool):
+@dataclass
+class MockProcess:
+
+    returncode = 0
+    stdout = "finished"
+    stderr = ""
+
+    def poll(self):
+        return self.returncode
+
+    def wait(self):
+        return self.returncode
+
+    def communicate(self):
+        return "", ""
+
+
+def test_config_files(mocker, repo: Repo):
     """
     Given:
         A repository with different scripts and integration of different python versions
@@ -52,14 +70,32 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     Then:
         Categorize the scripts and integration by python version, and make sure that pre-commit configuration is created for each
     """
+    mocker.patch.object(DockerHook, "__init__", return_value=None)
+    mocker.patch.object(
+        DockerHook,
+        "prepare_hook",
+        return_value=[{"id": "run-in-docker"}],
+    )
     mocker.patch.object(
         pre_commit_command,
         "PRECOMMIT_TEMPLATE_PATH",
-        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+        TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
     pack1 = repo.create_pack("Pack1")
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
-
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_CONFIG_MAIN_PATH",
+        Path(repo.path) / ".pre-commit-config.yaml",
+    )
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_DOCKER_CONFIGS",
+        Path(repo.path) / "docker-config",
+    )
+    mocker.patch.object(
+        pre_commit_command, "PRECOMMIT_CONFIG", Path(repo.path) / "config"
+    )
     integration1 = pack1.create_integration(
         "integration1", docker_image="demisto/python3:3.9.1.14969"
     )
@@ -77,7 +113,8 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     incident_field = pack1.create_incident_field("incident_field")
     classifier = pack1.create_classifier("classifier")
     mocker.patch.object(yaml, "dump", side_effect=lambda *args: [])
-    mock_subprocess = mocker.patch.object(subprocess, "run")
+    mocker.patch.object(subprocess, "run", return_value=MockProcess())
+
     relative_paths = {
         path.relative_to(repo.path)
         for path in Path(pack1.path).rglob("*")
@@ -92,7 +129,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == relative_paths
 
-    python_version_to_files, _ = group_by_python_version(files_to_run)
+    python_version_to_files, _ = group_by_language(files_to_run)
     pre_commit = pre_commit_command.PreCommitRunner(
         None, None, None, python_version_to_files, ""
     )
@@ -122,15 +159,10 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         not in pre_commit.python_version_to_files["3.10"]
     )
 
-    pre_commit.run(unit_test=is_test)
-
-    assert mock_subprocess.call_count == 1
-
-    tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
-    if not is_test:
-        tests_we_should_skip.add("run-unit-tests")
-    for m in mock_subprocess.call_args_list:
-        assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
+    pre_commit.prepare_and_run()
+    assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
+    assert list((Path(repo.path) / "docker-config").iterdir())
+    assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
 
 
 def test_mypy_hooks():
@@ -163,17 +195,18 @@ def test_ruff_hook(github_actions):
     """
     Testing ruff hook created successfully (the python version is correct and github action created successfully)
     """
-    ruff_hook = create_hook({})
+    ruff_hook = create_hook(
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
+    )
     RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES, github_actions)
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
     for (hook, python_version) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         assert (
-            hook["args"][0]
-            == f"--target-version={python_version_to_ruff[python_version]}"
+            f"--target-version={python_version_to_ruff[python_version]}" in hook["args"]
         )
-        assert hook["args"][1] == "--fix"
+        assert "--fix" in hook["args"]
         assert hook["name"] == f"ruff-py{python_version}"
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
@@ -184,10 +217,10 @@ def test_ruff_hook_nightly_mode():
     """
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
-    ruff_hook = create_hook({})
-    RuffHook(**ruff_hook, mode=PreCommitModes.NIGHTLY).prepare_hook(
-        PYTHON_VERSION_TO_FILES
+    ruff_hook = create_hook(
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
     )
+    RuffHook(**ruff_hook, mode="nightly").prepare_hook(PYTHON_VERSION_TO_FILES)
 
     for (hook, _) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
@@ -202,7 +235,7 @@ def test_validate_format_hook_nightly_mode_and_all_files():
     Testing validate_format hook created successfully (the -a flag is added and the -i arg is not exist)
     """
     validate_format_hook = create_hook({"args": []})
-    kwargs = {"mode": PreCommitModes.NIGHTLY, "all_files": True}
+    kwargs = {"mode": "nightly", "all_files": True}
     ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
         PYTHON_VERSION_TO_FILES
     )
@@ -217,7 +250,7 @@ def test_validate_format_hook_nightly_mode():
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist, even in nightly mode)
     """
     validate_format_hook = create_hook({"args": []})
-    kwargs = {"mode": PreCommitModes.NIGHTLY, "input_mode": True}
+    kwargs = {"mode": "nightly", "input_mode": True}
     ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
         PYTHON_VERSION_TO_FILES
     )
@@ -237,8 +270,8 @@ def test_validate_format_hook_all_files():
     )
 
     hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
-    assert "-a" not in hook_args
-    assert "-i" in hook_args
+    assert "-a" in hook_args
+    assert "-i" not in hook_args
 
 
 class TestPreprocessFiles:
@@ -246,6 +279,48 @@ class TestPreprocessFiles:
         input_files = [Path("file1.txt"), Path("file2.txt")]
         expected_output = set(input_files)
         mocker.patch.object(GitUtil, "get_all_files", return_value=set(input_files))
+        output = preprocess_files(input_files=input_files)
+        assert output == expected_output
+
+    def test_preprocess_files_with_input_yml_files(self, mocker, repo):
+        """
+        Given:
+            - A yml file.
+        When:
+            - Running demisto-sdk pre-commit -i file1.yml.
+        Then:
+            - Check that the associated python file was gathered correctly.
+        """
+        pack1 = repo.create_pack("Pack1")
+        mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+
+        integration = pack1.create_integration("integration")
+        relative_paths = {
+            path.relative_to(repo.path)
+            for path in Path(pack1.path).rglob("*")
+            if path.is_file()
+        }
+        input_files = [Path(integration.yml.path)]
+        expected_output = {
+            Path(integration.yml.rel_path),
+            Path(integration.code.rel_path),
+        }
+        mocker.patch.object(GitUtil, "get_all_files", return_value=relative_paths)
+        output = preprocess_files(input_files=input_files)
+        assert output == expected_output
+
+    def test_preprocess_files_with_input_yml_files_not_exists(self, mocker):
+        """
+        Given:
+            - A yml file.
+        When:
+            - Running demisto-sdk pre-commit -i file1.yml.
+        Then:
+            - Check that the associated python file was not gathered because it doesn't exist.
+        """
+        input_files = [Path("file1.yml")]
+        expected_output = {Path("file1.yml")}
+        mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
         output = preprocess_files(input_files=input_files)
         assert output == expected_output
 
@@ -303,11 +378,11 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
     mocker.patch.object(
         pre_commit_command,
         "PRECOMMIT_TEMPLATE_PATH",
-        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+        TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
     mocker.patch.object(pre_commit_command, "logger")
-    python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
+    python_version_to_files = {"2.7": {("file1.py", None)}, "3.8": {("file2.py", None)}}
     pre_commit_runner = pre_commit_command.PreCommitRunner(
         None, None, None, python_version_to_files, ""
     )
@@ -321,6 +396,158 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
 
     for hook in pre_commit_runner.hooks.values():
         if hook["hook"]["id"] in PYTHON2_SUPPORTED_HOOKS:
-            assert hook["hook"].get("exclude") is None
+            assert not hook["hook"].get("exclude") or "file1.py" not in hook[
+                "hook"
+            ].get("exclude")
         else:
             assert "file1.py" in hook["hook"]["exclude"]
+
+
+args = [
+    "-i",
+    ".coverage",
+    "--report-dir",
+    "coverage_report",
+    "--report-type",
+    "all",
+    "--previous-coverage-report-url",
+    "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+]
+args_nightly = [
+    "-i",
+    ".coverage",
+    "--report-dir",
+    "coverage_report",
+    "--report-type",
+    "all",
+    "--allowed-coverage-degradation-percentage",
+    "100",
+]
+
+
+@pytest.mark.parametrize(
+    "mode, expected_args", [(None, args), ("nightly", args_nightly)]
+)
+def test_coverage_analyze_general_hook(mode, expected_args):
+    """
+    Given:
+        - A hook and kwargs.
+    When:
+        - pre-commit command is running.
+    Then:
+        - Make sure that the coverage-analyze hook was created successfully.
+    """
+
+    coverage_analyze_hook = create_hook({"args": args, "args:nightly": args_nightly})
+    kwargs = {"mode": mode, "all_files": False, "input_mode": True}
+    Hook(**coverage_analyze_hook, **kwargs).prepare_hook()
+    hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
+    assert expected_args == hook_args
+
+
+@pytest.mark.parametrize(
+    "hook, expected_result",
+    [
+        ({"files": r"\.py$", "exclude": r"_test\.py$"}, ["file1.py", "file6.py"]),
+        (
+            {
+                "files": r"\.py$",
+            },
+            ["file1.py", "file6.py", "file2_test.py"],
+        ),
+        (
+            {},
+            [
+                "file1.py",
+                "file2_test.py",
+                "file3.ps1",
+                "file4.md",
+                "file5.md",
+                "file6.py",
+            ],
+        ),
+        ({"files": r"\.ps1$"}, ["file3.ps1"]),
+    ],
+)
+def test_filter_files_matching_hook_config(hook, expected_result):
+    """
+    Given:
+        an exclude regex, an include regex, and a list of files
+    When:
+        running filter_files_matching_hook_config on those files
+    Then:
+        Only get files matching files and not matching exclude
+
+    """
+    base_hook = create_hook(hook)
+
+    files = [
+        Path(x)
+        for x in [
+            "file1.py",
+            "file2_test.py",
+            "file3.ps1",
+            "file4.md",
+            "file5.md",
+            "file6.py",
+        ]
+    ]
+
+    assert {Path(x) for x in expected_result} == set(
+        DockerHook(**base_hook).filter_files_matching_hook_config(files)
+    )
+
+
+def test_skip_hook_with_mode(mocker):
+    """
+    Given:
+        Pre commit template config with skipped hooks
+
+    When:
+        Calling pre-commit with nightly mode
+
+    Then:
+        Don't generate the skipped hooks
+    """
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_TEMPLATE_PATH",
+        TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
+    )
+    python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
+    pre_commit_runner = pre_commit_command.PreCommitRunner(
+        None, None, "nightly", python_version_to_files, ""
+    )
+    repos = pre_commit_runner._get_repos(pre_commit_runner.precommit_template)
+    assert not repos["https://github.com/charliermarsh/ruff-pre-commit"]["hooks"]
+    assert "is-gitlab-changed" not in {
+        hook.get("id") for hook in repos["local"]["hooks"]
+    }
+    assert "should_be_skipped" not in {
+        hook.get("id")
+        for hook in repos["https://github.com/demisto/demisto-sdk"]["hooks"]
+    }
+
+
+def test_system_hooks():
+    """
+    Given:
+        hook with `system` language
+
+    When:
+        running pre-commit command.
+
+    Then:
+        The hook entry is updated with the path to the python interpreter that is running.
+    """
+    import sys
+
+    Path(sys.executable).parent
+    system_hook = create_hook(
+        {"args": [], "entry": "demisto-sdk", "language": "system"}
+    )
+    SystemHook(**system_hook).prepare_hook()
+    assert (
+        system_hook["repo"]["hooks"][0]["entry"]
+        == f"{Path(sys.executable).parent}/demisto-sdk"
+    )

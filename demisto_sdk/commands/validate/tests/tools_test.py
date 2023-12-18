@@ -8,13 +8,13 @@ from demisto_sdk.commands.validate.validators.tools import (
 
 
 @pytest.mark.parametrize(
-    "playbook_for_test, expected_result",
+    "content_item, expected_result",
     [
         (create_playbook_object(paths=["tasks"], values=[{"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}}]),{"hello: test", "example: test"}),
         (create_playbook_object(paths=["tasks"], values=[{"0": {"inputs": "test"}, "1": {"inputs": "test2"}}]),set())
     ],
 )
-def test_collect_all_inputs_in_use(playbook_for_test, expected_result):
+def test_collect_all_inputs_in_use(content_item, expected_result):
     """
     Given:
         - A playbook with inputs in some tasks
@@ -34,32 +34,27 @@ def test_collect_all_inputs_in_use(playbook_for_test, expected_result):
         Case 2: The results should be:
             An empty set object.
     """
-    assert collect_all_inputs_in_use(playbook_for_test) == expected_result
+    assert collect_all_inputs_in_use(content_item) == expected_result
 
 
-@pytest.fixture
-def playbook_for_test():
-    return create_playbook_object(
-        paths=["inputs"],
-        values=[
-            [
-                {"key": "inputs.test     ", "test text": "test"},
-                {"key": "inputs.test", "test text": "test"},
-                {"key": "inputs.test2", "test text": "test"},
-            ]
-        ],
-    )
+@pytest.mark.parametrize(
+    "content_item, expected_result",
+    [
+        (create_playbook_object(paths=["inputs"], values=[[{"key": "inputs.test1", "testing text": "text"}, {"key": "inputs.test1", "testing text": "text"}]]), {
+        "inputs.test1"}),
+        (create_playbook_object(paths=["inputs"], values=[[{"key": "inputs.test2     ","testing text": "text"}]]), {
+        "inputs.test2"})
+        ])
 
-def test_collect_all_inputs_from_inputs_section(playbook_for_test):
+def test_collect_all_inputs_from_inputs_section(content_item, expected_result):
     """
     Given:
         - A playbook with inputs defined in the inputs section
+        Case 1: both inputs have the same name and value
+        Case 2: the input has a space in the name
     When:
         - Running collect_all_inputs_from_inputs_section
     Then:
         - A set with all inputs defined in the inputs section with no duplicates or empty spaces are returned.
     """
-    assert collect_all_inputs_from_inputs_section(playbook_for_test) == {
-        "inputs.test",
-        "inputs.test2",
-    }
+    assert collect_all_inputs_from_inputs_section(content_item) == expected_result

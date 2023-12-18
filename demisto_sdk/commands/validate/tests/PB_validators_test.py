@@ -7,7 +7,7 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
 
 
 @pytest.mark.parametrize(
-    "playbook_for_test, expected_result",
+    "content_item, expected_result",
     [
         (create_playbook_object(paths=['inputs', 'tasks'],values=[[{"key":"input_name1", "value":"input_value1"}], {'key':{"first_input":"inputs.input_name1"}}]),[]),
         (create_playbook_object(paths=['inputs', 'tasks'],values=[[{"key":"input_name1", "value":"input_value1"}], {'key':{"first_input":"inputs.input_name1", "second_input": "inputs.input_name2"}}]), []),
@@ -15,7 +15,7 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
     ],
 )
 def test_is_valid_all_inputs_in_use(
-  playbook_for_test, expected_result
+  content_item, expected_result
 ):
     """
         Given:
@@ -33,6 +33,6 @@ def test_is_valid_all_inputs_in_use(
             Case 2: The playbook is valid since all inputs defined in the inputs section are in use in the playbook
             Case 3: The playbook is invalid
     """
-    result = IsInputKeyNotInTasksValidator().is_valid([playbook_for_test])
+    result = IsInputKeyNotInTasksValidator().is_valid([content_item])
 
     assert result == expected_result if isinstance(expected_result, list) else result[0].message == expected_result

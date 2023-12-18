@@ -13,13 +13,13 @@ mapping:
       sortvalues:
         type: seq
         sequence:
-          - type: str
+        - type: str
   name:
     type: str
     required: true
   display:
-      type: str
-      required: true
+    type: str
+    required: true
   deprecated:
     type: bool
   beta:
@@ -122,6 +122,16 @@ mapping:
         type: bool
       resetContext:
         type: bool
+      isfetch:xsoar:
+        type: bool
+      isfetch:marketplacev2:
+        type: bool
+      isfetch:xpanse:
+        type: bool
+      isfetch:xsoar_saas:
+        type: bool
+      isfetch:xsoar_on_prem:
+        type: bool
   system:
     type: bool
   hidden:
@@ -129,7 +139,7 @@ mapping:
   videos:
     type: seq
     sequence:
-      - type: str
+    - type: str
   versionedfields:
     type: any
   defaultEnabled:
@@ -145,10 +155,30 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
 
 # integration->configuration
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
 schema;configuration_schema:
   type: map
   required: true
@@ -189,6 +219,36 @@ schema;configuration_schema:
       type: str
 
 # integration->script->command
+    defaultvalue:xsoar:
+      type: any
+    defaultvalue:marketplacev2:
+      type: any
+    defaultvalue:xpanse:
+      type: any
+    defaultvalue:xsoar_saas:
+      type: any
+    defaultvalue:xsoar_on_prem:
+      type: any
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    required:xsoar:
+      type: bool
+    required:marketplacev2:
+      type: bool
+    required:xpanse:
+      type: bool
+    required:xsoar_saas:
+      type: bool
+    required:xsoar_on_prem:
+      type: bool
 schema;command_schema:
   type: map
   mapping:
@@ -207,7 +267,7 @@ schema;command_schema:
     arguments:
       type: seq
       sequence:
-        - include: argument_schema
+      - include: argument_schema
     outputs:
       type: seq
       sequence:
@@ -226,6 +286,26 @@ schema;command_schema:
       type: bool
 
 # int
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
 schema;argument_schema:
   type: map
   mapping:
@@ -261,6 +341,46 @@ schema;argument_schema:
 
 
 # integration->script->command->outputs
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    required:xsoar:
+      type: bool
+    required:marketplacev2:
+      type: bool
+    required:xpanse:
+      type: bool
+    required:xsoar_saas:
+      type: bool
+    required:xsoar_on_prem:
+      type: bool
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
+    defaultValue:xsoar:
+      type: any
+    defaultValue:marketplacev2:
+      type: any
+    defaultValue:xpanse:
+      type: any
+    defaultValue:xsoar_saas:
+      type: any
+    defaultValue:xsoar_on_prem:
+      type: any
 schema;output_schema:
   type: map
   mapping:
@@ -279,6 +399,16 @@ schema;output_schema:
       type: str
 
 # integration->script->command->important
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
 schema;important_schema:
   type: map
   mapping:
@@ -289,4 +419,14 @@ schema;important_schema:
       type: str
       required: true
     related:
+      type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
       type: str

@@ -18,41 +18,51 @@ mapping:
   definitionIds:
     type: seq
     sequence:
-      - type: str
+    - type: str
     required: true
   views:
     type: seq
     sequence:
-      - type: map
-        mapping:
-          icon:
-            type: str
-          name:
-            type: str
-          title:
-            type: str
-          id:
-            type: str
-            required: true
-          tabs:
-            type: seq
-            sequence:
-              - type: map
-                mapping:
-                  name:
-                    type: str
-                  newButtonDefinitionId:
-                    type: str
-                  tableView:
-                    type: bool
-                  tableViewWidgetGroups:
-                    type: seq
-                    sequence:
-                      - type: str
-                  tableViewColumns:
-                    type: seq
-                    sequence:
-                      - type: str
-                  dashboard:
-                    type: any
+    - type: map
+      mapping:
+        icon:
+          type: str
+        name:
+          type: str
+        title:
+          type: str
+        id:
+          type: str
+          required: true
+        tabs:
+          type: seq
+          sequence:
+          - type: map
+            mapping:
+              name:
+                type: str
+              newButtonDefinitionId:
+                type: str
+              tableView:
+                type: bool
+              tableViewWidgetGroups:
+                type: seq
+                sequence:
+                - type: str
+              tableViewColumns:
+                type: seq
+                sequence:
+                - type: str
+              dashboard:
+                type: any
     required: true
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str

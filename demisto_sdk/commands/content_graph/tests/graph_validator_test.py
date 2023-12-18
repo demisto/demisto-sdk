@@ -46,7 +46,7 @@ def setup_method(mocker):
     bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
-    mocker.patch.object(ContentGraphInterface, "export", return_value=None)
+    mocker.patch.object(ContentGraphInterface, "export_graph", return_value=None)
     mocker.patch(
         "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
         return_value={

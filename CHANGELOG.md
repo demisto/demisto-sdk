@@ -14,7 +14,7 @@
 * **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.
 * **Breaking change**: Removed the `--unit-test` argument in **pre-commit**. To skip unit tests, run with `--no-docker` or with `skip=pytest-in-docker`,
 * Fixed an issue where SDK commands were failing to execute correctly when supplied a path outside the Content repository.
-
+* Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.

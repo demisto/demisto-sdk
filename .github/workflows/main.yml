@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Run pytest
+      - name: Run Unit Tests
         run: |
           source "$(poetry env info --path)/bin/activate"
 
@@ -81,7 +81,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Run pytest
+      - name: Run Integration Tests
         run: |
           source "$(poetry env info --path)/bin/activate"
 
@@ -117,7 +117,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Run pytest
+      - name: Run Graph Tests
         run: |
           source "$(poetry env info --path)/bin/activate"
 

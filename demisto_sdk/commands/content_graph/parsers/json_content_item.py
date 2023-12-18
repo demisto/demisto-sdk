@@ -96,7 +96,15 @@ class JSONContentItemParser(ContentItemParser):
     def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
-            json_files_in_dir = [Path(file_) for file_ in json_files_in_dir if not file_.endswith("_data.json")]
+
+            # exclude the data file from the list of json files
+            # in case the list is json type
+            json_files_in_dir = [
+                Path(file_)
+                for file_ in json_files_in_dir
+                if not file_.endswith("_data.json")
+            ]
+
             if len(json_files_in_dir) != 1:
                 raise InvalidContentItemException(
                     f"Directory {self.path} must have a single JSON file."

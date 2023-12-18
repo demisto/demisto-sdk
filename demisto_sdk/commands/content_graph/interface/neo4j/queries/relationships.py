@@ -30,8 +30,11 @@ def build_source_properties() -> str:
 
 def build_target_properties(
     identifier: str = "object_id",
+    with_content_type: bool = False,
 ) -> str:
     properties = {identifier: "rel_data.target"}
+    if with_content_type:
+        properties["content_type"] = "rel_data.target_type"
     return node_map(properties)
 
 
@@ -42,7 +45,7 @@ UNWIND $data AS rel_data
 
 MATCH (integration:{ContentType.INTEGRATION}{build_source_properties()})
 
-MERGE (cmd:{ContentType.COMMAND}{build_target_properties()})
+MERGE (cmd:{ContentType.COMMAND}{build_target_properties(with_content_type=True)})
 
 // If created, add its name and marketplaces based on the integration's property
 ON CREATE

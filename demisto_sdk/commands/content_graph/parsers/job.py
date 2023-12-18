@@ -39,4 +39,4 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
                 "on server side, because currently it's a list of instances."
             )
         if playbook := self.json_data.get("playbookId"):
-            self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)
+            self.add_dependency_by_id(playbook, ContentType.BASE_PLAYBOOK)

@@ -73,7 +73,7 @@ RETURN count(r) AS relationships_merged"""
 def build_uses_relationships_query(
     target_type: ContentType = ContentType.BASE_NODE,
     target_identifier: str = "object_id",
-    with_target_type: bool = True,
+    with_target_type: bool = False,
 ) -> str:
     return f"""// Creates USES relationships between parsed nodes.
 // Note: if a target node is created, it means the node does not exist in the repository.

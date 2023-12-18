@@ -271,6 +271,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target (str): The identifier of the target content object (e.g, its node_id).
             kwargs: Additional information about the relationship.
         """
+        if target_type == ContentType.SCRIPT:
+            target_type = ContentType.BASE_SCRIPT
+        if target_type == ContentType.PLAYBOOK:
+            target_type = ContentType.BASE_PLAYBOOK
         self.relationships.add(
             relationship,
             source_id=self.object_id,

@@ -476,7 +476,7 @@ class PreCommitRunner:
 
         if self.all_files:
             logger.info(
-                f"Running pre-commit with on all files"
+                f"Running pre-commit on all files"
             )
 
         else:

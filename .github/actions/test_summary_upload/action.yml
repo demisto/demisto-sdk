@@ -30,7 +30,7 @@ runs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ inputs.artifacts_folder_name }}-artifacts-python-(${{ inputs.python-version }})-group(${{ inputs.group }})
+        name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})-group(${{ inputs.group }})
         path: |
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json

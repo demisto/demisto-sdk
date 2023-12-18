@@ -399,7 +399,22 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
     assert "Failed loading Pack Number 1 user metadata." in caplog.text
 
 
-my_instance = PackMetadata(
+
+
+
+@pytest.mark.parametrize("is_external, expected", [(True, ""), (False, "123")])
+def test__enhance_pack_properties__internal_and_external(mocker, is_external, expected):
+    """Tests the _enhance_pack_properties method for internal and external packs.
+    Given:
+        - Pack object.
+    When:
+        - Calling the _enhance_pack_properties method.
+    Then:
+        - Verify that the version_info is set correctly.
+        Scenario 1: When the pack is external than the version_info should be empty.
+        Scenario 2: When the pack is internal than the version_info should be set to the CI_PIPELINE_ID env variable.
+    """
+    my_instance = PackMetadata(
     name="test",
     display_name="",
     description="",
@@ -437,21 +452,6 @@ my_instance = PackMetadata(
     disableMonthly=False,
     contentCommitHash="",
 )
-
-
-@pytest.mark.parametrize("is_external, expected", [(True, ""), (False, "123")])
-def test__enhance_pack_properties__internal_and_external(mocker, is_external, expected):
-    """Tests the _enhance_pack_properties method for internal and external packs.
-    Given:
-        - Pack object.
-    When:
-        - Calling the _enhance_pack_properties method.
-    Then:
-        - Verify that the version_info is set correctly.
-        Scenario 1: When the pack is external than the version_info should be empty.
-        Scenario 2: When the pack is internal than the version_info should be set to the CI_PIPELINE_ID env variable.
-    """
-
     mocker.patch(
         "demisto_sdk.commands.content_graph.objects.pack_metadata.is_external_repository",
         return_value=is_external,

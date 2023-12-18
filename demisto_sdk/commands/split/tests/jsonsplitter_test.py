@@ -58,17 +58,17 @@ def test_split_json(git_repo):
 
 
 @pytest.mark.parametrize(
-    "list_name, list_type, suffix",
+    "list_name, list_type, suffix, data",
     [
-        ("test css", "css", ".css"),
-        ("test html", "html", ".html"),
-        ("test txt", "text_plain", ".txt"),
-        ("test markdown", "markdown", ".md"),
-        ("test json", "json", ".json"),
-        ("test csv", "csv", ".txt"),
+        ("test css", "css", ".css", "p {\n  color: red;\n  text-align: center;\n}"),
+        ("test html", "html", ".html", "<h1>Hello World</h1>"),
+        ("test txt", "text_plain", ".txt", "Hello World"),
+        ("test markdown", "markdown", ".md", "# Hello World"),
+        ("test json", "json", ".json", '{"name": "test"}'),
+        ("test csv", "csv", ".txt", "name,value\ntest,test"),
     ],
 )
-def test_split_json_list(repo, list_name: str, list_type: str, suffix: str):
+def test_split_json_list(repo, list_name: str, list_type: str, suffix: str, data: str):
     """
     Given:
         - A list json file.
@@ -81,7 +81,7 @@ def test_split_json_list(repo, list_name: str, list_type: str, suffix: str):
     """
     pack = repo.create_pack("PackName")
     list_json = pack.create_list("test-list", LIST)
-    list_json.update({"id": list_name, "name": list_name, "type": list_type})
+    list_json.update({"id": list_name, "name": list_name, "type": list_type, "data": data})
     json_splitter = JsonSplitter(
         input=list_json.path, output=pack.path, file_type=FileType.LISTS
     )

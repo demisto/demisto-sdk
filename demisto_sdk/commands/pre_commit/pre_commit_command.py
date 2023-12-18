@@ -475,9 +475,7 @@ class PreCommitRunner:
         self.exclude_python2_of_non_supported_hooks()
 
         if self.all_files:
-            logger.info(
-                f"Running pre-commit on all files"
-            )
+            logger.info("Running pre-commit on all files")
 
         else:
             for (

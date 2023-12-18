@@ -8,6 +8,7 @@
 * Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
 * Added support for `skip` property in **pre-commit** hooks.
 * Added support of the `List` content-item to the **prepare-content** and **split** commands.
+* * **Breaking change**: The **download** command will no longer download the content-item `List` in file unified but instead will split the content-item `List` into two files (list metadata, list data).
 * **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
 * added the *IN150* and *IN161* errors to *allowed ignore errors* list.
 * Added support for `env`, `copy_files` property in **pre-commit** docker hooks.

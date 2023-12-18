@@ -118,7 +118,7 @@ class YAMLContentItemParser(ContentItemParser):
             yaml_path = self.path.as_posix()
         else:
             _, yaml_path = get_yml_paths_in_dir(self.path.as_posix())
-        if not yaml_path:
+        if not yaml_path or not yaml_path.endswith("yml"):
             raise NotAContentItemException
 
         self.path = Path(yaml_path)

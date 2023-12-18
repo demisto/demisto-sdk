@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Callable, List, Optional, Union
 
 import demisto_client
@@ -51,6 +52,18 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_layout
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "group" in _dict and Path(path).suffix == ".json":
+            if "cliName" not in _dict:
+                if "id" not in _dict or (
+                    isinstance(_dict["id"], str)
+                    and not _dict["id"].startswith("incident")
+                    and not _dict["id"].startswith("indicator")
+                ):
+                    return True
+        return False
 
 
 def replace_layout_incident_alert(data: dict) -> dict:

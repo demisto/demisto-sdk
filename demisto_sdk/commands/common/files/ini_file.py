@@ -19,7 +19,7 @@ class IniFile(TextFile):
         config_parser.read_string(super().load(file_content))
         return config_parser
 
-    def _write(self, data: Any, path: Path, encoding: Optional[str] = None):
+    def _write(self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs):
         """
         Writes an INI file.
 

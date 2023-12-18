@@ -1,96 +1,38 @@
-id: Phishing Investigation - Generic
+id: Detonate File - JoeSecurity V2
 version: -1
-name: Phishing Investigation - Generic
-description:
-  "Use this playbook to investigate and remediate a potential phishing
-  incident. The playbook simultaneously engages with the user that triggered the incident,
-  while investigating the incident itself."
+contentitemexportablefields:
+  contentitemfields: {}
+name: Detonate File - JoeSecurity V2
+description: The Detonate File using Joe Sandbox Process is designed to streamline and enhance the security assessment of files. This automated system accepts a user-submitted file, sends it for in-depth analysis using Joe Sandbox technology, and returns comprehensive results as attachments to the user. The process is designed to be swift, efficient, and secure, providing users with valuable insights into potential threats and vulnerabilities within their files.
+tags:
+- Malware
+- Sandbox
+- Joe Security
 starttaskid: "0"
 tasks:
   "0":
     id: "0"
-    taskid:
+    taskid: 2a7c3ace-493a-4ad6-8b77-82fb6386532a
     type: start
     task:
-      id:
+      id: 2a7c3ace-493a-4ad6-8b77-82fb6386532a
       version: -1
       name: ""
-      iscommand: false
-      brand: ""
-      description: ""
-    nexttasks:
-      "#none#":
-        - "39"
-    separatecontext: false
-    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": -130\n  }\n}"
-    note: false
-    timertriggers: []
-    ignoreworker: false
-  "2":
-    id: "2"
-    taskid:
-    type: regular
-    task:
-      id:
-      version: -1
-      name: Assign to analyst
-      description:
-        Assign the incident to an analyst based on the analyst's organizational
-        role.
-      scriptName: AssignAnalystToIncident
-      type: regular
+      description: Detonates a file using JoeSecurity
       iscommand: false
       brand: ""
     nexttasks:
-      "#none#":
-        - "15"
-    scriptarguments:
-      assignBy: {}
-      email: {}
-      roles:
-        complex:
-          root: incident
-      username: {}
-      message:
-        simple: "*RRN*: ${incident.rrn}\n\n\n*Findings:*\n```\n${.=JSON.stringify(val.incident.prismacloudfindingsresults,null,2)}\n```\n\n*IAM Permissions*:\n``` \n${.=JSON.stringify(val.incident.prismacloudiamresults,null,2)}\n```\n"
-    reputationcalc: 1
+      '#none#':
+      - "7"
     separatecontext: false
-    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 1040\n  }\n}"
-    note: false
-    timertriggers: []
-    ignoreworker: false
-  "3":
-    id: "3"
-    taskid: 1640dfa4-a4b1-4199-894e-560c6486f2ce
-    type: regular
-    task:
-      id: 1640dfa4-a4b1-4199-894e-560c6486f2ce
-      version: -1
-      name: name
-      description: Description
-      script: Builtin|||setIncident
-      scriptarguments:
-        coverage: {}
-        filter_data: {}
-        id:
-          complex:
-            root: incident
-      type: regular
-      iscommand: false
-      brand: ""
-    nexttasks:
-      "#none#":
-        - "7"
-    scriptarguments:
-      CampaignIncidentType:
-        simple: Phishing Campaign
-      IncidentIDs:
-        complex:
-          root: EmailCampaign.incidents
-      type:
-        simple: incident
-    separatecontext: false
-    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 1230\n  }\n}"
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 275,
+          "y": 60
+        }
+      }
     note: false
     timertriggers: []
     ignoreworker: false
@@ -98,96 +40,500 @@ tasks:
     quietmode: 0
     isoversize: false
     isautoswitchedtoquietmode: false
-
+  "1":
+    id: "1"
+    taskid: 67a2b195-eff4-4586-8b58-19df81b12b6b
+    type: regular
+    task:
+      id: 67a2b195-eff4-4586-8b58-19df81b12b6b
+      version: -1
+      name: JoeSecurity Upload File
+      description: Submit a sample for sandbox analysis.
+      script: JoeSecurityV2|||joe-submit-sample
+      type: regular
+      iscommand: true
+      brand: JoeSecurityV2
+    nexttasks:
+      '#none#':
+      - "8"
+    scriptarguments:
+      comments:
+        complex:
+          root: inputs.Comments
+      entry_id:
+        complex:
+          root: inputs.File
+          accessor: EntryID
+      systems:
+        complex:
+          root: inputs.Systems
+      timeout:
+        complex:
+          root: inputs.Timeout
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 900,
+          "y": 710
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "3":
+    id: "3"
+    taskid: a8c79a81-6e1b-49a4-83cf-8f2011d07267
+    type: regular
+    task:
+      id: a8c79a81-6e1b-49a4-83cf-8f2011d07267
+      version: -1
+      name: JoeSecurity Get Report
+      description: Download a resource belonging to a report. This can be the full report, dropped binaries, etc. See the integration README for the full list of supported report types.
+      script: JoeSecurityV2|||joe-download-report
+      type: regular
+      iscommand: true
+      brand: JoeSecurityV2
+    nexttasks:
+      '#none#':
+      - "5"
+    scriptarguments:
+      type:
+        complex:
+          root: inputs.ReportFileType
+      webid:
+        complex:
+          root: JoeAnalysis
+          filters:
+          - - operator: isEqualString
+              left:
+                value:
+                  simple: JoeAnalysis.status
+                iscontext: true
+              right:
+                value:
+                  simple: finished
+              ignorecase: true
+          accessor: webid
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 900,
+          "y": 1200
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "5":
+    id: "5"
+    taskid: d718ec42-1f24-4d49-872b-0c5863ac20b0
+    type: title
+    task:
+      id: d718ec42-1f24-4d49-872b-0c5863ac20b0
+      version: -1
+      name: Done
+      type: title
+      iscommand: false
+      brand: ""
+      description: ''
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 275,
+          "y": 1370
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
   "6":
     id: "6"
-    taskid: fdee1b8a-3337-49e1-8fef-d1409e5563fb
+    taskid: 019840a3-d2dd-4df7-87b2-36e86a1b361a
     type: condition
     task:
-      id: fdee1b8a-3337-49e1-8fef-d1409e5563fb
+      id: 019840a3-d2dd-4df7-87b2-36e86a1b361a
       version: -1
-      name: Auto remediate?
-      description: Remediate automatically or manually update?
+      name: Is there a File to detonate?
+      description: Look for files to detonate
       type: condition
       iscommand: false
       brand: ""
     nexttasks:
-      "#default#":
-        - "8"
-      "Yes":
-        - "7"
+      '#default#':
+      - "5"
+      "yes":
+      - "10"
     separatecontext: false
-    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 650\n  }\n}"
+    conditions:
+    - label: "yes"
+      condition:
+      - - operator: isExists
+          left:
+            value:
+              complex:
+                root: inputs.File
+                accessor: EntryID
+            iscontext: true
+          right:
+            value: {}
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 510,
+          "y": 370
+        }
+      }
     note: false
     timertriggers: []
     ignoreworker: false
-    message:
-      to:
-      subject:
-      body:
-        simple: ${incident.id}
-      methods: []
-      format: ""
-      bcc:
-      cc:
-      timings:
-        retriescount: 2
-        retriesinterval: 360
-        completeafterreplies: 1
-      replyOptions:
-        - "Yes"
-        - "No"
     skipunavailable: false
     quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
   "7":
     id: "7"
-    taskid: 89d7dd49-06a3-4397-8b72-f4428bf24805
+    taskid: 77b76fb8-4a98-4ce5-82ba-4d4a7815ecb6
+    type: condition
+    task:
+      id: 77b76fb8-4a98-4ce5-82ba-4d4a7815ecb6
+      version: -1
+      name: Is JoeSecurity sandbox enabled?
+      description: Check if integration instance is enabled
+      type: condition
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#default#':
+      - "5"
+      "yes":
+      - "6"
+    separatecontext: false
+    conditions:
+    - label: "yes"
+      condition:
+      - - operator: isExists
+          left:
+            value:
+              complex:
+                root: modules
+                filters:
+                - - operator: isEqualString
+                    left:
+                      value:
+                        simple: modules.brand
+                      iscontext: true
+                    right:
+                      value:
+                        simple: JoeSecurityV2
+                - - operator: isEqualString
+                    left:
+                      value:
+                        simple: modules.state
+                      iscontext: true
+                    right:
+                      value:
+                        simple: active
+                    ignorecase: true
+                accessor: brand
+            iscontext: true
+          right:
+            value: {}
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 275,
+          "y": 195
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "8":
+    id: "8"
+    taskid: 50a9fe6b-499a-42ba-83d4-a3fb20770666
     type: regular
     task:
-      id: 89d7dd49-06a3-4397-8b72-f4428bf24805
+      id: 50a9fe6b-499a-42ba-83d4-a3fb20770666
       version: -1
-      name: Manually review the <-incident->
-      description:
-        Review the <-incident-> to determine if the email that the user reported
-        is malicious.
+      name: JoeSecurity Get Info
+      description: Get information about an analysis.
+      script: JoeSecurityV2|||joe-analysis-info
+      type: regular
+      iscommand: true
+      brand: JoeSecurityV2
+    nexttasks:
+      '#none#':
+      - "9"
+    scriptarguments:
+      webid:
+        complex:
+          root: Joe.Submission
+          accessor: submission_id
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 900,
+          "y": 875
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "9":
+    id: "9"
+    taskid: 483b9786-6057-48a7-85c0-4c6cf9240984
+    type: regular
+    task:
+      id: 483b9786-6057-48a7-85c0-4c6cf9240984
+      version: -1
+      name: Set Context
+      description: '-'
+      scriptName: Set
       type: regular
       iscommand: false
       brand: ""
     nexttasks:
-      "#none#":
-        - "33"
+      '#none#':
+      - "3"
+    scriptarguments:
+      key:
+        simple: JoeAnalysis
+      value:
+        complex:
+          root: Joe
+          accessor: Analysis
     separatecontext: false
-    view: "{\n  \"position\": {\n    \"x\": 60,\n    \"y\": 1535\n  }\n}"
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 900,
+          "y": 1040
+        }
+      }
     note: false
     timertriggers: []
     ignoreworker: false
-system: true
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "10":
+    id: "10"
+    taskid: ad0b0e84-9dc2-4d90-8200-938bdca36a7f
+    type: condition
+    task:
+      id: ad0b0e84-9dc2-4d90-8200-938bdca36a7f
+      version: -1
+      name: Is the file type supported?
+      type: condition
+      iscommand: false
+      brand: ""
+      description: ''
+    nexttasks:
+      '#default#':
+      - "5"
+      "yes":
+      - "1"
+    separatecontext: false
+    conditions:
+    - label: "yes"
+      condition:
+      - - operator: match
+          left:
+            value:
+              simple: File.Type
+            iscontext: true
+          right:
+            value:
+              simple: .*(?:EXE|DLL|PIF|CMD|BAT|COM|SCR|CPL|PDF|DOCX|DOC|DOCM|XLSX|XLS|XLSM|XLSB|PPT|PPX|PPTM|HWP|JTD|RFT|XPI|CRX|EML|MSG|CHM|JS|JSE|VBS|VBE|LNK|JAR|PS1|ZIP|7Z|RAR|ZLIB|ASPX|APS|PNG|JPEG|GIF|HTML|HTM|XHTML|SHTML)\b
+          ignorecase: true
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 710,
+          "y": 540
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {
+      "10_5_#default#": 0.41,
+      "6_5_#default#": 0.23,
+      "7_5_#default#": 0.24
+    },
+    "paper": {
+      "dimensions": {
+        "height": 1375,
+        "width": 1005,
+        "x": 275,
+        "y": 60
+      }
+    }
+  }
 inputs:
-  - key: Role
-    value:
-      simple: Administrator
-    required: true
-    description: The default role to assign the incident to.
-  - key: SearchAndDelete
-    value:
-      simple: "False"
-    required: false
-    description:
-      'Enable the "Search and Delete" capability (can be either "True" or
-      "False").
-      In case of a malicious email, the "Search and Delete" sub-playbook will look for
-      other instances of the email and delete them pending analyst approval.'
-  - key: BlockIndicators
-    value:
-      simple: "False"
-    required: false
-    description:
-      'Enable the "Block Indicators" capability (can be either "True" or
-      "False").
-
-      In case of a malicious email, the "Block Indicators" sub-playbook will block all
-      malicious indicators in the relevant integrations.'
+- key: File
+  value:
+    complex:
+      root: File
+  required: false
+  description: File object of the file to detonate. The File is taken from the context.
+  playbookInputQuery:
+- key: Timeout
+  value:
+    simple: "1500"
+  required: false
+  description: The duration after which to stop pooling and to resume the playbook (in minutes)
+  playbookInputQuery:
+- key: Systems
+  value: {}
+  required: false
+  description: 'Operating system to run the analysis on (comma-separated). Supported values are: w7, w7x64, w7_1, w7_2, w7native, android2, android3, mac1, w7l, w7x64l, w10, android4, w7x64native, w7_3, w10native, android5native_1, w7_4, w7_5, w10x64, w7x64_hvm, android6, iphone1, w7_sec, macvm, w7_lang_packs, w7x64native_hvm, lnxubuntu1, lnxcentos1, android7_nougat (if no input is provided, the default is w10x64_office)'
+  playbookInputQuery:
+- key: Comments
+  value: {}
+  required: false
+  description: Comments for the analysis.
+  playbookInputQuery:
+- key: ReportFileType
+  value: {}
+  required: false
+  description: 'The resource type to download. Default is html. Supported values are: html, lighthtml, executive, pdf, classhtml, xml, lightxml, classxml, clusterxml, irxml, json, jsonfixed, lightjson, lightjsonfixed, irjson, irjsonfixed, shoots (screenshots), openioc, maec, misp, graphreports, memstrings, binstrings, sample, cookbook, bins (dropped files), unpackpe (unpacked PE files), unpack, ida, pcap, pcapslim, memdumps, yara'
+  playbookInputQuery:
 outputs:
-  - contextPath: incident.fieldname
-    description: Security group name.
-    type: string
+- contextPath: DBotScore.Vendor
+  description: The vendor used to calculate the score.
+  type: string
+- contextPath: Joe.Analysis.ID
+  description: Web ID.
+  type: string
+- contextPath: Joe.Analysis.Status
+  description: Analysis Status.
+  type: string
+- contextPath: Joe.Analysis.Comments
+  description: Analysis Comments.
+  type: string
+- contextPath: Joe.Analysis.Time
+  description: Submitted Time.
+  type: date
+- contextPath: Joe.Analysis.Runs
+  description: Sub-Analysis Information.
+- contextPath: Joe.Analysis.Result
+  description: Analysis Results.
+  type: string
+- contextPath: Joe.Analysis.Errors
+  description: Raised errors during sampling.
+- contextPath: Joe.Analysis.Systems
+  description: Analysis OS.
+- contextPath: Joe.Analysis.MD5
+  description: MD5 of analysis sample.
+  type: string
+- contextPath: Joe.Analysis.SHA1
+  description: SHA1 of analysis sample.
+  type: string
+- contextPath: Joe.Analysis.SHA256
+  description: SHA256 of analysis sample.
+  type: string
+- contextPath: Joe.Analysis.SampleName
+  description: Sample Data, could be a file name or URL.
+  type: string
+- contextPath: DBotScore.Indicator
+  description: The indicator that was tested.
+  type: string
+- contextPath: DBotScore.Type
+  description: The indicator type.
+  type: string
+- contextPath: DBotScore.Score
+  description: The actual score.
+  type: number
+- contextPath: DBotScore.Malicious.Vendor
+  description: The vendor used to calculate the score.
+  type: string
+- contextPath: DBotScore.Malicious.Detections
+  description: The sub analysis detection statuses.
+  type: string
+- contextPath: DBotScore.Malicious.SHA1
+  description: The SHA1 of the file.
+  type: string
+- contextPath: InfoFile.Name
+  description: FileName.
+  type: string
+- contextPath: InfoFile.EntryID
+  description: The EntryID of the sample.
+  type: string
+- contextPath: InfoFile.Size
+  description: File Size.
+  type: number
+- contextPath: InfoFile.Type
+  description: File type e.g. "PE".
+  type: string
+- contextPath: InfoFile.Info
+  description: Basic information of the file.
+  type: string
+- contextPath: File.Extension
+  description: File Extension.
+  type: string
+- contextPath: InfoFile
+  description: Report file object.
+  type: unknown
+- contextPath: File
+  description: File object.
+  type: unknown
+- contextPath: Joe.Analysis
+  description: Joe Analysis object.
+  type: unknown
+- contextPath: DBotScore
+  description: DBotScore object.
+  type: unknown
+- contextPath: DBotScore.Malicious
+  description: DBotScore Malicious object.
+  type: unknown
+- contextPath: File.MD5
+  description: The MD5 hash of the file.
+- contextPath: File.Name
+  description: The full file name.
+- contextPath: File.SHA1
+  description: The SHA1 hash of the file.
+- contextPath: File.SHA256
+  description: The SHA256 hash of the file.
+tests:
+- No tests (auto formatted)
+fromversion: 6.8.0

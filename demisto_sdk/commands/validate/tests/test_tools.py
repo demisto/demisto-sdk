@@ -2,15 +2,15 @@ import tempfile
 from pathlib import Path
 from typing import Any, List, Optional
 from unittest.mock import MagicMock
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.repo import Repo
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 
 REPO = Repo(tmpdir=Path(tempfile.mkdtemp()))
 

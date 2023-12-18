@@ -1,3 +1,4 @@
+import filecmp
 import os.path
 import re
 import tempfile
@@ -201,13 +202,25 @@ def generate_integration_doc(
                     )
                     tmp_file.write(bytes)
 
-                    integration_diff = IntegrationDiffDetector(
-                        new=input_path, old=tmp_file.name
-                    )
+                    # If the integration YAML files are identical
+                    # return as there's nothing to generate
+                    if filecmp.cmp(input_path, tmp_file.name):
+                        logger.info(
+                            f"Files '{input_path}' and '{tmp_file.name}' are identical, nothing to generate"
+                        )
+                        return
+
+                    # Once we initialize the diff, we no longer need
+                    # the temporary integration yaml file so we leave the
+                    # context manager
+                    else:
+                        integration_diff = IntegrationDiffDetector(
+                            new=input_path, old=tmp_file.name
+                        )
 
                 # TODO Handle changed parameters
                 old_params = integration_diff.old_yaml_data.get("configuration", [])
-                new_params = integration_diff.new_yaml_data.get("configuration")
+                new_params = integration_diff.new_yaml_data.get("configuration", [])
 
                 changed_parameters = integration_diff.get_different_params(
                     old_params, new_params
@@ -226,6 +239,7 @@ def generate_integration_doc(
                 added_commands = integration_diff.added_commands
                 if added_commands:
                     doc_text = integration_readme_path.read_text()
+                    doc_text += "\n"
 
                     for cmd in added_commands:
                         logger.info(f"Generating docs for command `{cmd}`")
@@ -239,6 +253,7 @@ def generate_integration_doc(
                         doc_text, err = append_or_replace_command_in_docs(
                             doc_text, command_section_str, cmd
                         )
+                        doc_text += "\n"
                         errors.extend(err)
 
             except InvalidGitRepositoryError as igre:

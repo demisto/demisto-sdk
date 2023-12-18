@@ -1767,7 +1767,7 @@ class TestIntegrationDocUpdate:
             "read_file_content",
             return_value=Path(
                 TEST_FILES, self._get_function_name(), "Aha.yml"
-            ).read_text(),
+            ).read_bytes(),
         )
         master_text = repo.git_util.read_file_content(
             path=os.path.join(repo.packs[0].integrations[0].path, "Aha.yml"),
@@ -1775,11 +1775,11 @@ class TestIntegrationDocUpdate:
             from_remote=False,
         )
 
-        with Path(tmp_path, "Aha.yml").open("w") as fd:
+        with Path(str(tmp_path), "Aha.yml").open("wb") as fd:
             fd.write(master_text)
 
         diff = IntegrationDiffDetector(
-            old=os.path.join(tmp_path, "Aha.yml"),
+            old=os.path.join(str(tmp_path), "Aha.yml"),
             new=os.path.join(repo.packs[0].integrations[0].path, "Aha.yml"),
         )
 
@@ -1805,47 +1805,8 @@ class TestIntegrationDocUpdate:
 
         assert "aha-delete-idea" in actual
 
-    # def test_is_integration_changed(self, tmp_path: TempPathFactory):
-    #     """
-    #     # TODO
-    #     """
-
-    #     content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
-    #     content_temp_dir.mkdir()
-
-    #     os.environ["DEMISTO_SDK_CONTENT_PATH"] = str(content_temp_dir)
-
-    #     repo = Repo(tmpdir=content_temp_dir, init_git=True)
-
-    #     py_code_path = Path(TEST_FILES, "test_added_commands", "AHA.py")
-    #     py_code = py_code_path.read_text()
-
-    #     yml_code_path = Path(TEST_FILES, "test_added_commands", "AHA.yml")
-    #     with yml_code_path.open("r") as stream:
-    #         yml_code = yaml.load(stream)
-
-    #     readme_path = Path(TEST_FILES, "test_added_commands", PACKS_README_FILE_NAME)
-    #     markdown = readme_path.read_text()
-
-    #     # Create the Pack and Integration
-    #     repo.create_pack("AHA")
-    #     repo.packs[0].create_integration(
-    #         "Aha",
-    #         code=py_code,
-    #         yml=yml_code,
-    #         readme=markdown
-    #     )
-
-    #     # Add amd commit the changes to master branch
-    #     repo.git_util.repo.git.add(all=True)
-    #     repo.git_util.repo.index.commit("added Pack")
-
-    #     # Checkout a new branch and copy the modified integration YAML
-    #     repo.git_util.repo.git.checkout('-b', 'add_delete_cmd')
-    #     shutil.copyfile(
-    #         os.path.join(TEST_FILES, "test_added_commands", "AHA_added_cmd.yml"),
-    #         os.path.join(repo.packs[0].integrations[0].path, "Aha.yml")
-    #     )
-
-    #     integration_yml = os.path.join(repo.packs[0].integrations[0].path, "Aha.yml")
-    #     actual = is_integration_changed(integration_yml)
+    def test_identical_integration_yaml(self, tmp_path: TempPathFactory):
+        """
+        TODO Add a test where the integration yamls are identical
+        """
+        pass

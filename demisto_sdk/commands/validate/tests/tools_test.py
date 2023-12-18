@@ -8,50 +8,38 @@ from demisto_sdk.commands.validate.validators.tools import (
 
 
 @pytest.mark.parametrize(
-    "input_name, expected_result",
+    "playbook_for_test, expected_result",
     [
-        (
-            {"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}},
-            {"hello: test", "example: test"},
-        ),
-        ({"0": {"inputs": "test"}, "1": {"inputs": "test2"}}, set()),
+        (create_playbook_object(paths=["tasks"], values=[{"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}}]),{"hello: test", "example: test"}),
+        (create_playbook_object(paths=["tasks"], values=[{"0": {"inputs": "test"}, "1": {"inputs": "test2"}}]),set())
     ],
 )
-def test_collect_all_inputs_in_use(input_name, expected_result):
+def test_collect_all_inputs_in_use(playbook_for_test, expected_result):
     """
     Given:
         - A playbook with inputs in some tasks
-          scenario 1:
+          Case 1:
             The inputs for the first task are 'inputs.hello: test'
             The inputs for the second task are 'inputs.example: test'
-          scenario 2:
+          Case 2:
             The inputs for the first task are 'inputs: test'
             The inputs for the second task are 'inputs: test2'
     When:
         - Running collect_all_inputs_in_use
     Then:
         - Return a set of input names and values from any task in the playbook, if the inputs match the pattern inputs.<input_name>
-        scenario 1: The results should be A set object containing:
+        Case 1: The results should be A set object containing:
             'hello: test'
            'example: test'
-        scenario 2: The results should be:
+        Case 2: The results should be:
             An empty set object.
     """
-    playbook = create_playbook_object(paths=["tasks"], values=[input_name])
-
-    assert collect_all_inputs_in_use(playbook) == expected_result
+    assert collect_all_inputs_in_use(playbook_for_test) == expected_result
 
 
-def test_collect_all_inputs_from_inputs_section():
-    """
-    Given:
-        - A playbook with inputs defined in the inputs section
-    When:
-        - Running collect_all_inputs_from_inputs_section
-    Then:
-        - A set with all inputs defined in the inputs section with no duplicates or empty spaces are returned.
-    """
-    playbook = create_playbook_object(
+@pytest.fixture
+def playbook_for_test():
+    return create_playbook_object(
         paths=["inputs"],
         values=[
             [
@@ -62,7 +50,16 @@ def test_collect_all_inputs_from_inputs_section():
         ],
     )
 
-    assert collect_all_inputs_from_inputs_section(playbook) == {
+def test_collect_all_inputs_from_inputs_section(playbook_for_test):
+    """
+    Given:
+        - A playbook with inputs defined in the inputs section
+    When:
+        - Running collect_all_inputs_from_inputs_section
+    Then:
+        - A set with all inputs defined in the inputs section with no duplicates or empty spaces are returned.
+    """
+    assert collect_all_inputs_from_inputs_section(playbook_for_test) == {
         "inputs.test",
         "inputs.test2",
     }

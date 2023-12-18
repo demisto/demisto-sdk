@@ -271,6 +271,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target (str): The identifier of the target content object (e.g, its node_id).
             kwargs: Additional information about the relationship.
         """
+        # target type has to be the base type, because in the server they are the same
         if target_type == ContentType.SCRIPT:
             target_type = ContentType.BASE_SCRIPT
         if target_type == ContentType.PLAYBOOK:

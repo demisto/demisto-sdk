@@ -30,11 +30,8 @@ def build_source_properties() -> str:
 
 def build_target_properties(
     identifier: str = "object_id",
-    with_content_type: bool = False,
 ) -> str:
     properties = {identifier: "rel_data.target"}
-    if with_content_type:
-        properties["content_type"] = "rel_data.target_type"
     return node_map(properties)
 
 
@@ -45,7 +42,7 @@ UNWIND $data AS rel_data
 
 MATCH (integration:{ContentType.INTEGRATION}{build_source_properties()})
 
-MERGE (cmd:{ContentType.COMMAND}{build_target_properties(with_content_type=True)})
+MERGE (cmd:{ContentType.COMMAND}{build_target_properties()})
 
 // If created, add its name and marketplaces based on the integration's property
 ON CREATE
@@ -84,7 +81,7 @@ MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
 
 // Get or create the targets with the given properties
 MERGE (target:{target_type}{
-    build_target_properties(identifier=target_identifier, with_content_type=with_target_type)
+    build_target_properties(identifier=target_identifier)
 })
 
 // If created, mark "not in repository" (all repository nodes were created already)
@@ -124,7 +121,7 @@ UNWIND $data AS rel_data
 MATCH (content_item:{ContentType.BASE_NODE}{build_source_properties()})
 
 // Get or create the test playbook with the given id
-MERGE (tpb:{ContentType.TEST_PLAYBOOK}{build_target_properties(with_content_type=True)})
+MERGE (tpb:{ContentType.TEST_PLAYBOOK}{build_target_properties()})
 
 // If created, mark "not in repository" (all repository nodes were created already)
 ON CREATE

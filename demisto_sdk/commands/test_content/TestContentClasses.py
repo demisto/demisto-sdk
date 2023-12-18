@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILTER_CONF,
-    PB_Status,
+    PB_Status, MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_demisto_version
@@ -60,8 +60,18 @@ MAX_RETRIES = 3
 RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
 SLACK_MEM_CHANNEL_ID = "CM55V7J8K"
+XSOAR_SERVER_TYPE = "XSOAR"
 XSIAM_SERVER_TYPE = "XSIAM"
+XPANSE_SERVER_TYPE = "XPANSE"
 XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
+
+MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
+    MarketplaceVersions.XSOAR: {XSOAR_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE},
+    MarketplaceVersions.MarketplaceV2: XSIAM_SERVER_TYPE,
+    MarketplaceVersions.XPANSE: XPANSE_SERVER_TYPE,
+    MarketplaceVersions.XSOAR_SAAS: XSOAR_SAAS_SERVER_TYPE,
+    MarketplaceVersions.XSOAR_ON_PREM: XSOAR_SERVER_TYPE
+}
 
 __all__ = [
     "BuildContext",
@@ -148,6 +158,9 @@ class TestConfiguration:
         self.test_instance_names: List[str] = self._parse_instance_names_conf(
             test_configuration
         )
+        self.marketplaces: List[MarketplaceVersions] = self._parse_marketplaces_conf(
+            test_configuration
+        )
         self.instance_configuration: dict = test_configuration.get(
             "instance_configuration", {}
         )
@@ -171,6 +184,21 @@ class TestConfiguration:
         if not isinstance(instance_names_conf, list):
             instance_names_conf = [instance_names_conf]
         return instance_names_conf
+
+    @staticmethod
+    def _parse_marketplaces_conf(test_configuration) -> Optional[List[MarketplaceVersions]]:
+        marketplaces_conf = test_configuration.get("marketplaces", [])
+        if not isinstance(marketplaces_conf, list):
+            marketplaces_conf = [marketplaces_conf]
+        marketplaces_conf = [MarketplaceVersions(marketplace) for marketplace in marketplaces_conf]
+
+        if MarketplaceVersions.XSOAR in marketplaces_conf:
+            marketplaces_conf.append(MarketplaceVersions.XSOAR_SAAS)
+
+        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_conf:
+            marketplaces_conf.append(MarketplaceVersions.XSOAR)
+
+        return marketplaces_conf
 
     def __str__(self):
         return str(self.raw_dict)
@@ -292,6 +320,10 @@ class TestPlaybook:
         self.test_suite.add_property(
             "playbook.test_instance_names",
             ",".join(self.configuration.test_instance_names),
+        )
+        self.test_suite.add_property(
+            "playbook.marketplaces",
+            ",".join(self.configuration.marketplaces),
         )
         self.test_suite.add_property(
             "playbook.integrations", ",".join(map(str, self.integrations))
@@ -439,12 +471,48 @@ class TestPlaybook:
 
             return False
 
+        def marketplaces_match_server_type():
+            """
+            Checks if the test has a marketplace value, and if so- if it suits the server machine we are on.
+            """
+            test_server_types = set()
+            for marketplace in self.configuration.marketplaces:
+                test_server_types.update(MARKETPLACE_VERSIONS_TO_SERVER_TYPE[marketplace])
+            self.log_info(f'MARKETPLACES FOR TEST PLAYBOOK:\n'
+                          f'{self.configuration.marketplaces=} ({test_server_types=})\n'
+                          f'for {self.configuration.playbook_id=}\n'
+                          f'with {self.configuration.test_instance_names=}\n'
+                          f'in {self.build_context.server_type=}')
+            if not test_server_types:
+                return True
+
+            instance_names_log_message = f" for instance names: {', '.join(self.configuration.test_instance_names)}" \
+                if self.configuration.test_instance_names else ""
+
+            if self.build_context.server_type in test_server_types:
+                self.log_debug(f"Running {self} with current server marketplace{instance_names_log_message}")
+                return True
+
+            log_message = f"Skipping {self} because it's marketplace values are: " \
+                          f"{', '.join(self.configuration.marketplaces)}{instance_names_log_message}, " \
+                          f"which doesn't suit the current server marketplace value"
+            self.close_test_suite([Skipped(log_message)])
+            if self.configuration.playbook_id in self.build_context.filtered_tests:
+                self.log_warning(log_message)
+            else:
+                self.log_debug(log_message)
+            skipped_tests_collected[
+                self.configuration.playbook_id
+            ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            return False
+
         return (
             in_filtered_tests()
             and not nightly_test_in_non_nightly_build()
             and not skipped_test()
             and not version_mismatch()
             and not test_has_skipped_integration()
+            and marketplaces_match_server_type()
         )
 
     def run_test_module_on_integrations(self, client: DefaultApi) -> bool:

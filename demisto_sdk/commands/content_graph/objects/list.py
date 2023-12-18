@@ -31,3 +31,13 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
                 body=json.loads((dir_path / self.normalize_name).read_text()),
                 response_type="object",
             )
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if (
+            isinstance(_dict, dict)
+            and {"data", "allRead", "truncated"}.intersection(_dict.keys())
+            and path.suffix == ".json"
+        ):
+            return True
+        return False

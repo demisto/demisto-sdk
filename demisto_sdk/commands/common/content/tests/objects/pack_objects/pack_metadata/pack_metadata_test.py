@@ -419,39 +419,21 @@ def test__enhance_pack_properties__internal_and_external(mocker, is_external, ex
     display_name="",
     description="",
     created="",
-    updated="",
     legacy=False,
     support="",
     url="",
     email="",
     eulaLink="",
-    author="",
-    authorImage="",
-    certification="",
     price=0,
     hidden=False,
-    serverMinVersion="",
-    currentVersion="",
-    versionInfo="",
     commit="",
     downloads=0,
-    tags=[],
-    categories=[],
-    useCases=[],
     keywords=[],
     searchRank=0,
     excludedDependencies=[],
     videos=[],
     modules=[],
-    integrations=[],
-    premium=False,
-    vendorId="",
-    partnerId="",
-    partnerName="",
-    previewOnly=False,
-    disableMonthly=False,
-    contentCommitHash="",
-)
+) # type: ignore
     mocker.patch(
         "demisto_sdk.commands.content_graph.objects.pack_metadata.is_external_repository",
         return_value=is_external,
@@ -460,6 +442,6 @@ def test__enhance_pack_properties__internal_and_external(mocker, is_external, ex
     my_instance._enhance_pack_properties(
         marketplace=MarketplaceVersions.XSOAR,
         pack_id="9",
-        content_items=PackContentItems(),
+        content_items=PackContentItems(), # type: ignore
     )
     assert my_instance.version_info == expected

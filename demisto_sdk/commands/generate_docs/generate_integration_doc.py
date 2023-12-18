@@ -1,20 +1,29 @@
 import os.path
 import re
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from git import InvalidGitRepositoryError
 from requests.structures import CaseInsensitiveDict
 
+from demisto_sdk.commands.common import git_util
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER,
     DOCS_COMMAND_SECTION_REGEX,
+    INTEGRATIONS_DIR,
+    PACKS_DIR,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import (
+    get_content_path,
+    get_pack_name,
+    get_yaml,
+)
 from demisto_sdk.commands.generate_docs.common import (
     add_lines,
     build_example_dict,
@@ -98,7 +107,9 @@ def generate_integration_doc(
         yml_data = get_yaml(input_path)
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input_path))
+
         errors: list = []
+
         example_dict: dict = {}
         if examples:
             specific_commands = command.split(",") if command else None
@@ -140,6 +151,99 @@ def generate_integration_doc(
                     doc_text, command_section_str, specific_command
                 )
                 errors.extend(err)
+
+        # Before generating a new README, we check whether it's a new integration or not.
+        # If it's not new, we retrieve retrieve the integration YAML from the head
+        # and merge the changes into the output README.
+        elif (Path(input_path).parent / "README.md").exists():
+            integration_readme_path = Path(input_path).parent / "README.md"
+
+            pack_name = get_pack_name(input_path)
+            integration_yml_filename: str = Path(input_path).name
+            integration_name = Path(input_path).stem
+
+            logger.info(
+                f"README for Integration '{integration_name}' in Pack '{pack_name}' exists. Checking for differences in git..."
+            )
+            try:
+                git = git_util.GitUtil(get_content_path(Path(input_path)))
+                primary_branch = (
+                    git.find_primary_branch(git.repo)
+                    if git.find_primary_branch(git.repo)
+                    else "master"
+                )
+
+                integration_yml_path = os.path.join(
+                    PACKS_DIR,
+                    pack_name,
+                    INTEGRATIONS_DIR,
+                    integration_name,
+                    integration_yml_filename,
+                )
+
+                # FIXME hardcoded remote name 'origin'
+                logger.debug(
+                    f"Attempting to retrieve file '{integration_yml_path}' from local primary branch '{primary_branch}'..."
+                )
+                bytes = git.read_file_content(
+                    integration_yml_path,
+                    commit_or_branch=primary_branch,
+                    from_remote=False,
+                )
+
+                # We create a temporary file which contains the integration YAML from the
+                # primary branch
+                with tempfile.NamedTemporaryFile(
+                    "wb", suffix=integration_yml_filename
+                ) as tmp_file:
+                    logger.debug(
+                        f"Writing {len(bytes)} bytes to temporary file '{tmp_file}'..."
+                    )
+                    tmp_file.write(bytes)
+
+                    integration_diff = IntegrationDiffDetector(
+                        new=input_path, old=tmp_file.name
+                    )
+
+                # TODO Handle changed parameters
+                old_params = integration_diff.old_yaml_data.get("configuration", [])
+                new_params = integration_diff.new_yaml_data.get("configuration")
+
+                changed_parameters = integration_diff.get_different_params(
+                    old_params, new_params
+                )
+
+                if changed_parameters:
+                    logger.info("Found the following changed parameters:")
+                    logger.info(changed_parameters)
+
+                # TODO find and replace parameter in
+
+                # TODO Handle changed command arguments
+
+                # Handle new commands
+                # we append them to the README.
+                added_commands = integration_diff.added_commands
+                if added_commands:
+                    doc_text = integration_readme_path.read_text()
+
+                    for cmd in added_commands:
+                        logger.info(f"Generating docs for command `{cmd}`")
+                        command_section, command_errors = generate_commands_section(
+                            yml_data,
+                            example_dict,
+                            command_permissions_dict,
+                            command=cmd,
+                        )
+                        command_section_str = "\n".join(command_section)
+                        doc_text, err = append_or_replace_command_in_docs(
+                            doc_text, command_section_str, cmd
+                        )
+                        errors.extend(err)
+
+            except InvalidGitRepositoryError as igre:
+                errors.append(f"Failed to open git repository: {str(igre)}")
+
         else:
             docs: list = []
             docs.extend(add_lines(yml_data.get("description")))

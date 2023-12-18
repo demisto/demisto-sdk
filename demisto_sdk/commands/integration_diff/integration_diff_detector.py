@@ -32,6 +32,7 @@ class IntegrationDiffDetector:
 
         self.fount_missing = False
         self.missing_items_report: dict = {}
+        self.added_commands: List[str] = self.get_added_commands()
 
     def check_different(self) -> bool:
         """
@@ -594,3 +595,25 @@ class IntegrationDiffDetector:
                 result[element["command_name"]] = [element]
 
         return result
+
+    def get_added_commands(self) -> List[str]:
+        """
+        Helper function to return the list of added commands
+
+        Returns:
+        - `List[str]` with the names of the commands.
+        """
+
+        commands: List[str] = []
+
+        old_commands = self.old_yaml_data["script"]["commands"]
+        new_commands = self.new_yaml_data["script"]["commands"]
+
+        new_cmds = [cmd["name"] for cmd in new_commands]
+        old_cmds = [cmd["name"] for cmd in old_commands]
+
+        # Check if any new commands were added
+        if new_cmds != old_cmds:
+            commands = list(set(new_cmds).difference(old_cmds))
+
+        return commands

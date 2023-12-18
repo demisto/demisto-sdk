@@ -1,9 +1,16 @@
+import inspect
 import os
+import shutil
 from pathlib import Path
 from typing import Dict, List
 
 import pytest
+from _pytest.tmpdir import TempPathFactory
+from pytest_mock import MockerFixture
 
+from demisto_sdk.commands.common.constants import PACKS_README_FILE_NAME
+from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
@@ -21,7 +28,11 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
 )
+from demisto_sdk.commands.integration_diff.integration_diff_detector import (
+    IntegrationDiffDetector,
+)
 from TestSuite.pack import Pack
+from TestSuite.repo import Repo
 
 FILES_PATH = os.path.normpath(
     os.path.join(__file__, git_path(), "demisto_sdk", "tests", "test_files")
@@ -38,6 +49,12 @@ TEST_INTEGRATION_2_PATH = os.path.join(
     "integration-display-credentials-none/integration-display" "-credentials-none.yml",
 )
 
+DEMISTO_SDK_PATH = os.path.join(git_path(), "demisto_sdk")
+TEST_FILES = os.path.join(
+    DEMISTO_SDK_PATH, "commands", "generate_docs", "tests", "test_files"
+)
+
+yaml = YAML_Handler()
 
 # common tests
 
@@ -1690,3 +1707,145 @@ def test_missing_data_sections_when_generating_table_section(
     script_info = get_script_info(script_pack.yml.path, clear_cache=True)
     section = generate_table_section(script_info, "Script data")
     assert section == expected_result
+
+
+class TestIntegrationDocUpdate:
+
+    repo_dir_name = "content"
+
+    def _get_function_name(self) -> str:
+        return inspect.currentframe().f_back.f_code.co_name
+
+    def test_added_commands(self, mocker: MockerFixture, tmp_path: TempPathFactory):
+        """
+        Check that newly-added commands to the integration YAML
+        are appended to the integration README.
+
+        Given:
+        - A Pack with an integration
+
+        When:
+        - The original integration has 4 commands.
+        - The modified integration has 5 commands.
+
+        Then:
+        - The difference is 1 command.
+        """
+
+        # Create content repo
+        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
+        content_temp_dir.mkdir()
+        repo = Repo(tmpdir=content_temp_dir, init_git=True)
+
+        py_code_path = Path(TEST_FILES, self._get_function_name(), "AHA.py")
+        py_code = py_code_path.read_text()
+
+        yml_code_path = Path(TEST_FILES, self._get_function_name(), "AHA.yml")
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(
+            TEST_FILES, self._get_function_name(), PACKS_README_FILE_NAME
+        )
+        markdown = readme_path.read_text()
+
+        repo.create_pack("AHA")
+        repo.packs[0].create_integration(
+            "Aha", code=py_code, yml=yml_code, readme=markdown
+        )
+
+        repo.git_util.commit_files(commit_message="Adding AHA Pack")
+        repo.git_util.repo.git.checkout("-b", "add_delete_cmd")
+
+        shutil.copyfile(
+            os.path.join(TEST_FILES, self._get_function_name(), "AHA_added_cmd.yml"),
+            os.path.join(repo.packs[0].integrations[0].path, "Aha.yml"),
+        )
+
+        mocker.patch.object(
+            repo.git_util,
+            "read_file_content",
+            return_value=Path(
+                TEST_FILES, self._get_function_name(), "Aha.yml"
+            ).read_text(),
+        )
+        master_text = repo.git_util.read_file_content(
+            path=os.path.join(repo.packs[0].integrations[0].path, "Aha.yml"),
+            commit_or_branch="master",
+            from_remote=False,
+        )
+
+        with Path(tmp_path, "Aha.yml").open("w") as fd:
+            fd.write(master_text)
+
+        diff = IntegrationDiffDetector(
+            old=os.path.join(tmp_path, "Aha.yml"),
+            new=os.path.join(repo.packs[0].integrations[0].path, "Aha.yml"),
+        )
+
+        actual = diff.added_commands
+        expected = ["aha-delete-idea"]
+
+        assert actual == expected
+
+        mocker.patch.object(
+            GitUtil,
+            "read_file_content",
+            return_value=Path(
+                TEST_FILES, self._get_function_name(), "Aha.yml"
+            ).read_bytes(),
+        )
+        generate_integration_doc(
+            input_path=os.path.join(repo.packs[0].integrations[0].path, "Aha.yml")
+        )
+
+        actual = Path(
+            os.path.join(repo.packs[0].integrations[0].path, "Aha.yml")
+        ).read_text()
+
+        assert "aha-delete-idea" in actual
+
+    # def test_is_integration_changed(self, tmp_path: TempPathFactory):
+    #     """
+    #     # TODO
+    #     """
+
+    #     content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
+    #     content_temp_dir.mkdir()
+
+    #     os.environ["DEMISTO_SDK_CONTENT_PATH"] = str(content_temp_dir)
+
+    #     repo = Repo(tmpdir=content_temp_dir, init_git=True)
+
+    #     py_code_path = Path(TEST_FILES, "test_added_commands", "AHA.py")
+    #     py_code = py_code_path.read_text()
+
+    #     yml_code_path = Path(TEST_FILES, "test_added_commands", "AHA.yml")
+    #     with yml_code_path.open("r") as stream:
+    #         yml_code = yaml.load(stream)
+
+    #     readme_path = Path(TEST_FILES, "test_added_commands", PACKS_README_FILE_NAME)
+    #     markdown = readme_path.read_text()
+
+    #     # Create the Pack and Integration
+    #     repo.create_pack("AHA")
+    #     repo.packs[0].create_integration(
+    #         "Aha",
+    #         code=py_code,
+    #         yml=yml_code,
+    #         readme=markdown
+    #     )
+
+    #     # Add amd commit the changes to master branch
+    #     repo.git_util.repo.git.add(all=True)
+    #     repo.git_util.repo.index.commit("added Pack")
+
+    #     # Checkout a new branch and copy the modified integration YAML
+    #     repo.git_util.repo.git.checkout('-b', 'add_delete_cmd')
+    #     shutil.copyfile(
+    #         os.path.join(TEST_FILES, "test_added_commands", "AHA_added_cmd.yml"),
+    #         os.path.join(repo.packs[0].integrations[0].path, "Aha.yml")
+    #     )
+
+    #     integration_yml = os.path.join(repo.packs[0].integrations[0].path, "Aha.yml")
+    #     actual = is_integration_changed(integration_yml)

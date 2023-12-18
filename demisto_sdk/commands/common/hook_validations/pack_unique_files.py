@@ -4,7 +4,6 @@ This module is designed to validate the existence and structure of content pack 
 import glob
 import os
 import re
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
@@ -64,10 +63,10 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
+from demisto_sdk.commands.validate.tools import check_timestamp_format
 
 CONTRIBUTORS_LIST = ["partner", "developer", "community"]
 SUPPORTED_CONTRIBUTORS_LIST = ["partner", "developer"]
-ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
 MAXIMUM_DESCRIPTION_FIELD_LENGTH = 130
 SUPPORT_TYPES = ["community", "xsoar"] + SUPPORTED_CONTRIBUTORS_LIST
@@ -282,15 +281,6 @@ class PackUniqueFilesValidator(BaseValidator):
         old_marketplaces = old_meta_file_content.get("marketplaces", [])
         current_marketplaces = current_meta_file_content.get("marketplaces", [])
         return set(old_marketplaces) != set(current_marketplaces)
-
-    @staticmethod
-    def check_timestamp_format(timestamp):
-        """Check that the timestamp is in ISO format"""
-        try:
-            datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)
-            return True
-        except ValueError:
-            return False
 
     # secrets validation
     def validate_secrets_file(self):
@@ -598,7 +588,7 @@ class PackUniqueFilesValidator(BaseValidator):
             # check created field in iso format
             created_field = metadata.get(PACK_METADATA_CREATED, "")
             if created_field:
-                if not self.check_timestamp_format(created_field):
+                if not check_timestamp_format(created_field):
                     suggested_value = parser.parse(created_field).isoformat() + "Z"
                     if self._add_error(
                         Errors.pack_timestamp_field_not_in_iso_format(

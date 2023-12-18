@@ -1944,6 +1944,9 @@ MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 
+#  date formats:
+ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
 class ImagesFolderNames(str, Enum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"

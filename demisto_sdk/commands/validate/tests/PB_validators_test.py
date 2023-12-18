@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
     [
         ({"first_input":"inputs.input_name1"}, [{"key":"input_name1", "value":"input_value1"}], []),
         ({"first_input":"inputs.input_name1", "second_input": "inputs.input_name2"}, [{"key":"input_name1", "value":"input_value1"}], []),
-         ({"first_input":"inputs.input_name1"}, [{"key":"input_name2", "value":"input_value2"}], "The playbook 'Phishing Investigation - Generic' contains the following inputs that are not used in any of its tasks: input_name2")
+         ({"first_input":"inputs.input_name1"}, [{"key":"input_name2", "value":"input_value2"}], "The playbook 'Detonate File - JoeSecurity V2' contains the following inputs that are not used in any of its tasks: input_name2")
     ],
 )
 def test_is_valid_all_inputs_in_use(

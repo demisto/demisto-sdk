@@ -112,7 +112,10 @@ def configure_dotenv():
     """
     DOTENV_PATH.touch()
     python_path_values = ":".join((str(path) for path in PYTHONPATH))
-    update_dotenv({"PYTHONPATH": python_path_values, "MYPYPATH": python_path_values})
+    mypy_path_values = ":".join(
+        (str(path) for path in PYTHONPATH if "site-packages" not in str(path))
+    )
+    update_dotenv({"PYTHONPATH": python_path_values, "MYPYPATH": mypy_path_values})
 
 
 def configure_vscode_tasks(

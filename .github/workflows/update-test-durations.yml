@@ -57,7 +57,7 @@ jobs:
 
       - name: Create Draft PR
         run: |
-          gh pr create --base main --head update-test-durations --title "Update .test-durations" --body "This PR updates the .test-durations file." --draft --reviewer GuyAfik
+          gh pr create --base master --head update-test-durations --title "Update .test-durations" --body "This PR updates the .test-durations file." --draft --reviewer GuyAfik
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

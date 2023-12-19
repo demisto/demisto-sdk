@@ -15,6 +15,11 @@ configuration:
   defaultvalue: DEMO
   type: 0
   additionalinfo: "Check the Aha! project name in the URL. Replace the <PROJECT_NAME> placeholder in the following : example.com.aha.io/products/<PROJECT_NAME>/features."
+- name: project_id
+  display: Project ID
+  required: true
+  defaultvalue: DEMO
+  type: 0
 - name: api_key
   displaypassword: Api Key
   required: true
@@ -167,12 +172,6 @@ script:
     - contextPath: AHA.Idea.created_at
       description: The idea creation date.
       type: Date
-  - name: aha-delete-idea
-    description: "Delete an idea"
-    arguments:
-    - name: idea_name
-      description: "The idea to delete"
-      required: true
   runonce: false
   script: "-"
   type: python

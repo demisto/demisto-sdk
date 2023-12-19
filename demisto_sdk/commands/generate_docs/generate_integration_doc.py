@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     DOCS_COMMAND_SECTION_REGEX,
     INTEGRATIONS_DIR,
     PACKS_DIR,
+    PACKS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -158,7 +159,7 @@ def generate_integration_doc(
         # and merge the changes into the output README.
         elif (Path(input_path).parent / "README.md").exists():
             integration_readme_path = Path(input_path).parent / "README.md"
-
+            doc_text = integration_readme_path.read_text()
             pack_name = get_pack_name(input_path)
             integration_yml_filename: str = Path(input_path).name
             integration_name = Path(input_path).stem
@@ -212,23 +213,30 @@ def generate_integration_doc(
 
                     # Once we initialize the diff, we no longer need
                     # the temporary integration yaml file so we leave the
-                    # context manager
+                    # context
                     else:
                         integration_diff = IntegrationDiffDetector(
                             new=input_path, old=tmp_file.name
                         )
 
-                # TODO Handle changed parameters
-                old_params = integration_diff.old_yaml_data.get("configuration", [])
-                new_params = integration_diff.new_yaml_data.get("configuration", [])
+                # In case the configuration section has changed
+                # we want to replace the section with the new
+                if integration_diff.is_configuration_different():
+                    logger.info(
+                        "Integration configuration has changed, replacing the old section with the new one..."
+                    )
 
-                changed_parameters = integration_diff.get_different_params(
-                    old_params, new_params
-                )
+                    new_configuration_section = generate_setup_section(
+                        integration_diff.new_yaml_data
+                    )
+                    old_configuration_section = generate_setup_section(
+                        integration_diff.old_yaml_data
+                    )
 
-                if changed_parameters:
-                    logger.info("Found the following changed parameters:")
-                    logger.info(changed_parameters)
+                    doc_text.replace(
+                        old_configuration_section, new_configuration_section
+                    )
+                    logger.info("Integration configuration replaced")
 
                 # TODO find and replace parameter in
 
@@ -238,7 +246,6 @@ def generate_integration_doc(
                 # we append them to the README.
                 added_commands = integration_diff.added_commands
                 if added_commands:
-                    doc_text = integration_readme_path.read_text()
                     doc_text += "\n"
 
                     for cmd in added_commands:
@@ -256,8 +263,12 @@ def generate_integration_doc(
                         doc_text += "\n"
                         errors.extend(err)
 
-            except InvalidGitRepositoryError as igre:
-                errors.append(f"Failed to open git repository: {str(igre)}")
+            except InvalidGitRepositoryError as err:
+                errors.append(f"Failed to open git repository: {str(err)}")
+            except git_util.GitFileNotFoundError as err:
+                errors.append(
+                    f"Failed to open file '{integration_yml_path}': {str(err)}"
+                )
 
         else:
             docs: list = []
@@ -320,7 +331,7 @@ def generate_integration_doc(
             if not doc_text.endswith("\n"):
                 doc_text += "\n"
 
-        save_output(output, "README.md", doc_text)
+        save_output(output, PACKS_README_FILE_NAME, doc_text)
 
         if errors:
             logger.info("[yellow]Possible Errors:[/yellow]")

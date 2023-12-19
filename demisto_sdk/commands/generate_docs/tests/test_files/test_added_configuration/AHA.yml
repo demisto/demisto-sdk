@@ -167,12 +167,6 @@ script:
     - contextPath: AHA.Idea.created_at
       description: The idea creation date.
       type: Date
-  - name: aha-delete-idea
-    description: "Delete an idea"
-    arguments:
-    - name: idea_name
-      description: "The idea to delete"
-      required: true
   runonce: false
   script: "-"
   type: python

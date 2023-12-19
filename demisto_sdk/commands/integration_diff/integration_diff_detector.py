@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+import dictdiffer
+
 from demisto_sdk.commands.common.constants import (
     ARGUMENT_FIELDS_TO_CHECK,
     INTEGRATION_ARGUMENT_TYPES,
@@ -617,3 +619,20 @@ class IntegrationDiffDetector:
             commands = list(set(new_cmds).difference(old_cmds))
 
         return commands
+
+    def is_configuration_different(self) -> bool:
+        """
+        Helper function to return whether the configuration is
+        different between the integrations
+
+        Returns:
+        - `bool` indicating whether the configuration is different or not
+        """
+        return bool(
+            list(
+                dictdiffer.diff(
+                    self.old_yaml_data.get("configuration"),
+                    self.new_yaml_data.get("configuration"),
+                )
+            )
+        )

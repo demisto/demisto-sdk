@@ -143,17 +143,8 @@ def create_nodes(
 
 def remove_nodes(tx: Transaction, content_type_to_identifiers: dict) -> None:
     for content_type, content_items_identifiers in content_type_to_identifiers.items():
-        if content_type in [
-            ContentType.COMMAND,
-            ContentType.BASE_SCRIPT,
-            ContentType.SCRIPT,
-        ]:
-            label = ContentType.COMMAND_OR_SCRIPT
-        else:
-            label = ContentType.BASE_NODE
-
         query = REMOVE_NODES_BY_TYPE.format(
-            label=label,
+            label=ContentType.BASE_NODE,
             content_type=content_type,
             content_items_identifiers=[c.lower() for c in content_items_identifiers],
         )

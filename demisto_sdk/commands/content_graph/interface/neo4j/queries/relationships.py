@@ -206,7 +206,7 @@ def create_relationships_by_type(
         )
     elif relationship == RelationshipType.USES_PLAYBOOK:
         query = build_uses_relationships_query(
-            target_type=ContentType.PLAYBOOK,
+            target_type=ContentType.BASE_PLAYBOOK,
             target_identifier="name",
             with_target_type=False,
         )

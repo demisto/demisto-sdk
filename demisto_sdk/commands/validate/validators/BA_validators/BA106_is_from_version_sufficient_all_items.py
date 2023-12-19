@@ -30,11 +30,11 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient import (
+    IsFromVersionSufficientValidator,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-)
-from demisto_sdk.commands.validate.validators.super_classes.BA106_is_from_version_sufficient import (
-    IsFromVersionSufficientValidator,
 )
 
 ContentTypes = Union[

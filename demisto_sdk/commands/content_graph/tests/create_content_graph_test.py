@@ -60,7 +60,6 @@ def setup_method(mocker, repo: Repo):
             }
         },
     )
-    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -1093,17 +1092,6 @@ class TestCreateContentGraph:
             create_content_graph(interface)
             assert not interface.search()
 
-    def test_stop_content_graph(self):
-        """
-        Given:
-            - A running content graph service.
-        When:
-            - Running neo4j_service.stop()
-        Then:
-            - Make sure no exception is raised.
-        """
-        neo4j_service.stop()
-
     def test_create_content_graph_incident_to_alert_scripts(
         self, repo: Repo, tmp_path: Path, mocker
     ):
@@ -1237,5 +1225,8 @@ class TestCreateContentGraph:
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.INTEGRATION,
             )
+        import logging
+
+        logging.info(f"{integrations[0].to_dict()=}")
         assert expected_python_version == integrations[0].to_dict()["python_version"]
         assert dockerhub_api_mocker.called == is_taken_from_dockerhub

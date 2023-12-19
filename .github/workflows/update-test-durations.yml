@@ -1,3 +1,5 @@
+name: Update .test-durations file
+
 on:
   # schedule:
   #  - cron: "0 8 * * 0"  # Run every two weeks on Sunday at 8 AM UTC
@@ -10,21 +12,53 @@ on:
 
 jobs:
   update-test-durations:
+    name: Update .test-durations file
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.10" ]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
+      - name: Python ${{ matrix.python-version }} (${{ matrix.group }}) - Setup Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run Unit Tests
+        run: |
+          source "$(poetry env info --path)/bin/activate"
+
+          # Due to race conditions in the tests bringing up and down the node server, have the server available
+          # For all the tests.
+          node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
+          node_pid=$!
+          
+          mkdir unit-tests
+          poetry run pytest --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph} --store-durations --junitxml=unit-tests/junit.xml || pytest_exit_code=$
+          echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
+
+          kill $node_pid
+      
       - name: Update .test-durations
         run: |
           # Your logic to update the .test-durations file
-          echo "New content" > .test-durations
+          git status
           git add .test-durations
+          git status
           git commit -m "Update .test-durations" || true
           git push origin HEAD:refs/heads/update-test-durations
 
-      - name: Create PR
+      - name: Create Draft PR
         run: |
-          gh pr create --base master --head update-test-durations --title "Update .test-durations" --body "This PR updates the .test-durations file."
+          gh pr create --base main --head update-test-durations --title "Update .test-durations" --body "This PR updates the .test-durations file." --draft
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Python ${{ matrix.python-version }} (${{ matrix.group }}) - Test Summary Upload
+        uses: ./.github/actions/test_summary_upload
+        with:
+          python-version: ${{ matrix.python-version }}
+          artifacts_folder_name: unit-tests

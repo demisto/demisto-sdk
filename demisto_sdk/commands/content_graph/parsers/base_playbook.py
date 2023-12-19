@@ -73,7 +73,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
             self.add_relationship(
                 RelationshipType.USES_PLAYBOOK,
                 target=playbook,
-                target_type=ContentType.PLAYBOOK,
+                target_type=ContentType.BASE_PLAYBOOK,
                 mandatorily=is_mandatory,
             )
 
@@ -138,12 +138,16 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
         for filter in complex_input.get("filters", []):
             if filter:
                 operator = filter[0].get("operator").split(".")[-1]
-                self.add_dependency_by_id(operator, ContentType.BASE_SCRIPT, is_mandatory)
+                self.add_dependency_by_id(
+                    operator, ContentType.BASE_SCRIPT, is_mandatory
+                )
 
         for transformer in complex_input.get("transformers", []):
             if transformer:
                 operator = transformer.get("operator").split(".")[-1]
-                self.add_dependency_by_id(operator, ContentType.BASE_SCRIPT, is_mandatory)
+                self.add_dependency_by_id(
+                    operator, ContentType.BASE_SCRIPT, is_mandatory
+                )
 
     def handle_task_filter_and_transformer_scripts(
         self, task: Dict[str, Any], is_mandatory: bool

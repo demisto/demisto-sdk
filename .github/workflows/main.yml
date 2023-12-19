@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   unit-tests:
-    name: Unit Tests / ${{ matrix.python-version }} (${{ matrix.group }})
+    name: Unit Tests / Python ${{ matrix.python-version }} (${{ matrix.group }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -62,7 +62,7 @@ jobs:
 
 
   integration-tests:
-    name: Integration Tests / ${{ matrix.python-version }}
+    name: Integration Tests / Python ${{ matrix.python-version }} (All-Tests)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -98,7 +98,7 @@ jobs:
           artifacts_folder_name: integration-tests
 
   graph-tests:
-    name: Graph Tests / ${{ matrix.python-version }}
+    name: Graph Tests / Python ${{ matrix.python-version }} (All-Tests)
     runs-on: ubuntu-latest
     strategy:
       matrix:

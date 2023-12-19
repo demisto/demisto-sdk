@@ -1,0 +1,30 @@
+on:
+  # schedule:
+  #  - cron: "0 8 * * 0"  # Run every two weeks on Sunday at 8 AM UTC
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  update-test-durations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Update .test-durations
+        run: |
+          # Your logic to update the .test-durations file
+          echo "New content" > .test-durations
+          git add .test-durations
+          git commit -m "Update .test-durations" || true
+          git push origin HEAD:refs/heads/update-test-durations
+
+      - name: Create PR
+        run: |
+          gh pr create --base master --head update-test-durations --title "Update .test-durations" --body "This PR updates the .test-durations file."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

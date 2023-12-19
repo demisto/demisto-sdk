@@ -52,6 +52,14 @@ AND any(
 )
 DETACH DELETE a"""
 
+REMOVE_NODES_BY_ID = """// Removes parsed nodes (according to constants)
+MATCH (a)
+AND a.not_in_repository = true
+AND any(
+    identifier IN [a.object_id, a.name]
+    WHERE toLower(identifier) IN {content_items_identifiers}
+)
+DETACH DELETE a"""
 
 REMOVE_EMPTY_PROPERTIES = """// Removes string properties with empty values ("") from nodes
 CALL apoc.periodic.iterate(
@@ -142,10 +150,8 @@ def create_nodes(
 
 
 def remove_nodes(tx: Transaction, content_type_to_identifiers: dict) -> None:
-    for content_type, content_items_identifiers in content_type_to_identifiers.items():
-        query = REMOVE_NODES_BY_TYPE.format(
-            label=ContentType.BASE_NODE,
-            content_type=content_type,
+    for content_items_identifiers in content_type_to_identifiers.values():
+        query = REMOVE_NODES_BY_ID.format(
             content_items_identifiers=[c.lower() for c in content_items_identifiers],
         )
         run_query(tx, query)

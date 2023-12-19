@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Generic, Iterable, List, TypeVar, Union
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard

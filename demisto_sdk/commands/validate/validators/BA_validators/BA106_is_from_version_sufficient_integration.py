@@ -54,6 +54,7 @@ class IsFromVersionSufficientIntegrationValidator(
             content_object=content_item,
         )
 
+
 def is_from_version_insufficient(content_item: ContentTypes) -> str:
     """Validate that the integration fromversion is sufficient according to it's type.
 
@@ -64,7 +65,12 @@ def is_from_version_insufficient(content_item: ContentTypes) -> str:
         str: The integration type if the from version is insufficient, else an empty string.
     """
     integration_type = get_integration_type(content_item)
-    return integration_type if Version(content_item.fromversion) < Version(INTEGRATION_FROM_VERSION_DICT[integration_type]) else ""
+    return (
+        integration_type
+        if Version(content_item.fromversion)
+        < Version(INTEGRATION_FROM_VERSION_DICT[integration_type])
+        else ""
+    )
 
 
 def get_integration_type(content_item: ContentTypes) -> str:
@@ -76,4 +82,8 @@ def get_integration_type(content_item: ContentTypes) -> str:
     Returns:
         str: the integration type.
     """
-    return "powershell" if content_item.type == "powershell" else ("feed" if content_item.is_feed else "regular")
+    return (
+        "powershell"
+        if content_item.type == "powershell"
+        else ("feed" if content_item.is_feed else "regular")
+    )

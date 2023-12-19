@@ -5,13 +5,13 @@ from typing import Iterable, List
 from packaging.version import Version
 
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
+from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient import (
+    IsFromVersionSufficientValidator,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
     ValidationResult,
-)
-from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient import (
-    IsFromVersionSufficientValidator,
 )
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
@@ -57,6 +57,7 @@ class IsFromVersionSufficientIndicatorFieldValidator(
             content_object=content_item,
         )
 
+
 def is_from_version_insufficient(content_item: ContentTypes) -> str:
     """Validate that the indicator type is sufficient according to its type.
 
@@ -66,5 +67,11 @@ def is_from_version_insufficient(content_item: ContentTypes) -> str:
     Returns:
         str: The expected min version if the version is insufficient. Otherwise, return an empty string.
     """
-    expected_min_version = INDICATOR_FIELD_TYPE_TO_MIN_VERSION.get(content_item.type, INDICATOR_FIELD_MIN_VERSION)
-    return expected_min_version if Version(content_item.fromversion) < Version(expected_min_version) else ""
+    expected_min_version = INDICATOR_FIELD_TYPE_TO_MIN_VERSION.get(
+        content_item.type, INDICATOR_FIELD_MIN_VERSION
+    )
+    return (
+        expected_min_version
+        if Version(content_item.fromversion) < Version(expected_min_version)
+        else ""
+    )

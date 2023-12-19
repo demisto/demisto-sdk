@@ -166,14 +166,16 @@ def validate_marketplaces(tx: Transaction, pack_ids: List[str]):
 MATCH
 (p1)<-[:{RelationshipType.IN_PACK}]-(content_item_from{{deprecated: false}})
     -[r:{RelationshipType.USES}{{mandatorily:true}}]->
-        (n)-[:{RelationshipType.IN_PACK}]->(p2)
-WHERE not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplaces)
+        (n)-[:{RelationshipType.IN_PACK}]->(p2)]
+WHERE not p1.is_test
+AND not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplaces)
 """
     if pack_ids:
         query += f"AND (p1.object_id in {pack_ids} OR p2.object_id in {pack_ids})"
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
-WHERE elementId(n) <> elementId(n2)
+WHERE not n.is_test
+AND elementId(n) <> elementId(n2)
 AND all(elem IN content_item_from.marketplaces WHERE elem IN n2.marketplaces)
 
 WITH content_item_from, r, n, n2

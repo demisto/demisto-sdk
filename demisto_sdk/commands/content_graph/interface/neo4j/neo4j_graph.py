@@ -47,6 +47,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     get_relationships_to_preserve,
     get_schema,
     remove_content_private_nodes,
+    remove_empty_nodes,
     remove_empty_properties,
     remove_packs_before_creation,
     remove_server_nodes,
@@ -584,6 +585,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             # For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
             session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
+            session.execute_write(remove_empty_nodes)
 
     def import_graph(
         self,

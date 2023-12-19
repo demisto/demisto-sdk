@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from functools import lru_cache
@@ -20,7 +21,9 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_UPSTREAM,
     PACKS_FOLDER,
 )
-from demisto_sdk.commands.common.logger import logger
+
+
+logger = logging.getLogger("demisto-sdk")
 
 
 

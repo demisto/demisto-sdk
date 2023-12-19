@@ -168,7 +168,7 @@ MATCH
     -[r:{RelationshipType.USES}{{mandatorily:true}}]->
         (n)-[:{RelationshipType.IN_PACK}]->(p2)
 WHERE not p1.is_test
-AND not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplaces AND not elem.is_test)
+AND not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplaces)
 """
     if pack_ids:
         query += f"AND (p1.object_id in {pack_ids} OR p2.object_id in {pack_ids})"
@@ -176,7 +176,7 @@ AND not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplaces 
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
 WHERE not n.is_test
 AND elementId(n) <> elementId(n2)
-AND all(elem IN content_item_from.marketplaces WHERE elem IN n2.marketplaces AND not elem.is_test)
+AND all(elem IN content_item_from.marketplaces WHERE elem IN n2.marketplaces)
 
 WITH content_item_from, r, n, n2
 WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true}}]->(n2))

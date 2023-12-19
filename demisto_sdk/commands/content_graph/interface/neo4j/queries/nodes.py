@@ -54,7 +54,7 @@ DETACH DELETE a"""
 
 REMOVE_NODES_BY_ID = """// Removes parsed nodes (according to constants)
 MATCH (a)
-AND a.not_in_repository = true
+WHERE a.not_in_repository = true
 AND any(
     identifier IN [a.object_id, a.name]
     WHERE toLower(identifier) IN {content_items_identifiers}

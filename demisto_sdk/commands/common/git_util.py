@@ -20,6 +20,8 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_UPSTREAM,
     PACKS_FOLDER,
 )
+from demisto_sdk.commands.common.logger import logger
+
 
 
 class CommitOrBranchNotFoundError(GitError):
@@ -624,7 +626,13 @@ class GitUtil:
         Returns:
             Set: of Paths to files changed in the current branch.
         """
-        self.fetch()
+        try:
+            self.fetch()
+
+        except Exception as e:
+            logger.warning("Failed to fetch remote branch. Generating diff without fetching.")
+            logger.debug(f"Error: {e}")
+
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 

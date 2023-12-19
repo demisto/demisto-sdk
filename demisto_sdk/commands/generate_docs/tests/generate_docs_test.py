@@ -1811,7 +1811,6 @@ class TestIntegrationDocUpdate:
             input_path=os.path.join(repo.packs[0].integrations[0].yml.path)
         )
 
-        # FIXME actual should be the readme
         actual = repo.packs[0].integrations[0].readme.read()
 
         assert "aha-delete-idea" in actual
@@ -1892,23 +1891,17 @@ class TestIntegrationDocUpdate:
 
         assert diff.is_configuration_different()
 
-        generate_integration_doc(input_path=repo.packs[0].integrations[0].yml.path)
+        mocker.patch.object(
+            GitUtil,
+            "read_file_content",
+            return_value=Path(
+                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
+            ).read_bytes(),
+        )
+        generate_integration_doc(
+            input_path=os.path.join(repo.packs[0].integrations[0].yml.path)
+        )
 
-        assert True
+        actual = repo.packs[0].integrations[0].readme.read()
 
-        # mocker.patch.object(
-        #     GitUtil,
-        #     "read_file_content",
-        #     return_value=Path(
-        #         TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
-        #     ).read_bytes(),
-        # )
-        # generate_integration_doc(
-        #     input_path=os.path.join(repo.packs[0].integrations[0].yml.path)
-        # )
-
-        # actual = Path(
-        #     os.path.join(repo.packs[0].integrations[0].yml.path)
-        # ).read_text()
-
-        # assert "aha-delete-idea" in actual
+        assert "Project ID" in actual

@@ -233,12 +233,25 @@ def generate_integration_doc(
                         integration_diff.old_yaml_data
                     )
 
-                    doc_text.replace(
-                        old_configuration_section, new_configuration_section
-                    )
-                    logger.info("Integration configuration replaced")
+                    doc_text_lines = doc_text.splitlines()
 
-                # TODO find and replace parameter in
+                    # We calculate on which line the old configuration started
+                    # and ended
+                    old_config_start_line = doc_text_lines.index(
+                        old_configuration_section[0]
+                    )
+                    # -2 because the last element is an empty string
+                    old_config_end_line = doc_text_lines.index(
+                        old_configuration_section[-2]
+                    )
+
+                    doc_text_lines[
+                        old_config_start_line : old_config_end_line + 1
+                    ] = new_configuration_section
+
+                    doc_text = "\n".join(doc_text_lines)
+
+                    logger.info("Integration configuration replaced")
 
                 # TODO Handle changed command arguments
 

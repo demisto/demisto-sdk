@@ -929,7 +929,7 @@ class Linter:
         py_ver = None
         if docker_base_image[1] != -1:
             py_ver = parse(docker_base_image[1]).major  # type: ignore
-        test_image_name, errors = docker_base.pull_or_create_test_image(
+        test_image_name, errors = docker_base.get_or_create_test_image(
             docker_base_image[0],
             additional_requirements=self._facts["additional_requirements"],
             container_type=self._pkg_lint_status["pack_type"],

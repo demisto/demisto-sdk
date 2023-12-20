@@ -5,8 +5,8 @@ from pathlib import Path
 from shutil import rmtree
 
 import pytest
-from pytest import MonkeyPatch
 from packaging.version import parse
+from pytest import MonkeyPatch
 
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
@@ -19,11 +19,11 @@ from demisto_sdk.commands.common.content.objects.pack_objects import PackMetaDat
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
 )
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from TestSuite.test_tools import ChangeCWD
 
 logger = logging.getLogger("demisto-sdk")
 

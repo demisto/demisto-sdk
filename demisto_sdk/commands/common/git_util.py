@@ -956,5 +956,3 @@ class GitUtil:
     def commit_files(self, commit_message: str, files: Union[List, str] = "."):
         self.repo.git.add(files)
         self.repo.index.commit(commit_message)
-
-    # def checkout_branch(self, branch: str):

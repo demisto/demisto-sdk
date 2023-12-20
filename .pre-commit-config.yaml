@@ -4,7 +4,7 @@ repos:
   rev: "v0.1.2"
   hooks:
   - id: ruff
-    args: [--fix, --exit-non-zero-on-fix]
+    args: [--fix, --exit-non-zero-on-fix, --show-fixes]
 - repo: https://github.com/python-poetry/poetry
   rev: "1.6.1"
   hooks:
@@ -26,7 +26,6 @@ repos:
     exclude: tests/.*|demisto_sdk/commands/init/templates/.*
     # This is auto-generated dependencies list taken from `poetry.lock`. DO NOT EDIT MANUALLY
     additional_dependencies:
-    - astor==0.8.1 ; python_version >= "3.8" and python_version < "3.11"
     - astroid==2.9.3 ; python_version >= "3.8" and python_version < "3.11"
     - attrs==23.1.0 ; python_version >= "3.8" and python_version < "3.11"
     - autopep8==1.7.0 ; python_version >= "3.8" and python_version < "3.11"
@@ -44,7 +43,6 @@ repos:
     - colorama==0.4.6 ; python_version >= "3.8" and python_version < "3.11"
     - coloredlogs==15.0.1 ; python_version >= "3.8" and python_version < "3.11"
     - commonmark==0.9.1 ; python_version >= "3.8" and python_version < "3.11"
-    - configargparse==1.5.3 ; python_version >= "3.8" and python_version < "3.11"
     - configparser==5.3.0 ; python_version >= "3.8" and python_version < "3.11"
     - coverage==7.2.5 ; python_version >= "3.8" and python_version < "3.11"
     - cryptography==36.0.2 ; python_version >= "3.8" and python_version < "3.11"
@@ -86,7 +84,6 @@ repos:
     - json5==0.9.14 ; python_version >= "3.8" and python_version < "3.11"
     - jsonschema==4.17.3 ; python_version >= "3.8" and python_version < "3.11"
     - junitparser==3.1.0 ; python_version >= "3.8" and python_version < "3.11"
-    - klara==0.6.3 ; python_version >= "3.8" and python_version < "3.11"
     - lazy-object-proxy==1.9.0 ; python_version >= "3.8" and python_version < "3.11"
     - mccabe==0.6.1 ; python_version >= "3.8" and python_version < "3.11"
     - mergedeep==1.3.4 ; python_version >= "3.8" and python_version < "3.11"
@@ -185,7 +182,6 @@ repos:
     - websocket-client==1.5.1 ; python_version >= "3.8" and python_version < "3.11"
     - wrapt==1.13.3 ; python_version >= "3.8" and python_version < "3.11"
     - yamlordereddictloader==0.4.0 ; python_version >= "3.8" and python_version < "3.11"
-    - z3-solver==4.12.1.0 ; python_version >= "3.8" and python_version < "3.11"
     - zipp==3.15.0 ; python_version >= "3.8" and python_version < "3.10"
 - repo: https://github.com/psf/black
   rev: "22.12.0"

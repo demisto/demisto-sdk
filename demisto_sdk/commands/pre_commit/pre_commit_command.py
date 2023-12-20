@@ -2,11 +2,13 @@ import itertools
 import multiprocessing
 import os
 import re
+import shutil
 import subprocess
 import sys
 from collections import defaultdict
-from dataclasses import dataclass
-from functools import cached_property
+from dataclasses import dataclass, field
+from functools import cached_property, partial
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -16,14 +18,15 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
+    PACKS_FOLDER,
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
-    get_last_remote_release_version,
     get_remote_file,
     string_to_bool,
     write_dict,
@@ -38,13 +41,17 @@ from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
+from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
 PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
-PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
+PRECOMMIT_FOLDER = CONTENT_PATH / ".pre-commit"
+PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
+PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / ".pre-commit-config-main.yaml"
+PRECOMMIT_DOCKER_CONFIGS = PRECOMMIT_CONFIG / "docker"
 SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
@@ -56,10 +63,10 @@ PYTHON2_SUPPORTED_HOOKS = {
     "check-yaml",
     "check-ast",
     "check-merge-conflict",
-    "run-unit-tests",
     "validate",
     "format",
     "pylint-in-docker",
+    "pytest-in-docker",
 }
 
 
@@ -67,18 +74,25 @@ PYTHON2_SUPPORTED_HOOKS = {
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
 
-    input_mode: bool
+    input_files: Optional[List[Path]]
     all_files: bool
-    mode: str
-    python_version_to_files_with_objects: Dict[
+    mode: Optional[str]
+    language_version_to_files_with_objects: Dict[
         str, Set[Tuple[Path, Optional[IntegrationScript]]]
     ]
-    demisto_sdk_commit_hash: str
+    run_hook: Optional[str] = None
+    skipped_hooks: Set[str] = field(default_factory=set)
+    run_docker_hooks: bool = True
 
     def __post_init__(self):
         """
         We initialize the hooks and all_files for later use.
         """
+        shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
+        PRECOMMIT_FOLDER.mkdir()
+        PRECOMMIT_CONFIG.mkdir()
+        PRECOMMIT_DOCKER_CONFIGS.mkdir()
+
         self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:
@@ -89,16 +103,8 @@ class PreCommitRunner:
             raise TypeError(
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
-        if self.mode:
-            logger.info(
-                f"[yellow]Running pre-commit hooks in `{self.mode}` mode.[/yellow]"
-            )
-        # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
-        # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
-        self._get_repos(self.precommit_template)[
-            "https://github.com/demisto/demisto-sdk"
-        ]["rev"] = self.demisto_sdk_commit_hash
         self.hooks = self._get_hooks(self.precommit_template)
+        self.hooks_need_docker = self._hooks_need_docker()
 
     @cached_property
     def files_to_run_with_objects(
@@ -106,7 +112,7 @@ class PreCommitRunner:
     ) -> Set[Tuple[Path, Optional[IntegrationScript]]]:
         return set(
             itertools.chain.from_iterable(
-                self.python_version_to_files_with_objects.values()
+                self.language_version_to_files_with_objects.values()
             )
         )
 
@@ -115,10 +121,18 @@ class PreCommitRunner:
         return {file for file, _ in self.files_to_run_with_objects}
 
     @cached_property
+    def language_to_files(self) -> Dict[str, Set[Path]]:
+        return {
+            version: {path for path, _ in paths_with_objects}
+            for version, paths_with_objects in self.language_version_to_files_with_objects.items()
+        }
+
+    @cached_property
     def python_version_to_files(self) -> Dict[str, Set[Path]]:
         return {
             version: {path for path, _ in paths_with_objects}
-            for version, paths_with_objects in self.python_version_to_files_with_objects.items()
+            for version, paths_with_objects in self.language_version_to_files_with_objects.items()
+            if version not in {"javascript", "powershell"}
         }
 
     @staticmethod
@@ -131,14 +145,23 @@ class PreCommitRunner:
     def _get_hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
         for repo in pre_commit_config["repos"]:
+            new_hooks = []
             for hook in repo["hooks"]:
-                hooks[hook["id"]] = {
-                    "repo": repo,
-                    "hook": hook,
-                }
-                # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
-                if hook.pop("skip", None):
-                    SKIPPED_HOOKS.add(hook["id"])
+                if not self.run_docker_hooks and hook["id"].endswith("in-docker"):
+                    continue
+                if (self.run_hook and hook["id"] in self.run_hook) or (
+                    not self.run_hook
+                    and hook["id"] not in self.skipped_hooks
+                    and not Hook.get_property(hook, self.mode, "skip")
+                ):
+                    needs = Hook.get_property(hook, self.mode, "needs")
+                    if needs and any(need not in hooks for need in needs):
+                        continue
+                    new_hooks.append(hook)
+                    hooks[hook["id"]] = {"repo": repo, "hook": hook}
+
+                repo["hooks"] = new_hooks
+
         return hooks
 
     def exclude_python2_of_non_supported_hooks(self) -> None:
@@ -163,15 +186,12 @@ class PreCommitRunner:
             else:
                 hook["hook"]["exclude"] = join_files_string
 
-    def prepare_hooks(
-        self,
-        hooks: dict,
-        run_docker_hooks,
-    ) -> None:
+    def prepare_hooks(self, dry_run: bool) -> None:
+        hooks = self.hooks
         kwargs = {
             "mode": self.mode,
             "all_files": self.all_files,
-            "input_mode": self.input_mode,
+            "input_mode": bool(self.input_files),
         }
         if "pycln" in hooks:
             PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
@@ -189,88 +209,161 @@ class PreCommitRunner:
             )
         if "validate" in hooks:
             ValidateFormatHook(**hooks.pop("validate"), **kwargs).prepare_hook(
-                self.files_to_run
+                self.input_files
             )
         if "format" in hooks:
             ValidateFormatHook(**hooks.pop("format"), **kwargs).prepare_hook(
-                self.files_to_run
+                self.input_files
             )
         [
-            DockerHook(**hook, **kwargs).prepare_hook(
+            DockerHook(**hooks.pop(hook_id), **kwargs).prepare_hook(
                 files_to_run_with_objects=self.files_to_run_with_objects,
-                run_docker_hooks=run_docker_hooks,
+                dry_run=dry_run,
             )
-            for hook_id, hook in hooks.items()
+            for hook_id in hooks.copy()
             if hook_id.endswith("in-docker")
         ]
-        hooks_without_docker = [
-            hook for hook_id, hook in hooks.items() if not hook_id.endswith("in-docker")
+        # iterate the rest of the hooks
+        for hook_id in hooks.copy():
+            # this is used to handle the mode property correctly
+            Hook(**hooks.pop(hook_id), **kwargs).prepare_hook()
+        # get the hooks again because we want to get all the hooks, including the once that already prepared
+        hooks = self._get_hooks(self.precommit_template)
+        system_hooks = [
+            hook_id
+            for hook_id, hook in hooks.items()
+            if hook["hook"].get("language") == "system"
         ]
-        for hook in hooks_without_docker:
-            Hook(**hook, **kwargs).prepare_hook()
+        for hook_id in system_hooks.copy():
+            SystemHook(**hooks.pop(hook_id), **kwargs).prepare_hook()
 
-    def run(
+    def _hooks_need_docker(self) -> Set[str]:
+        """
+        Get all the hook ids that needs docker based on the "needs" property
+        """
+        return {
+            hook_id
+            for hook_id, hook in self.hooks.items()
+            if (needs := hook["hook"].pop("needs", None))
+            and any("in-docker" in need for need in needs)
+        }
+
+    def _get_docker_and_no_docker_hooks(
+        self, local_repo: dict
+    ) -> Tuple[List[dict], List[dict]]:
+        """This function separates the docker and no docker hooks of a local repo
+
+        Args:
+            local_repo (dict): The local repo
+
+        Returns:
+            Tuple[List[dict], List[dict]]: The first item is the list of docker hooks, the second is the list of no docker hooks
+        """
+        local_repo_hooks = local_repo["hooks"]
+        docker_hooks = [hook for hook in local_repo_hooks if "in-docker" in hook["id"]]
+        no_docker_hooks = [
+            hook for hook in local_repo_hooks if "in-docker" not in hook["id"]
+        ]
+        return docker_hooks, no_docker_hooks
+
+    def run_hooks(
         self,
-        unit_test: bool = False,
-        skip_hooks: Optional[List[str]] = None,
-        validate: bool = False,
-        format: bool = False,
-        secrets: bool = False,
+        index: Optional[int],
+        precommit_env: dict,
         verbose: bool = False,
-        show_diff_on_failure: bool = False,
-        exclude_files: Optional[Set[Path]] = None,
-        dry_run: bool = False,
-        run_docker_hooks: bool = True,
-    ) -> int:
-        ret_val = 0
-        precommit_env = os.environ.copy()
-        skipped_hooks: set = SKIPPED_HOOKS
-        skipped_hooks.update(set(skip_hooks or ()))
-        if not unit_test:
-            skipped_hooks.add("run-unit-tests")
-            skipped_hooks.add("coverage-analyze")
-            skipped_hooks.add("merge-pytest-reports")
-        if validate and "validate" in skipped_hooks:
-            skipped_hooks.remove("validate")
-        if format and "format" in skipped_hooks:
-            skipped_hooks.remove("format")
-        if secrets and "secrets" in skipped_hooks:
-            skipped_hooks.remove("secrets")
-        precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
-        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
-        # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
-        precommit_env["MYPYPATH"] = ":".join(
-            str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
-        )
-        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
+        stdout: Optional[int] = subprocess.PIPE,
+    ):
+        """This function runs the pre-commit process and waits until finished.
+        We run this function in multithread.
 
-        self.exclude_python2_of_non_supported_hooks()
+        Args:
+            index (Optional[int]): The index of the docker hook. if None, runs main pre-commit config
+            precommit_env (dict): The pre-commit environment variables
+            verbose (bool, optional): Whether print verbose output. Defaults to False.
+            stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
 
-        for (
-            python_version,
-            changed_files_by_version,
-        ) in self.python_version_to_files.items():
-            changed_files_string = ", ".join(
-                sorted(str(file) for file in changed_files_by_version)
+        Returns:
+            int: return code - 0 if hooks passed, 1 if failed
+        """
+        if index is None:
+            process = self._run_pre_commit_process(
+                PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
             )
-            logger.info(
-                f"Running pre-commit with Python {python_version} on {changed_files_string}"
-            )
-
-        self.prepare_hooks(self.hooks, run_docker_hooks)
-        if self.all_files:
-            self.precommit_template["exclude"] += f"|{join_files(exclude_files or {})}"
         else:
-            self.precommit_template["files"] = join_files(self.files_to_run)
-
-        write_dict(PRECOMMIT_PATH, data=self.precommit_template)
-
-        if dry_run:
-            logger.info(
-                "Dry run, skipping pre-commit.\nConfig file saved to .pre-commit-config-content.yaml"
+            process = self._run_pre_commit_process(
+                PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{index}.yaml",
+                precommit_env,
+                verbose,
+                stdout,
             )
-            return ret_val
-        response = subprocess.run(
+        if process.stdout:
+            logger.info(process.stdout)
+        if process.stderr:
+            logger.error(process.stderr)
+        return process.returncode
+
+    def _filter_hooks_need_docker(self, repos: dict) -> dict:
+        """
+        This filters the pre-commit config file the hooks that needed docker, so we will be able to execute them after the docker hooks are finished
+        """
+        full_hooks_need_docker = {}
+        for repo, repo_dict in repos.items():
+            hooks = []
+            for hook in repo_dict["hooks"]:
+                if hook["id"] not in self.hooks_need_docker:
+                    hooks.append(hook)
+                else:
+                    full_hooks_need_docker[hook["id"]] = {
+                        "repo": repo_dict,
+                        "hook": hook,
+                    }
+            repo_dict["hooks"] = hooks
+        return full_hooks_need_docker
+
+    def _update_hooks_needs_docker(self, hooks_needs_docker: dict):
+        """
+        This is to populate the pre-commit config file only for hooks that needs docker
+        This is needed because we need to execute this after all docker hooks are finished
+        """
+        self.precommit_template["repos"] = []
+        for _, hook in hooks_needs_docker.items():
+            repos = {repo["repo"] for repo in self.precommit_template["repos"]}
+            repo_in_hook = hook["repo"]["repo"]
+            if repo_in_hook not in repos:
+                hook["repo"]["hooks"] = []
+                self.precommit_template["repos"].append(hook["repo"])
+                repo = self.precommit_template["repos"][-1]
+            else:
+                repo = next(
+                    repo
+                    for repo in self.precommit_template["repos"]
+                    if repo["repo"] == repo_in_hook
+                )
+            repo["hooks"].append(hook["hook"])
+
+    def _run_pre_commit_process(
+        self,
+        path: Path,
+        precommit_env: dict,
+        verbose: bool,
+        stdout=None,
+        command: Optional[List[str]] = None,
+    ) -> subprocess.CompletedProcess:
+        """Runs a process of pre-commit
+
+        Args:
+            path (Path): Pre commit path
+            precommit_env (dict): Environment variables set on pre-commit
+            verbose (bool): whether to print verbose output
+            stdout (optional): use `subprocess.PIPE` to capture stdout. Use None to print it. Defaults to None.
+            command (Optional[List[str]], optional): The pre-commit command to run. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
+        if command is None:
+            command = ["run", "-a"]
+        return subprocess.run(
             list(
                 filter(
                     None,
@@ -278,27 +371,143 @@ class PreCommitRunner:
                         sys.executable,
                         "-m",
                         "pre_commit",
-                        "run",
-                        "-a",
+                        *command,
                         "-c",
-                        str(PRECOMMIT_PATH),
-                        "--show-diff-on-failure" if show_diff_on_failure else "",
-                        "-v" if verbose else "",
+                        str(path),
+                        "-v" if verbose and "run" in command else "",
                     ],
                 )
             ),
             env=precommit_env,
             cwd=CONTENT_PATH,
+            stdout=stdout,
+            stderr=stdout,
+            universal_newlines=True,
         )
-        if response.returncode:
-            ret_val = 1
 
-        # remove the config file in the end of the flow
-        PRECOMMIT_PATH.unlink(missing_ok=True)
+    def run(
+        self, precommit_env: dict, verbose: bool, show_diff_on_failure: bool
+    ) -> int:
+        if self.mode:
+            logger.info(
+                f"[yellow]Running pre-commit hooks in `{self.mode}` mode.[/yellow]"
+            )
+        if self.run_hook:
+            logger.info(f"[yellow]Running hook {self.run_hook}[/yellow]")
+        repos = self._get_repos(self.precommit_template)
+        local_repo = repos["local"]
+        docker_hooks, no_docker_hooks = self._get_docker_and_no_docker_hooks(local_repo)
+        local_repo["hooks"] = no_docker_hooks
+        full_hooks_need_docker = self._filter_hooks_need_docker(repos)
+
+        num_processes = cpu_count()
+        logger.info(f"Pre-Commit will use {num_processes} processes")
+        write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
+        # first, run the hooks without docker hooks
+        stdout = subprocess.PIPE if docker_hooks else None
+        self._run_pre_commit_process(
+            PRECOMMIT_CONFIG_MAIN_PATH,
+            precommit_env,
+            verbose,
+            command=["install-hooks"],
+        )
+        for i, hook in enumerate(docker_hooks):
+            self.precommit_template["repos"] = [local_repo]
+            local_repo["hooks"] = [hook]
+            path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
+            write_dict(path, data=self.precommit_template)
+
+        # the threads will run in separate process and will wait for completion
+        with ThreadPool(num_processes) as pool:
+            results = pool.map(
+                partial(
+                    self.run_hooks,
+                    precommit_env=precommit_env,
+                    verbose=verbose,
+                    stdout=stdout,
+                ),
+                [None] + list(range(len(docker_hooks))),
+            )
+        return_code = int(any(results))
+        if self.hooks_need_docker:
+            # run hooks that needs docker after all the docker hooks finished
+            self._update_hooks_needs_docker(full_hooks_need_docker)
+            path = PRECOMMIT_CONFIG_MAIN_PATH.with_name(
+                f"{PRECOMMIT_CONFIG_MAIN_PATH.stem}-needs.yaml"
+            )
+            write_dict(path, self.precommit_template)
+            process_needs_docker = self._run_pre_commit_process(
+                path, precommit_env, verbose=verbose
+            )
+
+            return_code = return_code or process_needs_docker.returncode
+
+        if return_code and show_diff_on_failure:
+            logger.info(
+                "Pre-Commit changed the following. If you experience this in CI, please run `demisto-sdk pre-commit`"
+            )
+            git_diff = subprocess.run(
+                ["git", "--no-pager", "diff", "--no-ext-diff"],
+                stdout=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            logger.info(git_diff.stdout)
+        return return_code
+
+    def prepare_and_run(
+        self,
+        verbose: bool = False,
+        show_diff_on_failure: bool = False,
+        exclude_files: Optional[Set[Path]] = None,
+        dry_run: bool = False,
+    ) -> int:
+
+        ret_val = 0
+        precommit_env = os.environ.copy()
+        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
+        # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
+        precommit_env["MYPYPATH"] = ":".join(
+            str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
+        )
+        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
+        precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
+        precommit_env["PRE_COMMIT_COLOR"] = "always"
+        self.exclude_python2_of_non_supported_hooks()
+
+        if self.all_files:
+            logger.info("Running pre-commit on all files")
+
+        else:
+            for (
+                python_version,
+                changed_files_by_version,
+            ) in self.python_version_to_files.items():
+                changed_files_string = "\n".join(
+                    sorted(str(file) for file in changed_files_by_version)
+                )
+                logger.info(
+                    f"Running pre-commit with Python {python_version} on:\n{changed_files_string}"
+                )
+
+        self.prepare_hooks(dry_run)
+        if self.all_files:
+            self.precommit_template[
+                "exclude"
+            ] += f"|{join_files(exclude_files or set())}"
+        else:
+            self.precommit_template["files"] = join_files(self.files_to_run)
+
+        if dry_run:
+            write_dict(PRECOMMIT_CONFIG_MAIN_PATH, data=self.precommit_template)
+            logger.info(
+                f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG_MAIN_PATH}"
+            )
+            return ret_val
+        ret_val = self.run(precommit_env, verbose, show_diff_on_failure)
         return ret_val
 
 
-def group_by_python_version(
+def group_by_language(
     files: Set[Path],
 ) -> Tuple[Dict[str, Set[Tuple[Path, Optional[IntegrationScript]]]], Set[Path]]:
     """This function groups the files to run pre-commit on by the python version.
@@ -310,14 +519,17 @@ def group_by_python_version(
         Exception: If invalid files were given.
 
     Returns:
-        Dict[str, set]: The files grouped by their python version.
+        Dict[str, set]: The files grouped by their python version, and a set of excluded paths
     """
     integrations_scripts_mapping = defaultdict(set)
     infra_files = []
     for file in files:
         if file.is_dir():
             continue
-        if set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}:
+        if (
+            set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}
+            and file.parts[0] == PACKS_FOLDER  # this is relative path so it works
+        ):
             find_path_index = (
                 i + 1
                 for i, part in enumerate(file.parts)
@@ -328,11 +540,13 @@ def group_by_python_version(
             code_file_path = CONTENT_PATH / Path(
                 *file.parts[: next(find_path_index) + 1]
             )
+            if not code_file_path.is_dir():
+                continue
             integrations_scripts_mapping[code_file_path].add(file)
         else:
             infra_files.append(file)
 
-    python_versions_to_files: Dict[str, Set] = defaultdict(set)
+    language_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
             BaseContent.from_path, integrations_scripts_mapping.keys()
@@ -345,6 +559,8 @@ def group_by_python_version(
         ):
             continue
         if integration_script.deprecated:
+            # we exclude deprecate integrations and scripts from pre-commit.
+            # the reason we maintain this set is for performance when running with --all-files. It is much faster to exclude.
             if integration_script.is_unified:
                 exclude_integration_script.add(
                     integration_script.path.relative_to(CONTENT_PATH)
@@ -358,16 +574,10 @@ def group_by_python_version(
         code_file_path = integration_script.path.parent
         if python_version := integration_script.python_version:
             version = Version(python_version)
-            python_version_string = f"{version.major}.{version.minor}"
+            language = f"{version.major}.{version.minor}"
         else:
-            # Skip cases of powershell scripts
-            exclude_integration_script.add(
-                integration_script.path.relative_to(CONTENT_PATH)
-            )
-            continue
-        python_versions_to_files[
-            python_version_string or DEFAULT_PYTHON2_VERSION
-        ].update(
+            language = integration_script.type
+        language_to_files[language].update(
             {
                 (path, integration_script)
                 for path in integrations_scripts_mapping[code_file_path]
@@ -376,15 +586,15 @@ def group_by_python_version(
         )
 
     if infra_files:
-        python_versions_to_files[DEFAULT_PYTHON_VERSION].update(
+        language_to_files[DEFAULT_PYTHON_VERSION].update(
             [(infra, None) for infra in infra_files]
         )
 
     if exclude_integration_script:
         logger.info(
-            f"Skipping deprecated or powershell integrations or scripts: {join_files(exclude_integration_script, ', ')}"
+            f"Skipping deprecated integrations or scripts: {join_files(exclude_integration_script, ', ')}"
         )
-    return python_versions_to_files, exclude_integration_script
+    return language_to_files, exclude_integration_script
 
 
 def pre_commit_manager(
@@ -394,17 +604,16 @@ def pre_commit_manager(
     git_diff: bool = False,
     all_files: bool = False,
     mode: str = "",
-    unit_test: bool = False,
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
     format: bool = False,
     secrets: bool = False,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
-    sdk_ref: Optional[str] = None,
     dry_run: bool = False,
     run_docker_hooks: bool = True,
-) -> Optional[int]:
+    run_hook: Optional[str] = None,
+) -> int:
     """Run pre-commit hooks .
 
     Args:
@@ -414,7 +623,6 @@ def pre_commit_manager(
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         mode (str): The mode to run pre-commit in. Defaults to empty str.
-        test (bool, optional): Whether to run unit-tests. Defaults to False.
         skip_hooks (Optional[List[str]], optional): List of hooks to skip. Defaults to None.
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
@@ -437,42 +645,36 @@ def pre_commit_manager(
     )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
-        return None
+        return 0
 
-    files_to_run_string = ", ".join(
-        sorted((str(changed_path) for changed_path in files_to_run))
-    )
-
-    # This is the files that pre-commit received, but in fact it will run on files returned from group_by_python_version
-    logger.info(f"pre-commit received the following files: {files_to_run_string}")
-
-    if not sdk_ref:
-        sdk_ref = f"v{get_last_remote_release_version()}"
-    python_version_to_files_with_objects, exclude_files = group_by_python_version(
-        files_to_run
-    )
-    if not python_version_to_files_with_objects:
+    language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
+    if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
-        return None
+        return 0
+
+    skipped_hooks: set = SKIPPED_HOOKS
+    skipped_hooks.update(set(skip_hooks or ()))
+    if validate and "validate" in skipped_hooks:
+        skipped_hooks.remove("validate")
+    if format and "format" in skipped_hooks:
+        skipped_hooks.remove("format")
+    if secrets and "secrets" in skipped_hooks:
+        skipped_hooks.remove("secrets")
 
     pre_commit_runner = PreCommitRunner(
-        bool(input_files),
+        list(input_files) if input_files else None,
         all_files,
         mode,
-        python_version_to_files_with_objects,
-        sdk_ref,
+        language_to_files_with_objects,
+        run_hook,
+        skipped_hooks,
+        run_docker_hooks,
     )
-    return pre_commit_runner.run(
-        unit_test,
-        skip_hooks,
-        validate,
-        format,
-        secrets,
+    return pre_commit_runner.prepare_and_run(
         verbose,
         show_diff_on_failure,
         exclude_files,
         dry_run,
-        run_docker_hooks,
     )
 
 
@@ -511,6 +713,13 @@ def preprocess_files(
                 py_file_path = file.with_suffix(".py")
                 if py_file_path.exists():
                     files_to_run.add(py_file_path)
+            if file.suffix in (".py", ".ps1"):
+                if file.suffix == ".py":
+                    test_file = file.with_name(f"{file.stem}_test.py")
+                else:
+                    test_file = file.with_name(f"{file.stem}.Tests.ps1")
+                if test_file.exists():
+                    files_to_run.add(test_file)
 
     # convert to relative file to content path
     relative_paths = {

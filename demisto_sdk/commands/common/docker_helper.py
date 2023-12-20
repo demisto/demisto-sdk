@@ -169,14 +169,39 @@ class DockerBase:
         Get a local docker image, or pull it when unavailable.
         """
         docker_client = init_global_docker_client(log_prompt="pull_image")
-
         try:
             return docker_client.images.get(image)
+
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {image=} not found locally, pulling")
             ret = docker_client.images.pull(image)
             logger.debug(f"pulled docker {image=} successfully")
             return ret
+
+    @staticmethod
+    def is_image_available(
+        image: str,
+    ) -> bool:
+        docker_client = init_global_docker_client(log_prompt="get_image")
+        try:
+            docker_client.images.get(image)
+            return True
+        except docker.errors.ImageNotFound as e:
+            if ":" not in image:
+                repo = image
+                tag = "latest"
+            elif image.count(":") > 1:
+                raise ValueError(f"Invalid docker image: {image}") from e
+            else:
+                try:
+                    repo, tag = image.split(":")
+                    token = _get_docker_hub_token(repo)
+                    if _get_image_digest(repo, tag, token):
+                        return True
+                except RuntimeError as e:
+                    logger.debug(f"Error getting image data {image}: {e}")
+                    return False
+        return False
 
     @staticmethod
     def copy_files_container(
@@ -302,13 +327,20 @@ class DockerBase:
             self.push_image(image, log_prompt=log_prompt)
         return image
 
-    def pull_or_create_test_image(
+    @staticmethod
+    def get_image_registry(image: str) -> str:
+        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in image:
+            return f"docker-io.art.code.pan.run/{image}"
+        return image
+
+    def get_or_create_test_image(
         self,
         base_image: str,
         container_type: str = TYPE_PYTHON,
         python_version: Optional[int] = None,
         additional_requirements: Optional[List[str]] = None,
         push: bool = False,
+        should_pull: bool = True,
         log_prompt: str = "",
     ) -> Tuple[str, str]:
         """This will generate the test image for the given base image.
@@ -320,6 +352,7 @@ class DockerBase:
         Returns:
             The test image name and errors to create it if any
         """
+
         errors = ""
         if (
             not python_version
@@ -344,9 +377,14 @@ class DockerBase:
         identifier = hashlib.md5(
             "\n".join(sorted(pip_requirements)).encode("utf-8")
         ).hexdigest()
+
         test_docker_image = (
             f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
         )
+        if not should_pull and self.is_image_available(test_docker_image):
+            return test_docker_image, errors
+        base_image = self.get_image_registry(base_image)
+        test_docker_image = self.get_image_registry(test_docker_image)
 
         try:
             logger.debug(

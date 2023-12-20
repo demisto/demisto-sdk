@@ -50,9 +50,9 @@ def get_client_from_config(client_config: XsoarClientConfig) -> XsoarClient:
 
 def get_client_from_marketplace(
     marketplace: MarketplaceVersions,
-    base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL),
-    api_key: Optional[str] = os.getenv(DEMISTO_KEY),
-    auth_id: Optional[str] = os.getenv(AUTH_ID),
+    base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL, ""),
+    api_key: Optional[str] = os.getenv(DEMISTO_KEY, ""),
+    auth_id: Optional[str] = os.getenv(AUTH_ID, ""),
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False)),
 ) -> XsoarClient:
     """
@@ -92,9 +92,9 @@ def get_client_from_marketplace(
 
 @lru_cache
 def get_client_from_server_type(
-    base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL),
-    api_key: Optional[str] = os.getenv(DEMISTO_KEY),
-    auth_id: Optional[str] = os.getenv(AUTH_ID),
+    base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL, ""),
+    api_key: Optional[str] = os.getenv(DEMISTO_KEY, ""),
+    auth_id: Optional[str] = os.getenv(AUTH_ID, ""),
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False)),
 ) -> XsoarClient:
     """

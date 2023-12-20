@@ -1,7 +1,21 @@
 # Changelog
 ## Unreleased
+
+## 1.25.0
+* Added support to detect automatically the playground-id when running cli commands in xsoar-6.
+* Added support to return war-room entries when running cli commands.
 * Added support to automatically detect the correct file model by file path when reading files.
 * Fixed an issue where **run-playbook** command didn't work if the *url* argument was not provided.
+* Fixed an issue where **validate** command failed on valid complex layout rules and triggers.
+* Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
+* Added support for `skip` property in **pre-commit** hooks.
+* **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
+* Added the *IN150* and *IN161* errors to *allowed ignore errors* list.
+* Added support for `env`, `copy_files` property in **pre-commit** docker hooks.
+* Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
+* **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.
+* **Breaking change**: Removed the `--unit-test` argument in **pre-commit**. To skip unit tests, run with `--no-docker` or with `skip=pytest-in-docker`,
+* Fixed an issue where SDK commands were failing to execute correctly when supplied a path outside the Content repository.
 
 ## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
@@ -12,7 +26,6 @@
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
-* Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
 * Added support for json5 file, allowing to write files and read files from specific git branches, local file system, or from any remote api .
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
 * Added support for *Assets Modeling Rule* new content item in all `demisto-sdk` commands.

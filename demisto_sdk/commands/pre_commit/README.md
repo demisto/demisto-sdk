@@ -33,6 +33,27 @@ You can set this as follows.
 And call precommit as follows: `demisto-sdk pre-commit -a --mode nightly`.
 Note, that it is possible to use any mode that you like, and have multiple modes for each hook, like in the example.
 
+## Hooks
+Hooks can be set in the `.pre-commit-config_template.yaml` file. The syntax is similar to the official [`pre-commit` hooks](https://pre-commit.com/#new-hooks). But the command allows more keys to be set:
+
+### Skip key
+In order to skip certain hook from running, you can add a `skip` key to the hook configuration.
+```yaml
+- id: sample-hook
+  skip: true
+```
+This key could be use together with [mode](#modes), to skip certain hook when running in a specific mode.
+
+### Needs key
+Needs keys allow to define dependencies between hooks. If a hook with `needs` is skipped, hooks that depend on it will also be skipped.
+In this example, both hooks will be skipped.
+```yaml
+- id: sample-hook
+  skip: true
+- id: needs-example
+  needs: ["sample-hook"]
+```
+
 ## Steps
 
 ### External tools
@@ -59,7 +80,6 @@ The following SDK commands are automatically run
 - [validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
 - [format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
 - [secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
-- run-unit-tests: Runs the unit tests in an environment matching the content.
 
 ### Docker hooks
 To run a command in a script's relevant container you can set up a Docker Hook.
@@ -76,6 +96,22 @@ A docker hook must be under the `local` repo and it's `id` must end with `in-doc
 ```
 
 The `entry` key should be the command that should be run (eg. pylint, pytest).
+
+#### The env key
+Some commands require environment variables to be set. To configure environment variables for docker hooks you can set the `env` key. Here is an example with pytest.
+```yaml
+  - id: simple-in-docker
+    env:
+      DEMISTO_SDK__PYTEST__TESTS_PATH: Tests/scripts
+```
+
+#### The copy_files key
+Some hooks require several files to exist in the same directory as the code file in order to run properly. To configure this you can set the `copy_files` key as follows:
+```yaml
+- id: simple-in-docker
+  copy_files:
+    - Tests/scripts/conftest.py
+```
 
 #### The config_file_arg key
 Often with commands we run in the docker we have a configuration file that is specified per Integration/Script. To configure this you can set the `config_file_arg` key as follows. The configuration file should be in the same directory as the code file. Here is an example with ruff.

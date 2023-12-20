@@ -71,9 +71,7 @@ RETURN count(r) AS relationships_merged"""
 
 
 def build_uses_relationships_query(
-    target_type: ContentType = ContentType.BASE_NODE,
     target_identifier: str = "object_id",
-    with_target_type: bool = False,
 ) -> str:
     return f"""// Creates USES relationships between parsed nodes.
 // Note: if a target node is created, it means the node does not exist in the repository.
@@ -83,7 +81,7 @@ UNWIND $data AS rel_data
 MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
 
 // Get or create the targets with the given properties
-MERGE (target:{target_type}{
+MERGE (target:rel_data.target_type{
     build_target_properties(identifier=target_identifier)
 })
 
@@ -200,15 +198,11 @@ def create_relationships_by_type(
         )
     elif relationship == RelationshipType.USES_COMMAND_OR_SCRIPT:
         query = build_uses_relationships_query(
-            target_type=ContentType.COMMAND_OR_SCRIPT,
             target_identifier="object_id",
-            with_target_type=False,
         )
     elif relationship == RelationshipType.USES_PLAYBOOK:
         query = build_uses_relationships_query(
-            target_type=ContentType.BASE_PLAYBOOK,
             target_identifier="name",
-            with_target_type=False,
         )
     elif relationship == RelationshipType.IN_PACK:
         query = build_in_pack_relationships_query()

@@ -145,8 +145,6 @@ class PlaybookValidator(ContentEntityValidator):
             True if both directions for input use in playbook passes.
 
         """
-        if not is_modified:
-            return True
         inputs_in_use: set = self.collect_all_inputs_in_use()
         inputs_in_section: set = self.collect_all_inputs_from_inputs_section()
         all_inputs_in_use = self.are_all_inputs_in_use(inputs_in_use, inputs_in_section)

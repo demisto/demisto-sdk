@@ -43,11 +43,6 @@ class IDE(Enum):
 IDE_TO_FOLDER = {IDE.VSCODE: ".vscode", IDE.PYCHARM: ".idea"}
 
 
-def add_init_file_in_test_data(integration_script: IntegrationScript):
-    if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
-        (test_data_dir / "__init__.py").touch()
-
-
 def configure_vscode_settings(
     ide_folder: Path,
     integration_script: Optional[IntegrationScript] = None,
@@ -466,7 +461,6 @@ def configure_integration(
         integration_script, IntegrationScript
     ), "Expected Integration Script"
     add_demistomock_and_commonserveruser(integration_script)
-    add_init_file_in_test_data(integration_script)
     docker_image = integration_script.docker_image
     interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
     configure_params(integration_script, secret_id, instance_name, test_module)

@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

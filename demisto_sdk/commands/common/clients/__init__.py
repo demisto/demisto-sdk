@@ -122,6 +122,7 @@ def get_client_from_server_type(
             return True
 
         try:
+            # /ioc-rules is only an endpoint in XSIAM.
             response, status_code, response_headers = _client.generic_request(
                 "/ioc-rules", "GET"
             )

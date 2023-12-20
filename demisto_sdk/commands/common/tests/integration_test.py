@@ -2081,6 +2081,20 @@ class TestIsFetchParamsExist:
             ]
         )
 
+    def test_specific_for_marketplace(self):
+        """
+        Given:
+            a schema whit a custom value for specific marketplace on fetch
+
+        When:
+            running is_valid_fetch
+
+        Then:
+            validate that the validation pass
+        """
+        self.validator.current_file["configuration"][-1]["defaultValue:xsoar"] = "test"
+        assert self.validator.is_valid_fetch()
+
     def test_not_fetch(self, mocker):
         self.test_malformed_field(mocker)
         self.validator.is_valid = True

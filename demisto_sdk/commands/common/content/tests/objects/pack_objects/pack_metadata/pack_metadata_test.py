@@ -1,12 +1,11 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime
-import os
 from pathlib import Path
 from shutil import rmtree
-from pydantic import Field
 
 import pytest
+from pytest import MonkeyPatch
 from packaging.version import parse
 
 from demisto_sdk.commands.common.constants import (
@@ -403,7 +402,7 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
 
 
 @pytest.mark.parametrize("is_external, expected", [(True, ""), (False, "123")])
-def test__enhance_pack_properties__internal_and_external(mocker, is_external, expected):
+def test__enhance_pack_properties__internal_and_external(mocker, is_external, expected, monkeypatch: MonkeyPatch):
     """Tests the _enhance_pack_properties method for internal and external packs.
     Given:
         - Pack object.
@@ -438,7 +437,7 @@ def test__enhance_pack_properties__internal_and_external(mocker, is_external, ex
         "demisto_sdk.commands.content_graph.objects.pack_metadata.is_external_repository",
         return_value=is_external,
     )
-    os.environ["CI_PIPELINE_ID"] = "123"
+    monkeypatch.setenv("CI_PIPELINE_ID", "123")
     my_instance._enhance_pack_properties(
         marketplace=MarketplaceVersions.XSOAR,
         pack_id="9",

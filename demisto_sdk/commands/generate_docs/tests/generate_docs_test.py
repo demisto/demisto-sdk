@@ -24,6 +24,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_setup_section,
     generate_single_command_section,
     get_command_examples,
+    replace_integration_section,
 )
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
@@ -2020,3 +2021,67 @@ class TestIntegrationDocUpdate:
             in actual
         )
         assert "| AHA.Idea.updated_at | Date | The idea update date. |" in actual
+
+    def test_integration_section(self):
+        """
+        Test to check an integration section replacement.
+
+        Given:
+        - A new integration YAML.
+        - An old integration YAML.
+
+        When:
+        - The new integration YAML has an added configuration option "Project ID".
+
+        Then:
+        - No errors are returned.
+        - The new configuration option is present in the README.
+        """
+
+        integration_diff = IntegrationDiffDetector(
+            os.path.join(TEST_FILES, "test_added_configuration", "AHA_added_conf.yml"),
+            os.path.join(TEST_FILES, "test_added_configuration", "AHA.yml"),
+        )
+
+        doc_text, err = replace_integration_section(
+            doc_text=Path(
+                TEST_FILES, "test_added_configuration", PACKS_README_FILE_NAME
+            ).read_text(),
+            old_integration_yml=integration_diff.old_yaml_data,
+            new_integration_yml=integration_diff.new_yaml_data,
+        )
+
+        assert not err
+        assert "Project ID" in doc_text
+
+    def test_integration_section_error(self):
+        """
+        Test to check an integration section replacement in case of an error.
+
+        Given:
+        - A new integration YAML.
+        - An old integration YAML.
+
+        When:
+        - The README of the integration doesn't contain the configuration section.
+
+        Then:
+        - Errors are returned.
+        - The original README text is returned.
+        """
+
+        original_doc_text = "# Test Integration Configuration\n\nLorem ipsum"
+
+        integration_diff = IntegrationDiffDetector(
+            os.path.join(TEST_FILES, "test_added_configuration", "AHA_added_conf.yml"),
+            os.path.join(TEST_FILES, "test_added_configuration", "AHA.yml"),
+        )
+
+        doc_text, err = replace_integration_section(
+            doc_text=original_doc_text,
+            old_integration_yml=integration_diff.old_yaml_data,
+            new_integration_yml=integration_diff.new_yaml_data,
+        )
+
+        assert "Unable to find configuration section line in README" in err
+        assert doc_text == original_doc_text

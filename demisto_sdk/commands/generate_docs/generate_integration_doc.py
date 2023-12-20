@@ -222,32 +222,19 @@ def generate_integration_doc(
                         "Integration configuration has changed, replacing the old section with the new one..."
                     )
 
-                    new_configuration_section = generate_setup_section(
-                        integration_diff.new_yaml_data
-                    )
-                    old_configuration_section = generate_setup_section(
-                        integration_diff.old_yaml_data
-                    )
-
-                    doc_text_lines = doc_text.splitlines()
-
-                    # We calculate on which line the old configuration started
-                    # and ended
-                    old_config_start_line = doc_text_lines.index(
-                        old_configuration_section[0]
-                    )
-                    # -2 because the last element is an empty string
-                    old_config_end_line = doc_text_lines.index(
-                        old_configuration_section[-2]
+                    doc_text, error = replace_integration_section(
+                        doc_text=doc_text,
+                        old_integration_yml=integration_diff.old_yaml_data,
+                        new_integration_yml=integration_diff.new_yaml_data,
                     )
 
-                    doc_text_lines[
-                        old_config_start_line : old_config_end_line + 1
-                    ] = new_configuration_section
-
-                    doc_text = "\n".join(doc_text_lines)
-
-                    logger.info("Integration configuration replaced")
+                    if error:
+                        logger.error(
+                            f"Integration configuration replacement resulted in an error {error}"
+                        )
+                        errors.append(error)
+                    else:
+                        logger.info("Integration configuration replaced successfully")
 
                 # Handle changed command arguments
                 # We iterate over every modified command and subtitute
@@ -1054,3 +1041,51 @@ def add_access_data_of_type_credentials(
             "Required": credentials_conf.get("required", ""),
         }
     )
+
+
+def replace_integration_section(
+    doc_text: str,
+    old_integration_yml: Dict[str, Any],
+    new_integration_yml: Dict[str, Any],
+) -> Tuple[str, Optional[str]]:
+    """
+    Helper function that replaces an integration configuration section in the
+    README.
+
+    Args:
+    - `doc_text` (``str``): The actual README text.
+    - `old_integration_yml` (``Dict[str, Any]``): The dictionary representing the old integration YML.
+    - `new_integration_yml` (``Dict[str, Any]``): The dictionary representing the new integration YML.
+
+    Returns:
+    - `str` of the updated README text. If there's an errors, the original is returned.
+    - `str` of the error if there is one, `None` otherwise.
+
+    """
+    error = None
+
+    try:
+        new_configuration_section = generate_setup_section(new_integration_yml)
+        old_configuration_section = generate_setup_section(old_integration_yml)
+
+        doc_text_lines = doc_text.splitlines()
+
+        # We calculate on which line the old configuration started
+        # and ended
+        old_config_start_line = doc_text_lines.index(old_configuration_section[0])
+        # -2 because the last element is an empty string
+        old_config_end_line = doc_text_lines.index(old_configuration_section[-2])
+
+        doc_text_lines[
+            old_config_start_line : old_config_end_line + 1
+        ] = new_configuration_section
+
+        doc_text = "\n".join(doc_text_lines)
+    except ValueError as e:
+        error = f"Unable to find configuration section line in README: {str(e)}"
+    except Exception as e:
+        error = (
+            f"Failed replacing the integration section: {e.__class__.__name__} {str(e)}"
+        )
+    finally:
+        return doc_text, error

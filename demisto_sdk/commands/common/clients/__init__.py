@@ -139,22 +139,25 @@ def get_client_from_server_type(
     def is_xsoar_saas_enviorment() -> bool:
         if product_mode == "xsoar" and deployment_mode == "saas":
             return True
-        if server_version and Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION):
+        if server_version and Version(server_version) >= Version(
+            MINIMUM_XSOAR_SAAS_VERSION
+        ):
             return True
-        logger.debug(f'instance is not XSOAR-SaaS instance')
+        logger.debug("instance is not XSOAR-SaaS instance")
         return False
 
     def is_xsoar_on_prem() -> bool:
         if product_mode == "xsoar" and deployment_mode == "saas":
             return True
-        if server_version and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION):
+        if server_version and Version(server_version) < Version(
+            MINIMUM_XSOAR_SAAS_VERSION
+        ):
             return True
-        logger.debug(f'instance is not XSOAR-ON-PREM instance')
+        logger.debug("instance is not XSOAR-ON-PREM instance")
         return False
 
-
     about_raw_response = XsoarClient.get_xsoar_about(_client)
-    logger.debug(f'{about_raw_response=} for {base_url=}')
+    logger.debug(f"{about_raw_response=} for {base_url=}")
 
     product_mode = about_raw_response.get("productMode")
     deployment_mode = about_raw_response.get("deploymentMode")
@@ -166,7 +169,7 @@ def get_client_from_server_type(
             about_xsoar=about_raw_response,
             config=XsiamClientConfig(
                 base_api_url=base_url, api_key=api_key, auth_id=auth_id
-            )
+            ),
         )
     elif is_xsoar_saas_enviorment():
         return XsoarSaasClient(

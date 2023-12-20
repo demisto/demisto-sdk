@@ -45,6 +45,12 @@ class RuffHook(Hook):
             safe_update_hook_args(hook, target_version)
             if github_actions:
                 hook["args"].append("--format=github")
-            hook["files"] = join_files(python_version_to_files[python_version])
+            hook["files"] = join_files(
+                {
+                    file
+                    for file in python_version_to_files[python_version]
+                    if file.suffix == ".py"
+                }
+            )
 
             self.hooks.append(hook)

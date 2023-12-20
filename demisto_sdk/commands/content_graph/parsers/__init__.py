@@ -33,8 +33,12 @@ __all__ = [
     "XDRCTemplateParser",
     "LayoutRuleParser",
     "PreProcessRuleParser",
+    "AssetsModelingRuleParser",
 ]
 
+from demisto_sdk.commands.content_graph.parsers.assets_modeling_rule import (
+    AssetsModelingRuleParser,
+)
 from demisto_sdk.commands.content_graph.parsers.base_playbook import BasePlaybookParser
 from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser

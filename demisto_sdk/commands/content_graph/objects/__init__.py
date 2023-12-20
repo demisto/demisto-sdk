@@ -35,7 +35,11 @@ __all__ = [
     "RelationshipData",
     "LayoutRule",
     "PreProcessRule",
+    "AssetsModelingRule",
 ]
+from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
+    AssetsModelingRule,
+)
 from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 from demisto_sdk.commands.content_graph.objects.base_script import BaseScript
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier

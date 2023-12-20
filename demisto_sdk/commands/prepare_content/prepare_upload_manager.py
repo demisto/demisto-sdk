@@ -31,7 +31,8 @@ class PrepareUploadManager:
             input = Path(input)
         if isinstance(output, str):
             output = Path(output)
-
+        if not isinstance(marketplace, MarketplaceVersions):
+            marketplace = MarketplaceVersions(marketplace)
         if force:
             kwargs["force"] = True
         content_item = BaseContent.from_path(input)

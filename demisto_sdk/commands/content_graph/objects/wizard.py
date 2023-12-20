@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -33,3 +34,9 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
         summary_res = super().summary(marketplace, incident_to_alert)
         summary_res["dependency_packs"] = json.loads(summary_res["dependency_packs"])
         return summary_res
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if isinstance(_dict, dict) and "wizard" in _dict and path.suffix == ".json":
+            return True
+        return False

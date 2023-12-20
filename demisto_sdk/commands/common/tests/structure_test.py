@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.constants import (
     XDRC_TEMPLATE_YML_REGEX,
     XSIAM_DASHBOARD_JSON_REGEX,
     XSIAM_REPORT_JSON_REGEX,
+    FileType,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -46,6 +47,7 @@ from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator,
     checked_type_by_reg,
 )
+from demisto_sdk.commands.common.tools import get_file, write_dict
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET,
     DIR_LIST,
@@ -525,6 +527,32 @@ class TestStructureValidator:
             "incident-field-test", content=field_content
         )
         structure = StructureValidator(incident_field.path)
+        assert not structure.is_valid_scheme()
+
+    def test_with_marketplace_suffix(self, mocker, tmp_path):
+        mocker.patch.object(
+            StructureValidator, "get_file_type", return_value=FileType.INTEGRATION
+        )
+        mocker.patch.object(
+            StructureValidator,
+            "scheme_of_file_by_path",
+            return_value=FileType.INTEGRATION,
+        )
+        yml = get_file(VALID_INTEGRATION_TEST_PATH)
+        yml["name:xsoar"] = "xsoar"
+        yml["name:marketplacev2"] = "xsiam"
+        yml["name:xpanse"] = "xspanse"
+        yml["configuration"][0]["defaultvalue:xsoar_saas"] = "xsoar_saas"
+        write_dict(tmp_path / "integration.yml", yml)
+
+        structure = StructureValidator(str(tmp_path / "integration.yml"))
+        assert structure.is_valid_scheme()
+
+        yml["commonfields"]["id:xsoar"] = "not-valid"  # can't edit the id
+
+        write_dict(tmp_path / "integration-invalid.yml", yml)
+
+        structure = StructureValidator(str(tmp_path / "integration-invalid.yml"))
         assert not structure.is_valid_scheme()
 
 

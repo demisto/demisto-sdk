@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 import coverage
+from junitparser import JUnitXml
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -34,10 +35,10 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
                         cursor.execute(
                             "DELETE FROM file WHERE id = ?", (id_,)
                         )  # delete the file from the coverage report, as it is not relevant.
-                    if not file.startswith("/content"):
+                    if not file.startswith("/src"):
                         # means that the .coverage file is already fixed
                         continue
-                    file = Path(file).relative_to("/content")
+                    file = Path(file).relative_to("/src")
                     if (
                         not (CONTENT_PATH / file).exists()
                         or file.parent.name
@@ -58,8 +59,8 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
             shutil.copy(temp_file.name, coverage_file)
             return True
     except Exception:
-        logger.warning(f"Broken .coverage file found: {file}, deleting it")
-        file.unlink(missing_ok=True)
+        logger.warning(f"Broken .coverage file found: {coverage_file}, deleting it")
+        coverage_file.unlink(missing_ok=True)
         return False
 
 
@@ -73,14 +74,30 @@ def merge_coverage_report():
     fixed_files = [file for file in files if fix_coverage_report_path(Path(file))]
     cov.combine(fixed_files)
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
+    for file in files:
+        Path(file).unlink(missing_ok=True)
     logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
+
+
+def merge_junit_reports():
+    junit_reports_path = CONTENT_PATH / ".pre-commit" / "pytest-junit"
+
+    report_files = junit_reports_path.iterdir()
+    if reports := [JUnitXml.fromfile(str(file)) for file in report_files]:
+        report = reports[0]
+        for rep in reports[1:]:
+            report += rep
+        report.write(str(CONTENT_PATH / ".report_pytest.xml"))
+        for file in report_files:
+            Path(file).unlink(missing_ok=True)
 
 
 def main():
     try:
         merge_coverage_report()
+        merge_junit_reports()
     except Exception as e:
-        logger.warning(f"Failed to merge coverage report: {e}")
+        logger.warning(f"Failed to merge reports: {e}")
 
 
 if __name__ == "__main__":

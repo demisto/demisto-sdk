@@ -14,7 +14,7 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the pack name field exist and is different from the default one."
     )
-    error_message = "Pack metadata name field ({}) is missing or invalid. Please fill valid pack name."
+    error_message = "Pack metadata name field is either missing or invalid. Please fill valid pack name."
     related_field = "pack name"
     is_auto_fixable = False
 
@@ -25,7 +25,7 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.name),
+                message=self.error_message,
                 content_object=content_item,
             )
             for content_item in content_items

@@ -58,7 +58,8 @@ references:
           echo 'deb https://debian.neo4j.com stable 5' | sudo tee /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
           apt list -a neo4j
-          sudo apt-get install neo4j
+          # The neo4j version should be consistent with APOC version below!
+          sudo apt-get install neo4j=1:5.13.0
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
           sudo chown -R circleci /etc/neo4j
@@ -92,7 +93,7 @@ references:
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
           pkg-manager: "poetry"
-          args: "--no-dev"
+          args: "--no-dev -E generate-unit-tests"
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
@@ -114,7 +115,6 @@ references:
       requires:
             - precommit-checks
             - validate-files
-            - validate-files-new-validate
             - create-content-artifacts
             - test-lint
             - run-integration-tests
@@ -136,6 +136,7 @@ jobs:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
+            args: "-E generate-unit-tests"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
@@ -202,6 +203,7 @@ jobs:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
+            args: "-E generate-unit-tests"
             cache-version: << pipeline.parameters.cache-version >>
 
         - <<: *install_node_ci
@@ -322,24 +324,7 @@ jobs:
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
               ./Tests/scripts/validate.sh
-              
-        - store_artifacts:
-            path: /home/circleci/project/artifacts
-  validate-files-new-validate:
-      docker:
-        - image: << pipeline.parameters.global-docker-image >>
-      resource_class: large
-      <<: *environment
-      steps:
-        - checkout
-        - <<: *install_poetry
-        - <<: *install_neo4j
-        - attach_workspace:
-            at: ~/project
-        - <<: *install_build_dependencies
-        - node/install-packages:
-            cache-version: << pipeline.parameters.cache-version >>
-            app-dir: content
+
         - run:
             name: Test validate files and yaml - new validate
             when: always
@@ -354,7 +339,7 @@ jobs:
               cd content
               demisto-sdk -v
               echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
-
+              neo4j stop
               neo4j start
               # poll for neo4j status until available
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
@@ -552,9 +537,6 @@ workflows:
               pythonversion: ["3.8", "3.9", "3.10"]   
           name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
-          <<: *tag_filter
-          <<: *reqs_content_checkout
-      - validate-files-new-validate:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - test-lint:

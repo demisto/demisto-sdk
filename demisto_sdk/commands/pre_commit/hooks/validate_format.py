@@ -18,9 +18,9 @@ class ValidateFormatHook(Hook):
         Args:
             files_to_run (Optional[Iterable[Path]]): The input files to validate. Defaults to None.
         """
-        if self.mode and self.mode.lower() == "nightly" and self.all_files:
+        if self.all_files:
             safe_update_hook_args(self.base_hook, "-a")
-        elif self.input_mode or self.all_files:
+        elif self.input_mode:
             safe_update_hook_args(self.base_hook, "-i")
             self.base_hook["args"].append(join_files(files_to_run, ","))
         else:

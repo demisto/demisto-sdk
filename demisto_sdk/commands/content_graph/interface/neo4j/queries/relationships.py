@@ -32,7 +32,7 @@ def build_target_properties(
     identifier: str = "object_id",
     with_content_type: bool = False,
 ) -> str:
-    properties = {identifier: "rel_data.target"}
+    properties = {identifier: "rel_data.target", "not_in_repository": False}
     if with_content_type:
         properties["content_type"] = "rel_data.target_type"
     return node_map(properties)

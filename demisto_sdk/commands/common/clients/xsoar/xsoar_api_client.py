@@ -1201,6 +1201,8 @@ class XsoarClient(BaseModel):
                 time.sleep(interval)
                 elapsed_time = int(time.time() - start_time)
 
-        raise RuntimeError(
-            f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
-        )
+        error = f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
+        if playbook_state == InvestigationPlaybookState.FAILED:
+            error = f'{error}, reason: {self.get_incident_playbook_failure(incident_id)}'
+
+        raise RuntimeError(error)

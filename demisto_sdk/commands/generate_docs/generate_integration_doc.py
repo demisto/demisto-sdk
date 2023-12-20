@@ -157,15 +157,15 @@ def generate_integration_doc(
         # Before generating a new README, we check whether it's a new integration or not.
         # If it's not new, we retrieve retrieve the integration YAML from the head
         # and merge the changes into the output README.
-        elif (Path(input_path).parent / "README.md").exists():
-            integration_readme_path = Path(input_path).parent / "README.md"
+        elif (Path(input_path).parent / PACKS_README_FILE_NAME).exists():
+            integration_readme_path = Path(input_path).parent / PACKS_README_FILE_NAME
             doc_text = integration_readme_path.read_text()
             pack_name = get_pack_name(input_path)
             integration_yml_filename: str = Path(input_path).name
             integration_name = Path(input_path).stem
 
             logger.info(
-                f"README for Integration '{integration_name}' in Pack '{pack_name}' exists. Checking for differences in git..."
+                f"{PACKS_README_FILE_NAME} for Integration '{integration_name}' in Pack '{pack_name}' exists. Checking for differences in git..."
             )
             try:
                 git = git_util.GitUtil(get_content_path(Path(input_path)))
@@ -183,7 +183,6 @@ def generate_integration_doc(
                     integration_yml_filename,
                 )
 
-                # FIXME hardcoded remote name 'origin'
                 logger.debug(
                     f"Attempting to retrieve file '{integration_yml_path}' from local primary branch '{primary_branch}'..."
                 )
@@ -211,9 +210,6 @@ def generate_integration_doc(
                         )
                         return
 
-                    # Once we initialize the diff, we no longer need
-                    # the temporary integration yaml file so we leave the
-                    # context
                     else:
                         integration_diff = IntegrationDiffDetector(
                             new=input_path, old=tmp_file.name

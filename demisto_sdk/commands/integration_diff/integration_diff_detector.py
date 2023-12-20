@@ -586,11 +586,12 @@ class IntegrationDiffDetector:
 
         commands: List[str] = []
 
-        old_commands = self.old_yaml_data["script"]["commands"]
-        new_commands = self.new_yaml_data["script"]["commands"]
-
-        new_cmds = [cmd["name"] for cmd in new_commands]
-        old_cmds = [cmd["name"] for cmd in old_commands]
+        new_cmds: List[str] = [
+            cmd["name"] for cmd in self.new_yaml_data["script"]["commands"]
+        ]
+        old_cmds: List[str] = [
+            cmd["name"] for cmd in self.old_yaml_data["script"]["commands"]
+        ]
 
         # Check if any new commands were added
         if new_cmds != old_cmds:
@@ -625,12 +626,8 @@ class IntegrationDiffDetector:
 
         modified_cmds: List[str] = []
 
-        old_cmds: List[Dict[str, Any]] = self.old_yaml_data.get("script", {}).get(
-            "commands", []
-        )
-        new_cmds: List[Dict[str, Any]] = self.new_yaml_data.get("script", {}).get(
-            "commands", []
-        )
+        old_cmds: List[Dict[str, Any]] = self.old_yaml_data["script"]["commands"]
+        new_cmds: List[Dict[str, Any]] = self.new_yaml_data["script"]["commands"]
 
         for old_cmd in old_cmds:
             old_command_name = old_cmd.get("name", "")
@@ -643,5 +640,3 @@ class IntegrationDiffDetector:
                     modified_cmds.append(new_cmd_name)
 
         return modified_cmds
-
-    # TODO add method to check for deprecation

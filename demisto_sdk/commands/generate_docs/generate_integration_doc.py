@@ -222,7 +222,7 @@ def generate_integration_doc(
                         "Integration configuration has changed, replacing the old section with the new one..."
                     )
 
-                    doc_text, error = replace_integration_section(
+                    doc_text, error = replace_integration_conf_section(
                         doc_text=doc_text,
                         old_integration_yml=integration_diff.old_yaml_data,
                         new_integration_yml=integration_diff.new_yaml_data,
@@ -244,48 +244,25 @@ def generate_integration_doc(
                     logger.info(
                         f"Integration commands {modified_commands} have changed, replacing the old section with the new one..."
                     )
-                    for i, modified_command in enumerate(modified_commands):
-                        old_command_section, _ = generate_commands_section(
-                            integration_diff.old_yaml_data,
-                            example_dict,
-                            command_permissions_dict,
-                            modified_command,
+
+                    doc_text, errors = replace_integration_commands_section(
+                        doc_text=doc_text,
+                        old_integration_yml=integration_diff.old_yaml_data,
+                        new_integration_yml=integration_diff.new_yaml_data,
+                        example_dict=example_dict,
+                        command_permissions_dict=command_permissions_dict,
+                        commands=modified_commands,
+                    )
+
+                    if errors:
+                        logger.error(
+                            f"Integration commands section replacement in README resulted in {len(errors)} errors"
                         )
-
-                        new_command_section, err = generate_commands_section(
-                            integration_diff.new_yaml_data,
-                            example_dict,
-                            command_permissions_dict,
-                            modified_command,
+                        errors.extend(errors)
+                    else:
+                        logger.info(
+                            "Integration commands section replacement in README was successful"
                         )
-
-                        doc_text_lines = doc_text.splitlines()
-
-                        old_cmd_start_line = doc_text_lines.index(
-                            old_command_section[0]
-                        )
-
-                        # In cases when there are multiple identical
-                        # context outputs, we need to find the correct index
-                        # for the specific command we're replacing
-                        indices = [
-                            i
-                            for i, x in enumerate(doc_text_lines)
-                            if x == old_command_section[-2]
-                        ]
-
-                        old_cmd_end_line = doc_text_lines.index(
-                            old_command_section[-2], indices[i]
-                        )
-
-                        doc_text_lines[
-                            old_cmd_start_line : old_cmd_end_line + 1
-                        ] = new_command_section
-
-                        doc_text = "\n".join(doc_text_lines)
-
-                        if err:
-                            errors.append(err)
 
                 # Handle new commands
                 # we append them to the README.
@@ -1043,7 +1020,7 @@ def add_access_data_of_type_credentials(
     )
 
 
-def replace_integration_section(
+def replace_integration_conf_section(
     doc_text: str,
     old_integration_yml: Dict[str, Any],
     new_integration_yml: Dict[str, Any],
@@ -1060,8 +1037,8 @@ def replace_integration_section(
     Returns:
     - `str` of the updated README text. If there's an errors, the original is returned.
     - `str` of the error if there is one, `None` otherwise.
-
     """
+
     error = None
 
     try:
@@ -1089,3 +1066,76 @@ def replace_integration_section(
         )
     finally:
         return doc_text, error
+
+
+def replace_integration_commands_section(
+    doc_text: str,
+    old_integration_yml: Dict[str, Any],
+    new_integration_yml: Dict[str, Any],
+    commands: List[str],
+    example_dict: dict = {},
+    command_permissions_dict: dict = {},
+) -> Tuple[str, List[str]]:
+    """
+    Helper function that replaces an integration commands section in the
+    README.
+
+    Args:
+    - `doc_text` (``str``): The actual README text.
+    - `old_integration_yml` (``Dict[str, Any]``): The dictionary representing the old integration YML.
+    - `new_integration_yml` (``Dict[str, Any]``): The dictionary representing the new integration YML.
+    - `example_dict` (``dict``): An example dictionary.
+    - `command_permissions_dict` (``dict``): A command permission dictionary.
+    - `commands` (``List[str]``): A list of commands to replace.
+
+    Returns:
+    - `str` of the updated README text. If there's an errors, the original is returned.
+    - `List[str]` of the errors if there were any, `None` otherwise.
+    """
+
+    errors: List[str] = []
+
+    for i, modified_command in enumerate(commands):
+        try:
+            old_command_section, _ = generate_commands_section(
+                old_integration_yml,
+                example_dict,
+                command_permissions_dict,
+                modified_command,
+            )
+
+            (
+                new_command_section,
+                generate_command_section_errors,
+            ) = generate_commands_section(
+                new_integration_yml,
+                example_dict,
+                command_permissions_dict,
+                modified_command,
+            )
+
+            if generate_command_section_errors:
+                errors.extend(generate_command_section_errors)
+
+            doc_text_lines = doc_text.splitlines()
+
+            old_cmd_start_line = doc_text_lines.index(old_command_section[0])
+
+            # In cases when there are multiple identical
+            # context outputs, we need to find the correct index
+            # for the specific command we're replacing
+            indices = [
+                i for i, x in enumerate(doc_text_lines) if x == old_command_section[-2]
+            ]
+
+            old_cmd_end_line = doc_text_lines.index(old_command_section[-2], indices[i])
+
+            doc_text_lines[
+                old_cmd_start_line : old_cmd_end_line + 1
+            ] = new_command_section
+
+            doc_text = "\n".join(doc_text_lines)
+        except ValueError as e:
+            error = f"Unable to find line in command '{modified_command}' section in README: {str(e)}"
+            errors.append(error)
+    return doc_text, errors

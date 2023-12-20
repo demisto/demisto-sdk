@@ -24,7 +24,8 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_setup_section,
     generate_single_command_section,
     get_command_examples,
-    replace_integration_section,
+    replace_integration_commands_section,
+    replace_integration_conf_section,
 )
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
@@ -1923,6 +1924,9 @@ class TestIntegrationDocUpdate:
             - The `description` field was changed in the `aha-edit-idea` command.
             - The `workflow_status` argument was added to the `aha-edit-idea` command.
             - The `AHA.Idea.updated_at` context path was added to the `output` of the `aha-edit-idea` command.
+
+        Then:
+        - All modified integration commands changes are reflected in the README.
         """
 
         # Create content repo
@@ -2022,9 +2026,9 @@ class TestIntegrationDocUpdate:
         )
         assert "| AHA.Idea.updated_at | Date | The idea update date. |" in actual
 
-    def test_integration_section(self):
+    def test_replace_integration_conf_section(self):
         """
-        Test to check an integration section replacement.
+        Test to check an integration configuration section replacement.
 
         Given:
         - A new integration YAML.
@@ -2043,7 +2047,7 @@ class TestIntegrationDocUpdate:
             os.path.join(TEST_FILES, "test_added_configuration", "AHA.yml"),
         )
 
-        doc_text, err = replace_integration_section(
+        doc_text, err = replace_integration_conf_section(
             doc_text=Path(
                 TEST_FILES, "test_added_configuration", PACKS_README_FILE_NAME
             ).read_text(),
@@ -2054,9 +2058,9 @@ class TestIntegrationDocUpdate:
         assert not err
         assert "Project ID" in doc_text
 
-    def test_integration_section_error(self):
+    def test_replace_integration_conf_section_error(self):
         """
-        Test to check an integration section replacement in case of an error.
+        Test to check an integration configuration section replacement in case of an error.
 
         Given:
         - A new integration YAML.
@@ -2077,11 +2081,101 @@ class TestIntegrationDocUpdate:
             os.path.join(TEST_FILES, "test_added_configuration", "AHA.yml"),
         )
 
-        doc_text, err = replace_integration_section(
+        doc_text, err = replace_integration_conf_section(
             doc_text=original_doc_text,
             old_integration_yml=integration_diff.old_yaml_data,
             new_integration_yml=integration_diff.new_yaml_data,
         )
 
         assert "Unable to find configuration section line in README" in err
+        assert doc_text == original_doc_text
+
+    def test_replace_integration_commands_section(self):
+        """
+        Test to check an integration commands section replacement.
+
+        Given:
+        - A new integration YAML.
+        - An old integration YAML.
+
+        When:
+        - The integration commands have the following changes:
+            - The `defaultValue` field was removed from `from_date` argument in the `aha-get-features` command.
+            - The `defaultValue` field was changed (30 -> 50) from `per_page` argument in the`aha-get-features` command.
+            - The `assigned_to_user` argument was added to the `aha-get-features` command.
+            - The `description` field was changed in the `aha-edit-idea` command.
+            - The `workflow_status` argument was added to the `aha-edit-idea` command.
+            - The `AHA.Idea.updated_at` context path was added to the `output` of the `aha-edit-idea` command.
+
+        Then:
+        - 2 errors are returned for missing command examples.
+        - The new configuration option is present in the README.
+        """
+
+        integration_diff = IntegrationDiffDetector(
+            os.path.join(TEST_FILES, "test_modified_commands", "AHA_modified_cmds.yml"),
+            os.path.join(TEST_FILES, "test_modified_commands", "AHA.yml"),
+        )
+
+        doc_text, errors = replace_integration_commands_section(
+            doc_text=Path(
+                TEST_FILES, "test_modified_commands", PACKS_README_FILE_NAME
+            ).read_text(),
+            old_integration_yml=integration_diff.old_yaml_data,
+            new_integration_yml=integration_diff.new_yaml_data,
+            commands=integration_diff.get_modified_commands(),
+        )
+
+        assert len(errors) == 2
+
+        assert (
+            "| from_date | Show features created after this date. | Optional |"
+            in doc_text
+        )
+        assert (
+            "| per_page | The maximum number of results per page. Default is 50."
+            in doc_text
+        )
+        assert (
+            "| assigned_to_user | The user the feature is assigned to. | Optional |"
+            in doc_text
+        )
+        assert (
+            "| workflow_status | The status to change the idea to. Default is Shipped. | Optional |"
+            in doc_text
+        )
+        assert "| AHA.Idea.updated_at | Date | The idea update date. |" in doc_text
+
+    def test_replace_integration_commands_section_errors(self):
+        """
+        Test to check an integration commands section replacement.
+
+        Given:
+        - A new integration YAML.
+        - An old integration YAML.
+
+        When:
+        - The commands section of the integration README doesn't contain the commands.
+
+        Then:
+        - 2 errors are returned for missing command examples.
+        - The original README is returned.
+        """
+
+        original_doc_text = "# Test Integration Configuration\n\nLorem ipsum"
+
+        integration_diff = IntegrationDiffDetector(
+            os.path.join(TEST_FILES, "test_modified_commands", "AHA_modified_cmds.yml"),
+            os.path.join(TEST_FILES, "test_modified_commands", "AHA.yml"),
+        )
+
+        doc_text, errors = replace_integration_commands_section(
+            doc_text=original_doc_text,
+            old_integration_yml=integration_diff.old_yaml_data,
+            new_integration_yml=integration_diff.new_yaml_data,
+            commands=integration_diff.get_modified_commands(),
+        )
+
+        assert len(errors) == 4
+
         assert doc_text == original_doc_text

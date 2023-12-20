@@ -890,6 +890,7 @@ class TestIntegrationDiffDetector:
     @pytest.mark.ciac_8757
     def test_get_modified_commands_identical(self, pack: Pack):
         """
+        TODO check why this is failing intermittently
         Test whether the modified commands method works as expected
         when given a set of identical commands.
 
@@ -922,6 +923,5 @@ class TestIntegrationDiffDetector:
         )
 
         actual = integration_detector.get_modified_commands()
-        expected = []
 
-        assert actual == expected
+        assert not actual

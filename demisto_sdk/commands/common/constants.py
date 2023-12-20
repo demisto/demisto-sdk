@@ -1965,13 +1965,17 @@ class IncidentState(str, Enum):
     ACKNOWLEDGED = 3  # the incident is archived
 
 
-class TypeList(str, Enum):
+class TypeListData(str, Enum):
+    """
+    A closed list of list (content-item) data types
+    """
     TEXT = "plain_text"
     HTML = "html"
     CSS = "css"
     MD = "markdown"
     JSON = "json"
 
+
 # Used to format the writing of the yml/json file
-JSON_INDENT_CONSTANT = 4
-YAML_INDENT_CONSTANT = 0
+DEFAULT_JSON_INDENT = 4
+DEFAULT_YAML_INDENT = 0

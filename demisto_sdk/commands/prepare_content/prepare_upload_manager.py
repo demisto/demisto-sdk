@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Optional, Union
 
 from demisto_sdk.commands.common.constants import (
-    JSON_INDENT_CONSTANT,
-    YAML_INDENT_CONSTANT,
+    DEFAULT_JSON_INDENT,
+    DEFAULT_YAML_INDENT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -85,7 +85,9 @@ class PrepareUploadManager:
             output,
             data=data,
             handler=content_item.handler,
-            indent=JSON_INDENT_CONSTANT if isinstance(content_item.handler, JSON_Handler) else YAML_INDENT_CONSTANT,
+            indent=DEFAULT_JSON_INDENT
+            if isinstance(content_item.handler, JSON_Handler)
+            else DEFAULT_YAML_INDENT,
         )
 
         logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")

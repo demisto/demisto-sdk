@@ -1131,15 +1131,20 @@ class Downloader:
                 return get_yaml(content_item_path)
 
         else:
-            if content_type == LISTS_DIR:
-                if content_item_path.is_dir():
-                    json_files = [str(path) for path in content_item_path.iterdir() if path.suffix == ".json"]
-                    if not json_files:
-                        return None
-                    return get_json(json_files[0])
+            if content_type == LISTS_DIR and content_item_path.is_dir():
+
+                # json files except list data files
+                json_files = [
+                    str(path)
+                    for path in content_item_path.iterdir()
+                    if path.suffix == ".json" and not path.name.endswith("_data.json")
+                ]
+                if not json_files:
+                    return None
+                return get_json(json_files[0])
+
             if content_item_path.is_file() and content_item_path.suffix == ".json":
                 return get_json(content_item_path)
-
         return None
 
     @staticmethod
@@ -1300,8 +1305,8 @@ class Downloader:
                 downloaded_files: list[Path] = []
 
                 try:
-                    # We skip 'download_existing_content_items' logic for lists since 'smart-merge' is irrelevant for lists
                     if content_item_exists and content_item_type != FileType.LISTS:
+                        # We skip 'download_existing_content_items' logic for lists since 'smart-merge' is irrelevant for lists
                         downloaded_files = self.download_existing_content_items(
                             content_object=content_object,
                             existing_pack_structure=existing_pack_structure,

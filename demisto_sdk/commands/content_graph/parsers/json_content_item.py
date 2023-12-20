@@ -107,7 +107,8 @@ class JSONContentItemParser(ContentItemParser):
 
             if len(json_files_in_dir) != 1:
                 raise InvalidContentItemException(
-                    f"Directory {self.path} must have a single JSON file."
+                    f"Directory {self.path} should only contain a single JSON file."
+                    f"Found {len(json_files_in_dir)} files."
                 )
             self.path = Path(json_files_in_dir[0])
         if not self.path.suffix.lower() == ".json":

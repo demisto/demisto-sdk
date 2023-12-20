@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Tuple
 
 import pytest
 
@@ -6,17 +7,17 @@ from demisto_sdk.commands.common.constants import LISTS_DIR
 from demisto_sdk.commands.common.tools import pascal_case
 from demisto_sdk.commands.prepare_content.list_unifier import ListUnifier, logger
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    LIST,
+    LIST as list_obj,
 )
 from TestSuite.test_tools import ChangeCWD
 
 
-def create_split_list():
-    list_json = LIST
-    list_data = LIST["data"]
+def create_split_list() -> Tuple[dict, str, Path]:
+    list_json = list_obj
+    list_data = list_obj["data"]
     list_json["data"] = "-"
-    list_dir_name = Path(LISTS_DIR) / pascal_case(list_json["name"])
-    return list_json, list_data, list_dir_name
+    relative_list_dir_path = Path(LISTS_DIR) / pascal_case(list_json["name"])
+    return list_json, list_data, relative_list_dir_path
 
 
 def test_list_unify(git_repo):
@@ -29,21 +30,21 @@ def test_list_unify(git_repo):
         - Ensure the list is unified as expected.
     '''
     pack = git_repo.create_pack("PackName")
-    list_json, list_data, list_dir_name = create_split_list()
-    list_dir_path = Path(pack.path) / list_dir_name
+    list_json, list_data, relative_list_dir_path = create_split_list()
+    list_dir_path = Path(pack.path) / relative_list_dir_path
     list_dir_path.mkdir(parents=True, exist_ok=True)
-    (list_dir_path / (list_dir_name.name + ".json")).write_text(str(list_json))
-    (list_dir_path / (list_dir_name.name + "_data.css")).write_text(str(list_data))
+    (list_dir_path / (relative_list_dir_path.name + ".json")).write_text(str(list_json))
+    (list_dir_path / (relative_list_dir_path.name + "_data.css")).write_text(str(list_data))
 
     with ChangeCWD(pack.repo_path):
         list_unifier = ListUnifier.unify(
-            path=list_dir_path / (list_dir_name.name + ".json"), data=list_json
+            path=list_dir_path / (relative_list_dir_path.name + ".json"), data=list_json
         )
         assert list_unifier["data"] == list_data
 
 
 @pytest.mark.parametrize("suffix", ["css", "json", "txt", "md", "csv", "html"])
-def test_find_file_content_data(tmpdir, suffix):
+def test_find_file_content_data(tmpdir, suffix: str):
     '''
     Given:
         - A data file with a suffix that is txt, json, css, md, csv or html.
@@ -52,15 +53,15 @@ def test_find_file_content_data(tmpdir, suffix):
     Then:
         - Ensure the path of the data file is returned.
     '''
-    (Path(tmpdir) / f"_data.{suffix}").write_text("data")
+    path = Path(tmpdir, f"_data.{suffix}")
+    path.write_text("data")
     assert (
-        ListUnifier.find_file_content_data(Path(tmpdir) / "_data")
-        == Path(tmpdir) / f"_data.{suffix}"
+        ListUnifier.find_file_content_data(path) == path
     )
 
 
 @pytest.mark.parametrize("suffix", ["jpg", "png", "gif", "bmp"])
-def test_find_file_content_data_return_none(tmpdir, suffix):
+def test_find_file_content_data_return_none(tmpdir, suffix: str):
     '''
     Given:
         - A data file with a suffix that is not txt, json, css, md, csv or html.
@@ -69,8 +70,8 @@ def test_find_file_content_data_return_none(tmpdir, suffix):
     Then:
         - Ensure None is returned.
     '''
-    (Path(tmpdir) / f"_data.{suffix}").write_bytes(b"data")
-    assert not ListUnifier.find_file_content_data(Path(tmpdir) / "_data")
+    (path:= Path(tmpdir) / f"_data.{suffix}").write_bytes(b"data")
+    assert not ListUnifier.find_file_content_data(path)
 
 
 def test_insert_data_to_json(tmpdir):
@@ -83,7 +84,7 @@ def test_insert_data_to_json(tmpdir):
         - Ensure the data section is filled with the data from the data file.
     '''
     (Path(tmpdir) / "_data.txt").write_text("data")
-    json_list = LIST
+    json_list = list_obj
     json_list["data"] = "-"
 
     json_unified = ListUnifier.insert_data_to_json(
@@ -106,7 +107,7 @@ def test_insert_data_to_json_with_warning(mocker, tmpdir):
     list_dir_path = Path(tmpdir) / "Lists" / "TestList"
     list_dir_path.mkdir(parents=True, exist_ok=True)
     (list_dir_path / "_data.txt").write_text("data")
-    json_list = LIST
+    json_list = list_obj
     json_list["data"] = "test test test"
 
     json_unified = ListUnifier.insert_data_to_json(

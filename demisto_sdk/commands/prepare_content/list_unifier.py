@@ -13,8 +13,9 @@ class ListUnifier(Unifier):
     def unify(
         path: Path, data: Dict, marketplace: MarketplaceVersions = None, **kwargs
     ) -> Dict:
-        logger.info(f"Unifying {path}...")
+        logger.debug(f"Unifying {path}...")
         if path.parent.name == LISTS_DIR:
+            # if the file is in the lists directory, we assume it is already unified
             return data
         package_path = path.parent
         file_content_data_path = ListUnifier.find_file_content_data(
@@ -45,6 +46,9 @@ class ListUnifier(Unifier):
 
     @staticmethod
     def find_file_content_data(list_path: Path) -> Optional[Path]:
+        """
+        finds the file with the data in the list directory by closed list of suffixes
+        """
         for suffix in (".txt", ".json", ".html", ".css", ".csv", ".md"):
             if (path_file_data := list_path.with_suffix(suffix)).exists():
                 return path_file_data

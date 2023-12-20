@@ -5,12 +5,12 @@ from typing import Dict, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR,
+    DEFAULT_JSON_INDENT,
     GENERIC_MODULES_DIR,
-    JSON_INDENT_CONSTANT,
     LISTS_DIR,
     PACKS_DIR,
     FileType,
-    TypeList,
+    TypeListData,
 )
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.text_file import TextFile
@@ -45,7 +45,7 @@ class JsonSplitter:
         input_file_data: Optional[Dict] = None,
     ):
         self.input = input
-        self.output = output if output else Path(input).parent
+        self.output = output or Path(input).parent
         self.dashboard_dir = output if output else ""
         self.module_dir = output if output else ""
         self.autocreate_dir = not no_auto_create_dir
@@ -146,15 +146,19 @@ class JsonSplitter:
 
             module_file_path = os.path.join(self.module_dir, file_name)
 
-        write_dict(module_file_path, data=self.json_data, indent=JSON_INDENT_CONSTANT)
+        write_dict(module_file_path, data=self.json_data, indent=DEFAULT_JSON_INDENT)
 
     def get_auto_output_path(self) -> Tuple[Path, str, str]:
+        """
+        Obtains the output path automatically according to the List name
+        if autocreate_dir == true, otherwise returns the output as is
+        """
         suffix_by_type = {
-            TypeList.TEXT: ".txt",
-            TypeList.HTML: ".html",
-            TypeList.CSS: ".css",
-            TypeList.MD: ".md",
-            TypeList.JSON: ".json",
+            TypeListData.TEXT: ".txt",
+            TypeListData.HTML: ".html",
+            TypeListData.CSS: ".css",
+            TypeListData.MD: ".md",
+            TypeListData.JSON: ".json",
         }
 
         suffix = suffix_by_type.get(self.json_data["type"], ".txt")
@@ -168,13 +172,11 @@ class JsonSplitter:
             if not pack_name:
                 return Path(self.input).parent, file_name, file_data_name
 
-            if not (lists_dir := Path(PACKS_DIR) / pack_name / LISTS_DIR).exists():
-                lists_dir.mkdir()
+            (lists_dir := Path(PACKS_DIR) / pack_name / LISTS_DIR).mkdir(exist_ok=True)
 
             # create the specific list dir under the LISTS_DIR if it does not exist
             # the dir name determine by the file name without the suffix
-            if not (list_name_dir := lists_dir / file_name[: -len(".json")]).exists():
-                list_name_dir.mkdir()
+            (list_name_dir := lists_dir / Path(file_name).stem).mkdir(exist_ok=True)
 
             return list_name_dir, file_name, file_data_name
 
@@ -185,26 +187,28 @@ class JsonSplitter:
 
     def write_file_data(self, list_name_dir: Path, file_data_name: str):
         if file_data_name.endswith("json"):
-            
-            JsonFile.write_file(
-                json.loads(self.json_data["data"]),
-                (list_name_dir / file_data_name),
-                indent=JSON_INDENT_CONSTANT,
-            )
+            try:
+                JsonFile.write_file(
+                    json.loads(self.json_data["data"]),
+                    (list_name_dir / file_data_name),
+                    indent=DEFAULT_JSON_INDENT,
+                )
+            except json.decoder.JSONDecodeError as e:
+                raise Exception(
+                    f"Could not parse data of the list {self.json_data['name']}.\n"
+                ) from e
         else:
             TextFile.write_file(
                 self.json_data["data"], (list_name_dir / file_data_name)
             )
 
-    def write_list(self, list_name_dir: Path, file_name: str):
+    def write_list(self, file_path: Path):
         self.json_data["data"] = "-"
-        JsonFile.write_file(
-            self.json_data, (list_name_dir / file_name), indent=JSON_INDENT_CONSTANT
-        )
+        JsonFile.write_file(self.json_data, file_path, indent=DEFAULT_JSON_INDENT)
 
     def split_list(self):
         list_name_dir, file_name, file_data_name = self.get_auto_output_path()
 
         self.write_file_data(list_name_dir, file_data_name)
 
-        self.write_list(list_name_dir, file_name)
+        self.write_list(list_name_dir / file_name)

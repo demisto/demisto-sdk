@@ -474,16 +474,20 @@ class PreCommitRunner:
         precommit_env["PRE_COMMIT_COLOR"] = "always"
         self.exclude_python2_of_non_supported_hooks()
 
-        for (
-            python_version,
-            changed_files_by_version,
-        ) in self.python_version_to_files.items():
-            changed_files_string = ", ".join(
-                sorted(str(file) for file in changed_files_by_version)
-            )
-            logger.info(
-                f"Running pre-commit with Python {python_version} on {changed_files_string}"
-            )
+        if self.all_files:
+            logger.info("Running pre-commit on all files")
+
+        else:
+            for (
+                python_version,
+                changed_files_by_version,
+            ) in self.python_version_to_files.items():
+                changed_files_string = "\n".join(
+                    sorted(str(file) for file in changed_files_by_version)
+                )
+                logger.info(
+                    f"Running pre-commit with Python {python_version} on:\n{changed_files_string}"
+                )
 
         self.prepare_hooks(dry_run)
         if self.all_files:

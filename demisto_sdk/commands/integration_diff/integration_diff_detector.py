@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import dictdiffer
 
@@ -102,28 +102,6 @@ class IntegrationDiffDetector:
         commands = []
         arguments = []
         outputs = []
-
-        new_cmds = [
-            {"name": cmd["name"], "description": cmd["description"]}
-            for cmd in new_commands
-        ]
-        old_cmds = [
-            {"name": cmd["name"], "description": cmd["description"]}
-            for cmd in old_commands
-        ]
-
-        # Check if any new commands were added
-        if new_cmds != old_cmds:
-            added_cmds = [cmd for cmd in new_cmds if cmd not in old_cmds]
-            for added_cmd in added_cmds:
-                commands.append(
-                    {
-                        "type": "commands",
-                        "name": added_cmd.get("name"),
-                        "message": f"New command added '{added_cmd.get('name')}'.",
-                        "description": added_cmd.get("description", ""),
-                    }
-                )
 
         # for each old integration command check if exist in the new, if not, check what is missing
         for old_command in old_commands:
@@ -636,3 +614,34 @@ class IntegrationDiffDetector:
                 )
             )
         )
+
+    def get_modified_commands(self) -> List[str]:
+        """
+        Helper function to return a list of modified commands.
+
+        Returns:
+        - `List[str]` with the commands, e.g. ['command-x`, `command-h`]
+        """
+
+        modified_cmds: List[str] = []
+
+        old_cmds: List[Dict[str, Any]] = self.old_yaml_data.get("script", {}).get(
+            "commands", []
+        )
+        new_cmds: List[Dict[str, Any]] = self.new_yaml_data.get("script", {}).get(
+            "commands", []
+        )
+
+        for old_cmd in old_cmds:
+            old_command_name = old_cmd.get("name", "")
+
+            for new_cmd in new_cmds:
+                new_cmd_name = new_cmd.get("name", "")
+                if new_cmd_name == old_command_name and list(
+                    dictdiffer.diff(old_cmd, new_cmd)
+                ):
+                    modified_cmds.append(new_cmd_name)
+
+        return modified_cmds
+
+    # TODO add method to check for deprecation

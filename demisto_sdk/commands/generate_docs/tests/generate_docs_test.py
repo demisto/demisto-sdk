@@ -1905,3 +1905,118 @@ class TestIntegrationDocUpdate:
         actual = repo.packs[0].integrations[0].readme.read()
 
         assert "Project ID" in actual
+
+    def test_modified_commands(self, mocker: MockerFixture, tmp_path: TempPathFactory):
+        """
+        Test to verify that if any modified commands are added to the integration,
+        they're sections are rerendered.
+
+        Given:
+        - A Pack with an integration.
+
+        When:
+        - The integration commands have the following changes:
+            - The `defaultValue` field was removed from `from_date` argument in the `aha-get-features` command.
+            - The `defaultValue` field was changed (30 -> 50) from `per_page` argument in the`aha-get-features` command.
+            - The `assigned_to_user` argument was added to the `aha-get-features` command.
+            - The `description` field was changed in the `aha-edit-idea` command.
+            - The `workflow_status` argument was added to the `aha-edit-idea` command.
+            - The `AHA.Idea.updated_at` context path was added to the `output` of the `aha-edit-idea` command.
+        """
+
+        # Create content repo
+        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
+        content_temp_dir.mkdir()
+        repo = Repo(tmpdir=content_temp_dir, init_git=True)
+
+        # Initialize Integration Python, YAML, README.
+        py_code_path = Path(
+            TEST_FILES, self._get_function_name(), f"{self.integration_name}.py"
+        )
+        py_code = py_code_path.read_text()
+
+        yml_code_path = Path(
+            TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(
+            TEST_FILES, self._get_function_name(), PACKS_README_FILE_NAME
+        )
+        markdown = readme_path.read_text()
+
+        # Create Pack and Integration
+        repo.create_pack(self.pack_name)
+        repo.packs[0].create_integration(
+            self.integration_name, code=py_code, yml=yml_code, readme=markdown
+        )
+
+        repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
+        repo.git_util.repo.git.checkout("-b", "modify_cmds")
+
+        shutil.copyfile(
+            os.path.join(
+                TEST_FILES,
+                self._get_function_name(),
+                f"{self.integration_name}_modified_cmds.yml",
+            ),
+            repo.packs[0].integrations[0].yml.path,
+        )
+
+        mocker.patch.object(
+            repo.git_util,
+            "read_file_content",
+            return_value=Path(
+                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
+            ).read_bytes(),
+        )
+        master_text = repo.git_util.read_file_content(
+            path=os.path.join(repo.packs[0].integrations[0].yml.path),
+            commit_or_branch="master",
+            from_remote=False,
+        )
+
+        with Path(str(tmp_path), f"{self.integration_name}.yml").open("wb") as fd:
+            fd.write(master_text)
+
+        diff = IntegrationDiffDetector(
+            old=os.path.join(str(tmp_path), f"{self.integration_name}.yml"),
+            new=os.path.join(repo.packs[0].integrations[0].yml.path),
+        )
+
+        expected_modified_commands = ["aha-get-features", "aha-edit-idea"]
+        actual_modified_commands = diff.get_modified_commands()
+        assert expected_modified_commands == actual_modified_commands
+
+        # Return master branch integration YAML.
+        mocker.patch.object(
+            GitUtil,
+            "read_file_content",
+            return_value=Path(
+                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
+            ).read_bytes(),
+        )
+        generate_integration_doc(
+            input_path=os.path.join(repo.packs[0].integrations[0].yml.path)
+        )
+
+        actual = repo.packs[0].integrations[0].readme.read()
+
+        assert (
+            "| from_date | Show features created after this date. | Optional |"
+            in actual
+        )
+        assert (
+            "| per_page | The maximum number of results per page. Default is 50."
+            in actual
+        )
+        assert (
+            "| assigned_to_user | The user the feature is assigned to. | Optional |"
+            in actual
+        )
+        assert (
+            "| workflow_status | The status to change the idea to. Default is Shipped. | Optional |"
+            in actual
+        )
+        assert "| AHA.Idea.updated_at | Date | The idea update date. |" in actual

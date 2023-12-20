@@ -253,7 +253,56 @@ def generate_integration_doc(
 
                     logger.info("Integration configuration replaced")
 
-                # TODO Handle changed command arguments
+                # Handle changed command arguments
+                # We iterate over every modified command and subtitute
+                # the section with the new one
+                modified_commands = integration_diff.get_modified_commands()
+                if modified_commands:
+                    logger.info(
+                        f"Integration commands {modified_commands} have changed, replacing the old section with the new one..."
+                    )
+                    for i, modified_command in enumerate(modified_commands):
+                        old_command_section, _ = generate_commands_section(
+                            integration_diff.old_yaml_data,
+                            example_dict,
+                            command_permissions_dict,
+                            modified_command,
+                        )
+
+                        new_command_section, err = generate_commands_section(
+                            integration_diff.new_yaml_data,
+                            example_dict,
+                            command_permissions_dict,
+                            modified_command,
+                        )
+
+                        doc_text_lines = doc_text.splitlines()
+
+                        old_cmd_start_line = doc_text_lines.index(
+                            old_command_section[0]
+                        )
+
+                        # In cases when there are multiple identical
+                        # context outputs, we need to find the correct index
+                        # for the specific command we're replacing
+                        indices = [
+                            i
+                            for i, x in enumerate(doc_text_lines)
+                            if x == old_command_section[-2]
+                        ]
+
+                        old_cmd_end_line = doc_text_lines.index(
+                            old_command_section[-2], indices[i]
+                        )
+
+                        doc_text_lines[
+                            old_cmd_start_line : old_cmd_end_line + 1
+                        ] = new_command_section
+
+                        doc_text = "\n".join(doc_text_lines)
+
+                        if err:
+                            errors.append(err)
 
                 # Handle new commands
                 # we append them to the README.

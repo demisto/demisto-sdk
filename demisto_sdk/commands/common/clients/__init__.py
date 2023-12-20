@@ -153,7 +153,7 @@ def get_client_from_server_type(
 
 
     about_raw_response = XsoarClient.get_xsoar_about(_client)
-    logger.debug(f'{about_raw_response=}')
+    logger.debug(f'{about_raw_response=} for {base_url=}')
 
     product_mode = about_raw_response.get("productMode")
     deployment_mode = about_raw_response.get("deploymentMode")

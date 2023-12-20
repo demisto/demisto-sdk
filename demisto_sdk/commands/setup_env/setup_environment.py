@@ -67,7 +67,9 @@ def configure_vscode_settings(
     else:
         python_path = [str(path) for path in PYTHONPATH if str(path)]
 
-    settings["python.analysis.extraPaths"] = python_path
+    settings["python.analysis.extraPaths"] = [
+        path for path in python_path if "site-packages" not in path
+    ]
     with open(ide_folder / "settings.json", "w") as f:
         json5.dump(settings, f, indent=4)
 

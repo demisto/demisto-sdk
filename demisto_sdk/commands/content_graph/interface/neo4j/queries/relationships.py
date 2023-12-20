@@ -81,10 +81,9 @@ UNWIND $data AS rel_data
 MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
 
 // Get or create the targets with the given properties
-MERGE (target:rel_data.target_type{
+MERGE (target:{ContentType.BASE_NODE}{
     build_target_properties(identifier=target_identifier)
-})
-
+} WHERE rel_data.target_type IN labels(target))
 // If created, mark "not in repository" (all repository nodes were created already)
 ON CREATE
     SET target.not_in_repository = true,

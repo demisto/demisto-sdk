@@ -117,40 +117,69 @@ def get_client_from_server_type(
         verify_ssl=verify_ssl,
     )
 
-    try:
-        # /ioc-rules is only an endpoint in XSIAM.
-        response, status_code, response_headers = _client.generic_request(
-            "/ioc-rules", "GET"
-        )
-        if "text/html" in response_headers.get("Content-Type"):
-            raise ApiException(
-                status=400,
-                reason=f"endpoint /ioc-rules does not exist in {_client.api_client.configuration.host}",
-            )
-        if status_code != requests.codes.ok:
-            raise ApiException(status=status_code, reason=response)
+    def is_xsiam_enviorment() -> bool:
+        if product_mode == "xsiam":
+            return True
 
+        try:
+            response, status_code, response_headers = _client.generic_request(
+                "/ioc-rules", "GET"
+            )
+        except ApiException as e:
+            logger.debug(f"instance is not XSIAM instance, error:{e}")
+            return False
+        if "text/html" in response_headers.get("Content-Type"):
+            return False
+        if status_code != requests.codes.ok:
+            return False
+
+        return True
+
+    def is_xsoar_saas_enviorment() -> bool:
+        if product_mode == "xsoar" and deployment_mode == "saas":
+            return True
+        if server_version and Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION):
+            return True
+        logger.debug(f'instance is not XSOAR-SaaS instance')
+        return False
+
+    def is_xsoar_on_prem() -> bool:
+        if product_mode == "xsoar" and deployment_mode == "saas":
+            return True
+        if server_version and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION):
+            return True
+        logger.debug(f'instance is not XSOAR-ON-PREM instance')
+        return False
+
+
+    about_raw_response = XsoarClient.get_xsoar_about(_client)
+    logger.debug(f'{about_raw_response=}')
+
+    product_mode = about_raw_response.get("productMode")
+    deployment_mode = about_raw_response.get("deploymentMode")
+    server_version = about_raw_response.get("demistoVersion")
+
+    if is_xsiam_enviorment():
         return XsiamClient(
             client=_client,
+            about_xsoar=about_raw_response,
             config=XsiamClientConfig(
+                base_api_url=base_url, api_key=api_key, auth_id=auth_id
+            )
+        )
+    elif is_xsoar_saas_enviorment():
+        return XsoarSaasClient(
+            client=_client,
+            about_xsoar=about_raw_response,
+            config=XsoarSaasClientConfig(
                 base_api_url=base_url, api_key=api_key, auth_id=auth_id
             ),
         )
-    except ApiException as e:
-        logger.debug(f"instance is not XSIAM instance, error:{e}")
-        about_raw_response = XsoarClient.get_xsoar_about(_client)
-        if server_version := about_raw_response.get("demistoVersion"):
-            if Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION):
-                return XsoarSaasClient(
-                    client=_client,
-                    about_xsoar=about_raw_response,
-                    config=XsoarSaasClientConfig(
-                        base_api_url=base_url, api_key=api_key, auth_id=auth_id
-                    ),
-                )
-            return XsoarClient(
-                client=_client,
-                about_xsoar=about_raw_response,
-                config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
-            )
-        raise RuntimeError(f"Could not determine the correct api-client for {base_url}")
+    elif is_xsoar_on_prem():
+        return XsoarClient(
+            client=_client,
+            about_xsoar=about_raw_response,
+            config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
+        )
+
+    raise RuntimeError(f"Could not determine the correct api-client for {base_url}")

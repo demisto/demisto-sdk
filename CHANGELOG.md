@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in **validate** where there is a specific value for marketplace in `isFetch` parameter.
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

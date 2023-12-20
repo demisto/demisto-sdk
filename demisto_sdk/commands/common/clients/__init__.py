@@ -121,6 +121,7 @@ def get_client_from_server_type(
         if product_mode == "xsiam":
             return True
 
+        # for old enivorments that do not have product-mode / deployment-mode
         try:
             # /ioc-rules is only an endpoint in XSIAM.
             response, status_code, response_headers = _client.generic_request(
@@ -139,6 +140,8 @@ def get_client_from_server_type(
     def is_xsoar_saas_enviorment() -> bool:
         if product_mode == "xsoar" and deployment_mode == "saas":
             return True
+
+        # for old enivorments that do not have product-mode / deployment-mode
         if server_version and Version(server_version) >= Version(
             MINIMUM_XSOAR_SAAS_VERSION
         ):
@@ -149,6 +152,7 @@ def get_client_from_server_type(
     def is_xsoar_on_prem() -> bool:
         if product_mode == "xsoar" and deployment_mode == "saas":
             return True
+        # for old enivorments that do not have product-mode / deployment-mode
         if server_version and Version(server_version) < Version(
             MINIMUM_XSOAR_SAAS_VERSION
         ):

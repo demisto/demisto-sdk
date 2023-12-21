@@ -10,8 +10,22 @@ from demisto_sdk.commands.validate.validators.tools import (
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_playbook_object(paths=["tasks"], values=[{"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}}]),{"hello: test", "example: test"}),
-        (create_playbook_object(paths=["tasks"], values=[{"0": {"inputs": "test"}, "1": {"inputs": "test2"}}]),set())
+        (
+            create_playbook_object(
+                paths=["tasks"],
+                values=[
+                    {"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}}
+                ],
+            ),
+            {"hello: test", "example: test"},
+        ),
+        (
+            create_playbook_object(
+                paths=["tasks"],
+                values=[{"0": {"inputs": "test"}, "1": {"inputs": "test2"}}],
+            ),
+            set(),
+        ),
     ],
 )
 def test_collect_all_inputs_in_use(content_item, expected_result):
@@ -32,7 +46,7 @@ def test_collect_all_inputs_in_use(content_item, expected_result):
             'hello: test'
            'example: test'
         Case 2: The results should be:
-            An empty set object.
+            An empty set object, because the inputs are not in the pattern inputs.<input_name>
     """
     assert collect_all_inputs_in_use(content_item) == expected_result
 
@@ -40,12 +54,27 @@ def test_collect_all_inputs_in_use(content_item, expected_result):
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_playbook_object(paths=["inputs"], values=[[{"key": "inputs.test1", "testing text": "text"}, {"key": "inputs.test1", "testing text": "text"}]]), {
-        "inputs.test1"}),
-        (create_playbook_object(paths=["inputs"], values=[[{"key": "inputs.test2     ","testing text": "text"}]]), {
-        "inputs.test2"})
-        ])
-
+        (
+            create_playbook_object(
+                paths=["inputs"],
+                values=[
+                    [
+                        {"key": "inputs.test1", "testing text": "text"},
+                        {"key": "inputs.test1", "testing text": "text"},
+                    ]
+                ],
+            ),
+            {"inputs.test1"},
+        ),
+        (
+            create_playbook_object(
+                paths=["inputs"],
+                values=[[{"key": "inputs.test2     ", "testing text": "text"}]],
+            ),
+            {"inputs.test2"},
+        ),
+    ],
+)
 def test_collect_all_inputs_from_inputs_section(content_item, expected_result):
     """
     Given:

@@ -52,7 +52,7 @@ from demisto_sdk.commands.test_content.tools import (
 ENV_RESULTS_PATH = "./artifacts/env_results.json"
 FAILED_MATCH_INSTANCE_MSG = (
     "{} Failed to run.\n There are {} instances of {}, please select one of them by using "
-    "the instance_name argument in conf.json. The options are:\n{}"
+    "the instance_names argument in conf.json. The options are:\n{}"
 )
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
@@ -67,10 +67,10 @@ XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
 
 MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
     MarketplaceVersions.XSOAR: {XSOAR_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE},
-    MarketplaceVersions.MarketplaceV2: XSIAM_SERVER_TYPE,
-    MarketplaceVersions.XPANSE: XPANSE_SERVER_TYPE,
-    MarketplaceVersions.XSOAR_SAAS: XSOAR_SAAS_SERVER_TYPE,
-    MarketplaceVersions.XSOAR_ON_PREM: XSOAR_SERVER_TYPE
+    MarketplaceVersions.MarketplaceV2: {XSIAM_SERVER_TYPE},
+    MarketplaceVersions.XPANSE: {XPANSE_SERVER_TYPE},
+    MarketplaceVersions.XSOAR_SAAS: {XSOAR_SAAS_SERVER_TYPE},
+    MarketplaceVersions.XSOAR_ON_PREM: {XSOAR_SERVER_TYPE}
 }
 
 __all__ = [
@@ -158,7 +158,7 @@ class TestConfiguration:
         self.test_instance_names: List[str] = self._parse_instance_names_conf(
             test_configuration
         )
-        self.marketplaces: List[MarketplaceVersions] = self._parse_marketplaces_conf(
+        self.marketplaces: Optional[List[MarketplaceVersions]] = self._parse_marketplaces_conf(
             test_configuration
         )
         self.instance_configuration: dict = test_configuration.get(
@@ -475,7 +475,7 @@ class TestPlaybook:
             """
             Checks if the test has a marketplace value, and if so- if it suits the server machine we are on.
             """
-            test_server_types = set()
+            test_server_types: Set[str] = set()
             for marketplace in self.configuration.marketplaces:
                 test_server_types.update(MARKETPLACE_VERSIONS_TO_SERVER_TYPE[marketplace])
             self.log_info(f'MARKETPLACES FOR TEST PLAYBOOK:\n'
@@ -495,7 +495,7 @@ class TestPlaybook:
 
             log_message = f"Skipping {self} because it's marketplace values are: " \
                           f"{', '.join(self.configuration.marketplaces)}{instance_names_log_message}, " \
-                          f"which doesn't suit the current server marketplace value"
+                          f"which is not compatible with the current server marketplace value"
             self.close_test_suite([Skipped(log_message)])
             if self.configuration.playbook_id in self.build_context.filtered_tests:
                 self.log_warning(log_message)

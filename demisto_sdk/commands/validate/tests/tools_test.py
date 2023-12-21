@@ -82,7 +82,7 @@ def test_collect_all_inputs_from_inputs_section(content_item, expected_result):
         Case 1: both inputs have the same name and value
         Case 2: the input has a space in the name
     When:
-        - Running collect_all_inputs_from_inputs_section
+        - Running collect_all_inputs_from_inputs_section.
     Then:
         - A set with all inputs defined in the inputs section with no duplicates or empty spaces are returned.
     """

@@ -46,7 +46,7 @@ def test_collect_all_inputs_in_use(content_item, expected_result):
             'hello: test'
            'example: test'
         Case 2: The results should be:
-            An empty set object, because the inputs are not in the pattern inputs.<input_name>
+            An empty set object. (Because the inputs are not in the pattern inputs.<input_name>)
     """
     assert collect_all_inputs_in_use(content_item) == expected_result
 

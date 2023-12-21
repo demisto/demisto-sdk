@@ -1,0 +1,42 @@
+name: 'Setup environment for demisto-sdk'
+description: 'Setup environment for every demisto-sdk workflow job'
+author: 'Demisto-SDK'
+
+inputs:
+  python-version:
+    required: true
+    type: string
+    description: "The python version"
+  node-version:
+    required: false
+    type: string
+    default: "16"
+    description: "The node version to install"
+
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Setup Poetry
+      run: |
+        sudo curl -sSL https://install.python-poetry.org | python3 -
+        poetry --version
+        poetry check --lock
+        poetry install -E generate-unit-tests
+      shell: bash
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install npm
+      run: |
+        npm install
+        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+      shell: bash

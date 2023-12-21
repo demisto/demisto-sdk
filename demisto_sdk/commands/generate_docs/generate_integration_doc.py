@@ -12,8 +12,6 @@ from demisto_sdk.commands.common import git_util
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER,
     DOCS_COMMAND_SECTION_REGEX,
-    INTEGRATIONS_DIR,
-    PACKS_DIR,
     PACKS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
@@ -155,8 +153,15 @@ def generate_integration_doc(
                 errors.extend(err)
 
         # Before generating a new README, we check whether it's a new integration or not.
-        # If it's not new, we retrieve retrieve the integration YAML from the head
+        # If it's not new, we retrieve the integration YAML from the primary branch
         # and merge the changes into the output README.
+        # The process is as follows:
+        # 1) Initialize git, find primary branch and write the integration YML from the local primary branch to a temporary file.
+        # 2) Use the integration YAMLs from input and local primary branch to check for differences in configuration and commands.
+        # 3) If any changes are detected in the configuration, replace the configuration section.
+        # 4) If any modifications are detected in the existing commands, replace the modified command'(s') section(s).
+        # 5) If new commands are detected, we append them to the end of the commands section (EOF).
+
         elif (Path(input_path).parent / PACKS_README_FILE_NAME).exists():
             integration_readme_path = Path(input_path).parent / PACKS_README_FILE_NAME
             doc_text = integration_readme_path.read_text()
@@ -175,19 +180,11 @@ def generate_integration_doc(
                     else "master"
                 )
 
-                integration_yml_path = os.path.join(
-                    PACKS_DIR,
-                    pack_name,
-                    INTEGRATIONS_DIR,
-                    integration_name,
-                    integration_yml_filename,
-                )
-
                 logger.debug(
-                    f"Attempting to retrieve file '{integration_yml_path}' from local primary branch '{primary_branch}'..."
+                    f"Attempting to retrieve file '{input_path}' from local primary branch '{primary_branch}'..."
                 )
                 bytes = git.read_file_content(
-                    integration_yml_path,
+                    input_path,
                     commit_or_branch=primary_branch,
                     from_remote=False,
                 )
@@ -288,9 +285,7 @@ def generate_integration_doc(
             except InvalidGitRepositoryError as err:
                 errors.append(f"Failed to open git repository: {str(err)}")
             except git_util.GitFileNotFoundError as err:
-                errors.append(
-                    f"Failed to open file '{integration_yml_path}': {str(err)}"
-                )
+                errors.append(f"Failed to open file '{input_path}': {str(err)}")
 
         else:
             docs: list = []

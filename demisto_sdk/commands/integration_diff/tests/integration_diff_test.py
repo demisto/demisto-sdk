@@ -890,7 +890,14 @@ class TestIntegrationDiffDetector:
     @pytest.mark.ciac_8757
     def test_get_modified_commands_identical(self, pack: Pack):
         """
-        TODO check why this is failing intermittently
+        FIXME check why when using:
+
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        The test fails intermittently
+
         Test whether the modified commands method works as expected
         when given a set of identical commands.
 
@@ -904,18 +911,12 @@ class TestIntegrationDiffDetector:
         Then:
         - No commands should be returned.
         """
-        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[1][
-            "outputs"
-        ].pop(4)
-        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[2][
-            "description"
-        ] = "Irrelevant description"
 
         old_integration = pack.create_integration(
             "oldIntegration", yml=self.OLD_INTEGRATION_YAML
         )
         new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+            "newIntegration", yml=self.OLD_INTEGRATION_YAML
         )
 
         integration_detector = IntegrationDiffDetector(

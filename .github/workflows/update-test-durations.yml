@@ -42,18 +42,24 @@ jobs:
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
-      
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})-group(${{ inputs.group }})
+          path: |
+            .test_durations
       - name: Update .test-durations
         run: |
           git status
           git add .test_durations
-          git status
           git commit -m "Update .test-durations" || true
-          git push origin HEAD:refs/heads/update-test-durations
-
+          git status
+          # git push origin HEAD:refs/heads/update-test-durations
       - name: Create Draft PR
         run: |
-          gh pr create --base master --head update-test-durations --title "Update .test-durations" --body "This PR updates the .test-durations file." --draft --reviewer GuyAfik
+          echo "bla"
+          # gh pr create --base master --head update-test-durations --title "Update .test-durations" --body "This PR updates the .test-durations file." --draft --reviewer GuyAfik
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

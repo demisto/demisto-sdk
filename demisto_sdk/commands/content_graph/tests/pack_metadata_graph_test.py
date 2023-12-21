@@ -31,7 +31,6 @@ def setup_method(mocker, repo: Repo):
     bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    neo4j_service.stop()
 
 
 @pytest.fixture

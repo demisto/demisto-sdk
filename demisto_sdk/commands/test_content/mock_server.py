@@ -386,7 +386,7 @@ class MITMProxy:
         self.logging_module.debug(
             f'[blue]normalize_mock_file | {path=}'
         )
-        logger.info(f"[red]normalize_mock_file | {path=}[/red]")
+        logger.info(f"[red]normalize_mock_filex | {path=}[/red]")
         problem_keys_filepath = os.path.join(
             path, get_folder_path(playbook_or_integration_id), "problematic_keys.json"
         )
@@ -638,6 +638,8 @@ def run_with_mock(
         record: A boolean indicating this is record mode or not
     Yields: A result holder dict in which the calling method can add the result of the proxy run under the key 'result'
     """
+    logger.info(f"Running run_with_mock")
+    proxy_instance.logging_module.debug("Running run_with_mock")
     if record:
         proxy_instance.set_tmp_folder()
         # If the record files should be committed - clean the content-test-data repo first
@@ -656,7 +658,6 @@ def run_with_mock(
         proxy_instance.stop()
         if record:
             if result_holder.get(RESULT):
-                logger.info(f"Running proxy_instance.normalize_mock_file [/blue]")
                 proxy_instance.normalize_mock_file(playbook_or_integration_id)
                 proxy_instance.move_mock_file_to_repo(playbook_or_integration_id)
                 proxy_instance.successful_rerecord_count += 1

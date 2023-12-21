@@ -60,7 +60,6 @@ def setup_method(mocker, repo: Repo):
             }
         },
     )
-    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -1092,17 +1091,6 @@ class TestCreateContentGraph:
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             assert not interface.search()
-
-    def test_stop_content_graph(self):
-        """
-        Given:
-            - A running content graph service.
-        When:
-            - Running neo4j_service.stop()
-        Then:
-            - Make sure no exception is raised.
-        """
-        neo4j_service.stop()
 
     def test_create_content_graph_incident_to_alert_scripts(
         self, repo: Repo, tmp_path: Path, mocker

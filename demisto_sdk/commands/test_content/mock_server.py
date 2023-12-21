@@ -9,7 +9,7 @@ from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock
 from typing import Dict, Iterator
-
+from demisto_sdk.commands.common.logger import logger
 import demisto_client.demisto_api
 import urllib3
 
@@ -379,9 +379,14 @@ class MITMProxy:
                 provided, method will use the current directory.
         """
         self.logging_module.debug(
-            f'normalize_mock_file was called for test "{playbook_or_integration_id}"'
+            f'[blue]normalize_mock_file was called for test "{playbook_or_integration_id}[/blue]"'
         )
+        logger.info(f"[red]normalize_mock_file was called for test {playbook_or_integration_id}[/red]")
         path = path or self.current_folder
+        self.logging_module.debug(
+            f'[blue]normalize_mock_file | {path=}'
+        )
+        logger.info(f"[red]normalize_mock_file | {path=}[/red]")
         problem_keys_filepath = os.path.join(
             path, get_folder_path(playbook_or_integration_id), "problematic_keys.json"
         )
@@ -651,6 +656,7 @@ def run_with_mock(
         proxy_instance.stop()
         if record:
             if result_holder.get(RESULT):
+                logger.info(f"Running proxy_instance.normalize_mock_file [/blue]")
                 proxy_instance.normalize_mock_file(playbook_or_integration_id)
                 proxy_instance.move_mock_file_to_repo(playbook_or_integration_id)
                 proxy_instance.successful_rerecord_count += 1

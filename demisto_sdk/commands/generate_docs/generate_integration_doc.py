@@ -1042,10 +1042,10 @@ def replace_integration_conf_section(
 
         doc_text_lines = doc_text.splitlines()
 
-        # We calculate on which line the old configuration started
-        # and ended
+        # We take the first and the second-to-last index of the old section
+        # and use the section range to replace it with the new section.
+        # Second-to-last index because the last element is an empty string
         old_config_start_line = doc_text_lines.index(old_configuration_section[0])
-        # -2 because the last element is an empty string
         old_config_end_line = doc_text_lines.index(old_configuration_section[-2])
 
         doc_text_lines[
@@ -1114,13 +1114,18 @@ def replace_integration_commands_section(
 
             doc_text_lines = doc_text.splitlines()
 
+            # We take the first and the second-to-last index of the old section
+            # and use the section range to replace it with the new section.
+            # Second-to-last index because the last element is an empty string
             old_cmd_start_line = doc_text_lines.index(old_command_section[0])
 
-            # In cases when there are multiple identical
-            # context outputs, we need to find the correct index
-            # for the specific command we're replacing
+            # In cases when there are multiple identical context outputs
+            # in the second-to-last line, we need to find the relevant
+            # second-to-last line for the specific command we're replacing.
             indices = [
-                i for i, x in enumerate(doc_text_lines) if x == old_command_section[-2]
+                i
+                for i, doc_line in enumerate(doc_text_lines)
+                if doc_line == old_command_section[-2]
             ]
 
             old_cmd_end_line = doc_text_lines.index(old_command_section[-2], indices[i])

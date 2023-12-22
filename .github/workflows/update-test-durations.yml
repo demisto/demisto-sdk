@@ -36,7 +36,7 @@ jobs:
           # For all the tests.
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
-          
+
           mkdir unit-tests
           poetry run pytest . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --store-durations --junitxml=unit-tests/junit.xml || pytest_exit_code=$
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV

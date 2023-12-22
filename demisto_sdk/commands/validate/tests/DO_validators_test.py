@@ -1,9 +1,15 @@
 import pytest
 
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
+)
+from demisto_sdk.commands.validate.validators.DO_validators.DO100_default_docker_image import (
+    DefaultDockerImageValidator,
 )
 from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_exist import (
     DockerImageExistValidator,
@@ -89,11 +95,50 @@ def test_DockerImageExistValidator_is_valid(
         return_value="3.1.1.1",
     )
     results = DockerImageExistValidator().is_valid(content_items)
-    len(results) == expected_number_of_failures
+    assert len(results) == expected_number_of_failures
     assert all(
         [
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
-    mocker.call_count == expected_call_count
+    assert mocker.call_count == expected_call_count
+
+
+def test_DefaultDockerImageValidator_is_valid():
+    """
+    Given:
+     - 2 integration and script which uses the default docker image
+     - 4 integrations and scripts which do not use the default docker image / javascript
+
+    When:
+     - Running the DefaultDockerImageValidator validator
+
+    Then:
+     - make sure the integration and script with default docker fail the validation.
+     - make sure the rest of scripts/integrations are valid.
+    """
+    content_items = [
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=["demisto/python:1.3-alpine"],  # integration with default docker
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=["demisto/python:1.3-alpine"],  # script with default docker
+        ),
+        create_integration_object(),  # integration without default docker
+        create_script_object(),  # script without default docker
+        create_integration_object(
+            paths=["script.type"], values=["javascript"]
+        ),  # javascript integration
+        create_script_object(
+            paths=["type"], values=["javascript"]
+        ),  # script integration
+    ]
+    results = DefaultDockerImageValidator().is_valid(content_items)
+    assert len(results) == 2
+    for result in results:
+        content_item: IntegrationScript = result.content_object
+        assert content_item.type == "python"
+        assert content_item.docker_image == "demisto/python:1.3-alpine"

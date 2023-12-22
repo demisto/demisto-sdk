@@ -155,3 +155,8 @@ jobs:
           else
             echo "Skipping coveralls"
           fi
+      - name: Pytest coverage comment
+        if: always()
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-xml-coverage-path: coverage.xml

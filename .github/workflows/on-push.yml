@@ -155,4 +155,3 @@ jobs:
           else
             echo "Skipping coveralls"
           fi
-

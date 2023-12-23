@@ -149,6 +149,10 @@ jobs:
         uses: coverallsapp/github-action@v2
       - name: Coveralls v2
         run: |
-          pip install coveralls
-          coveralls
+          if [ -n "$COVERALLS_REPO_TOKEN" ]; then
+            pip install coveralls
+            coveralls
+          else
+            echo "Skipping coveralls"
+          fi
 

@@ -1232,7 +1232,7 @@ class XsoarClient(BaseModel):
         error = f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
         if playbook_state == InvestigationPlaybookState.FAILED:
             error = (
-                f"{error}, reason: {self.get_incident_playbook_failure(incident_id)}"
+                f"{error}\nreason: {self.get_incident_playbook_failure(incident_id)}"
             )
 
         raise RuntimeError(error)

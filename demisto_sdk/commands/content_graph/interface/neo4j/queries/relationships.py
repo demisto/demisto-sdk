@@ -163,8 +163,8 @@ MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
 MERGE (target:{ContentType.BASE_NODE}{build_target_properties()})
 ON CREATE
     SET target.not_in_repository = true,
-        target.object_id = CASE WHEN target.object_id IS NULL THEN target.name ELSE target.object_id END,
-        target.name = CASE WHEN target.name IS NULL THEN target.object_id ELSE target.name END
+        target.object_id = rel_data.target,
+        target.name = rel_data.target
 MERGE (source)-[r:{relationship}]->(target)
 RETURN count(r) AS relationships_merged"""
 

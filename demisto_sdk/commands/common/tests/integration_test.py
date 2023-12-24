@@ -2305,6 +2305,16 @@ class TestIsFeedParamsExist:
             self.validator.all_feed_params_exist() is True
         ), "all_feed_params_exist() returns False instead True"
 
+    def test_value_for_marketplace_feed(self):
+        configuration = self.validator.current_file["configuration"]
+        for item in configuration:
+            if item.get("name") == "feed":
+                item["name:xsoar"] = "test-name"
+                item["something:xsoar"] = "test"
+        assert (
+            self.validator.all_feed_params_exist() is True
+        ), "all_feed_params_exist() returns False instead True"
+
     NO_HIDDEN = {
         "configuration": [
             {"id": "new", "name": "new", "display": "test"},

@@ -165,10 +165,6 @@ def remove_content_private_nodes(tx: Transaction) -> None:
     remove_nodes(tx, CONTENT_PRIVATE_ITEMS)
 
 
-def remove_empty_nodes(tx: Transaction) -> None:
-    remove_nodes(tx, {"empty": [""]})
-
-
 def create_nodes_by_type(
     tx: Transaction,
     content_type: ContentType,

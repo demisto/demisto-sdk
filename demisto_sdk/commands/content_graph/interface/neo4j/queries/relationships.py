@@ -79,16 +79,22 @@ UNWIND $data AS rel_data
 
 // Get all content items with the specified properties
 MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
-
-// Get or create the targets with the given properties
+WITH source, rel_data
 MERGE (target:{ContentType.BASE_NODE}{
     build_target_properties(identifier=target_identifier)
-} WHERE rel_data.target_type IN labels(target))
-// If created, mark "not in repository" (all repository nodes were created already)
+})
 ON CREATE
-    SET target.not_in_repository = true,
-        target.object_id = CASE WHEN target.object_id IS NULL THEN COALESCE(target.name, target.cli_name) ELSE target.object_id END,
-        target.name = CASE WHEN target.name IS NULL THEN COALESCE(target.object_id, target.cli_name) ELSE target.name END
+    // If created, mark "not in repository" (all repository nodes were created already)
+    SET
+        target.not_in_repository = true,
+        target.object_id = rel_data.target,
+        target.name = rel_data.target,
+        target.cli_name = rel_data.target,
+        target.content_type = rel_data.target_type
+// filter by the correct label
+WITH source, rel_data, target
+MATCH (target)
+WHERE rel_data.target_type IN labels(target) OR target.not_in_repository
 
 // Get or create the relationship and set its "mandatorily" field based on relationship data
 MERGE (source)-[r:{RelationshipType.USES}]->(target)

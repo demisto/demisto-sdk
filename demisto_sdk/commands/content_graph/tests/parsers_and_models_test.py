@@ -1173,7 +1173,7 @@ class TestParsersAndModels:
             model,
             expected_id="sample",
             expected_name="sample",
-            expected_content_type=ContentType.BASE_PLAYBOOK,
+            expected_content_type=ContentType.PLAYBOOK,
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
             expected_description="test test2 test3\n   - test4 ",
@@ -1243,7 +1243,7 @@ class TestParsersAndModels:
             model,
             expected_id="sample_script",
             expected_name="sample_script",
-            expected_content_type=ContentType.BASE_SCRIPT,
+            expected_content_type=ContentType.SCRIPT,
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )

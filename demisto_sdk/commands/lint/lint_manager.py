@@ -386,6 +386,8 @@ class LintManager:
             )
             branch_name = ""
 
+        logger.debug(f'{commit=}, {branch_name=}')
+
         staged_files = {
             content_repo.repo.working_dir / Path(item.b_path).parent  # type: ignore[operator]
             for item in commit.tree.diff(None, paths=pkgs)

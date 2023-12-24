@@ -23,6 +23,8 @@ NODE_INDEX_OPTIONS = [
     ["cli_name", "not_in_repository"],
     ["path"],
     ["not_in_repository"],
+    ["deprecated"],
+    ["deprecated", "not_in_repository"],
     ["content_type", "not_in_repository"],
 ]
 

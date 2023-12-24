@@ -24,7 +24,7 @@ NODE_INDEX_OPTIONS = [
     ["path"],
     ["not_in_repository"],
     ["deprecated"],
-    ["deprecated", "not_in_repository"],
+    ["deprecated", "is_test"],
     ["content_type", "not_in_repository"],
 ]
 

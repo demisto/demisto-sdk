@@ -24,8 +24,8 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
 from demisto_sdk.commands.common.tools import get_remote_file, is_external_repository

@@ -415,10 +415,11 @@ class LintManager:
                     commit,
                     f"{content_repo.repo.remote()}/{base_branch}",
                 )[0]
-            logger.info(
-                f"Comparing [cyan]{commit}[/cyan] to"
-                f" last common commit with [cyan]{last_common_commit}[/cyan]"
-            )
+            if branch_name:
+                logger.info(
+                    f"Comparing [cyan]{branch_name}[/cyan] to"
+                    f" last common commit with [cyan]{last_common_commit}[/cyan]"
+                )
 
         changed_from_base = {
             content_repo.repo.working_dir / Path(item.b_path).parent  # type: ignore[operator]

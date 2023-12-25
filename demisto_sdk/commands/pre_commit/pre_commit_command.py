@@ -15,7 +15,6 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     PACKS_FOLDER,
@@ -161,23 +160,25 @@ class PreCommitRunner:
 
         return hooks
 
-    def exclude_python2_of_non_supported_hooks(self) -> None:
+    def exclude_non_supported_version_hooks(self) -> None:
         """
-        This function handles the python2 files.
-        Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
+        This function excludes the files that are not supported by the hook, according to the hook min_version property.
         """
-        python2_files = self.python_version_to_files.get(DEFAULT_PYTHON2_VERSION)
-        if not python2_files:
-            return
-
-        join_files_string = join_files(python2_files)
         for hook in self.hooks.values():
-            if Hook.get_property(hook["hook"], self.mode, "python2"):
+            min_version = Hook.get_property(hook["hook"], self.mode, "min_version")
+            if not min_version:
                 continue
-            elif hook["hook"].get("exclude"):
-                hook["hook"]["exclude"] += f"|{join_files_string}"
-            else:
-                hook["hook"]["exclude"] = join_files_string
+            files_to_exclude: Set[Path] = set()
+
+            for version, paths in self.python_version_to_files.items():
+                if Version(version) < Version(min_version):
+                    files_to_exclude.update(path for path in paths)
+            if files_to_exclude:
+                join_files_string = join_files(files_to_exclude)
+                if hook["hook"].get("exclude"):
+                    hook["hook"]["exclude"] += f"|{join_files_string}"
+                else:
+                    hook["hook"]["exclude"] = join_files_string
 
     def exclude_support_level_hooks(self) -> None:
         """This function excludes the hooks that are not supported by the support level of the file."""
@@ -485,7 +486,7 @@ class PreCommitRunner:
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
         precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
         precommit_env["PRE_COMMIT_COLOR"] = "always"
-        self.exclude_python2_of_non_supported_hooks()
+        self.exclude_non_supported_version_hooks()
         self.exclude_support_level_hooks()
 
         if self.all_files:

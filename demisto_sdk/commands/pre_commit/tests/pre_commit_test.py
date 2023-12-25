@@ -387,7 +387,7 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
         None, None, None, python_version_to_files, ""
     )
 
-    pre_commit_runner.exclude_python2_of_non_supported_hooks()
+    pre_commit_runner.exclude_non_supported_version_hooks()
 
     assert (
         "Python 2.7 files running only with the following hooks:"

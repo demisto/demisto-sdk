@@ -35,6 +35,9 @@ class Hook:
         """
         self.hooks.append(deepcopy(self.base_hook))
 
+    def filter_by_support_level(self):
+        ...
+
     def _set_files_on_hook(
         self, hook: dict, files: Iterable[Path], should_filter: bool = True
     ) -> int:

@@ -58,17 +58,6 @@ SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
-PYTHON2_SUPPORTED_HOOKS = {
-    "check-json",
-    "check-yaml",
-    "check-ast",
-    "check-merge-conflict",
-    "validate",
-    "format",
-    "pylint-in-docker",
-    "pytest-in-docker",
-}
-
 
 @dataclass
 class PreCommitRunner:
@@ -76,7 +65,7 @@ class PreCommitRunner:
 
     input_files: Optional[List[Path]]
     all_files: bool
-    mode: Optional[str]
+    mode: str
     language_version_to_files_with_objects: Dict[
         str, Set[Tuple[Path, Optional[IntegrationScript]]]
     ]
@@ -135,6 +124,14 @@ class PreCommitRunner:
             if version not in {"javascript", "powershell"}
         }
 
+    @cached_property
+    def support_level_to_files(self) -> Dict[str, Set[Tuple[Path, IntegrationScript]]]:
+        support_level_to_files = defaultdict(set)
+        for path, obj in self.files_to_run_with_objects:
+            if obj:
+                support_level_to_files[obj.support_level].add((path, obj))
+        return support_level_to_files
+
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
         repos = {}
@@ -173,18 +170,34 @@ class PreCommitRunner:
         if not python2_files:
             return
 
-        logger.info(
-            f"Python {DEFAULT_PYTHON2_VERSION} files running only with the following hooks: {', '.join(PYTHON2_SUPPORTED_HOOKS)}"
-        )
-
         join_files_string = join_files(python2_files)
         for hook in self.hooks.values():
-            if hook["hook"]["id"] in PYTHON2_SUPPORTED_HOOKS:
+            if Hook.get_property(hook["hook"], self.mode, "python2"):
                 continue
             elif hook["hook"].get("exclude"):
                 hook["hook"]["exclude"] += f"|{join_files_string}"
             else:
                 hook["hook"]["exclude"] = join_files_string
+
+    def exclude_support_level_hooks(self) -> None:
+        """This function excludes the hooks that are not supported by the support level of the file."""
+        for hook in self.hooks.values():
+            support_levels = Hook.get_property(hook["hook"], self.mode, "support")
+            if not support_levels:
+                continue
+            files_to_exclude: Set[Path] = set()
+            for support_level in support_levels:
+                files_to_exclude.update(
+                    path
+                    for path, obj in self.support_level_to_files[support_level]
+                    if obj
+                )
+            if files_to_exclude:
+                join_files_string = join_files(files_to_exclude)
+                if hook["hook"].get("exclude"):
+                    hook["hook"]["exclude"] += f"|{join_files_string}"
+                else:
+                    hook["hook"]["exclude"] = join_files_string
 
     def prepare_hooks(self, dry_run: bool) -> None:
         hooks = self.hooks
@@ -235,7 +248,7 @@ class PreCommitRunner:
             if hook["hook"].get("language") == "system"
         ]
         for hook_id in system_hooks.copy():
-            SystemHook(**hooks.pop(hook_id), **kwargs).prepare_hook()
+            SystemHook(**hooks[hook_id], **kwargs).prepare_hook()
 
     def _hooks_need_docker(self) -> Set[str]:
         """
@@ -473,6 +486,7 @@ class PreCommitRunner:
         precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
         precommit_env["PRE_COMMIT_COLOR"] = "always"
         self.exclude_python2_of_non_supported_hooks()
+        self.exclude_support_level_hooks()
 
         if self.all_files:
             logger.info("Running pre-commit on all files")

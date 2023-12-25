@@ -22,12 +22,14 @@ repos:
     rev: "v0.0.269"
     hooks:
       - id: ruff
+        min_version: "3.7"
         skip:nightly: true
 
   - repo: https://github.com/pre-commit/mirrors-autopep8
     rev: "v2.0.1"
     hooks:
       - id: autopep8
+        exclude_support_level: ["community"]
   - repo: local
     hooks:
 

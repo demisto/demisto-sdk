@@ -160,7 +160,7 @@ class PreCommitRunner:
 
         return hooks
 
-    def exclude_non_supported_version_hooks(self) -> None:
+    def exclude_hooks_by_version(self) -> None:
         """
         This function excludes the files that are not supported by the hook, according to the hook min_version property.
         """
@@ -180,10 +180,12 @@ class PreCommitRunner:
                 else:
                     hook["hook"]["exclude"] = join_files_string
 
-    def exclude_support_level_hooks(self) -> None:
+    def exclude_hooks_by_support_level(self) -> None:
         """This function excludes the hooks that are not supported by the support level of the file."""
         for hook in self.hooks.values():
-            support_levels = Hook.get_property(hook["hook"], self.mode, "support")
+            support_levels = Hook.get_property(
+                hook["hook"], self.mode, "exclude_support_level"
+            )
             if not support_levels:
                 continue
             files_to_exclude: Set[Path] = set()
@@ -486,8 +488,8 @@ class PreCommitRunner:
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
         precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
         precommit_env["PRE_COMMIT_COLOR"] = "always"
-        self.exclude_non_supported_version_hooks()
-        self.exclude_support_level_hooks()
+        self.exclude_hooks_by_version()
+        self.exclude_hooks_by_support_level()
 
         if self.all_files:
             logger.info("Running pre-commit on all files")

@@ -14,7 +14,6 @@ from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
-    PYTHON2_SUPPORTED_HOOKS,
     GitUtil,
     group_by_language,
     preprocess_files,
@@ -31,6 +30,19 @@ PYTHON_VERSION_TO_FILES = {
     "3.9": {Path("Packs/Pack1/Integrations/integration2/integration2.py")},
     "3.10": {Path("Packs/Pack1/Integrations/integration3/integration3.py")},
 }
+
+
+@dataclass(frozen=True)
+class Obj:
+    path: Path = Path("somefile")
+    object_id: str = "id1"
+    is_powershell: bool = False
+    docker_image: str = "dockerimage"
+    support_level: str = "xsoar"
+
+    @property
+    def docker_images(self):
+        return [self.docker_image]
 
 
 def create_hook(hook: dict):
@@ -362,18 +374,17 @@ class TestPreprocessFiles:
         assert output == expected_output
 
 
-def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
+def test_exclude_hooks_by_version(mocker, repo: Repo):
     """
     Given:
-        python_version_to_files with python 2.7 and python 3.8 files, and unit_test is True
+        python_version_to_files with python 2.7 and python 3.8 files
     When:
-        Calling handle_python2_files
+        Calling exclude hooks by version, to exclude non supported hooks by version
     Then:
         1. python2_files contain the python 2.7 files
         2. python_version_to_files should contain only python 3.8 files
-        3. The logger should print that it is running pre-commit with python 2.7 on file1.py
-        4. The exclude field of the run-unit-tests hook should be None
-        5. The exclude field of the other hooks should be file1.py
+        4. The exclude field of the validate hook should be None
+        5. The exclude field of the ruff hook should be file1.py
     """
     mocker.patch.object(
         pre_commit_command,
@@ -387,20 +398,43 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
         None, None, None, python_version_to_files, ""
     )
 
-    pre_commit_runner.exclude_non_supported_version_hooks()
+    pre_commit_runner.exclude_hooks_by_version()
 
-    assert (
-        "Python 2.7 files running only with the following hooks:"
-        in pre_commit_command.logger.info.call_args[0][0]
+    hooks = pre_commit_runner.hooks
+    assert hooks["validate"]["hook"].get("exclude") is None
+    assert "file1.py" in hooks["ruff"]["hook"]["exclude"]
+
+
+def test_exclude_hooks_by_support_level(mocker, repo: Repo):
+    """
+    Given:
+        python_version_to_files with python 2.7 and python 3.8 files, 2.7 is xsoar supported in 3.8 is community supported
+    When:
+        Calling exclude by support level
+    Then:
+        4. The exclude field of the ruff hook should be None
+        5. The exclude field of the autopep should be file2.py
+    """
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_TEMPLATE_PATH",
+        TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
+    )
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+    mocker.patch.object(pre_commit_command, "logger")
+    python_version_to_files = {
+        "2.7": {("file1.py", Obj())},
+        "3.8": {("file2.py", Obj(support_level="community"))},
+    }
+    pre_commit_runner = pre_commit_command.PreCommitRunner(
+        None, None, None, python_version_to_files, ""
     )
 
-    for hook in pre_commit_runner.hooks.values():
-        if hook["hook"]["id"] in PYTHON2_SUPPORTED_HOOKS:
-            assert not hook["hook"].get("exclude") or "file1.py" not in hook[
-                "hook"
-            ].get("exclude")
-        else:
-            assert "file1.py" in hook["hook"]["exclude"]
+    pre_commit_runner.exclude_hooks_by_support_level()
+
+    hooks = pre_commit_runner.hooks
+    assert hooks["ruff"]["hook"].get("exclude") is None
+    assert "file2.py" in hooks["autopep8"]["hook"]["exclude"]
 
 
 args = [

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -8,19 +7,7 @@ from demisto_sdk.commands.pre_commit.hooks.docker import (
     DockerHook,
     docker_tag_to_runfiles,
 )
-from demisto_sdk.commands.pre_commit.tests.pre_commit_test import create_hook
-
-
-@dataclass(frozen=True)
-class Obj:
-    path: Path = Path("somefile")
-    object_id: str = "id1"
-    is_powershell: bool = False
-    docker_image: str = "dockerimage"
-
-    @property
-    def docker_images(self):
-        return [self.docker_image]
+from demisto_sdk.commands.pre_commit.tests.pre_commit_test import Obj, create_hook
 
 
 @pytest.fixture(autouse=True)

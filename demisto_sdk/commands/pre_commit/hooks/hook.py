@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List, Set
 
 from demisto_sdk.commands.common.logger import logger
 
-PROPERTIES_TO_DELETE = {"needs", "support", "min_version"}
+PROPERTIES_TO_DELETE = {"needs", "exclude_support_level", "min_version"}
 
 
 class Hook:

@@ -3,9 +3,12 @@ from pathlib import Path
 from typing import Any, List, Optional
 from unittest.mock import MagicMock
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.repo import Repo
 
@@ -194,3 +197,26 @@ def update_keys(dict_obj, paths, values):
     if paths and values:
         for path, value in zip(paths, values):
             set_value(dict_obj, path, value)
+
+
+def create_playbook_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+):
+    """Creating an playbook object with altered fields from a default playbook yml structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+
+    Returns:
+        The playbook object.
+    """
+    yml_content = load_yaml("playbook.yml")
+    update_keys(yml_content, paths, values)
+    pack = REPO.create_pack()
+    playbook = pack.create_playbook()
+    playbook.create_default_playbook(name="sample")
+    playbook.yml.update(yml_content)
+    parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
+    return Playbook.from_orm(parser)  # type:ignore

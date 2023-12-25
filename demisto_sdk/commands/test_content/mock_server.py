@@ -445,23 +445,26 @@ class MITMProxy:
             diff_cmd_output = self.ami.check_output(diff_cmd.split()).decode().strip()
             logger.info(f"[red]################ diff_cmd_output: {diff_cmd_output}[/red]")
             self.logging_module.debug(f"diff_cmd_output={diff_cmd_output}")
+            logger.info(f"[red]################ diff_cmd_output: {diff_cmd_output}[/red]")
             if diff_cmd_output.endswith("are identical"):
                 self.logging_module.debug(
                     "normalized mock file and original mock file are identical"
                 )
+                logger.info(f"[red]################ normalized mock file and original mock file are identical[/red]")
             else:
                 self.logging_module.debug(
                     "the normalized mock file differs from the original"
                 )
-
+                logger.info(f"[red]################ the normalized mock file differs from the original[/red]")
         except CalledProcessError:
             self.logging_module.debug(
                 "the normalized mock file differs from the original"
             )
-
+            logger.info(f"[red]################ the normalized mock file differs from the original[/red]")
         self.logging_module.debug(
             "Replacing original mock file with the normalized one."
         )
+        logger.info(f"[red]################ Replacing original mock file with the normalized one.[/red]")
         mv_cmd = f"mv {cleaned_mock_filepath} {mock_file_path}"
         logger.info(f"[red]################ mv_cmd: {mv_cmd}[/red]")
         self.ami.call(mv_cmd.split())

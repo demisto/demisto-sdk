@@ -2659,6 +2659,7 @@ class TestContext:
         self.playbook.log_info(f"------ Test {self} start ------ (Mock: Recording)")
         with acquire_test_lock(self.playbook) as lock:
             if not lock:
+                self.playbook.log_warning(f"################{lock=}")
                 # If the integrations were not locked - the test has not finished its execution
                 return False
 

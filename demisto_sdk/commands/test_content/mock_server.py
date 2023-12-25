@@ -200,6 +200,7 @@ class MITMProxy:
 
     def commit_mock_file(self, folder_name):
         self.logging_module.debug("Committing mock files")
+        logger.info("[red]################ running commit_mock_file | Committing mock files[/red]")
         try:
             output = self.ami.check_output(
                 "cd content-test-data && "
@@ -207,6 +208,7 @@ class MITMProxy:
                 f"git commit -m \"Updated mock files for '{folder_name}' from build number - {self.build_number}\" -v".split(),
                 stderr=STDOUT,
             )
+            logger.info(f"Committing mock files output: {output.decode()=}[/red]")
             self.logging_module.debug(
                 f"Committing mock files output:\n{output.decode()}"
             )
@@ -214,6 +216,7 @@ class MITMProxy:
             self.logging_module.debug(
                 f"Committing mock files output:\n{exc.output.decode()}"
             )
+            logger.info(f"[red]################ Committing mock files output: {exc.output.decode()=}[/red]")
 
     def reset_mock_files(self):
         self.logging_module.debug("Resetting mock files")
@@ -680,10 +683,12 @@ def run_with_mock(
                 proxy_instance.move_mock_file_to_repo(playbook_or_integration_id)
                 proxy_instance.successful_rerecord_count += 1
                 proxy_instance.rerecorded_tests.append(playbook_or_integration_id)
+                logger.info(f"[red]################ {proxy_instance.should_update_mock_repo=}[/red]")
                 if proxy_instance.should_update_mock_repo:
                     proxy_instance.logging_module.debug(
                         "committing new/updated mock files to mock git repo."
                     )
+                    logger.info("[red]################ committing new/updated mock files to mock git repo.[/red]")
                     proxy_instance.commit_mock_file(playbook_or_integration_id)
             else:
                 proxy_instance.failed_rerecord_count += 1

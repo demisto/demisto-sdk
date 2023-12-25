@@ -58,6 +58,7 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
+from packaging.version import Version
 
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 XSIAM_CLIENT_SLEEP_INTERVAL = 60
@@ -1036,6 +1037,24 @@ def validate_modeling_rule(
                 collector_token=collector_token,  # type: ignore[arg-type]
             )
             xsiam_client = XsiamApiClient(xsiam_client_cfg)
+            tenant_demisto_version = xsiam_client.get_demisto_version()
+            modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(to_version=modeling_rule.to_version,
+                                                          from_version=modeling_rule.from_version,
+                                                          tenant_demisto_version=Version(tenant_demisto_version))
+            # TODO Get the demisto version of the tenant and check if the modeling rule is valid
+            if not modeling_rule_is_compatible:
+                skipped = (
+                    f'Skipping the Modeling Rule {modeling_rule_file_name}, since its version is less than'
+                    ' the tenant\'s demisto version'
+                )
+                logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
+                test_case = TestCase('Modeling Rule not compatible with tenant\'s demisto version',
+                                     classname=f'Modeling Rule {modeling_rule_file_name}')
+                return add_result_to_test_case(
+                    'Modeling Rule not compatible with tenant\'s demisto version',
+                    test_case,
+                    modeling_rule_test_suite,
+                )
             if not verify_pack_exists_on_tenant(
                 xsiam_client, retrying_caller, modeling_rule, interactive
             ):
@@ -1242,6 +1261,21 @@ def validate_modeling_rule(
             return False, modeling_rule_test_suite
         return False, None
 
+def validate_modeling_rule_version_against_tenant(to_version: Version, from_version:Version,
+                                   tenant_demisto_version: Version) -> bool:
+    """Checks if the version of the modeling rule is compatible with the tenant's demisto version.
+    Compatibility is checked by: from_version <= tenant_demisto_version <= to_version
+
+    Args:
+        to_version (Version): The to version of the modeling rule
+        from_version (Version): The from version of the modeling rule
+        tenant_demisto_version (Version): The demisto version of the tenant
+
+    Returns:
+        bool: True if the version of the modeling rule is compatible, else False
+    """
+    return tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
+    
 
 def handle_missing_event_data_in_modeling_rule(
     missing_event_data: List[UUID],

@@ -160,7 +160,9 @@ def test_config_files(mocker, repo: Repo):
     )
 
     pre_commit.prepare_and_run()
+
     assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
+    assert (Path(repo.path) / ".pre-commit-config-fixable.yaml").exists()
     assert list((Path(repo.path) / "docker-config").iterdir())
     assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
 

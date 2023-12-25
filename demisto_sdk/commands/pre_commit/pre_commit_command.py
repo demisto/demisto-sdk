@@ -415,11 +415,7 @@ class PreCommitRunner:
         num_processes = cpu_count()
         logger.info(f"Pre-Commit will use {num_processes} processes")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
-        self._set_config_to_hooks(full_fixable_hooks)
-        fixable_path = PRECOMMIT_CONFIG_MAIN_PATH.with_name(
-            "pre-commit-config-fixable.yaml"
-        )
-        write_dict(fixable_path, self.precommit_template)
+
         stdout = subprocess.PIPE if docker_hooks else None
         # first install the hooks environment
         self._run_pre_commit_process(
@@ -428,12 +424,19 @@ class PreCommitRunner:
             verbose,
             command=["install-hooks"],
         )
-        # run hooks that are fixable first, without concurrency
-        self._run_pre_commit_process(
-            fixable_path,
-            precommit_env,
-            verbose,
-        )
+        if full_fixable_hooks:
+            self._set_config_to_hooks(full_fixable_hooks)
+
+            # run hooks that are fixable first, without concurrency
+            fixable_path = PRECOMMIT_CONFIG_MAIN_PATH.with_name(
+                f"{PRECOMMIT_CONFIG_MAIN_PATH.stem}-fixable.yaml"
+            )
+            write_dict(fixable_path, self.precommit_template)
+            self._run_pre_commit_process(
+                fixable_path,
+                precommit_env,
+                verbose,
+            )
 
         for i, hook in enumerate(docker_hooks):
             self.precommit_template["repos"] = [local_repo]

@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
+
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

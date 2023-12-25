@@ -338,6 +338,8 @@ class MITMProxy:
         Args:
             playbook_or_integration_id (string): ID of the test playbook or integration of which the files should be moved.
         """
+        logger.info(f"[red[command to normalize mockfile: {command}[/red]")
+
         src_filepath = os.path.join(
             self.tmp_folder, get_mock_file_path(playbook_or_integration_id)
         )
@@ -347,17 +349,20 @@ class MITMProxy:
         dst_folder = os.path.join(
             self.repo_folder, get_folder_path(playbook_or_integration_id)
         )
-
+        logger.info(f"[red]running move_mock_file_to_repo function[/red]")
         if not self.has_mock_file(playbook_or_integration_id):
             self.logging_module.debug("Mock file not created!")
+            logger.info(f"[red]################ Mock file not created![/red]")
         elif self.get_mock_file_size(src_filepath) == "0":
             self.logging_module.debug("Mock file is empty, ignoring.")
+            logger.info(f"[red]################ Mock file is empty, ignoring.[/red]")
             self.empty_files.append(playbook_or_integration_id)
         else:
             # Move to repo folder
             self.logging_module.debug(
                 f'Moving "{src_files}" files to "{dst_folder}" directory'
             )
+            logger.info(f"[red]################ Moving '{src_files}' files to '{dst_folder}' directory[/red]")
             self.ami.call(["mkdir", "--parents", dst_folder])
             self.ami.call(["mv", src_files, dst_folder])
 

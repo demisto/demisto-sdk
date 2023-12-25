@@ -379,13 +379,11 @@ class MITMProxy:
                 provided, method will use the current directory.
         """
         self.logging_module.debug(
-            f'[blue]normalize_mock_file was called for test "{playbook_or_integration_id}[/blue]"'
+            f'normalize_mock_file was called for test "{playbook_or_integration_id}"'
         )
         logger.info(f"[red]normalize_mock_file was called for test {playbook_or_integration_id}[/red]")
         path = path or self.current_folder
-        self.logging_module.debug(
-            f'[blue]normalize_mock_file | {path=}'
-        )
+        self.logging_module.debug(f'normalize_mock_file | {path=}')
         logger.info(f"[red]normalize_mock_filex | {path=}[/red]")
         problem_keys_filepath = os.path.join(
             path, get_folder_path(playbook_or_integration_id), "problematic_keys.json"
@@ -403,10 +401,13 @@ class MITMProxy:
         mock_file_path = os.path.join(
             path, get_mock_file_path(playbook_or_integration_id)
         )
+        logger.info(f"[red]################ mock_file_path: {mock_file_path}[/red]")
         cleaned_mock_filepath = mock_file_path.strip(".mock") + "_cleaned.mock"
+        logger.info(f"[red]################ cleaned_mock_filepath: {cleaned_mock_filepath}[/red]")
         log_file = os.path.join(
             path, get_log_file_path(playbook_or_integration_id, record=True)
         )
+        logger.info(f"[red]################ log_file: {log_file}[/red]")
         command = (
             f"/home/{SSH_USER}/.local/bin/mitmdump -ns ~/timestamp_replacer.py "
             f"--set script_mode=clean --set keys_filepath={problem_keys_filepath}"
@@ -414,6 +415,10 @@ class MITMProxy:
         )
         self.logging_module.debug(f"command to normalize mockfile:\n\t{command}")
         self.logging_module.debug("Let's try and normalize the mockfile")
+
+        logger.info(f"[red[command to normalize mockfile: {command}[/red]")
+        logger.info(f"[red]Let's try and normalize the mockfile[/red]")
+
         try:
             check_output(
                 self.ami.add_ssh_prefix(command.split(), ssh_options="-t"),
@@ -435,8 +440,10 @@ class MITMProxy:
 
         # verify cleaned mock is different than original
         diff_cmd = f"diff -sq {cleaned_mock_filepath} {mock_file_path}"
+        logger.info(f"[red]################ diff_cmd: {diff_cmd}[/red]")
         try:
             diff_cmd_output = self.ami.check_output(diff_cmd.split()).decode().strip()
+            logger.info(f"[red]################ diff_cmd_output: {diff_cmd_output}[/red]")
             self.logging_module.debug(f"diff_cmd_output={diff_cmd_output}")
             if diff_cmd_output.endswith("are identical"):
                 self.logging_module.debug(
@@ -456,6 +463,7 @@ class MITMProxy:
             "Replacing original mock file with the normalized one."
         )
         mv_cmd = f"mv {cleaned_mock_filepath} {mock_file_path}"
+        logger.info(f"[red]################ mv_cmd: {mv_cmd}[/red]")
         self.ami.call(mv_cmd.split())
 
     def start(self, playbook_or_integration_id, path=None, record=False) -> None:

@@ -2630,10 +2630,10 @@ class TestContext:
         # we want to test first playback only once (we want to skip it when using retries mechanism)
 
         self.playbook.log_info("################ running _execute_mockable_test function")
-        self.playbook.log_info(f"{self.playbook=}")
-        self.playbook.log_info(f"{proxy=}")
-        self.playbook.log_info(f"{self.playbook.configuration.playbook_id=}")
-        self.playbook.log_info(f"{proxy.has_mock_file(self.playbook.configuration.playbook_id)}")
+        self.playbook.log_info(f"################ {self.playbook=}")
+        self.playbook.log_info(f"################ {proxy=}")
+        self.playbook.log_info(f"################ {self.playbook.configuration.playbook_id=}")
+        self.playbook.log_info(f"################ proxy.has_mock_file: {proxy.has_mock_file(self.playbook.configuration.playbook_id)}")
         if (
             not self.playbook.configuration.is_first_playback_failed
             and proxy.has_mock_file(self.playbook.configuration.playbook_id)

@@ -503,6 +503,16 @@ def configure_integration(
         )
 
 
+def clean_repo():
+    """
+    This functions clean the repo from the temp `CommonServerPython` and `APIModules` files and other files that were created by lint
+    """
+    for path in PYTHONPATH:
+        for temp_file in CONTENT_PATH.rglob(path.name):
+            if temp_file != path:
+                temp_file.unlink(missing_ok=True)
+
+
 def setup_env(
     file_paths: Tuple[Path, ...],
     ide: IDE = IDE.VSCODE,
@@ -511,6 +521,7 @@ def setup_env(
     secret_id: Optional[str] = None,
     instance_name: Optional[str] = None,
     test_module: bool = False,
+    clean: bool = False,
 ) -> None:
     """This function sets up the development environment for integration scripts
 
@@ -525,6 +536,8 @@ def setup_env(
     Raises:
         RuntimeError:
     """
+    if clean:
+        clean_repo()
     configure_dotenv()
     if not file_paths:
         (CONTENT_PATH / "CommonServerUserPython.py").touch()

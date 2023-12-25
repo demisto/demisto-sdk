@@ -3490,6 +3490,12 @@ def update_content_graph(
     default=False,
     help="Whether to run test-module on the configured XSOAR/XSIAM instance",
 )
+@click.option(
+    "--clean",
+    is_flag=True,
+    default=False,
+    help="Clean the repo out of the temp `CommonServerPython.py` files, `demistomock.py` and other files that were copied by `lint`",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
     input,
@@ -3499,6 +3505,7 @@ def setup_env(
     secret_id,
     instance_name,
     run_test_module,
+    clean,
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup_env,
@@ -3514,6 +3521,7 @@ def setup_env(
         secret_id=secret_id,
         instance_name=instance_name,
         test_module=run_test_module,
+        clean=True,
     )
 
 

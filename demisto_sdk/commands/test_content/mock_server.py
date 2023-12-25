@@ -338,18 +338,20 @@ class MITMProxy:
         Args:
             playbook_or_integration_id (string): ID of the test playbook or integration of which the files should be moved.
         """
-        logger.info(f"[red[command to normalize mockfile: {command}[/red]")
+        logger.info(f"[red]################ running move_mock_file_to_repo function[/red]")
 
         src_filepath = os.path.join(
             self.tmp_folder, get_mock_file_path(playbook_or_integration_id)
         )
+        logger.info(f"[red################ {src_filepath=}[/red]")
         src_files = os.path.join(
             self.tmp_folder, get_folder_path(playbook_or_integration_id) + "*"
         )
+        logger.info(f"[red################ {src_files=}[/red]")
         dst_folder = os.path.join(
             self.repo_folder, get_folder_path(playbook_or_integration_id)
         )
-        logger.info(f"[red]running move_mock_file_to_repo function[/red]")
+        logger.info(f"[red################ {dst_folder=}[/red]")
         if not self.has_mock_file(playbook_or_integration_id):
             self.logging_module.debug("Mock file not created!")
             logger.info(f"[red]################ Mock file not created![/red]")
@@ -418,7 +420,7 @@ class MITMProxy:
             f"--set script_mode=clean --set keys_filepath={problem_keys_filepath}"
             f" -r {mock_file_path} -w {cleaned_mock_filepath} | sudo tee -a {log_file}"
         )
-        self.logging_module.debug(f"command to normalize mockfile:\n\t{command}")
+        self.logging_module.debug(f"command to normalize mockfile:\n\t{command=}")
         self.logging_module.debug("Let's try and normalize the mockfile")
 
         logger.info(f"[red[command to normalize mockfile: {command}[/red]")

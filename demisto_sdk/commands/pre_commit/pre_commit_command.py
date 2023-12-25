@@ -105,6 +105,7 @@ class PreCommitRunner:
             )
         self.hooks = self._get_hooks(self.precommit_template)
         self.hooks_need_docker = self._hooks_need_docker()
+        self.hooks_fixable = self._hooks_fixable()
 
     @cached_property
     def files_to_run_with_objects(
@@ -248,6 +249,16 @@ class PreCommitRunner:
             and any("in-docker" in need for need in needs)
         }
 
+    def _hooks_fixable(self) -> Set[str]:
+        """
+        Get all the hook ids that needs docker based on the "needs" property
+        """
+        return {
+            hook_id
+            for hook_id, hook in self.hooks.items()
+            if hook["hook"].pop("fixable", None)
+        }
+
     def _get_docker_and_no_docker_hooks(
         self, local_repo: dict
     ) -> Tuple[List[dict], List[dict]]:
@@ -302,31 +313,30 @@ class PreCommitRunner:
             logger.error(process.stderr)
         return process.returncode
 
-    def _filter_hooks_need_docker(self, repos: dict) -> dict:
+    def _filter_hooks_by_hooks_set(self, repos: dict, hooks_set: Set[str]) -> dict:
         """
-        This filters the pre-commit config file the hooks that needed docker, so we will be able to execute them after the docker hooks are finished
+        This filters the hooks by a hooks set. All the hooks in the hook set will be removed from the pre-commit config file and will be returned for later use
         """
-        full_hooks_need_docker = {}
+        full_hooks = {}
         for repo, repo_dict in repos.items():
             hooks = []
             for hook in repo_dict["hooks"]:
-                if hook["id"] not in self.hooks_need_docker:
+                if hook["id"] not in hooks_set:
                     hooks.append(hook)
                 else:
-                    full_hooks_need_docker[hook["id"]] = {
+                    full_hooks[hook["id"]] = {
                         "repo": repo_dict,
                         "hook": hook,
                     }
             repo_dict["hooks"] = hooks
-        return full_hooks_need_docker
+        return full_hooks
 
-    def _update_hooks_needs_docker(self, hooks_needs_docker: dict):
+    def _set_config_to_hooks(self, hooks: dict):
         """
-        This is to populate the pre-commit config file only for hooks that needs docker
-        This is needed because we need to execute this after all docker hooks are finished
+        This is to populate the pre-commit config file only for specific hooks
         """
         self.precommit_template["repos"] = []
-        for _, hook in hooks_needs_docker.items():
+        for _, hook in hooks.items():
             repos = {repo["repo"] for repo in self.precommit_template["repos"]}
             repo_in_hook = hook["repo"]["repo"]
             if repo_in_hook not in repos:
@@ -398,19 +408,33 @@ class PreCommitRunner:
         local_repo = repos["local"]
         docker_hooks, no_docker_hooks = self._get_docker_and_no_docker_hooks(local_repo)
         local_repo["hooks"] = no_docker_hooks
-        full_hooks_need_docker = self._filter_hooks_need_docker(repos)
-
+        full_hooks_need_docker = self._filter_hooks_by_hooks_set(
+            repos, self.hooks_need_docker
+        )
+        full_fixable_hooks = self._filter_hooks_by_hooks_set(repos, self.hooks_fixable)
         num_processes = cpu_count()
         logger.info(f"Pre-Commit will use {num_processes} processes")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
-        # first, run the hooks without docker hooks
+        self._set_config_to_hooks(full_fixable_hooks)
+        fixable_path = PRECOMMIT_CONFIG_MAIN_PATH.with_name(
+            "pre-commit-config-fixable.yaml"
+        )
+        write_dict(fixable_path, self.precommit_template)
         stdout = subprocess.PIPE if docker_hooks else None
+        # first install the hooks environment
         self._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
             verbose,
             command=["install-hooks"],
         )
+        # run hooks that are fixable first, without concurrency
+        self._run_pre_commit_process(
+            fixable_path,
+            precommit_env,
+            verbose,
+        )
+
         for i, hook in enumerate(docker_hooks):
             self.precommit_template["repos"] = [local_repo]
             local_repo["hooks"] = [hook]
@@ -431,7 +455,7 @@ class PreCommitRunner:
         return_code = int(any(results))
         if self.hooks_need_docker:
             # run hooks that needs docker after all the docker hooks finished
-            self._update_hooks_needs_docker(full_hooks_need_docker)
+            self._set_config_to_hooks(full_hooks_need_docker)
             path = PRECOMMIT_CONFIG_MAIN_PATH.with_name(
                 f"{PRECOMMIT_CONFIG_MAIN_PATH.stem}-needs.yaml"
             )

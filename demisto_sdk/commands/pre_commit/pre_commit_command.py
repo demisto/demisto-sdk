@@ -165,7 +165,7 @@ class PreCommitRunner:
         This function excludes the files that are not supported by the hook, according to the hook min_version property.
         """
         for hook in self.hooks.values():
-            min_version = Hook.get_property(hook["hook"], self.mode, "min_version")
+            min_version = Hook.get_property(hook["hook"], self.mode, "min_py_version")
             if not min_version:
                 continue
             files_to_exclude: Set[Path] = set()

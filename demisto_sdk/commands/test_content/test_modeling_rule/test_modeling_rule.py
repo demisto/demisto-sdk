@@ -1053,11 +1053,9 @@ def validate_modeling_rule(
                 logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
                 test_case = TestCase('Modeling Rule not compatible with tenant\'s demisto version',
                                      classname=f'Modeling Rule {modeling_rule_file_name}')
-                return add_result_to_test_case(
-                    'Modeling Rule not compatible with tenant\'s demisto version',
-                    test_case,
-                    modeling_rule_test_suite,
-                )
+                test_case.result += [Skipped(skipped)]
+                modeling_rule_test_suite.add_testcase(test_case)
+                return True, modeling_rule_test_suite
             if not verify_pack_exists_on_tenant(
                 xsiam_client, retrying_caller, modeling_rule, interactive
             ):

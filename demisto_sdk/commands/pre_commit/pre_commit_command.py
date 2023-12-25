@@ -415,15 +415,10 @@ class PreCommitRunner:
         num_processes = cpu_count()
         logger.info(f"Pre-Commit will use {num_processes} processes")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, self.precommit_template)
+        stdout = (
+            subprocess.PIPE if docker_hooks else None
+        )  # this is the stdout of the "main" hooks, if it is the only one we can stream to stdout
 
-        stdout = subprocess.PIPE if docker_hooks else None
-        # first install the hooks environment
-        self._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH,
-            precommit_env,
-            verbose,
-            command=["install-hooks"],
-        )
         if full_fixable_hooks:
             self._set_config_to_hooks(full_fixable_hooks)
 
@@ -437,6 +432,13 @@ class PreCommitRunner:
                 precommit_env,
                 verbose,
             )
+        # install the hooks environment, so it will not appear in the middle of the run
+        self._run_pre_commit_process(
+            PRECOMMIT_CONFIG_MAIN_PATH,
+            precommit_env,
+            verbose,
+            command=["install-hooks"],
+        )
 
         for i, hook in enumerate(docker_hooks):
             self.precommit_template["repos"] = [local_repo]

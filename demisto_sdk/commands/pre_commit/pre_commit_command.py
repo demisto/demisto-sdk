@@ -124,11 +124,11 @@ class PreCommitRunner:
         }
 
     @cached_property
-    def support_level_to_files(self) -> Dict[str, Set[Tuple[Path, IntegrationScript]]]:
+    def support_level_to_files(self) -> Dict[str, Set[Path]]:
         support_level_to_files = defaultdict(set)
         for path, obj in self.files_to_run_with_objects:
             if obj:
-                support_level_to_files[obj.support_level].add((path, obj))
+                support_level_to_files[obj.support_level].add(path)
         return support_level_to_files
 
     @staticmethod
@@ -191,9 +191,7 @@ class PreCommitRunner:
             files_to_exclude: Set[Path] = set()
             for support_level in support_levels:
                 files_to_exclude.update(
-                    path
-                    for path, obj in self.support_level_to_files[support_level]
-                    if obj
+                    path for path in self.support_level_to_files[support_level]
                 )
             if files_to_exclude:
                 join_files_string = join_files(files_to_exclude)

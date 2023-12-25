@@ -946,14 +946,12 @@ def validate_modeling_rule(
     modeling_rule_directory: Path,
     xsiam_url: str,
     retrying_caller: Retrying,
-    api_key: str,
-    auth_id: str,
-    xsiam_token: str,
-    collector_token: str,
     push: bool,
     interactive: bool,
     ctx: typer.Context,
     delete_existing_dataset: bool,
+    xsiam_client: XsiamApiClient,
+    tenant_xsiam_version: Version
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Validate a modeling rule.
 
@@ -961,18 +959,13 @@ def validate_modeling_rule(
         modeling_rule_directory (Path): Path to the modeling rule directory.
         retrying_caller (tenacity.Retrying): The retrying caller object.
         xsiam_url (str): URL of the xsiam tenant.
-        api_key (str): xsiam API key.
-        auth_id (str): xsiam auth ID.
-        xsiam_token (str): xsiam token.
-        collector_token: collector token.
         push (bool): Whether to push test event data to the tenant.
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
         delete_existing_dataset (bool): Whether to delete the existing dataset in the tenant.
+        xsiam_client (XsiamApiClient): The XSIAM client used to do API calls to the tenant.
+        tenant_xsiam_version (Version): The XSIAM version of the tenant.
     """
-    print(
-        'Hellooo'
-    )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
     containing_pack = get_containing_pack(modeling_rule)
@@ -1030,31 +1023,21 @@ def validate_modeling_rule(
             missing_event_data, _ = is_test_data_exists_on_server(
                 modeling_rule.testdata_path
             )
-
-            # initialize xsiam client
-            xsiam_client_cfg = XsiamApiClientConfig(
-                base_url=xsiam_url,  # type: ignore[arg-type]
-                api_key=api_key,  # type: ignore[arg-type]
-                auth_id=auth_id,  # type: ignore[arg-type]
-                token=xsiam_token,  # type: ignore[arg-type]
-                collector_token=collector_token,  # type: ignore[arg-type]
-            )
-            xsiam_client = XsiamApiClient(xsiam_client_cfg)
-            tenant_demisto_version = xsiam_client.get_demisto_version()
-            modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(to_version=modeling_rule.to_version,
-                                                          from_version=modeling_rule.from_version,
-                                                          tenant_demisto_version=Version(tenant_demisto_version))
-            # TODO Get the demisto version of the tenant and check if the modeling rule is valid
+            modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
+                to_version=modeling_rule.to_version,
+                from_version=modeling_rule.from_version,
+                tenant_xsiam_version=tenant_xsiam_version)
             if not modeling_rule_is_compatible:
+                # Modeling rule version is not compatible with the XSIAM version of the tenant, skipping
                 skipped = (
-                    f'Skipping the Modeling Rule {modeling_rule_file_name}, since its version is less than'
-                    ' the tenant\'s demisto version'
+                    f'Skipping the Modeling Rule {modeling_rule} due to version mismatch'
                 )
-                logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
-                test_case = TestCase('Modeling Rule not compatible with tenant\'s demisto version',
+                logger.warning(f'[yellow]{skipped}[/yellow]', extra={'markup': True})
+                test_case = TestCase('Modeling Rule not compatible with tenant\'s XSIAM version',
                                      classname=f'Modeling Rule {modeling_rule_file_name}')
                 test_case.result += [Skipped(skipped)]
                 modeling_rule_test_suite.add_testcase(test_case)
+                # Return True since we don't want to fail the command
                 return True, modeling_rule_test_suite
             if not verify_pack_exists_on_tenant(
                 xsiam_client, retrying_caller, modeling_rule, interactive
@@ -1263,19 +1246,19 @@ def validate_modeling_rule(
         return False, None
 
 def validate_modeling_rule_version_against_tenant(to_version: Version, from_version:Version,
-                                   tenant_demisto_version: Version) -> bool:
-    """Checks if the version of the modeling rule is compatible with the tenant's demisto version.
-    Compatibility is checked by: from_version <= tenant_demisto_version <= to_version
+                                   tenant_xsiam_version: Version) -> bool:
+    """Checks if the version of the modeling rule is compatible with the tenant's XSIAM version.
+    Compatibility is checked by: from_version <= tenant_xsiam_version <= to_version
 
     Args:
         to_version (Version): The to version of the modeling rule
         from_version (Version): The from version of the modeling rule
-        tenant_demisto_version (Version): The demisto version of the tenant
+        tenant_xsiam_version (Version): The XSIAM version of the tenant
 
     Returns:
         bool: True if the version of the modeling rule is compatible, else False
     """
-    return tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
+    return tenant_xsiam_version >= from_version and tenant_xsiam_version <= to_version
     
 
 def handle_missing_event_data_in_modeling_rule(
@@ -1520,6 +1503,16 @@ def test_modeling_rule(
     errors = False
     xml = JUnitXml()
     start_time = datetime.now(timezone.utc)
+    # initialize xsiam client
+    xsiam_client_cfg = XsiamApiClientConfig(
+        base_url=xsiam_url,  # type: ignore[arg-type]
+        api_key=api_key,  # type: ignore[arg-type]
+        auth_id=auth_id,  # type: ignore[arg-type]
+        token=xsiam_token,  # type: ignore[arg-type]
+        collector_token=collector_token,  # type: ignore[arg-type]
+    )
+    xsiam_client = XsiamApiClient(xsiam_client_cfg)
+    tenant_xsiam_version = xsiam_client.get_xsiam_version()
     for i, modeling_rule_directory in enumerate(inputs, start=1):
         logger.info(
             f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
@@ -1530,14 +1523,12 @@ def test_modeling_rule(
             # can ignore the types since if they are not set to str values an error occurs
             xsiam_url,  # type: ignore[arg-type]
             retrying_caller,
-            api_key,  # type: ignore[arg-type]
-            auth_id,  # type: ignore[arg-type]
-            xsiam_token,  # type: ignore[arg-type]
-            collector_token,  # type: ignore[arg-type]
             push,
             interactive,
             ctx,
             delete_existing_dataset,
+            xsiam_client=xsiam_client,
+            tenant_xsiam_version=Version(tenant_xsiam_version)
         )
         if success:
             logger.info(

@@ -970,6 +970,9 @@ def validate_modeling_rule(
         ctx (typer.Context): Typer context.
         delete_existing_dataset (bool): Whether to delete the existing dataset in the tenant.
     """
+    print(
+        'Hellooo'
+    )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
     containing_pack = get_containing_pack(modeling_rule)

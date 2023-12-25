@@ -1063,7 +1063,7 @@ class TestPackUniqueFilesValidator:
             not in errors
         )
 
-    def test_validate_pack_readme_invalid_images(self):
+    def test_validate_pack_readme_invalid_images(self, mocker):
         """
         Given
             - A pack README file with invalid absolute and relative image paths in it.
@@ -1078,6 +1078,7 @@ class TestPackUniqueFilesValidator:
         self.validator = PackUniqueFilesValidator(
             os.path.join(self.FILES_PATH, "DummyPack2")
         )
+        mocker.patch("demisto_sdk.commands.common.tools.sleep")
 
         with requests_mock.Mocker() as m:
             # Mock get requests

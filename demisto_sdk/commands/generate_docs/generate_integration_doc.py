@@ -38,6 +38,11 @@ from demisto_sdk.commands.integration_diff.integration_diff_detector import (
 )
 
 CREDENTIALS = 9
+SETUP_SECTION_CONSTANTS = (
+    "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+    "3. Click **Add instance** to create and configure a new integration instance.",
+    "4. Click **Test** to validate the URLs, token, and connection.",
+)
 
 
 def append_or_replace_command_in_docs(
@@ -110,14 +115,19 @@ def generate_integration_doc(
 
         errors: list = []
 
+        # If we're generating/syncing a doc for a UI contribution, we don't want to overwrite the
+        # Command Example and Human Readable Output sections so we unset the command examples
         example_dict: dict = {}
-        if examples:
-            specific_commands = command.split(",") if command else None
-            command_examples = get_command_examples(examples, specific_commands)
-            example_dict, build_errors = build_example_dict(command_examples, insecure)
-            errors.extend(build_errors)
-        else:
-            errors.append(f"Command examples was not found: {examples}.")
+        if not is_contribution:
+            if examples:
+                specific_commands = command.split(",") if command else None
+                command_examples = get_command_examples(examples, specific_commands)
+                example_dict, build_errors = build_example_dict(
+                    command_examples, insecure
+                )
+                errors.extend(build_errors)
+            else:
+                errors.append(f"Command examples was not found: {examples}.")
 
         if permissions == "per-command":
             command_permissions_dict: Any = {}
@@ -173,6 +183,7 @@ def generate_integration_doc(
                 f"{PACKS_README_FILE_NAME} for Integration '{integration_name}' in Pack '{pack_name}' exists. Checking for differences in git..."
             )
             try:
+                # TODO discuss version control solution
                 git = git_util.GitUtil(get_content_path(Path(input_path)))
                 primary_branch = (
                     git.find_primary_branch(git.repo)
@@ -239,7 +250,7 @@ def generate_integration_doc(
                 modified_commands = integration_diff.get_modified_commands()
                 if modified_commands:
                     logger.info(
-                        f"Integration commands {modified_commands} have changed, replacing the old section with the new one..."
+                        f"Integration commands {','.join(modified_commands)} have changed, replacing the old section with the new one..."
                     )
 
                     doc_text, errors = replace_integration_commands_section(
@@ -373,9 +384,9 @@ def generate_setup_section(yaml_data: dict):
     default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
 
     section = [
-        "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+        SETUP_SECTION_CONSTANTS[0],
         "2. Search for {}.".format(yaml_data["display"]),
-        "3. Click **Add instance** to create and configure a new integration instance.",
+        SETUP_SECTION_CONSTANTS[1],
     ]
     access_data: List[Dict] = []
 
@@ -408,7 +419,7 @@ def generate_setup_section(yaml_data: dict):
             access_data, "", horizontal_rule=False, numbered_section=True
         )
     )
-    section.append("4. Click **Test** to validate the URLs, token, and connection.")
+    section.append(SETUP_SECTION_CONSTANTS[2])
     section.append("")
 
     return section
@@ -1030,7 +1041,7 @@ def replace_integration_conf_section(
     - `new_integration_yml` (``Dict[str, Any]``): The dictionary representing the new integration YML.
 
     Returns:
-    - `str` of the updated README text. If there's an errors, the original is returned.
+    - `str` of the updated README text. If there's an error, the original is returned.
     - `str` of the error if there is one, `None` otherwise.
     """
 
@@ -1038,15 +1049,14 @@ def replace_integration_conf_section(
 
     try:
         new_configuration_section = generate_setup_section(new_integration_yml)
-        old_configuration_section = generate_setup_section(old_integration_yml)
 
         doc_text_lines = doc_text.splitlines()
 
         # We take the first and the second-to-last index of the old section
         # and use the section range to replace it with the new section.
         # Second-to-last index because the last element is an empty string
-        old_config_start_line = doc_text_lines.index(old_configuration_section[0])
-        old_config_end_line = doc_text_lines.index(old_configuration_section[-2])
+        old_config_start_line = doc_text_lines.index(SETUP_SECTION_CONSTANTS[0])
+        old_config_end_line = doc_text_lines.index(SETUP_SECTION_CONSTANTS[2])
 
         doc_text_lines[
             old_config_start_line : old_config_end_line + 1
@@ -1128,14 +1138,23 @@ def replace_integration_commands_section(
                 if doc_line == old_command_section[-2]
             ]
 
-            old_cmd_end_line = doc_text_lines.index(old_command_section[-2], indices[i])
+            if indices:
+                old_cmd_end_line = doc_text_lines.index(
+                    old_command_section[-2], indices[i]
+                )
+            else:
+                old_cmd_end_line = doc_text_lines.index(old_command_section[-2])
 
+            # TODO check if + 1 here is right or whether we need
+            # len(new_command_section) - len()
             doc_text_lines[
                 old_cmd_start_line : old_cmd_end_line + 1
             ] = new_command_section
 
             doc_text = "\n".join(doc_text_lines)
-        except ValueError as e:
-            error = f"Unable to find line in command '{modified_command}' section in README: {str(e)}"
+        except (ValueError, IndexError) as e:
+            error = (
+                f"Unable to replace '{modified_command}' section in README: {str(e)}"
+            )
             errors.append(error)
     return doc_text, errors

@@ -1817,7 +1817,7 @@ class TestIntegrationDocUpdate:
 
         assert "aha-delete-idea" in actual
 
-    def test_identical_integration_yaml(self, tmp_path: TempPathFactory):
+    def test_identical_integration_yaml(self):
         """
         TODO Add a test where the integration yamls are identical
         """
@@ -2179,3 +2179,121 @@ class TestIntegrationDocUpdate:
         assert len(errors) == 4
 
         assert doc_text == original_doc_text
+
+    def test_added_conf_cmd_modified_cmd(self, git_repo: Repo, mocker: MockerFixture):
+        """
+        Test for a scenario where we:
+        - Add a new configuration option.
+        - Add a new command.
+        - Modify a command argument and output.
+
+        Given:
+        - A repo with a SplunkPy integration
+
+        When:
+        - A new configuration option was added.
+        - A new command was added.
+        - A command argument and output were modified.
+
+        Then:
+        - The configuration should be added to the setup section of the README.
+        - The added command should be appended to the README.
+        - The modified argument and output should be reflected in the README.
+        """
+
+        integration_name = "SplunkPy"
+
+        yml_code_path = Path(
+            TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(
+            TEST_FILES, self._get_function_name(), PACKS_README_FILE_NAME
+        )
+        markdown = readme_path.read_text()
+
+        # Create Pack and Integration
+        git_repo.create_pack(integration_name)
+        git_repo.packs[0].create_integration(
+            integration_name, yml=yml_code, readme=markdown
+        )
+
+        git_repo.git_util.commit_files(commit_message=f"Added {integration_name} Pack")
+        git_repo.git_util.repo.git.checkout("-b", "add_conf_cmd_mod_cmd")
+
+        shutil.copyfile(
+            os.path.join(
+                TEST_FILES,
+                self._get_function_name(),
+                f"{integration_name}_update.yml",
+            ),
+            git_repo.packs[0].integrations[0].yml.path,
+        )
+
+        mocker.patch.object(
+            git_repo.git_util,
+            "read_file_content",
+            return_value=Path(
+                TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
+            ).read_bytes(),
+        )
+        master_text = git_repo.git_util.read_file_content(
+            path=os.path.join(git_repo.packs[0].integrations[0].yml.path),
+            commit_or_branch="master",
+            from_remote=False,
+        )
+
+        with Path(str(git_repo._tmpdir), f"{integration_name}.yml").open("wb") as fd:
+            fd.write(master_text)
+
+        diff = IntegrationDiffDetector(
+            old=os.path.join(str(git_repo._tmpdir), f"{integration_name}.yml"),
+            new=os.path.join(git_repo.packs[0].integrations[0].yml.path),
+        )
+
+        assert diff.is_configuration_different()
+
+        mocker.patch.object(
+            GitUtil,
+            "read_file_content",
+            return_value=Path(
+                TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
+            ).read_bytes(),
+        )
+        generate_integration_doc(
+            input_path=os.path.join(git_repo.packs[0].integrations[0].yml.path)
+        )
+
+        actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
+        actual[61] == "    | Debug logging enabled |  | False |"
+        actual[
+            804
+        ] == "| limit | Maximum number of records to return. Default is 100. | Optional |"
+        actual[805] == "| new_arg | New argument for testing. | Optional | "
+        actual[812] == "| Splunk.Test | String | Test output for Splunk | "
+        assert actual[1139:1161] == [
+            "### splunk-test-cmd",
+            "",
+            "***",
+            "A new test command",
+            "",
+            "#### Base Command",
+            "",
+            "`splunk-test-cmd`",
+            "",
+            "#### Input",
+            "",
+            "| **Argument Name** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| some_arg | Test argument for new command. | Required | ",
+            "",
+            "#### Context Output",
+            "",
+            "| **Path** | **Type** | **Description** |",
+            "| --- | --- | --- |",
+            "| Splunk.Test.Output | String | Some sample test output | ",
+            "| Splunk.Test.Date | Date | Some sample test output date | ",
+            "",
+        ]

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -24,7 +23,6 @@ class IsCreatedFieldInISOFormatValidator(BaseValidator[ContentTypes]):
     related_field = "created"
     is_auto_fixable = True
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -36,12 +34,11 @@ class IsCreatedFieldInISOFormatValidator(BaseValidator[ContentTypes]):
             if not check_timestamp_format(content_item.created)
         ]
 
-
     def fix(
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        content_item.created = parser.parse(content_item.created).isoformat() + "Z" # type: ignore
+        content_item.created = parser.parse(content_item.created).isoformat() + "Z"  # type: ignore
         return FixResult(
             validator=self,
             message=self.fix_message.format(content_item.created),

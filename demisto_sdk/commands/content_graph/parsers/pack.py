@@ -240,7 +240,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
         try:
             metadata = get_json(path / PACK_METADATA_FILENAME, git_sha=git_sha)
             if not metadata or not isinstance(metadata, dict):
-                raise NotAContentItemException(f"Please make sure that the {PACK_METADATA_FILENAME} is a non-empty dict for pack {path=}")
+                raise NotAContentItemException(
+                    f"Please make sure that the {PACK_METADATA_FILENAME} is a non-empty dict for pack {path=}"
+                )
         except FileNotFoundError:
             raise NotAContentItemException(
                 f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
@@ -278,7 +280,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
                     mandatorily=dependency.get("mandatory"),
                 )
         except AttributeError:
-            raise AttributeError(f"Couldn't parse dependencies section for pack {self.name} pack_metadata. Dependencies section must be a dict.")
+            raise AttributeError(
+                f"Couldn't parse dependencies section for pack {self.name} pack_metadata. Dependencies section must be a dict."
+            )
 
         if (
             self.object_id != BASE_PACK

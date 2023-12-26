@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import re
@@ -21,7 +20,6 @@ class IsCurrentVersionCorrectFormatValidator(BaseValidator[ContentTypes]):
     related_field = "currentVersion"
     is_auto_fixable = False
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -30,8 +28,5 @@ class IsCurrentVersionCorrectFormatValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not re.match(VERSION_REGEX, content_item.current_version) # type: ignore
+            if not re.match(VERSION_REGEX, content_item.current_version)  # type: ignore
         ]
-    
-
-    

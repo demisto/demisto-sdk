@@ -38,7 +38,7 @@ runs:
       if: ${{ inputs.junit-file-path != '' }}
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})
+        name: ${{ inputs.junit-file-path }}
         path: |
           ${{ inputs.junit-file-path }}
     - name: Print Summary of pytest results in workflow summary

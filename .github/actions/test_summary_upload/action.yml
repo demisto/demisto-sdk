@@ -49,7 +49,7 @@ runs:
       if: always()
       uses: pmeier/pytest-results-action@main
       with:
-        path: ${{ inputs.artifacts_folder_name }}/junit.xml
+        path: ${{ inputs.artifacts-folder-name }}/junit.xml
         summary: true
         display-options: ${{ inputs.summary-display-options }}
         fail-on-empty: false

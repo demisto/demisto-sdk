@@ -156,14 +156,16 @@ jobs:
       - name: Merge all junit-files
         run: |
           npm install -g junit-report-merger
+          ls -a ./unit-tests-junit-files-python-${{ matrix.python-version }}
           jrm ./combined-junit.xml ./unit-tests-junit-files-python-${{ matrix.python-version }}/*.xml
+          ls -a
       - name: Print Summary of pytest results in workflow summary
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
           path: combined-junit.xml
           summary: true
-          display-options: fs
+          display-options: fsEX
           fail-on-empty: true
           title: Unit Tests / Python ${{ matrix.python-version }} summary
 

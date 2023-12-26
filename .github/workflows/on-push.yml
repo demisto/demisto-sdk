@@ -158,6 +158,7 @@ jobs:
         with:
           path: unit-tests-junit-files-python-${{ matrix.python-version }}
           pattern: junit-python-${{ matrix.python-version }}*
+          merge-multiple: true
       - name: Merge all junit-files
         run: |
           npm install -g junit-report-merger

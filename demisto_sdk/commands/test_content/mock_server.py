@@ -184,8 +184,8 @@ class MITMProxy:
         self.logging_module = logging_module
         self.build_number = build_number
         self.ami = AMIConnection(self.internal_ip)
-        self.should_update_mock_repo = is_branch_master
-        self.should_validate_playback = not is_branch_master
+        self.should_update_mock_repo = True
+        self.should_validate_playback = True
         self.empty_files = []
         self.failed_tests_count = 0
         self.successful_tests_count = 0
@@ -209,6 +209,7 @@ class MITMProxy:
                 f"git commit -m \"Updated mock files for '{folder_name}' from build number - {self.build_number}\" -v".split(),
                 stderr=STDOUT,
             )
+            logger.info(f"Committing mock files output: {output}[/red]")
             logger.info(f"Committing mock files output: {output.decode()=}[/red]")
             self.logging_module.debug(
                 f"Committing mock files output:\n{output.decode()}"

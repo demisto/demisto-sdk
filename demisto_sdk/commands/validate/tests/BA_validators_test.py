@@ -28,6 +28,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
+    IDNameValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_all_items import IsFromVersionSufficientAllItemsValidator
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_indicator_field import (
     IsFromVersionSufficientIndicatorFieldValidator,
 )
@@ -39,12 +43,6 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_shoul
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_version_synched import (
     FromToVersionSyncedValidator,
-)
-from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equal_name import (
-    IDNameValidator,
-)
-from demisto_sdk.commands.validate.validators.super_classes.BA106_is_from_version_sufficient import (
-    IsFromVersionSufficientValidator,
 )
 
 
@@ -298,7 +296,7 @@ def test_CliNameMatchIdValidator_fix(content_item, expected_name, expected_fix_m
         ),
     ],
 )
-def test_IsFromVersionSufficientValidator_is_valid(
+def test_IsFromVersionSufficientAllItemsValidator_is_valid(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
@@ -307,13 +305,13 @@ def test_IsFromVersionSufficientValidator_is_valid(
         - Case 1: a list of content items with 1 item of each kind supported by the validation where the fromVersion field is valid.
         - Case 2: IncidentField, wizard, playbook, and genericField, all set to fromVersion = 4.5.0 (insufficient).
     When
-    - Calling the IsFromVersionSufficientValidator is_valid function.
+    - Calling the IsFromVersionSufficientAllItemsValidator is_valid function.
     Then
         - Make sure the right amount of failures return and that the error msg is correct.
         - Case 1: Shouldn't fail anything.
         - Case 2: Should fail all 4 content items.
     """
-    results = IsFromVersionSufficientValidator().is_valid(content_items)
+    results = IsFromVersionSufficientAllItemsValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -343,7 +341,7 @@ def test_IsFromVersionSufficientValidator_is_valid(
         ),
     ],
 )
-def test_IsFromVersionSufficientValidator_fix(
+def test_IsFromVersionSufficientAllItemsValidator_fix(
     content_items, expected_msgs, expected_new_from_versions
 ):
     """
@@ -351,7 +349,7 @@ def test_IsFromVersionSufficientValidator_fix(
     content_items list.
         - Case 1: IncidentField, wizard, playbook, and genericField, all set to fromVersion = 4.5.0 (insufficient).
     When
-    - Calling the IsFromVersionSufficientValidator fix function.
+    - Calling the IsFromVersionSufficientAllItemsValidator fix function.
     Then
         - Make sure the contentitem from version was set to the right version and the right message was returned.
     """
@@ -359,7 +357,7 @@ def test_IsFromVersionSufficientValidator_fix(
         content_items, expected_msgs, expected_new_from_versions
     ):
         assert content_item.fromversion == "4.5.0"
-        result = IsFromVersionSufficientValidator().fix(content_item)
+        result = IsFromVersionSufficientAllItemsValidator().fix(content_item)
         assert result.message == expected_msg
         assert content_item.fromversion == expected_new_from_version
 

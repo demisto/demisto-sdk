@@ -14,6 +14,7 @@ from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
+    INCIDENT_FIELDS_DIR,
     INTEGRATIONS_DIR,
     LAYOUT,
     LAYOUTS_CONTAINER,
@@ -697,7 +698,7 @@ def test_format_pack_dir_name(contrib_converter, input_name, expected_output_nam
     ), "The output's last character must be alphanumeric"
 
 
-def test_convert_contribution_dir_to_pack_contents(tmp_path):
+def test_convert_contribution_dir_to_pack_contents(tmp_path: Path, repo: Repo):
     """
     Scenario: convert a directory which was unarchived from a contribution zip into the content
         pack directory into which the contribution is intended to update, and the contribution
@@ -722,25 +723,31 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     - Ensure the file '.../incidentfield/incidentfield-SomeIncidentField.json' is moved to
         '.../IncidentFields/incidentfield-SomeIncidentField.json' and overwrites the existing file
     """
-    fake_pack_subdir = tmp_path / "IncidentFields"
-    fake_pack_subdir.mkdir()
-    extant_file = fake_pack_subdir / "incidentfield-SomeIncidentField.json"
-    old_json = {"field": "old_value"}
-    extant_file.write_text(json.dumps(old_json))
-    fake_pack_extracted_dir = tmp_path / "incidentfield"
-    fake_pack_extracted_dir.mkdir()
-    update_file = fake_pack_extracted_dir / "incidentfield-SomeIncidentField.json"
-    new_json = {"field": "new_value"}
-    update_file.write_text(json.dumps(new_json))
+
+    incident_field_data = {"field": "old_value"}
+
+    tmp_unzipped_path = tmp_path / "incidentfield"
+    tmp_unzipped_ic_path = tmp_unzipped_path / "SomeIncidentField.json"
+
+    tmp_renamed_path = tmp_path / INCIDENT_FIELDS_DIR
+    tmp_renamed_ic_path = tmp_renamed_path / "SomeIncidentField.json"
+
+    tmp_unzipped_path.mkdir()
+    tmp_unzipped_ic_path.touch()
+
+    with tmp_unzipped_ic_path.open("w") as ic:
+        json.dump(incident_field_data, ic)
+
     converter = ContributionConverter(
-        # TODO use tmp_dir
-        contribution="/tmp/contrib.zip",
+        contribution="",
         working_dir_path=str(tmp_path),
-        base_dir=fake_pack_subdir,
+        base_dir=repo.path,
     )
-    converter.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
-    assert json.loads(extant_file.read_text()) == new_json
-    assert not fake_pack_extracted_dir.exists()
+
+    converter.convert_contribution_dir_to_pack_contents(str(tmp_unzipped_path))
+
+    assert json.loads(tmp_renamed_ic_path.read_text()) == incident_field_data
+    assert not tmp_unzipped_path.exists()
 
 
 directories_set_1 = {"IndicatorTypes", "Layouts", "IndicatorFields", "Classifiers"}

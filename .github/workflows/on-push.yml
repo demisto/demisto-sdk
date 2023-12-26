@@ -156,16 +156,14 @@ jobs:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: unit-tests-junit-files-python-${{ matrix.python-version }}
           pattern: junit-python-${{ matrix.python-version }}*
-          merge-multiple: true
       - name: Merge all junit-files
         run: |
           npm install -g junit-report-merger
-          cat ./unit-tests-junit-files-python-${{ matrix.python-version }}/junit.xml
-          ls -a ./unit-tests-junit-files-python-${{ matrix.python-version }}/junit.xml
+          la -a
+          
           echo "running jrm"
-          jrm ./combined-junit.xml ./unit-tests-junit-files-python-${{ matrix.python-version }}/junit.xml/*.xml
+          jrm ./combined-junit.xml ./junit*.xml/*.xml
           ls -a
           cat ./combined-junit.xml
       - name: Print Summary of pytest results in workflow summary

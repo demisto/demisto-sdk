@@ -1325,8 +1325,12 @@ class IntegrationValidator(ContentEntityValidator):
 
             # ignore optional fields
             for param in params:
-                for field in ["defaultvalue", "section", "advanced", "required"]:
-                    param.pop(field, None)
+                for field in param.copy():
+                    if (
+                        field in ["defaultvalue", "section", "advanced", "required"]
+                        or ":" in field
+                    ):
+                        param.pop(field, None)
 
             for fetch_required_param in fetch_required_params:
                 # If this condition returns true, we'll go over the params dict and we'll check if there's a param that match the fetch_required_param name.
@@ -1422,6 +1426,9 @@ class IntegrationValidator(ContentEntityValidator):
             for param in self.current_file.get("configuration", [])
         }
         for param_name, param_details in params.items():
+            for detail in param_details.copy():
+                if ":" in detail:
+                    param_details.pop(detail)
             if "defaultvalue" in param_details and param_name != "feed":
                 param_details.pop("defaultvalue")
             if "hidden" in param_details:

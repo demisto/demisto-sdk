@@ -778,7 +778,9 @@ rearranging_before_conversion_inputs = [
 @pytest.mark.parametrize(
     "zip_path, expected_directories", rearranging_before_conversion_inputs
 )
-def test_rearranging_before_conversion(zip_path: str, expected_directories: set):
+def test_rearranging_before_conversion(
+    zip_path: str, expected_directories: set, repo: Repo, mocker: MockerFixture
+):
     """
     Given a zip file, fixes the wrong server mapping.
     if an indicatorfield is mapped to an incidentfield directory, then we will make sure that we have indeed created
@@ -798,10 +800,9 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     - Ensure (at first test/check) in case the original directory becomes empty, then it is deleted
 
     """
+
     contribution_converter = ContributionConverter(
-        # TODO use tmp_dir
-        contribution=zip_path,
-        base_dir="/tmp/content",
+        contribution=zip_path, base_dir=repo.path
     )
     contribution_converter.convert_contribution_to_pack()
     unpacked_contribution_dirs = get_child_directories(
@@ -831,7 +832,7 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
         ("", "0.0.0"),
     ],
 )
-def test_extract_pack_version(input_script: str, output_version: str):
+def test_extract_pack_version(input_script: str, output_version: str, repo: Repo):
     """
     Given:
     - A text with/without the pack version in it.
@@ -844,18 +845,14 @@ def test_extract_pack_version(input_script: str, output_version: str):
 
     """
     contribution_converter = ContributionConverter(
-        # TODO use tmp_dir
-        contribution="contrib.zip",
-        base_dir="/tmp/content",
+        contribution="contrib.zip", base_dir=repo.path
     )
     assert contribution_converter.extract_pack_version(input_script) == output_version
 
 
-def test_create_contribution_items_version_note():
+def test_create_contribution_items_version_note(repo: Repo):
     contribution_converter = ContributionConverter(
-        # TODO use tmp_dir
-        contribution="contrib.zip",
-        base_dir="/tmp/content",
+        contribution="contrib.zip", base_dir=repo.path
     )
     contribution_converter.contribution_items_version = {
         "CortexXDRIR": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},

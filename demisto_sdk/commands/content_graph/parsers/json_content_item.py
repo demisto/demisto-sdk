@@ -96,8 +96,10 @@ class JSONContentItemParser(ContentItemParser):
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
 
-            # exclude the data file from the list of json files
-            # in case the content-item is list and it is json type
+            """
+            exclude the data file from the list of json files
+            in case the content-item is list and it is json type
+            """
             if LISTS_DIR in self.path.parts:
                 json_files_in_dir = [
                     Path(file)

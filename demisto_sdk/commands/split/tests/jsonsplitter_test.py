@@ -81,7 +81,9 @@ def test_split_json_list(repo, list_name: str, list_type: str, suffix: str, data
     """
     pack = repo.create_pack("PackName")
     list_json = pack.create_list("test-list", LIST)
-    list_json.update({"id": list_name, "name": list_name, "type": list_type, "data": data})
+    list_json.update(
+        {"id": list_name, "name": list_name, "type": list_type, "data": data}
+    )
     json_splitter = JsonSplitter(
         input=list_json.path, output=pack.path, file_type=FileType.LISTS
     )

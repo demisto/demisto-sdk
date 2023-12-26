@@ -1,4 +1,3 @@
-import json
 import os
 from enum import Enum
 from pathlib import Path
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.text_file import TextFile
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_pack_name,
@@ -50,7 +50,7 @@ class JsonSplitter:
     def __init__(
         self,
         input: Union[Path, str],
-        output: Union[Path, str] = "",
+        output: Optional[Union[Path, str]] = None,  # If not provided, the output will be created next to the input
         file_type: FileType = FileType.GENERIC_MODULE,
         no_auto_create_dir: bool = False,
         new_module_file: bool = False,
@@ -176,7 +176,7 @@ class JsonSplitter:
         suffix = suffix_by_type.get(self.json_data["type"], ".txt")
 
         file_name = Path(pascal_case(self.json_data["name"]) + ".json")
-        file_data_name = file_name.with_name(file_name.stem + f"_data{suffix}")
+        file_data_name = file_name.with_name(f"{file_name.stem}_data{suffix}")
 
         if self.autocreate_dir:
             pack_name = get_pack_name(self.input)
@@ -202,7 +202,7 @@ class JsonSplitter:
         if file_data_name.suffix == ".json":
             try:
                 data_list = json.loads(self.json_data["data"])
-            except json.decoder.JSONDecodeError as e:
+            except Exception as e:
                 raise Exception(
                     f"Could not parse data of the list {self.json_data['name']}.\n"
                 ) from e

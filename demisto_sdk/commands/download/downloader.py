@@ -1132,7 +1132,6 @@ class Downloader:
 
         else:
             if content_type == LISTS_DIR and content_item_path.is_dir():
-
                 # Collect json files to return the list metadata
                 json_files = [
                     path
@@ -1411,7 +1410,9 @@ class Downloader:
 
         elif content_item_entity_directory == LISTS_DIR:
             download_path = (
-                output_path / content_item_entity_directory / pascal_case(content_item_name)
+                output_path
+                / content_item_entity_directory
+                / pascal_case(content_item_name)
             )
             download_path.mkdir(parents=True, exist_ok=True)
 

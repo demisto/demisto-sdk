@@ -47,7 +47,7 @@ class TestFile:
         ]
 
         for path in json_file_paths:
-            assert type(File.__from_path(path)) == JsonFile
+            assert type(File._from_path(path)) == JsonFile
 
     def test_from_path_valid_yml_based_content_items(self, repo: Repo):
         """
@@ -79,7 +79,7 @@ class TestFile:
         ]
 
         for path in yml_file_paths:
-            assert type(File.__from_path(path)) == YmlFile
+            assert type(File._from_path(path)) == YmlFile
 
     def test_from_path_valid_text_based_files(self, repo: Repo):
         """
@@ -114,7 +114,7 @@ class TestFile:
         ]
 
         for path in text_file_paths:
-            assert type(File.__from_path(path)) == TextFile
+            assert type(File._from_path(path)) == TextFile
 
     def test_from_path_valid_ini_based_files(self, repo: Repo):
         """
@@ -147,7 +147,7 @@ class TestFile:
 
         ini_file_paths = [pack.pack_ignore.path, _ini_file_path]
         for path in ini_file_paths:
-            assert type(File.__from_path(path)) == IniFile
+            assert type(File._from_path(path)) == IniFile
 
     def test_from_path_valid_binary_files(self, repo: Repo):
         """
@@ -167,7 +167,7 @@ class TestFile:
 
         binary_file_paths = [integration.image.path, _bin_file_path]
         for path in binary_file_paths:
-            assert type(File.__from_path(path)) == BinaryFile
+            assert type(File._from_path(path)) == BinaryFile
 
     def test_from_path_unknown_file_error(self, repo: Repo):
         """
@@ -183,7 +183,7 @@ class TestFile:
         _path = Path(repo.path) / "file.unknown-suffix"
         TextFile.write_file("text", output_path=_path)
         with pytest.raises(UnknownFileError):
-            File.__from_path(_path)
+            File._from_path(_path)
 
     def test_read_from_local_path_error(self):
         """

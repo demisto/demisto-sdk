@@ -127,7 +127,7 @@ class File(ABC, BaseModel):
 
     @classmethod
     @lru_cache
-    def __from_path(
+    def _from_path(
         cls,
         input_path: Union[Path, str],
         git_util: Optional[GitUtil] = None,
@@ -220,7 +220,7 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_local_path.cache_clear()
-        model = cls.__from_path(input_path=path, git_util=git_util, handler=handler)
+        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
         return model.__read_local_file()
 
     def __read_local_file(self) -> Any:
@@ -259,7 +259,7 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
-        model = cls.__from_path(input_path=path, git_util=git_util, handler=handler)
+        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
         return model.__read_git_file(tag, from_remote=from_remote)
 
     def __read_git_file(

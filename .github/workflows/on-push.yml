@@ -160,7 +160,7 @@ jobs:
       - name: Merge all junit-files
         run: |
           npm install -g junit-report-merger
-          la -a
+          ls -a
           
           echo "running jrm"
           jrm ./combined-junit.xml ./junit*.xml/*.xml

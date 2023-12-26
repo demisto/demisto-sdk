@@ -334,7 +334,6 @@ class TestPackUniqueFilesValidator:
             "The pack price was changed from 2 to 3 - revert the change",
         )
 
-
     def test_validate_pack_dependencies_invalid_id_set(self, mocker, repo):
         """
         Given

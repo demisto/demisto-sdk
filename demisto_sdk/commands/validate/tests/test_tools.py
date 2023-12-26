@@ -10,8 +10,8 @@ from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
-from TestSuite.repo import Repo
 from demisto_sdk.commands.validate.tools import check_timestamp_format
+from TestSuite.repo import Repo
 
 REPO = Repo(tmpdir=Path(tempfile.mkdtemp()))
 
@@ -221,6 +221,7 @@ def create_playbook_object(
     playbook.yml.update(yml_content)
     parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
     return Playbook.from_orm(parser)  # type:ignore
+
 
 def test_check_timestamp_format(self):
     """

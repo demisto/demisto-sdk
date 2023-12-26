@@ -175,12 +175,12 @@ class PackMetadataParser:
             metadata.get("contentCommitHash") or ""
         )
 
-        self.pack_metadata: dict = metadata
+        self.pack_metadata_dict: dict = metadata
 
     @property
     def url(self) -> str:
-        if "url" in self.pack_metadata and self.pack_metadata["url"]:
-            return self.pack_metadata.get("url", "")
+        if "url" in self.pack_metadata_dict and self.pack_metadata_dict["url"]:
+            return self.pack_metadata_dict.get("url", "")
         return (
             "https://www.paloaltonetworks.com/cortex" if self.support == "xsoar" else ""
         )
@@ -189,12 +189,12 @@ class PackMetadataParser:
     def certification(self):
         if self.support in ["xsoar", "partner"]:
             return "certified"
-        return self.pack_metadata.get("certification") or ""
+        return self.pack_metadata_dict.get("certification") or ""
 
     @property
     def author(self):
         return (
-            self.pack_metadata.get(
+            self.pack_metadata_dict.get(
                 "author", "Cortex XSOAR" if self.support == "xsoar" else ""
             )
             or ""
@@ -202,11 +202,11 @@ class PackMetadataParser:
 
     @property
     def categories(self):
-        return [capital_case(c) for c in self.pack_metadata["categories"]]
+        return [capital_case(c) for c in self.pack_metadata_dict["categories"]]
 
     @property
     def use_cases(self):
-        return [capital_case(c) for c in self.pack_metadata["useCases"]]
+        return [capital_case(c) for c in self.pack_metadata_dict["useCases"]]
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():

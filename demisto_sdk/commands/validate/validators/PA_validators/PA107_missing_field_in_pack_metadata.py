@@ -30,7 +30,7 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 missing_fields := [
-                    field for field in PACK_METADATA_FIELDS if field not in content_item.pack_metadata  # type: ignore
+                    field for field in PACK_METADATA_FIELDS if field not in content_item.pack_metadata_dict  # type: ignore
                 ]
             )
         ]

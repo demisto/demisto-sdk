@@ -56,7 +56,6 @@ class PackMetadata(BaseModel):
     videos: Optional[List[str]] = Field([])
     modules: Optional[List[str]] = Field([])
     integrations: Optional[List[str]] = Field([])
-    pack_metadata: Optional[dict] = Field({})
 
     # For private packs
     premium: Optional[bool]

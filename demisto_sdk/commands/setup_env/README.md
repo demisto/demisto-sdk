@@ -32,3 +32,5 @@ Secret ID, to use with Google Secret Manager instance. If not provided, will use
 Instance name to configure in XSOAR/XSIAM.
 - **--run-test-module**
 Whether to run the test-module of the integration.
+- **--clean**
+Clean the repo out of the temp `CommonServerPython.py` files, `demistomock.py` and other files that were created by `lint`.

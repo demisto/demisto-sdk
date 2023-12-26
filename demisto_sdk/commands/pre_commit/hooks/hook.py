@@ -175,9 +175,9 @@ class Hook:
         if files_to_exclude:
             join_files_string = join_files(files_to_exclude)
             if self.base_hook.get("exclude"):
-                self.base_hook["hook"]["exclude"] += f"|{join_files_string}"
+                self.base_hook["exclude"] += f"|{join_files_string}"
             else:
-                self.base_hook["hook"]["exclude"] = join_files_string
+                self.base_hook["exclude"] = join_files_string
 
 
 def join_files(files: Set[Path], separator: str = "|") -> str:

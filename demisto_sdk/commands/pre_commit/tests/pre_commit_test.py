@@ -15,6 +15,7 @@ from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     GitUtil,
+    PreCommitRunner,
     group_by_language,
     preprocess_files,
     subprocess,
@@ -49,7 +50,10 @@ def create_hook(hook: dict):
     """
     This function mocks hook as he returns in _get_hooks() function
     """
-    repo_and_hook: dict = {"repo": {"repo": "repo", "hooks": [hook]}}
+    repo_and_hook: dict = {
+        "repo": {"repo": "repo", "hooks": [hook]},
+        "runner": PreCommitRunner(None, False, "", {}),
+    }
     repo_and_hook["hook"] = repo_and_hook["repo"]["hooks"][0]
     return repo_and_hook
 
@@ -393,14 +397,17 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
     )
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
     mocker.patch.object(pre_commit_command, "logger")
-    python_version_to_files = {"2.7": {("file1.py", None)}, "3.8": {("file2.py", None)}}
+    python_version_to_files = {
+        "2.7": {(Path("file1.py"), None)},
+        "3.8": {(Path("file2.py"), None)},
+    }
     pre_commit_runner = pre_commit_command.PreCommitRunner(
         None, None, None, python_version_to_files, ""
     )
 
-    pre_commit_runner.exclude_hooks_by_version()
+    pre_commit_runner.prepare_hooks(dry_run=True)
 
-    hooks = pre_commit_runner.hooks
+    hooks = pre_commit_runner._get_hooks(pre_commit_runner.precommit_template)
     assert hooks["validate"]["hook"].get("exclude") is None
     assert "file1.py" in hooks["ruff"]["hook"]["exclude"]
 
@@ -412,7 +419,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
     When:
         Calling exclude by support level
     Then:
-        4. The exclude field of the ruff hook should be None
+        4. The exclude field of the pycln hook should be None
         5. The exclude field of the autopep should be file2.py
     """
     mocker.patch.object(
@@ -423,17 +430,17 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {
-        "2.7": {("file1.py", Obj())},
-        "3.8": {("file2.py", Obj(support_level="community"))},
+        "2.7": {(Path("file1.py"), Obj())},
+        "3.8": {(Path("file2.py"), Obj(support_level="community"))},
     }
     pre_commit_runner = pre_commit_command.PreCommitRunner(
         None, None, None, python_version_to_files, ""
     )
 
-    pre_commit_runner.exclude_hooks_by_support_level()
+    pre_commit_runner.prepare_hooks(True)
 
-    hooks = pre_commit_runner.hooks
-    assert hooks["ruff"]["hook"].get("exclude") is None
+    hooks = pre_commit_runner._get_hooks(pre_commit_runner.precommit_template)
+    assert hooks["pycln"]["hook"].get("exclude") is None
     assert "file2.py" in hooks["autopep8"]["hook"]["exclude"]
 
 

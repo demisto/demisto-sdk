@@ -40,7 +40,7 @@ runs:
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json
           .coverage
-    - name: Upload artifacts
+    - name: Upload artifacts Junit Files
       if: ${{ inputs.junit-file-path != '' }}
       uses: actions/upload-artifact@v4
       with:

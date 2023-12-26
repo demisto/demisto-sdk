@@ -181,13 +181,11 @@ def get_client_from_server_type(
             )
         # if its xsoar-on-prem that has version > 8.x.x
         except pydantic.ValidationError:
-            if base_url and api_key and not auth_id:
-                return XsoarClient(
-                    client=_client,
-                    about_xsoar=about_raw_response,
-                    config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
-                )
-            raise
+            return XsoarClient(
+                client=_client,
+                about_xsoar=about_raw_response,
+                config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
+            )
 
     elif is_xsoar_on_prem_environment():
         return XsoarClient(

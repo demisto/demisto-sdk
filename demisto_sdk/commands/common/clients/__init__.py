@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
-
+from requests.exceptions import RequestException
 
 @lru_cache
 def get_client_from_config(client_config: XsoarClientConfig) -> XsoarClient:
@@ -117,7 +117,7 @@ def get_client_from_server_type(
         verify_ssl=verify_ssl,
     )
 
-    def is_xsiam_enviorment() -> bool:
+    def is_xsiam_environment() -> bool:
         if product_mode == "xsiam":
             return True
 
@@ -137,7 +137,7 @@ def get_client_from_server_type(
 
         return True
 
-    def is_xsoar_saas_enviorment() -> bool:
+    def is_xsoar_saas_environment() -> bool:
         if product_mode == "xsoar" and deployment_mode == "saas":
             return True
 
@@ -149,10 +149,10 @@ def get_client_from_server_type(
         logger.debug("instance is not XSOAR-SaaS instance")
         return False
 
-    def is_xsoar_on_prem() -> bool:
+    def is_xsoar_on_prem_environment() -> bool:
         if product_mode == "xsoar" and deployment_mode == "saas":
             return True
-        # for old enivorments that do not have product-mode / deployment-mode
+        # for old environments that do not have product-mode / deployment-mode
         if server_version and Version(server_version) < Version(
             MINIMUM_XSOAR_SAAS_VERSION
         ):
@@ -167,7 +167,7 @@ def get_client_from_server_type(
     deployment_mode = about_raw_response.get("deploymentMode")
     server_version = about_raw_response.get("demistoVersion")
 
-    if is_xsiam_enviorment():
+    if is_xsiam_environment():
         return XsiamClient(
             client=_client,
             about_xsoar=about_raw_response,
@@ -175,15 +175,26 @@ def get_client_from_server_type(
                 base_api_url=base_url, api_key=api_key, auth_id=auth_id
             ),
         )
-    elif is_xsoar_saas_enviorment():
-        return XsoarSaasClient(
+    elif is_xsoar_saas_environment():
+        xsoar_saas_client = XsoarSaasClient(
             client=_client,
             about_xsoar=about_raw_response,
             config=XsoarSaasClientConfig(
                 base_api_url=base_url, api_key=api_key, auth_id=auth_id
             ),
         )
-    elif is_xsoar_on_prem():
+        # we might have self services that are xsoar on-prem but with versions of 8.x.x
+        try:
+            # unique endpoint only for xsoar-saas
+            xsoar_saas_client.get_tenant_info()
+            return xsoar_saas_client
+        except RequestException:
+            return XsoarClient(
+                client=_client,
+                about_xsoar=about_raw_response,
+                config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
+            )
+    elif is_xsoar_on_prem_environment():
         return XsoarClient(
             client=_client,
             about_xsoar=about_raw_response,

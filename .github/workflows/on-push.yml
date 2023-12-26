@@ -55,7 +55,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           artifacts-folder-name: unit-tests
-          group: ${{ matrix.group }}
           junit-file-path: unit-tests/junit-python-${{ matrix.python-version }}-group-${{ matrix.group }}.xml
 
 

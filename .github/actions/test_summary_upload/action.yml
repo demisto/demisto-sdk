@@ -42,7 +42,7 @@ runs:
     - name: Upload artifacts Junit Files
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.junit-file-path }}-python-${{ inputs.python-version }}-group-${{ inputs.group }}.xml
+        name: junit-python-${{ inputs.python-version }}-group-${{ inputs.group }}.xml
         path: |
           ${{ inputs.junit-file-path }}
     - name: Print Summary of pytest results in workflow summary

@@ -45,11 +45,17 @@ jobs:
           node_pid=$!
 
           mkdir unit-tests
-          poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
-          cp -r unit-tests/junit.xml junit.xml
+          poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
+
+      - name: Upload artifacts Junit Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-python-${{ matrix.python-version }}-group-${{ matrix.group }}.xml
+          path: |
+            junit.xml
 
       - name: Python ${{ matrix.python-version }} (${{ matrix.group }}) - Test Summary Upload
         uses: ./.github/actions/test_summary_upload
@@ -152,11 +158,11 @@ jobs:
         with:
           path: unit-tests-junit-files-python-${{ matrix.python-version }}
           pattern: junit-python-${{ matrix.python-version }}*
-          merge-multiple: true
       - name: Merge all junit-files
         run: |
           npm install -g junit-report-merger
           ls -a ./unit-tests-junit-files-python-${{ matrix.python-version }}
+          echo "running jrm"
           jrm ./combined-junit.xml ./unit-tests-junit-files-python-${{ matrix.python-version }}/*.xml
           ls -a
       - name: Print Summary of pytest results in workflow summary

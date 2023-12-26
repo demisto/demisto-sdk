@@ -21,11 +21,7 @@ inputs:
     type: string
     description: "The test-summary display options"
     default: fsEX  # show all failed and skipped tests
-  junit-file-path:
-    required: false
-    type: string
-    default: "junit.xml"
-    description: "The path for the junit file that pytest produces"
+
 
 runs:
   using: 'composite'
@@ -36,15 +32,9 @@ runs:
       with:
         name: ${{ inputs.artifacts-folder-name }}-artifacts-python-${{ inputs.python-version }}-(${{ inputs.group }})
         path: |
-          ${{ inputs.artifacts_folder_name }}
+          ${{ inputs.artifacts-folder-name }}
           node_versions_info.json
           .coverage
-    - name: Upload artifacts Junit Files
-      uses: actions/upload-artifact@v4
-      with:
-        name: junit-python-${{ inputs.python-version }}-group-${{ inputs.group }}.xml
-        path: |
-          ${{ inputs.junit-file-path }}
     - name: Print Summary of pytest results in workflow summary
       if: always()
       uses: pmeier/pytest-results-action@main
@@ -53,13 +43,13 @@ runs:
         summary: true
         display-options: ${{ inputs.summary-display-options }}
         fail-on-empty: false
-    - name: Check if ${{ inputs.artifacts_folder_name }} have passed
+    - name: Check if ${{ inputs.artifacts-folder-name }} have passed
       shell: bash
       if: always()
       run: |
         if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
-          echo "There are ${{ inputs.artifacts_folder_name }} that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the ${{ inputs.artifacts_folder_name }} summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
+          echo "There are ${{ inputs.artifacts-folder-name }} that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the ${{ inputs.artifacts-folder-name }} summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
         else
-          echo "All ${{ inputs.artifacts_folder_name }} have passed, congratulations!"
+          echo "All ${{ inputs.artifacts-folder-name }} have passed, congratulations!"
         fi
         exit $PYTEST_EXIT_CODE

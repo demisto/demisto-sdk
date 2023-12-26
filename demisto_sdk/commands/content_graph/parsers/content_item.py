@@ -242,7 +242,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             path
         )
 
-    def set_path(self, suffix: str) -> Path:
+    def set_path(self, suffix: str) -> None:
         """Sets the path of the content item with a given suffix.
 
         Args:
@@ -266,7 +266,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                         break
                 else:
                     path = paths[0]
-        return path
+        self.path = path
 
     def should_skip_parsing(self) -> bool:
         """Returns true if any of the minimal conditions for parsing is not met.

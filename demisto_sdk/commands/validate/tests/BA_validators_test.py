@@ -31,7 +31,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_all_items import IsFromVersionSufficientAllItemsValidator
+from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_all_items import (
+    IsFromVersionSufficientAllItemsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_indicator_field import (
     IsFromVersionSufficientIndicatorFieldValidator,
 )

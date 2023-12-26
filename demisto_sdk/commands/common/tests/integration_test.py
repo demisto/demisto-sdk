@@ -2081,6 +2081,20 @@ class TestIsFetchParamsExist:
             ]
         )
 
+    def test_specific_for_marketplace(self):
+        """
+        Given:
+            a schema whit a custom value for specific marketplace on fetch
+
+        When:
+            running is_valid_fetch
+
+        Then:
+            validate that the validation pass
+        """
+        self.validator.current_file["configuration"][-1]["defaultValue:xsoar"] = "test"
+        assert self.validator.is_valid_fetch()
+
     def test_not_fetch(self, mocker):
         self.test_malformed_field(mocker)
         self.validator.is_valid = True
@@ -2287,6 +2301,16 @@ class TestIsFeedParamsExist:
         for item in configuration:
             if item.get("additionalinfo"):
                 item["additionalinfo"] = f"""{item['additionalinfo']}."""
+        assert (
+            self.validator.all_feed_params_exist() is True
+        ), "all_feed_params_exist() returns False instead True"
+
+    def test_value_for_marketplace_feed(self):
+        configuration = self.validator.current_file["configuration"]
+        for item in configuration:
+            if item.get("name") == "feed":
+                item["name:xsoar"] = "test-name"
+                item["something:xsoar"] = "test"
         assert (
             self.validator.all_feed_params_exist() is True
         ), "all_feed_params_exist() returns False instead True"

@@ -35,7 +35,7 @@ runs:
           node_versions_info.json
           .coverage
     - name: Upload junit artifacts
-      if: ${{ ne(inputs.junit-file-path, '') }}
+      if: ${{ inputs.junit-file-path != "" }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})

@@ -38,7 +38,7 @@ do
 
   # Do git commands...
   current_content_branch=$(git branch --show-current)
-  old_sha=$(git rev-parse -q --verify refs/stash)                                                                                                                                                                               ─╯
+  old_sha=$(git rev-parse -q --verify refs/stash)
   git stash
   new_sha=$(git rev-parse -q --verify refs/stash)
   git checkout master

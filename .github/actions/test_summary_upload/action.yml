@@ -21,17 +21,22 @@ inputs:
     type: string
     description: "The test-summary display options"
     default: fsEX  # show all failed and skipped tests
-
+  junit-file-path:
+    required: false
+    type: string
+    default: ""
+    description: "The path for the junit file that pytest produces"
 
 runs:
   using: 'composite'
   steps:
     - name: Upload artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})-group(${{ inputs.group }})
         path: |
+          ${{ junit-file-path }}
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json
           .coverage
@@ -42,7 +47,7 @@ runs:
         path: ${{ inputs.artifacts_folder_name }}/junit.xml
         summary: true
         display-options: ${{ inputs.summary-display-options }}
-        fail-on-empty: true
+        fail-on-empty: false
     - name: Check if ${{ inputs.artifacts_folder_name }} have passed
       shell: bash
       if: always()

@@ -29,7 +29,7 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})
+        name: ${{ inputs.artifacts-folder-name }}-artifacts-python(${{ inputs.python-version }})
         path: |
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json

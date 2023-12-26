@@ -1,6 +1,7 @@
 import itertools
 from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Optional
 
 import pytest
 
@@ -46,13 +47,19 @@ class Obj:
         return [self.docker_image]
 
 
-def create_hook(hook: dict):
+def create_hook(
+    hook: dict,
+    mode: str = "",
+    all_files=False,
+    input_files: Optional[List[Path]] = None,
+):
     """
     This function mocks hook as he returns in _get_hooks() function
     """
+
     repo_and_hook: dict = {
         "repo": {"repo": "repo", "hooks": [hook]},
-        "runner": PreCommitRunner(None, False, "", {}),
+        "runner": PreCommitRunner(input_files, all_files, mode, {}),
     }
     repo_and_hook["hook"] = repo_and_hook["repo"]["hooks"][0]
     return repo_and_hook
@@ -234,9 +241,10 @@ def test_ruff_hook_nightly_mode():
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
     ruff_hook = create_hook(
-        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]},
+        mode="nightly",
     )
-    RuffHook(**ruff_hook, mode="nightly").prepare_hook(PYTHON_VERSION_TO_FILES)
+    RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
 
     for (hook, _) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
@@ -250,11 +258,8 @@ def test_validate_format_hook_nightly_mode_and_all_files():
     """
     Testing validate_format hook created successfully (the -a flag is added and the -i arg is not exist)
     """
-    validate_format_hook = create_hook({"args": []})
-    kwargs = {"mode": "nightly", "all_files": True}
-    ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
-        PYTHON_VERSION_TO_FILES
-    )
+    validate_format_hook = create_hook({"args": []}, mode="nightly", all_files=True)
+    ValidateFormatHook(**validate_format_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
 
     hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
     assert "-a" in hook_args
@@ -265,11 +270,10 @@ def test_validate_format_hook_nightly_mode():
     """
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist, even in nightly mode)
     """
-    validate_format_hook = create_hook({"args": []})
-    kwargs = {"mode": "nightly", "input_mode": True}
-    ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
-        PYTHON_VERSION_TO_FILES
+    validate_format_hook = create_hook(
+        {"args": []}, mode="nightly", input_files=[Path("file1.py")]
     )
+    ValidateFormatHook(**validate_format_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
 
     hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
     assert "-a" not in hook_args
@@ -280,10 +284,8 @@ def test_validate_format_hook_all_files():
     """
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist)
     """
-    validate_format_hook = create_hook({"args": []})
-    ValidateFormatHook(**validate_format_hook, **{"all_files": True}).prepare_hook(
-        PYTHON_VERSION_TO_FILES
-    )
+    validate_format_hook = create_hook({"args": []}, all_files=True)
+    ValidateFormatHook(**validate_format_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
 
     hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
     assert "-a" in hook_args
@@ -479,9 +481,13 @@ def test_coverage_analyze_general_hook(mode, expected_args):
         - Make sure that the coverage-analyze hook was created successfully.
     """
 
-    coverage_analyze_hook = create_hook({"args": args, "args:nightly": args_nightly})
-    kwargs = {"mode": mode, "all_files": False, "input_mode": True}
-    Hook(**coverage_analyze_hook, **kwargs).prepare_hook()
+    coverage_analyze_hook = create_hook(
+        {"args": args, "args:nightly": args_nightly},
+        mode=mode,
+        all_files=True,
+        input_files=[Path("file1.py")],
+    )
+    Hook(**coverage_analyze_hook).prepare_hook()
     hook_args = coverage_analyze_hook["repo"]["hooks"][0]["args"]
     assert expected_args == hook_args
 

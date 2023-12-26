@@ -65,13 +65,13 @@ def test_moded_properties(mocker, mode, expected_text):
         "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
         return_value="devtestimg",
     )
-    raw_hook = create_hook({"args": [], "language": "docker"})
+    raw_hook = create_hook({"args": [], "language": "docker"}, mode=mode)
 
     raw_hook["hook"]["args"] = ["i am some argument"]
     raw_hook["hook"]["args:nightly"] = ["i am the nightly args"]
     raw_hook["hook"]["args:other"] = ["i am some other argument"]
 
-    DockerHook(**raw_hook, mode=mode).prepare_hook([(file_path, None)], True)
+    DockerHook(**raw_hook).prepare_hook([(file_path, None)], True)
 
     hook = raw_hook["repo"]["hooks"][0]
     assert hook["args"] == expected_text
@@ -100,9 +100,9 @@ def test_get_property():
                         "prop1": value1,
                         "prop1:nightly": nightly_val,
                         "prop1:othermode": "someval",
-                    }
+                    },
+                    mode=mode,
                 ),
-                mode=mode
             )._get_property(prop)
             == expected_value
         )
@@ -177,9 +177,10 @@ def test__set_properties():
                 "prop1:othermode": "someval",
                 "other_prop": "whatever",
                 "nonused:mode": "isignored",
-            }
+            },
+            mode=mode,
         )
-        docker_hook = DockerHook(**hook, mode=mode)
+        docker_hook = DockerHook(**hook)
         assert docker_hook.base_hook == expected_value
 
     assert_get_prop_successful(

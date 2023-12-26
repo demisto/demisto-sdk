@@ -140,9 +140,9 @@ class PreCommitRunner:
 
     def _get_hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
-        for repo in pre_commit_config["repos"]:
+        for repo in pre_commit_config.get("repos", []):
             new_hooks = []
-            for hook in repo["hooks"]:
+            for hook in repo.get("hooks", []):
                 if not self.run_docker_hooks and hook["id"].endswith("in-docker"):
                     continue
                 if (self.run_hook and hook["id"] in self.run_hook) or (

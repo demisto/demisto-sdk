@@ -7,7 +7,7 @@ from demisto_sdk.commands.pre_commit.hooks.docker import (
     DockerHook,
     docker_tag_to_runfiles,
 )
-from demisto_sdk.commands.pre_commit.pre_commit_command import PreCommitRunner
+from demisto_sdk.commands.pre_commit.pre_commit_command import PreCommitContext
 from demisto_sdk.commands.pre_commit.tests.pre_commit_test import Obj, create_hook
 
 
@@ -67,9 +67,9 @@ def test_moded_properties(mocker, mode, expected_text):
         return_value="devtestimg",
     )
     mocker.patch.object(
-        PreCommitRunner, "files_to_run_with_objects", [(file_path, None)]
+        PreCommitContext, "files_to_run_with_objects", [(file_path, None)]
     )
-    mocker.patch.object(PreCommitRunner, "dry_run", True)
+    mocker.patch.object(PreCommitContext, "dry_run", True)
 
     raw_hook = create_hook({"args": [], "language": "docker"}, mode=mode)
 

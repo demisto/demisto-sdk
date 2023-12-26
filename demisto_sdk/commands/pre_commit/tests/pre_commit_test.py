@@ -17,6 +17,7 @@ from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     GitUtil,
+    PreCommitContext,
     PreCommitRunner,
     group_by_language,
     preprocess_files,
@@ -60,7 +61,7 @@ def create_hook(
 
     repo_and_hook: dict = {
         "repo": {"repo": "repo", "hooks": [hook]},
-        "context": PreCommitRunner(input_files, all_files, mode, {}),
+        "context": PreCommitContext(input_files, all_files, mode, {}),
     }
     repo_and_hook["hook"] = repo_and_hook["repo"]["hooks"][0]
     return repo_and_hook
@@ -154,36 +155,36 @@ def test_config_files(mocker, repo: Repo):
     assert files_to_run == relative_paths
 
     python_version_to_files, _ = group_by_language(files_to_run)
-    pre_commit = pre_commit_command.PreCommitRunner(
+    pre_commit_context = pre_commit_command.PreCommitContext(
         None, None, None, python_version_to_files, ""
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["2.7"]
+        in pre_commit_context.python_version_to_files["2.7"]
     )
     assert (
         Path(integration3.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.8"]
+        in pre_commit_context.python_version_to_files["3.8"]
     )
     assert (
         Path(integration1.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.9"]
+        in pre_commit_context.python_version_to_files["3.9"]
     )
     assert (
         Path(integration2.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.10"]
+        in pre_commit_context.python_version_to_files["3.10"]
     )
     assert all(
         Path(obj.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.10"]
+        in pre_commit_context.python_version_to_files["3.10"]
         for obj in (incident_field, classifier)
     )
     assert (
         Path(integration_deprecated.yml.path).relative_to(repo.path)
-        not in pre_commit.python_version_to_files["3.10"]
+        not in pre_commit_context.python_version_to_files["3.10"]
     )
 
-    pre_commit.prepare_and_run()
+    PreCommitRunner.prepare_and_run(pre_commit_context)
     assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
     assert list((Path(repo.path) / "docker-config").iterdir())
     assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
@@ -205,7 +206,7 @@ def test_mypy_hooks(mocker):
     }
     mypy_hook = create_hook(mypy_hook)
     mocker.patch.object(
-        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
     MypyHook(**mypy_hook).prepare_hook()
     for (hook, python_version) in itertools.zip_longest(
@@ -225,7 +226,7 @@ def test_ruff_hook(github_actions, mocker):
         {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
     )
     mocker.patch.object(
-        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
     mocker.patch.dict(
         os.environ, {"GITHUB_ACTIONS": str(github_actions) if github_actions else ""}
@@ -254,7 +255,7 @@ def test_ruff_hook_nightly_mode(mocker):
         mode="nightly",
     )
     mocker.patch.object(
-        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
 
     RuffHook(**ruff_hook).prepare_hook()
@@ -273,7 +274,7 @@ def test_validate_format_hook_nightly_mode_and_all_files(mocker):
     """
     validate_format_hook = create_hook({"args": []}, mode="nightly", all_files=True)
     mocker.patch.object(
-        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
 
     ValidateFormatHook(**validate_format_hook).prepare_hook()
@@ -291,7 +292,7 @@ def test_validate_format_hook_nightly_mode(mocker):
         {"args": []}, mode="nightly", input_files=[Path("file1.py")]
     )
     mocker.patch.object(
-        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
 
     ValidateFormatHook(**validate_format_hook).prepare_hook()
@@ -307,7 +308,7 @@ def test_validate_format_hook_all_files(mocker):
     """
     validate_format_hook = create_hook({"args": []}, all_files=True)
     mocker.patch.object(
-        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
 
     ValidateFormatHook(**validate_format_hook).prepare_hook()
@@ -428,12 +429,12 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
         "2.7": {(Path("file1.py"), None)},
         "3.8": {(Path("file2.py"), None)},
     }
-    pre_commit_runner = pre_commit_command.PreCommitRunner(
+    pre_commit_context = pre_commit_command.PreCommitContext(
         None, None, None, python_version_to_files, ""
     )
-    pre_commit_runner.prepare_hooks()
+    PreCommitRunner.prepare_hooks(pre_commit_context)
 
-    hooks = pre_commit_runner._get_hooks(pre_commit_runner.precommit_template)
+    hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
     assert hooks["validate"]["hook"].get("exclude") is None
     assert "file1.py" in hooks["ruff"]["hook"]["exclude"]
 
@@ -459,13 +460,13 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
         "2.7": {(Path("file1.py"), Obj())},
         "3.8": {(Path("file2.py"), Obj(support_level="community"))},
     }
-    pre_commit_runner = pre_commit_command.PreCommitRunner(
+    pre_commit_context = pre_commit_command.PreCommitContext(
         None, None, None, python_version_to_files, ""
     )
 
-    pre_commit_runner.prepare_hooks()
+    PreCommitRunner.prepare_hooks(pre_commit_context)
 
-    hooks = pre_commit_runner._get_hooks(pre_commit_runner.precommit_template)
+    hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
     assert hooks["pycln"]["hook"].get("exclude") is None
     assert "file2.py" in hooks["autopep8"]["hook"]["exclude"]
 
@@ -586,7 +587,7 @@ def test_skip_hook_with_mode(mocker):
         TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
     python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
-    pre_commit_runner = pre_commit_command.PreCommitRunner(
+    pre_commit_runner = pre_commit_command.PreCommitContext(
         None, None, "nightly", python_version_to_files, ""
     )
     repos = pre_commit_runner._get_repos(pre_commit_runner.precommit_template)

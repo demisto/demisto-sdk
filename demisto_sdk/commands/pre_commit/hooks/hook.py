@@ -9,7 +9,7 @@ from packaging.version import Version
 from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.pre_commit.pre_commit_command import PreCommitRunner
+    from demisto_sdk.commands.pre_commit.pre_commit_command import PreCommitContext
 
 PROPERTIES_TO_DELETE = {"needs"}
 
@@ -19,7 +19,7 @@ class Hook:
         self,
         hook: dict,
         repo: dict,
-        context: "PreCommitRunner",
+        context: "PreCommitContext",
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)

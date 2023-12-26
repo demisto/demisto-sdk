@@ -90,7 +90,7 @@ def test_collect_all_inputs_from_inputs_section(content_item, expected_result):
     assert collect_all_inputs_from_inputs_section(content_item) == expected_result
 
 
-def test_check_timestamp_format(self):
+def test_check_timestamp_format():
     """
     Given
     - timestamps in various formats.

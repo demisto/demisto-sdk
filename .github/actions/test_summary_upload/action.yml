@@ -41,7 +41,7 @@ runs:
           node_versions_info.json
           .coverage
     - name: Upload artifacts
-      if: always()
+      if: ${{ inputs.junit-file-path != '' }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.junit-file-path }}

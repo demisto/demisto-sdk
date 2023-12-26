@@ -8,13 +8,17 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_value, get_yaml, get_yml_paths_in_dir
+from demisto_sdk.commands.common.files.yml_file import YmlFile
+from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
 )
+
+handler = YAML_Handler(typ="safe")
 
 
 class YAMLContentItemParser(ContentItemParser):
@@ -115,11 +119,15 @@ class YAMLContentItemParser(ContentItemParser):
         self, git_sha: Optional[str] = None
     ) -> Dict[str, Union[str, List[str]]]:
         if not self.path.is_dir():
-            yaml_path = self.path.as_posix()
+            yaml_path = self.path
         else:
-            _, yaml_path = get_yml_paths_in_dir(self.path.as_posix())
-        if not yaml_path or not yaml_path.endswith("yml"):
+            yaml_path = self.path / f"{self.path.name}.yml"
+        if not yaml_path.exists() or yaml_path.suffix != ".yml":
             raise NotAContentItemException
 
-        self.path = Path(yaml_path)
-        return get_yaml(self.path.as_posix(), keep_order=False, git_sha=git_sha)
+        self.path = yaml_path
+        if git_sha:
+            return YmlFile.read_from_git_path(self.path, tag=git_sha, handler=handler)
+        return YmlFile.read_from_local_path(
+            self.path,
+        )

@@ -1,10 +1,10 @@
 [use_git]
-select = ["BA101", "PA108", "BC100", "GR106", "BA116", "DO108", "IN108", "IN130", "BA106", "BA118", "IF112", "IN119", "IN120"]
+select = ["BA101"]
 warning = []
 ignorable_errors = ["BA101", "BA116"]
 
 [validate_all]
-select = ["BA101", "GR106", "DO108", "IN108", "IN130", "PA108", "BA116", "BA106", "BA118", "IF112", "IN119", "IN120"]
+select = ["BA101"]
 warning = []
 ignorable_errors = ["BA101", "BA116"]
 

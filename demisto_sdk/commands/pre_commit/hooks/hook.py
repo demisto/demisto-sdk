@@ -132,7 +132,7 @@ class Hook:
             if (prop := self._get_property(key)) is not None:
                 hook[key] = prop
         for key in keys_to_delete:
-            del hook[key]
+            hook.pop(key, None)
         self.base_hook = hook
 
 

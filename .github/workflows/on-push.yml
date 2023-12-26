@@ -54,7 +54,7 @@ jobs:
         uses: ./.github/actions/test_summary_upload
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts_folder_name: unit-tests
+          artifacts-folder-name: unit-tests
           group: ${{ matrix.group }}
           junit-file-path: unit-tests/junit-python-${{ matrix.python-version }}-group-${{ matrix.group }}.xml
 
@@ -93,7 +93,7 @@ jobs:
         uses: ./.github/actions/test_summary_upload
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts_folder_name: integration-tests
+          artifacts-folder-name: integration-tests
 
   graph-tests:
     name: Graph Tests / Python ${{ matrix.python-version }} (All-Tests)
@@ -127,7 +127,7 @@ jobs:
         uses: ./.github/actions/test_summary_upload
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts_folder_name: graph-tests
+          artifacts-folder-name: graph-tests
 
   unit-test-merge-summary:
     name: Unit Tests Merge Summary / Python ${{ matrix.python-version }}

@@ -7,15 +7,10 @@ inputs:
     required: true
     type: string
     description: "The python version"
-  artifacts_folder_name:
+  artifacts-folder-name:
     required: false
     type: string
     description: "The folder name to save artifacts"
-  group:
-    required: false
-    type: string
-    default: "All-Tests"
-    description: "The group of the pytest-split"
   summary-display-options:
     required: false
     type: string
@@ -34,9 +29,9 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})-group(${{ inputs.group }})
+        name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})
         path: |
-          ${{ junit-file-path }}
+          ${{ inputs.junit-file-path }}
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json
           .coverage

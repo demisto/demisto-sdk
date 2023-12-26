@@ -1,4 +1,5 @@
 import itertools
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
@@ -188,7 +189,7 @@ def test_config_files(mocker, repo: Repo):
     assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
 
 
-def test_mypy_hooks():
+def test_mypy_hooks(mocker):
     """
     Testing mypy hook created successfully (the python version is correct)
     """
@@ -203,8 +204,10 @@ def test_mypy_hooks():
         ]
     }
     mypy_hook = create_hook(mypy_hook)
-
-    MypyHook(**mypy_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
+    mocker.patch.object(
+        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+    )
+    MypyHook(**mypy_hook).prepare_hook()
     for (hook, python_version) in itertools.zip_longest(
         mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
@@ -214,14 +217,20 @@ def test_mypy_hooks():
 
 
 @pytest.mark.parametrize("github_actions", [True, False])
-def test_ruff_hook(github_actions):
+def test_ruff_hook(github_actions, mocker):
     """
     Testing ruff hook created successfully (the python version is correct and github action created successfully)
     """
     ruff_hook = create_hook(
         {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
     )
-    RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES, github_actions)
+    mocker.patch.object(
+        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+    )
+    mocker.patch.dict(
+        os.environ, {"GITHUB_ACTIONS": str(github_actions) if github_actions else ""}
+    )
+    RuffHook(**ruff_hook).prepare_hook()
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
     for (hook, python_version) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
@@ -236,7 +245,7 @@ def test_ruff_hook(github_actions):
             assert hook["args"][2] == "--format=github"
 
 
-def test_ruff_hook_nightly_mode():
+def test_ruff_hook_nightly_mode(mocker):
     """
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
@@ -244,7 +253,11 @@ def test_ruff_hook_nightly_mode():
         {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]},
         mode="nightly",
     )
-    RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
+    mocker.patch.object(
+        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+    )
+
+    RuffHook(**ruff_hook).prepare_hook()
 
     for (hook, _) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
@@ -254,38 +267,50 @@ def test_ruff_hook_nightly_mode():
         assert "--config=nightly_ruff.toml" in hook_args
 
 
-def test_validate_format_hook_nightly_mode_and_all_files():
+def test_validate_format_hook_nightly_mode_and_all_files(mocker):
     """
     Testing validate_format hook created successfully (the -a flag is added and the -i arg is not exist)
     """
     validate_format_hook = create_hook({"args": []}, mode="nightly", all_files=True)
-    ValidateFormatHook(**validate_format_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
+    mocker.patch.object(
+        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+    )
+
+    ValidateFormatHook(**validate_format_hook).prepare_hook()
 
     hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
     assert "-a" in hook_args
     assert "-i" not in hook_args
 
 
-def test_validate_format_hook_nightly_mode():
+def test_validate_format_hook_nightly_mode(mocker):
     """
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist, even in nightly mode)
     """
     validate_format_hook = create_hook(
         {"args": []}, mode="nightly", input_files=[Path("file1.py")]
     )
-    ValidateFormatHook(**validate_format_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
+    mocker.patch.object(
+        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+    )
+
+    ValidateFormatHook(**validate_format_hook).prepare_hook()
 
     hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
     assert "-a" not in hook_args
     assert "-i" in hook_args
 
 
-def test_validate_format_hook_all_files():
+def test_validate_format_hook_all_files(mocker):
     """
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist)
     """
     validate_format_hook = create_hook({"args": []}, all_files=True)
-    ValidateFormatHook(**validate_format_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
+    mocker.patch.object(
+        PreCommitRunner, "python_version_to_files", PYTHON_VERSION_TO_FILES
+    )
+
+    ValidateFormatHook(**validate_format_hook).prepare_hook()
 
     hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
     assert "-a" in hook_args
@@ -406,8 +431,7 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
     pre_commit_runner = pre_commit_command.PreCommitRunner(
         None, None, None, python_version_to_files, ""
     )
-
-    pre_commit_runner.prepare_hooks(dry_run=True)
+    pre_commit_runner.prepare_hooks()
 
     hooks = pre_commit_runner._get_hooks(pre_commit_runner.precommit_template)
     assert hooks["validate"]["hook"].get("exclude") is None
@@ -439,7 +463,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
         None, None, None, python_version_to_files, ""
     )
 
-    pre_commit_runner.prepare_hooks(True)
+    pre_commit_runner.prepare_hooks()
 
     hooks = pre_commit_runner._get_hooks(pre_commit_runner.precommit_template)
     assert hooks["pycln"]["hook"].get("exclude") is None

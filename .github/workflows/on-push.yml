@@ -162,7 +162,8 @@ jobs:
       - name: Merge all junit-files
         run: |
           npm install -g junit-report-merger
-          ls -a ./unit-tests-junit-files-python-${{ matrix.python-version }}/junit.xml/
+          cat ./unit-tests-junit-files-python-${{ matrix.python-version }}/junit.xml
+          ls -a ./unit-tests-junit-files-python-${{ matrix.python-version }}/junit.xml
           echo "running jrm"
           jrm ./combined-junit.xml ./unit-tests-junit-files-python-${{ matrix.python-version }}/junit.xml/*.xml
           ls -a

@@ -1,42 +1,30 @@
-name: 'Setup environment for demisto-sdk'
-description: 'Setup environment for every demisto-sdk workflow job'
-author: 'Demisto-SDK'
+name: Conditional Artifact Upload
 
-inputs:
-  python-version:
-    required: true
-    type: string
-    description: "The python version"
-  node-version:
-    required: false
-    type: string
-    default: "16"
-    description: "The node version to install"
+on:
+  push:
+    branches:
+      - main
 
+jobs:
+  upload-artifact:
+    runs-on: ubuntu-latest
 
-runs:
-  using: 'composite'
-  steps:
-    - name: Set up Python ${{ inputs.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ inputs.python-version }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - name: Setup Poetry
-      run: |
-        sudo curl -sSL https://install.python-poetry.org | python3 -
-        poetry --version
-        poetry check --lock
-        poetry install -E generate-unit-tests
-      shell: bash
+      - name: Create Files
+        run: |
+          mkdir additional_files
+          echo "This is an additional file" > additional_files/file.txt
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ inputs.node-version }}
+      - name: Conditionally Upload Artifact
+        if: ${{ success() && steps.create-files.outputs.file-created == 'true' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: additional-files
+          path: additional_files
 
-    - name: Install npm
-      run: |
-        npm install
-        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
-      shell: bash
+      - name: Set Output
+        id: create-files
+        run: echo "::set-output name=file-created::true"

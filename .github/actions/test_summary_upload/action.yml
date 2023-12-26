@@ -31,10 +31,16 @@ runs:
       with:
         name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})
         path: |
-          ${{ inputs.junit-file-path }}
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json
           .coverage
+    - name: Upload junit artifacts
+      if: ${{ ne(inputs.junit-file-path, '') }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})
+        path: |
+          ${{ inputs.junit-file-path }}
     - name: Print Summary of pytest results in workflow summary
       if: always()
       uses: pmeier/pytest-results-action@main

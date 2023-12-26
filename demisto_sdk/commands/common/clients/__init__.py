@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
-from requests.exceptions import RequestException
+
 
 @lru_cache
 def get_client_from_config(client_config: XsoarClientConfig) -> XsoarClient:

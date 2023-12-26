@@ -43,11 +43,6 @@ class IDE(Enum):
 IDE_TO_FOLDER = {IDE.VSCODE: ".vscode", IDE.PYCHARM: ".idea"}
 
 
-def add_init_file_in_test_data(integration_script: IntegrationScript):
-    if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
-        (test_data_dir / "__init__.py").touch()
-
-
 def configure_vscode_settings(
     ide_folder: Path,
     integration_script: Optional[IntegrationScript] = None,
@@ -72,7 +67,9 @@ def configure_vscode_settings(
     else:
         python_path = [str(path) for path in PYTHONPATH if str(path)]
 
-    settings["python.analysis.extraPaths"] = python_path
+    settings["python.analysis.extraPaths"] = [
+        path for path in python_path if "site-packages" not in path
+    ]
     with open(ide_folder / "settings.json", "w") as f:
         json5.dump(settings, f, indent=4)
 
@@ -112,7 +109,10 @@ def configure_dotenv():
     """
     DOTENV_PATH.touch()
     python_path_values = ":".join((str(path) for path in PYTHONPATH))
-    update_dotenv({"PYTHONPATH": python_path_values, "MYPYPATH": python_path_values})
+    mypy_path_values = ":".join(
+        (str(path) for path in PYTHONPATH if "site-packages" not in str(path))
+    )
+    update_dotenv({"PYTHONPATH": python_path_values, "MYPYPATH": mypy_path_values})
 
 
 def configure_vscode_tasks(
@@ -463,7 +463,6 @@ def configure_integration(
         integration_script, IntegrationScript
     ), "Expected Integration Script"
     add_demistomock_and_commonserveruser(integration_script)
-    add_init_file_in_test_data(integration_script)
     docker_image = integration_script.docker_image
     interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
     configure_params(integration_script, secret_id, instance_name, test_module)
@@ -504,6 +503,16 @@ def configure_integration(
         )
 
 
+def clean_repo():
+    """
+    This functions clean the repo from the temp `CommonServerPython` and `APIModules` files and other files that were created by lint
+    """
+    for path in PYTHONPATH:
+        for temp_file in CONTENT_PATH.rglob(path.name):
+            if temp_file != path:
+                temp_file.unlink(missing_ok=True)
+
+
 def setup_env(
     file_paths: Tuple[Path, ...],
     ide: IDE = IDE.VSCODE,
@@ -512,6 +521,7 @@ def setup_env(
     secret_id: Optional[str] = None,
     instance_name: Optional[str] = None,
     test_module: bool = False,
+    clean: bool = False,
 ) -> None:
     """This function sets up the development environment for integration scripts
 
@@ -526,6 +536,8 @@ def setup_env(
     Raises:
         RuntimeError:
     """
+    if clean:
+        clean_repo()
     configure_dotenv()
     if not file_paths:
         (CONTENT_PATH / "CommonServerUserPython.py").touch()

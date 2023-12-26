@@ -38,12 +38,16 @@ do
 
   # Do git commands...
   current_content_branch=$(git branch --show-current)
+  old_sha=$(git rev-parse -q --verify refs/stash)
   git stash
+  new_sha=$(git rev-parse -q --verify refs/stash)
   git checkout master
   git pull
   poetry install
   git checkout "$current_content_branch"
-  git stash pop
+  if [ "$old_sha" != "$new_sha" ]; then
+    git stash pop
+  fi
 done
 
 # Move back to original path

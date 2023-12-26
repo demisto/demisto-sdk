@@ -24,7 +24,7 @@ inputs:
   junit-file-path:
     required: false
     type: string
-    default: ""
+    default: "junit.xml"
     description: "The path for the junit file that pytest produces"
 
 runs:
@@ -36,15 +36,13 @@ runs:
       with:
         name: ${{ inputs.artifacts-folder-name }}-artifacts-python-${{ inputs.python-version }}-(${{ inputs.group }})
         path: |
-          ${{ inputs.junit-file-path }}
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json
           .coverage
     - name: Upload artifacts Junit Files
-      if: ${{ inputs.junit-file-path != '' }}
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.junit-file-path }}
+        name: ${{ inputs.junit-file-path }}-python-${{ inputs.python-version }}-group-${{ inputs.group }}.xml
         path: |
           ${{ inputs.junit-file-path }}
     - name: Print Summary of pytest results in workflow summary

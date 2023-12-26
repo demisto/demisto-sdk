@@ -176,6 +176,7 @@ class MITMProxy:
         repo_folder=MOCKS_GIT_PATH,
         tmp_folder=MOCKS_TMP_PATH,
     ):
+        self.branch_name = branch_name
         is_branch_master = branch_name == DEMISTO_GIT_PRIMARY_BRANCH
         self.internal_ip = internal_ip
         self.current_folder = self.repo_folder = repo_folder
@@ -684,6 +685,7 @@ def run_with_mock(
                 proxy_instance.successful_rerecord_count += 1
                 proxy_instance.rerecorded_tests.append(playbook_or_integration_id)
                 logger.info(f"[red]################ {proxy_instance.should_update_mock_repo=}[/red]")
+                logger.info(f"[red]################ {DEMISTO_GIT_PRIMARY_BRANCH=}[/red]")
                 if proxy_instance.should_update_mock_repo:
                     proxy_instance.logging_module.debug(
                         "committing new/updated mock files to mock git repo."

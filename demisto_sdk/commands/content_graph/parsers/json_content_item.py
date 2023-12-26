@@ -93,14 +93,7 @@ class JSONContentItemParser(ContentItemParser):
         return self.get_marketplaces(self.json_data)
 
     def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
-        if not self.path.is_dir():
-            json_path = self.path
-        else:
-            json_path = self.path / f"{self.path.name}.json"
-        if not json_path.exists() or json_path.suffix != ".json":
-            raise NotAContentItemException
-
-        self.path = json_path
+        self.set_path(".json")
         if git_sha:
             return JsonFile.read_from_git_path(self.path, tag=git_sha)
         return JsonFile.read_from_local_path(

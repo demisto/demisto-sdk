@@ -242,6 +242,32 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             path
         )
 
+    def set_path(self, suffix: str) -> Path:
+        """Sets the path of the content item with a given suffix.
+
+        Args:
+            suffix (str): The suffix of the content item (JSON or YAML).
+
+        """
+        if not self.path.is_dir():
+            if not self.path.exists() or not self.path.suffix == suffix:
+                raise NotAContentItemException
+            path = self.path
+        else:
+            paths = [path for path in self.path.iterdir() if path.suffix == suffix]
+            if not paths:
+                raise NotAContentItemException
+            if len(paths) == 1:
+                path = paths[0]
+            else:
+                for path in paths:
+                    if path == self.path / f"{self.path.name}{suffix}":
+                        path = path
+                        break
+                else:
+                    path = paths[0]
+        return path
+
     def should_skip_parsing(self) -> bool:
         """Returns true if any of the minimal conditions for parsing is not met.
 

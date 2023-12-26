@@ -118,14 +118,7 @@ class YAMLContentItemParser(ContentItemParser):
     def get_yaml(
         self, git_sha: Optional[str] = None
     ) -> Dict[str, Union[str, List[str]]]:
-        if not self.path.is_dir():
-            yaml_path = self.path
-        else:
-            yaml_path = self.path / f"{self.path.name}.yml"
-        if not yaml_path.exists() or yaml_path.suffix != ".yml":
-            raise NotAContentItemException
-
-        self.path = yaml_path
+        self.set_path(".yml")
         if git_sha:
             return YmlFile.read_from_git_path(self.path, tag=git_sha, handler=handler)
         return YmlFile.read_from_local_path(

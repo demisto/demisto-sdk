@@ -12,7 +12,7 @@ from demisto_sdk.commands.common import git_util
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER,
     DOCS_COMMAND_SECTION_REGEX,
-    PACKS_README_FILE_NAME,
+    INTEGRATIONS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -172,15 +172,17 @@ def generate_integration_doc(
         # 4) If any modifications are detected in the existing commands, replace the modified command'(s') section(s).
         # 5) If new commands are detected, we append them to the end of the commands section (EOF).
 
-        elif (Path(input_path).parent / PACKS_README_FILE_NAME).exists():
-            integration_readme_path = Path(input_path).parent / PACKS_README_FILE_NAME
+        elif (Path(input_path).parent / INTEGRATIONS_README_FILE_NAME).exists():
+            integration_readme_path = (
+                Path(input_path).parent / INTEGRATIONS_README_FILE_NAME
+            )
             doc_text = integration_readme_path.read_text()
             pack_name = get_pack_name(input_path)
             integration_yml_filename: str = Path(input_path).name
             integration_name = Path(input_path).stem
 
             logger.info(
-                f"{PACKS_README_FILE_NAME} for Integration '{integration_name}' in Pack '{pack_name}' exists. Checking for differences in git..."
+                f"{INTEGRATIONS_README_FILE_NAME} for Integration '{integration_name}' in Pack '{pack_name}' exists. Checking for differences in git..."
             )
             try:
                 # TODO discuss version control solution
@@ -359,7 +361,7 @@ def generate_integration_doc(
             if not doc_text.endswith("\n"):
                 doc_text += "\n"
 
-        save_output(output, PACKS_README_FILE_NAME, doc_text)
+        save_output(output, INTEGRATIONS_README_FILE_NAME, doc_text)
 
         if errors:
             logger.info("[yellow]Possible Errors:[/yellow]")

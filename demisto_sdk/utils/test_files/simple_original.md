@@ -24,13 +24,13 @@ Hello command - prints hello to anyone.
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
-| name | The name of whom you want to say hello to. | Optional | 
+| name | The name of whom you want to say hello to. | Optional |
 
 #### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
-| hello | String | Should be Hello \*\*something\*\* here. | 
+| hello | String | Should be Hello \*\*something\*\* here. |
 
 #### Command example
 ```!helloworld-say-hello name="Hello Dbot"```
@@ -58,19 +58,19 @@ Lists the example alerts as it would be fetched from the API.
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
-| alert_id | Filter by alert item ID. If not provided, all IDs will be retrieved. | Optional | 
-| limit | How many alerts to fetch. Default is 10. | Optional | 
-| severity | The severity  by which to filter the alerts. | Optional | 
+| alert_id | Filter by alert item ID. If not provided, all IDs will be retrieved. | Optional |
+| limit | How many alerts to fetch. Default is 10. | Optional |
+| severity | The severity  by which to filter the alerts. | Optional |
 
 #### Context Output
 
 | **Path** | **Type** | **Description** |
 | --- | --- | --- |
-| HelloWorld.alert.id | Number | The ID of the alert. | 
-| HelloWorld.alert.name | String | The name of the alert. | 
-| HelloWorld.alert.severity | String | The severity of the alert. | 
-| HelloWorld.alert.date | Date | The date of the alert occurrence. | 
-| HelloWorld.alert.status | String | The status of the alert. | 
+| HelloWorld.alert.id | Number | The ID of the alert. |
+| HelloWorld.alert.name | String | The name of the alert. |
+| HelloWorld.alert.severity | String | The severity of the alert. |
+| HelloWorld.alert.date | Date | The date of the alert occurrence. |
+| HelloWorld.alert.status | String | The status of the alert. |
 
 #### Command example
 ```!helloworld-alert-list limit="3" severity="low"```

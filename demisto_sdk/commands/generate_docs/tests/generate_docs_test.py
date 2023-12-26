@@ -8,7 +8,9 @@ import pytest
 from _pytest.tmpdir import TempPathFactory
 from pytest_mock import MockerFixture
 
-from demisto_sdk.commands.common.constants import PACKS_README_FILE_NAME
+from demisto_sdk.commands.common.constants import (
+    INTEGRATIONS_README_FILE_NAME,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -969,7 +971,7 @@ class TestGenerateIntegrationDoc:
     def teardown_class(cls):
         cls.rm_readme()
 
-    def test_generate_integration_doc(self, mocker):
+    def test_generate_integration_doc(self, mocker, tmp_path: TempPathFactory):
         """
         Given
             - YML file representing an integration.
@@ -989,10 +991,10 @@ class TestGenerateIntegrationDoc:
         )
         mocker.patch.object(common, "execute_command", side_effect=handle_example)
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_PATH, examples)
+        generate_integration_doc(TEST_INTEGRATION_PATH, examples, output=str(tmp_path))
         with open(fake_readme) as fake_file:
             with open(
-                os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
+                os.path.join(str(tmp_path), INTEGRATIONS_README_FILE_NAME)
             ) as real_file:
                 fake_data = fake_file.read()
                 assert fake_data == real_file.read()
@@ -1003,7 +1005,7 @@ class TestGenerateIntegrationDoc:
                 )
                 assert "Number of users to return. Max 300. Default is 30." in fake_data
 
-    def test_generate_integration_doc_new_contribution(self):
+    def test_generate_integration_doc_new_contribution(self, tmp_path: TempPathFactory):
         """
         Given
             - YML file representing a new integration contribution.
@@ -1017,10 +1019,12 @@ class TestGenerateIntegrationDoc:
             os.path.dirname(TEST_INTEGRATION_PATH), "fake_new_contribution_README.md"
         )
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_PATH, is_contribution=True)
+        generate_integration_doc(
+            TEST_INTEGRATION_PATH, is_contribution=True, output=str(tmp_path)
+        )
         with open(fake_readme) as fake_file:
             with open(
-                os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
+                os.path.join(str(tmp_path), INTEGRATIONS_README_FILE_NAME)
             ) as real_file:
                 fake_data = fake_file.read()
                 assert fake_data == real_file.read()
@@ -1029,23 +1033,29 @@ class TestGenerateIntegrationDoc:
                     not in fake_data
                 )
 
-    def test_generate_integration_doc_passes_markdownlint(self):
+    def test_generate_integration_doc_passes_markdownlint(
+        self, tmp_path: TempPathFactory
+    ):
         """
         Given: An integrations
         When: Generating a readme for the integration
         Then: The generated readme will have no markdown errors
 
         """
-        generate_integration_doc(TEST_INTEGRATION_PATH, is_contribution=False)
+        generate_integration_doc(
+            TEST_INTEGRATION_PATH, is_contribution=False, output=str(tmp_path)
+        )
         # Generate doc
         with ReadMeValidator.start_mdx_server():
             with open(
-                os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
+                os.path.join(str(tmp_path), INTEGRATIONS_README_FILE_NAME)
             ) as real_readme_file:
                 markdownlint = run_markdownlint(real_readme_file.read())
                 assert not markdownlint.has_errors, markdownlint.validations
 
-    def test_integration_doc_credentials_display_missing(self):
+    def test_integration_doc_credentials_display_missing(
+        self, tmp_path: TempPathFactory
+    ):
         """
         Given
             - YML file representing an integration, containing display None for credentials parameter.
@@ -1057,12 +1067,19 @@ class TestGenerateIntegrationDoc:
             - Test that the predefined values and default values are added to the README.
             - Test that credentials parameter name shown in README is using display password field.
         """
-        readme = os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), "README.md")
+        readme = os.path.join(
+            os.path.dirname(TEST_INTEGRATION_2_PATH), INTEGRATIONS_README_FILE_NAME
+        )
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_2_PATH, skip_breaking_changes=True)
+        generate_integration_doc(
+            TEST_INTEGRATION_2_PATH, skip_breaking_changes=True, output=str(tmp_path)
+        )
         with open(readme) as readme_file:
             with open(
-                os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), "README.md")
+                os.path.join(
+                    os.path.dirname(TEST_INTEGRATION_2_PATH),
+                    INTEGRATIONS_README_FILE_NAME,
+                )
             ) as new_readme:
                 readme_data = readme_file.read()
                 assert readme_data == new_readme.read()
@@ -1754,7 +1771,7 @@ class TestIntegrationDocUpdate:
             yml_code = yaml.load(stream)
 
         readme_path = Path(
-            TEST_FILES, self._get_function_name(), PACKS_README_FILE_NAME
+            TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
         markdown = readme_path.read_text()
 
@@ -1848,7 +1865,7 @@ class TestIntegrationDocUpdate:
             yml_code = yaml.load(stream)
 
         readme_path = Path(
-            TEST_FILES, self._get_function_name(), PACKS_README_FILE_NAME
+            TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
         markdown = readme_path.read_text()
 
@@ -1947,7 +1964,7 @@ class TestIntegrationDocUpdate:
             yml_code = yaml.load(stream)
 
         readme_path = Path(
-            TEST_FILES, self._get_function_name(), PACKS_README_FILE_NAME
+            TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
         markdown = readme_path.read_text()
 
@@ -2049,7 +2066,7 @@ class TestIntegrationDocUpdate:
 
         doc_text, err = replace_integration_conf_section(
             doc_text=Path(
-                TEST_FILES, "test_added_configuration", PACKS_README_FILE_NAME
+                TEST_FILES, "test_added_configuration", INTEGRATIONS_README_FILE_NAME
             ).read_text(),
             old_integration_yml=integration_diff.old_yaml_data,
             new_integration_yml=integration_diff.new_yaml_data,
@@ -2119,7 +2136,7 @@ class TestIntegrationDocUpdate:
 
         doc_text, errors = replace_integration_commands_section(
             doc_text=Path(
-                TEST_FILES, "test_modified_commands", PACKS_README_FILE_NAME
+                TEST_FILES, "test_modified_commands", INTEGRATIONS_README_FILE_NAME
             ).read_text(),
             old_integration_yml=integration_diff.old_yaml_data,
             new_integration_yml=integration_diff.new_yaml_data,
@@ -2210,7 +2227,7 @@ class TestIntegrationDocUpdate:
             yml_code = yaml.load(stream)
 
         readme_path = Path(
-            TEST_FILES, self._get_function_name(), PACKS_README_FILE_NAME
+            TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
         markdown = readme_path.read_text()
 

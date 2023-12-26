@@ -982,9 +982,9 @@ class XsoarClient(BaseModel):
             investigation_id, response_type
         )
 
-    def get_error_entries(self, entries: List[Entry]) -> Set[str]:
+    def get_formatted_error_entries(self, entries: List[Entry]) -> Set[str]:
         """
-        Get error entries from an executed command / playbook tasks
+        Get formatted error entries from an executed command / playbook tasks
 
         Args:
             entries: a list of entries
@@ -1166,7 +1166,7 @@ class XsoarClient(BaseModel):
             ),
             response_type="list[Entry]",
         )
-        return self.get_error_entries(playbook_entries)
+        return self.get_formatted_error_entries(playbook_entries)
 
     @retry(exceptions=ApiException)
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):

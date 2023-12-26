@@ -172,7 +172,7 @@ jobs:
         with:
           path: combined-junit.xml
           summary: true
-          display-options: fsEX
+          display-options: fs
           fail-on-empty: true
           title: Unit Tests / Python ${{ matrix.python-version }} summary
       - uses: geekyeggo/delete-artifact@v4

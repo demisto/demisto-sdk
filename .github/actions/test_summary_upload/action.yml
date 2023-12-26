@@ -20,7 +20,7 @@ inputs:
     required: false
     type: string
     description: "The test-summary display options"
-    default: fsEX  # show all failed and skipped tests
+    default: fs  # show all failed and skipped tests
 
 
 runs:

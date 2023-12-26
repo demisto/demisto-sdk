@@ -3,6 +3,7 @@ from functools import lru_cache
 from typing import Optional
 
 import demisto_client
+import pydantic
 import requests
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
@@ -121,7 +122,7 @@ def get_client_from_server_type(
         if product_mode == "xsiam":
             return True
 
-        # for old enivorments that do not have product-mode / deployment-mode
+        # for old environments that do not have product-mode / deployment-mode
         try:
             # /ioc-rules is only an endpoint in XSIAM.
             response, status_code, response_headers = _client.generic_request(
@@ -141,24 +142,18 @@ def get_client_from_server_type(
         if product_mode == "xsoar" and deployment_mode == "saas":
             return True
 
-        # for old enivorments that do not have product-mode / deployment-mode
-        if server_version and Version(server_version) >= Version(
+        # for old environments that do not have product-mode / deployment-mode
+        return server_version and Version(server_version) >= Version(
             MINIMUM_XSOAR_SAAS_VERSION
-        ):
-            return True
-        logger.debug("instance is not XSOAR-SaaS instance")
-        return False
+        )
 
     def is_xsoar_on_prem_environment() -> bool:
-        if product_mode == "xsoar" and deployment_mode == "saas":
+        if product_mode == "xsoar" and deployment_mode == "opp":
             return True
         # for old environments that do not have product-mode / deployment-mode
-        if server_version and Version(server_version) < Version(
+        return server_version and Version(server_version) < Version(
             MINIMUM_XSOAR_SAAS_VERSION
-        ):
-            return True
-        logger.debug("instance is not XSOAR-ON-PREM instance")
-        return False
+        )
 
     about_raw_response = XsoarClient.get_xsoar_about(_client)
     logger.debug(f"{about_raw_response=} for {base_url=}")
@@ -176,24 +171,24 @@ def get_client_from_server_type(
             ),
         )
     elif is_xsoar_saas_environment():
-        xsoar_saas_client = XsoarSaasClient(
-            client=_client,
-            about_xsoar=about_raw_response,
-            config=XsoarSaasClientConfig(
-                base_api_url=base_url, api_key=api_key, auth_id=auth_id
-            ),
-        )
-        # we might have self services that are xsoar on-prem but with versions of 8.x.x
         try:
-            # unique endpoint only for xsoar-saas
-            xsoar_saas_client.get_tenant_info()
-            return xsoar_saas_client
-        except RequestException:
-            return XsoarClient(
+            return XsoarSaasClient(
                 client=_client,
                 about_xsoar=about_raw_response,
-                config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
+                config=XsoarSaasClientConfig(
+                    base_api_url=base_url, api_key=api_key, auth_id=auth_id
+                ),
             )
+        # if its xsoar-on-prem that has version > 8.x.x
+        except pydantic.ValidationError:
+            if base_url and api_key and not auth_id:
+                return XsoarClient(
+                    client=_client,
+                    about_xsoar=about_raw_response,
+                    config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
+                )
+            raise
+
     elif is_xsoar_on_prem_environment():
         return XsoarClient(
             client=_client,

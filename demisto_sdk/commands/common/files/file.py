@@ -127,7 +127,7 @@ class File(ABC, BaseModel):
 
     @classmethod
     @lru_cache
-    def from_path(
+    def __from_path(
         cls,
         input_path: Union[Path, str],
         git_util: Optional[GitUtil] = None,
@@ -220,10 +220,10 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_local_path.cache_clear()
-        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
-        return model.read_local_file()
+        model = cls.__from_path(input_path=path, git_util=git_util, handler=handler)
+        return model.__read_local_file()
 
-    def read_local_file(self) -> Any:
+    def __read_local_file(self) -> Any:
         try:
             return self.load(self.content)
         except FileReadError:
@@ -259,10 +259,10 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
-        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
-        return model.read_git_file(tag, from_remote=from_remote)
+        model = cls.__from_path(input_path=path, git_util=git_util, handler=handler)
+        return model.__read_git_file(tag, from_remote=from_remote)
 
-    def read_git_file(
+    def __read_git_file(
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
     ) -> Any:
         try:
@@ -478,21 +478,21 @@ class File(ABC, BaseModel):
             raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
-    def _write(
+    def __write(
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         raise NotImplementedError(
-            "_write must be implemented for each File concrete object"
+            "__write must be implemented for each File concrete object"
         )
 
     def write(
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         def _write_safe_unicode():
-            self._write(data, path=path, **kwargs)
+            self.__write(data, path=path, **kwargs)
 
         if encoding:
-            self._write(data, path=path, encoding=encoding, **kwargs)
+            self.__write(data, path=path, encoding=encoding, **kwargs)
         else:
             try:
                 _write_safe_unicode()

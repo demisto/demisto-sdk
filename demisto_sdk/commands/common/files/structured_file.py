@@ -50,7 +50,7 @@ class StructuredFile(TextFile, ABC):
             **kwargs
         )
 
-    def _write(
+    def __write(
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         with path.open("w", encoding=encoding or self.default_encoding) as output_file:

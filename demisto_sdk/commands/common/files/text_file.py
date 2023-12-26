@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.logger import logger
 class TextFile(File):
     @property
     def num_lines(self):
-        return len(self.read_local_file().splitlines())
+        return len(self.__read_local_file().splitlines())
 
     @classmethod
     def is_model_type_by_path(cls, path: Path) -> bool:
@@ -44,9 +44,9 @@ class TextFile(File):
             raise LocalFileReadError(self.input_path, exc=e)
 
     def search_text(self, regex_pattern: str) -> List[str]:
-        return re.findall(regex_pattern, string=self.read_local_file())
+        return re.findall(regex_pattern, string=self.__read_local_file())
 
-    def _write(
+    def __write(
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         path.write_text(data=data, encoding=encoding or self.default_encoding)

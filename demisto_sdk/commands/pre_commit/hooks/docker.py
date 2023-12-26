@@ -186,21 +186,17 @@ class DockerHook(Hook):
 
     def prepare_hook(
         self,
-        files_to_run_with_objects: Iterable[Tuple[Path, Optional[IntegrationScript]]],
-        dry_run: bool,
     ):
         """
         Group all the files by dockerimages
         Split those images by config files
         Get the devimage for each image
         Args:
-            files_to_run: all files to run on
-            dry_run: bool: Whether we are in dry run or not, affects pulling images.
         """
 
         start_time = time.time()
         filtered_files = self.filter_files_matching_hook_config(
-            (file for file, _ in files_to_run_with_objects)
+            (file for file, _ in self.context.files_to_run_with_objects)
         )
         if not filtered_files:
             logger.debug(
@@ -209,7 +205,7 @@ class DockerHook(Hook):
             return
         filtered_files_with_objects = {
             (file, obj)
-            for file, obj in files_to_run_with_objects
+            for file, obj in self.context.files_to_run_with_objects
             if file in filtered_files
         }
         tag_to_files_objs = docker_tag_to_runfiles(
@@ -245,7 +241,7 @@ class DockerHook(Hook):
                 obj.is_powershell for _, obj in files_with_objects
             )
 
-            dev_image = devtest_image(image, image_is_powershell, dry_run)
+            dev_image = devtest_image(image, image_is_powershell, self.context.dry_run)
             hooks = self.get_new_hooks(
                 dev_image,
                 image,

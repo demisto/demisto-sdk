@@ -19,21 +19,21 @@ class Hook:
         self,
         hook: dict,
         repo: dict,
-        runner: "PreCommitRunner",
+        context: "PreCommitRunner",
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
         self.hook_index = self.hooks.index(self.base_hook)
         self.hooks.remove(self.base_hook)
-        self.mode = runner.mode
-        self.all_files = runner.all_files
-        self.input_mode = bool(runner.input_files)
-        self.runner = runner
+        self.mode = context.mode
+        self.all_files = context.all_files
+        self.input_mode = bool(context.input_files)
+        self.context = context
         self._set_properties()
         self._exclude_hooks_by_version()
         self._exclude_hooks_by_support_level()
 
-    def prepare_hook(self, **kwargs):
+    def prepare_hook(self):
         """
         This method should be implemented in each hook.
         Since we removed the base hook from the hooks list, we must add it back.
@@ -151,7 +151,7 @@ class Hook:
             return
         files_to_exclude: Set[Path] = set()
 
-        for version, paths in self.runner.python_version_to_files.items():
+        for version, paths in self.context.python_version_to_files.items():
             if Version(version) < Version(min_version):
                 files_to_exclude.update(path for path in paths)
         if files_to_exclude:
@@ -170,7 +170,7 @@ class Hook:
         files_to_exclude: Set[Path] = set()
         for support_level in support_levels:
             files_to_exclude.update(
-                path for path in self.runner.support_level_to_files[support_level]
+                path for path in self.context.support_level_to_files[support_level]
             )
         if files_to_exclude:
             join_files_string = join_files(files_to_exclude)

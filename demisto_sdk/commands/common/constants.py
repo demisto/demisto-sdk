@@ -6,6 +6,8 @@ from typing import Dict, List
 
 from packaging.version import Version
 
+# CI
+
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"
 

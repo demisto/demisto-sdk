@@ -71,6 +71,7 @@ class PreCommitRunner:
     run_hook: Optional[str] = None
     skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
+    dry_run: bool = False
 
     def __post_init__(self):
         """
@@ -160,45 +161,29 @@ class PreCommitRunner:
 
         return hooks
 
-    def prepare_hooks(self, dry_run: bool) -> None:
+    def prepare_hooks(self) -> None:
         hooks = self.hooks
-        kwargs = {
-            "runner": self,
-        }
         if "pycln" in hooks:
-            PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
+            PyclnHook(**hooks.pop("pycln"), context=self).prepare_hook()
         if "ruff" in hooks:
-            RuffHook(**hooks.pop("ruff"), **kwargs).prepare_hook(
-                self.python_version_to_files, IS_GITHUB_ACTIONS
-            )
+            RuffHook(**hooks.pop("ruff"), context=self).prepare_hook()
         if "mypy" in hooks:
-            MypyHook(**hooks.pop("mypy"), **kwargs).prepare_hook(
-                self.python_version_to_files
-            )
+            MypyHook(**hooks.pop("mypy"), context=self).prepare_hook()
         if "sourcery" in hooks:
-            SourceryHook(**hooks.pop("sourcery"), **kwargs).prepare_hook(
-                self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
-            )
+            SourceryHook(**hooks.pop("sourcery"), context=self).prepare_hook()
         if "validate" in hooks:
-            ValidateFormatHook(**hooks.pop("validate"), **kwargs).prepare_hook(
-                self.input_files
-            )
+            ValidateFormatHook(**hooks.pop("validate"), context=self).prepare_hook()
         if "format" in hooks:
-            ValidateFormatHook(**hooks.pop("format"), **kwargs).prepare_hook(
-                self.input_files
-            )
+            ValidateFormatHook(**hooks.pop("format"), context=self).prepare_hook()
         [
-            DockerHook(**hooks.pop(hook_id), **kwargs).prepare_hook(
-                files_to_run_with_objects=self.files_to_run_with_objects,
-                dry_run=dry_run,
-            )
+            DockerHook(**hooks.pop(hook_id), context=self).prepare_hook()
             for hook_id in hooks.copy()
             if hook_id.endswith("in-docker")
         ]
         # iterate the rest of the hooks
         for hook_id in hooks.copy():
             # this is used to handle the mode property correctly
-            Hook(**hooks.pop(hook_id), **kwargs).prepare_hook()
+            Hook(**hooks.pop(hook_id), context=self).prepare_hook()
         # get the hooks again because we want to get all the hooks, including the once that already prepared
         hooks = self._get_hooks(self.precommit_template)
         system_hooks = [
@@ -207,7 +192,7 @@ class PreCommitRunner:
             if hook["hook"].get("language") == "system"
         ]
         for hook_id in system_hooks.copy():
-            SystemHook(**hooks[hook_id], **kwargs).prepare_hook()
+            SystemHook(**hooks[hook_id], context=self).prepare_hook()
 
     def _hooks_need_docker(self) -> Set[str]:
         """
@@ -435,6 +420,7 @@ class PreCommitRunner:
     ) -> int:
 
         ret_val = 0
+        self.dry_run = dry_run
         precommit_env = os.environ.copy()
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
@@ -460,7 +446,7 @@ class PreCommitRunner:
                     f"Running pre-commit with Python {python_version} on:\n{changed_files_string}"
                 )
 
-        self.prepare_hooks(dry_run)
+        self.prepare_hooks()
         if self.all_files:
             self.precommit_template[
                 "exclude"

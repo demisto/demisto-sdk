@@ -59,7 +59,7 @@ def create_hook(
 
     repo_and_hook: dict = {
         "repo": {"repo": "repo", "hooks": [hook]},
-        "runner": PreCommitRunner(input_files, all_files, mode, {}),
+        "context": PreCommitRunner(input_files, all_files, mode, {}),
     }
     repo_and_hook["hook"] = repo_and_hook["repo"]["hooks"][0]
     return repo_and_hook

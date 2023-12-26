@@ -29,6 +29,7 @@ class YAMLContentItemParser(ContentItemParser):
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces)
+        self.set_path_with_suffix(".yml")
         self.yml_data: Dict[str, Any] = self.get_yaml(git_sha=git_sha)
 
         if not isinstance(self.yml_data, dict):
@@ -118,7 +119,6 @@ class YAMLContentItemParser(ContentItemParser):
     def get_yaml(
         self, git_sha: Optional[str] = None
     ) -> Dict[str, Union[str, List[str]]]:
-        self.set_path(".yml")
         if git_sha:
             return YmlFile.read_from_git_path(self.path, tag=git_sha, handler=handler)
         return YmlFile.read_from_local_path(

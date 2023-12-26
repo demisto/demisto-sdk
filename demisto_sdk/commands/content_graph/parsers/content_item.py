@@ -242,7 +242,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             path
         )
 
-    def set_path(self, suffix: str) -> None:
+    def set_path_with_suffix(self, suffix: str) -> None:
         """Sets the path of the content item with a given suffix.
 
         Args:

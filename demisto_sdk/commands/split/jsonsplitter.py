@@ -176,9 +176,7 @@ class JsonSplitter:
         suffix = suffix_by_type.get(self.json_data["type"], ".txt")
 
         file_name = Path(pascal_case(self.json_data["name"]) + ".json")
-        file_data_name = file_name.with_stem(file_name.stem + "_data").with_suffix(
-            suffix
-        )
+        file_data_name = file_name.with_name(file_name.stem + f"_data{suffix}")
 
         if self.autocreate_dir:
             pack_name = get_pack_name(self.input)

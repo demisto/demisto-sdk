@@ -8,9 +8,7 @@ from demisto_sdk.commands.common.constants import (
     LISTS_DIR,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json, get_value
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,

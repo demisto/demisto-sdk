@@ -50,7 +50,9 @@ class JsonSplitter:
     def __init__(
         self,
         input: Union[Path, str],
-        output: Optional[Union[Path, str]] = None,  # If not provided, the output will be created next to the input
+        output: Optional[
+            Union[Path, str]
+        ] = None,  # If not provided, the output will be created next to the input
         file_type: FileType = FileType.GENERIC_MODULE,
         no_auto_create_dir: bool = False,
         new_module_file: bool = False,

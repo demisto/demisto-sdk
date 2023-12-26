@@ -42,7 +42,7 @@ runs:
           node_versions_info.json
           .coverage
     - name: Print Summary of pytest results in workflow summary
-      if: always()
+      if: ${{ inputs.junit-path != '' }}
       uses: pmeier/pytest-results-action@main
       with:
         path: ${{ inputs.junit-path}}

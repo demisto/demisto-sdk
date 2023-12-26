@@ -11,6 +11,7 @@ import pytest
 import urllib3
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
@@ -444,7 +445,9 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
     assert not unified_yml_in_sample.exists()
 
 
-def test_convert_contribution_zip(tmp_path, mocker):
+def test_convert_contribution_zip(
+    tmp_path: TempPathFactory, mocker: MockerFixture, git_repo: Repo
+):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -462,25 +465,23 @@ def test_convert_contribution_zip(tmp_path, mocker):
     - Ensure script and integration are componentized and in valid directory structure
     - Ensure readme_files is not empty and the generated docs exists.
     """
-    mocker.patch.object(GitUtil, "added_files", return_value=set())
-    mocker.patch.object(GitUtil, "modified_files", return_value=set())
+    mocker.patch.object(git_repo.git_util, "added_files", return_value=set())
+    mocker.patch.object(git_repo.git_util, "modified_files", return_value=set())
     # Create all Necessary Temporary directories
     # create temp directory for the repo
-    repo_dir = tmp_path / "content_repo"
-    repo_dir.mkdir()
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
-    target_dir = repo_dir / "target_dir"
+    target_dir = Path(str(tmp_path), "target_dir")
     target_dir.mkdir()
     # create temp directory in which the contribution zip will reside
-    contribution_zip_dir = tmp_path / "contrib_zip"
+    contribution_zip_dir = Path(str(tmp_path), "contrib_zip")
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
-    repo = Repo(repo_dir)
     mocker.patch(
-        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", git_repo.path
     )
-    contrib_zip = Contribution(target_dir, "ContribTestPack", repo)
+
+    contrib_zip = Contribution(target_dir, "ContribTestPack", git_repo)
     contrib_zip.create_zip(contribution_zip_dir)
     # target_dir should have been deleted after creation of the zip file
     assert not target_dir.exists()
@@ -502,12 +503,11 @@ def test_convert_contribution_zip(tmp_path, mocker):
         contribution=contribution_path,
         description=description,
         author=author,
-        base_dir=repo_dir,
+        base_dir=git_repo.path,
     )
     contrib_converter_inst.convert_contribution_to_pack()
-    contrib_converter_inst.generate_readmes_for_new_content_pack()
 
-    converted_pack_path = repo_dir / "Packs" / "ContribTestPack"
+    converted_pack_path = git_repo._packs_path / "ContribTestPack"
     assert converted_pack_path.exists()
 
     scripts_path = converted_pack_path / "Scripts"
@@ -572,7 +572,9 @@ def test_convert_contribution_zip(tmp_path, mocker):
     }
 
 
-def test_convert_contribution_zip_with_args(tmp_path, mocker):
+def test_convert_contribution_zip_with_args(
+    tmp_path: TempPathFactory, mocker: MockerFixture, git_repo: Repo
+):
     """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
     Args:
@@ -596,26 +598,21 @@ def test_convert_contribution_zip_with_args(tmp_path, mocker):
     - Ensure that the pack's 'pack_metadata.json' file's 'githubUser' field a list containing only 'octocat'
     - Ensure that the pack's 'pack_metadata.json' file's 'email' field is the empty string
     """
-    mocker.patch.object(GitUtil, "added_files", return_value=set())
-    mocker.patch.object(GitUtil, "modified_files", return_value=set())
+    mocker.patch.object(git_repo.git_util, "added_files", return_value=set())
+    mocker.patch.object(git_repo.git_util, "modified_files", return_value=set())
 
-    # Create all Necessary Temporary directories
-    # create temp directory for the repo
-    repo_dir = tmp_path / "content_repo"
-    repo_dir.mkdir()
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
-    target_dir = repo_dir / "target_dir"
+    target_dir = Path(str(tmp_path), "target_dir")
     target_dir.mkdir()
     # create temp directory in which the contribution zip will reside
-    contribution_zip_dir = tmp_path / "contrib_zip"
+    contribution_zip_dir = Path(str(tmp_path), "contrib_zip")
     contribution_zip_dir.mkdir()
-    # Create fake content repo and contribution zip
-    repo = Repo(repo_dir)
+
     mocker.patch(
-        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", git_repo.path
     )
-    contrib_zip = Contribution(target_dir, "ContribTestPack", repo)
+    contrib_zip = Contribution(target_dir, "ContribTestPack", git_repo)
     # contrib_zip.create_zip(contribution_zip_dir)
     contrib_zip.create_zip(contribution_zip_dir)
 
@@ -633,12 +630,11 @@ def test_convert_contribution_zip_with_args(tmp_path, mocker):
         description=description,
         author=author,
         gh_user=gh_user,
-        base_dir=repo_dir,
+        base_dir=git_repo.path,
     )
     contrib_converter_inst.convert_contribution_to_pack()
-    contrib_converter_inst.generate_readmes_for_new_content_pack()
 
-    converted_pack_path = repo_dir / "Packs" / "TestPack"
+    converted_pack_path = git_repo._packs_path / "TestPack"
     assert converted_pack_path.exists()
 
     pack_metadata_path = converted_pack_path / "pack_metadata.json"
@@ -931,7 +927,9 @@ class TestEnsureUniquePackDirName:
         return args
 
     @pytest.mark.parametrize("new_pack", [True, False])
-    def test_format_converted_pack(self, contribution_converter, mocker, new_pack):
+    def test_format_converted_pack(
+        self, contribution_converter, mocker: MockerFixture, new_pack
+    ):
         """Test the 'format_converted_pack' method
 
         Args:
@@ -1056,7 +1054,7 @@ class TestReleaseNotes:
         assert get_previous_nonempty_line(lines, index) == expected_result
 
     def test_replace_RN_template_with_value(
-        self, mocker, contrib_converter, rn_file_copy
+        self, mocker: MockerFixture, contrib_converter, rn_file_copy
     ):
         """Test the 'replace_RN_template_with_value' method
         Scenario:
@@ -1130,7 +1128,9 @@ class TestReleaseNotes:
             EXPECTED_NEW_ENTITY_RELEASE_NOTES
         )
 
-    def test_format_user_input(self, mocker, contrib_converter, rn_file_copy):
+    def test_format_user_input(
+        self, mocker: MockerFixture, contrib_converter, rn_file_copy
+    ):
         """Test the 'format_user_input' method
         Given
         - A pack's release note file path

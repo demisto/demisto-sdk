@@ -32,7 +32,7 @@ class Repo:
     def __init__(self, tmpdir: Path, init_git: bool = False):
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
-        self._packs_path = tmpdir / "Packs"
+        self._packs_path: Path = tmpdir / "Packs"
         self._packs_path.mkdir()
         self.path = str(self._tmpdir)
 

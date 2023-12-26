@@ -360,9 +360,12 @@ class ContributionConverter:
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
         if file_type == "integration":
-            generate_integration_doc(yml_path, is_contribution=is_contribution)
+            generate_integration_doc(
+                yml_path, is_contribution=is_contribution, examples=None
+            )
         if file_type == "script":
-            generate_script_doc(input_path=yml_path, examples=[])
+            # generate_script_doc(input_path=yml_path, examples=[], use_graph=False)
+            generate_script_doc(input_path=yml_path, examples=None)
         if file_type == "playbook":
             generate_playbook_doc(yml_path)
 

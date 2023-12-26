@@ -11,6 +11,11 @@ inputs:
     required: false
     type: string
     description: "The folder name to save artifacts"
+  group:
+    required: false
+    type: string
+    description: "The folder name to save artifacts"
+    default: "All-Tests"
   summary-display-options:
     required: false
     type: string
@@ -29,12 +34,19 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifacts-folder-name }}-artifacts-python(${{ inputs.python-version }})
+        name: ${{ inputs.artifacts-folder-name }}-artifacts-python-${{ inputs.python-version }}-(${{ inputs.group }})
         path: |
           ${{ inputs.junit-file-path }}
           ${{ inputs.artifacts_folder_name }}
           node_versions_info.json
           .coverage
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.junit-file-path }}
+        path: |
+          ${{ inputs.junit-file-path }}
     - name: Print Summary of pytest results in workflow summary
       if: always()
       uses: pmeier/pytest-results-action@main

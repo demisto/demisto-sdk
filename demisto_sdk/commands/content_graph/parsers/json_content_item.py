@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    LISTS_DIR,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
@@ -98,12 +99,13 @@ class JSONContentItemParser(ContentItemParser):
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
 
             # exclude the data file from the list of json files
-            # in case the list is json type
-            json_files_in_dir = [
-                Path(file_)
-                for file_ in json_files_in_dir
-                if not file_.endswith("_data.json")
-            ]
+            # in case the content-item is list and it is json type
+            if LISTS_DIR in self.path.parts:
+                json_files_in_dir = [
+                    Path(file)
+                    for file in json_files_in_dir
+                    if not Path(file).stem.endswith("_data")
+                ]
 
             if len(json_files_in_dir) != 1:
                 raise InvalidContentItemException(

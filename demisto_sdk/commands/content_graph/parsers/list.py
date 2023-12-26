@@ -30,7 +30,4 @@ class ListParser(JSONContentItemParser, content_type=ContentType.LIST):
 
     @property
     def is_unified(self) -> bool:
-        data =  self.json_data.get("data")
-        if not data or data == "-":
-            return False
-        return True
+        return bool((data := self.json_data.get("data")) and data != "-")

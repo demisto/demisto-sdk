@@ -1,5 +1,6 @@
 import json
 import os
+from enum import Enum
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
 
@@ -10,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
     LISTS_DIR,
     PACKS_DIR,
     FileType,
-    TypeListData,
 )
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.text_file import TextFile
@@ -21,6 +21,18 @@ from demisto_sdk.commands.common.tools import (
     pascal_case,
     write_dict,
 )
+
+
+class ListData(str, Enum):
+    """
+    A closed list of types of list (content-item) that the server accepts
+    """
+
+    TEXT = "plain_text"
+    HTML = "html"
+    CSS = "css"
+    MD = "markdown"
+    JSON = "json"
 
 
 class JsonSplitter:
@@ -148,23 +160,25 @@ class JsonSplitter:
 
         write_dict(module_file_path, data=self.json_data, indent=DEFAULT_JSON_INDENT)
 
-    def get_auto_output_path(self) -> Tuple[Path, str, str]:
+    def get_auto_output_path_for_list(self) -> Tuple[Path, Path, Path]:
         """
         Obtains the output path automatically according to the List name
         if autocreate_dir == true, otherwise returns the output as is
         """
         suffix_by_type = {
-            TypeListData.TEXT: ".txt",
-            TypeListData.HTML: ".html",
-            TypeListData.CSS: ".css",
-            TypeListData.MD: ".md",
-            TypeListData.JSON: ".json",
+            ListData.TEXT: ".txt",
+            ListData.HTML: ".html",
+            ListData.CSS: ".css",
+            ListData.MD: ".md",
+            ListData.JSON: ".json",
         }
 
         suffix = suffix_by_type.get(self.json_data["type"], ".txt")
 
-        file_name = pascal_case(self.json_data["name"]) + ".json"
-        file_data_name = file_name[: -len(".json")] + "_data" + suffix
+        file_name = Path(pascal_case(self.json_data["name"]) + ".json")
+        file_data_name = file_name.with_stem(file_name.stem + "_data").with_suffix(
+            suffix
+        )
 
         if self.autocreate_dir:
             pack_name = get_pack_name(self.input)
@@ -172,11 +186,12 @@ class JsonSplitter:
             if not pack_name:
                 return Path(self.input).parent, file_name, file_data_name
 
-            (lists_dir := Path(PACKS_DIR) / pack_name / LISTS_DIR).mkdir(exist_ok=True)
-
-            # create the specific list dir under the LISTS_DIR if it does not exist
-            # the dir name determine by the file name without the suffix
-            (list_name_dir := lists_dir / Path(file_name).stem).mkdir(exist_ok=True)
+            (
+                list_name_dir := Path(PACKS_DIR)
+                / pack_name
+                / LISTS_DIR
+                / file_name.stem
+            ).mkdir(parents=True, exist_ok=True)
 
             return list_name_dir, file_name, file_data_name
 
@@ -185,30 +200,35 @@ class JsonSplitter:
 
         return output, file_name, file_data_name
 
-    def write_file_data(self, list_name_dir: Path, file_data_name: str):
-        if file_data_name.endswith("json"):
+    def write_file_data(self, list_name_dir: Path, file_data_name: Path):
+        if file_data_name.suffix == ".json":
             try:
-                JsonFile.write_file(
-                    json.loads(self.json_data["data"]),
-                    (list_name_dir / file_data_name),
-                    indent=DEFAULT_JSON_INDENT,
-                )
+                data_list = json.loads(self.json_data["data"])
             except json.decoder.JSONDecodeError as e:
                 raise Exception(
                     f"Could not parse data of the list {self.json_data['name']}.\n"
                 ) from e
+
+            JsonFile.write_file(
+                data_list,
+                (list_name_dir / file_data_name),
+                indent=DEFAULT_JSON_INDENT,
+            )
         else:
             TextFile.write_file(
                 self.json_data["data"], (list_name_dir / file_data_name)
             )
 
-    def write_list(self, file_path: Path):
+    def write_file_metadata_list(self, file_path: Path):
+        """
+        writes the metadata of the list so that the data segment with `-` because the split
+        """
         self.json_data["data"] = "-"
         JsonFile.write_file(self.json_data, file_path, indent=DEFAULT_JSON_INDENT)
 
     def split_list(self):
-        list_name_dir, file_name, file_data_name = self.get_auto_output_path()
+        list_name_dir, file_name, file_data_name = self.get_auto_output_path_for_list()
 
         self.write_file_data(list_name_dir, file_data_name)
 
-        self.write_list(list_name_dir / file_name)
+        self.write_file_metadata_list(list_name_dir / file_name)

@@ -21,20 +21,22 @@ def create_split_list() -> Tuple[dict, str, Path]:
 
 
 def test_list_unify(git_repo):
-    '''
+    """
     Given:
         - A list json file.
     When:
         - Running ListUnifier.unify on it.
     Then:
         - Ensure the list is unified as expected.
-    '''
+    """
     pack = git_repo.create_pack("PackName")
     list_json, list_data, relative_list_dir_path = create_split_list()
     list_dir_path = Path(pack.path) / relative_list_dir_path
     list_dir_path.mkdir(parents=True, exist_ok=True)
     (list_dir_path / (relative_list_dir_path.name + ".json")).write_text(str(list_json))
-    (list_dir_path / (relative_list_dir_path.name + "_data.css")).write_text(str(list_data))
+    (list_dir_path / (relative_list_dir_path.name + "_data.css")).write_text(
+        str(list_data)
+    )
 
     with ChangeCWD(pack.repo_path):
         list_unifier = ListUnifier.unify(
@@ -45,44 +47,42 @@ def test_list_unify(git_repo):
 
 @pytest.mark.parametrize("suffix", ["css", "json", "txt", "md", "csv", "html"])
 def test_find_file_content_data(tmpdir, suffix: str):
-    '''
+    """
     Given:
         - A data file with a suffix that is txt, json, css, md, csv or html.
     When:
         - Running `find_file_content_data` method.
     Then:
         - Ensure the path of the data file is returned.
-    '''
+    """
     path = Path(tmpdir, f"_data.{suffix}")
     path.write_text("data")
-    assert (
-        ListUnifier.find_file_content_data(path) == path
-    )
+    assert ListUnifier.find_data_file(path) == path
 
 
 @pytest.mark.parametrize("suffix", ["jpg", "png", "gif", "bmp"])
 def test_find_file_content_data_return_none(tmpdir, suffix: str):
-    '''
+    """
     Given:
         - A data file with a suffix that is not txt, json, css, md, csv or html.
     When:
         - Running `find_file_content_data` method.
     Then:
         - Ensure None is returned.
-    '''
-    (path:= Path(tmpdir) / f"_data.{suffix}").write_bytes(b"data")
-    assert not ListUnifier.find_file_content_data(path)
+    """
+    (path := Path(tmpdir) / f"_data.{suffix}").write_bytes(b"data")
+    assert not ListUnifier.find_data_file(path)
 
 
 def test_insert_data_to_json(tmpdir):
-    '''
+    """
     Given:
         - A list (data section filled with a dash(-) or blank).
     When:
         - Running `insert_data_to_json` method.
     Then:
         - Ensure the data section is filled with the data from the data file.
-    '''
+    """
     (Path(tmpdir) / "_data.txt").write_text("data")
     json_list = list_obj
     json_list["data"] = "-"
@@ -94,7 +94,7 @@ def test_insert_data_to_json(tmpdir):
 
 
 def test_insert_data_to_json_with_warning(mocker, tmpdir):
-    '''
+    """
     Given:
         - A list with data section filled with something else than a dash(-) or blank.
     When:
@@ -102,7 +102,7 @@ def test_insert_data_to_json_with_warning(mocker, tmpdir):
     Then:
         - Ensure the data section is filled with the data from the data file.
         - Ensure a warning is printed.
-    '''
+    """
     mock_warning = mocker.patch.object(logger, "warning")
     list_dir_path = Path(tmpdir) / "Lists" / "TestList"
     list_dir_path.mkdir(parents=True, exist_ok=True)

@@ -7,6 +7,8 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
+LIST_DATA_SUFFIXES = (".txt", ".json", ".html", ".css", ".csv", ".md")
+
 
 class ListUnifier(Unifier):
     @staticmethod
@@ -16,9 +18,10 @@ class ListUnifier(Unifier):
         logger.debug(f"Unifying {path}...")
         if path.parent.name == LISTS_DIR:
             # if the file is in the lists directory, we assume it is already unified
+            logger.debug(f"File is already unified: {path.name}")
             return data
         package_path = path.parent
-        file_content_data_path = ListUnifier.find_file_content_data(
+        file_content_data_path = ListUnifier.find_data_file(
             package_path / (package_path.name + "_data")
         )
         if not file_content_data_path:
@@ -28,7 +31,9 @@ class ListUnifier(Unifier):
             return data
 
         json_unified = copy.deepcopy(data)
-        json_unified = ListUnifier.insert_data_to_json(json_unified, file_content_data_path)
+        json_unified = ListUnifier.insert_data_to_json(
+            json_unified, file_content_data_path
+        )
         logger.debug(f"[green]Created unified json: {path.name}[/green]")
         return json_unified
 
@@ -45,11 +50,11 @@ class ListUnifier(Unifier):
         return json_unified
 
     @staticmethod
-    def find_file_content_data(list_path: Path) -> Optional[Path]:
+    def find_data_file(list_path: Path) -> Optional[Path]:
         """
-        finds the file with the data in the list directory by closed list of suffixes
+        To unify, we need to find the file with the actual list data.
         """
-        for suffix in (".txt", ".json", ".html", ".css", ".csv", ".md"):
+        for suffix in LIST_DATA_SUFFIXES:
             if (path_file_data := list_path.with_suffix(suffix)).exists():
                 return path_file_data
         return None

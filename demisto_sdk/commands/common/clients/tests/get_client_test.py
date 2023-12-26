@@ -116,7 +116,7 @@ def test_get_client_from_marketplace(
         ("https://tes2.com", "8.4.0", XsoarSaasClient),
     ],
 )
-def test_get_xsoar_client_from_server_type(
+def test_get_xsoar_client_from_server_type_no_product_deployment_mode(
     api_requests_mocker,
     base_api_url: str,
     xsoar_version: str,
@@ -126,6 +126,7 @@ def test_get_xsoar_client_from_server_type(
     Given:
      - Case A: xsoar 6 version
      - Case B: xsoar 8 version
+     - no product / deployment modes
 
     When:
      - running get_client_from_server_type function
@@ -156,10 +157,13 @@ def test_get_xsoar_client_from_server_type(
     )
 
 
-def test_get_xsiam_client_from_server_type(api_requests_mocker):
+def test_get_xsiam_client_from_server_type_no_product_deployment_mode(
+    api_requests_mocker,
+):
     """
     Given:
      - /ioc-rules endpoint that is valid
+     - no product / deployment modes
 
     When:
      - running get_client_from_server_type function
@@ -245,3 +249,102 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
         get_client_from_server_type(
             base_url="https://test5.com", api_key="test", auth_id="1"
         )
+
+
+@pytest.mark.parametrize(
+    "base_api_url, product_deployment_modes, expected_client_type",
+    [
+        ("https://test6.com", {"productMode": "xsiam"}, XsiamClient),
+        (
+            "https://test7.com",
+            {"productMode": "xsoar", "deploymentMode": "saas"},
+            XsoarSaasClient,
+        ),
+        (
+            "https://test8.com",
+            {"productMode": "xsoar", "deploymentMode": "opp"},
+            XsoarClient,
+        ),
+    ],
+)
+def test_get_client_from_server_type_with_product_deployment_mode(
+    api_requests_mocker,
+    base_api_url: str,
+    product_deployment_modes: dict,
+    expected_client_type: Type[XsoarClient],
+):
+    """
+    Given:
+     - Case A: productMode=xsiam
+     - Case B: productMode=xsoar, deploymentMode=saas
+     - Case C: productMode=xsoar, deploymentMode=opp
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - Case A: XsiamClient is returned
+     - Case B: XsoarSaasClient is returned
+     - Case C: XsoarClient is returned
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        raise ApiException(status=500, reason="error")
+
+    api_requests_mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+
+    api_requests_mocker.patch.object(
+        XsoarClient, "get_xsoar_about", return_value=product_deployment_modes
+    )
+
+    assert (
+        type(
+            get_client_from_server_type(
+                base_url=base_api_url, api_key="test", auth_id="1"
+            )
+        )
+        == expected_client_type
+    )
+
+
+def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_with_from_version_larger_than_8(
+    mocker,
+):
+    """
+    Given:
+     - xsoar-on-prem that has from version of 8
+     - no auth id
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure XsoarClient is returned even when from version is > 8
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException(status=500, reason="error")
+        if path == "/about" and method == "GET" and response_type == "object":
+            return (
+                {"demistoVersion": "8.0.0"},
+                200,
+                {"Content-Type": "application/json"},
+            )
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+
+    assert (
+        type(get_client_from_server_type(base_url="https://test9.com", api_key="test"))
+        == XsoarClient
+    )

@@ -3,6 +3,7 @@
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
 * Fixed an issue in **validate** where there is a specific value for marketplace in `isFetch` parameter.
 * Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
+* Fixed an issue in **prepare-content**, **upload** where the unified YAML/JSON file was parsed instead of the original file.
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

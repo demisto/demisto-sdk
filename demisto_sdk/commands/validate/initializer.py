@@ -387,6 +387,8 @@ class Initializer:
                         old_file_path=Path(file_path[1]),
                         git_sha=git_sha,
                     )
+                elif git_status == GitStatuses.ADDED:
+                    temp_obj = BaseContent.from_path(Path(file_path), git_status)
                 else:
                     temp_obj = BaseContent.from_path(
                         Path(file_path), git_status, git_sha=git_sha

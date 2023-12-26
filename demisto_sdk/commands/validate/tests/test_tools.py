@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.repo import Repo
+from demisto_sdk.commands.validate.tools import check_timestamp_format
 
 REPO = Repo(tmpdir=Path(tempfile.mkdtemp()))
 
@@ -220,3 +221,25 @@ def create_playbook_object(
     playbook.yml.update(yml_content)
     parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
     return Playbook.from_orm(parser)  # type:ignore
+
+def test_check_timestamp_format(self):
+    """
+    Given
+    - timestamps in various formats.
+
+    When
+    - Running check_timestamp_format on them.
+
+    Then
+    - Ensure True for iso format and False for any other format.
+    """
+    good_format_timestamp = "2020-04-14T00:00:00Z"
+    missing_z = "2020-04-14T00:00:00"
+    missing_t = "2020-04-14 00:00:00Z"
+    only_date = "2020-04-14"
+    with_hyphen = "2020-04-14T00-00-00Z"
+    assert check_timestamp_format(good_format_timestamp)
+    assert not check_timestamp_format(missing_t)
+    assert not check_timestamp_format(missing_z)
+    assert not check_timestamp_format(only_date)
+    assert not check_timestamp_format(with_hyphen)

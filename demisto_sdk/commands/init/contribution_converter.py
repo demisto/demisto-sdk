@@ -42,7 +42,6 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
     get_child_files,
-    get_content_path,
     get_display_name,
     get_pack_metadata,
 )
@@ -946,7 +945,7 @@ class ContributionConverter:
             source_file_path = info_dict.get("source_file_name", "")
             if re.search(integrations_path_pattern, source_file_path):
                 fetched_display_field = self.get_source_integration_display_field(
-                    os.path.join(get_content_path(), source_file_path)
+                    Path(self.packs_dir_path).parent / source_file_path
                 )
                 if fetched_display_field:
                     info_dict["source_display"] = fetched_display_field

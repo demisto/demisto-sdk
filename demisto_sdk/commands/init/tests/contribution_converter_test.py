@@ -40,9 +40,7 @@ yaml = YAML_Handler()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-CONTRIBUTION_TESTS = os.path.join(
-    DEMISTO_SDK_PATH, "commands", "init", "tests", "test_files"
-)
+CONTRIBUTION_TESTS = Path(DEMISTO_SDK_PATH, "commands", "init", "tests", "test_files")
 
 RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md"
 SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN/1_0_1.md"
@@ -85,14 +83,18 @@ def util_open_file(path):
 
 
 @pytest.fixture
-def contrib_converter():
+def contrib_converter(tmp_path: TempPathFactory, git_repo: Repo):
     return ContributionConverter(
-        contribution="contribution.zip", name="", pack_dir_name="", base_dir="/tmp"
+        contribution="contribution.zip",
+        name="",
+        pack_dir_name="",
+        base_dir=git_repo.path,
+        working_dir_path=str(tmp_path),
     )
 
 
 @pytest.fixture
-def create_test_packs(request, tmp_path_factory):
+def create_test_packs(request: FixtureRequest, tmp_path_factory: TempPathFactory):
     """Create TmpPack objects for each pack name passed in the request.param"""
     if isinstance(request.param, (list, tuple)):
         tmp_packs = []
@@ -731,6 +733,7 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     new_json = {"field": "new_value"}
     update_file.write_text(json.dumps(new_json))
     converter = ContributionConverter(
+        # TODO use tmp_dir
         contribution="/tmp/contrib.zip",
         working_dir_path=str(tmp_path),
         base_dir=fake_pack_subdir,
@@ -789,7 +792,9 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
 
     """
     contribution_converter = ContributionConverter(
-        contribution=zip_path, base_dir="/tmp/content"
+        # TODO use tmp_dir
+        contribution=zip_path,
+        base_dir="/tmp/content",
     )
     contribution_converter.convert_contribution_to_pack()
     unpacked_contribution_dirs = get_child_directories(
@@ -832,14 +837,18 @@ def test_extract_pack_version(input_script: str, output_version: str):
 
     """
     contribution_converter = ContributionConverter(
-        contribution="contrib.zip", base_dir="/tmp/content"
+        # TODO use tmp_dir
+        contribution="contrib.zip",
+        base_dir="/tmp/content",
     )
     assert contribution_converter.extract_pack_version(input_script) == output_version
 
 
 def test_create_contribution_items_version_note():
     contribution_converter = ContributionConverter(
-        contribution="contrib.zip", base_dir="/tmp/content"
+        # TODO use tmp_dir
+        contribution="contrib.zip",
+        base_dir="/tmp/content",
     )
     contribution_converter.contribution_items_version = {
         "CortexXDRIR": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},
@@ -1564,7 +1573,7 @@ class TestReadmes:
 
 @pytest.mark.helper
 class TestFixupDetectedContentItems:
-    def test_fixup_detected_content_items_automation(self, tmp_path):
+    def test_fixup_detected_content_items_automation(self, tmp_path, git_repo: Repo):
         """
         Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
 
@@ -1616,7 +1625,7 @@ class TestFixupDetectedContentItems:
             detected_content_items=detected_content_items,
             contribution=path_to_test_zip,
             working_dir_path=str(tmp_path),
-            base_dir="/tmp",
+            base_dir=git_repo.path,
         )
 
         (
@@ -1645,7 +1654,7 @@ class TestFixupDetectedContentItems:
                 assert data_obj.get("commonfields", {}).get("id", "") == original_id
                 assert data_obj.get("name", "") == original_name
 
-    def test_fixup_detected_content_items_servicenow(self, tmp_path):
+    def test_fixup_detected_content_items_servicenow(self, tmp_path, git_repo: Repo):
         """
         Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
 
@@ -1737,7 +1746,7 @@ class TestFixupDetectedContentItems:
             detected_content_items=detected_content_items,
             contribution=path_to_test_zip,
             working_dir_path=str(tmp_path),
-            base_dir="/tmp",
+            base_dir=git_repo.path,
         )
 
         (
@@ -1825,10 +1834,7 @@ class TestFixupDetectedContentItems:
                         assert content_item_id == expected_source_id
                         assert data_obj.get("name", "") == expected_source_name
 
-    @pytest.mark.parametrize("create_test_packs", ["AbuseDB"], indirect=True)
-    def test_fixup_detected_content_items_integration(
-        self, create_test_packs, tmp_path
-    ):
+    def test_fixup_detected_content_items_integration(self, repo: Repo, tmp_path: Path):
         """
         Scenario: Modify a contribution zip file's content files to use source file info (for relevant files)
 
@@ -1851,24 +1857,12 @@ class TestFixupDetectedContentItems:
         - Ensure the id field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
         - Ensure the display field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
         """
-        path_to_test_zip = os.path.join(
-            CONTRIBUTION_TESTS, "contentpack-abuse_Contribution_Pack.zip"
+        path_to_test_zip = (
+            CONTRIBUTION_TESTS / "contentpack-abuse_Contribution_Pack.zip"
         )
-        tmp_destination = tmp_path / "abuse_contribution_pack.zip"
-        tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
+        tmp_zip = shutil.copy(str(path_to_test_zip), tmp_path)
 
-        tmp_packs_dir = tmp_path / "Packs"
-        tmp_packs_dir.mkdir()
-        abusedb_pack = create_test_packs
-        abusedb_pack.create_integration(
-            name="AbuseDB", contents='"display": "AbuseIPDB"'
-        )
-        # the created pack has a digit appended since the
-        # (side-effect of using the tmp_path_factory the create_test_packs fixture)
-        # move the created pack under the "Packs" dir and rename the pack dir from "AbuseDB0" to "AbuseDB"
-        shutil.move(str(abusedb_pack), tmp_packs_dir / "AbuseDB")
-        containing_directory = os.path.normpath(os.path.join(tmp_packs_dir, ".."))
-        os.chdir(containing_directory)
+        repo.create_pack("AbuseDB").create_integration("AbuseDB")
 
         file_id = "AbuseIPDB_copy"
         file_name = "AbuseIPDB_copy"
@@ -1898,7 +1892,7 @@ class TestFixupDetectedContentItems:
             detected_content_items=detected_content_items,
             contribution=tmp_zip,
             working_dir_path=str(tmp_path),
-            base_dir="/tmp",
+            base_dir=repo.path,
         )
 
         (
@@ -1926,7 +1920,7 @@ class TestFixupDetectedContentItems:
                 data_obj = ryaml.load(integration_yml)
                 assert data_obj.get("commonfields", {}).get("id", "") == original_id
                 assert data_obj.get("name", "") == original_name
-                assert data_obj.get("display", "") == original_name
+                assert data_obj.get("display", "") == expected_base_name
 
 
 @pytest.mark.helper
@@ -1964,7 +1958,11 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+            # TODO use tmp_dir
+            "contrib.zip",
+            "contrib",
+            base_dir="/tmp",
+            working_dir_path="/tmp",
         )
         fetched_display_field = converter.get_source_integration_display_field(
             path_to_file
@@ -2001,7 +1999,11 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+            # TODO use tmp_dir
+            "contrib.zip",
+            "contrib",
+            base_dir="/tmp",
+            working_dir_path="/tmp",
         )
         fetched_display_field = converter.get_source_integration_display_field(
             path_to_file
@@ -2031,7 +2033,11 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+            # TODO use tmp_dir
+            "contrib.zip",
+            "contrib",
+            base_dir="/tmp",
+            working_dir_path="/tmp",
         )
         fetched_display_field = converter.get_source_integration_display_field(
             path_to_file
@@ -2062,7 +2068,11 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+            # TODO use tmp_dir
+            "contrib.zip",
+            "contrib",
+            base_dir="/tmp",
+            working_dir_path="/tmp",
         )
         fetched_display_field = converter.get_source_integration_display_field(
             path_to_file
@@ -2100,7 +2110,11 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            "contrib.zip", "contrib", base_dir="/tmp", working_dir_path="/tmp"
+            # TODO use tmp_dir
+            "contrib.zip",
+            "contrib",
+            base_dir="/tmp",
+            working_dir_path="/tmp",
         )
         fetched_display_field = converter.get_source_integration_display_field(
             path_to_file

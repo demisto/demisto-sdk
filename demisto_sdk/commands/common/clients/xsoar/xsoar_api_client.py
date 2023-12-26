@@ -4,7 +4,7 @@ import socket
 import time
 import urllib.parse
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
 
 import dateparser
@@ -12,11 +12,12 @@ import demisto_client
 import requests
 from demisto_client.demisto_api.api.default_api import DefaultApi
 from demisto_client.demisto_api.models.entry import Entry
-from demisto_client.demisto_api.rest import ApiException
+from demisto_client.demisto_api.rest import ApiException, RESTResponse
 from packaging.version import Version
 from pydantic import BaseModel, Field, validator
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
+from urllib3 import HTTPResponse
 
 from demisto_sdk.commands.common.clients.configs import (
     XsoarClientConfig,
@@ -27,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     InvestigationPlaybookState,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
@@ -980,6 +982,37 @@ class XsoarClient(BaseModel):
             investigation_id, response_type
         )
 
+    def get_formatted_error_entries(self, entries: List[Entry]) -> Set[str]:
+        """
+        Get formatted error entries from an executed command / playbook tasks
+
+        Args:
+            entries: a list of entries
+
+        Returns:
+            Formatted error entries
+        """
+        error_entries: Set[str] = set()
+
+        for entry in entries:
+            if entry.type == self._ENTRY_TYPE_ERROR and entry.parent_content:
+                # Checks for passwords and replaces them with "******"
+                parent_content = re.sub(
+                    r' ([Pp])assword="[^";]*"',
+                    " password=******",
+                    entry.parent_content,
+                )
+                formatted_error = ""
+                if entry_task := entry.entry_task:
+                    formatted_error = f"Playbook {entry_task.playbook_name} task({entry_task.task_id}) named '{entry_task.task_name}' using "
+                formatted_error += (
+                    f"Command {parent_content} finished with error:\n{entry.contents}"
+                )
+
+                error_entries.add(formatted_error)
+
+        return error_entries
+
     def get_playground_id(self) -> str:
         """
         Returns a playground ID based on the user.
@@ -1114,7 +1147,7 @@ class XsoarClient(BaseModel):
         return raw_response
 
     @retry(exceptions=ApiException)
-    def get_incident_playbook_failure(self, incident_id: str) -> Dict:
+    def get_incident_playbook_failure(self, incident_id: str) -> Set[str]:
         """
         Returns the failure reason for a playbook within an incident
 
@@ -1122,23 +1155,18 @@ class XsoarClient(BaseModel):
             incident_id: the incident ID.
 
         Returns:
-            mapping between the command(s) and its failure
+            Formatted set of error messages for each error entry
         """
         investigation_status = self.get_investigation_status(incident_id)
-        entries = investigation_status["entries"]
-        error_entries = {}
-        for entry in entries:
-            if entry["type"] == self._ENTRY_TYPE_ERROR and entry["parentContent"]:
-                # Checks for passwords and replaces them with "******"
-                parent_content = re.sub(
-                    r' ([Pp])assword="[^";]*"',
-                    " password=******",
-                    entry["parentContent"],
-                )
-                error_entries[
-                    f"Command: {parent_content}"
-                ] = f'Body:\n{entry["contents"]}'
-        return error_entries
+
+        # parses the playbook entries into the Entry model from demisto-py
+        playbook_entries = self.client.api_client.deserialize(
+            RESTResponse(
+                HTTPResponse(body=json.dumps(investigation_status.get("entries") or []))
+            ),
+            response_type="list[Entry]",
+        )
+        return self.get_formatted_error_entries(playbook_entries)
 
     @retry(exceptions=ApiException)
     def get_playbook_state(self, incident_id: str, response_type: str = "object"):
@@ -1201,6 +1229,10 @@ class XsoarClient(BaseModel):
                 time.sleep(interval)
                 elapsed_time = int(time.time() - start_time)
 
-        raise RuntimeError(
-            f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
-        )
+        error = f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
+        if playbook_state == InvestigationPlaybookState.FAILED:
+            error = (
+                f"{error}\nreason: {self.get_incident_playbook_failure(incident_id)}"
+            )
+
+        raise RuntimeError(error)

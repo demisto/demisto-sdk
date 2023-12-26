@@ -298,6 +298,10 @@ class BaseContent(BaseNode):
             )
             return None
 
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        pass
+
 
 class UnknownContent(BaseNode):
     """A model for non-existing content items used by existing content items."""

@@ -160,52 +160,10 @@ class PreCommitRunner:
 
         return hooks
 
-    def exclude_hooks_by_version(self) -> None:
-        """
-        This function excludes the files that are not supported by the hook, according to the hook min_version property.
-        """
-        for hook in self.hooks.values():
-            min_version = Hook.get_property(hook["hook"], self.mode, "min_py_version")
-            if not min_version:
-                continue
-            files_to_exclude: Set[Path] = set()
-
-            for version, paths in self.python_version_to_files.items():
-                if Version(version) < Version(min_version):
-                    files_to_exclude.update(path for path in paths)
-            if files_to_exclude:
-                join_files_string = join_files(files_to_exclude)
-                if hook["hook"].get("exclude"):
-                    hook["hook"]["exclude"] += f"|{join_files_string}"
-                else:
-                    hook["hook"]["exclude"] = join_files_string
-
-    def exclude_hooks_by_support_level(self) -> None:
-        """This function excludes the hooks that are not supported by the support level of the file."""
-        for hook in self.hooks.values():
-            support_levels = Hook.get_property(
-                hook["hook"], self.mode, "exclude_support_level"
-            )
-            if not support_levels:
-                continue
-            files_to_exclude: Set[Path] = set()
-            for support_level in support_levels:
-                files_to_exclude.update(
-                    path for path in self.support_level_to_files[support_level]
-                )
-            if files_to_exclude:
-                join_files_string = join_files(files_to_exclude)
-                if hook["hook"].get("exclude"):
-                    hook["hook"]["exclude"] += f"|{join_files_string}"
-                else:
-                    hook["hook"]["exclude"] = join_files_string
-
     def prepare_hooks(self, dry_run: bool) -> None:
         hooks = self.hooks
         kwargs = {
-            "mode": self.mode,
-            "all_files": self.all_files,
-            "input_mode": bool(self.input_files),
+            "runner": self,
         }
         if "pycln" in hooks:
             PyclnHook(**hooks.pop("pycln"), **kwargs).prepare_hook(PYTHONPATH)
@@ -486,8 +444,6 @@ class PreCommitRunner:
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
         precommit_env["SYSTEMD_COLORS"] = "1"  # for colorful output
         precommit_env["PRE_COMMIT_COLOR"] = "always"
-        self.exclude_hooks_by_version()
-        self.exclude_hooks_by_support_level()
 
         if self.all_files:
             logger.info("Running pre-commit on all files")

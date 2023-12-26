@@ -22,7 +22,7 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Setup Poetry
+    - name: Install SDK dependencies with poetry
       run: |
         sudo curl -sSL https://install.python-poetry.org | python3 -
         poetry --version

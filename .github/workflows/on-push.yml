@@ -53,7 +53,7 @@ jobs:
       - name: Upload artifacts Junit Files
         uses: actions/upload-artifact@v4
         with:
-          name: junit-python-${{ matrix.python-version }}-group-${{ matrix.group }}.xml
+          name: junit-python-${{ matrix.python-version }}-group-${{ matrix.group }}
           path: |
             junit.xml
 
@@ -161,7 +161,7 @@ jobs:
       - name: Merge all junit-files
         run: |
           npm install -g junit-report-merger
-          jrm ./combined-junit.xml ./junit*.xml/*.xml
+          jrm ./combined-junit.xml ./junit*/*.xml
       - name: Print Summary of pytest results in workflow summary
         if: always()
         uses: pmeier/pytest-results-action@main

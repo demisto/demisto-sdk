@@ -163,8 +163,8 @@ def generate_integration_doc(
                 errors.extend(err)
 
         # Before generating a new README, we check whether it's a new integration or not.
-        # If it's not new, we retrieve the integration YAML from the primary branch
-        # and merge the changes into the output README.
+        # If it's not new, we retrieve the integration YAML from the primary branch,
+        # and regenerate the changed sections.
         # The process is as follows:
         # 1) Initialize git, find primary branch and write the integration YML from the local primary branch to a temporary file.
         # 2) Use the integration YAMLs from input and local primary branch to check for differences in configuration and commands.

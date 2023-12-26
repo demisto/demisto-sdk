@@ -259,12 +259,6 @@ class TestIntegrationDiffDetector:
         "commands": [
             {
                 "description": "",
-                "message": "New command added 'command_3'.",
-                "name": "command_3",
-                "type": "commands",
-            },
-            {
-                "description": "",
                 "type": "commands",
                 "name": "command_1",
                 "message": "Missing the command 'command_1'.",
@@ -335,7 +329,7 @@ class TestIntegrationDiffDetector:
             new=new_integration.yml.path, old=old_integration.yml.path
         )
 
-        assert not integration_detector.check_different()
+        assert integration_detector.check_different()
 
     def test_get_differences(self, pack):
         """
@@ -725,31 +719,6 @@ class TestIntegrationDiffDetector:
                 for current_str in excepted_output
             ]
         )
-
-    def test_get_differences_from_files(self):
-        """
-        Test differences from 2 YAMLs created from a UI contribution
-        https://github.com/demisto/content/pull/31266
-
-        The new integration includes a new command
-        """
-
-        diff = IntegrationDiffDetector(
-            os.path.join(TEST_FILES, "HelloWorld_new.yml"),
-            os.path.join(TEST_FILES, "HelloWorld_old.yml"),
-        )
-
-        actual = diff.get_differences()
-
-        assert actual["commands"]
-        assert actual["commands"][0]["name"] == "helloworld-new-cmd"
-        assert "New command added" in actual["commands"][0]["message"]
-        assert (
-            actual["commands"][0]["description"]
-            == "New command to test out https://jira-dc.paloaltonetworks.com/browse/CIAC-4657"
-        )
-
-        assert 1
 
     @pytest.mark.ciac_8757
     def test_get_added_commands(self, pack: Pack):

@@ -32,7 +32,7 @@ class IntegrationDiffDetector:
         self.old_yaml_data = get_yaml(self.old)
         self.new_yaml_data = get_yaml(self.new)
 
-        self.fount_missing = False
+        self.found_missing = False
         self.missing_items_report: dict = {}
         self.added_commands: List[str] = self.get_added_commands()
 
@@ -44,12 +44,7 @@ class IntegrationDiffDetector:
             bool. return true if the new integration contains everything in the old integration.
         """
 
-        self.missing_items_report = self.get_differences()
-
-        if self.print_items():
-            return False
-
-        return True
+        return True if self.get_differences() else False
 
     def get_differences(self) -> dict:
         """

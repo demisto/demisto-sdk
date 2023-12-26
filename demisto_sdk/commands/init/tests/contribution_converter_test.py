@@ -387,7 +387,6 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
         base_dir=repo_dir,
     )
     contrib_converter_inst.convert_contribution_to_pack()
-    contrib_converter_inst.generate_readmes_for_new_content_pack()
 
     # Ensure directory/file structure output by conversion meets expectations
 

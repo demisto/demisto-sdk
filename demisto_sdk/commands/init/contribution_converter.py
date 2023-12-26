@@ -370,7 +370,7 @@ class ContributionConverter:
         if file_type == "playbook":
             readme_path = yml_path.replace(".yml", "_README.md")
         else:
-            readme_path = os.path.join(dir_output, "README.md")
+            readme_path = os.path.join(dir_output, PACKS_README_FILE_NAME)
 
         return readme_path
 
@@ -670,6 +670,7 @@ class ContributionConverter:
                             input=content_item_file_path,
                             file_type=file_type,
                             output=content_item_dir,
+                            no_readme=True,
                         )
                     try:
                         content_item = BaseContent.from_path(
@@ -719,7 +720,7 @@ class ContributionConverter:
         to be in the base directory of a pack
         """
         logger.info("Creating pack base files")
-        Path(self.working_dir_path, "README.md").touch()
+        Path(self.working_dir_path, PACKS_README_FILE_NAME).touch()
 
         Path(self.working_dir_path, ".secrets-ignore").touch()
 

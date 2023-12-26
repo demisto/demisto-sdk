@@ -478,7 +478,7 @@ class File(ABC, BaseModel):
             raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
-    def __write(
+    def _write(
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         raise NotImplementedError(
@@ -489,10 +489,10 @@ class File(ABC, BaseModel):
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         def _write_safe_unicode():
-            self.__write(data, path=path, **kwargs)
+            self._write(data, path=path, **kwargs)
 
         if encoding:
-            self.__write(data, path=path, encoding=encoding, **kwargs)
+            self._write(data, path=path, encoding=encoding, **kwargs)
         else:
             try:
                 _write_safe_unicode()

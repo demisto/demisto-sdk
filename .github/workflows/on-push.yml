@@ -47,7 +47,7 @@ jobs:
           mkdir unit-tests
           poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=junit.xml --splits 5 --group ${{ matrix.group }} || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
-
+          
           kill $node_pid
 
       - name: Upload artifacts Junit Files
@@ -58,12 +58,11 @@ jobs:
             junit.xml
 
       - name: Python ${{ matrix.python-version }} (${{ matrix.group }}) - Test Summary Upload
-        uses: ./.github/actions/test_summary_upload
+        uses: ./.github/actions/test_summary
         with:
           python-version: ${{ matrix.python-version }}
           artifacts-folder-name: unit-tests
           group: ${{ matrix.group }}
-
 
   integration-tests:
     name: Integration Tests / Python ${{ matrix.python-version }} (All-Tests)
@@ -96,10 +95,11 @@ jobs:
           exit $pytest_exit_code
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
-        uses: ./.github/actions/test_summary_upload
+        uses: ./.github/actions/test_summary
         with:
           python-version: ${{ matrix.python-version }}
           artifacts-folder-name: integration-tests
+          junit-path: integration-tests/junit.xml
 
   graph-tests:
     name: Graph Tests / Python ${{ matrix.python-version }} (All-Tests)
@@ -130,13 +130,14 @@ jobs:
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
-        uses: ./.github/actions/test_summary_upload
+        uses: ./.github/actions/test_summary
         with:
           python-version: ${{ matrix.python-version }}
           artifacts-folder-name: graph-tests
+          junit-path: graph-tests/junit.xml
 
   unit-test-merge-summary:
-    name: Unit Tests Merge Summary / Python ${{ matrix.python-version }}
+    name: Unit Tests / Python ${{ matrix.python-version }} (All-Tests)
     if: ${{ always() }}
     runs-on: ubuntu-latest
     needs: [ unit-tests ]
@@ -160,12 +161,7 @@ jobs:
       - name: Merge all junit-files
         run: |
           npm install -g junit-report-merger
-          ls -a
-          
-          echo "running jrm"
           jrm ./combined-junit.xml ./junit*.xml/*.xml
-          ls -a
-          cat ./combined-junit.xml
       - name: Print Summary of pytest results in workflow summary
         if: always()
         uses: pmeier/pytest-results-action@main
@@ -175,9 +171,9 @@ jobs:
           display-options: fs
           fail-on-empty: true
           title: Unit Tests / Python ${{ matrix.python-version }} summary
-      - uses: geekyeggo/delete-artifact@v4
+      - name: Delete all junit-files created from unit-tests groups
+        uses: geekyeggo/delete-artifact@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           name: |
             junit-python-${{ matrix.python-version }}*
 

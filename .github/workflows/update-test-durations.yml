@@ -15,18 +15,15 @@ jobs:
   update-test-durations:
     name: Update .test-durations file
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [ "3.10" ]
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Python ${{ matrix.python-version }} (${{ matrix.group }}) - Setup Environment
+      - name: Python 3.10 - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
 
       - name: Run Unit Tests
         run: |
@@ -44,9 +41,9 @@ jobs:
           kill $node_pid
       - name: Upload artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.artifacts_folder_name }}-artifacts-python(${{ inputs.python-version }})-group(${{ inputs.group }})
+          name: test-durations-artifacts-python-3.10
           path: |
             .test_durations
       - name: Update .test-durations
@@ -63,8 +60,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Python ${{ matrix.python-version }} (${{ matrix.group }}) - Test Summary Upload
-        uses: ./.github/actions/test_summary_upload
+      - name: Python 3.10 - Test Summary Upload
+        uses: ./.github/actions/test_summary
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
           artifacts_folder_name: unit-tests
+          junit-path: unit-tests/junit.xml

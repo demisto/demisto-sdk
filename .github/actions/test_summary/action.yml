@@ -1,5 +1,5 @@
-name: 'Test Summary Upload'
-description: 'Prints out a summary for all the tests of the demisto-sdk'
+name: 'Test Summary'
+description: 'Uploads artifacts, prints out a summary and check if there are any failed tests'
 author: 'Demisto-SDK'
 
 inputs:
@@ -21,6 +21,12 @@ inputs:
     type: string
     description: "The test-summary display options"
     default: fs  # show all failed and skipped tests
+  junit-path:
+    required: true
+    type: "string"
+    description: "The junit-path file to post its summary in github workflow summary"
+    default: ""
+
 
 
 runs:
@@ -39,7 +45,7 @@ runs:
       if: always()
       uses: pmeier/pytest-results-action@main
       with:
-        path: ${{ inputs.artifacts-folder-name }}/junit.xml
+        path: ${{ inputs.junit-path}}
         summary: true
         display-options: ${{ inputs.summary-display-options }}
         fail-on-empty: false

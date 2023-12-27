@@ -2,12 +2,10 @@ import itertools
 import os
 import shutil
 from collections import defaultdict
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
-
-from pydantic import Field
-from pydantic.dataclasses import dataclass
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -43,7 +41,7 @@ class PreCommitContext:
         str, Set[Tuple[Path, Optional[IntegrationScript]]]
     ]
     run_hook: Optional[str] = None
-    skipped_hooks: Set[str] = Field(default_factory=set)
+    skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
     dry_run: bool = False
 

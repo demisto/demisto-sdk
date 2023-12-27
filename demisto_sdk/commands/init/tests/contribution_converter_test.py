@@ -84,7 +84,7 @@ def util_open_file(path):
 
 
 @pytest.fixture
-def contrib_converter(tmp_path: TempPathFactory, git_repo: Repo):
+def contrib_converter(tmp_path: Path, git_repo: Repo):
     return ContributionConverter(
         contribution="contribution.zip",
         name="",
@@ -449,7 +449,7 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
 
 
 def test_convert_contribution_zip(
-    tmp_path: TempPathFactory, mocker: MockerFixture, git_repo: Repo
+    tmp_path: Path, mocker: MockerFixture, git_repo: Repo
 ):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
@@ -576,7 +576,7 @@ def test_convert_contribution_zip(
 
 
 def test_convert_contribution_zip_with_args(
-    tmp_path: TempPathFactory, mocker: MockerFixture, git_repo: Repo
+    tmp_path: Path, mocker: MockerFixture, git_repo: Repo
 ):
     """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
@@ -1202,9 +1202,7 @@ class TestReadmes:
     author = "Kobbi Gal"
     gh_user = "kgal-pan"
 
-    def test_process_existing_pack_existing_integration_readme(
-        self, tmp_path: TempPathFactory
-    ):
+    def test_process_existing_pack_existing_integration_readme(self, tmp_path: Path):
         """
         Test for an existing integration in an existing pack
         to ensure the README is updated correctly.
@@ -1310,9 +1308,7 @@ class TestReadmes:
         assert actual_integration_python.read_text() != py_code
         assert "helloworld-new-cmd" in actual_integration_python.read_text()
 
-    def test_process_existing_pack_new_integration_readme(
-        self, tmp_path: TempPathFactory
-    ):
+    def test_process_existing_pack_new_integration_readme(self, tmp_path: Path):
         """
         Test for a new integration in an existing pack
         to ensure the README is updated correctly.
@@ -1378,7 +1374,7 @@ class TestReadmes:
         generated_readme = Path(contrib_converter.readme_files[0])
         assert generated_readme.exists()
 
-    def test_process_new_pack(self, tmp_path: TempPathFactory):
+    def test_process_new_pack(self, tmp_path: Path):
         """
         Test for a new Integration added to a new Pack.
         The Pack and the Integration READMEs should be generated.
@@ -1444,7 +1440,7 @@ class TestReadmes:
         # Check new Integration README exists
         assert Path(contrib_converter.readme_files[0]).exists()
 
-    def test_get_contributed_content(self, tmp_path: TempPathFactory):
+    def test_get_contributed_content(self, tmp_path: Path):
         """
         Test whether the new content map works when we receive a contribution
         with an existing integration, an existing playbook but a new script.
@@ -1931,7 +1927,7 @@ class TestFixupDetectedContentItems:
 class TestGetSourceIntegrationDisplayField:
     valid_path = "Packs/FakePack/Integrations/FakeIntegration/FakeIntegration.yml"
 
-    def test_get_source_integration_display_field_valid(self, tmp_path):
+    def test_get_source_integration_display_field_valid(self, tmp_path: Path):
         """
         Scenario: Get a source integration's display field value
 
@@ -1962,18 +1958,16 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            # TODO use tmp_dir
-            "contrib.zip",
-            "contrib",
-            base_dir="/tmp",
-            working_dir_path="/tmp",
+            "contrib.zip", "contrib", working_dir_path=str(tmp_path)
         )
         fetched_display_field = converter.get_source_integration_display_field(
-            path_to_file
+            str(path_to_file)
         )
         assert fetched_display_field == display_field_value
 
-    def test_get_source_integration_display_field_valid_but_no_field(self, tmp_path):
+    def test_get_source_integration_display_field_valid_but_no_field(
+        self, tmp_path: Path
+    ):
         """
         Scenario: Get a source integration's display field value
 
@@ -2003,18 +1997,18 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            # TODO use tmp_dir
             "contrib.zip",
             "contrib",
-            base_dir="/tmp",
-            working_dir_path="/tmp",
+            working_dir_path=str(tmp_path),
         )
         fetched_display_field = converter.get_source_integration_display_field(
-            path_to_file
+            str(path_to_file)
         )
         assert not fetched_display_field
 
-    def test_get_source_integration_display_field_invalid_file_type(self, tmp_path):
+    def test_get_source_integration_display_field_invalid_file_type(
+        self, tmp_path: Path
+    ):
         """
         Scenario: Get a source integration's display field value
 
@@ -2037,18 +2031,16 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            # TODO use tmp_dir
             "contrib.zip",
             "contrib",
-            base_dir="/tmp",
-            working_dir_path="/tmp",
+            working_dir_path=str(tmp_path),
         )
         fetched_display_field = converter.get_source_integration_display_field(
-            path_to_file
+            str(path_to_file)
         )
         assert not fetched_display_field
 
-    def test_get_source_integration_display_field_invalid_no_file(self, tmp_path):
+    def test_get_source_integration_display_field_invalid_no_file(self, tmp_path: Path):
         """
         Scenario: Get a source integration's display field value
 
@@ -2072,18 +2064,18 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            # TODO use tmp_dir
             "contrib.zip",
             "contrib",
-            base_dir="/tmp",
-            working_dir_path="/tmp",
+            working_dir_path=str(tmp_path),
         )
         fetched_display_field = converter.get_source_integration_display_field(
-            path_to_file
+            str(path_to_file)
         )
         assert not fetched_display_field
 
-    def test_get_source_integration_display_field_invalid_not_yaml(self, tmp_path):
+    def test_get_source_integration_display_field_invalid_not_yaml(
+        self, tmp_path: Path
+    ):
         """
         Scenario: Get a source integration's display field value
 
@@ -2114,13 +2106,11 @@ class TestGetSourceIntegrationDisplayField:
 
         # assertions
         converter = ContributionConverter(
-            # TODO use tmp_dir
             "contrib.zip",
             "contrib",
-            base_dir="/tmp",
-            working_dir_path="/tmp",
+            working_dir_path=Path(tmp_path),
         )
         fetched_display_field = converter.get_source_integration_display_field(
-            path_to_file
+            str(path_to_file)
         )
         assert not fetched_display_field

@@ -233,7 +233,7 @@ class DockerHook(Hook):
         split_by_obj = self._get_property("split_by_object", False)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
-        logger.info(f"{len(tag_to_files_objs)} images were collected from files")
+        logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
         logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
         for image, files_with_objects in sorted(
             tag_to_files_objs.items(), key=lambda item: item[0]
@@ -254,8 +254,8 @@ class DockerHook(Hook):
             )
             self.hooks.extend(hooks)
         end_time = time.time()
-        logger.info(
-            f"DockerHook - Elapsed time to prep all the images: {end_time - start_time} seconds"
+        logger.debug(
+            f"DockerHook - Elapsed time prepared images in {round(end_time - start_time, 2)} seconds"
         )
 
     def get_new_hooks(

@@ -33,6 +33,7 @@ class SourceryHook(Hook):
             None
         """
         config_file = CONTENT_PATH / self._get_property("config_file")
+        self.base_hook.pop("config_file", None)
         for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"sourcery-py{python_version}",

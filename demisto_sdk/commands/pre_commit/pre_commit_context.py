@@ -1,12 +1,12 @@
-import dataclasses
 import itertools
 import os
 import shutil
 from collections import defaultdict
-from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
+
+from pydantic.dataclasses import Field, dataclass
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -42,7 +42,7 @@ class PreCommitContext:
         str, Set[Tuple[Path, Optional[IntegrationScript]]]
     ]
     run_hook: Optional[str] = None
-    skipped_hooks: Set[str] = field(default_factory=set)
+    skipped_hooks: Set[str] = Field(default_factory=set)
     run_docker_hooks: bool = True
     dry_run: bool = False
 
@@ -67,7 +67,13 @@ class PreCommitContext:
             )
         self.hooks = self._get_hooks(self.precommit_template)
         self.hooks_need_docker = self._hooks_need_docker()
-        logger.debug(f"PreCommitContext: {dataclasses.asdict(self)}")
+        logger.debug(f"PreCommitContext: {self.asdict()}")
+
+    def asdict(self):
+        dct = self.__dict__.copy()
+        dct.pop("language_version_to_files_with_objects", None)
+        dct["python_version_to_files"] = self.python_version_to_files
+        return dct
 
     @cached_property
     def files_to_run_with_objects(

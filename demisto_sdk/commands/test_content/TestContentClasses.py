@@ -2935,6 +2935,7 @@ class ServerContext:
                 and self.proxy
                 and self.proxy.should_update_mock_repo
             ):
+                self.playbook.log_info("################ calling proxy.push_mock_files() from TestContentClasses.py")
                 self.proxy.push_mock_files()
             self.build_context.logging_module.debug(
                 f"Tests executed on server {self.server_ip}:\n"

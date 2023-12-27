@@ -209,8 +209,7 @@ class MITMProxy:
                 f"git commit -m \"Updated mock files for '{folder_name}' from build number - {self.build_number}\" -v".split(),
                 stderr=STDOUT,
             )
-            logger.info(f"Committing mock files output: {output}[/red]")
-            logger.info(f"Committing mock files output: {output.decode()=}[/red]")
+            logger.info(f"[red]Committing mock files output: {output.decode()=}[/red]")
             self.logging_module.debug(
                 f"Committing mock files output:\n{output.decode()}"
             )
@@ -238,6 +237,7 @@ class MITMProxy:
         self.logging_module.debug(
             "Pushing new/updated mock files to mock git repo.", real_time=True
         )
+        logger.info("[red]################ running push_mock_files function[/red]")
         self.content_data_lock.acquire()
         try:
             output = self.ami.check_output(
@@ -247,14 +247,17 @@ class MITMProxy:
             self.logging_module.debug(
                 f"Pushing mock files output:\n{output.decode()}", real_time=True
             )
+            logger.info(f"[red]################ Pushing mock files output: {output.decode()}[/red]")
         except CalledProcessError as exc:
             self.logging_module.debug(
                 f"Pushing mock files output:\n{exc.output.decode()}", real_time=True
             )
+            logger.info(f"[red]################ CalledProcessError - Pushing mock files output: {exc.output.decode()}[/red]")
         except Exception as exc:
             self.logging_module.debug(
                 f"Failed pushing mock files with error: {exc}", real_time=True
             )
+            logger.info(f"[red]################ Failed pushing mock files with error: {exc}[/red]")
         finally:
             self.content_data_lock.release()
 

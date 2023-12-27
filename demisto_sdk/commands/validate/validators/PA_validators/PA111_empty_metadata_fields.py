@@ -15,7 +15,7 @@ ContentTypes = Pack
 class EmptyMetadataFieldsValidator(BaseValidator[ContentTypes]):
     error_code = "PA111"
     description = "Validate that certain metadata fields are not empty."
-    error_message = "The following fields are empty and must be filled: {0}."
+    error_message = "The following fields contains empty values: {0}."
     related_field = "keywords, tags, categories, useCases"
     is_auto_fixable = False
 
@@ -29,7 +29,7 @@ class EmptyMetadataFieldsValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 missing_fields := [
-                    field for field in PACK_METADATA_MANDATORY_FILLED_FIELDS if field in content_item.pack_metadata_dict and (field_val := content_item.pack_metadata_dict[field]) and "" not in field_val  # type: ignore
+                    field for field in PACK_METADATA_MANDATORY_FILLED_FIELDS if field in content_item.pack_metadata_dict and (field_val := content_item.pack_metadata_dict[field]) and "" in field_val  # type: ignore
                 ]
             )
         ]

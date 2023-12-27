@@ -255,9 +255,9 @@ def test_MissingFieldInPackMetadataValidator_is_valid(
             ],
             3,
             [
-                "The following fields are empty and must be filled: tags.",
-                "The following fields are empty and must be filled: useCases.",
-                "The following fields are empty and must be filled: keywords, useCases.",
+                "The following fields contains empty values: tags.",
+                "The following fields contains empty values: useCases.",
+                "The following fields contains empty values: useCases.",
             ],
         ),
     ],
@@ -271,19 +271,19 @@ def test_EmptyMetadataFieldsValidator_is_valid(
         - Case 1: One pack_metadata with all fields filled.
         - Case 2: One pack_metadata with an empty categories field.
         - Case 3: Three pack_metadatas:
-            - One pack_metadata with empty name and tags fields.
-            - One pack_metadata with an empty useCases field.
-            - One pack_metadata with empty keywords and useCases fields.
+            - One pack_metadata with empty name and tags field with empty value.
+            - One pack_metadata with an empty useCases field value.
+            - One pack_metadata with an empty useCases field value, and an empty keywords field.
     When
     - Calling the EmptyMetadataFieldsValidator is_valid function.
     Then
         - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
-        - Case 2: Should fail.
+        - Case 2: Shouldn't fail.
         - Case 3: Should fail all 3 pack metadatas.
             - The first pack_metadata should fail due to an empty tags field.
             - The second pack_metadata should fail due to an empty useCases field.
-            - The third pack_metadata should fail due to empty useCases and keywords fields.
+            - The third pack_metadata should fail due to an empty useCases field.
     """
     results = EmptyMetadataFieldsValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures

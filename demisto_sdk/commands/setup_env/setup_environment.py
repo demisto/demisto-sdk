@@ -509,7 +509,7 @@ def clean_repo():
     """
     for path in PYTHONPATH:
         for temp_file in CONTENT_PATH.rglob(f"{path.name}.py"):
-            if temp_file.parent / temp_file.stem != path:
+            if temp_file.parent != path:
                 temp_file.unlink(missing_ok=True)
     for path in CONTENT_PATH.rglob("*.pyc"):
         path.unlink(missing_ok=True)

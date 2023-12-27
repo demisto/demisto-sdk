@@ -2,14 +2,13 @@ import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Set
+from typing import Any, Dict, Iterable, List, Set
 
 from packaging.version import Version
 
 from demisto_sdk.commands.common.logger import logger
-
-if TYPE_CHECKING:
-    from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
+from demisto_sdk.commands.pre_commit.hooks.tools import get_property
+from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
 
 PROPERTIES_TO_DELETE = {"needs"}
 
@@ -19,7 +18,7 @@ class Hook:
         self,
         hook: dict,
         repo: dict,
-        context: "PreCommitContext",
+        context: PreCommitContext,
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
@@ -95,22 +94,6 @@ class Hook:
             and (not exclude_pattern or not re.search(exclude_pattern, str(file)))
         }  # only exclude if defined
 
-    @staticmethod
-    def get_property(hook: dict, mode: str, name: str, default=None):
-        """
-        Will get the given property from the base hook, taking mode into account
-        Args:
-            hook: the hook dict
-            mode: the mode to use
-            name: the key to get from the config
-            default: the default value to return
-        Returns: The value from the base hook
-        """
-        ret = None
-        if mode:
-            ret = hook.get(f"{name}:{mode}")
-        return ret or hook.get(name, default)
-
     def _get_property(self, name, default=None):
         """
         Will get the given property from the base hook, taking mode into account
@@ -119,7 +102,7 @@ class Hook:
             default: the default value to return
         Returns: The value from the base hook
         """
-        return self.get_property(self.base_hook, self.mode, name, default=default)
+        return get_property(self.base_hook, self.mode, name, default=default)
 
     def _set_properties(self):
         """

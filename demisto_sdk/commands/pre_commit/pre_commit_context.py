@@ -6,7 +6,8 @@ from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from pydantic.dataclasses import Field, dataclass
+from pydantic import Field
+from pydantic.dataclasses import dataclass
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -18,7 +19,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+from demisto_sdk.commands.pre_commit.hooks.tools import get_property
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
@@ -129,9 +130,9 @@ class PreCommitContext:
                 if (self.run_hook and hook["id"] in self.run_hook) or (
                     not self.run_hook
                     and hook["id"] not in self.skipped_hooks
-                    and not Hook.get_property(hook, self.mode, "skip")
+                    and not get_property(hook, self.mode, "skip")
                 ):
-                    needs = Hook.get_property(hook, self.mode, "needs")
+                    needs = get_property(hook, self.mode, "needs")
                     if needs and any(need not in hooks for need in needs):
                         continue
                     new_hooks.append(hook)

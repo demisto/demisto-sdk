@@ -128,31 +128,27 @@ def get_client_from_server_type(
             response, status_code, response_headers = _client.generic_request(
                 "/ioc-rules", "GET"
             )
-        except ApiException as e:
-            logger.debug(f"instance is not XSIAM instance, error:{e}")
+        except ApiException:
             return False
-        if "text/html" in response_headers.get("Content-Type"):
-            return False
-        if status_code != requests.codes.ok:
+
+        if (
+            "text/html" in response_headers.get("Content-Type")
+            or status_code != requests.codes.ok
+        ):
             return False
 
         return True
 
     def is_xsoar_saas_environment() -> bool:
-        if product_mode == "xsoar" and deployment_mode == "saas":
-            return True
-
-        # for old environments that do not have product-mode / deployment-mode
-        return server_version and Version(server_version) >= Version(
-            MINIMUM_XSOAR_SAAS_VERSION
+        return (product_mode == "xsoar" and deployment_mode == "saas") or (
+            server_version
+            and Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION)
         )
 
     def is_xsoar_on_prem_environment() -> bool:
-        if product_mode == "xsoar" and deployment_mode == "opp":
-            return True
-        # for old environments that do not have product-mode / deployment-mode
-        return server_version and Version(server_version) < Version(
-            MINIMUM_XSOAR_SAAS_VERSION
+        return (product_mode == "xsoar" and deployment_mode == "opp") or (
+            server_version
+            and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
         )
 
     about_raw_response = XsoarClient.get_xsoar_about(_client)

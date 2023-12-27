@@ -133,7 +133,7 @@ class XsiamApiClient(XsiamApiInterface):
         response.raise_for_status()
         data = response.json()
         demisto_version = data.get('demistoVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)
-        logger.info(f'[green]XSIAM version of tenant is {demisto_version}[/green]',
+        logger.info(f'[green]Demisto version of XSIAM tenant is {demisto_version}[/green]',
                     extra={"markup": True})
         return demisto_version
 

@@ -28,11 +28,10 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_DESC,
     PACK_METADATA_EMAIL,
     PACK_METADATA_FIELDS,
-    PACK_METADATA_KEYWORDS,
+    PACK_METADATA_MANDATORY_FILLED_FIELDS,
     PACK_METADATA_MODULES,
     PACK_METADATA_NAME,
     PACK_METADATA_SUPPORT,
-    PACK_METADATA_TAGS,
     PACK_METADATA_URL,
     PACK_METADATA_USE_CASES,
     PACKS_PACK_IGNORE_FILE_NAME,
@@ -599,12 +598,7 @@ class PackUniqueFilesValidator(BaseValidator):
                         return False
 
             # check metadata list fields and validate that no empty values are contained in this fields
-            for list_field in (
-                PACK_METADATA_KEYWORDS,
-                PACK_METADATA_TAGS,
-                PACK_METADATA_CATEGORIES,
-                PACK_METADATA_USE_CASES,
-            ):
+            for list_field in PACK_METADATA_MANDATORY_FILLED_FIELDS:
                 field = metadata[list_field]
                 if field and len(field) == 1:
                     value = field[0]

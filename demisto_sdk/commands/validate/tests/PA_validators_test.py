@@ -8,6 +8,9 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA107_missing_field_
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
 )
+from demisto_sdk.commands.validate.validators.PA_validators.PA111_empty_metadata_fields import (
+    EmptyMetadataFieldsValidator,
+)
 from demisto_sdk.commands.validate.validators.PA_validators.PA115_is_created_field_in_iso_format import (
     IsCreatedFieldInISOFormatValidator,
 )
@@ -224,6 +227,63 @@ def test_MissingFieldInPackMetadataValidator_is_valid(
         - Case 2: Should fail.
     """
     results = MissingFieldInPackMetadataValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        ([create_metadata_object()], 0, []),
+        (
+            [create_metadata_object(paths=["categories"], values=[[]])],
+            1,
+            ["The following fields must be filled: categories."],
+        ),
+        (
+            [
+                create_metadata_object(paths=["name", "tags"], values=["", ""]),
+                create_metadata_object(paths=["useCases"], values=[""]),
+                create_metadata_object(paths=["keywords", "useCases"], values=[[], ""]),
+            ],
+            3,
+            [
+                "The following fields are empty and must be filled: tags.",
+                "The following fields are empty and must be filled: useCases.",
+                "The following fields are empty and must be filled: keywords, useCases.",
+            ],
+        ),
+    ],
+)
+def test_EmptyMetadataFieldsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items.
+        - Case 1: One pack_metadata with all fields filled.
+        - Case 2: One pack_metadata with an empty categories field.
+        - Case 3: Three pack_metadatas:
+            - One pack_metadata with empty name and tags fields.
+            - One pack_metadata with an empty useCases field.
+            - One pack_metadata with empty keywords and useCases fields.
+    When
+    - Calling the EmptyMetadataFieldsValidator is_valid function.
+    Then
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+        - Case 3: Should fail all 3 pack metadatas.
+            - The first pack_metadata should fail due to an empty tags field.
+            - The second pack_metadata should fail due to an empty useCases field.
+            - The third pack_metadata should fail due to empty useCases and keywords fields.
+    """
+    results = EmptyMetadataFieldsValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

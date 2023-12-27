@@ -11,11 +11,6 @@ inputs:
     required: false
     type: string
     description: "The folder name to save artifacts"
-  group:
-    required: false
-    type: string
-    description: "The folder name to save artifacts"
-    default: "All-Tests"
   summary-display-options:
     required: false
     type: string
@@ -34,9 +29,9 @@ runs:
   steps:
     - name: Upload artifacts
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
-        name: ${{ inputs.artifacts-folder-name }}-artifacts-python-${{ inputs.python-version }}-(${{ inputs.group }})
+        name: ${{ inputs.artifacts-folder-name }}-artifacts-python-${{ inputs.python-version }}
         path: |
           ${{ inputs.artifacts-folder-name }}
           node_versions_info.json

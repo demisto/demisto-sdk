@@ -29,7 +29,7 @@ runs:
   steps:
     - name: Upload artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifacts-folder-name }}-artifacts-python-${{ inputs.python-version }}
         path: |

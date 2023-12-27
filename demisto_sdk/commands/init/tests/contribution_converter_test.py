@@ -2108,7 +2108,7 @@ class TestGetSourceIntegrationDisplayField:
         converter = ContributionConverter(
             "contrib.zip",
             "contrib",
-            working_dir_path=Path(tmp_path),
+            working_dir_path=str(tmp_path),
         )
         fetched_display_field = converter.get_source_integration_display_field(
             str(path_to_file)

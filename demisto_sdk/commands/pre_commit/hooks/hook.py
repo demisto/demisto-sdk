@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List, Set
 from packaging.version import Version
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.pre_commit.hooks.tools import get_property
+from demisto_sdk.commands.pre_commit.hooks.utils import get_property
 from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
 
 PROPERTIES_TO_DELETE = {"needs"}

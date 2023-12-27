@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.pre_commit.hooks.tools import get_property
+from demisto_sdk.commands.pre_commit.hooks.utils import get_property
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 

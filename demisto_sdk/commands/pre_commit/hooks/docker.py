@@ -255,7 +255,7 @@ class DockerHook(Hook):
             self.hooks.extend(hooks)
         end_time = time.time()
         logger.debug(
-            f"DockerHook - Elapsed time prepared images in {round(end_time - start_time, 2)} seconds"
+            f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
 
     def get_new_hooks(

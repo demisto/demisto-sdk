@@ -7,8 +7,6 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 
-SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
-
 
 class SourceryHook(Hook):
     def _get_temp_config_file(self, config_file_path: Path, python_version):
@@ -34,13 +32,14 @@ class SourceryHook(Hook):
         Returns:
             None
         """
+        config_file = CONTENT_PATH / self._get_property("config_file")
         for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"sourcery-py{python_version}",
             }
             hook.update(deepcopy(self.base_hook))
             hook["args"].append(
-                f"--config={self._get_temp_config_file(SOURCERY_CONFIG_PATH, python_version)}"
+                f"--config={self._get_temp_config_file(config_file, python_version)}"
             )
             hook["files"] = join_files(
                 self.context.python_version_to_files[python_version]

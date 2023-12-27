@@ -1,3 +1,4 @@
+import dataclasses
 import itertools
 import os
 import shutil
@@ -66,6 +67,7 @@ class PreCommitContext:
             )
         self.hooks = self._get_hooks(self.precommit_template)
         self.hooks_need_docker = self._hooks_need_docker()
+        logger.debug(f"PreCommitContext: {dataclasses.asdict(self)}")
 
     @cached_property
     def files_to_run_with_objects(

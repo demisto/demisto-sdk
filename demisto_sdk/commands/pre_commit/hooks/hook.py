@@ -2,14 +2,12 @@ import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Set
+from typing import Any, Dict, Iterable, List, Set
 
 from packaging.version import Version
 
 from demisto_sdk.commands.common.logger import logger
-
-if TYPE_CHECKING:
-    from demisto_sdk.commands.pre_commit.pre_commit_command import PreCommitContext
+from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
 
 PROPERTIES_TO_DELETE = {"needs"}
 
@@ -19,7 +17,7 @@ class Hook:
         self,
         hook: dict,
         repo: dict,
-        context: "PreCommitContext",
+        context: PreCommitContext,
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
@@ -30,8 +28,7 @@ class Hook:
         self.input_mode = bool(context.input_files)
         self.context = context
         self._set_properties()
-        self._exclude_hooks_by_version()
-        self._exclude_hooks_by_support_level()
+        self.exclude_irrelevant_files()
 
     def prepare_hook(self):
         """
@@ -40,6 +37,10 @@ class Hook:
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
         self.hooks.append(deepcopy(self.base_hook))
+
+    def exclude_irrelevant_files(self):
+        self._exclude_hooks_by_version()
+        self._exclude_hooks_by_support_level()
 
     def _set_files_on_hook(
         self, hook: dict, files: Iterable[Path], should_filter: bool = True

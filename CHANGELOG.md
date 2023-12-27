@@ -4,6 +4,8 @@
 * Fixed an issue in **validate** where there is a specific value for marketplace in `isFetch` parameter.
 * Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
 * Fixed an issue in **generate-docs** where the description field was missing from an argument.
+* Fixed an issue where contributions (Playbooks, Scripts, Integration) added to an existing Pack don't generate `README`s.
+* Added support in **generate-docs** for auto-update of `README`s of modified integrations.
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.
@@ -77,7 +79,6 @@
   * Fixed an issue where the download would fail when using the '-r' / '--regex' flag when there were multiple custom content items on the server matching the pattern, having the same name.
   * Fixed an issue where integrations / automations with a dot in their name would be saved with an incorrect file name (For example: `Test v1.1.py` would be named `Test v1.py`)
   * Fixed the **Link to Jira** Github flow to match the Jira-dc.
-  * Fixed an issue where contributions added to an existing Pack don't generate `README`s.
 
 **Note:** Due to the optimization changes made to the **download** command, playbooks might be formatted a bit differently than before when downloaded from the server using the new version. The playbooks should however function and work the same.
 * Fixed an issue where the **pre-commit** command, now correctly gathers the associated python file when a yml file is provided as input.

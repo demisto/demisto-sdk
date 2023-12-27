@@ -17,13 +17,14 @@ ignorable_errors = [
 ]
 
 [validate_all]
+
 select = [
     "BA101", "BA106", "BA116", "BA118",
     "GR106",
     "DO108",
     "IN108",
     "IN130",
-    "PA107", "PA108" "PA115", "PA130"
+    "PA107", "PA108", "PA115", "PA130"
 ]
 warning = []
 ignorable_errors = ["BA101", "BA116"]

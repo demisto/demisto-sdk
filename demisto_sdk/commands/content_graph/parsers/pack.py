@@ -121,15 +121,15 @@ class PackMetadataParser:
     """A pack metadata parser."""
 
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
-        self.name: str = metadata["name"]
-        self.display_name: str = metadata["name"]
-        self.description: str = metadata["description"]
+        self.name: str = metadata.get("name", "")
+        self.display_name: str = metadata.get("name", "")
+        self.description: str = metadata.get("description", "")
+        self.support: str = metadata.get("support", "")
         self.created: str = metadata.get("created") or NOW
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None
         )  # default: True, private default: False
-        self.support: str = metadata["support"]
         self.email: str = metadata.get("email") or ""
         self.eulaLink: str = (
             metadata.get("eulaLink")
@@ -144,7 +144,7 @@ class PackMetadataParser:
         self.commit: str = GitUtil().get_current_commit_hash() or ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
-        self.keywords: List[str] = metadata["keywords"] or []
+        self.keywords: List[str] = metadata.get("keywords", [])
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
         self.marketplaces: List[str] = (

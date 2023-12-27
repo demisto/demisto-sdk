@@ -14,17 +14,16 @@ ContentTypes = Pack
 
 class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
     error_code = "PA107"
-    description = "The following fields are missing from the file: {0}"
-    error_message = ""
-    fix_message = ""
-    related_field = ""
+    description = "Ensure that mandatory fields exist in the pack_metadata."
+    error_message = "The following fields are missing from the file: {0}."
+    related_field = "name, desc, support, currentVersion, author, url, categories, tags, use_cases, keywords"
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(missing_fields),
+                message=self.error_message.format(", ".join(missing_fields)),
                 content_object=content_item,
             )
             for content_item in content_items

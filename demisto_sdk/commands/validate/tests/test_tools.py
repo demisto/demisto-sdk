@@ -176,6 +176,7 @@ def create_script_object(
 def create_metadata_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
+    fields_to_delete: Optional[List[str]] = None,
 ):
     """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
 
@@ -188,10 +189,17 @@ def create_metadata_object(
     """
     json_content = load_json("pack_metadata.json")
     update_keys(json_content, paths, values)
+    remove_fields_from_dict(json_content, fields_to_delete)
     pack = REPO.create_pack()
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     return PackParser(Path(pack.path))
+
+
+def remove_fields_from_dict(json_content, fields_to_delete):
+    if fields_to_delete:
+        for field in fields_to_delete:
+            del json_content[field]
 
 
 def create_classifier_object(

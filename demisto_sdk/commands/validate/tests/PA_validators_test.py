@@ -1,6 +1,10 @@
 import pytest
 
+from demisto_sdk.commands.common.constants import PACK_METADATA_FIELDS
 from demisto_sdk.commands.validate.tests.test_tools import create_metadata_object
+from demisto_sdk.commands.validate.validators.PA_validators.PA107_missing_field_in_pack_metadata import (
+    MissingFieldInPackMetadataValidator,
+)
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
 )
@@ -188,4 +192,42 @@ def test_IsCurrentVersionCorrectFormatValidator_is_valid(
         not results
         or results[0].message
         == "Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)"
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        ([create_metadata_object()], 0, []),
+        (
+            [create_metadata_object(fields_to_delete=list(PACK_METADATA_FIELDS))],
+            1,
+            [
+                f"The following fields are missing from the file: {', '.join(PACK_METADATA_FIELDS)}."
+            ],
+        ),
+    ],
+)
+def test_MissingFieldInPackMetadataValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items.
+        - Case 1: One pack_metadata without missing fields.
+        - Case 2: One pack_metadata with name, desc, support, currentVersion, author, url, categories, tags, use_cases, keywords fields missing.
+    When
+    - Calling the MissingFieldInPackMetadataValidator is_valid function.
+    Then
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+    """
+    results = MissingFieldInPackMetadataValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
     )

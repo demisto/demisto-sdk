@@ -10,6 +10,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     cast,
 )
@@ -181,7 +182,10 @@ class BaseContent(BaseNode):
     old_base_content_object: Optional["BaseContent"] = None
 
     def _save(
-        self, path: Path, data: dict, predefined_keys_to_keep: Optional[tuple[str]]
+        self,
+        path: Path,
+        data: dict,
+        predefined_keys_to_keep: Optional[Tuple[str]] = None,
     ):
         for key, val in self.field_mapping.items():
             attr = getattr(self, key)

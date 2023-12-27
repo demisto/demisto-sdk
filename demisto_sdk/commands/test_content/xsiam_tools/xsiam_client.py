@@ -10,6 +10,7 @@ import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 
@@ -126,15 +127,15 @@ class XsiamApiClient(XsiamApiInterface):
     def _session(self, value: requests.Session):
         self.__session = value
 
-    def get_xsiam_version(self) -> str:
+    def get_demisto_version(self) -> str:
         endpoint = urljoin(self.base_url, 'xsoar/about')
         response = self._session.get(endpoint)
         response.raise_for_status()
         data = response.json()
-        xsiam_version = data.get('demistoVersion', '99.99.99')
-        logger.info(f'[green]XSIAM version of tenant is {xsiam_version}[/green]',
+        demisto_version = data.get('demistoVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)
+        logger.info(f'[green]XSIAM version of tenant is {demisto_version}[/green]',
                     extra={"markup": True})
-        return xsiam_version
+        return demisto_version
 
     @property
     def installed_packs(self) -> List[Dict[str, Any]]:

@@ -951,7 +951,7 @@ def validate_modeling_rule(
     ctx: typer.Context,
     delete_existing_dataset: bool,
     xsiam_client: XsiamApiClient,
-    tenant_xsiam_version: Version
+    tenant_demisto_version: Version
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Validate a modeling rule.
 
@@ -964,7 +964,7 @@ def validate_modeling_rule(
         ctx (typer.Context): Typer context.
         delete_existing_dataset (bool): Whether to delete the existing dataset in the tenant.
         xsiam_client (XsiamApiClient): The XSIAM client used to do API calls to the tenant.
-        tenant_xsiam_version (Version): The XSIAM version of the tenant.
+        tenant_demisto_version (Version): The demisto version of the XSIAM tenant.
     """
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
@@ -1026,14 +1026,14 @@ def validate_modeling_rule(
             modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
                 to_version=modeling_rule.to_version,
                 from_version=modeling_rule.from_version,
-                tenant_xsiam_version=tenant_xsiam_version)
+                tenant_demisto_version=tenant_demisto_version)
             if not modeling_rule_is_compatible:
-                # Modeling rule version is not compatible with the XSIAM version of the tenant, skipping
+                # Modeling rule version is not compatible with the demisto version of the tenant, skipping
                 skipped = (
-                    f'Skipping the Modeling Rule {modeling_rule} due to version mismatch'
+                    f'XSIAM Tenant\'s Demisto version doesn\'t match Modeling Rule {modeling_rule} version'
                 )
                 logger.warning(f'[yellow]{skipped}[/yellow]', extra={'markup': True})
-                test_case = TestCase('Modeling Rule not compatible with tenant\'s XSIAM version',
+                test_case = TestCase('Modeling Rule not compatible with XSIAM tenant\'s demisto version',
                                      classname=f'Modeling Rule {modeling_rule_file_name}')
                 test_case.result += [Skipped(skipped)]
                 modeling_rule_test_suite.add_testcase(test_case)
@@ -1246,19 +1246,19 @@ def validate_modeling_rule(
         return False, None
 
 def validate_modeling_rule_version_against_tenant(to_version: Version, from_version:Version,
-                                   tenant_xsiam_version: Version) -> bool:
-    """Checks if the version of the modeling rule is compatible with the tenant's XSIAM version.
+                                   tenant_demisto_version: Version) -> bool:
+    """Checks if the version of the modeling rule is compatible with the XSIAM tenant's demisto version.
     Compatibility is checked by: from_version <= tenant_xsiam_version <= to_version
 
     Args:
         to_version (Version): The to version of the modeling rule
         from_version (Version): The from version of the modeling rule
-        tenant_xsiam_version (Version): The XSIAM version of the tenant
+        tenant_demisto_version (Version): The demisto version of the XSIAM tenant
 
     Returns:
         bool: True if the version of the modeling rule is compatible, else False
     """
-    return tenant_xsiam_version >= from_version and tenant_xsiam_version <= to_version
+    return tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
     
 
 def handle_missing_event_data_in_modeling_rule(
@@ -1512,7 +1512,7 @@ def test_modeling_rule(
         collector_token=collector_token,  # type: ignore[arg-type]
     )
     xsiam_client = XsiamApiClient(xsiam_client_cfg)
-    tenant_xsiam_version = xsiam_client.get_xsiam_version()
+    tenant_demisto_version = xsiam_client.get_demisto_version()
     for i, modeling_rule_directory in enumerate(inputs, start=1):
         logger.info(
             f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
@@ -1528,7 +1528,7 @@ def test_modeling_rule(
             ctx,
             delete_existing_dataset,
             xsiam_client=xsiam_client,
-            tenant_xsiam_version=Version(tenant_xsiam_version)
+            tenant_demisto_version=Version(tenant_demisto_version)
         )
         if success:
             logger.info(

@@ -12,6 +12,7 @@ import requests
 import typer
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from junitparser.junitparser import Result
+from packaging.version import Version
 from tabulate import tabulate
 from tenacity import (
     Retrying,
@@ -58,7 +59,6 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
-from packaging.version import Version
 
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 XSIAM_CLIENT_SLEEP_INTERVAL = 60

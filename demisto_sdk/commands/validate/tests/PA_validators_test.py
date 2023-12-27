@@ -243,7 +243,7 @@ def test_MissingFieldInPackMetadataValidator_is_valid(
         (
             [create_metadata_object(paths=["categories"], values=[[]])],
             1,
-            ["The following fields must be filled: categories."],
+            ["The following fields are empty and must be filled: categories."],
         ),
         (
             [

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -20,7 +19,6 @@ class EmptyMetadataFieldsValidator(BaseValidator[ContentTypes]):
     related_field = "keywords, tags, categories, useCases"
     is_auto_fixable = False
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -31,7 +29,7 @@ class EmptyMetadataFieldsValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 missing_fields := [
-                    field for field in PACK_METADATA_MANDATORY_FILLED_FIELDS if field not in content_item.pack_metadata_dict or not content_item.pack_metadata_dict[field] # type: ignore  # noqa: F821
+                    field for field in PACK_METADATA_MANDATORY_FILLED_FIELDS if field not in content_item.pack_metadata_dict or not content_item.pack_metadata_dict[field]  # type: ignore
                 ]
             )
         ]

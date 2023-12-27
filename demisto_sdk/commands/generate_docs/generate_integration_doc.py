@@ -512,7 +512,7 @@ def generate_single_command_section(
                         arg["name"], cmd["name"]
                     )
                 )
-            if not description.endswith("."):
+            if description and not description.endswith("."):
                 description = f"{description}."
 
             argument_description = (

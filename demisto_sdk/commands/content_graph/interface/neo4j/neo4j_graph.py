@@ -344,7 +344,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result.element_id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:
-        logger.info("Creating graph indexes and constraints...")
         with self.driver.session() as session:
             session.execute_write(create_indexes)
             session.execute_write(create_constraints)

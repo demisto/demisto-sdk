@@ -1,21 +1,20 @@
 from io import StringIO
-from pathlib import Path
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML  # noqa: TID251
 
 from demisto_sdk.commands.common.handlers.yaml.ruamel_handler import RUAMEL_Handler
 
 
 class TestYAMLHandler:
     def test_yaml_handler_without_indent(self, mocker):
-        '''
+        """
         Given:
             - A RUAMEL_Handler object without indent
         When:
             - Running dump method
         Then:
             - Ensure indent is not called
-        '''
+        """
         mocker.patch.object(YAML, "dump")
         mocker.patch.object(YAML, "indent")
         yaml = RUAMEL_Handler()
@@ -23,7 +22,7 @@ class TestYAMLHandler:
         assert yaml.yaml.indent.call_count == 0
 
     def test_yaml_handler_with_indent(self, mocker):
-        '''
+        """
         Given:
             - A RUAMEL_Handler object with indent
         When:
@@ -31,7 +30,7 @@ class TestYAMLHandler:
         Then:
             - Ensure indent is called
             - Ensure indent is called with the correct value
-        '''
+        """
         mocker.patch.object(YAML, "dump")
         mocker.patch.object(YAML, "indent")
         yaml_dump = RUAMEL_Handler(indent=4)

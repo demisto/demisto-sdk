@@ -1,11 +1,11 @@
 from io import StringIO
-import json5
+
+import json5  # noqa: TID251
 import pytest
 import ujson  # noqa: TID251
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.handlers.json.json5_handler import JSON5_Handler
-from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
 
 class TestJSONHandler:
@@ -43,14 +43,14 @@ class TestJSONHandler:
     ],
 )
 def test_json_handler_with_indent(mocker, xsoar_handler, handler):
-    '''
+    """
     Given:
         - A JSON_Handler / JSON5_Handler class with indent
     When:
         - run dumps / dump method
     Then:
         - Ensure that the method is called with the expected `indent`
-    '''
+    """
     dumps_mock = mocker.patch.object(handler, "dumps")
     dump_mock = mocker.patch.object(handler, "dump")
     xsoar_handler(indent=4).dumps({"url": "https://xsoar.com"})
@@ -73,14 +73,14 @@ def test_json_handler_with_indent(mocker, xsoar_handler, handler):
     ],
 )
 def test_json_handler_without_indent(mocker, xsoar_handler, handler):
-    '''
+    """
     Given:
         - A JSON_Handler / JSON5_Handler class without indent
     When:
         - run dumps / dump method
     Then:
         - Ensure that the method is called with indent=0
-    '''
+    """
     dumps_mock = mocker.patch.object(handler, "dumps")
     dump_mock = mocker.patch.object(handler, "dump")
     xsoar_handler().dumps({"url": "https://xsoar.com"})

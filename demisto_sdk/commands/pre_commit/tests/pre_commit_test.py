@@ -7,6 +7,7 @@ from typing import List, Optional
 import pytest
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
+import demisto_sdk.commands.pre_commit.pre_commit_context as context
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
@@ -102,25 +103,29 @@ def test_config_files(mocker, repo: Repo):
         return_value=[{"id": "run-in-docker"}],
     )
     mocker.patch.object(
-        pre_commit_command,
+        context,
         "PRECOMMIT_TEMPLATE_PATH",
         TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
     pack1 = repo.create_pack("Pack1")
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+
     mocker.patch.object(
         pre_commit_command,
         "PRECOMMIT_CONFIG_MAIN_PATH",
         Path(repo.path) / ".pre-commit-config.yaml",
     )
     mocker.patch.object(
-        pre_commit_command,
+        context,
         "PRECOMMIT_DOCKER_CONFIGS",
         Path(repo.path) / "docker-config",
     )
     mocker.patch.object(
-        pre_commit_command, "PRECOMMIT_CONFIG", Path(repo.path) / "config"
+        pre_commit_command,
+        "PRECOMMIT_DOCKER_CONFIGS",
+        Path(repo.path) / "docker-config",
     )
+    mocker.patch.object(context, "PRECOMMIT_CONFIG", Path(repo.path) / "config")
     integration1 = pack1.create_integration(
         "integration1", docker_image="demisto/python3:3.9.1.14969"
     )
@@ -204,10 +209,11 @@ def test_mypy_hooks(mocker):
             "--python-version=3.10",
         ]
     }
-    mypy_hook = create_hook(mypy_hook)
     mocker.patch.object(
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
+
+    mypy_hook = create_hook(mypy_hook)
     MypyHook(**mypy_hook).prepare_hook()
     for (hook, python_version) in itertools.zip_longest(
         mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
@@ -222,12 +228,13 @@ def test_ruff_hook(github_actions, mocker):
     """
     Testing ruff hook created successfully (the python version is correct and github action created successfully)
     """
-    ruff_hook = create_hook(
-        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
-    )
     mocker.patch.object(
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
+    ruff_hook = create_hook(
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
+    )
+
     mocker.patch.dict(
         os.environ, {"GITHUB_ACTIONS": str(github_actions) if github_actions else ""}
     )
@@ -250,12 +257,12 @@ def test_ruff_hook_nightly_mode(mocker):
     """
     Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
     """
+    mocker.patch.object(
+        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
+    )
     ruff_hook = create_hook(
         {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]},
         mode="nightly",
-    )
-    mocker.patch.object(
-        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
 
     RuffHook(**ruff_hook).prepare_hook()
@@ -419,11 +426,11 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
         5. The exclude field of the ruff hook should be file1.py
     """
     mocker.patch.object(
-        pre_commit_command,
+        context,
         "PRECOMMIT_TEMPLATE_PATH",
         TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
-    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+    mocker.patch.object(context, "CONTENT_PATH", Path(repo.path))
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {
         "2.7": {(Path("file1.py"), None)},
@@ -450,11 +457,11 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
         5. The exclude field of the autopep should be file2.py
     """
     mocker.patch.object(
-        pre_commit_command,
+        context,
         "PRECOMMIT_TEMPLATE_PATH",
         TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
-    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+    mocker.patch.object(context, "CONTENT_PATH", Path(repo.path))
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {
         "2.7": {(Path("file1.py"), Obj())},
@@ -582,11 +589,14 @@ def test_skip_hook_with_mode(mocker):
         Don't generate the skipped hooks
     """
     mocker.patch.object(
-        pre_commit_command,
+        context,
         "PRECOMMIT_TEMPLATE_PATH",
         TEST_DATA_PATH / ".pre-commit-config_template-test.yaml",
     )
-    python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
+    python_version_to_files = {
+        "2.7": {(Path("file1.py"), None)},
+        "3.8": {(Path("file2.py"), None)},
+    }
     pre_commit_runner = pre_commit_command.PreCommitContext(
         None, None, "nightly", python_version_to_files, ""
     )

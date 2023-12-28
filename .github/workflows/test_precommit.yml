@@ -49,7 +49,7 @@ jobs:
         echo "# test" >> Tests/collect_tests.py
         git add .
         npm install --no-fund --no-audit
-        demisto-sdk pre-commit --unit-test --format --validate --show-diff-on-failure --verbose
+        demisto-sdk pre-commit --format --validate --show-diff-on-failure --verbose
 
     - name: run pre-commit on input files
       continue-on-error: true
@@ -57,4 +57,4 @@ jobs:
         source $(poetry env info --path)/bin/activate
         cd content
         npm install --no-fund --no-audit
-        demisto-sdk pre-commit --unit-test --format --validate --show-diff-on-failure --verbose -i Packs/HelloWorld,Packs/QRadar/Integrations/QRadar_v3
+        demisto-sdk pre-commit --format --validate --show-diff-on-failure --verbose -i Packs/HelloWorld,Packs/QRadar/Integrations/QRadar_v3

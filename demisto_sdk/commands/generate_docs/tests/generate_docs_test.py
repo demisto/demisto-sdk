@@ -2068,7 +2068,6 @@ class TestIntegrationDocUpdate:
             doc_text=Path(
                 TEST_FILES, "test_added_configuration", INTEGRATIONS_README_FILE_NAME
             ).read_text(),
-            old_integration_yml=integration_diff.old_yaml_data,
             new_integration_yml=integration_diff.new_yaml_data,
         )
 
@@ -2100,7 +2099,6 @@ class TestIntegrationDocUpdate:
 
         doc_text, err = replace_integration_conf_section(
             doc_text=original_doc_text,
-            old_integration_yml=integration_diff.old_yaml_data,
             new_integration_yml=integration_diff.new_yaml_data,
         )
 

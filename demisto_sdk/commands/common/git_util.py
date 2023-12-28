@@ -73,6 +73,19 @@ class GitUtil:
         return cls(path)
 
     def path_from_git_root(self, path: Union[Path, str]) -> Path:
+
+        """
+        Given an absolute path, return the path to the file/directory from the
+        repo/git root. For example, `/Users/$USER/dev/demisto/content/Packs/HelloWorld/pack_metadata.json`
+        will return `Packs/HelloWorld/pack_metadata.json`.
+
+        Arguments:
+        - `path` (``Path|str``): The path to the file/folder.
+
+        Returns:
+        - `Path` relative to the working directory.
+        """
+
         try:
             return Path(path).relative_to(Path(self.repo.working_dir))
         except ValueError:

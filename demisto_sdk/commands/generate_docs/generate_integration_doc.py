@@ -11,16 +11,18 @@ from requests.structures import CaseInsensitiveDict
 from demisto_sdk.commands.common import git_util
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     DOCS_COMMAND_SECTION_REGEX,
     INTEGRATIONS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
+from demisto_sdk.commands.common.files import BinaryFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    get_content_path,
     get_pack_name,
     get_yaml,
 )
@@ -163,15 +165,14 @@ def generate_integration_doc(
                 errors.extend(err)
 
         # Before generating a new README, we check whether it's a new integration or not.
-        # If it's not new, we retrieve the integration YAML from the local primary branch,
+        # If it's not new, we retrieve the integration YAML from `demisto/content` `origin/master``,
         # and regenerate the changed sections.
 
         # The process is as follows:
-        # 1) Initialize git, find local primary branch and write the integration YML from the local primary branch to a temporary file.
-        # 2) Use the integration YAMLs from input and local primary branch to check for differences in configuration and commands.
-        # 3) If any changes are detected in the configuration, replace the configuration section.
-        # 4) If any modifications are detected in the existing commands, replace the modified command'(s') section(s).
-        # 5) If new commands are detected, we append them to the end of the commands section (EOF).
+        # 1) Compare the integration YAMLs from input and master to check for differences in configuration and commands.
+        # 2) If any changes are detected in the configuration, replace the configuration section.
+        # 3) If any modifications are detected in the existing commands, replace the modified command'(s') section(s).
+        # 4) If new commands are detected, we append them to the end of the commands section (EOF).
 
         elif (Path(input_path).parent / INTEGRATIONS_README_FILE_NAME).exists():
             integration_readme_path = (
@@ -183,24 +184,21 @@ def generate_integration_doc(
             integration_name = Path(input_path).stem
 
             logger.info(
-                f"{INTEGRATIONS_README_FILE_NAME} for Integration '{integration_name}' in Pack '{pack_name}' exists. Checking for differences in git..."
+                f"{INTEGRATIONS_README_FILE_NAME} for Integration '{integration_name}' in Pack '{pack_name}' exists."
             )
             try:
-                # TODO discuss version control solution
-                git = git_util.GitUtil(get_content_path(Path(input_path)))
-                primary_branch = (
-                    git.find_primary_branch(git.repo)
-                    if git.find_primary_branch(git.repo)
-                    else "master"
-                )
 
                 logger.debug(
-                    f"Attempting to retrieve file '{input_path}' from local primary branch '{primary_branch}'..."
+                    f"Normalizing path '{input_path}' to relative path from git root..."
                 )
-                bytes = git.read_file_content(
-                    input_path,
-                    commit_or_branch=primary_branch,
-                    from_remote=False,
+
+                yml_relative_path = git_util.GitUtil().path_from_git_root(input_path)
+                logger.debug(
+                    f"Downloading '{yml_relative_path}' from git remote '{DEMISTO_GIT_UPSTREAM}' branch '{DEMISTO_GIT_PRIMARY_BRANCH}'..."
+                )
+                yaml_bytes = BinaryFile.read_from_git_path(yml_relative_path)
+                logger.debug(
+                    f"File '{yml_relative_path}' ({len(yaml_bytes)}B) finished downloading."
                 )
 
                 # We create a temporary file which contains the integration YAML from the
@@ -209,9 +207,9 @@ def generate_integration_doc(
                     "wb", suffix=integration_yml_filename
                 ) as tmp_file:
                     logger.debug(
-                        f"Writing {len(bytes)} bytes to temporary file '{tmp_file}'..."
+                        f"Writing {len(yaml_bytes)}B into temp file '{tmp_file}'..."
                     )
-                    tmp_file.write(bytes)
+                    tmp_file.write(yaml_bytes)
 
                     # If the integration YAML files are identical
                     # return as there's nothing to generate
@@ -235,7 +233,6 @@ def generate_integration_doc(
 
                     doc_text, error = replace_integration_conf_section(
                         doc_text=doc_text,
-                        old_integration_yml=integration_diff.old_yaml_data,
                         new_integration_yml=integration_diff.new_yaml_data,
                     )
 
@@ -1031,7 +1028,6 @@ def add_access_data_of_type_credentials(
 
 def replace_integration_conf_section(
     doc_text: str,
-    old_integration_yml: Dict[str, Any],
     new_integration_yml: Dict[str, Any],
 ) -> Tuple[str, Optional[str]]:
     """
@@ -1040,7 +1036,6 @@ def replace_integration_conf_section(
 
     Args:
     - `doc_text` (``str``): The actual README text.
-    - `old_integration_yml` (``Dict[str, Any]``): The dictionary representing the old integration YML.
     - `new_integration_yml` (``Dict[str, Any]``): The dictionary representing the new integration YML.
 
     Returns:

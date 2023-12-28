@@ -1026,7 +1026,7 @@ class XsoarClient(BaseModel):
             playground_id = answer.data[0].id
         else:
             # if found more than one playground, try to filter to results against the current user
-            user_data, status_code, headers = self.client.generic_request(
+            user_data, status_code, _ = self.client.generic_request(
                 path="/user",
                 method="GET",
                 content_type="application/json",

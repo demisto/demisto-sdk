@@ -3,9 +3,12 @@
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
 * Fixed an issue in **validate** where there is a specific value for marketplace in `isFetch` parameter.
 * Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
+* Added support for the `List` content-item to **prepare-content** and **split**.
+* **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
 * Fixed an issue in **generate-docs** where the description field was missing from an argument.
 * Fixed an issue where contributions (Playbooks, Scripts, Integration) added to an existing Pack don't generate `README`s.
 * Added support in **generate-docs** for auto-update of `README`s of modified integrations.
+* Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

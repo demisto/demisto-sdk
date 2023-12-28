@@ -162,11 +162,11 @@ def test_IsIntegrationRunnableValidator_is_valid(
     """
     Given
     content_items iterables.
-        - Case 1: An integration without any commands, and isfetch, feeed, and longRunnings keys are set to false.
-        - Case 2: An integration without any commands, and feeed, and longRunnings keys are set to false, and isfetch is set to True.
-        - Case 3: An integration without any commands, and isfetch, feeed, and longRunnings keys are set to false, and feeed is set to True.
-        - Case 4: An integration without any commands, and isfetch, and feeed keys are set to false, and longRunnings is set to True.
-        - Case 5: An integration with one command, and isfetch, feeed, and longRunnings keys are set to false.
+        - Case 1: An integration without any commands, and isfetch, feed, and longRunnings keys are set to false.
+        - Case 2: An integration without any commands, and feed, and longRunnings keys are set to false, and isfetch is set to True.
+        - Case 3: An integration without any commands, and isfetch, feed, and longRunnings keys are set to false, and feed is set to True.
+        - Case 4: An integration without any commands, and isfetch, and feed keys are set to false, and longRunnings is set to True.
+        - Case 5: An integration with one command, and isfetch, feed, and longRunnings keys are set to false.
     When
     - Calling the IsIntegrationRunnableValidator is valid function.
     Then

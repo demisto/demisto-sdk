@@ -1012,6 +1012,22 @@ def validate_modeling_rule(
             extra={"markup": True},
         )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
+        modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
+                to_version=modeling_rule.to_version,
+                from_version=modeling_rule.from_version,
+                tenant_demisto_version=tenant_demisto_version)
+        if not modeling_rule_is_compatible:
+            # Modeling rule version is not compatible with the demisto version of the tenant, skipping
+            skipped = (
+                f'XSIAM Tenant\'s Demisto version doesn\'t match Modeling Rule {modeling_rule} version, skipping'
+            )
+            logger.warning(f'[yellow]{skipped}[/yellow]', extra={'markup': True})
+            test_case = TestCase('Modeling Rule not compatible with XSIAM tenant\'s demisto version',
+                                    classname=f'Modeling Rule {modeling_rule_file_name}')
+            test_case.result += [Skipped(skipped)]
+            modeling_rule_test_suite.add_testcase(test_case)
+            # Return True since we don't want to fail the command
+            return True, modeling_rule_test_suite
         if (
             Validations.TEST_DATA_CONFIG_IGNORE.value
             not in test_data.ignored_validations
@@ -1023,22 +1039,6 @@ def validate_modeling_rule(
             missing_event_data, _ = is_test_data_exists_on_server(
                 modeling_rule.testdata_path
             )
-            modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
-                to_version=modeling_rule.to_version,
-                from_version=modeling_rule.from_version,
-                tenant_demisto_version=tenant_demisto_version)
-            if not modeling_rule_is_compatible:
-                # Modeling rule version is not compatible with the demisto version of the tenant, skipping
-                skipped = (
-                    f'XSIAM Tenant\'s Demisto version doesn\'t match Modeling Rule {modeling_rule} version'
-                )
-                logger.warning(f'[yellow]{skipped}[/yellow]', extra={'markup': True})
-                test_case = TestCase('Modeling Rule not compatible with XSIAM tenant\'s demisto version',
-                                     classname=f'Modeling Rule {modeling_rule_file_name}')
-                test_case.result += [Skipped(skipped)]
-                modeling_rule_test_suite.add_testcase(test_case)
-                # Return True since we don't want to fail the command
-                return True, modeling_rule_test_suite
             if not verify_pack_exists_on_tenant(
                 xsiam_client, retrying_caller, modeling_rule, interactive
             ):

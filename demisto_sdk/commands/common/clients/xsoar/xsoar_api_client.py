@@ -1026,36 +1026,21 @@ class XsoarClient(BaseModel):
             playground_id = answer.data[0].id
         else:
             # if found more than one playground, try to filter to results against the current user
-            user_data, status_code, _ = self.client.generic_request(
+            user_data, status_code, headers = self.client.generic_request(
                 path="/user",
                 method="GET",
                 content_type="application/json",
                 response_type="object",
             )
+
             if status_code != 200:
                 raise RuntimeError("Cannot find username")
 
-            username = user_data.get("username") or ""
-
-            def filter_by_creating_user_id(playground):
-                return playground.creating_user_id == username
-
-            playgrounds = list(filter(filter_by_creating_user_id, answer.data))
-            if playgrounds:
-                playground_id = playgrounds[0].id
-            else:
-                for page in range(int((answer.total - 1) / len(answer.data))):
-                    playgrounds.extend(
-                        filter(
-                            filter_by_creating_user_id,
-                            self.client.search_investigations(
-                                filter={"filter": {"type": [9], "page": page + 1}}
-                            ).data,
-                        )
-                    )
-                if not playgrounds:
-                    raise RuntimeError(f"Could not find playground for {self.base_url}")
-                playground_id = playgrounds[0].id
+            playground_id = user_data.get("playgroundId")
+            if not playground_id:
+                raise RuntimeError(
+                    f'user {user_data.get("username")} does not have any playground'
+                )
 
         logger.debug(f"Found playground ID {playground_id} for {self.base_url}")
         return playground_id

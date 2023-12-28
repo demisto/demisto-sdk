@@ -1017,6 +1017,24 @@ class XsoarClient(BaseModel):
         """
         Returns a playground ID based on the user.
         """
+        if self.marketplace == MarketplaceVersions.XSOAR:
+            user_data, status_code, _ = self.client.generic_request(
+                path="/user",
+                method="GET",
+                content_type="application/json",
+                response_type="object",
+            )
+
+            if status_code != 200:
+                raise RuntimeError("Cannot find username")
+
+            playground_id = user_data.get("playgroundId")
+            if not playground_id:
+                raise RuntimeError(
+                    f'user {user_data.get("username")} does not have any playground'
+                )
+            return playground_id
+
         answer = self.client.search_investigations(
             filter={"filter": {"type": [9], "page": 0}}
         )

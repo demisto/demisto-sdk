@@ -8,10 +8,65 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+# NOTE: Do not add internal imports here, as it may cause circular imports.
+from demisto_sdk.commands.common.constants import STRING_TO_BOOL_MAP
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools import parse_int_or_default, string_to_bool
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
+
+
+def environment_variable_to_bool(variable_name: str, default_value: bool = False) -> bool:
+    """
+    Check if the environment variable is set and is a valid boolean value.
+    If it is not set or is not a valid boolean value, return the default value.
+
+    Args:
+        variable_name (str): The name of the environment variable.
+        default_value (bool): A default value to return if the environment variable is not set or is invalid.
+
+    Returns:
+        bool: The environment variable value if it is set and is a valid boolean value, otherwise the default value.
+    """
+    env_var = os.getenv(variable_name, default_value)
+
+    if isinstance(env_var, bool):
+        return env_var
+
+    return (
+            isinstance(env_var, str)
+            and env_var.casefold() in STRING_TO_BOOL_MAP
+            and STRING_TO_BOOL_MAP[env_var]
+            )
+
+
+def environment_variable_to_int(variable_name: str, default_value: int) -> int:
+    """
+    Check if the environment variable is set and is a valid integer value.
+    If it is not set or is not a valid integer value, return the default value.
+
+    Args:
+        variable_name (str): The name of the environment variable.
+        default_value (int): A default value to return if the environment variable is not set or is invalid.
+
+    Returns:
+        int: The environment variable value if it is set and is a valid integer value, otherwise the default value.
+    """
+    env_var = os.getenv(variable_name, default_value)
+
+    if isinstance(env_var, int):
+        return env_var
+
+    try:
+        return int(env_var)
+
+    except ValueError:
+        logger.warning(
+            f"'{variable_name}' environment variable is set to '{value}', "
+            f"which is not a valid integer value. Default value '{default_value}' will be used."
+        )
+
+    return default_value
+
 
 neo4j_log = logging.getLogger("neo4j")
 neo4j_log.setLevel(logging.CRITICAL)
@@ -43,16 +98,12 @@ DEPRECATED_PARAMETERS = {
 }
 
 SUCCESS_LEVEL: int = 25
-DEMISTO_SDK_LOG_FILE_SIZE = parse_int_or_default(
-    os.getenv("DEMISTO_SDK_LOG_FILE_SIZE"), 1_048_576  # 1MB
-)
-DEMISTO_SDK_LOG_FILE_COUNT = parse_int_or_default(
-    os.getenv("DEMISTO_SDK_LOG_FILE_COUNT"), 10
-)
+DEMISTO_SDK_LOG_FILE_SIZE = environment_variable_to_int('DEMISTO_SDK_LOG_FILE_SIZE', 1_048_576)  # 1MB
+DEMISTO_SDK_LOG_FILE_COUNT = environment_variable_to_int("DEMISTO_SDK_LOG_FILE_COUNT", 10)
 
 FILE_LOG_RECORD_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s"
 
-if os.getenv("CI"):
+if environment_variable_to_bool("CI"):
     CONSOLE_LOG_RECORD_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
     CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(asctime)s] [%(levelname)s] "
 else:
@@ -342,7 +393,7 @@ def logging_setup(
     file_handler.set_name(FILE_HANDLER)
     file_handler.setLevel(file_log_threshold or logging.DEBUG)
 
-    if string_to_bool(os.getenv("DEMISTO_SDK_LOG_NO_COLORS", "False")):
+    if environment_variable_to_bool("DEMISTO_SDK_LOG_NO_COLORS"):
         console_handler.setFormatter(fmt=NoColorFileFormatter())
     else:
         console_handler.setFormatter(fmt=ColorConsoleFormatter())
@@ -371,7 +422,7 @@ def logging_setup(
     demisto_logger.debug(f"Platform: {platform.system()}")
 
     if not log_file_name_notified:
-        if string_to_bool(os.getenv("DEMISTO_SDK_LOG_NOTIFY_PATH", "True")):
+        if environment_variable_to_bool("DEMISTO_SDK_LOG_NOTIFY_PATH", default_value=True):
             demisto_logger.info(
                 f"[yellow]Log file location: {current_log_file_path}[/yellow]"
             )

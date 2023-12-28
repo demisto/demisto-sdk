@@ -6,6 +6,8 @@ from typing import Dict, List
 
 from packaging.version import Version
 
+# Note: Do NOT add imports of internal modules here, as it may cause circular imports.
+
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"
 
@@ -1947,6 +1949,19 @@ XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
+
+STRING_TO_BOOL_MAP = {
+    "y": True,
+    "1": True,
+    "yes": True,
+    "true": True,
+    "n": False,
+    "0": False,
+    "no": False,
+    "false": False,
+    "t": True,
+    "f": False,
+}
 
 
 #  date formats:

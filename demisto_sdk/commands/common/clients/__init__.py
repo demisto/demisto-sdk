@@ -2,11 +2,7 @@ import os
 from functools import lru_cache
 from typing import Optional
 
-import demisto_client
 import pydantic
-import requests
-from demisto_client.demisto_api.rest import ApiException
-from packaging.version import Version
 
 from demisto_sdk.commands.common.clients.configs import (
     XsiamClientConfig,
@@ -23,7 +19,6 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_BASE_URL,
     DEMISTO_KEY,
     DEMISTO_VERIFY_SSL,
-    MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
@@ -111,83 +106,36 @@ def get_client_from_server_type(
     Returns:
         the correct client based on querying the type of the server
     """
-    _client = demisto_client.configure(
-        base_url=base_url,
-        api_key=api_key,
-        auth_id=auth_id,
-        verify_ssl=verify_ssl,
-    )
-
-    def is_xsiam_environment() -> bool:
-        if product_mode == "xsiam":
-            return True
-
-        # for old environments that do not have product-mode / deployment-mode
+    try:
+        return XsiamClient.from_server_type(
+            XsiamClientConfig(
+                base_api_url=base_url,
+                api_key=api_key,
+                auth_id=auth_id,
+                verify_ssl=verify_ssl,
+            )
+        )
+    except ValueError as error:
+        logger.debug(f"{error=}")
         try:
-            # /ioc-rules is only an endpoint in XSIAM.
-            response, status_code, response_headers = _client.generic_request(
-                "/ioc-rules", "GET"
+            return XsoarSaasClient.from_server_type(
+                XsoarSaasClientConfig(
+                    base_api_url=base_url,
+                    api_key=api_key,
+                    auth_id=auth_id,
+                    verify_ssl=verify_ssl,
+                )
             )
-        except ApiException:
-            return False
-
-        if (
-            "text/html" in response_headers.get("Content-Type")
-            or status_code != requests.codes.ok
-        ):
-            return False
-
-        return True
-
-    def is_xsoar_saas_environment() -> bool:
-        return (product_mode == "xsoar" and deployment_mode == "saas") or (
-            server_version
-            and Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION)
-        )
-
-    def is_xsoar_on_prem_environment() -> bool:
-        return (product_mode == "xsoar" and deployment_mode == "opp") or (
-            server_version
-            and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
-        )
-
-    about_raw_response = XsoarClient.get_xsoar_about(_client)
-    logger.debug(f"{about_raw_response=} for {base_url=}")
-
-    product_mode = about_raw_response.get("productMode")
-    deployment_mode = about_raw_response.get("deploymentMode")
-    server_version = about_raw_response.get("demistoVersion")
-
-    if is_xsiam_environment():
-        return XsiamClient(
-            client=_client,
-            about_xsoar=about_raw_response,
-            config=XsiamClientConfig(
-                base_api_url=base_url, api_key=api_key, auth_id=auth_id
-            ),
-        )
-    elif is_xsoar_saas_environment():
-        try:
-            return XsoarSaasClient(
-                client=_client,
-                about_xsoar=about_raw_response,
-                config=XsoarSaasClientConfig(
-                    base_api_url=base_url, api_key=api_key, auth_id=auth_id
-                ),
-            )
-        # if its xsoar-on-prem that has version > 8.x.x
-        except pydantic.ValidationError:
-            return XsoarClient(
-                client=_client,
-                about_xsoar=about_raw_response,
-                config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
-            )
-
-    elif is_xsoar_on_prem_environment():
-        return XsoarClient(
-            client=_client,
-            about_xsoar=about_raw_response,
-            config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
-        )
-
-    raise RuntimeError(f"Could not determine the correct api-client for {base_url}")
+        except (ValueError, pydantic.ValidationError) as error:
+            logger.debug(f"{error=}")
+            try:
+                return XsoarClient.from_server_type(
+                    XsoarClientConfig(
+                        base_api_url=base_url, api_key=api_key, verify_ssl=verify_ssl
+                    )
+                )
+            except ValueError as error:
+                logger.debug(f"{error=}")
+                raise RuntimeError(
+                    f"Could not determine the correct api-client for {base_url}"
+                )

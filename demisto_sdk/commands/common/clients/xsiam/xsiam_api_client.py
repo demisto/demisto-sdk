@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urljoin
 
 import requests
+from demisto_client.demisto_api.api.default_api import DefaultApi
+from demisto_client.demisto_api.rest import ApiException
 from pydantic import validator
 from requests import Session
 from requests.exceptions import RequestException
@@ -23,6 +25,30 @@ json = DEFAULT_JSON_HANDLER
 
 class XsiamClient(XsoarSaasClient):
     marketplace = MarketplaceVersions.MarketplaceV2
+
+    @classmethod
+    def is_server_type(cls, xsoar_info: Dict):
+        product_mode = xsoar_info.get("productMode")
+        if product_mode == "xsiam":
+            return True
+
+        # for old environments that do not have product-mode / deployment-mode
+        _client: DefaultApi = xsoar_info.get("_client")
+        try:
+            # /ioc-rules is only an endpoint in XSIAM.
+            response, status_code, response_headers = _client.generic_request(
+                "/ioc-rules", "GET"
+            )
+        except ApiException:
+            return False
+
+        if (
+            "text/html" in response_headers.get("Content-Type")
+            or status_code != requests.codes.ok
+        ):
+            return False
+
+        return True
 
     @classmethod
     @retry(exceptions=RequestException)

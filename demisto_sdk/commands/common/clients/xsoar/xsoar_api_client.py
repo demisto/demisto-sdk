@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.clients.configs import (
 )
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import (
+    MINIMUM_XSOAR_SAAS_VERSION,
     IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
@@ -44,6 +45,40 @@ class XsoarClient(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+    @classmethod
+    def is_server_type(cls, xsoar_info: Dict):
+        product_mode = xsoar_info.get("productMode")
+        deployment_mode = xsoar_info.get("deploymentMode")
+        server_version = xsoar_info.get("demistoVersion")
+        return (product_mode == "xsoar" and deployment_mode == "opp") or (
+            server_version
+            and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
+        )
+
+    @classmethod
+    def from_server_type(
+        cls, client_config: Optional[XsoarClientConfig] = None
+    ) -> "XsoarClient":
+        config = client_config or XsoarClientConfig()
+        _client = cls.get_xsoar_client(None, {"config": config})
+        about_raw_response = cls.get_xsoar_about(_client)
+
+        xsoar_info = {
+            "product_mode": about_raw_response.get("productMode"),
+            "deployment_mode": about_raw_response.get("deploymentMode"),
+            "server_version": about_raw_response.get("demistoVersion"),
+            "client": _client,
+        }
+
+        if cls.is_server_type(xsoar_info):
+            logger.debug(f"server {config.base_api_url} is {cls} client")
+            return cls(
+                client=_client,
+                about_xsoar=about_raw_response,
+                config=config,
+            )
+        raise ValueError(f"server {config.base_api_url} is not {cls} client")
 
     @classmethod
     @retry(exceptions=ApiException)

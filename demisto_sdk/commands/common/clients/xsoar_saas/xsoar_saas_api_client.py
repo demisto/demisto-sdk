@@ -1,18 +1,32 @@
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
+from packaging.version import Version
 from pydantic import Field, validator
 from requests import Response, Session
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MINIMUM_XSOAR_SAAS_VERSION,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.tools import retry
 
 
 class XsoarSaasClient(XsoarClient):
     session: Session = Field(None, exclude=True)
     marketplace = MarketplaceVersions.XSOAR_SAAS
+
+    @classmethod
+    def is_server_type(cls, xsoar_info: Dict):
+        product_mode = xsoar_info.get("productMode")
+        deployment_mode = xsoar_info.get("deploymentMode")
+        server_version = xsoar_info.get("demistoVersion")
+        return (product_mode == "xsoar" and deployment_mode == "saas") or (
+            server_version
+            and Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION)
+        )
 
     @validator("session", always=True)
     def get_xdr_session(cls, v: Optional[Session], values: Dict[str, Any]) -> Session:

@@ -60,7 +60,7 @@ class XsoarSaasClient(XsoarClient):
         playgrounds: InvestigationSearchResponse = self.client.search_investigations(
             filter={"filter": {"type": [9], "page": 0}}
         )
-        if not playgrounds.data or not playgrounds.total > 0:
+        if playgrounds.total == 0:
             raise RuntimeError(f"No playgrounds in {self.base_url}")
         if not self.config.user:
             raise ValueError(

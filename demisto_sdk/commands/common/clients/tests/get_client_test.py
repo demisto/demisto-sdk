@@ -113,7 +113,7 @@ def test_get_client_from_marketplace(
     "base_api_url, xsoar_version, expected_client_type",
     [
         ("https://test.com", "6.11.0", XsoarClient),
-        ("https://tes2.com", "8.4.0", XsoarSaasClient),
+        ("https://test2.com", "8.4.0", XsoarSaasClient),
     ],
 )
 def test_get_xsoar_client_from_server_type_no_product_deployment_mode(
@@ -245,7 +245,8 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
     mocker.patch.object(
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect
     )
-    with pytest.raises(ValueError):
+
+    with pytest.raises(RuntimeError):
         get_client_from_server_type(
             base_url="https://test5.com", api_key="test", auth_id="1"
         )

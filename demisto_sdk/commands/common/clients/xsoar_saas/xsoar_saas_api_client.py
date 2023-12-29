@@ -6,6 +6,10 @@ from pydantic import Field, validator
 from requests import Response, Session
 from requests.exceptions import RequestException
 
+from demisto_sdk.commands.common.clients.configs import (
+    XsoarClientConfig,
+    XsoarSaasClientConfig,
+)
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
@@ -19,10 +23,19 @@ class XsoarSaasClient(XsoarClient):
     marketplace = MarketplaceVersions.XSOAR_SAAS
 
     @classmethod
+    def from_server_type(
+        cls, client_config: Optional[XsoarClientConfig] = None
+    ) -> "XsoarClient":
+        """
+        Returns whether the configured client is xsoar-saas.
+        """
+        return super().from_server_type(client_config or XsoarSaasClientConfig())
+
+    @classmethod
     def is_server_type(cls, xsoar_info: Dict):
         product_mode = xsoar_info.get("productMode")
         deployment_mode = xsoar_info.get("deploymentMode")
-        server_version = xsoar_info.get("demistoVersion")
+        server_version = xsoar_info.get("serverVersion")
         return (product_mode == "xsoar" and deployment_mode == "saas") or (
             server_version
             and Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION)

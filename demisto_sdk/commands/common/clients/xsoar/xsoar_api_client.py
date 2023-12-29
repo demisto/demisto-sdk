@@ -3,6 +3,7 @@ import re
 import socket
 import time
 import urllib.parse
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
@@ -48,9 +49,12 @@ class XsoarClient(BaseModel):
 
     @classmethod
     def is_server_type(cls, xsoar_info: Dict):
+        """
+        Returns whether the configured client is xsoar-on-prem.
+        """
         product_mode = xsoar_info.get("productMode")
         deployment_mode = xsoar_info.get("deploymentMode")
-        server_version = xsoar_info.get("demistoVersion")
+        server_version = xsoar_info.get("serverVersion")
         return (product_mode == "xsoar" and deployment_mode == "opp") or (
             server_version
             and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
@@ -61,17 +65,17 @@ class XsoarClient(BaseModel):
         cls, client_config: Optional[XsoarClientConfig] = None
     ) -> "XsoarClient":
         config = client_config or XsoarClientConfig()
-        _client = cls.get_xsoar_client(None, {"config": config})
+        _client = cls.get_xsoar_client(values={"config": config})
         about_raw_response = cls.get_xsoar_about(_client)
 
-        xsoar_info = {
-            "product_mode": about_raw_response.get("productMode"),
-            "deployment_mode": about_raw_response.get("deploymentMode"),
-            "server_version": about_raw_response.get("demistoVersion"),
-            "client": _client,
-        }
-
-        if cls.is_server_type(xsoar_info):
+        if cls.is_server_type(
+            {
+                "productMode": about_raw_response.get("productMode"),
+                "deploymentMode": about_raw_response.get("deploymentMode"),
+                "serverVersion": about_raw_response.get("demistoVersion"),
+                "client": _client,
+            }
+        ):
             logger.debug(f"server {config.base_api_url} is {cls} client")
             return cls(
                 client=_client,
@@ -81,6 +85,7 @@ class XsoarClient(BaseModel):
         raise ValueError(f"server {config.base_api_url} is not {cls} client")
 
     @classmethod
+    @lru_cache
     @retry(exceptions=ApiException)
     def get_xsoar_about(cls, client: DefaultApi) -> Dict[str, Any]:
         """
@@ -106,14 +111,15 @@ class XsoarClient(BaseModel):
 
     @validator("client", always=True, pre=True)
     def get_xsoar_client(
-        cls, v: Optional[DefaultApi], values: Dict[str, Any]
+        cls, v: Optional[DefaultApi] = None, values: Optional[Dict[str, Any]] = None
     ) -> DefaultApi:
         """
         Returns the client for xsoar endpoints.
         """
         if v:
             return v
-        config: XsoarClientConfig = values["config"]
+        _values = values or {}
+        config: XsoarClientConfig = _values["config"]
         return demisto_client.configure(
             config.base_api_url,
             api_key=config.api_key.get_secret_value(),

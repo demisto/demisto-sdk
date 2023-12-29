@@ -126,7 +126,13 @@ def get_client_from_server_type(
                     verify_ssl=verify_ssl,
                 )
             )
-        except (ValueError, pydantic.ValidationError) as error:
+        except pydantic.ValidationError:
+            return XsoarClient(
+                config=XsoarClientConfig(
+                    base_api_url=base_url, api_key=api_key, verify_ssl=verify_ssl
+                )
+            )
+        except ValueError as error:
             logger.debug(f"{error=}")
             try:
                 return XsoarClient.from_server_type(

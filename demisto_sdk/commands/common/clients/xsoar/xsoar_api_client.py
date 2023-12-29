@@ -948,17 +948,11 @@ class XsoarClient(BaseModel):
             response_type: the response type of the raw response
 
         Returns:
-            the context after running the command
+            Tuple: The war-room entries created during the command and the context output.
         """
         if not investigation_id:
-            if self.marketplace == MarketplaceVersions.XSOAR:
-                investigation_id = self.get_playground_id()
-            else:
-                # it is not possible to auto-detect playground-id in xsoar-8, see CIAC-8766,
-                # once its resolved this should be implemented
-                raise ValueError(
-                    "Investigation_id must be provided for xsoar-saas/xsiam"
-                )
+            investigation_id = self.get_playground_id()
+
         if not command.startswith("!"):
             command = f"!{command}"
 
@@ -1017,50 +1011,19 @@ class XsoarClient(BaseModel):
         """
         Returns a playground ID based on the user.
         """
-        if self.marketplace == MarketplaceVersions.XSOAR:
-            user_data, status_code, _ = self.client.generic_request(
-                path="/user",
-                method="GET",
-                content_type="application/json",
-                response_type="object",
-            )
-
-            if status_code != 200:
-                raise RuntimeError("Cannot find username")
-
-            playground_id = user_data.get("playgroundId")
-            if not playground_id:
-                raise RuntimeError(
-                    f'user {user_data.get("username")} does not have any playground'
-                )
-            return playground_id
-
-        answer = self.client.search_investigations(
-            filter={"filter": {"type": [9], "page": 0}}
+        user_data, status_code, _ = self.client.generic_request(
+            path="/user",
+            method="GET",
+            content_type="application/json",
+            response_type="object",
         )
-        if answer.total == 0:
-            raise RuntimeError(f"No playgrounds were detected in {self.base_url}")
-        elif answer.total == 1:
-            playground_id = answer.data[0].id
-        else:
-            # if found more than one playground, try to filter to results against the current user
-            user_data, status_code, _ = self.client.generic_request(
-                path="/user",
-                method="GET",
-                content_type="application/json",
-                response_type="object",
+
+        playground_id = user_data.get("playgroundId")
+        if status_code != 200 or not playground_id:
+            raise RuntimeError(
+                f'user {user_data.get("username")} does not have any playground'
             )
 
-            if status_code != 200:
-                raise RuntimeError("Cannot find username")
-
-            playground_id = user_data.get("playgroundId")
-            if not playground_id:
-                raise RuntimeError(
-                    f'user {user_data.get("username")} does not have any playground'
-                )
-
-        logger.debug(f"Found playground ID {playground_id} for {self.base_url}")
         return playground_id
 
     @retry(exceptions=ApiException)

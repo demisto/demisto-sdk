@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.tools import parse_int_or_default, string_to_bo
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
 neo4j_log = logging.getLogger("neo4j")
-neo4j_log.setLevel(logging.WARNING)
+neo4j_log.setLevel(logging.CRITICAL)
 
 CONSOLE_HANDLER = "console-handler"
 FILE_HANDLER = "file-handler"

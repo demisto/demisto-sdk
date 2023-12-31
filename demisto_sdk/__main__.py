@@ -55,6 +55,9 @@ from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
+from demisto_sdk.commands.setup_env.setup_environment import (
+    IDEType
+)
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import (
     init_test_data,
@@ -3456,6 +3459,12 @@ def update_content_graph(
 
 @main.command(short_help="Setup integration environments")
 @click.option(
+    "--ide",
+    help="IDEType type to configure the environment for. If not specified, the IDEType will be auto-detected. Case-insensitive.",
+    default="auto-detect",
+    type=click.Choice(["auto-detect"] + [IDEType.value for IDEType in IDEType], case_sensitive=False),
+)
+@click.option(
     "-i",
     "--input",
     type=PathsParamType(
@@ -3463,44 +3472,46 @@ def update_content_graph(
     ),  # PathsParamType allows passing a list of paths
     help="A list of content packs/files to validate.",
 )
+
 @click.option(
     "--create-virtualenv",
     is_flag=True,
     default=False,
-    help="Create a virtualenv for the environment",
+    help="Create a virtualenv for the environment.",
 )
 @click.option(
     "--overwrite-virtualenv",
     is_flag=True,
     default=False,
-    help="Overwrite existing virtualenvs. Use with the create-virtualenv flag",
+    help="Overwrite existing virtualenvs. Relevant only if the 'create-virtualenv' flag is used.",
 )
 @click.option(
     "--secret-id",
-    help="Secret ID, to use with Google Secret Manager instance with `DEMISTO_SDK_GCP_PROJECT_ID` environment variable set.",
+    help="Secret ID to use for the Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.",
     required=False,
 )
 @click.option(
     "--instance-name",
     required=False,
-    help="Instance name to configure in XSOAR/XSIAM.",
+    help="Instance name to configure in XSOAR / XSIAM.",
 )
 @click.option(
     "--run-test-module",
     required=False,
     is_flag=True,
     default=False,
-    help="Whether to run test-module on the configured XSOAR/XSIAM instance",
+    help="Whether to run test-module on the configured XSOAR / XSIAM instance.",
 )
 @click.option(
     "--clean",
     is_flag=True,
     default=False,
-    help="Clean the repo out of the temp files that were created by `lint`",
+    help="Clean the repository of temporary files created by the 'lint' command.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
     input,
+    ide,
     file_paths,
     create_virtualenv,
     overwrite_virtualenv,
@@ -3513,11 +3524,26 @@ def setup_env(
         setup_env,
     )
 
+    if ide == "auto-detect":
+        # Order decides which IDEType will be selected for configuration if multiple IDEs are detected
+        if (CONTENT_PATH / ".vscode").exists():
+            logger.info("Visual Studio Code IDEType has been detected and will be configured.")
+            ide_type = IDEType.VSCODE
+        elif (CONTENT_PATH / ".idea").exists():
+            logger.info("PyCharm / IDEA IDEType has been detected and will be configured.")
+            ide_type = IDEType.PYCHARM
+        else:
+            raise RuntimeError("Could not detect IDEType. Please select a specific IDEType using the --ide flag.")
+
+    else:
+        ide_type = IDEType(ide)
+
     if input:
         file_paths = tuple(input.split(","))
 
     setup_env(
-        file_paths,
+        file_paths=file_paths,
+        ide_type=ide_type,
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,
         secret_id=secret_id,

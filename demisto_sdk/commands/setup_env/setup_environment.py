@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import venv
 from enum import Enum
+from lxml import etree
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -35,12 +36,12 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 DOTENV_PATH = CONTENT_PATH / ".env"
 
 
-class IDE(Enum):
-    VSCODE = "vscode"
-    PYCHARM = "pycharm"
+class IDEType(Enum):
+    PYCHARM = "PyCharm"
+    VSCODE = "VSCode"
 
 
-IDE_TO_FOLDER = {IDE.VSCODE: ".vscode", IDE.PYCHARM: ".idea"}
+IDE_TO_FOLDER = {IDEType.VSCODE: ".vscode", IDEType.PYCHARM: ".idea"}
 
 
 def configure_vscode_settings(
@@ -92,28 +93,51 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
     return docker_python_path
 
 
-def update_dotenv(values: Dict[str, str], quote_mode="never"):
-    env_vars = dotenv.dotenv_values(DOTENV_PATH)
+def update_dotenv(file_path: Path, values: Dict[str, str], quote_mode="never"):
+    """
+    Configure the .env file with the given values. Generates the file if it doesn't exist.
+
+    Args:
+        file_path (Path): The path to the .env file
+        values (Dict[str, str]): The values to set
+        quote_mode (str): The quote mode to use. Defaults to "never"
+    """
+    file_path.touch(exist_ok=True)
+    env_vars = dotenv.dotenv_values(file_path)
     env_vars.update(values)
     for key, value in env_vars.items():
         if value:
             dotenv.set_key(DOTENV_PATH, key, value, quote_mode=quote_mode)
         else:
-            logger.warning(f"empty value for {key}, not setting it")
+            logger.warning(f"Empty value for '{key}'. Skipping...")
 
 
-def configure_dotenv():
+def update_pycharm_config_file(file_path: Path, python_paths: List[str]):
+    pass
+
+
+def configure_module_discovery(ide_type: IDEType):
     """
-    This functions configures the .env file located with PYTHONPATH and MYPYPATH
-    This is needed for discovery and linting for CommonServerPython, demistomock and API Modules files.
-    """
-    DOTENV_PATH.touch()
-    python_path_values = ":".join((str(path) for path in PYTHONPATH))
-    mypy_path_values = ":".join(
-        (str(path) for path in PYTHONPATH if "site-packages" not in str(path))
-    )
-    update_dotenv({"PYTHONPATH": python_path_values, "MYPYPATH": mypy_path_values})
+    Configure the IDE to auto discover CommonServerPython, demistomock, and API Modules files.
 
+    Args:
+        ide_type (IDEType): The IDE type to configure
+    """
+    python_paths: list[str] = [str(path) for path in PYTHONPATH]
+    mypy_paths: list[str] = [str(path) for path in PYTHONPATH if "site-packages" not in str(path)]
+
+    if ide_type == IDEType.VSCODE:
+        update_dotenv(
+            file_path=DOTENV_PATH,
+            values={"PYTHONPATH": ":".join(python_paths), "MYPYPATH": ":".join(mypy_paths)}
+        )
+
+    elif ide_type == IDEType.PYCHARM:
+        config_file_path = CONTENT_PATH / ".idea" / (CONTENT_PATH.name.lower() + ".iml")
+        update_pycharm_config_file(
+            file_path=config_file_path,
+            python_paths=python_paths
+        )
 
 def configure_vscode_tasks(
     ide_folder: Path, integration_script: IntegrationScript, test_docker_image: str
@@ -389,15 +413,16 @@ def configure_params(
                     logger.warning(
                         f"Failed to create integration instance {instance_name}. Error {e}"
                     )
-            update_dotenv({"DEMISTO_PARAMS": json.dumps(params)}, quote_mode="never")
+            update_dotenv(file_path=DOTENV_PATH,
+                          values={"DEMISTO_PARAMS": json.dumps(params)}, quote_mode="never")
         except SecretManagerException:
             logger.warning(
-                f"Failed to fetch integration params from Google Secret Manager for {secret_id}"
+                f"Failed to fetch integration params for '{secret_id}' from Google Secret Manager."
             )
 
     else:
         logger.info(
-            "Skipping searching in Google Secret Manager as DEMISTO_SDK_GCP_PROJECT_ID is not set"
+            "Skipping Google Secret Manager lookup as 'DEMISTO_SDK_GCP_PROJECT_ID' environment variable is not set."
         )
 
 
@@ -435,7 +460,7 @@ def add_demistomock_and_commonserveruser(integration_script: IntegrationScript):
 
 
 def configure_integration(
-    ide: IDE,
+    ide: IDEType,
     file_path: Path,
     create_virtualenv: bool,
     overwrite_virtualenv: bool,
@@ -446,7 +471,7 @@ def configure_integration(
     """Configures the environment of the integration
 
     Args:
-        ide (IDE): The IDE to configure to
+        ide (IDEType): The IDE to configure to
         file_path (Path): The filepath of the integration
         create_virtualenv (bool): Whether create a virtual environment
         overwrite_virtualenv (bool): Whether overwrite the virtual environment
@@ -455,9 +480,11 @@ def configure_integration(
         test_module (bool): Whether run test module on the instance on XSOAR/XSIAM
 
     Raises:
-        RuntimeError: If configuring failed (for instance, Docker is turned off)
+        RuntimeError: If using auto-detection for IDE and it failed,
+            or if the configuration failed (for instance, Docker is turned off)
     """
-    ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
+    base_path = CONTENT_PATH
+
     integration_script = BaseContent.from_path(Path(file_path))
     assert isinstance(
         integration_script, IntegrationScript
@@ -472,7 +499,7 @@ def configure_integration(
         docker_helper.init_global_docker_client()
     except docker_helper.DockerException:
         logger.error(
-            "Failed to initialize docker client. Make sure Docker is running and configured correctly"
+            "Failed to initialize Docker client. Please assure Docker is running and properly configured."
         )
         raise
     (test_docker_image, errors,) = docker_helper.get_docker().get_or_create_test_image(
@@ -480,32 +507,35 @@ def configure_integration(
     )
     if errors:
         raise RuntimeError(
-            f"Failed to pull/create test docker image for {docker_image}: {errors}"
+            f"Failed to pull / create test Docker image for '{docker_image}': {errors}"
         )
 
     if create_virtualenv and integration_script.type.startswith("python"):
         pack = integration_script.in_pack
         assert isinstance(pack, Pack), "Expected pack"
-        ide_folder = pack.path / IDE_TO_FOLDER[ide]
-        pack_env = pack.path / ".env"
-        if pack_env.exists() and not pack_env.is_symlink():
-            pack_env.unlink(missing_ok=True)
-        if not pack_env.exists():
-            pack_env.symlink_to(DOTENV_PATH)
+        base_path = pack.path
+        pack_env_file = base_path / ".env"
+        if pack_env_file.exists() and not pack_env_file.is_symlink():
+            pack_env_file.unlink(missing_ok=True)
+        if not pack_env_file.exists():
+            pack_env_file.symlink_to(DOTENV_PATH)
         if create_virtualenv and integration_script.type.startswith("python"):
             interpreter_path = install_virtualenv(
                 integration_script, test_docker_image, overwrite_virtualenv
             )
 
-    if ide == IDE.VSCODE:
+    if ide == IDEType.VSCODE:
         configure_vscode(
-            ide_folder, integration_script, test_docker_image, interpreter_path
+            ide_folder=base_path / ".vscode",
+            integration_script=integration_script,
+            test_docker_image=test_docker_image,
+            interpreter_path=interpreter_path
         )
 
 
 def clean_repo():
     """
-    This functions clean the repo from the temp `CommonServerPython` and `APIModules` files and other files that were created by lint
+    Clean the repository from temporary files like 'CommonServerPython' and API modules created by the 'lint' command.
     """
     for path in PYTHONPATH:
         for temp_file in CONTENT_PATH.rglob(f"{path.name}.py"):
@@ -519,7 +549,7 @@ def clean_repo():
 
 def setup_env(
     file_paths: Tuple[Path, ...],
-    ide: IDE = IDE.VSCODE,
+    ide_type: IDEType,
     create_virtualenv: bool = False,
     overwrite_virtualenv: bool = False,
     secret_id: Optional[str] = None,
@@ -527,35 +557,39 @@ def setup_env(
     test_module: bool = False,
     clean: bool = False,
 ) -> None:
-    """This function sets up the development environment for integration scripts
+    """
+    This function sets up the development environment for integration scripts
 
     Args:
         file_paths (Tuple[Path, ...]): File paths to set integration
-        ide (IDE, optional): The IDE to setup the environment for. Defaults to IDE.VSCODE.
+        ide_type (IDEType): An IDEType value representing an IDE setup the environment for.
         create_virtualenv (bool, optional): Whether create virtual environment or not. Defaults to False.
         overwrite_virtualenv (bool, optional): Whether overwrite the existing virtual environment. Defaults to False.
         secret_id (Optional[str], optional): The secret id try to fetch from Google Secret Manager. Defaults to the integration name. Defaults to None.
         instance_name (Optional[str], optional): The instance name to configure on XSOAR/XSIAM. Defaults to None.
+        test_module (bool, optional): Whether test-module will run or not. Defaults to False.
+        clean (bool, optional): Whether clean the repository from temporary files. Defaults to False.
 
     Raises:
         RuntimeError:
     """
     if clean:
         clean_repo()
-    configure_dotenv()
+
+    configure_module_discovery(ide_type=ide_type)
     if not file_paths:
         (CONTENT_PATH / "CommonServerUserPython.py").touch()
-        ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
-        if ide == IDE.VSCODE:
+        if ide_type == IDEType.VSCODE:
+            ide_folder = CONTENT_PATH / ".vscode"
             ide_folder.mkdir(exist_ok=True)
-            configure_vscode_settings(ide_folder)
+            configure_vscode_settings(ide_folder=ide_folder)
     for file_path in file_paths:
         configure_integration(
-            ide,
-            file_path,
-            create_virtualenv,
-            overwrite_virtualenv,
-            secret_id,
-            instance_name,
-            test_module,
+            ide=ide_type,
+            file_path=file_path,
+            create_virtualenv=create_virtualenv,
+            overwrite_virtualenv=overwrite_virtualenv,
+            secret_id=secret_id,
+            instance_name=instance_name,
+            test_module=test_module,
         )

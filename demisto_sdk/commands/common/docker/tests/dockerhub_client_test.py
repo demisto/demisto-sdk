@@ -16,17 +16,44 @@ def dockerhub_client() -> DockerHubClient:
 
 
 def test_get_token_with_new_token(requests_mock, dockerhub_client: DockerHubClient):
+    """
+    Given:
+        - token from the api
+
+    When:
+        - running get_token method
+
+    Then:
+        - ensure that the token is extracted properly
+        - ensure that the token is saved in the cache
+    """
     requests_mock.get(
         "https://auth.docker.io/token",
         json={"token": "1234", "issued_at": "1234", "expires_in": 300},
     )
     assert dockerhub_client.get_token(repo="test") == "1234"
+    assert dockerhub_client._docker_hub_auth_tokens["test:pull"]
+    assert dockerhub_client._docker_hub_auth_tokens["test:pull"] == {
+        "token": "1234",
+        "issued_at": "1234",
+        "expires_in_seconds": 300,
+    }
 
 
 @freeze_time("2024-01-01 12:00:00")
 def test_get_token_with_existing_not_expired_token(
     requests_mock, dockerhub_client: DockerHubClient
 ):
+    """
+    Given:
+        - existing token from the cache that is not expired
+
+    When:
+        - running get_token method
+
+    Then:
+        - ensure that the token is extracted properly only from the cache without api-request
+    """
     dockerhub_client._docker_hub_auth_tokens = {
         "test:pull": {
             "token": "1234",
@@ -44,6 +71,18 @@ def test_get_token_with_existing_not_expired_token(
 def test_get_token_with_existing_expired_token(
     requests_mock, dockerhub_client: DockerHubClient
 ):
+    """
+    Given:
+        - existing token from the cache that is expired
+
+    When:
+        - running get_token method
+
+    Then:
+        - ensure that the token is extracted from the api-request because token has expired
+        - ensure the api is called
+        - ensure that cache gets updated with the newly created token
+    """
     dockerhub_client._docker_hub_auth_tokens = {
         "test:pull": {
             "token": "token_from_cache",
@@ -59,6 +98,11 @@ def test_get_token_with_existing_expired_token(
     )
     assert dockerhub_client.get_token(repo="test") == "token_from_api"
     assert requests_mock.called
+    assert dockerhub_client._docker_hub_auth_tokens["test:pull"] == {
+        "token": "token_from_api",
+        "issued_at": "1234",
+        "expires_in_seconds": 300,
+    }
 
 
 @pytest.mark.parametrize(
@@ -95,6 +139,16 @@ def test_get_latest_docker_image_tag(
     tags: List[str],
     expected_highest_tag: str,
 ):
+    """
+    Given:
+        - lists of tags
+
+    When:
+        - running get_latest_docker_image_tag method
+
+    Then:
+        - ensure that the latest tag is returned always
+    """
     requests_mock.get(
         "https://auth.docker.io/token",
         json={"token": "1234", "issued_at": "1234", "expires_in": 300},
@@ -147,7 +201,16 @@ def test_do_docker_hub_get_request_with_pagination(
     responses: List[Dict[str, Any]],
     count: int,
 ):
+    """
+    Given:
+        - pagination responses
 
+    When:
+        - running do_docker_hub_get_request method
+
+    Then:
+        - ensure that we retrieve all the objects eventually after pagination
+    """
     mocked_responses = []
     for paged_response in responses:
         response = Response()
@@ -162,7 +225,16 @@ def test_do_docker_hub_get_request_with_pagination(
 def test_do_docker_hub_get_request_single_object(
     requests_mock, dockerhub_client: DockerHubClient
 ):
+    """
+    Given:
+        - single object response
 
+    When:
+        - running do_docker_hub_get_request method
+
+    Then:
+        - ensure that we retrieve only the single object without pagination
+    """
     response = Response()
     response._content = json.dumps({"test": "test"}).encode("utf-8")
 

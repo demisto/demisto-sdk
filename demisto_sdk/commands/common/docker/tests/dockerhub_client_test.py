@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
-from typing import List
+from typing import Any, Dict, List
 
 import pytest
 from freezegun import freeze_time
 from packaging.version import Version
+from requests import Response, Session
 
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 @pytest.fixture()
@@ -105,3 +107,68 @@ def test_get_latest_docker_image_tag(
     assert dockerhub_client.get_latest_docker_image_tag(docker_image) == Version(
         expected_highest_tag
     )
+
+
+@pytest.mark.parametrize(
+    "responses, count",
+    [
+        (
+            [
+                {"count": 100, "results": list(range(30)), "next": "next_link"},
+                {"count": 100, "results": list(range(30)), "next": "next_link"},
+                {"count": 100, "results": list(range(30)), "next": "next_link"},
+                {"count": 100, "results": list(range(10)), "next": None},
+            ],
+            100,
+        ),
+        (
+            [
+                {"count": 600, "results": list(range(100)), "next": "next_link"},
+                {"count": 600, "results": list(range(100)), "next": "next_link"},
+                {"count": 600, "results": list(range(100)), "next": "next_link"},
+                {"count": 600, "results": list(range(100)), "next": "next_link"},
+                {"count": 600, "results": list(range(100)), "next": "next_link"},
+                {"count": 600, "results": list(range(100)), "next": None},
+            ],
+            600,
+        ),
+        (
+            [
+                {"count": 158, "results": list(range(100)), "next": "next_link"},
+                {"count": 158, "results": list(range(58)), "next": None},
+            ],
+            158,
+        ),
+    ],
+)
+def test_do_docker_hub_get_request_with_pagination(
+    mocker,
+    dockerhub_client: DockerHubClient,
+    responses: List[Dict[str, Any]],
+    count: int,
+):
+
+    mocked_responses = []
+    for paged_response in responses:
+        response = Response()
+        response._content = json.dumps(paged_response).encode("utf-8")
+        mocked_responses.append(response)
+
+    mocker.patch.object(Session, "get", side_effect=mocked_responses)
+    mocker.patch.object(Response, "raise_for_status")
+    assert len(dockerhub_client.do_docker_hub_get_request(url_suffix="/test")) == count
+
+
+def test_do_docker_hub_get_request_single_object(
+    requests_mock, dockerhub_client: DockerHubClient
+):
+
+    response = Response()
+    response._content = json.dumps({"test": "test"}).encode("utf-8")
+
+    requests_mock.get(
+        f"{dockerhub_client.DOCKER_HUB_API_BASE_URL}/test",
+        json={"test": "test"},
+    )
+
+    assert dockerhub_client.do_docker_hub_get_request("/test") == {"test": "test"}

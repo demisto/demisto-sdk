@@ -159,7 +159,10 @@ class DockerHubClient:
         if next_page_url := raw_json_response.get("next"):
             results.extend(
                 self.do_docker_hub_get_request(
-                    next_page_url=next_page_url, headers=headers, params=params
+                    next_page_url=next_page_url,
+                    headers=headers,
+                    params=params,
+                    results_key=results_key,
                 )
             )
 

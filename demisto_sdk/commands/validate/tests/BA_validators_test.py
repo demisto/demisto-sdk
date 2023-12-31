@@ -31,6 +31,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA105_id_contain_slashes import (
+    IDContainSlashesValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_all_items import (
     IsFromVersionSufficientAllItemsValidator,
 )
@@ -774,3 +777,128 @@ def test_IsFromVersionSufficientIntegrationValidator_fix(
         == expected_msg
     )
     assert integration.fromversion == expected_fixed_version
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_indicator_field_object(),
+                create_incident_field_object(),
+                create_widget_object(),
+                create_wizard_object(),
+                create_report_object(),
+                create_xsiam_report_object(),
+                create_integration_object(),
+                create_script_object(),
+                create_dashboard_object(),
+                create_incident_type_object(),
+                create_generic_module_object(),
+                create_generic_type_object(),
+                create_incoming_mapper_object(),
+                create_outgoing_mapper_object(),
+                create_generic_definition_object(),
+                create_classifier_object(),
+                create_xsiam_dashboard_object(),
+                create_job_object(),
+                create_list_object(),
+                create_parsing_rule_object(),
+                create_playbook_object(),
+                create_generic_field_object(),
+                create_correlation_rule_object(),
+                create_assets_modeling_rule_object(),
+                create_layout_object(),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_incident_type_object(["id"], ["Tra/ps"]),
+                create_incident_field_object(["id"], ["incide/nt_cv/e"]),
+                create_list_object(["id"], ["checked integrations/"]),
+                create_integration_object(["commonfields.id"], ["TestIntegrati/on"]),
+            ],
+            4,
+            [
+                "The IncidentType ID field (Tra/ps) include a slash (/), please make sure to remove it.",
+                "The IncidentField ID field (tcv/e) include a slash (/), please make sure to remove it.",
+                "The List ID field (checked integrations/) include a slash (/), please make sure to remove it.",
+                "The Integration ID field (TestIntegrati/on) include a slash (/), please make sure to remove it.",
+            ],
+        ),
+    ],
+)
+def test_IDContainSlashesValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items list.
+        - Case 1: A list of one of each content_item supported by the validation with a valid ID.
+        - Case 2: A list of one IncidentType, IncidentField, List, and Integration, all with invalid ids with at least one /.
+    When
+    - Calling the IDContainSlashesValidator is_valid function.
+    Then
+        - Make sure the right amount of failures return and that the error msg is correct.
+        - Case 1: Shouldn't fail anything.
+        - Case 2: Should fail all 4 content items.
+    """
+    results = IDContainSlashesValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_item, current_id, expected_fix_msg, expected_id",
+    [
+        (
+            create_incident_type_object(["id"], ["Tra/ps"]),
+            "Tra/ps",
+            "Removed slashes (/) from ID, new ID is Traps.",
+            "Traps",
+        ),
+        (
+            create_incident_field_object(["id"], ["incident_c/v/e"]),
+            "c/v/e",
+            "Removed slashes (/) from ID, new ID is cve.",
+            "cve",
+        ),
+        (
+            create_list_object(["id"], ["checked integrations/"]),
+            "checked integrations/",
+            "Removed slashes (/) from ID, new ID is checked integrations.",
+            "checked integrations",
+        ),
+        (
+            create_integration_object(["commonfields.id"], ["TestIntegrati///on"]),
+            "TestIntegrati///on",
+            "Removed slashes (/) from ID, new ID is TestIntegration.",
+            "TestIntegration",
+        ),
+    ],
+)
+def test_IDContainSlashesValidator_fix(
+    content_item, current_id, expected_fix_msg, expected_id
+):
+    """
+    Given
+    content_item.
+        - Case 1: An incident type with ID that contain slashes.
+        - Case 2: An incident field with ID that contain slashes.
+        - Case 3: A list with ID that contain slashes.
+        - Case 4: An integration with ID that contain slashes.
+    When
+    - Calling the IDContainSlashesValidator fix function.
+    Then
+        - Make sure that all the slashes were removed, the right field was set with the fixed value and the right message was printed out.
+    """
+    assert content_item.object_id == current_id
+    assert IDContainSlashesValidator().fix(content_item).message == expected_fix_msg
+    assert content_item.object_id == expected_id

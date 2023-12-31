@@ -212,9 +212,11 @@ class ModelingRule(YAMLContentUnifiedObject):
         self.rules_dict: dict = {}
 
     def __repr__(self) -> str:
-        path_name = self.path.name if isinstance(self.path, Path) else Path(self.path).name
-        return f'{path_name} ({self.from_version}->{self.to_version})'
-    
+        path_name = (
+            self.path.name if isinstance(self.path, Path) else Path(self.path).name
+        )
+        return f"{path_name} ({self.from_version}->{self.to_version})"
+
     def normalize_file_name(self) -> str:
         return generate_xsiam_normalized_name(self._path.name, MODELING_RULE)
 

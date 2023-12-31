@@ -951,7 +951,7 @@ def validate_modeling_rule(
     ctx: typer.Context,
     delete_existing_dataset: bool,
     xsiam_client: XsiamApiClient,
-    tenant_demisto_version: Version
+    tenant_demisto_version: Version,
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Validate a modeling rule.
 
@@ -1013,17 +1013,18 @@ def validate_modeling_rule(
         )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
         modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
-                to_version=modeling_rule.to_version,
-                from_version=modeling_rule.from_version,
-                tenant_demisto_version=tenant_demisto_version)
+            to_version=modeling_rule.to_version,
+            from_version=modeling_rule.from_version,
+            tenant_demisto_version=tenant_demisto_version,
+        )
         if not modeling_rule_is_compatible:
             # Modeling rule version is not compatible with the demisto version of the tenant, skipping
-            skipped = (
-                f'XSIAM Tenant\'s Demisto version doesn\'t match Modeling Rule {modeling_rule} version, skipping'
+            skipped = f"XSIAM Tenant's Demisto version doesn't match Modeling Rule {modeling_rule} version, skipping"
+            logger.warning(f"[yellow]{skipped}[/yellow]", extra={"markup": True})
+            test_case = TestCase(
+                "Modeling Rule not compatible with XSIAM tenant's demisto version",
+                classname=f"Modeling Rule {modeling_rule_file_name}",
             )
-            logger.warning(f'[yellow]{skipped}[/yellow]', extra={'markup': True})
-            test_case = TestCase('Modeling Rule not compatible with XSIAM tenant\'s demisto version',
-                                    classname=f'Modeling Rule {modeling_rule_file_name}')
             test_case.result += [Skipped(skipped)]
             modeling_rule_test_suite.add_testcase(test_case)
             # Return True since we don't want to fail the command
@@ -1245,8 +1246,10 @@ def validate_modeling_rule(
             return False, modeling_rule_test_suite
         return False, None
 
-def validate_modeling_rule_version_against_tenant(to_version: Version, from_version:Version,
-                                   tenant_demisto_version: Version) -> bool:
+
+def validate_modeling_rule_version_against_tenant(
+    to_version: Version, from_version: Version, tenant_demisto_version: Version
+) -> bool:
     """Checks if the version of the modeling rule is compatible with the XSIAM tenant's demisto version.
     Compatibility is checked by: from_version <= tenant_xsiam_version <= to_version
 
@@ -1258,8 +1261,10 @@ def validate_modeling_rule_version_against_tenant(to_version: Version, from_vers
     Returns:
         bool: True if the version of the modeling rule is compatible, else False
     """
-    return tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
-    
+    return (
+        tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
+    )
+
 
 def handle_missing_event_data_in_modeling_rule(
     missing_event_data: List[UUID],
@@ -1528,7 +1533,7 @@ def test_modeling_rule(
             ctx,
             delete_existing_dataset,
             xsiam_client=xsiam_client,
-            tenant_demisto_version=Version(tenant_demisto_version)
+            tenant_demisto_version=Version(tenant_demisto_version),
         )
         if success:
             logger.info(

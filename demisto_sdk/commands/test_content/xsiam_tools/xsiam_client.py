@@ -128,13 +128,15 @@ class XsiamApiClient(XsiamApiInterface):
         self.__session = value
 
     def get_demisto_version(self) -> str:
-        endpoint = urljoin(self.base_url, 'xsoar/about')
+        endpoint = urljoin(self.base_url, "xsoar/about")
         response = self._session.get(endpoint)
         response.raise_for_status()
         data = response.json()
-        demisto_version = data.get('demistoVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)
-        logger.info(f'[green]Demisto version of XSIAM tenant is {demisto_version}[/green]',
-                    extra={"markup": True})
+        demisto_version = data.get("demistoVersion", DEFAULT_CONTENT_ITEM_TO_VERSION)
+        logger.info(
+            f"[green]Demisto version of XSIAM tenant is {demisto_version}[/green]",
+            extra={"markup": True},
+        )
         return demisto_version
 
     @property

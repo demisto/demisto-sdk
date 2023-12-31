@@ -1,0 +1,380 @@
+from __future__ import print_function
+
+import os
+from datetime import datetime, timedelta
+from enum import Enum
+from functools import lru_cache
+from typing import Any, Dict, List, Optional
+
+import dateparser
+import requests
+from packaging.version import InvalidVersion, Version
+from requests.exceptions import ConnectionError, HTTPError, Timeout
+
+from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import retry
+
+DOCKERHUB_USER = "DOCKERHUB_USER"
+DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
+DEFAULT_REPOSITORY = "demisto"
+
+
+class DockerHubAuthScope(str, Enum):
+    PULL = "pull"  # Grants read-only access to the repository, allowing you to pull images.
+    PUSH = "push"  # Grants write access to the repository, allowing you to push images.
+    DELETE = "delete"  # Grants permission to delete images from the repository.
+    REPOSITORY = "repository"  # Grants full access to the repository, including both pull and push permissions.
+
+
+class DockerHubClient:
+
+    DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
+    DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
+
+    def __init__(
+        self,
+        docker_hub_api_url: str = "",
+        registry: str = "",
+        username: str = os.getenv(DOCKERHUB_USER, ""),
+        password: str = os.getenv(DOCKERHUB_PASSWORD, ""),
+        verify_ssl: bool = False,
+    ):
+
+        self.registry_api_url = registry or self.DEFAULT_REGISTRY
+        self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
+        self.username = username
+        self.password = password
+        self._session = requests.Session()
+        self.docker_hub_auth_tokens: Dict[str, Any] = {}
+        self.verify_ssl = verify_ssl
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._session.close()
+
+    @retry(times=5, exceptions=(ConnectionError, Timeout))
+    def get_token(
+        self, repo: str, scope: DockerHubAuthScope = DockerHubAuthScope.PULL
+    ) -> str:
+        """
+        Retrieves the token for repo's authentication.
+
+        Args:
+            repo: the repository to retrieve the token for.
+            scope: the scope needed for the repository
+        """
+        if token_metadata := self.docker_hub_auth_tokens.get(f"{repo}:{scope}"):
+            now = datetime.now()
+            # minus 60 seconds to be on the safe side
+            if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
+                _expiration_time: datetime = expiration_time + timedelta(
+                    seconds=token_metadata.get("expired_in_seconds") - 60
+                )
+                if _expiration_time.replace(tzinfo=None) < now:
+                    return token_metadata.get("token")
+
+        response = self._session.get(
+            "https://auth.docker.io/token",
+            params={
+                "service": "registry.docker.io",
+                "scope": f"repository:{repo}:{scope}",
+            },
+            auth=(self.username, self.password)
+            if self.username and self.password
+            else None,
+        )
+        if not response.ok:
+            raise RuntimeError(f"Failed to get docker hub token: {response.text}")
+        try:
+            raw_json_response = response.json()
+        except JSONDecodeError as e:
+            raise RuntimeError(
+                f"Failed to get docker hub token: {response.text}"
+            ) from e
+
+        token = raw_json_response.get("token")
+        self.docker_hub_auth_tokens[f"{repo}:{scope}"] = {
+            "token": token,
+            "issued_at": raw_json_response.get("issued_at"),
+            "expired_in_seconds": raw_json_response.get("expires_in"),
+        }
+
+        return token
+
+    @lru_cache
+    @retry(times=5, exceptions=(ConnectionError, Timeout))
+    def do_docker_hub_get_request(
+        self,
+        url_suffix: Optional[str] = None,
+        next_page_url: Optional[str] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
+        results_key: str = "results",
+    ):
+        """
+        Do a get request to dockerhub api
+
+        Args:
+            url_suffix: the URL suffix
+            next_page_url: the URL for the next page if pagination is required
+            headers: any custom headers
+            params: query parameters
+            results_key: the key to retrieve the results in case its a list
+        """
+        if url_suffix:
+            if not url_suffix.startswith("/"):
+                url_suffix = f"/{url_suffix}"
+            url = f"{self.docker_hub_api_url}{url_suffix}"
+        elif next_page_url:
+            url = next_page_url
+        else:
+            raise ValueError("either url_suffix/next_page_url must be provided")
+
+        response = self._session.get(
+            url,
+            headers=headers or {"Accept": "application/json"},
+            params=params or {"page_size": 1000} if not next_page_url else params,
+            verify=self.verify_ssl,
+            auth=(self.username, self.password)
+            if self.username and self.password
+            else None,
+        )
+        response.raise_for_status()
+        try:
+            raw_json_response = response.json()
+        except JSONDecodeError as e:
+            raise RuntimeError(
+                f"Failed to get response of {url=}, {response.text=}"
+            ) from e
+
+        amount_of_objects = raw_json_response.get("count")
+        if not amount_of_objects:
+            # received only a single record
+            return raw_json_response
+
+        logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
+
+        results = raw_json_response.get(results_key) or []
+        if next_page_url := raw_json_response.get("next"):
+            results.extend(
+                self.do_docker_hub_get_request(
+                    next_page_url=next_page_url, headers=headers, params=params
+                )
+            )
+
+        return results
+
+    @lru_cache
+    @retry(times=5, exceptions=(ConnectionError, Timeout))
+    def do_registry_get_request(
+        self,
+        url_suffix: str,
+        docker_image: str,
+        scope: DockerHubAuthScope = DockerHubAuthScope.PULL,
+        headers: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Do a get request to a dockerhub registry
+
+        Args:
+            url_suffix: the URL suffix
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            scope: what is the scope for the api-request.
+            headers: any custom headers
+            params: query parameters
+
+        Returns:
+
+        """
+        if not url_suffix.startswith("/"):
+            url_suffix = f"/{url_suffix}"
+
+        url = f"{self.registry_api_url}/{docker_image}{url_suffix}"
+
+        response = self._session.get(
+            url,
+            headers=headers
+            or {
+                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                "application/vnd.docker.distribution.manifest.list.v2+json",
+                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+            },
+            params=params,
+        )
+        response.raise_for_status()
+        try:
+            return response.json()
+        except JSONDecodeError as e:
+            raise RuntimeError(f"Failed to get response of {url=}") from e
+
+    def get_image_manifests(self, docker_image: str, tag: str) -> Dict[str, Any]:
+        """
+        Returns the docker image's manifests
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            tag: The tag of the docker image
+        """
+        try:
+            return self.do_registry_get_request(
+                f"/manifests/{tag}", docker_image=docker_image
+            )
+        except HTTPError as error:
+            raise RuntimeError(
+                f"Failed to get docker-image {docker_image} manifest"
+            ) from error
+
+    def get_image_digest(self, docker_image: str, tag: str) -> str:
+        """
+        Returns docker image's tag digest.
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            tag: The tag of the docker image
+        """
+        response = self.get_image_manifests(docker_image, tag=tag)
+        try:
+            return response["config"]["digest"]
+        except KeyError as error:
+            raise RuntimeError(
+                f"Failed to get docker image {docker_image}'s tag {tag} digest from {response=}"
+            ) from error
+
+    def get_image_blobs(self, docker_image: str, image_digest: str) -> Dict[str, Any]:
+        """
+        Returns the blobs of an image digest
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            image_digest: The docker image's digest
+        """
+        try:
+            return self.do_registry_get_request(
+                f"/blobs/{image_digest}", docker_image=docker_image
+            )
+        except HTTPError as error:
+            raise RuntimeError(
+                f"Failed to get docker-image {docker_image}'s digest metadata"
+            ) from error
+
+    def get_image_env(self, docker_image: str, tag: str) -> List[str]:
+        """
+        Get docker image's tag environment metadata.
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            tag: The tag of the docker image
+        """
+        image_digest = self.get_image_digest(docker_image, tag=tag)
+        response = self.get_image_blobs(docker_image, image_digest=image_digest)
+        try:
+            return response["config"]["Env"]
+        except KeyError as e:
+            raise RuntimeError(
+                f"Failed to get docker image {docker_image}'s tag {tag} env from {response=}"
+            ) from e
+
+    def get_image_tags(self, docker_image: str) -> List[str]:
+        """
+        Lists all the tags of a docker-image.
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+        """
+        try:
+            response = self.do_registry_get_request(
+                "/tags/list", docker_image=docker_image
+            )
+        except HTTPError as error:
+            raise RuntimeError(
+                f"Failed to get docker-image {docker_image} tags"
+            ) from error
+
+        return response.get("tags") or []
+
+    def get_image_tag_metadata(self, docker_image: str, tag: str) -> Dict[str, Any]:
+        """
+        Returns the docker image's tag metadata
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            tag: The tag of the docker image
+        """
+        try:
+            return self.do_docker_hub_get_request(
+                f"/repositories/{docker_image}/tags/{tag}"
+            )
+        except HTTPError as error:
+            raise RuntimeError(
+                f"Failed to get docker image {docker_image}'s {tag} metadata"
+            ) from error
+
+    def get_docker_image_tag_creation_date(
+        self, docker_image: str, tag: str
+    ) -> datetime:
+        """
+        Returns the creation date of the docker-image's tag.
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            tag: The tag of the docker image
+        """
+        response = self.get_image_tag_metadata(docker_image, tag=tag)
+        return datetime.strptime(
+            response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
+        )
+
+    def get_latest_docker_image_tag(self, docker_image: str) -> Version:
+        """
+        Returns the latest tag of a docker image.
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+        """
+        image_tags = self.get_image_tags(docker_image)
+        if not image_tags:
+            raise RuntimeError(
+                f"The docker image {docker_image} does not have any tags"
+            )
+
+        def is_valid_tag(tag) -> Version:
+            try:
+                return Version(tag)
+            except InvalidVersion:
+                logger.debug(
+                    f"The tag {tag} has invalid version for docker-image {docker_image}"
+                )
+                return Version("0.0.0")
+
+        return max([Version(tag) for tag in image_tags if is_valid_tag(tag)])
+
+    def get_repository_images(
+        self, repo: str = DEFAULT_REPOSITORY
+    ) -> List[Dict[str, Any]]:
+        """
+        Returns all the images metadata of a repo.
+
+        Args:
+            repo: The repository name, e.g.: demisto
+        """
+        try:
+            return self.do_docker_hub_get_request(f"/repositories/{repo}")
+        except HTTPError as error:
+            raise RuntimeError(f"Failed to get repository {repo}'s images") from error
+
+    def get_repository_images_names(self, repo: str = DEFAULT_REPOSITORY) -> List[str]:
+        """
+        Returns a list of the images within a repository
+
+        Args:
+            repo: The repository name, e.g.: demisto
+        """
+        return [
+            image_metadata.get("name", "")
+            for image_metadata in self.get_repository_images(repo)
+            if image_metadata.get("name")
+        ]

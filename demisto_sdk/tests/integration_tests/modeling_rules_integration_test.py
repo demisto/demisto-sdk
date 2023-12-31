@@ -97,6 +97,7 @@ class SetFakeXsiamClientEnvironmentVars:
         if self.og_collector_token:
             os.environ["COLLECTOR_TOKEN"] = self.og_collector_token
 
+
 class TestTheTestModelingRuleCommandSingleRule:
     def test_the_test_modeling_rule_command_pack_not_on_tenant(
         self, pack, monkeypatch, mocker
@@ -143,7 +144,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -216,7 +217,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -300,7 +301,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -387,7 +388,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -489,7 +490,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -603,7 +604,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # installed_packs mock request
                     m.get(
@@ -740,7 +741,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -890,7 +891,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -1035,9 +1036,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         with requests_mock.Mocker() as m:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                 m.get(
-                        f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
-                    )
+                    f"{fake_env_vars.demisto_base_url}/xsoar/about",
+                    json={"demistoVersion": "8.4.0"},
+                )
                 # Arrange
                 m.get(
                     f"{fake_env_vars.demisto_base_url}/xsoar/contentpacks/metadata/installed",
@@ -1119,7 +1120,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -1263,7 +1264,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -1409,7 +1410,7 @@ class TestTheTestModelingRuleCommandMultipleRules:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # Arrange
                     m.get(
@@ -1579,8 +1580,9 @@ class TestTheTestModelingRuleCommandInteractive:
                 mock_confirm.return_value = True
                 mock_prompt.return_value = 2
                 mocker.patch(
-                    'demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.'
-                    'XsiamApiClient.get_demisto_version', return_value='8.4.0'
+                    "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule."
+                    "XsiamApiClient.get_demisto_version",
+                    return_value="8.4.0",
                 )
                 # Act
                 result = runner.invoke(
@@ -1667,7 +1669,7 @@ class TestDeleteExistingDataset:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
                     m.get(
                         f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                        json={'demistoVersion': '8.4.0'}
+                        json={"demistoVersion": "8.4.0"},
                     )
                     # installed_packs mock request
                     m.get(

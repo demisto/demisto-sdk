@@ -245,7 +245,11 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 )
         except FileNotFoundError:
             raise NotAContentItemException(
-                f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
+                f"{PACK_METADATA_FILENAME} not found in pack in {path=}.\nPlease make sure the file exists and is a valid json file."
+            )
+        except OSError:
+            raise NotAContentItemException(
+                f"{PACK_METADATA_FILENAME} in {path=} couldn't be open."
             )
 
         PackMetadataParser.__init__(self, path, metadata)
@@ -262,6 +266,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         logger.debug(f"Parsing {self.node_id}")
         self.parse_pack_folders()
         self.parse_ignored_errors()
+        self.parse_pack_readme()
 
         logger.debug(f"Successfully parsed {self.node_id}")
 
@@ -333,6 +338,17 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
         self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {})  # type: ignore
+
+    def parse_pack_readme(self):
+        """Sets the pack's readme field."""
+        path = f"{self.path}/README.md"
+        try:
+            with open(path) as f:
+                self.pack_readme = f.read()
+        except Exception:
+            raise NotAContentItemException(
+                f"Couldn't find README.md file for pack at path {self.path}.\nPlease make sure the file exists."
+            )
 
     @cached_property
     def field_mapping(self):

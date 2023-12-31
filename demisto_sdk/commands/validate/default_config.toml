@@ -1,7 +1,7 @@
 [use_git]
 
 select = [
-    "BA101", "BA106", "BA116", "BA118",
+    "BA101", "BA105", "BA106", "BA116", "BA118",
     "PA107", "PA108", "PA111", "PA115", "PA130",
     "BC100",
     "GR106",
@@ -19,7 +19,7 @@ ignorable_errors = [
 [validate_all]
 
 select = [
-    "BA101", "BA106", "BA116", "BA118",
+    "BA101", "BA105", "BA106","BA116", "BA118",
     "GR106",
     "DO108",
     "IN108",

@@ -262,7 +262,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             else:
                 for path in paths:
                     if path == self.path / f"{self.path.name}{suffix}":
-                        path = path
                         break
                 else:
                     path = paths[0]

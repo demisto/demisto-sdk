@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 import shutil
@@ -61,7 +62,6 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
-from demisto_sdk.utils.file_utils import merge_files
 
 
 def get_previous_nonempty_line(lines: List[str], index: int):
@@ -363,7 +363,6 @@ class ContributionConverter:
                 yml_path, is_contribution=is_contribution, examples=None
             )
         if file_type == "script":
-            # generate_script_doc(input_path=yml_path, examples=[], use_graph=False)
             generate_script_doc(input_path=yml_path, examples=None)
         if file_type == "playbook":
             generate_playbook_doc(yml_path)
@@ -501,34 +500,15 @@ class ContributionConverter:
             # to check if the contributed content item is new or not
             # and merge its README with the existing one if it is.
             else:
-                # We get the path to contributed content item yml
-                # the same item in the content repo and whether the item exists in the
-                # content repo.
-                for (
-                    contributed_yml,
-                    content_yml,
-                    exists,
-                ) in self.get_contributed_content():
+                # We get the path to contributed content item ymls
+                integration_ymls = glob.glob(
+                    f"{self.working_dir_path}/**/*.yml", recursive=True
+                )
+                for yml in integration_ymls:
                     # We use the path to the yml to generate a README for the contributed content item
                     generated_readme = self.generate_readme_for_pack_content_item(
-                        yml_path=contributed_yml.__str__(), is_contribution=True
+                        yml_path=yml, is_contribution=True
                     )
-
-                    # If the contributed content item exists, we need to
-                    # merge the READMEs and add them to the state
-                    if exists:
-                        generated_readme_path = (
-                            contributed_yml.parent / PACKS_README_FILE_NAME
-                        )
-                        existing_readme_path = (
-                            content_yml.parent / PACKS_README_FILE_NAME
-                        )
-
-                        generated_readme = merge_files(
-                            existing_readme_path,
-                            generated_readme_path,
-                            generated_readme_path.__str__(),
-                        ).__str__()
 
                     generated_readmes.append(generated_readme)
 

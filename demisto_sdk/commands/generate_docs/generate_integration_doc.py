@@ -111,6 +111,7 @@ def generate_integration_doc(
 
     """
     try:
+        logger.info(f"Generating an integration README for '{input_path}'...")
         yml_data = get_yaml(input_path)
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input_path))
@@ -130,6 +131,8 @@ def generate_integration_doc(
                 errors.extend(build_errors)
             else:
                 errors.append(f"Command examples was not found: {examples}.")
+        else:
+            logger.info("Skipping command examples as it's a UI contribution...")
 
         if permissions == "per-command":
             command_permissions_dict: Any = {}

@@ -55,7 +55,7 @@ mapping:
     type: seq
     sequence:
     - include: output_schema
-  outputsSections:
+  outputSections:
     type: seq
     sequence:
     - include: outputsSection_schema
@@ -63,7 +63,7 @@ mapping:
     type: seq
     sequence:
     - include: input_schema
-  inputsSections:
+  inputSections:
     type: seq
     sequence:
     - include: inputsSection_schema
@@ -429,7 +429,7 @@ schema;output_schema:
     description_x2:
       type: str
 
-# playbook->outputsSections
+# playbook->outputSections
     description:xsoar:
       type: str
     description:marketplacev2:

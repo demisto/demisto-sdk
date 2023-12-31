@@ -79,10 +79,10 @@ UNWIND $data AS rel_data
 
 // Get all content items with the specified properties
 MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
-WITH source, rel_data
-MERGE (target:{ContentType.BASE_NODE}{
-    build_target_properties(identifier=target_identifier)
-})
+    WITH source, rel_data
+    MERGE (target:{ContentType.BASE_NODE}{
+        build_target_properties(identifier=target_identifier)
+    })
 ON CREATE
     // If created, mark "not in repository" (all repository nodes were created already)
     SET

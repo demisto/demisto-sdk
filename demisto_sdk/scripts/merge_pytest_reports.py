@@ -8,7 +8,6 @@ from junitparser import JUnitXml
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
 
 
 def fix_coverage_report_path(coverage_file: Path) -> bool:
@@ -68,10 +67,11 @@ def merge_coverage_report():
     coverage_path = CONTENT_PATH / ".coverage"
     coverage_path.unlink(missing_ok=True)
     cov = coverage.Coverage(data_file=coverage_path)
-    if not (files := coverage_files()):
+    coverage_paths = CONTENT_PATH / ".pre-commit" / "coverage"
+    if not (files := list(coverage_paths.iterdir())):
         logger.warning("No coverage files found, skipping coverage report.")
         return
-    fixed_files = [file for file in files if fix_coverage_report_path(Path(file))]
+    fixed_files = [str(file) for file in files if fix_coverage_report_path(Path(file))]
     cov.combine(fixed_files)
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
     for file in files:

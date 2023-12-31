@@ -1,37 +1,17 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.classifier import Classifier
-from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
-from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.layout import Layout
-from demisto_sdk.commands.content_graph.objects.mapper import Mapper
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.wizard import Wizard
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
     ValidationResult,
 )
 
-ContentTypes = Union[
-    Integration,
-    Dashboard,
-    IncidentType,
-    Layout,
-    Mapper,
-    Playbook,
-    Script,
-    Wizard,
-    Classifier,
-]
 
-
-class IDNameValidator(BaseValidator[ContentTypes], ABC):
+class IDNameValidator(BaseValidator, ABC):
     error_code = "BA101"
     description = "Validate that the file id and name fields are identical."
     error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
@@ -39,7 +19,7 @@ class IDNameValidator(BaseValidator[ContentTypes], ABC):
     related_field = "name"
     is_auto_fixable = True
 
-    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def is_valid(self, content_items: Iterable[ContentItem]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -52,7 +32,7 @@ class IDNameValidator(BaseValidator[ContentTypes], ABC):
             if content_item.object_id != content_item.name
         ]
 
-    def fix(self, content_item: ContentTypes) -> FixResult:
+    def fix(self, content_item: ContentItem) -> FixResult:
         content_item.name = content_item.object_id
         return FixResult(
             validator=self,

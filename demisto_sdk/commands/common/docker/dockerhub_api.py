@@ -44,7 +44,7 @@ class DockerHubClient:
         self.username = username
         self.password = password
         self._session = requests.Session()
-        self.docker_hub_auth_tokens: Dict[str, Any] = {}
+        self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
 
     def __enter__(self):
@@ -64,12 +64,12 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        if token_metadata := self.docker_hub_auth_tokens.get(f"{repo}:{scope}"):
+        if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()
             # minus 60 seconds to be on the safe side
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
                 _expiration_time: datetime = expiration_time + timedelta(
-                    seconds=token_metadata.get("expired_in_seconds") - 60
+                    seconds=token_metadata.get("expires_in_seconds") - 60
                 )
                 if _expiration_time.replace(tzinfo=None) < now:
                     return token_metadata.get("token")
@@ -94,10 +94,10 @@ class DockerHubClient:
             ) from e
 
         token = raw_json_response.get("token")
-        self.docker_hub_auth_tokens[f"{repo}:{scope}"] = {
+        self._docker_hub_auth_tokens[f"{repo}:{scope}"] = {
             "token": token,
             "issued_at": raw_json_response.get("issued_at"),
-            "expired_in_seconds": raw_json_response.get("expires_in"),
+            "expires_in_seconds": raw_json_response.get("expires_in"),
         }
 
         return token

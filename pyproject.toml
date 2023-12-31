@@ -112,6 +112,7 @@ klara = { version = "^0.6.3", optional = true }
 
 
 pre-commit = "^3.5.0"
+lxml = "^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"

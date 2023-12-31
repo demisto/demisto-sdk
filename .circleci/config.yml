@@ -114,7 +114,6 @@ references:
     requires_all: &requires_all
       requires:
             - precommit-checks
-            - validate-files
             - create-content-artifacts
             - test-lint
             - run-integration-tests
@@ -544,7 +543,7 @@ workflows:
       - test-update-graph:
           <<: *tag_filter
           <<: *reqs_content_checkout
-
+    
       - build:
           <<: *tag_filter
       - deploy:

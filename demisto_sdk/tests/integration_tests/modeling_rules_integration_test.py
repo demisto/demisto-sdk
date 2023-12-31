@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 
+import pytest
 import requests_mock
 import typer
 from typer.testing import CliRunner
@@ -97,6 +98,80 @@ class SetFakeXsiamClientEnvironmentVars:
         if self.og_collector_token:
             os.environ["COLLECTOR_TOKEN"] = self.og_collector_token
 
+class TestSkippingInvalidModelingRule:
+
+    @pytest.mark.parametrize('fromVersion, toVersion, demistoVersion', [('6.8.0', '8.3.0', '8.4.0'),
+                                                         ('6.8.0', '99.99.99', '6.5.0')])
+    def test_skipping_invalid_modeling_rule(self, pack, monkeypatch, mocker, fromVersion, toVersion, demistoVersion):
+        """
+        Given:
+            - A from and to version configuration of a modeling rule.
+            - The demisto version of the XSIAM tenant.
+
+        When:
+            - Running the modeling-rule test command.
+
+        Then:
+            - Verify no exception is raised.
+            - Verify we get a message saying the the modeling rule is not compatible with the demisto version of the tenant.
+
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            app as test_modeling_rule_cmd,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+        monkeypatch.setenv("COLUMNS", "1000")
+        runner = CliRunner()
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.sleep",
+            return_value=None,
+        )
+        # Create Test Data File
+        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, yml={
+                "id": "modeling-rule",
+                "name": "Modeling Rule",
+                "fromversion": fromVersion,
+                "toversion": toVersion,
+                "tags": "tag",
+                "rules": "",
+                "schema": "",
+            })
+        modeling_rule_directory = Path(
+            pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME
+        )
+        test_data_file = (
+            modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
+        )
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
+        try:
+            with requests_mock.Mocker() as m:
+                with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
+                    m.get(
+                        f"{fake_env_vars.demisto_base_url}/xsoar/about",
+                        json={"demistoVersion": demistoVersion},
+                    )
+                    # Act
+                    result = runner.invoke(
+                        test_modeling_rule_cmd,
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
+                    )
+                    # Assert
+                    assert result.exit_code == 0
+                    assert str_in_call_args_list(
+                        logger_warning.call_args_list, "XSIAM Tenant's Demisto version doesn't match Modeling Rule"
+                    )
+        except typer.Exit:
+            assert False, "No exception should be raised in this scenario."
 
 class TestTheTestModelingRuleCommandSingleRule:
     def test_the_test_modeling_rule_command_pack_not_on_tenant(

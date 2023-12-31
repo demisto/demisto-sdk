@@ -29,7 +29,7 @@ class Repo:
         packs: A list of created packs
     """
 
-    def __init__(self, tmpdir: Path, init_git: bool = True):
+    def __init__(self, tmpdir: Path, init_git: bool = False):
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
         self._packs_path = tmpdir / "Packs"

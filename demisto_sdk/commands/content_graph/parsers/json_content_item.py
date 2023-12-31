@@ -7,8 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.files.json_file import JsonFile
-from demisto_sdk.commands.common.tools import get_value
+from demisto_sdk.commands.common.tools import get_json, get_value
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -95,8 +94,4 @@ class JSONContentItemParser(ContentItemParser):
         return self.get_marketplaces(self.json_data)
 
     def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
-        if git_sha:
-            return JsonFile.read_from_git_path(self.path, tag=git_sha)
-        return JsonFile.read_from_local_path(
-            self.path,
-        )
+        return get_json(str(self.path), git_sha=git_sha)

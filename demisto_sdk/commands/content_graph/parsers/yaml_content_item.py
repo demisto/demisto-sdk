@@ -8,17 +8,13 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.files.yml_file import YmlFile
-from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import get_value
+from demisto_sdk.commands.common.tools import get_value, get_yaml
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
 )
-
-handler = YAML_Handler(typ="safe")
 
 
 class YAMLContentItemParser(ContentItemParser):
@@ -119,8 +115,4 @@ class YAMLContentItemParser(ContentItemParser):
     def get_yaml(
         self, git_sha: Optional[str] = None
     ) -> Dict[str, Union[str, List[str]]]:
-        if git_sha:
-            return YmlFile.read_from_git_path(self.path, tag=git_sha, handler=handler)
-        return YmlFile.read_from_local_path(
-            self.path,
-        )
+        return get_yaml(str(self.path), git_sha=git_sha)

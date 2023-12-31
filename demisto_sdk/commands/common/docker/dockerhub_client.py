@@ -339,14 +339,15 @@ class DockerHubClient:
                 f"The docker image {docker_image} does not have any tags"
             )
 
-        def is_valid_tag(tag) -> Version:
+        def is_valid_tag(tag) -> bool:
             try:
-                return Version(tag)
+                Version(tag)
+                return True
             except InvalidVersion:
                 logger.debug(
                     f"The tag {tag} has invalid version for docker-image {docker_image}"
                 )
-                return Version("0.0.0")
+                return False
 
         return max([Version(tag) for tag in image_tags if is_valid_tag(tag)])
 

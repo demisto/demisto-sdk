@@ -90,7 +90,7 @@ class Changelog:
 
         """
         if not is_release(self.pr_name):
-            raise ValueError("The PR name should match `v0.0.0` to start a release.")
+            raise ValueError("The PR name should match `demisto-sdk release 0.0.0` to start a release.")
 
         # get all log files as `LogFileObject`
         logs = read_log_files()

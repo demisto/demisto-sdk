@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict, List, Union
 
-from pydantic import BaseModel, validator, root_validator
+from pydantic import BaseModel, root_validator, validator
 
 INITIAL_DESCRIPTION = "enter description about this PR"
 INITIAL_TYPE = "<breaking|feature|fix|internal>"
@@ -44,24 +44,24 @@ class LogEntry(BaseModel):
     class Config:
         """Pydantic config class"""
 
-        use_enum_values = True
+        use_enum_values = False
 
-    @root_validator(pre=True)
-    def validate(cls, values):
-        if values["type"] == INITIAL_TYPE:
-            raise ValueError(
-                "One of the types is still not different from the initial value, please edit it"
-            )
-        elif values["type"] not in LogType.list():
-            raise ValueError(
-                f"The type {values['type']} is not supported, please use one of the following: {LogType.list()}"
-            )
-        if values["description"] == INITIAL_DESCRIPTION:
-            raise ValueError(
-                "One of the descriptions is still not different from the initial value, please edit it"
-            )
+    # @root_validator(pre=True)
+    # def validate(cls, values):
+    #     if values["type"] == INITIAL_TYPE:
+    #         raise ValueError(
+    #             "One of the types is still not different from the initial value, please edit it"
+    #         )
+    #     elif values["type"] not in LogType.list():
+    #         raise ValueError(
+    #             f"The type {values['type']} is not supported, please use one of the following: {LogType.list()}"
+    #         )
+    #     if values["description"] == INITIAL_DESCRIPTION:
+    #         raise ValueError(
+    #             "One of the descriptions is still not different from the initial value, please edit it"
+    #         )
         
-        return values
+    #     return values
 
 
 class LogFileObject(BaseModel):

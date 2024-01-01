@@ -14,6 +14,7 @@ from tabulate import tabulate
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     INTEGRATIONS_DIR,
+    LISTS_DIR,
     SCRIPTS_DIR,
     FileType,
     MarketplaceVersions,
@@ -358,6 +359,8 @@ class Uploader:
         if path.name in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
             # These folders have another level of content
             to_upload = filter(lambda p: p.is_dir(), path.iterdir())
+        elif path.name == LISTS_DIR:
+            to_upload = path.iterdir()
         else:
             to_upload = itertools.chain(path.glob("*.yml"), path.glob("*.json"))
 

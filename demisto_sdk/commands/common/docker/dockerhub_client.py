@@ -103,7 +103,6 @@ class DockerHubClient:
 
         return token
 
-    @lru_cache
     @retry(times=5, exceptions=(ConnectionError, Timeout))
     def get_request(
         self,
@@ -127,13 +126,12 @@ class DockerHubClient:
             ) from e
 
     @lru_cache
-    @retry(times=5, exceptions=(ConnectionError, Timeout))
     def do_docker_hub_get_request(
         self,
         url_suffix: Optional[str] = None,
         next_page_url: Optional[str] = None,
-        headers: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[frozenset] = None,
+        params: Optional[frozenset] = None,
         results_key: str = "results",
     ):
         """
@@ -155,11 +153,14 @@ class DockerHubClient:
         else:
             raise ValueError("either url_suffix/next_page_url must be provided")
 
+        _params = params or {"page_size": 1000} if not next_page_url else params
+
         raw_json_response = self.get_request(
             url,
-            headers=headers or {"Accept": "application/json"},
-            params=params or {"page_size": 1000} if not next_page_url else params,
-            verify=self.verify_ssl,
+            headers={key: value for key, value in headers}
+            if headers
+            else None or {"Accept": "application/json"},
+            params=_params,
         )
 
         amount_of_objects = raw_json_response.get("count")
@@ -183,14 +184,13 @@ class DockerHubClient:
         return results
 
     @lru_cache
-    @retry(times=5, exceptions=(ConnectionError, Timeout))
     def do_registry_get_request(
         self,
         url_suffix: str,
         docker_image: str,
         scope: DockerHubAuthScope = DockerHubAuthScope.PULL,
-        headers: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[frozenset] = None,
+        params: Optional[frozenset] = None,
     ) -> Dict[str, Any]:
         """
         Do a get request to a dockerhub registry
@@ -207,13 +207,15 @@ class DockerHubClient:
 
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
-            headers=headers
+            headers={key: value for key, value in headers}
+            if headers
+            else None
             or {
                 "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
                 "application/vnd.docker.distribution.manifest.list.v2+json",
                 "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
             },
-            params=params,
+            params={key: value for key, value in params} if params else None,
         )
 
     def get_image_manifests(self, docker_image: str, tag: str) -> Dict[str, Any]:

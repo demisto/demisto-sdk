@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.24.0"
+version = "1.25.1"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -88,7 +88,6 @@ types-six = "^1.16.12"
 types-PyMySQL = "^1.0.15"
 typing-extensions = "^4.1.1"
 gsutil = {version = "5.17", optional = true}
-klara = "^0.6.3"
 ordered-set = "^4.1.0"
 types-filelock = "^3.2.5"
 types-Markdown = "^3.3.21"
@@ -110,11 +109,15 @@ junitparser = "^3.1.0"
 google-cloud-secret-manager = "^2.16.2"
 json5 = "^0.9.14"
 types-protobuf = "^4.24.0.4"
+klara = { version = "^0.6.3", optional = true }
+
+
+
+pre-commit = "^3.5.0"
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"
 mock = "^4.0.3"
-pre-commit = "^2.18.1"
 pytest = "^7.1.1"
 pytest-cov = "^4.0.0"
 pytest-datadir-ng = "^1.1.1"
@@ -127,6 +130,7 @@ ruff = "^0.1.2"
 
 [tool.poetry.extras]
 build = ["gsutil"]
+generate-unit-tests = ["klara"]
 
 [tool.mypy]
 check_untyped_defs = true

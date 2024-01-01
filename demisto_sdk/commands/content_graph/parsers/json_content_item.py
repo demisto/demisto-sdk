@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    LISTS_DIR,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json, get_value
@@ -94,9 +95,25 @@ class JSONContentItemParser(ContentItemParser):
     def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
+
+            """
+            exclude the data file from the list of json files
+            in case the content-item is list and it is json type
+            """
+            if LISTS_DIR in self.path.parts:
+                json_files_in_dir = [
+                    Path(file)
+                    for file in json_files_in_dir
+                    if not Path(file).stem.endswith("_data")
+                ]
+
             if len(json_files_in_dir) != 1:
-                raise NotAContentItemException(
-                    f"Directory {self.path} must have a single JSON file."
+                raise InvalidContentItemException(
+                    f"Directory {self.path} should only contain a single JSON file."
+                    f"Found {len(json_files_in_dir)} files."
                 )
             self.path = Path(json_files_in_dir[0])
+        if not self.path.suffix.lower() == ".json":
+            raise NotAContentItemException
+
         return get_json(self.path.as_posix(), git_sha=git_sha)

@@ -2,9 +2,9 @@ type: map
 mapping:
   canvasContextConnections:
     type: seq
-    required: True
+    required: true
     sequence:
-      - include: canvas_context_conncetion
+    - include: canvas_context_conncetion
   fromVersion:
     type: str
   toVersion:
@@ -15,13 +15,13 @@ schema;canvas_context_conncetion:
   mapping:
     contextKey1:
       type: str
-      required: True
+      required: true
     contextKey2:
       type: str
-      required: True
+      required: true
     connectionDescription:
       type: str
-      required: True
+      required: true
     parentContextKey:
       type: str
-      required: True
+      required: true

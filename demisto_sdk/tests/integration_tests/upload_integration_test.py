@@ -24,14 +24,12 @@ from demisto_sdk.commands.upload.tests.uploader_test import (
     mock_upload_method,
 )
 from demisto_sdk.commands.upload.uploader import (
-    ERROR_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from TestSuite.test_tools import ChangeCWD, flatten_call_args, str_in_call_args_list
 
 UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-
 
 yaml = YAML_Handler()
 
@@ -360,31 +358,6 @@ def test_integration_upload_path_does_not_exist(demisto_client_mock):
         f"Invalid value for '-i' / '--input': Path '{invalid_dir_path}' does not exist"
         in result.stderr
     )
-
-
-def test_integration_upload_script_invalid_path(demisto_client_mock, tmp_path, mocker):
-    """
-    Given
-    - Directory with invalid path - "Script" instead of "Scripts".
-
-    When
-    - Uploading the script.
-
-    Then
-    - Ensure upload fails due to invalid path.
-    - Ensure failure upload message is printed.
-    """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    path = tmp_path / "Script" / "InvalidScript"
-    path.mkdir(parents=True)
-    runner = CliRunner(mix_stderr=False)
-
-    result = runner.invoke(main, [UPLOAD_CMD, "-i", str(path), "--insecure"])
-    logged_errors = flatten_call_args(logger_error.call_args_list)
-
-    assert result.exit_code == ERROR_RETURN_CODE
-    assert str(path) in logged_errors[0]
-    assert "Nothing to upload: the" in logged_errors[1]
 
 
 def test_integration_upload_pack_invalid_connection_params(mocker):

@@ -17,7 +17,7 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Optional, Tuple, Union
+from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
@@ -306,10 +306,11 @@ def split(ctx, config, **kwargs):
         FileType.GENERIC_MODULE,
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
+        FileType.LISTS,
         FileType.ASSETS_MODELING_RULE,
     ]:
         logger.info(
-            "[red]File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.[/red]"
+            "[red]File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.[/red]"
         )
         return 1
 
@@ -331,6 +332,7 @@ def split(ctx, config, **kwargs):
             output=kwargs.get("output"),  # type: ignore[arg-type]
             no_auto_create_dir=kwargs.get("no_auto_create_dir"),  # type: ignore[arg-type]
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
+            file_type=file_type,
         )
         return json_splitter.split_json()
 
@@ -3452,192 +3454,6 @@ def update_content_graph(
     )
 
 
-@main.command(short_help="Runs pre-commit hooks on the files in the repository")
-@click.help_option("-h", "--help")
-@click.option(
-    "-i",
-    "--input",
-    help="The path to the input file to run the command on.",
-    type=PathsParamType(
-        exists=True, resolve_path=True
-    ),  # PathsParamType allows passing a list of paths
-)
-@click.option(
-    "-s",
-    "--staged-only",
-    help="Whether to run only on staged files",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--commited-only",
-    help="Whether to run on commited files only",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "-g",
-    "--git-diff",
-    help="Whether to use git to determine which files to run on",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "-a",
-    "--all-files",
-    help="Whether to run on all files",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--mode",
-    help="Special mode to run the pre-commit with",
-)
-@click.option(
-    "-ut/--no-ut",
-    "--unit-test/--no-unit-test",
-    help="Whether to run unit tests for content items",
-    default=False,
-)
-@click.option(
-    "--skip",
-    help="A comma separated list of precommit hooks to skip",
-)
-@click.option(
-    "--validate/--no-validate",
-    help="Whether to run demisto-sdk validate",
-    default=True,
-)
-@click.option(
-    "--format/--no-format",
-    help="Whether to run demisto-sdk format",
-    default=False,
-)
-@click.option(
-    "--secrets/--no-secrets",
-    help="Whether to run demisto-sdk secrets",
-    default=True,
-)
-@click.option(
-    "-v",
-    "--verbose",
-    help="Verbose output of pre-commit",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--show-diff-on-failure",
-    help="Show diff on failure",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--sdk-ref",
-    help="The demisto-sdk ref to use for the pre-commit hooks",
-    default="",
-)
-@click.option(
-    "--dry-run",
-    help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
-    is_flag=True,
-    default=False,
-)
-@click.argument(
-    "file_paths",
-    nargs=-1,
-    type=click.Path(exists=True, resolve_path=True, path_type=Path),
-)
-@click.option(
-    "--docker/--no-docker",
-    help="Whether to run docker based hooks or not.",
-    default=True,
-    is_flag=True,
-)
-@click.pass_context
-@logging_setup_decorator
-def pre_commit(
-    ctx,
-    input: str,
-    staged_only: bool,
-    commited_only: bool,
-    git_diff: bool,
-    all_files: bool,
-    mode: Optional[str],
-    unit_test: bool,
-    skip: str,
-    validate: bool,
-    format: bool,
-    secrets: bool,
-    verbose: bool,
-    show_diff_on_failure: bool,
-    sdk_ref: str,
-    file_paths: Iterable[Path],
-    dry_run: bool,
-    docker: bool,
-    **kwargs,
-):
-    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
-
-    if file_paths and input:
-        logger.info(
-            "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
-        )
-    input_files = []
-    if input:
-        input_files = [Path(i) for i in input.split(",") if i]
-    elif file_paths:
-        input_files = list(file_paths)
-    if skip:
-        skip = skip.split(",")  # type: ignore[assignment]
-
-    sys.exit(
-        pre_commit_manager(
-            input_files,
-            staged_only,
-            commited_only,
-            git_diff,
-            all_files,
-            mode,
-            unit_test,
-            skip,
-            validate,
-            format,
-            secrets,
-            verbose,
-            show_diff_on_failure,
-            run_docker_hooks=docker,
-            sdk_ref=sdk_ref,
-            dry_run=dry_run,
-        )
-    )
-
-
-@main.command(short_help="Run unit tests in a docker for integrations and scripts")
-@click.help_option("-h", "--help")
-@click.option(
-    "-i",
-    "--input",
-    type=PathsParamType(
-        exists=True, resolve_path=True
-    ),  # PathsParamType allows passing a list of paths
-    help="The path of the content pack/file to validate specifically.",
-)
-@click.option(
-    "-v", "--verbose", is_flag=True, default=False, help="Verbose output of unit tests"
-)
-@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
-@click.pass_context
-@logging_setup_decorator
-def run_unit_tests(
-    ctx, input: str, file_paths: Tuple[str, ...], verbose: bool, **kwargs
-):
-    if input:
-        file_paths = tuple(input.split(","))
-    from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
-
-    sys.exit(unit_test_runner(file_paths, verbose))
-
-
 @main.command(short_help="Setup integration environments")
 @click.option(
     "-i",
@@ -3676,6 +3492,12 @@ def run_unit_tests(
     default=False,
     help="Whether to run test-module on the configured XSOAR/XSIAM instance",
 )
+@click.option(
+    "--clean",
+    is_flag=True,
+    default=False,
+    help="Clean the repo out of the temp files that were created by `lint`",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
     input,
@@ -3685,6 +3507,7 @@ def setup_env(
     secret_id,
     instance_name,
     run_test_module,
+    clean,
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup_env,
@@ -3700,6 +3523,7 @@ def setup_env(
         secret_id=secret_id,
         instance_name=instance_name,
         test_module=run_test_module,
+        clean=clean,
     )
 
 
@@ -3708,11 +3532,106 @@ def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
 
+# ====================== Pre-Commit ====================== #
+pre_commit_app = typer.Typer(name="Pre-Commit")
+
+
+@pre_commit_app.command()
+def pre_commit(
+    input_files: Optional[List[Path]] = typer.Option(
+        None,
+        "-i",
+        "--input",
+        "--files",
+        exists=True,
+        dir_okay=True,
+        resolve_path=True,
+        show_default=False,
+        help=("The paths to run pre-commit on. May pass multiple paths."),
+    ),
+    staged_only: bool = typer.Option(
+        False, "--staged-only", help="Whether to run only on staged files"
+    ),
+    commited_only: bool = typer.Option(
+        False, "--commited-only", help="Whether to run on commited files only"
+    ),
+    git_diff: bool = typer.Option(
+        False,
+        "--git-diff",
+        "-g",
+        help="Whether to use git to determine which files to run on",
+    ),
+    all_files: bool = typer.Option(
+        False, "--all-files", "-a", help="Whether to run on all files"
+    ),
+    mode: str = typer.Option(
+        "", "--mode", help="Special mode to run the pre-commit with"
+    ),
+    skip: Optional[List[str]] = typer.Option(
+        None, "--skip", help="A list of precommit hooks to skip"
+    ),
+    validate: bool = typer.Option(
+        True, "--validate/--no-validate", help="Whether to run demisto-sdk validate"
+    ),
+    format: bool = typer.Option(
+        False, "--format/--no-format", help="Whether to run demisto-sdk format"
+    ),
+    secrets: bool = typer.Option(
+        True, "--secrets/--no-secrets", help="Whether to run demisto-sdk secrets"
+    ),
+    verbose: bool = typer.Option(
+        False, "-v", "--verbose", help="Verbose output of pre-commit"
+    ),
+    show_diff_on_failure: bool = typer.Option(
+        False, "--show-diff-on-failure", help="Show diff on failure"
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+    ),
+    docker: bool = typer.Option(
+        True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
+    ),
+    run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
+):
+    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
+
+    return_code = pre_commit_manager(
+        input_files,
+        staged_only,
+        commited_only,
+        git_diff,
+        all_files,
+        mode,
+        skip,
+        validate,
+        format,
+        secrets,
+        verbose,
+        show_diff_on_failure,
+        run_docker_hooks=docker,
+        dry_run=dry_run,
+        run_hook=run_hook,
+    )
+    if return_code:
+        raise typer.Exit(1)
+
+
+main.add_command(typer.main.get_command(pre_commit_app), "pre-commit")
+
+
 # ====================== modeling-rules command group ====================== #
-app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
-app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
-app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)
-typer_click_object = typer.main.get_command(app)
+modeling_rules_app = typer.Typer(
+    name="modeling-rules", hidden=True, no_args_is_help=True
+)
+modeling_rules_app.command("test", no_args_is_help=True)(
+    test_modeling_rule.test_modeling_rule
+)
+modeling_rules_app.command("init-test-data", no_args_is_help=True)(
+    init_test_data.init_test_data
+)
+typer_click_object = typer.main.get_command(modeling_rules_app)
 main.add_command(typer_click_object, "modeling-rules")
 
 app_generate_modeling_rules = typer.Typer(

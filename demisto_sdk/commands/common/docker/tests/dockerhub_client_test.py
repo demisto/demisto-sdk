@@ -68,6 +68,7 @@ def test_get_token_with_existing_not_expired_token(
     assert not requests_mock.called
 
 
+@freeze_time("2024-01-01 12:00:00")
 def test_get_token_with_existing_expired_token(
     requests_mock, dockerhub_client: DockerHubClient
 ):

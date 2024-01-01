@@ -147,7 +147,7 @@ def validate_log_yml(pr_number: str) -> None:
         LogFileObject(**data)
     except ValidationError as e:
         logger.error(extract_errors(str(e), CHANGELOG_FOLDER / f'{pr_number}.yml'))
-        # raise ValueError("One or more files were found invalid, see logs.")
+        sys.exit(1)
 
 
 def read_log_files() -> List[LogFileObject]:

@@ -376,7 +376,7 @@ def get_server_content_items() -> Dict[ContentType, list]:
             git_content_config=GitContentConfig(
                 repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
             ),
-            tag="add_server_nodes",
+            tag="c4983f1d857d07bffe0fce1e071f344ea863c05b",
         )
     return {ContentType(k): v for k, v in json_data.items()}
 

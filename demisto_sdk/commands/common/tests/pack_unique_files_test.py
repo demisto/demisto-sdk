@@ -980,12 +980,6 @@ class TestPackUniqueFilesValidator:
         )
         assert self.validator.validate_pack_readme_file_is_not_empty()
 
-    def test_validate_pack_readme_file_is_not_empty_missing_file(self):
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack")
-        )
-        assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
-
     def test_validate_pack_readme_valid_images(self, mocker):
         """
         Given

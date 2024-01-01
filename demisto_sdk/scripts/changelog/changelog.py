@@ -114,13 +114,13 @@ class Changelog:
     """ HELPER FUNCTIONS """
 
 
-def extract_errors(error: Exception, file_name: Path) -> str:
+def extract_errors(error: str, file_name: Path) -> str:
     """
     Extracts the error messages from the json_errors string.
     """
-    error_msg = str(error).split("\n", 1)
-    header_error_msg = f"[red]{error_msg[0][:-len('LogFileObject')] + f'{file_name} file'}[/red]"
-    return header_error_msg + "\n" + error_msg[1]
+    error_msg = error.split("\n", 1)
+    header_error_msg = f"{error_msg[0][:-len('LogFileObject')] + f'{file_name} file'}"
+    return f"[red]{header_error_msg}\n{error_msg[1]}[/red]"
 
 
 def is_changelog_modified() -> bool:
@@ -141,13 +141,13 @@ def validate_log_yml(pr_number: str) -> None:
       according to the conventions of the 'LogFileObject' model
     """
     if not isinstance(data := get_yaml(CHANGELOG_FOLDER / f"{pr_number}.yml"), dict):
-        raise ValueError(f"The {pr_number}.yml log file is not valid")  # ????
+        raise ValueError(f"The {pr_number}.yml log file is not valid")
 
     try:
         LogFileObject(**data)
     except ValidationError as e:
-        logger.error(extract_errors(e, CHANGELOG_FOLDER / f'{pr_number}.yml'))
-        sys.exit(1)
+        logger.error(extract_errors(str(e), CHANGELOG_FOLDER / f'{pr_number}.yml'))
+        # raise ValueError("One or more files were found invalid, see logs.")
 
 
 def read_log_files() -> List[LogFileObject]:
@@ -156,7 +156,7 @@ def read_log_files() -> List[LogFileObject]:
     in case that one of the logs is not valid, an error is raised
     """
     changelogs: List[LogFileObject] = []
-    errors: Dict[str, str] = {}
+    errors: Dict[Path, str] = {}
     for path in CHANGELOG_FOLDER.iterdir():
         if path.suffix.endswith(".md"):  # exclude README file
             continue
@@ -167,11 +167,11 @@ def read_log_files() -> List[LogFileObject]:
         try:
             changelogs.append(LogFileObject(**log_file))
         except ValidationError as e:
-            errors[f"{path}"] = e.json()
+            errors[path] = str(e)
 
     if errors:
         for file_path, error in errors.items():
-            logger.error(f"{file_path}:\n{error}\n")
+            logger.error(extract_errors(error, file_path))
         raise ValueError("One or more files were found invalid, see logs.")
     return changelogs
 

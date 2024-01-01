@@ -55,9 +55,7 @@ from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-from demisto_sdk.commands.setup_env.setup_environment import (
-    IDEType
-)
+from demisto_sdk.commands.setup_env.setup_environment import IDEType
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import (
     init_test_data,
@@ -3462,7 +3460,9 @@ def update_content_graph(
     "--ide",
     help="IDEType type to configure the environment for. If not specified, the IDEType will be auto-detected. Case-insensitive.",
     default="auto-detect",
-    type=click.Choice(["auto-detect"] + [IDEType.value for IDEType in IDEType], case_sensitive=False),
+    type=click.Choice(
+        ["auto-detect"] + [IDEType.value for IDEType in IDEType], case_sensitive=False
+    ),
 )
 @click.option(
     "-i",
@@ -3472,7 +3472,6 @@ def update_content_graph(
     ),  # PathsParamType allows passing a list of paths
     help="A list of content packs/files to validate.",
 )
-
 @click.option(
     "--create-virtualenv",
     is_flag=True,
@@ -3527,13 +3526,19 @@ def setup_env(
     if ide == "auto-detect":
         # Order decides which IDEType will be selected for configuration if multiple IDEs are detected
         if (CONTENT_PATH / ".vscode").exists():
-            logger.info("Visual Studio Code IDEType has been detected and will be configured.")
+            logger.info(
+                "Visual Studio Code IDEType has been detected and will be configured."
+            )
             ide_type = IDEType.VSCODE
         elif (CONTENT_PATH / ".idea").exists():
-            logger.info("PyCharm / IDEA IDEType has been detected and will be configured.")
+            logger.info(
+                "PyCharm / IDEA IDEType has been detected and will be configured."
+            )
             ide_type = IDEType.PYCHARM
         else:
-            raise RuntimeError("Could not detect IDEType. Please select a specific IDEType using the --ide flag.")
+            raise RuntimeError(
+                "Could not detect IDEType. Please select a specific IDEType using the --ide flag."
+            )
 
     else:
         ide_type = IDEType(ide)

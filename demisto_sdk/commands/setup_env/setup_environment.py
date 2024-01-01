@@ -6,12 +6,12 @@ import subprocess
 import tempfile
 import venv
 from enum import Enum
-from lxml import etree
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import dotenv
 from demisto_client.demisto_api.rest import ApiException
+from lxml import etree
 
 from demisto_sdk.commands.common import docker_helper
 from demisto_sdk.commands.common.clients import (
@@ -121,9 +121,11 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
         python_discovery_paths (List[Path]): The python paths to add to the module discovery
     """
     if not file_path.exists():
-        logger.warning(f"Could not find file '{file_path}'.\n"
-                       "This can happen if the project has not been opened in the IDE yet.\n"
-                       "Module discovery will not be configured.")
+        logger.warning(
+            f"Could not find file '{file_path}'.\n"
+            "This can happen if the project has not been opened in the IDE yet.\n"
+            "Module discovery will not be configured."
+        )
         return
 
     url_prefix = "file://$MODULE_DIR$"
@@ -133,43 +135,58 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
 
     # Generate the root component if it doesn't exist
     if config_data.find(module_root_component) is None:
-        module_root_component = etree.SubElement(config_data.getroot(), module_root_component)
-        module_root_component.tail = "\n" + "  " * 2
+        module_root_component_data = etree.SubElement(
+            config_data.getroot(), module_root_component
+        )
+        module_root_component_data.tail = "\n" + "  " * 2
 
     # Generate the content component if it doesn't exist
     if config_data.find(module_root_content) is None:
-        content = etree.SubElement(config_data.find(module_root_component), "content", url=url_prefix)
-        content.tail = "\n" + "  " * 4
+        module_root_content_data = etree.SubElement(
+            config_data.find(module_root_component), "content", url=url_prefix
+        )
+        module_root_content_data.tail = "\n" + "  " * 4
 
     source_folders = config_data.findall(module_root_content + "/sourceFolder")
     existing_paths = set()
 
     for source_folder in source_folders:
         if url := source_folder.get("url"):
-            existing_paths.add(Path(url.replace(url_prefix + '/', "")))
+            existing_paths.add(Path(url.replace(url_prefix + "/", "")))
 
     module_root_content_data = config_data.find(module_root_content)
     file_updated = False
 
     for python_path in python_discovery_paths:
-        if (
-                (not python_path.is_relative_to(CONTENT_PATH)) or
-                (python_path.relative_to(CONTENT_PATH) in existing_paths)
-        ):
+        try:
+            python_path_relative = python_path.relative_to(CONTENT_PATH)
+
+        except ValueError:  # Skip paths that are not within the project root
+            continue
+
+        if python_path_relative in existing_paths:
             continue
 
         file_updated = True
-        module_root_content_data[-1].tail = "\n" + " " * 6  # Add indentation following last 'sourceFolder' item.
+        module_root_content_data[-1].tail = (
+            "\n" + " " * 6
+        )  # Add indentation following last 'sourceFolder' item.
 
-        python_path_relative = python_path.relative_to(CONTENT_PATH)
         etree.SubElement(
-            module_root_content_data, "sourceFolder", url=f"{url_prefix}/{python_path_relative}", isTestSource="false",
+            module_root_content_data,
+            "sourceFolder",
+            url=f"{url_prefix}/{python_path_relative}",
+            isTestSource="false",
         )
 
-    module_root_content_data[-1].tail = "\n" + ' ' * 4  # Set indentation for closing tag ('</content>')
+    module_root_content_data[-1].tail = (
+        "\n" + " " * 4
+    )  # Set indentation for closing tag ('</content>')
 
     if file_updated:  # Write changes to file only if there were relevant changes
-        config_data.write(str(file_path), pretty_print=True, xml_declaration=True, encoding="utf-8")
+        config_data.write(
+            str(file_path), pretty_print=True, xml_declaration=True, encoding="utf-8"
+        )
 
 
 def configure_module_discovery(ide_type: IDEType):
@@ -184,8 +201,14 @@ def configure_module_discovery(ide_type: IDEType):
             file_path=DOTENV_PATH,
             values={
                 "PYTHONPATH": ":".join([str(path) for path in PYTHONPATH]),
-                "MYPYPATH": ":".join([str(path) for path in PYTHONPATH if "site-packages" not in str(path)])
-            }
+                "MYPYPATH": ":".join(
+                    [
+                        str(path)
+                        for path in PYTHONPATH
+                        if "site-packages" not in str(path)
+                    ]
+                ),
+            },
         )
 
     elif ide_type == IDEType.PYCHARM:
@@ -477,8 +500,11 @@ def configure_params(
                     logger.warning(
                         f"Failed to create integration instance {instance_name}. Error {e}"
                     )
-            update_dotenv(file_path=DOTENV_PATH,
-                          values={"DEMISTO_PARAMS": json.dumps(params)}, quote_mode="never")
+            update_dotenv(
+                file_path=DOTENV_PATH,
+                values={"DEMISTO_PARAMS": json.dumps(params)},
+                quote_mode="never",
+            )
         except SecretManagerException:
             logger.warning(
                 f"Failed to fetch integration params for '{secret_id}' from Google Secret Manager."
@@ -593,7 +619,7 @@ def configure_integration(
             ide_folder=base_path / ".vscode",
             integration_script=integration_script,
             test_docker_image=test_docker_image,
-            interpreter_path=interpreter_path
+            interpreter_path=interpreter_path,
         )
 
 

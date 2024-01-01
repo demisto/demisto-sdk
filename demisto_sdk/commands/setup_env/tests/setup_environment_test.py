@@ -7,8 +7,8 @@ import demisto_sdk.commands.content_graph.objects.content_item as content_item
 import demisto_sdk.commands.setup_env.setup_environment as setup_environment
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.setup_env.setup_environment import (
-    docker_helper,
     IDEType,
+    docker_helper,
     json,
     json5,
     setup_env,
@@ -64,7 +64,11 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
         mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     else:
         interpreter_path = repo_path / ".venv" / "bin" / "python"
-    setup_env(file_paths=(integration.yml.path,), ide_type=IDEType.VSCODE, create_virtualenv=create_virtualenv)
+    setup_env(
+        file_paths=(integration.yml.path,),
+        ide_type=IDEType.VSCODE,
+        create_virtualenv=create_virtualenv,
+    )
     dotenv_text = (repo_path / ".env").read_text()
     assert "PYTHONPATH" in dotenv_text
     assert "MYPYPATH" in dotenv_text

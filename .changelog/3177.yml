@@ -1,4 +1,4 @@
 changes:
-- description: Added the **changelog** new command for management the changelog.md file.
+- description: enter description about this PR
   type: <breaking|feature|fix|internal>
 pr_number: 3177

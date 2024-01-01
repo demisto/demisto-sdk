@@ -1,5 +1,6 @@
 import itertools
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List
 
@@ -27,6 +28,7 @@ RELEASE_VERSION_REGEX = re.compile(r"demisto-sdk release \d{1,2}\.\d{1,2}\.\d{1,
 
 yaml = DEFAULT_YAML_HANDLER
 json = DEFAULT_JSON_HANDLER
+sys.tracebacklimit = 0
 
 
 class Changelog:
@@ -112,16 +114,13 @@ class Changelog:
     """ HELPER FUNCTIONS """
 
 
-def extract_errors(json_errors: str, file_name: Path) -> str:
+def extract_errors(error: Exception, file_name: Path) -> str:
     """
     Extracts the error messages from the json_errors string.
     """
-    readable_errors = ""
-    json_errors_as_dict = json.loads(json_errors)
-    for err in json_errors_as_dict:
-        loc = err["loc"]
-        readable_errors += f"position `{loc[1]}` field `{loc[2]}` Error: `{err['msg']}`\n"
-    return f"{file_name}:\n{readable_errors}"
+    error_msg = str(error).split("\n", 1)
+    header_error_msg = f"[red]{error_msg[0][:-len('LogFileObject')] + f'{file_name} file'}[/red]"
+    return header_error_msg + "\n" + error_msg[1]
 
 
 def is_changelog_modified() -> bool:
@@ -147,7 +146,8 @@ def validate_log_yml(pr_number: str) -> None:
     try:
         LogFileObject(**data)
     except ValidationError as e:
-        logger.error(f"[red]{extract_errors(e.json(), CHANGELOG_FOLDER / f'{pr_number}.yml')}[/red]")
+        logger.error(extract_errors(e, CHANGELOG_FOLDER / f'{pr_number}.yml'))
+        sys.exit(1)
 
 
 def read_log_files() -> List[LogFileObject]:
@@ -254,7 +254,7 @@ def commit_and_push(branch_name: str):
     remote.push(branch_name)
 
 
-main = typer.Typer()
+main = typer.Typer(pretty_exceptions_enable=False)
 
 release = typer.Option(False, "--release", help="releasing", is_flag=True)
 init = typer.Option(

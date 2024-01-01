@@ -374,7 +374,7 @@ def get_server_content_items(tag: Optional[str] = None) -> Dict[ContentType, lis
         json_data: dict = get_json(str(SERVER_CONTENT_ITEMS_PATH))
     else:
         json_data = get_remote_file(
-            SERVER_CONTENT_ITEMS_PATH,
+            str(SERVER_CONTENT_ITEMS_PATH),
             git_content_config=GitContentConfig(
                 repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
             ),

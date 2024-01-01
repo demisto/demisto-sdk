@@ -110,6 +110,14 @@ class DockerHubClient:
         headers: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
     ):
+        """
+        Do a get request to a dockerhub endpoint service
+
+        Args:
+            url: full URL
+            headers: headers if needed
+            params: params if needed
+        """
         response = self._session.get(
             url,
             headers=headers,

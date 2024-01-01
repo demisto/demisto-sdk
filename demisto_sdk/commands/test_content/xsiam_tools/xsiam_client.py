@@ -1,6 +1,7 @@
 import gzip
 import os
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, List, Optional
@@ -10,9 +11,9 @@ import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import retry
 
 json = JSON_Handler()
 
@@ -127,12 +128,16 @@ class XsiamApiClient(XsiamApiInterface):
     def _session(self, value: requests.Session):
         self.__session = value
 
+    @lru_cache
+    @retry(times=5, exceptions=(RuntimeError))
     def get_demisto_version(self) -> str:
         endpoint = urljoin(self.base_url, "xsoar/about")
         response = self._session.get(endpoint)
         response.raise_for_status()
         data = response.json()
-        demisto_version = data.get("demistoVersion", DEFAULT_CONTENT_ITEM_TO_VERSION)
+        demisto_version = data.get("demistoVersion")
+        if not demisto_version:
+            raise RuntimeError('Could not get the tenant\'s demisto version')
         logger.info(
             f"[green]Demisto version of XSIAM tenant is {demisto_version}[/green]",
             extra={"markup": True},

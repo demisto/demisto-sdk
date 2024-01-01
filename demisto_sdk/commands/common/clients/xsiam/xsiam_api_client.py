@@ -61,6 +61,15 @@ class XsiamClient(XsoarSaasClient):
             f"Could not connect to XSIAM server {config.base_api_url}, check your configurations are valid"
         )
 
+    def get_incident_work_plan_url(self, incident_id: str) -> str:
+        """
+        Returns the URL link to the work-plan of XSIAM alert.
+
+        Args:
+            incident_id: incident ID
+        """
+        return f"{self.base_url}/alerts?action:openAlertDetails={incident_id}-workPlan"
+
     """
     #############################
     xsoar related methods

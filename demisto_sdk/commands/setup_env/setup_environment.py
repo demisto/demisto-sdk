@@ -508,9 +508,13 @@ def clean_repo():
     This functions clean the repo from the temp `CommonServerPython` and `APIModules` files and other files that were created by lint
     """
     for path in PYTHONPATH:
-        for temp_file in CONTENT_PATH.rglob(path.name):
-            if temp_file != path:
+        for temp_file in CONTENT_PATH.rglob(f"{path.name}.py"):
+            if temp_file.parent != path:
                 temp_file.unlink(missing_ok=True)
+    for path in CONTENT_PATH.rglob("*.pyc"):
+        path.unlink(missing_ok=True)
+    for path in CONTENT_PATH.rglob("test_data/__init__.py"):
+        path.unlink(missing_ok=True)
 
 
 def setup_env(

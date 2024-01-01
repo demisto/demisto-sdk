@@ -1962,3 +1962,8 @@ class IncidentState(str, Enum):
     IN_PROGRESS = 1  # the incident is in progress
     CLOSED = 2  # the incident is closed
     ACKNOWLEDGED = 3  # the incident is archived
+
+
+# Used to format the writing of the yml/json file
+DEFAULT_JSON_INDENT = 4
+DEFAULT_YAML_INDENT = 0

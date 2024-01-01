@@ -108,6 +108,7 @@ def update_content_graph(
         success_local = content_graph_interface.import_graph()
 
         if not success_local:
+            builder.init_database()
             # Import from remote if local failed
             # If the download fails and we are in external repo, we should raise an error
             success_remote = content_graph_interface.import_graph(

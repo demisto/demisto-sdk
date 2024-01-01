@@ -7,7 +7,10 @@ import typer
 from git import Repo
 from pydantic import ValidationError
 
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER
+from demisto_sdk.commands.common.handlers import (
+    DEFAULT_JSON_HANDLER,
+    DEFAULT_YAML_HANDLER,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
@@ -23,6 +26,7 @@ CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
 RELEASE_VERSION_REGEX = re.compile(r"demisto-sdk release \d{1,2}\.\d{1,2}\.\d{1,2}")
 
 yaml = DEFAULT_YAML_HANDLER
+json = DEFAULT_JSON_HANDLER
 
 
 class Changelog:
@@ -108,6 +112,18 @@ class Changelog:
     """ HELPER FUNCTIONS """
 
 
+def extract_errors(json_errors: str, file_name: Path) -> str:
+    """
+    Extracts the error messages from the json_errors string.
+    """
+    readable_errors = ""
+    json_errors_as_dict = json.loads(json_errors)
+    for err in json_errors_as_dict:
+        loc = err["loc"]
+        readable_errors += f"position `{loc[1]}` field `{loc[2]}` Error: `{err['msg']}`\n"
+    return f"{file_name}:\n{readable_errors}"
+
+
 def is_changelog_modified() -> bool:
     return (
         "CHANGELOG.md"
@@ -131,7 +147,7 @@ def validate_log_yml(pr_number: str) -> None:
     try:
         LogFileObject(**data)
     except ValidationError as e:
-        raise ValueError(e.json())
+        logger.error(f"[red]{extract_errors(e.json(), CHANGELOG_FOLDER / f'{pr_number}.yml')}[/red]")
 
 
 def read_log_files() -> List[LogFileObject]:

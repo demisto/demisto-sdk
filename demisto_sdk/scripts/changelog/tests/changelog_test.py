@@ -20,18 +20,18 @@ DUMMY_PR_NUMBER = "12345"
 DUMMY_PR_NAME = "demisto-sdk release 2.2.2"
 
 LOG_FILE_1 = {
-    "logs": [{"description": "fixed an issue where test", "type": "fix"}],
+    "changes": [{"description": "fixed an issue where test", "type": "fix"}],
     "pr_number": DUMMY_PR_NUMBER,
 }
 LOG_FILE_2 = {
-    "logs": [
+    "changes": [
         {"description": "added a feature that test", "type": "feature"},
         {"description": "breaking changes: test", "type": "breaking"},
     ],
     "pr_number": "43524",
 }
 LOG_FILE_3 = {
-    "logs": [
+    "changes": [
         {"description": "added a feature that test", "type": "fix"},
         {"description": "breaking changes: test", "type": "internal"},
     ],
@@ -106,7 +106,7 @@ def test_get_all_logs(changelog_folder_mock: Path):
         yaml.dump(LOG_FILE_2, f)
     log_files = read_log_files()
     assert len(log_files) == 2
-    assert len(log_files[0].logs) == 2
+    assert len(log_files[0].changes) == 2
 
 
 @pytest.mark.parametrize("pr_name", [DUMMY_PR_NAME, ""])

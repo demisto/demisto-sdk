@@ -137,7 +137,7 @@ class XsiamApiClient(XsiamApiInterface):
         data = response.json()
         demisto_version = data.get("demistoVersion")
         if not demisto_version:
-            raise RuntimeError('Could not get the tenant\'s demisto version')
+            raise RuntimeError("Could not get the tenant's demisto version")
         logger.info(
             f"[green]Demisto version of XSIAM tenant is {demisto_version}[/green]",
             extra={"markup": True},

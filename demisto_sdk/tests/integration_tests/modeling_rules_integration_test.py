@@ -98,13 +98,17 @@ class SetFakeXsiamClientEnvironmentVars:
         if self.og_collector_token:
             os.environ["COLLECTOR_TOKEN"] = self.og_collector_token
 
+
 @pytest.fixture
 def requests_mocker(requests_mock):
     # A requests mocker that mocks the API call to /xsoar/about
     with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
-        requests_mock.get(f"{fake_env_vars.demisto_base_url}/xsoar/about",
-                                          json={"demistoVersion": "8.4.0"})
+        requests_mock.get(
+            f"{fake_env_vars.demisto_base_url}/xsoar/about",
+            json={"demistoVersion": "8.4.0"},
+        )
         yield requests_mock
+
 
 class TestSkippingInvalidModelingRule:
     @pytest.mark.parametrize(

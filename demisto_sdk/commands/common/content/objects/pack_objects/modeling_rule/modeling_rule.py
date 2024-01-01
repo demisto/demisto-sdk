@@ -212,7 +212,7 @@ class ModelingRule(YAMLContentUnifiedObject):
         self.rules_dict: dict = {}
 
     def __repr__(self) -> str:
-        path_name = Path(f'{self.path}').name
+        path_name = Path(f"{self.path}").name
         return f"{path_name} ({self.from_version}->{self.to_version})"
 
     def normalize_file_name(self) -> str:

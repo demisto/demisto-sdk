@@ -1,0 +1,16 @@
+{
+	"SplunkPy": {
+		"detected_content_items": [
+			{
+				"id": "SplunkPy_copy",
+				"name": "SplunkPy_copy",
+				"source_id": "SplunkPy",
+				"source_name": "SplunkPy",
+				"source_file_name": "Packs/SplunkPy/Integrations/SplunkPy/SplunkPy.yml"
+			}
+		],
+		"pack_name": "Splunk",
+		"pack_author": "Cortex XSOAR",
+		"pack_description": "Run queries on Splunk servers."
+	}
+}

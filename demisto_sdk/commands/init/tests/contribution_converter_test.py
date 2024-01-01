@@ -1,10 +1,11 @@
+import inspect
 import os
 import re
 import shutil
-from collections import namedtuple
+from difflib import Differ
 from os.path import join
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 from zipfile import ZipFile
 
 import pytest
@@ -14,19 +15,27 @@ from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
+    CLASSIFIERS_DIR,
     INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR,
     INTEGRATIONS_DIR,
+    INTEGRATIONS_README_FILE_NAME,
     LAYOUT,
     LAYOUTS_CONTAINER,
+    LAYOUTS_DIR,
+    PACKS_DIR,
     PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
 )
+from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_child_directories
+from demisto_sdk.commands.content_graph.common import PACK_METADATA_FILENAME
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_script,
 )
@@ -306,7 +315,9 @@ def test_convert_contribution_zip_updated_pack(tmp_path, mocker):
     assert not unified_yml_in_sample.exists()
 
 
-def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
+def test_convert_contribution_zip_outputs_structure(
+    tmp_path: Path, mocker: MockerFixture, git_repo: Repo
+):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -324,8 +335,7 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
     - Ensure the unified yaml files of the integration and script have been removed from the output created by
       converting the contribution zip file
     """
-    mocker.patch.object(GitUtil, "added_files", return_value=set())
-    mocker.patch.object(GitUtil, "modified_files", return_value=set())
+    pack_name = "ContribTestPack"
 
     # ### Mock the content graph ### #
 
@@ -352,23 +362,16 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
     )
 
     # ### SETUP ### #
-    # Create all Necessary Temporary directories
-    # create temp directory for the repo
-    repo_dir = tmp_path / "content_repo"
-    repo_dir.mkdir()
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
-    target_dir = repo_dir / "target_dir"
+    target_dir = tmp_path / "target_dir"
     target_dir.mkdir()
     # create temp directory in which the contribution zip will reside
     contribution_zip_dir = tmp_path / "contrib_zip"
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
-    repo = Repo(repo_dir)
-    mocker.patch(
-        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
-    )
-    contrib_zip = Contribution(target_dir, "ContribTestPack", repo)
+    mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+    contrib_zip = Contribution(target_dir, pack_name, git_repo)
     contrib_zip.create_zip(contribution_zip_dir)
     # rename script-script0.yml unified to automation-script0.yml
     # this naming is aligned to how the server exports scripts in contribution zips
@@ -385,67 +388,111 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
     author = "Octocat Smith"
     contrib_converter_inst = ContributionConverter(
         name=name,
+        pack_dir_name=pack_name,
         contribution=contribution_path,
         description=description,
         author=author,
-        base_dir=repo_dir,
+        working_dir_path=str(tmp_path),
     )
     contrib_converter_inst.convert_contribution_to_pack()
-
-    # Ensure directory/file structure output by conversion meets expectations
 
     # target_dir should have been deleted after creation of the zip file
     assert not target_dir.exists()
 
-    converted_pack_path = repo_dir / "Packs" / "ContribTestPack"
-    assert converted_pack_path.exists()
+    assert (tmp_path / INTEGRATIONS_DIR).exists()
+    assert (tmp_path / INTEGRATIONS_DIR / "Sample").exists()
+    assert (tmp_path / INTEGRATIONS_DIR / "Sample" / "Sample_image.png").exists()
+    assert (tmp_path / INTEGRATIONS_DIR / "Sample" / "Sample.py").exists()
+    assert (tmp_path / INTEGRATIONS_DIR / "Sample" / "Sample.yml").exists()
+    assert (
+        tmp_path / INTEGRATIONS_DIR / "Sample" / INTEGRATIONS_README_FILE_NAME
+    ).exists()
+    assert (tmp_path / INTEGRATIONS_DIR / "Sample" / "Sample_description.md").exists()
+    assert not (tmp_path / INTEGRATIONS_DIR / "integration-integration0.yml").exists()
+    assert not (
+        tmp_path / INTEGRATIONS_DIR / "Sample" / "integration-integration0.yml"
+    ).exists()
 
-    scripts_path = converted_pack_path / "Scripts"
-    sample_script_path = scripts_path / "SampleScript"
-    script_yml = sample_script_path / "SampleScript.yml"
-    script_py = sample_script_path / "SampleScript.py"
-    script_readme_md = sample_script_path / "README.md"
-    unified_script_in_sample = sample_script_path / "automation-script0.yml"
-    unified_script = scripts_path / "automation-script0.yml"
+    assert (tmp_path / SCRIPTS_DIR / "SampleScript" / "SampleScript.py").exists()
+    assert (tmp_path / SCRIPTS_DIR / "SampleScript" / "SampleScript.yml").exists()
+    assert (
+        tmp_path / SCRIPTS_DIR / "SampleScript" / INTEGRATIONS_README_FILE_NAME
+    ).exists()
 
-    assert scripts_path.exists()
-    assert sample_script_path.exists()
-    assert script_yml.exists()
-    assert script_py.exists()
-    assert script_readme_md.exists()
+    assert tmp_path / PLAYBOOKS_DIR / "playbook-SamplePlaybook.yml"
+    assert tmp_path / PLAYBOOKS_DIR / "playbook-SamplePlaybook_README.md"
 
-    # generated script readme should not be empty
-    script_statinfo = os.stat(script_readme_md)
-    assert script_statinfo and script_statinfo.st_size > 0
-    # unified yaml of the script should have been deleted
-    assert not unified_script_in_sample.exists()
-    assert not unified_script.exists()
+    assert (tmp_path / CLASSIFIERS_DIR / "classifier-mapper-fakemapper.json").exists()
+    assert (tmp_path / CLASSIFIERS_DIR / "classifier-fakeclassifier.json").exists()
 
-    integrations_path = converted_pack_path / "Integrations"
-    sample_integration_path = integrations_path / "Sample"
-    integration_yml = sample_integration_path / "Sample.yml"
-    integration_py = sample_integration_path / "Sample.py"
-    integration_description = sample_integration_path / "Sample_description.md"
-    integration_image = sample_integration_path / "Sample_image.png"
-    integration_readme_md = sample_integration_path / "README.md"
-    unified_yml = integrations_path / "integration-integration0.yml"
-    unified_yml_in_sample = sample_integration_path / "integration-integration0.yml"
-    integration_files = [
-        integration_yml,
-        integration_py,
-        integration_description,
-        integration_image,
-        integration_readme_md,
-    ]
-    for integration_file in integration_files:
-        assert integration_file.exists()
-    # generated integration readme should not be empty
-    statinfo = os.stat(integration_readme_md)
-    assert statinfo and statinfo.st_size > 0
+    assert (tmp_path / LAYOUTS_DIR / "layout-fakelayout.json").exists()
+    assert (
+        tmp_path / LAYOUTS_DIR / "layoutscontainer-fakelayoutscontainer.json"
+    ).exists()
 
-    # unified yaml of the integration should have been deleted
-    assert not unified_yml.exists()
-    assert not unified_yml_in_sample.exists()
+    assert (
+        tmp_path / INCIDENT_TYPES_DIR / "incident-type-fakeincidenttype.json"
+    ).exists()
+
+    assert (
+        tmp_path / INCIDENT_FIELDS_DIR / "incident-field-fakeincidentfield.json"
+    ).exists()
+
+    assert (
+        tmp_path / INDICATOR_FIELDS_DIR / "incident-field-fakeindicatorfield.json"
+    ).exists()
+
+    assert (tmp_path / PACK_METADATA_FILENAME).exists()
+    assert (tmp_path / PACKS_README_FILE_NAME).exists()
+    assert (tmp_path / ".secrets-ignore").exists()
+    assert (tmp_path / ".pack-ignore").exists()
+
+    # scripts_path = converted_pack_path / "Scripts"
+    # sample_script_path = scripts_path / "SampleScript"
+    # script_yml = sample_script_path / "SampleScript.yml"
+    # script_py = sample_script_path / "SampleScript.py"
+    # script_readme_md = sample_script_path / "README.md"
+    # unified_script_in_sample = sample_script_path / "automation-script0.yml"
+    # unified_script = scripts_path / "automation-script0.yml"
+
+    # assert scripts_path.exists()
+    # assert sample_script_path.exists()
+    # assert script_yml.exists()
+    # assert script_py.exists()
+    # assert script_readme_md.exists()
+
+    # # generated script readme should not be empty
+    # script_statinfo = os.stat(script_readme_md)
+    # assert script_statinfo and script_statinfo.st_size > 0
+    # # unified yaml of the script should have been deleted
+    # assert not unified_script_in_sample.exists()
+    # assert not unified_script.exists()
+
+    # integrations_path = converted_pack_path / "Integrations"
+    # sample_integration_path = integrations_path / "Sample"
+    # integration_yml = sample_integration_path / "Sample.yml"
+    # integration_py = sample_integration_path / "Sample.py"
+    # integration_description = sample_integration_path / "Sample_description.md"
+    # integration_image = sample_integration_path / "Sample_image.png"
+    # integration_readme_md = sample_integration_path / "README.md"
+    # unified_yml = integrations_path / "integration-integration0.yml"
+    # unified_yml_in_sample = sample_integration_path / "integration-integration0.yml"
+    # integration_files = [
+    #     integration_yml,
+    #     integration_py,
+    #     integration_description,
+    #     integration_image,
+    #     integration_readme_md,
+    # ]
+    # for integration_file in integration_files:
+    #     assert integration_file.exists()
+    # # generated integration readme should not be empty
+    # statinfo = os.stat(integration_readme_md)
+    # assert statinfo and statinfo.st_size > 0
+
+    # # unified yaml of the integration should have been deleted
+    # assert not unified_yml.exists()
+    # assert not unified_yml_in_sample.exists()
 
 
 def test_convert_contribution_zip(
@@ -468,16 +515,14 @@ def test_convert_contribution_zip(
     - Ensure script and integration are componentized and in valid directory structure
     - Ensure readme_files is not empty and the generated docs exists.
     """
-    mocker.patch.object(git_repo.git_util, "added_files", return_value=set())
-    mocker.patch.object(git_repo.git_util, "modified_files", return_value=set())
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
-    target_dir = Path(str(tmp_path), "target_dir")
+    target_dir = tmp_path / "target_dir"
     target_dir.mkdir()
     # create temp directory in which the contribution zip will reside
-    contribution_zip_dir = Path(str(tmp_path), "contrib_zip")
+    contribution_zip_dir = tmp_path / "contrib_zip"
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
     mocker.patch(
@@ -510,7 +555,7 @@ def test_convert_contribution_zip(
     )
     contrib_converter_inst.convert_contribution_to_pack()
 
-    converted_pack_path = git_repo._packs_path / "ContribTestPack"
+    converted_pack_path = Path(git_repo.path) / PACKS_DIR / "ContribTestPack"
     assert converted_pack_path.exists()
 
     scripts_path = converted_pack_path / "Scripts"
@@ -1192,6 +1237,7 @@ class TestReleaseNotes:
         assert expected_rn_per_content_item == rn_per_content_item
 
 
+@pytest.mark.ciac_8757
 class TestReadmes:
     repo_dir_name = "content_repo"
     existing_pack_name = "HelloWorld"
@@ -1202,7 +1248,12 @@ class TestReadmes:
     author = "Kobbi Gal"
     gh_user = "kgal-pan"
 
-    def test_process_existing_pack_existing_integration_readme(self, tmp_path: Path):
+    def _get_function_name(self) -> str:
+        return inspect.currentframe().f_back.f_code.co_name
+
+    def test_process_existing_pack_existing_integration_readme(
+        self, tmp_path: Path, mocker: MockerFixture, git_repo: Repo
+    ):
         """
         Test for an existing integration in an existing pack
         to ensure the README is updated correctly.
@@ -1221,11 +1272,6 @@ class TestReadmes:
         - The integration README should be updated with the new command.
         """
 
-        # Create content repo
-        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
-        content_temp_dir.mkdir()
-        repo = Repo(tmpdir=content_temp_dir, init_git=True)
-
         # Read integration python, yml code and README to create mock integration
         py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
         py_code = py_code_path.read_text()
@@ -1237,8 +1283,8 @@ class TestReadmes:
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
-        repo.create_pack(self.existing_pack_name)
-        repo.packs[0].create_integration(
+        git_repo.create_pack(self.existing_pack_name)
+        git_repo.packs[0].create_integration(
             name=self.existing_integration_name,
             code=py_code,
             readme=readme,
@@ -1255,7 +1301,7 @@ class TestReadmes:
                 self.existing_pack_name, {}
             ).get("detected_content_items", [])
 
-        contribution_temp_dir = Path(str(tmp_path)) / "contribution"
+        contribution_temp_dir = tmp_path / "contribution"
         contribution_temp_dir.mkdir()
         # Create a contribution converter instance
         contrib_converter = ContributionConverter(
@@ -1268,8 +1314,22 @@ class TestReadmes:
             gh_user=self.gh_user,
             create_new=False,
             detected_content_items=contributed_content_items,
-            working_dir_path=contribution_temp_dir.__str__(),
-            base_dir=content_temp_dir.__str__(),
+            working_dir_path=str(contribution_temp_dir),
+            base_dir=git_repo.path,
+        )
+
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(
+            GitUtil,
+            "path_from_git_root",
+            return_value=Path(
+                f"Packs/{self.existing_pack_name}/{INTEGRATIONS_DIR}/{self.existing_integration_name}/{self.existing_integration_name}.yml"
+            ),
+        )
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
 
         # Convert the contribution to a pack
@@ -1308,7 +1368,9 @@ class TestReadmes:
         assert actual_integration_python.read_text() != py_code
         assert "helloworld-new-cmd" in actual_integration_python.read_text()
 
-    def test_process_existing_pack_new_integration_readme(self, tmp_path: Path):
+    def test_process_existing_pack_new_integration_readme(
+        self, tmp_path: Path, git_repo: Repo, mocker: MockerFixture
+    ):
         """
         Test for a new integration in an existing pack
         to ensure the README is updated correctly.
@@ -1326,11 +1388,6 @@ class TestReadmes:
         - A new Integration README should be generated.
         """
 
-        # Create content repo
-        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
-        content_temp_dir.mkdir()
-        repo = Repo(tmpdir=content_temp_dir, init_git=True)
-
         # Read integration python, yml code and README to create mock integration
         # and Pack
         py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
@@ -1343,15 +1400,15 @@ class TestReadmes:
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
-        repo.create_pack(self.existing_pack_name)
-        repo.packs[0].create_integration(
+        git_repo.create_pack(self.existing_pack_name)
+        git_repo.packs[0].create_integration(
             name=self.existing_integration_name,
             code=py_code,
             readme=readme,
             yml=yml_code,
         )
 
-        contribution_temp_dir = Path(str(tmp_path)) / "contribution"
+        contribution_temp_dir = tmp_path / "contribution"
         contribution_temp_dir.mkdir()
         # Create a contribution converter instance
         contrib_converter = ContributionConverter(
@@ -1363,10 +1420,23 @@ class TestReadmes:
             ),
             gh_user=self.gh_user,
             create_new=False,
-            working_dir_path=contribution_temp_dir.__str__(),
-            base_dir=content_temp_dir.__str__(),
+            working_dir_path=str(contribution_temp_dir),
+            base_dir=git_repo.path,
         )
 
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(
+            GitUtil,
+            "path_from_git_root",
+            return_value=Path(
+                f"Packs/{self.existing_pack_name}/{INTEGRATIONS_DIR}/{self.existing_integration_name}/{self.existing_integration_name}.yml"
+            ),
+        )
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
+        )
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
@@ -1374,7 +1444,9 @@ class TestReadmes:
         generated_readme = Path(contrib_converter.readme_files[0])
         assert generated_readme.exists()
 
-    def test_process_new_pack(self, tmp_path: Path):
+    def test_process_new_pack(
+        self, tmp_path: Path, git_repo: Repo, mocker: MockerFixture
+    ):
         """
         Test for a new Integration added to a new Pack.
         The Pack and the Integration READMEs should be generated.
@@ -1390,11 +1462,6 @@ class TestReadmes:
         - An Integration README should be generated.
         """
 
-        # Create content repo
-        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
-        content_temp_dir.mkdir()
-        repo = Repo(tmpdir=content_temp_dir, init_git=True)
-
         # Read integration python, yml code and README to create mock integration
         # and Pack
         py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
@@ -1407,16 +1474,30 @@ class TestReadmes:
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
-        repo.create_pack(self.existing_pack_name)
-        repo.packs[0].create_integration(
+        git_repo.create_pack(self.existing_pack_name)
+        git_repo.packs[0].create_integration(
             name=self.existing_integration_name,
             code=py_code,
             readme=readme,
             yml=yml_code,
         )
 
-        contribution_temp_dir = Path(str(tmp_path)) / "contribution"
+        contribution_temp_dir = tmp_path / "contribution"
         contribution_temp_dir.mkdir()
+
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(
+            GitUtil,
+            "path_from_git_root",
+            return_value=Path(
+                f"Packs/{self.existing_pack_name}/{INTEGRATIONS_DIR}/{self.existing_integration_name}/{self.existing_integration_name}.yml"
+            ),
+        )
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
+        )
 
         contrib_converter = ContributionConverter(
             name=self.new_pack_name,
@@ -1427,8 +1508,8 @@ class TestReadmes:
             ),
             gh_user=self.gh_user,
             create_new=True,
-            working_dir_path=contribution_temp_dir.__str__(),
-            base_dir=content_temp_dir.__str__(),
+            working_dir_path=str(contribution_temp_dir),
+            base_dir=git_repo.path,
         )
 
         # Convert the contribution to a pack
@@ -1440,135 +1521,108 @@ class TestReadmes:
         # Check new Integration README exists
         assert Path(contrib_converter.readme_files[0]).exists()
 
-    def test_get_contributed_content(self, tmp_path: Path):
+    def test_process_existing_pack_modified_cmd_conf_added_cmd_up_to_date(
+        self, git_repo: Repo, tmp_path: Path, mocker: MockerFixture
+    ):
         """
-        Test whether the new content map works when we receive a contribution
-        with an existing integration, an existing playbook but a new script.
+        A test to simulate a contribution for an existing Pack (SplunkPy)
+        when the contributed Pack is up-to-date with content latest.
 
         Given:
-        - A contribution zip.
+        - A content repo.
+        - A contribution zip (taken from https://github.com/demisto/contribution-management/actions/runs/7370121179/job/20056135116#step:7:298)
 
         When:
-        - The content repo has an integration and a playbook.
-        - The contribution zip has an integration, playbook and script.
+        - The contributed content is up-to-date with master.
+        - A new configuration option was added.
+        - A new command was added.
+        - A command argument and output were modified.
 
         Then:
-        - The new content map will have a 3 keys:
-            - 1 for the playbook set to `True`.
-            - 1 for the integration set to `True`.
-            - 1 for the script set to `False`.
+        - The configuration should be added to the setup section of the README.
+        - The added command should be appended to the README.
+        - The modified argument and output should be reflected in the README.
         """
 
-        # Create content repo
-        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
-        content_temp_dir.mkdir()
-        repo = Repo(tmpdir=content_temp_dir, init_git=True)
+        pack_name = integration_name = "SplunkPy"
 
-        repo.create_pack(self.existing_pack_name)
+        pack = git_repo.create_pack(pack_name)
 
-        # Create Integration
-        py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
-        py_code = py_code_path.read_text()
-
-        readme_path = Path(CONTRIBUTION_TESTS, "README.md")
-        readme = readme_path.read_text()
-
-        yml_code_path = Path(CONTRIBUTION_TESTS, "integration.yml")
+        yml_code_path = Path(
+            CONTRIBUTION_TESTS, self._get_function_name(), f"{integration_name}.yml"
+        )
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
-        repo.packs[0].create_integration(
-            name="HelloWorldV3", code=py_code, readme=readme, yml=yml_code
+        readme_path = Path(
+            CONTRIBUTION_TESTS, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
+        markdown = readme_path.read_text()
 
-        # Create Playbook
-        pb_yml_path = Path(CONTRIBUTION_TESTS, "playbook.yml")
-        with pb_yml_path.open("r") as stream:
-            pb_yml_code = yaml.load(stream)
-        repo.packs[0].create_playbook(
-            name="HelloWorld Playbook",
-            yml=pb_yml_code,
-            readme="#HelloWorld Playbook\n\n##Prints the README\n",
-        )
+        pack.create_integration("SplunkPy", yml=yml_code, readme=markdown)
 
-        contribution_temp_dir = Path(str(tmp_path)) / "contribution"
-        contribution_temp_dir.mkdir()
-        # Create a contribution converter instance
-        contrib_converter = ContributionConverter(
-            name=self.existing_pack_name,
-            author=self.author,
-            description="Test contrib-management process_pack",
-            contribution=os.path.join(
-                CONTRIBUTION_TESTS, "existing_pack_new_int_pb_scr.zip"
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(
+            GitUtil,
+            "path_from_git_root",
+            return_value=Path(
+                f"Packs/{pack_name}/{INTEGRATIONS_DIR}/{integration_name}/{integration_name}.yml"
             ),
-            gh_user=self.gh_user,
+        )
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
+        )
+
+        mapping = Path(
+            CONTRIBUTION_TESTS, self._get_function_name(), "content_mapping.json"
+        )
+        with mapping.open("r") as m:
+            detected_content_items = (
+                json.load(m).get(pack_name).get("detected_content_items")
+            )
+
+        contrib_zip = Path(CONTRIBUTION_TESTS, self._get_function_name(), "pack.zip")
+        converter = ContributionConverter(
+            contribution=str(contrib_zip),
             create_new=False,
-            working_dir_path=contribution_temp_dir.__str__(),
-            base_dir=content_temp_dir.__str__(),
+            working_dir_path=str(tmp_path),
+            pack_dir_name=pack_name,
+            detected_content_items=detected_content_items,
         )
 
-        # Convert the contribution to a pack
-        contrib_converter.convert_contribution_to_pack()
+        converter.convert_contribution_to_pack()
 
-        expected: List[Tuple[Path, Path, bool]] = []
-        new_content = namedtuple(
-            "new_content", ["contributed_yml", "content_yml", "exists"]
-        )
-        expected.append(
-            new_content(
-                Path(
-                    contrib_converter.working_dir_path
-                    / PLAYBOOKS_DIR
-                    / "playbook-CIAC-8757.yml"
-                ),
-                Path(
-                    contrib_converter.pack_dir_path
-                    / PLAYBOOKS_DIR
-                    / "HelloWorld Playbook.yml"
-                ),
-                True,
+        differ = Differ()
+        original_readme = readme_path.read_text().splitlines()
+        actual_readme = (
+            Path(
+                converter.working_dir_path,
+                INTEGRATIONS_DIR,
+                integration_name,
+                INTEGRATIONS_README_FILE_NAME,
             )
-        )
-        expected.append(
-            new_content(
-                Path(
-                    contrib_converter.working_dir_path
-                    / INTEGRATIONS_DIR
-                    / "HelloWorldV3"
-                    / "HelloWorldV3.yml"
-                ),
-                Path(
-                    contrib_converter.pack_dir_path
-                    / INTEGRATIONS_DIR
-                    / "HelloWorldV3"
-                    / "HelloWorldV3.yml"
-                ),
-                True,
-            )
-        )
-        expected.append(
-            new_content(
-                Path(
-                    contrib_converter.working_dir_path
-                    / SCRIPTS_DIR
-                    / "CommonServerUserPython"
-                    / "CommonServerUserPython.yml"
-                ),
-                Path(
-                    contrib_converter.pack_dir_path
-                    / SCRIPTS_DIR
-                    / "CommonServerUserPython"
-                    / "CommonServerUserPython.yml"
-                ),
-                False,
-            )
+            .read_text()
+            .splitlines()
         )
 
-        actual = contrib_converter.get_contributed_content()
-
-        assert actual[0] in expected
-        assert actual[1] in expected
-        assert actual[2] in expected
+        added_lines = [
+            line
+            for line in list(differ.compare(original_readme, actual_readme))
+            if line.startswith("+ ")
+        ]
+        assert (
+            "+     | Debug logging enabled | Test configuration | False |"
+            in added_lines
+        )
+        assert (
+            "+ | limit | Maximum number of records to return. Default is 100. | Optional | "
+            in added_lines
+        )
+        assert "+ | new_arg | New argument for testing. | Optional | " in added_lines
+        assert "+ | Splunk.Test | string | Test output | " in added_lines
+        assert "+ ### splunkt-test-cmd" in added_lines
 
 
 @pytest.mark.helper

@@ -5,7 +5,7 @@ import shutil
 import textwrap
 import traceback
 import zipfile
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
@@ -1032,75 +1032,3 @@ class ContributionConverter:
         """
 
         Path(self.contribution).unlink()
-
-    def get_contributed_content(self) -> List[Tuple[Path, Path, bool]]:
-        """
-        A helper method to check whether the contributed content items (Integration, Playbook, Script only)
-        are new (doesn't exist in the `content` repo).
-
-        Returns:
-        - `NamedTuple[Path, Path, bool]` indicating the content item and whether it's new or not.
-        The first `Path` is to the contributed content item YML.
-        The second `Path` is to the content item YML.
-        The `bool` indicates whether the content item is new.
-        """
-
-        result: List[Tuple[Path, Path, bool]] = []
-
-        for dir in get_child_directories(self.working_dir_path):
-            new_content = namedtuple(
-                "new_content", ["contributed_yml", "content_yml", "exists"]
-            )
-            if Path(dir).name == INTEGRATIONS_DIR or Path(dir).name == SCRIPTS_DIR:
-                for sub_dir in get_child_directories(dir):
-                    logger.debug(
-                        f"Checking whether '{sub_dir}' exists in '{Path(self.pack_dir_path / dir / Path(sub_dir).name)}'..."
-                    )
-
-                    # There should only be 1 YAML
-                    try:
-                        yml = list(Path(sub_dir).glob("*.yml"))[0]
-
-                        result.append(
-                            new_content(
-                                yml,
-                                Path(
-                                    self.pack_dir_path
-                                    / Path(dir).name
-                                    / Path(sub_dir).name
-                                    / f"{Path(sub_dir).name}.yml"
-                                ),
-                                Path(
-                                    self.pack_dir_path
-                                    / Path(dir).name
-                                    / Path(sub_dir).name
-                                ).exists(),
-                            )
-                        )
-                    except IndexError as ie:
-                        logger.warn(
-                            f"Couldn't find a YML in the directory '{sub_dir}': {str(ie)}. Skipping..."
-                        )
-                        pass
-            # Since Playbooks are not put in a separate directory
-            # we need to parse the Playbook ID and check if it exists
-            elif Path(dir).name == PLAYBOOKS_DIR:
-                contrib_ymls = Path(dir).glob("*.yml")
-                content_ymls = Path(self.pack_dir_path / Path(dir).name).glob("*.yml")
-
-                for pb_yml in contrib_ymls:
-                    yaml_handler = YAML_Handler()
-                    with pb_yml.open("r") as stream:
-                        pb_data = yaml_handler.load(stream)
-                        pb_id = pb_data.get("id")
-
-                    for pb_content_yml in content_ymls:
-                        with pb_content_yml.open("r") as stream2:
-                            pb_data_existing = yaml_handler.load(stream2)
-                            pb_id_existing = pb_data_existing.get("id")
-
-                        result.append(
-                            new_content(pb_yml, pb_content_yml, pb_id == pb_id_existing)
-                        )
-
-        return result

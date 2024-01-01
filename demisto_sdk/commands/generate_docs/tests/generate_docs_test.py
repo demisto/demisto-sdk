@@ -2,15 +2,16 @@ import inspect
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List, Tuple
 
 import pytest
-from _pytest.tmpdir import TempPathFactory
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
+    INTEGRATIONS_DIR,
     INTEGRATIONS_README_FILE_NAME,
 )
+from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -971,7 +972,7 @@ class TestGenerateIntegrationDoc:
     def teardown_class(cls):
         cls.rm_readme()
 
-    def test_generate_integration_doc(self, mocker, tmp_path: TempPathFactory):
+    def test_generate_integration_doc(self, mocker, tmp_path: Path):
         """
         Given
             - YML file representing an integration.
@@ -1005,7 +1006,7 @@ class TestGenerateIntegrationDoc:
                 )
                 assert "Number of users to return. Max 300. Default is 30." in fake_data
 
-    def test_generate_integration_doc_new_contribution(self, tmp_path: TempPathFactory):
+    def test_generate_integration_doc_new_contribution(self, tmp_path: Path):
         """
         Given
             - YML file representing a new integration contribution.
@@ -1033,9 +1034,7 @@ class TestGenerateIntegrationDoc:
                     not in fake_data
                 )
 
-    def test_generate_integration_doc_passes_markdownlint(
-        self, tmp_path: TempPathFactory
-    ):
+    def test_generate_integration_doc_passes_markdownlint(self, tmp_path: Path):
         """
         Given: An integrations
         When: Generating a readme for the integration
@@ -1053,9 +1052,7 @@ class TestGenerateIntegrationDoc:
                 markdownlint = run_markdownlint(real_readme_file.read())
                 assert not markdownlint.has_errors, markdownlint.validations
 
-    def test_integration_doc_credentials_display_missing(
-        self, tmp_path: TempPathFactory
-    ):
+    def test_integration_doc_credentials_display_missing(self, tmp_path: Path):
         """
         Given
             - YML file representing an integration, containing display None for credentials parameter.
@@ -1512,7 +1509,9 @@ def test_scripts_in_playbook(repo):
     assert "test_2" in scripts
 
 
-TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS = [
+TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS: List[
+    Tuple[List, Dict[str, Any], List[Dict[str, Any]]]
+] = [
     (
         [],
         {"display": "username", "additionalinfo": "Username", "required": True},
@@ -1737,7 +1736,7 @@ class TestIntegrationDocUpdate:
     def _get_function_name(self) -> str:
         return inspect.currentframe().f_back.f_code.co_name
 
-    def test_added_commands(self, mocker: MockerFixture, tmp_path: TempPathFactory):
+    def test_added_commands(self, mocker: MockerFixture, tmp_path: Path):
         """
         Check that newly-added commands to the integration YAML
         are appended to the integration README.
@@ -1840,9 +1839,7 @@ class TestIntegrationDocUpdate:
         """
         pass
 
-    def test_added_configuration(
-        self, mocker: MockerFixture, tmp_path: TempPathFactory
-    ):
+    def test_added_configuration(self, mocker: MockerFixture, tmp_path: Path):
         """
         TODO test a changed configuration
         """
@@ -1925,7 +1922,7 @@ class TestIntegrationDocUpdate:
 
         assert "Project ID" in actual
 
-    def test_modified_commands(self, mocker: MockerFixture, tmp_path: TempPathFactory):
+    def test_modified_commands(self, mocker: MockerFixture, tmp_path: Path):
         """
         Test to verify that if any modified commands are added to the integration,
         they're sections are rerendered.
@@ -2216,13 +2213,17 @@ class TestIntegrationDocUpdate:
         - The modified argument and output should be reflected in the README.
         """
 
-        integration_name = "SplunkPy"
+        pack_name = integration_name = "SplunkPy"
 
         yml_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
         )
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
+
+        modified_yml_code_path = Path(
+            TEST_FILES, self._get_function_name(), f"{integration_name}_update.yml"
+        )
 
         readme_path = Path(
             TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
@@ -2235,51 +2236,26 @@ class TestIntegrationDocUpdate:
             integration_name, yml=yml_code, readme=markdown
         )
 
-        git_repo.git_util.commit_files(commit_message=f"Added {integration_name} Pack")
-        git_repo.git_util.repo.git.checkout("-b", "add_conf_cmd_mod_cmd")
-
-        shutil.copyfile(
-            os.path.join(
-                TEST_FILES,
-                self._get_function_name(),
-                f"{integration_name}_update.yml",
-            ),
-            git_repo.packs[0].integrations[0].yml.path,
-        )
-
-        mocker.patch.object(
-            git_repo.git_util,
-            "read_file_content",
-            return_value=Path(
-                TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
-            ).read_bytes(),
-        )
-        master_text = git_repo.git_util.read_file_content(
-            path=os.path.join(git_repo.packs[0].integrations[0].yml.path),
-            commit_or_branch="master",
-            from_remote=False,
-        )
-
-        with Path(str(git_repo._tmpdir), f"{integration_name}.yml").open("wb") as fd:
-            fd.write(master_text)
-
-        diff = IntegrationDiffDetector(
-            old=os.path.join(str(git_repo._tmpdir), f"{integration_name}.yml"),
-            new=os.path.join(git_repo.packs[0].integrations[0].yml.path),
-        )
-
-        assert diff.is_configuration_different()
-
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
         mocker.patch.object(
             GitUtil,
-            "read_file_content",
+            "path_from_git_root",
             return_value=Path(
-                TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
-            ).read_bytes(),
+                f"Packs/{pack_name}/{INTEGRATIONS_DIR}/{integration_name}/{integration_name}.yml"
+            ),
         )
-        generate_integration_doc(
-            input_path=os.path.join(git_repo.packs[0].integrations[0].yml.path)
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
+
+        git_repo.git_util.commit_files("Add SplunkPy Pack")
+        shutil.copyfile(
+            src=modified_yml_code_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
+
+        generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
         actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
         actual[61] == "    | Debug logging enabled |  | False |"

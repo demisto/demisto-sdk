@@ -790,6 +790,20 @@ PACK_METADATA_PRICE = "price"
 PACK_METADATA_DEPENDENCIES = "dependencies"
 PACK_METADATA_IRON_BANK_TAG = "Iron Bank"
 
+ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
+USE_CASE_TAG = "Use Case"
+INCORRECT_PACK_NAME_PATTERN = (
+    "[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK["
+    "^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook["
+    "^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK["
+    "^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook["
+    "^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration["
+    "^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION["
+    "^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration["
+    "^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script["
+    "^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT["
+    "^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ "
+)
 PACK_METADATA_FIELDS = (
     PACK_METADATA_NAME,
     PACK_METADATA_DESC,
@@ -1426,6 +1440,7 @@ XSOAR_CONTEXT_AND_OUTPUTS_URL = (
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
 EXCLUDED_DISPLAY_NAME_WORDS = [PARTNER_SUPPORT, COMMUNITY_SUPPORT]
+INCORRECT_PACK_NAME_WORDS = ["Pack", "Playbook", "Integration", "Script", PARTNER_SUPPORT, COMMUNITY_SUPPORT]
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
 SUPPORT_LEVEL_HEADER = "supportlevelheader"

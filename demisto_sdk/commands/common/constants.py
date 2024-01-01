@@ -1403,18 +1403,29 @@ IOC_OUTPUTS_DICT = {
     "url": {"URL.Data"},
     "endpoint": {"Endpoint.Hostname", "Endpoint.IPAddress", "Endpoint.ID"},
 }
+
+# support types:
 XSOAR_SUPPORT = "xsoar"
 PARTNER_SUPPORT = "partner"
+COMMUNITY_SUPPORT = "community"
+DEVELOPER_SUPPORT = "developer"
+PACK_SUPPORT_OPTIONS = [
+    XSOAR_SUPPORT,
+    PARTNER_SUPPORT,
+    DEVELOPER_SUPPORT,
+    COMMUNITY_SUPPORT,
+]
+CONTRIBUTORS_LIST = [PARTNER_SUPPORT, DEVELOPER_SUPPORT, COMMUNITY_SUPPORT]
+SUPPORTED_CONTRIBUTORS_LIST = [DEVELOPER_SUPPORT, PARTNER_SUPPORT]
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"
-PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
 XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
 XSOAR_CONTEXT_AND_OUTPUTS_URL = (
     "https://xsoar.pan.dev/docs/integrations/context-and-outputs"
 )
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
-EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
+EXCLUDED_DISPLAY_NAME_WORDS = [PARTNER_SUPPORT, COMMUNITY_SUPPORT]
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
 SUPPORT_LEVEL_HEADER = "supportlevelheader"

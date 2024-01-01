@@ -1,27 +1,37 @@
 [use_git]
+
 select = [
-    "BA101", "BA106", "BA116", "BA118",
-    "PA108",
+    "BA101", "BA105", "BA106", "BA116", "BA118",
+    "PA107", "PA108", "PA109", "PA111", "PA115", "PA130",
     "BC100",
     "GR106",
     "DO108",
     "IN108",
-    "IN130"
+    "IN130",
+    "PB118",
 ]
 warning = []
-ignorable_errors = ["BA101", "BA116"]
+ignorable_errors = [
+    "BA101", "BA116",
+    "PB118",
+    "PA113", "PA116", "PA124", "PA125", "PA127"
+]
 
 [validate_all]
+
 select = [
-    "BA101", "BA106", "BA116", "BA118",
+    "BA101", "BA105", "BA106","BA116", "BA118",
     "GR106",
     "DO108",
     "IN108",
     "IN130",
-    "PA108"
+    "PA107", "PA108", "PA109", "PA111", "PA115", "PA130"
 ]
 warning = []
-ignorable_errors = ["BA101", "BA116"]
+ignorable_errors = [
+    "BA101", "BA116",
+    "PA113", "PA116", "PA124", "PA125", "PA127"
+]
 
 [Custom_Categories]
 select = []

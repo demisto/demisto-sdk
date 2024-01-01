@@ -36,11 +36,13 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_TAGS,
     PACK_METADATA_URL,
     PACK_METADATA_USE_CASES,
+    PACK_SUPPORT_OPTIONS,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     PARTNER_SUPPORT,
+    SUPPORTED_CONTRIBUTORS_LIST,
     VERSION_REGEX,
     MarketplaceVersions,
 )
@@ -65,12 +67,9 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
-CONTRIBUTORS_LIST = ["partner", "developer", "community"]
-SUPPORTED_CONTRIBUTORS_LIST = ["partner", "developer"]
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
 MAXIMUM_DESCRIPTION_FIELD_LENGTH = 130
-SUPPORT_TYPES = ["community", "xsoar"] + SUPPORTED_CONTRIBUTORS_LIST
 INCORRECT_PACK_NAME_PATTERN = (
     "[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK["
     "^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook["
@@ -756,7 +755,10 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         try:
             pack_meta_file_content = self._read_metadata_content()
-            if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
+            if (
+                pack_meta_file_content[PACK_METADATA_SUPPORT]
+                not in PACK_SUPPORT_OPTIONS
+            ):
                 self._add_error(
                     Errors.pack_metadata_invalid_support_type(), self.pack_meta_file
                 )

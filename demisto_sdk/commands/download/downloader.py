@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     ENTITY_NAME_SEPARATORS,
     ENTITY_TYPE_TO_DIR,
     INTEGRATIONS_DIR,
+    LISTS_DIR,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -47,11 +48,13 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     get_yml_paths_in_dir,
     is_sdk_defined_working_offline,
+    pascal_case,
     safe_read_unicode,
     write_dict,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator
+from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 
@@ -989,7 +992,7 @@ class Downloader:
             if content_entity_path.is_dir():
                 directory_name = content_entity_path.name
 
-                if directory_name in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+                if directory_name in (INTEGRATIONS_DIR, SCRIPTS_DIR, LISTS_DIR):
                     # If entity is of type integration/script it will have dirs, otherwise files
                     directory_items = [
                         p for p in content_entity_path.iterdir() if p.is_dir()
@@ -1128,9 +1131,19 @@ class Downloader:
                 return get_yaml(content_item_path)
 
         else:
+            if content_type == LISTS_DIR and content_item_path.is_dir():
+                # Collect json files to return the list metadata
+                json_files = [
+                    path
+                    for path in content_item_path.iterdir()
+                    if path.suffix == ".json" and not path.stem.endswith("_data")
+                ]
+                if not json_files:
+                    return None
+                return get_json(str(json_files[0]))
+
             if content_item_path.is_file() and content_item_path.suffix == ".json":
                 return get_json(content_item_path)
-
         return None
 
     @staticmethod
@@ -1274,6 +1287,7 @@ class Downloader:
             for file_name, content_object in downloaded_content_objects.items():
                 content_item_name: str = content_object["name"]
                 content_item_entity: str = content_object["entity"]
+                content_item_type: FileType = content_object["type"]
 
                 content_item_exists = (  # Content item already exists in output pack
                     content_item_name
@@ -1290,7 +1304,8 @@ class Downloader:
                 downloaded_files: list[Path] = []
 
                 try:
-                    if content_item_exists:
+                    if content_item_exists and content_item_type != FileType.LISTS:
+                        # We skip 'download_existing_content_items' logic for lists since 'smart-merge' is irrelevant for lists
                         downloaded_files = self.download_existing_content_items(
                             content_object=content_object,
                             existing_pack_structure=existing_pack_structure,
@@ -1389,6 +1404,26 @@ class Downloader:
             extractor.extract_to_package_format()
 
             # Add items to downloaded_files
+            for file_path in download_path.iterdir():
+                if file_path.is_file():
+                    downloaded_files.append(file_path)
+
+        elif content_item_entity_directory == LISTS_DIR:
+            download_path = (
+                output_path
+                / content_item_entity_directory
+                / pascal_case(content_item_name)
+            )
+            download_path.mkdir(parents=True, exist_ok=True)
+
+            JsonSplitter(
+                input=content_item_file_name,
+                output=download_path,
+                no_auto_create_dir=True,
+                file_type=content_item_type,
+                input_file_data=content_object["data"],
+            ).split_json()
+
             for file_path in download_path.iterdir():
                 if file_path.is_file():
                     downloaded_files.append(file_path)

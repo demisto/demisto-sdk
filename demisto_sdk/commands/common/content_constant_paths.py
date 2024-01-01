@@ -20,21 +20,21 @@ LANDING_PAGE_SECTIONS_PATH = (
 )
 NATIVE_IMAGE_PATH = CONTENT_PATH / "Tests" / NATIVE_IMAGE_FILE_NAME
 
+COMMON_SERVER_PYTHON_PATH = CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"
+DEMISTO_MOCK_PATH = CONTENT_PATH / TESTS_DIR / "demistomock"
+API_MODULES_SCRIPTS_DIR = CONTENT_PATH / "Packs" / "ApiModules" / "Scripts"
 
 PYTHONPATH = [
-    Path(CONTENT_PATH).absolute(),
-    Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython").absolute(),
-    Path(CONTENT_PATH / TESTS_DIR / "demistomock").absolute(),
-    Path(__file__).parent.parent / "lint" / "resources" / "pylint_plugins",
+    path.absolute() for path in [
+        Path(CONTENT_PATH),
+        COMMON_SERVER_PYTHON_PATH,
+        DEMISTO_MOCK_PATH,
+        Path(__file__).parent.parent / "lint" / "resources" / "pylint_plugins",
+    ]
 ]
-try:
-    PYTHONPATH.extend(
-        (
-            path.absolute()
-            for path in Path(
-                CONTENT_PATH / "Packs" / "ApiModules" / "Scripts"
-            ).iterdir()
-        )
-    )
-except FileNotFoundError:
-    logger.info("ApiModules not found, skipping adding to PYTHONPATH")
+
+if API_MODULES_SCRIPTS_DIR.exists():
+    PYTHONPATH.extend(path.absolute() for path in API_MODULES_SCRIPTS_DIR.iterdir())
+
+else:
+    logger.warning("API Modules directory could not be found. Module discover for API Modules will not be configured.")

@@ -112,8 +112,64 @@ def update_dotenv(file_path: Path, values: Dict[str, str], quote_mode="never"):
             logger.warning(f"Empty value for '{key}'. Skipping...")
 
 
-def update_pycharm_config_file(file_path: Path, python_paths: List[str]):
-    pass
+def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Path]):
+    """
+    Configure and update the .iml file to add the given python paths to the module discovery.
+
+    Args:
+        file_path (Path): The path to the .iml file to update
+        python_discovery_paths (List[Path]): The python paths to add to the module discovery
+    """
+    if not file_path.exists():
+        logger.warning(f"Could not find file '{file_path}'.\n"
+                       "This can happen if the project has not been opened in the IDE yet.\n"
+                       "Module discovery will not be configured.")
+        return
+
+    url_prefix = "file://$MODULE_DIR$"
+    module_root_component = "component[@name='NewModuleRootManager']"
+    module_root_content = f"{module_root_component}/content[@url='{url_prefix}']"
+    config_data = etree.parse(str(file_path))
+
+    # Generate the root component if it doesn't exist
+    if config_data.find(module_root_component) is None:
+        module_root_component = etree.SubElement(config_data.getroot(), module_root_component)
+        module_root_component.tail = "\n" + "  " * 2
+
+    # Generate the content component if it doesn't exist
+    if config_data.find(module_root_content) is None:
+        content = etree.SubElement(config_data.find(module_root_component), "content", url=url_prefix)
+        content.tail = "\n" + "  " * 4
+
+    source_folders = config_data.findall(module_root_content + "/sourceFolder")
+    existing_paths = set()
+
+    for source_folder in source_folders:
+        if url := source_folder.get("url"):
+            existing_paths.add(Path(url.replace(url_prefix + '/', "")))
+
+    module_root_content_data = config_data.find(module_root_content)
+    file_updated = False
+
+    for python_path in python_discovery_paths:
+        if (
+                (not python_path.is_relative_to(CONTENT_PATH)) or
+                (python_path.relative_to(CONTENT_PATH) in existing_paths)
+        ):
+            continue
+
+        file_updated = True
+        module_root_content_data[-1].tail = "\n" + " " * 6  # Add indentation following last 'sourceFolder' item.
+
+        python_path_relative = python_path.relative_to(CONTENT_PATH)
+        etree.SubElement(
+            module_root_content_data, "sourceFolder", url=f"{url_prefix}/{python_path_relative}", isTestSource="false",
+        )
+
+    module_root_content_data[-1].tail = "\n" + ' ' * 4  # Set indentation for closing tag ('</content>')
+
+    if file_updated:  # Write changes to file only if there were relevant changes
+        config_data.write(str(file_path), pretty_print=True, xml_declaration=True, encoding="utf-8")
 
 
 def configure_module_discovery(ide_type: IDEType):
@@ -123,21 +179,29 @@ def configure_module_discovery(ide_type: IDEType):
     Args:
         ide_type (IDEType): The IDE type to configure
     """
-    python_paths: list[str] = [str(path) for path in PYTHONPATH]
-    mypy_paths: list[str] = [str(path) for path in PYTHONPATH if "site-packages" not in str(path)]
-
     if ide_type == IDEType.VSCODE:
         update_dotenv(
             file_path=DOTENV_PATH,
-            values={"PYTHONPATH": ":".join(python_paths), "MYPYPATH": ":".join(mypy_paths)}
+            values={
+                "PYTHONPATH": ":".join([str(path) for path in PYTHONPATH]),
+                "MYPYPATH": ":".join([str(path) for path in PYTHONPATH if "site-packages" not in str(path)])
+            }
         )
 
     elif ide_type == IDEType.PYCHARM:
+        python_discovery_paths = PYTHONPATH.copy()
+
+        # Remove the 'CONTENT_PATH' from the python discovery paths as it is already configured by default,
+        # and the paths are relative to the project root (which is 'CONTENT_PATH').
+        if CONTENT_PATH in python_discovery_paths:
+            python_discovery_paths.remove(CONTENT_PATH)
+
         config_file_path = CONTENT_PATH / ".idea" / (CONTENT_PATH.name.lower() + ".iml")
         update_pycharm_config_file(
             file_path=config_file_path,
-            python_paths=python_paths
+            python_discovery_paths=python_discovery_paths,
         )
+
 
 def configure_vscode_tasks(
     ide_folder: Path, integration_script: IntegrationScript, test_docker_image: str

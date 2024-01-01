@@ -159,5 +159,5 @@ def test_get_new_log_entries(changelog_folder_mock: Path):
             yaml.dump(log_file, f)
     logs = read_log_files()
     results = get_new_log_entries(logs)
-    for type_ in (log_type for log_type in LogType if log_type != LogType.initial):
+    for type_ in (log_type for log_type in LogType):
         assert type_ in results

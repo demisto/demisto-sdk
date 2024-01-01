@@ -10,6 +10,7 @@ from urllib.parse import urljoin
 import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
+from requests.exceptions import ConnectionError, Timeout
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -129,7 +130,7 @@ class XsiamApiClient(XsiamApiInterface):
         self.__session = value
 
     @lru_cache
-    @retry(times=5, exceptions=(RuntimeError))
+    @retry(times=5, exceptions=(RuntimeError, ConnectionError, Timeout))
     def get_demisto_version(self) -> str:
         endpoint = urljoin(self.base_url, "xsoar/about")
         response = self._session.get(endpoint)

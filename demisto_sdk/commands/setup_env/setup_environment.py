@@ -155,7 +155,7 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
             existing_paths.add(Path(url.replace(url_prefix + "/", "")))
 
     module_root_content_data = config_data.find(module_root_content)
-    file_updated = False
+    added_entries_count = 0
 
     for python_path in python_discovery_paths:
         try:
@@ -167,7 +167,6 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
         if python_path_relative in existing_paths:
             continue
 
-        file_updated = True
         module_root_content_data[-1].tail = (
             "\n" + " " * 6
         )  # Add indentation following last 'sourceFolder' item.
@@ -178,14 +177,26 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
             url=f"{url_prefix}/{python_path_relative}",
             isTestSource="false",
         )
+        added_entries_count += 1
 
     module_root_content_data[-1].tail = (
         "\n" + " " * 4
     )  # Set indentation for closing tag ('</content>')
 
-    if file_updated:  # Write changes to file only if there were relevant changes
+    if (
+        added_entries_count > 0
+    ):  # Write changes to file only if there were relevant changes
         config_data.write(
             str(file_path), pretty_print=True, xml_declaration=True, encoding="utf-8"
+        )
+        logger.info(
+            f"Configuration file ('{file_path}') was successfully configured for automatic module discovery. "
+            f"New entries added: {added_entries_count}."
+        )
+
+    else:
+        logger.info(
+            f"All entries are already configured on the configuration file ('{file_path}'). No changes were made."
         )
 
 

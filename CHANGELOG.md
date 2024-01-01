@@ -1,7 +1,4 @@
 # Changelog
-## v2.33.4
-* enter description about this PR. [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
-
 ## Unreleased
 
 ## 1.25.1

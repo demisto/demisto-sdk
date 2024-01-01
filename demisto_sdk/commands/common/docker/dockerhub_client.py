@@ -34,15 +34,18 @@ class DockerHubClient:
         self,
         docker_hub_api_url: str = "",
         registry: str = "",
-        username: str = os.getenv(DOCKERHUB_USER, ""),
-        password: str = os.getenv(DOCKERHUB_PASSWORD, ""),
+        username: str = "",
+        password: str = "",
         verify_ssl: bool = False,
     ):
 
         self.registry_api_url = registry or self.DEFAULT_REGISTRY
         self.docker_hub_api_url = docker_hub_api_url or self.DOCKER_HUB_API_BASE_URL
-        self.username = username
-        self.password = password
+        self.username = username or os.getenv(DOCKERHUB_USER, "")
+        self.password = password or os.getenv(DOCKERHUB_PASSWORD, "")
+        self.auth = (
+            (self.username, self.password) if self.username and self.password else None
+        )
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
@@ -66,8 +69,8 @@ class DockerHubClient:
         """
         if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
             now = datetime.now()
-            # minus 60 seconds to be on the safe side
             if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
+                # minus 60 seconds to be on the safe side
                 _expiration_time: datetime = expiration_time + timedelta(
                     seconds=token_metadata.get("expires_in_seconds") - 60
                 )
@@ -80,9 +83,7 @@ class DockerHubClient:
                 "service": "registry.docker.io",
                 "scope": f"repository:{repo}:{scope}",
             },
-            auth=(self.username, self.password)
-            if self.username and self.password
-            else None,
+            auth=self.auth,
         )
         if not response.ok:
             raise RuntimeError(f"Failed to get docker hub token: {response.text}")
@@ -101,6 +102,29 @@ class DockerHubClient:
         }
 
         return token
+
+    @lru_cache
+    @retry(times=5, exceptions=(ConnectionError, Timeout))
+    def get_request(
+        self,
+        url: str,
+        headers: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ):
+        response = self._session.get(
+            url,
+            headers=headers,
+            params=params,
+            verify=self.verify_ssl,
+            auth=self.auth,
+        )
+        response.raise_for_status()
+        try:
+            return response.json()
+        except JSONDecodeError as e:
+            raise RuntimeError(
+                f"Failed to get response of {url=}, {response.text=}"
+            ) from e
 
     @lru_cache
     @retry(times=5, exceptions=(ConnectionError, Timeout))
@@ -131,22 +155,12 @@ class DockerHubClient:
         else:
             raise ValueError("either url_suffix/next_page_url must be provided")
 
-        response = self._session.get(
+        raw_json_response = self.get_request(
             url,
             headers=headers or {"Accept": "application/json"},
             params=params or {"page_size": 1000} if not next_page_url else params,
             verify=self.verify_ssl,
-            auth=(self.username, self.password)
-            if self.username and self.password
-            else None,
         )
-        response.raise_for_status()
-        try:
-            raw_json_response = response.json()
-        except JSONDecodeError as e:
-            raise RuntimeError(
-                f"Failed to get response of {url=}, {response.text=}"
-            ) from e
 
         amount_of_objects = raw_json_response.get("count")
         if not amount_of_objects:
@@ -154,8 +168,8 @@ class DockerHubClient:
             return raw_json_response
 
         logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
-
         results = raw_json_response.get(results_key) or []
+        # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
             results.extend(
                 self.do_docker_hub_get_request(
@@ -187,17 +201,12 @@ class DockerHubClient:
             scope: what is the scope for the api-request.
             headers: any custom headers
             params: query parameters
-
-        Returns:
-
         """
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
 
-        url = f"{self.registry_api_url}/{docker_image}{url_suffix}"
-
-        response = self._session.get(
-            url,
+        return self.get_request(
+            f"{self.registry_api_url}/{docker_image}{url_suffix}",
             headers=headers
             or {
                 "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
@@ -206,11 +215,6 @@ class DockerHubClient:
             },
             params=params,
         )
-        response.raise_for_status()
-        try:
-            return response.json()
-        except JSONDecodeError as e:
-            raise RuntimeError(f"Failed to get response of {url=}") from e
 
     def get_image_manifests(self, docker_image: str, tag: str) -> Dict[str, Any]:
         """

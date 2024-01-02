@@ -33,6 +33,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
+BACKUP_FILES_SUFFIX = ".demisto_sdk_backup"
 DOTENV_PATH = CONTENT_PATH / ".env"
 
 
@@ -185,7 +186,15 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
 
     if (
         added_entries_count > 0
-    ):  # Write changes to file only if there were relevant changes
+    ):  # Apply changes to file only if there were relevant changes
+        backup_file_path = file_path.with_suffix(file_path.suffix + BACKUP_FILES_SUFFIX)
+
+        if not backup_file_path.exists():
+            # Backup the original file on the first time it is configured (if the backup file doesn't exist)
+            shutil.copyfile(
+                file_path, file_path.with_suffix(file_path.suffix + BACKUP_FILES_SUFFIX)
+            )
+
         config_data.write(
             str(file_path), pretty_print=True, xml_declaration=True, encoding="utf-8"
         )

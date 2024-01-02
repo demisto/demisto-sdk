@@ -1,6 +1,6 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -62,7 +62,7 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_e
                 "The Script myScript is missing a docker image, please make sure to add one.\n The recommended default docker is demisto/python3:3.1.1.1.",
                 "The Integration TestIntegration is missing a docker image, please make sure to add one.\n The recommended default docker is demisto/python3:3.1.1.1.",
             ],
-            1,
+            2,
         ),
     ],
 )
@@ -86,22 +86,19 @@ def test_DockerImageExistValidator_is_valid(
         - Make sure the right amount of failures, and the correct msgs are returned, and also that the mocker wasn't called more than once.
         - Case 1: Should fail 1 integration.
         - Case 2: Should fail 1 script.
-        - Case 3: Should'nt fail at all.
+        - Case 3: Shouldn't fail at all.
         - Case 4: Should fail all content items.
     """
     mocker = mocker.patch.object(
-        DockerImageValidator,
-        "get_docker_image_latest_tag_request",
+        DockerHubClient,
+        "get_latest_docker_image_tag",
         return_value="3.1.1.1",
     )
     results = DockerImageExistValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )
+    for result, expected_msg in zip(results, expected_msgs):
+        assert result.message == expected_msg
+
     assert mocker.call_count == expected_call_count
 
 

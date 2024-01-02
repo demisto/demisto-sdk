@@ -2283,6 +2283,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             )
 
         if file_type == FileType.INTEGRATION:
+            logger.info(f"Generating {file_type.value.lower()} documentation")
             use_cases = kwargs.get("use_cases")
             command_permissions = kwargs.get("command_permissions")
             return generate_integration_doc(

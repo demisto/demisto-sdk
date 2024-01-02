@@ -1813,7 +1813,7 @@ class TestIntegrationDocUpdate:
             new=os.path.join(repo.packs[0].integrations[0].yml.path),
         )
 
-        actual = diff.added_commands
+        actual = diff.get_added_commands()
         expected = ["aha-delete-idea"]
 
         assert actual == expected

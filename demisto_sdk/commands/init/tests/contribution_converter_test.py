@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     INTEGRATIONS_README_FILE_NAME,
     LAYOUT,
@@ -116,6 +117,13 @@ def create_test_packs(request: FixtureRequest, tmp_path_factory: TempPathFactory
     # otherwise assume it's a string
     pack_dir = tmp_path_factory.mktemp(request.param)
     return TmpPack(pack_dir)
+
+
+def get_function_name() -> str:
+    """
+    Returns the function name
+    """
+    return inspect.currentframe().f_back.f_code.co_name
 
 
 class TmpPack(os.PathLike):
@@ -795,7 +803,6 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path: Path, repo: Repo):
     assert not tmp_unzipped_path.exists()
 
 
-directories_set_1 = {"IndicatorTypes", "Layouts", "IndicatorFields", "Classifiers"}
 directories_set_2 = {
     "IndicatorTypes",
     "Layouts",
@@ -803,35 +810,20 @@ directories_set_2 = {
     "Classifiers",
     "IncidentFields",
 }
-indicatorfield_only_check = (
-    os.path.join(CONTRIBUTION_TESTS, "contribution_indicatorfield_only.zip"),
-    directories_set_1,
-)
+
 indicatorfield_and_incidentfield_check = (
     os.path.join(
-        CONTRIBUTION_TESTS, "contribution_indicatorfield_and_incidentfield.zip"
+        CONTRIBUTION_TESTS,
+        get_function_name(),
+        "contribution_indicatorfield_and_incidentfield.zip",
     ),
     directories_set_2,
 )
 
-rearranging_before_conversion_inputs = [
-    indicatorfield_only_check,
-    indicatorfield_and_incidentfield_check,
-]
 
-
-@pytest.mark.parametrize(
-    "zip_path, expected_directories", rearranging_before_conversion_inputs
-)
-def test_rearranging_before_conversion(
-    zip_path: str, expected_directories: set, repo: Repo, mocker: MockerFixture
-):
+def test_rearranging_before_conversion_indicator_fields(repo: Repo):
     """
-    Given a zip file, fixes the wrong server mapping.
-    if an indicatorfield is mapped to an incidentfield directory, then we will make sure that we have indeed created
-    a new directory for all indicatorsfield with a suitable name (indicatorfield),
-    and we will delete the original directory if it no longer contains anything.
-
+    Given a zip file, fixes the wrong server mapping in both indicator fields.
 
     Scenario: Simulate converting a contribution zip file.
 
@@ -846,6 +838,11 @@ def test_rearranging_before_conversion(
 
     """
 
+    zip_path = os.path.join(
+        CONTRIBUTION_TESTS, get_function_name(), "contribution_indicatorfield_only.zip"
+    )
+    expected = [INDICATOR_TYPES_DIR, LAYOUTS_DIR, INDICATOR_FIELDS_DIR, CLASSIFIERS_DIR]
+
     contribution_converter = ContributionConverter(
         contribution=zip_path, base_dir=repo.path
     )
@@ -853,10 +850,50 @@ def test_rearranging_before_conversion(
     unpacked_contribution_dirs = get_child_directories(
         contribution_converter.pack_dir_path
     )
-    results = set()
-    for directory in unpacked_contribution_dirs:
-        results.add(Path(directory).name)
-    assert expected_directories == results
+
+    actual = [Path(d).name for d in unpacked_contribution_dirs]
+    assert actual == expected
+
+
+def test_rearranging_before_conversion_indicator_and_incident_fields(repo: Repo):
+    """
+    Given a zip file, fixes the wrong server mapping in both indicator and incident fields.
+    Scenario: Simulate converting a contribution zip file.
+
+    Given
+    - zip_path (str): A contribution zip file
+    - expected_directories (set): A set of directories that we expect now after patching to be
+    When
+    - Converting the zipfile to a valid Pack structure
+    Then
+    - Ensure the mapping is correct now
+    - Ensure (at first test/check) in case the original directory becomes empty, then it is deleted
+
+    """
+
+    zip_path = os.path.join(
+        CONTRIBUTION_TESTS,
+        get_function_name(),
+        "contribution_indicatorfield_and_incidentfield.zip",
+    )
+    expected = [
+        INDICATOR_TYPES_DIR,
+        LAYOUTS_DIR,
+        INCIDENT_FIELDS_DIR,
+        INDICATOR_FIELDS_DIR,
+        CLASSIFIERS_DIR,
+    ]
+
+    contribution_converter = ContributionConverter(
+        contribution=zip_path, base_dir=repo.path
+    )
+    contribution_converter.convert_contribution_to_pack()
+    unpacked_contribution_dirs = get_child_directories(
+        contribution_converter.pack_dir_path
+    )
+
+    actual = [Path(d).name for d in unpacked_contribution_dirs]
+    assert actual == expected
 
 
 @pytest.mark.parametrize(
@@ -1273,13 +1310,13 @@ class TestReadmes:
         """
 
         # Read integration python, yml code and README to create mock integration
-        py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
+        py_code_path = Path(CONTRIBUTION_TESTS, "common", "integration.py")
         py_code = py_code_path.read_text()
 
-        readme_path = Path(CONTRIBUTION_TESTS, "README.md")
+        readme_path = Path(CONTRIBUTION_TESTS, "common", "README.md")
         readme = readme_path.read_text()
 
-        yml_code_path = Path(CONTRIBUTION_TESTS, "integration.yml")
+        yml_code_path = Path(CONTRIBUTION_TESTS, "common", "integration.yml")
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
@@ -1293,7 +1330,11 @@ class TestReadmes:
 
         # Read the contribution content mapping
         with open(
-            os.path.join(CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.json"),
+            os.path.join(
+                CONTRIBUTION_TESTS,
+                get_function_name(),
+                "existing_pack_add_integration_cmd.json",
+            ),
             "r",
         ) as j:
             contributed_content_mapping = json.load(j)
@@ -1309,7 +1350,9 @@ class TestReadmes:
             author=self.author,
             description="Test contrib-management process_pack",
             contribution=os.path.join(
-                CONTRIBUTION_TESTS, "existing_pack_add_integration_cmd.zip"
+                CONTRIBUTION_TESTS,
+                get_function_name(),
+                "existing_pack_add_integration_cmd.zip",
             ),
             gh_user=self.gh_user,
             create_new=False,
@@ -1390,13 +1433,13 @@ class TestReadmes:
 
         # Read integration python, yml code and README to create mock integration
         # and Pack
-        py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
+        py_code_path = Path(CONTRIBUTION_TESTS, "common", "integration.py")
         py_code = py_code_path.read_text()
 
-        readme_path = Path(CONTRIBUTION_TESTS, "README.md")
+        readme_path = Path(CONTRIBUTION_TESTS, "common", "README.md")
         readme = readme_path.read_text()
 
-        yml_code_path = Path(CONTRIBUTION_TESTS, "integration.yml")
+        yml_code_path = Path(CONTRIBUTION_TESTS, "common", "integration.yml")
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
@@ -1416,7 +1459,9 @@ class TestReadmes:
             author=self.author,
             description="Test contrib-management process_pack",
             contribution=os.path.join(
-                CONTRIBUTION_TESTS, "existing_pack_new_integration.zip"
+                CONTRIBUTION_TESTS,
+                get_function_name(),
+                "existing_pack_new_integration.zip",
             ),
             gh_user=self.gh_user,
             create_new=False,
@@ -1464,13 +1509,13 @@ class TestReadmes:
 
         # Read integration python, yml code and README to create mock integration
         # and Pack
-        py_code_path = Path(CONTRIBUTION_TESTS, "integration.py")
+        py_code_path = Path(CONTRIBUTION_TESTS, "common", "integration.py")
         py_code = py_code_path.read_text()
 
-        readme_path = Path(CONTRIBUTION_TESTS, "README.md")
+        readme_path = Path(CONTRIBUTION_TESTS, "common", "README.md")
         readme = readme_path.read_text()
 
-        yml_code_path = Path(CONTRIBUTION_TESTS, "integration.yml")
+        yml_code_path = Path(CONTRIBUTION_TESTS, "common", "integration.yml")
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
@@ -1504,7 +1549,7 @@ class TestReadmes:
             author=self.author,
             description="Test new Integration and Pack",
             contribution=os.path.join(
-                CONTRIBUTION_TESTS, "new_pack_new_integration.zip"
+                CONTRIBUTION_TESTS, get_function_name(), "new_pack_new_integration.zip"
             ),
             gh_user=self.gh_user,
             create_new=True,
@@ -1649,7 +1694,9 @@ class TestFixupDetectedContentItems:
         - Ensure the id field of "automation-TotallyAwesome.yml" has been changed to "TotallyAwesome"
         """
         path_to_test_zip = os.path.join(
-            CONTRIBUTION_TESTS, "test_fixup_detected_content_items_automation.zip"
+            CONTRIBUTION_TESTS,
+            get_function_name(),
+            "test_fixup_detected_content_items_automation.zip",
         )
         tmp_destination = tmp_path / "ok_contribution_pack.zip"
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
@@ -1732,7 +1779,9 @@ class TestFixupDetectedContentItems:
         - Ensure the id field of "incidenttype-ServiceNowTicket.json" has been changed to "TotallyAwesome"
         """
         path_to_test_zip = os.path.join(
-            CONTRIBUTION_TESTS, "uploads_edb61840-4575-406b-93ed-c20d30200c70_pack.zip"
+            CONTRIBUTION_TESTS,
+            get_function_name(),
+            "uploads_edb61840-4575-406b-93ed-c20d30200c70_pack.zip",
         )
         tmp_destination = tmp_path / "uploads_edb.zip"
         tmp_zip = shutil.copy(path_to_test_zip, tmp_destination)
@@ -1912,7 +1961,9 @@ class TestFixupDetectedContentItems:
         - Ensure the display field of "integration-AbuseDB.yml" has been changed to "AbuseIPDB"
         """
         path_to_test_zip = (
-            CONTRIBUTION_TESTS / "contentpack-abuse_Contribution_Pack.zip"
+            CONTRIBUTION_TESTS
+            / get_function_name()
+            / "contentpack-abuse_Contribution_Pack.zip"
         )
         tmp_zip = shutil.copy(str(path_to_test_zip), tmp_path)
 

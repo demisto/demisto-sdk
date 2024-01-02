@@ -747,7 +747,7 @@ class TestIntegrationDiffDetector:
             new=new_integration.yml.path, old=old_integration.yml.path
         )
 
-        actual = integration_detector.added_commands
+        actual = integration_detector.get_added_commands()
 
         assert len(actual) == 1
         assert actual == ["command_3"]

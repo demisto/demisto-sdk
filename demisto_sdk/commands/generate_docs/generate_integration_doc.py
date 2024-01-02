@@ -108,7 +108,6 @@ def generate_integration_doc(
 
     """
     try:
-        logger.info(f"Generating an integration README for '{input_path}'...")
         yml_data = get_yaml(input_path)
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input_path))
@@ -295,7 +294,7 @@ def generate_integration_doc(
 
             # Handle new commands
             # we append them to the README.
-            added_commands = integration_diff.added_commands
+            added_commands = integration_diff.get_added_commands()
             if added_commands:
                 doc_text += "\n"
 

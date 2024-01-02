@@ -1,3 +1,5 @@
+from typing import Union
+
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
@@ -17,6 +19,7 @@ def generate_test_configuration(
     pid_threshold: int = None,
     is_mockable: bool = None,
     runnable_on_docker_only: bool = None,
+    marketplaces: Union[list, str] = None
 ) -> dict:
     playbook_config = {
         "playbookID": playbook_id,
@@ -41,6 +44,8 @@ def generate_test_configuration(
         playbook_config["runnable_on_docker_only"] = runnable_on_docker_only
     if is_mockable is not None:
         playbook_config["is_mockable"] = is_mockable
+    if marketplaces:
+        playbook_config["marketplaces"] = marketplaces
     return playbook_config
 
 
@@ -228,10 +233,10 @@ def get_mocked_build_context(
     return BuildContext(kwargs, logging_manager)
 
 
-def create_xsiam_build(mocker, tmp_file):
+def create_xsiam_build(mocker, tmp_file, content_conf_json: dict = None, filtered_tests_content: list = None):
     logging_manager = ParallelLoggingManager(tmp_file / "log_file.log")
     conf_path = tmp_file / "conf_path"
-    conf_path.write_text(json.dumps(generate_content_conf_json()))
+    conf_path.write_text(json.dumps(content_conf_json or generate_content_conf_json()))
 
     secret_conf_path = tmp_file / "secret_conf_path"
     secret_conf_path.write_text(json.dumps(generate_secret_conf_json()))
@@ -252,7 +257,7 @@ def create_xsiam_build(mocker, tmp_file):
     )
 
     filtered_tests_path = tmp_file / "filtered_tests_path"
-    filtered_tests_path.write_text("[]")
+    filtered_tests_path.write_text("\n".join(filtered_tests_content or []) or "[]")
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.FILTER_CONF",
         str(filtered_tests_path),
@@ -466,6 +471,46 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
         "playbook_with_version_mismatch"
         in build_context.tests_data_keeper.skipped_tests
     )
+
+
+def test_playbook_with_marketplaces(mocker, tmp_path):
+    """
+    Given:
+        - A build context for a server type that matches and that does not match the playbook marketplaces
+    When:
+        - Initializing the BuildContext instance
+    Then:
+        - Ensure that the playbook with marketplaces mismatch is skipped
+        - Ensure that the playbook with the marketplaces match is not skipped
+    """
+    filtered_tests = ["xsiam_playbook_with_marketplaces_mismatch", "xsoar_playbook_with_marketplaces_mismatch"]
+    tests = [
+        generate_test_configuration(
+            playbook_id="xsiam_playbook_with_marketplaces_mismatch", marketplaces="marketplacev2"
+        ),
+        generate_test_configuration(
+            playbook_id="xsoar_playbook_with_marketplaces_mismatch", marketplaces="xsoar"
+        )
+    ]
+    content_conf_json = generate_content_conf_json(tests=tests)
+
+    xsoar_build_context = get_mocked_build_context(
+        mocker,
+        tmp_path,
+        content_conf_json=content_conf_json,
+        filtered_tests_content=filtered_tests
+    )
+    assert "xsiam_playbook_with_marketplaces_mismatch" in xsoar_build_context.tests_data_keeper.skipped_tests
+    assert "xsoar_playbook_with_marketplaces_mismatch" not in xsoar_build_context.tests_data_keeper.skipped_tests
+
+    xsiam_build_context = create_xsiam_build(
+        mocker,
+        tmp_path,
+        content_conf_json=content_conf_json,
+        filtered_tests_content=filtered_tests
+    )
+    assert "xsiam_playbook_with_marketplaces_mismatch" not in xsiam_build_context.tests_data_keeper.skipped_tests
+    assert "xsoar_playbook_with_marketplaces_mismatch" in xsiam_build_context.tests_data_keeper.skipped_tests
 
 
 def test_unmockable_playbook_configuration(mocker, tmp_path):

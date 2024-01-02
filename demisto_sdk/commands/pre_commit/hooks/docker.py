@@ -280,7 +280,7 @@ class DockerHook(Hook):
         env = new_hook.pop("env", {})
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet -u {os.getuid()}:4000 {dev_image}'
         ret_hooks = []
         for (
             integration_script,

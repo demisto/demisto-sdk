@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -47,6 +48,26 @@ class IntegrationScript(ContentItem):
     @property
     def docker_images(self) -> List[str]:
         return [self.docker_image] + self.alt_docker_images if self.docker_image else []
+
+    @property
+    def docker_image_object(self):
+        class DockerImage:
+            def __init__(self, repository: str, tag: str):
+                self.repository = repository  # e.g.: demisto/python3
+                self.tag = tag  # any tag
+
+            @classmethod
+            def from_string(cls, docker_image: str):
+                pattern = re.compile(r"^([^:/]+)(?::([^@]+))?(?:@(.+))?$")
+                if matches := pattern.match(docker_image):
+                    return cls(matches.group(1), matches.group(2))
+
+                raise ValueError(f"docker-image {docker_image} is invalid")
+
+        if self.docker_image:
+            return DockerImage.from_string(self.docker_image)
+
+        raise ValueError(f"The content item {self.path} does not have docker image")
 
     @property
     def is_powershell(self) -> bool:

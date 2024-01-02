@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Iterable, List, Union
 
+from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -33,15 +34,18 @@ class DockerImageExistValidator(BaseValidator[ContentTypes]):
         return DockerImageExistValidator.latest_docker_dict[docker]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        dockerhub_client = DockerHubClient()
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
                     content_item.content_type,
                     content_item.name,
-                    self.get_latest_docker(content_item),
+                    dockerhub_client.get_latest_docker_image_tag(
+                        content_item.docker_image_object.repository
+                    ),
+                    content_object=content_item,
                 ),
-                content_object=content_item,
             )
             for content_item in content_items
             if not content_item.type == "javascript" and not content_item.docker_image

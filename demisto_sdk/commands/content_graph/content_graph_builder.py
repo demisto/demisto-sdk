@@ -84,6 +84,12 @@ class ContentGraphBuilder:
             self.nodes.update(pack.to_nodes())
             self.relationships.update(pack.relationships)
 
+        if (
+            conf_json := content_dto.conf_json
+        ):  # Repo could also not have it # TODO check
+            self.nodes.update(conf_json.to_node())
+            self.relationships.update(conf_json.relationships)
+
     def create_graph(self) -> None:
         self._parse_and_model_content()
         self._create_or_update_graph()

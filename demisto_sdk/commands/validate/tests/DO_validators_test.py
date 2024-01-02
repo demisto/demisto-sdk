@@ -8,8 +8,8 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
 )
-from demisto_sdk.commands.validate.validators.DO_validators.DO100_default_docker_image import (
-    DefaultDockerImageValidator,
+from demisto_sdk.commands.validate.validators.DO_validators.DO100_docker_image_tag_is_not_latest import (
+    LatestDockerImageTagValidator,
 )
 from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_exist import (
     DockerImageExistValidator,
@@ -105,11 +105,12 @@ def test_DockerImageExistValidator_is_valid(
     assert mocker.call_count == expected_call_count
 
 
-def test_DefaultDockerImageValidator_is_valid():
+def test_LatestDockerImageTagValidator_is_valid():
     """
     Given:
-     - 2 integration and script which uses the default docker image
-     - 4 integrations and scripts which do not use the default docker image / javascript
+     - 1 integration and 1 script which uses the latest tag
+     - 1 integration and 1 script which do not use the 'latest' tag
+     - 1 integration and 1 script that are javascript
 
     When:
      - Running the DefaultDockerImageValidator validator
@@ -121,24 +122,26 @@ def test_DefaultDockerImageValidator_is_valid():
     content_items = [
         create_integration_object(
             paths=["script.dockerimage"],
-            values=["demisto/python:1.3-alpine"],  # integration with default docker
+            values=[
+                "demisto/python3:latest"
+            ],  # integration with 'latest' as the docker tag
         ),
         create_script_object(
             paths=["dockerimage"],
-            values=["demisto/python:1.3-alpine"],  # script with default docker
+            values=["demisto/python3:latest"],  # script with 'latest' as the docker tag
         ),
-        create_integration_object(),  # integration without default docker
-        create_script_object(),  # script without default docker
+        create_integration_object(),  # integration without 'latest' docker tag
+        create_script_object(),  # script without 'latest' docker tag
         create_integration_object(
             paths=["script.type"], values=["javascript"]
         ),  # javascript integration
         create_script_object(
             paths=["type"], values=["javascript"]
-        ),  # script integration
+        ),  # javascript script
     ]
-    results = DefaultDockerImageValidator().is_valid(content_items)
+    results = LatestDockerImageTagValidator().is_valid(content_items)
     assert len(results) == 2
     for result in results:
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
-        assert content_item.docker_image == "demisto/python:1.3-alpine"
+        assert content_item.docker_image == "demisto/python3:latest"

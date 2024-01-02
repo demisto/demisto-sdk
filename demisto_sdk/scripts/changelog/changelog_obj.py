@@ -44,24 +44,27 @@ class LogEntry(BaseModel):
     class Config:
         """Pydantic config class"""
 
-        use_enum_values = False
+        use_enum_values = True
 
-    @root_validator(pre=True)
-    def validate_all_fields(cls, values):
-        if values["type"] == INITIAL_TYPE:
+    @validator("type", pre=True)
+    def validate_type(cls, value):
+        if value == INITIAL_TYPE:
             raise ValueError(
                 "One of the types is still not different from the initial value, please edit it"
             )
-        elif values["type"] not in LogType.list():
+        elif value not in LogType.list():
             raise ValueError(
-                f"The type {values['type']} is not supported, please use one of the following: {LogType.list()}"
+                f"The type {value} is not supported, please use one of the following: {LogType.list()}"
             )
-        if values["description"] == INITIAL_DESCRIPTION:
+        
+        return value
+
+    @validator("description", pre=True)
+    def validate_description(cls, value):
+        if value == INITIAL_DESCRIPTION:
             raise ValueError(
                 "One of the descriptions is still not different from the initial value, please edit it"
             )
-        
-        return values
 
 
 class LogFileObject(BaseModel):

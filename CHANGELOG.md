@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
+* Fixed an issue where **lint** command didn't work on detached heads.
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

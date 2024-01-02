@@ -50,7 +50,7 @@ class LogEntry(BaseModel):
     def validate_type(cls, value):
         if value == INITIAL_TYPE:
             raise ValueError(
-                "One of the types is still not different from the initial value, please edit it"
+                "The type is still not different from the initial value, please edit it"
             )
         elif value not in LogType.list():
             raise ValueError(
@@ -63,8 +63,9 @@ class LogEntry(BaseModel):
     def validate_description(cls, value):
         if value == INITIAL_DESCRIPTION:
             raise ValueError(
-                "One of the descriptions is still not different from the initial value, please edit it"
+                "The description is still not different from the initial value, please edit it"
             )
+        return value
 
 
 class LogFileObject(BaseModel):

@@ -235,13 +235,13 @@ def _validate_branch(pr_number: str) -> None:
     if is_changelog_modified():
         raise ValueError(
             "Do not modify changelog.md\n"
-            "run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>`"
+            "Run `demisto-sdk changelog --init -n <pr number>`"
             " to create a changelog file instead."
         )
     if not is_log_yml_exist(pr_number):
         raise ValueError(
             "Missing changelog file.\n"
-            "Run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>` and fill it."
+            "Run `demisto-sdk changelog --init -n <pr number>` and fill it."
         )
     validate_log_yml(pr_number)
 

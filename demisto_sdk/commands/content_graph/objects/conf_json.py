@@ -18,7 +18,7 @@ class StrictBaseModel(BaseModel):
         extra = Extra.forbid
 
 
-class ConfJsonNode(BaseNode):
+class ConfJsonNode(BaseNode, content_type=ContentType.CONF_JSON):
     path: Path
 
     def to_node(self):
@@ -35,7 +35,7 @@ class ConfJsonNode(BaseNode):
             result.add(
                 RelationshipType.USES_BY_ID,
                 source_id=self.object_id,
-                source_type=ContentType.CONF_JSON,
+                source_type=self.content_type,
                 target=skipped_integration,
                 target_type=ContentType.INTEGRATION,
             )

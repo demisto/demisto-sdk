@@ -3,13 +3,14 @@ from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.file import File
+from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
 
 yaml = YAML_Handler()
 
 
-class Playbook:
+class Playbook(YAML):
 
     default_assets_dir = "assets"
 
@@ -21,8 +22,8 @@ class Playbook:
         self.is_test_playbook = is_test_playbook
 
         self.path = str(tmpdir)
-        self.yml = YAML(tmpdir / f"{self.name}.yml", self._repo.path)
 
+        super().__init__(tmp_path=tmpdir / f"{self.name}.yml", repo_path=str(repo.path))
         if not self.is_test_playbook:
             self.readme = File(tmpdir / f"{self.name}_README.md", self._repo.path)
 
@@ -32,7 +33,8 @@ class Playbook:
         else:
             # build test playbook
             self.create_default_test_playbook()
-
+        
+    
     def build(
         self,
         yml: Optional[dict] = None,
@@ -40,7 +42,7 @@ class Playbook:
     ):
         """Writes not None objects to files."""
         if yml is not None:
-            self.yml.write_dict(yml)
+            self.write_dict(yml)
         if not self.is_test_playbook and readme is not None:
             self.readme.write(readme)
 
@@ -84,7 +86,7 @@ class Playbook:
             )
             return
 
-        original_yml = self.yml.read_dict()
+        original_yml = self.read_dict()
         tasks = original_yml["tasks"]
         last_task = tasks[next(reversed(tasks))]
         last_task["nexttasks"] = {"#none#": [task["id"]]}

@@ -3,17 +3,19 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 from TestSuite.file import File
+from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
 
 yaml = YAML_Handler()
 
 
-class Integration:
+class Integration(TestSuiteBase):
     def __init__(
         self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False
     ):
@@ -53,6 +55,7 @@ class Integration:
         self.commands_txt = File(
             self._tmpdir_integration_path / "commands.txt", self._repo.path
         )
+        super().__init__(self._tmpdir_integration_path)
 
     def build(
         self,

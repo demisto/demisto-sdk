@@ -5,12 +5,13 @@ from typing import Union
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from TestSuite.test_suite_base import TestSuiteBase
 
 json = JSON_Handler()
 
 
-class JSONBased:
-    def __init__(self, dir_path: Path, name: str, prefix: str):
+class JSONBased(TestSuiteBase):
+    def __init__(self, dir_path: Path, name: str, prefix: str, json_content: dict = None):
         self._dir_path = dir_path
         if prefix:
             self.name = f'{prefix.rstrip("-")}-{name}.json'
@@ -19,8 +20,17 @@ class JSONBased:
 
         self._file_path = dir_path / self.name
         self.path = str(self._file_path)
+        super().__init__(self._file_path)
+        
+        if json_content:
+            self.write_json(json_content)
+        else:
+            self.create_default()
+    
+    def create_default(self):
+        # to be override by sub classes
         self.write_json({})
-
+    
     def write_json(self, obj: dict):
         self._file_path.write_text(json.dumps(obj), None)
 

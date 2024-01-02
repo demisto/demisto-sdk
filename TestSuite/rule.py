@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from demisto_sdk.commands.common.constants import SAMPLES_DIR
 from TestSuite.json_based import JSONBased
+from TestSuite.test_suite_base import TestSuiteBase
 
 if TYPE_CHECKING:
     from TestSuite.repo import Repo
@@ -17,7 +18,7 @@ from TestSuite.yml import YAML
 yaml = YAML_Handler()
 
 
-class Rule:
+class Rule(TestSuiteBase):
     def __init__(
         self,
         tmpdir: Path,
@@ -39,6 +40,7 @@ class Rule:
 
         self.samples: list[JSONBased] = []
         self.samples_dir_path = tmpdir / self.name / SAMPLES_DIR
+        super().__init__(self._tmpdir_rule_path)
 
     def build(
         self,

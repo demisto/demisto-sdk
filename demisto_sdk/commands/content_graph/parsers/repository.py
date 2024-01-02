@@ -8,7 +8,7 @@ from tqdm import tqdm
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.parsers.conf_json import ConfJSONParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 IGNORED_PACKS_FOR_PARSING = ["NonSupported"]
@@ -31,12 +31,7 @@ class RepositoryParser:
         """
         self.path: Path = path
         self.packs: List[PackParser] = []
-        self.conf_json = {
-            "object_id": "conf_json",
-            "content_type": ContentType.CONF_JSON,
-            "path": self.path / "Tests" / "conf.json",
-            "node_id": "conf.json",
-        }
+        self.conf_json = ConfJSONParser(self.path / "Tests" / "conf.json")
 
     def parse(
         self,
@@ -53,6 +48,7 @@ class RepositoryParser:
                     self.packs.append(pack)
                     if progress_bar:
                         progress_bar.update(1)
+
         except Exception:
             logger.error(traceback.format_exc())
             raise

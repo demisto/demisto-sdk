@@ -37,8 +37,12 @@ class ConfJsonNode(BaseNode, content_type=ContentType.CONF_JSON):
                 RelationshipType.USES_BY_ID,
                 source_id=self.object_id,
                 source_type=self.content_type,
+                source_fromversion=self.fromversion,
+                source_marketplaces=self.marketplaces,
                 target=skipped_integration,
                 target_type=ContentType.INTEGRATION,
+                target_fromversion=self.fromversion,
+                type="Skipped integration",
             )
         return result
 

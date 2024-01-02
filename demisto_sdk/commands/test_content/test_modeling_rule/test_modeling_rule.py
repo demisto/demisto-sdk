@@ -1517,7 +1517,7 @@ def test_modeling_rule(
         collector_token=collector_token,  # type: ignore[arg-type]
     )
     xsiam_client = XsiamApiClient(xsiam_client_cfg)
-    tenant_demisto_version = xsiam_client.get_demisto_version()
+    tenant_demisto_version: Version = xsiam_client.get_demisto_version()
     for i, modeling_rule_directory in enumerate(inputs, start=1):
         logger.info(
             f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
@@ -1533,7 +1533,7 @@ def test_modeling_rule(
             ctx,
             delete_existing_dataset,
             xsiam_client=xsiam_client,
-            tenant_demisto_version=Version(tenant_demisto_version),
+            tenant_demisto_version=tenant_demisto_version,
         )
         if success:
             logger.info(

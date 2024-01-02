@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 import requests
+from packaging.version import Version
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 from requests.exceptions import ConnectionError, Timeout
@@ -131,7 +132,7 @@ class XsiamApiClient(XsiamApiInterface):
 
     @lru_cache
     @retry(times=5, exceptions=(RuntimeError, ConnectionError, Timeout))
-    def get_demisto_version(self) -> str:
+    def get_demisto_version(self) -> Version:
         endpoint = urljoin(self.base_url, "xsoar/about")
         response = self._session.get(endpoint)
         response.raise_for_status()
@@ -143,7 +144,7 @@ class XsiamApiClient(XsiamApiInterface):
             f"[green]Demisto version of XSIAM tenant is {demisto_version}[/green]",
             extra={"markup": True},
         )
-        return demisto_version
+        return Version(demisto_version)
 
     @property
     def installed_packs(self) -> List[Dict[str, Any]]:

@@ -19,7 +19,7 @@ def generate_test_configuration(
     pid_threshold: int = None,
     is_mockable: bool = None,
     runnable_on_docker_only: bool = None,
-    marketplaces: Union[list, str] = None
+    marketplaces: Union[list, str] = None,
 ) -> dict:
     playbook_config = {
         "playbookID": playbook_id,
@@ -233,7 +233,12 @@ def get_mocked_build_context(
     return BuildContext(kwargs, logging_manager)
 
 
-def create_xsiam_build(mocker, tmp_file, content_conf_json: dict = None, filtered_tests_content: list = None):
+def create_xsiam_build(
+    mocker,
+    tmp_file,
+    content_conf_json: dict = None,
+    filtered_tests_content: list = None,
+):
     logging_manager = ParallelLoggingManager(tmp_file / "log_file.log")
     conf_path = tmp_file / "conf_path"
     conf_path.write_text(json.dumps(content_conf_json or generate_content_conf_json()))
@@ -483,14 +488,19 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
         - Ensure that the playbook with marketplaces mismatch is skipped
         - Ensure that the playbook with the marketplaces match is not skipped
     """
-    filtered_tests = ["xsiam_playbook_with_marketplaces_mismatch", "xsoar_playbook_with_marketplaces_mismatch"]
+    filtered_tests = [
+        "xsiam_playbook_with_marketplaces_mismatch",
+        "xsoar_playbook_with_marketplaces_mismatch",
+    ]
     tests = [
         generate_test_configuration(
-            playbook_id="xsiam_playbook_with_marketplaces_mismatch", marketplaces="marketplacev2"
+            playbook_id="xsiam_playbook_with_marketplaces_mismatch",
+            marketplaces="marketplacev2",
         ),
         generate_test_configuration(
-            playbook_id="xsoar_playbook_with_marketplaces_mismatch", marketplaces="xsoar"
-        )
+            playbook_id="xsoar_playbook_with_marketplaces_mismatch",
+            marketplaces="xsoar",
+        ),
     ]
     content_conf_json = generate_content_conf_json(tests=tests)
 
@@ -498,19 +508,31 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        filtered_tests_content=filtered_tests
+        filtered_tests_content=filtered_tests,
     )
-    assert "xsiam_playbook_with_marketplaces_mismatch" in xsoar_build_context.tests_data_keeper.skipped_tests
-    assert "xsoar_playbook_with_marketplaces_mismatch" not in xsoar_build_context.tests_data_keeper.skipped_tests
+    assert (
+        "xsiam_playbook_with_marketplaces_mismatch"
+        in xsoar_build_context.tests_data_keeper.skipped_tests
+    )
+    assert (
+        "xsoar_playbook_with_marketplaces_mismatch"
+        not in xsoar_build_context.tests_data_keeper.skipped_tests
+    )
 
     xsiam_build_context = create_xsiam_build(
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
-        filtered_tests_content=filtered_tests
+        filtered_tests_content=filtered_tests,
     )
-    assert "xsiam_playbook_with_marketplaces_mismatch" not in xsiam_build_context.tests_data_keeper.skipped_tests
-    assert "xsoar_playbook_with_marketplaces_mismatch" in xsiam_build_context.tests_data_keeper.skipped_tests
+    assert (
+        "xsiam_playbook_with_marketplaces_mismatch"
+        not in xsiam_build_context.tests_data_keeper.skipped_tests
+    )
+    assert (
+        "xsoar_playbook_with_marketplaces_mismatch"
+        in xsiam_build_context.tests_data_keeper.skipped_tests
+    )
 
 
 def test_unmockable_playbook_configuration(mocker, tmp_path):

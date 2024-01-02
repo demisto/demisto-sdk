@@ -350,23 +350,22 @@ class DockerHubClient:
         Args:
             docker_image: The docker-image name, e.g: demisto/pan-os-python
         """
-        image_tags = self.get_image_tags(docker_image)
-        if not image_tags:
+        raw_image_tags = self.get_image_tags(docker_image)
+        if not raw_image_tags:
             raise RuntimeError(
                 f"The docker image {docker_image} does not have any tags"
             )
 
-        def is_valid_tag(tag) -> bool:
+        version_tags = []
+        for tag in raw_image_tags:
             try:
-                Version(tag)
-                return True
+                version_tags.append(Version(tag))
             except InvalidVersion:
                 logger.debug(
-                    f"The tag {tag} has invalid version for docker-image {docker_image}"
+                    f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
-                return False
 
-        return max([Version(tag) for tag in image_tags if is_valid_tag(tag)])
+        return max(version_tags)
 
     def get_repository_images(
         self, repo: str = DEFAULT_REPOSITORY

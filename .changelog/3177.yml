@@ -1,4 +1,4 @@
 changes:
-- description: enter description about this PR
-  type: fix
+- description: feature description
+  type: feature
 pr_number: 3177

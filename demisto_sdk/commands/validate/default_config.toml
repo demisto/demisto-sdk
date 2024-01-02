@@ -36,7 +36,7 @@ ignorable_errors = [
 [Custom_Categories]
 select = ["PA125"]
 warning = []
-ignorable_errors = []
+ignorable_errors = ["PA125"]
 
 
 [support_level]

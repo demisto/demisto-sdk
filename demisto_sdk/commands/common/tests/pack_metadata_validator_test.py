@@ -4,7 +4,6 @@ from typing import Dict
 import pytest
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PACK_METADATA_NAME,

@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import re
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
-    EXCLUDED_DISPLAY_NAME_WORDS,
-    INCORRECT_PACK_NAME_PATTERN,
     INCORRECT_PACK_NAME_WORDS,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -27,7 +24,9 @@ class IsValidPackNameValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.name, ", ".join(INCORRECT_PACK_NAME_WORDS)),
+                message=self.error_message.format(
+                    content_item.name, ", ".join(INCORRECT_PACK_NAME_WORDS)
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

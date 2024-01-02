@@ -1,7 +1,7 @@
 import re
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -26,7 +26,7 @@ class YAMLContentItemParser(ContentItemParser):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.path = self.get_path_with_suffix(".yml")
-        self.yml_data: Dict[str, Any] = self.get_yaml(git_sha=git_sha)
+        self.git_sha = git_sha
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(
@@ -112,7 +112,6 @@ class YAMLContentItemParser(ContentItemParser):
                     target_type=ContentType.TEST_PLAYBOOK,
                 )
 
-    def get_yaml(
-        self, git_sha: Optional[str] = None
-    ) -> Dict[str, Union[str, List[str]]]:
-        return get_yaml(str(self.path), git_sha=git_sha)
+    @property
+    def yml_data(self) -> Dict:
+        return get_yaml(str(self.path), git_sha=self.git_sha)

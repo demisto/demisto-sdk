@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added the `clean` flag to **setup-env** to delete
 
 ## 1.25.1
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.

@@ -1,4 +1,10 @@
 # Changelog
+## 2.11.0
+* breaking description [#3923](https://github.com/demisto/demisto-sdk/pull/3923)
+* feature description [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+* fix description [#3921](https://github.com/demisto/demisto-sdk/pull/3921)
+* internal description [#3920](https://github.com/demisto/demisto-sdk/pull/3920)
+
 ## Unreleased
 
 ## 1.25.1

@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
+* Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
 
 ## 1.25.1
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.

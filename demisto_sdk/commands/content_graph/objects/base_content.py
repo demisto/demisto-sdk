@@ -187,6 +187,13 @@ class BaseContent(BaseNode):
         data: dict,
         predefined_keys_to_keep: Optional[Tuple[str]] = None,
     ):
+        """Save the class vars into the dict data.
+
+        Args:
+            path (Path): The path of the file to save the new data into.
+            data (dict): the data dict.
+            predefined_keys_to_keep (Optional[Tuple[str]], optional): keys to keep even if they're not defined.
+        """
         for key, val in self.field_mapping.items():
             attr = getattr(self, key)
             if key == "marketplaces":

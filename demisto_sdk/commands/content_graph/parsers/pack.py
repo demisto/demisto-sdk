@@ -286,7 +286,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 )
         except AttributeError:
             raise AttributeError(
-                f"Couldn't parse dependencies section for pack {self.name} pack_metadata. Dependencies section must be a dict."
+                f"Couldn't parse dependencies section for pack {self.name} pack_metadata. Dependencies section must be a valid dictionary."
             )
 
         if (
@@ -345,7 +345,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         try:
             with open(path) as f:
                 self.pack_readme = f.read()
-        except Exception:
+        except FileNotFoundError:
             raise NotAContentItemException(
                 f"Couldn't find README.md file for pack at path {self.path}.\nPlease make sure the file exists."
             )

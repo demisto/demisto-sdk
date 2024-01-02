@@ -196,7 +196,7 @@ def create_metadata_object(
     return PackParser(Path(pack.path))
 
 
-def remove_fields_from_dict(json_content, fields_to_delete):
+def remove_fields_from_dict(json_content: dict, fields_to_delete: Optional[List[str]] = None):
     if fields_to_delete:
         for field in fields_to_delete:
             del json_content[field]

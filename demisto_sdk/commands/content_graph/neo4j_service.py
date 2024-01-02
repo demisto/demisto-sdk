@@ -1,5 +1,4 @@
 import hashlib
-import logging
 import os
 import shutil
 from pathlib import Path
@@ -93,8 +92,6 @@ def _docker_start():
     (REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER).mkdir(parents=True, exist_ok=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER).mkdir(parents=True, exist_ok=True)
     # suppress logs in docker init to avoid spamming
-    neo4j_log = logging.getLogger("neo4j")
-    neo4j_log.setLevel(logging.CRITICAL)
 
     docker_client.containers.run(
         image=NEO4J_SERVICE_IMAGE,
@@ -125,9 +122,6 @@ def _docker_start():
         },
         user=f"{os.getuid()}:{os.getgid()}",
     )
-    # reset logger to warning after neo4j is started
-    neo4j_log.setLevel(logging.WARNING)
-
     logger.debug("Neo4j service started successfully")
 
 

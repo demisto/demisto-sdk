@@ -1,10 +1,11 @@
+import inspect
 import shutil
 import urllib.parse
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
@@ -23,6 +24,7 @@ from demisto_sdk.commands.common.files.errors import (
     GitFileReadError,
     HttpFileReadError,
     LocalFileReadError,
+    UnknownFileError,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -102,14 +104,37 @@ class File(ABC, BaseModel):
         )
 
     @classmethod
+    @abstractmethod
+    def is_model_type_by_path(cls, path: Path) -> bool:
+        raise NotImplementedError
+
+    @classmethod
+    def __file_factory(cls, path: Path) -> Type["File"]:
+        def _file_factory(_cls):
+            for subclass in _cls.__subclasses__():
+                if not inspect.isabstract(subclass) and subclass.is_model_type_by_path(
+                    path
+                ):
+                    return subclass
+                if _subclass := _file_factory(subclass):
+                    return _subclass
+            return None
+
+        if file_object := _file_factory(cls):
+            return file_object
+
+        raise UnknownFileError(f"Could not identify file {path}")
+
+    @classmethod
     @lru_cache
-    def from_path(
+    def _from_path(
         cls,
         input_path: Union[Path, str],
         git_util: Optional[GitUtil] = None,
         **kwargs,
     ) -> "File":
         """
+        Returns the correct file model
 
         Args:
             input_path: the file input path
@@ -119,11 +144,6 @@ class File(ABC, BaseModel):
         Returns:
             File: any subclass of the File model.
         """
-        if cls is File:
-            raise ValueError(
-                "when reading from file content please specify concrete class"
-            )
-
         input_path = Path(input_path)
 
         model_attributes: Dict[str, Any] = {
@@ -133,9 +153,12 @@ class File(ABC, BaseModel):
 
         model_attributes.update(kwargs)
 
-        model = cls.parse_obj(model_attributes)
+        if cls is File:
+            model = cls.__file_factory(input_path)
+        else:
+            model = cls
         logger.debug(f"Using model {model} for file {input_path}")
-        return model
+        return model.parse_obj(model_attributes)
 
     @classmethod
     @lru_cache
@@ -197,10 +220,10 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_local_path.cache_clear()
-        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
-        return model.read_local_file()
+        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
+        return model.__read_local_file()
 
-    def read_local_file(self) -> Any:
+    def __read_local_file(self) -> Any:
         try:
             return self.load(self.content)
         except FileReadError:
@@ -236,10 +259,10 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
-        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
-        return model.read_git_file(tag, from_remote=from_remote)
+        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
+        return model.__read_git_file(tag, from_remote=from_remote)
 
-    def read_git_file(
+    def __read_git_file(
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
     ) -> Any:
         try:
@@ -425,6 +448,7 @@ class File(ABC, BaseModel):
         output_path: Union[Path, str],
         encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
+        **kwargs,
     ):
         """
         Writes a file into to the local file system.
@@ -433,10 +457,8 @@ class File(ABC, BaseModel):
             data: the data to write
             output_path: the output path to write to
             encoding: any custom encoding if needed
-            handler:
+            handler: whether a custom handler is required, if not takes the default.
 
-        Returns:
-            Any: the file content in the desired format
         """
         output_path = Path(output_path)
 
@@ -450,23 +472,27 @@ class File(ABC, BaseModel):
         # builds up the object without validations, when writing file, no need to init path and git_util
         model = cls.construct(**model_attributes)
         try:
-            model.write(data, path=output_path, encoding=encoding)
+            model.write(data, path=output_path, encoding=encoding, **kwargs)
         except Exception as e:
             logger.exception(f"Could not write {output_path} as {cls.__name__} file")
             raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
-    def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
+    def _write(
+        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
+    ) -> None:
         raise NotImplementedError(
-            "_write must be implemented for each File concrete object"
+            "__write must be implemented for each File concrete object"
         )
 
-    def write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
+    def write(
+        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
+    ) -> None:
         def _write_safe_unicode():
-            self._write(data, path=path)
+            self._write(data, path=path, **kwargs)
 
         if encoding:
-            self._write(data, path=path, encoding=encoding)
+            self._write(data, path=path, encoding=encoding, **kwargs)
         else:
             try:
                 _write_safe_unicode()

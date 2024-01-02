@@ -1,0 +1,4 @@
+global_rule_id: correlation_rule_id
+rules: null
+name: correlation_rule_name
+fromversion: 6.10.0

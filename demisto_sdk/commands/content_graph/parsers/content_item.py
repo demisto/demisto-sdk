@@ -99,17 +99,21 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
+        from demisto_sdk.commands.content_graph.common import ContentType
+
         logger.debug(f"Parsing content item {path}")
         if not ContentItemParser.is_content_item(path):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
-            else:
-                raise NotAContentItemException
         try:
             content_type: ContentType = ContentType.by_path(path)
-        except ValueError as e:
-            logger.error(f"Could not determine content type for {path}: {e}")
-            raise InvalidContentItemException from e
+        except ValueError:
+            try:
+                optional_content_type = ContentType.by_schema(path)
+            except ValueError as e:
+                logger.error(f"Could not determine content type for {path}: {e}")
+                raise InvalidContentItemException from e
+            content_type = optional_content_type
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
@@ -237,6 +241,31 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(
             path
         )
+
+    def get_path_with_suffix(self, suffix: str) -> Path:
+        """Sets the path of the content item with a given suffix.
+
+        Args:
+            suffix (str): The suffix of the content item (JSON or YAML).
+
+        """
+        if not self.path.is_dir():
+            if not self.path.exists() or not self.path.suffix == suffix:
+                raise NotAContentItemException
+            path = self.path
+        else:
+            paths = [path for path in self.path.iterdir() if path.suffix == suffix]
+            if not paths:
+                raise NotAContentItemException
+            if len(paths) == 1:
+                path = paths[0]
+            else:
+                for path in paths:
+                    if path == self.path / f"{self.path.name}{suffix}":
+                        break
+                else:
+                    path = paths[0]
+        return path
 
     def should_skip_parsing(self) -> bool:
         """Returns true if any of the minimal conditions for parsing is not met.

@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
@@ -60,6 +61,14 @@ class ContentItem(BaseContent):
         if not CONTENT_PATH.name:
             return CONTENT_PATH / v
         return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
+
+    @staticmethod
+    @abstractmethod
+    def match(_dict: dict, path: Path) -> bool:
+        """
+        This function checks whether the file in the given path is of the content item type.
+        """
+        pass
 
     @property
     def pack_id(self) -> str:
@@ -206,6 +215,10 @@ class ContentItem(BaseContent):
         return get_file(self.path, keep_order=False)
 
     @property
+    def text(self) -> str:
+        return get_file(self.path, return_content=True)
+
+    @property
     def ordered_data(self) -> dict:
         return get_file(self.path, keep_order=True)
 
@@ -221,9 +234,7 @@ class ContentItem(BaseContent):
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(
-            data, current_marketplace, self.marketplaces
-        )
+        return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
         self,

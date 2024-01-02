@@ -12,7 +12,7 @@ mapping:
     type: bool
   elasticcommonfields:
     type: map
-    allowempty: True
+    allowempty: true
   id:
     type: str
     required: true
@@ -52,25 +52,25 @@ mapping:
         type: any
         required: false
   outputs:
-      type: seq
-      sequence:
-        - include: output_schema
-  outputsSections:
     type: seq
     sequence:
-      - include: outputsSection_schema
+    - include: output_schema
+  outputSections:
+    type: seq
+    sequence:
+    - include: outputsSection_schema
   inputs:
     type: seq
     sequence:
-      - include: input_schema
-  inputsSections:
+    - include: input_schema
+  inputSections:
     type: seq
     sequence:
-      - include: inputsSection_schema
+    - include: inputsSection_schema
   tags:
     type: seq
     sequence:
-      - type: str
+    - type: str
   tasks:
     type: map
     required: true
@@ -91,28 +91,28 @@ mapping:
             enum: ['regular', 'playbook', 'condition', 'start', 'title', 'section', 'standard', 'collection']
           form:
             type: map
-            allowempty: True
+            allowempty: true
           message:
             type: map
-            allowempty: True
+            allowempty: true
           defaultassigneecomplex:
             type: map
-            allowempty: True
+            allowempty: true
           sla:
             type: map
-            allowempty: True
+            allowempty: true
           slareminder:
             type: map
-            allowempty: True
+            allowempty: true
           quietmode:
             type: int
           restrictedcompletion:
             type: bool
           scriptarguments:
             type: map
-            allowempty: True
+            allowempty: true
           timertriggers:
-            allowempty: True
+            allowempty: true
             type: seq
             sequence:
             - include: timertriggers_schema
@@ -142,18 +142,18 @@ mapping:
               customfields:
                 type: map
                 required: false
-                allowempty: True
+                allowempty: true
               occurred:
                 required: false
                 type: map
-                allowempty: True
+                allowempty: true
                 mapping:
                   simple:
                     type: text
               tags:
                 type: map
                 required: false
-                allowempty: True
+                allowempty: true
                 mapping:
                   simple:
                     type: text
@@ -204,13 +204,33 @@ mapping:
                 required: true
               elasticcommonfields:
                 type: map
-                allowempty: True
+                allowempty: true
               brand:
                 type: text
                 required: true
               issystemtask:
                 type: bool
               clonedfrom:
+                type: str
+              name:xsoar:
+                type: str
+              name:marketplacev2:
+                type: str
+              name:xpanse:
+                type: str
+              name:xsoar_saas:
+                type: str
+              name:xsoar_on_prem:
+                type: str
+              description:xsoar:
+                type: str
+              description:marketplacev2:
+                type: str
+              description:xpanse:
+                type: str
+              description:xsoar_saas:
+                type: str
+              description:xsoar_on_prem:
                 type: str
           note:
             type: bool
@@ -220,7 +240,7 @@ mapping:
               regex;(.+):
                 type: seq
                 sequence:
-                  - type: str
+                - type: str
           loop:
             type: map
             mapping:
@@ -229,14 +249,14 @@ mapping:
               builtincondition:
                 type: seq
                 sequence:
-                  - include: arg_filters_schema
+                - include: arg_filters_schema
               scriptId:
                 type: str
               scriptId_x2:
                 type: str
               scriptArguments:
                 type: map
-                allowempty: True
+                allowempty: true
               exitCondition:
                 type: str
               max:
@@ -248,14 +268,14 @@ mapping:
           conditions:
             type: seq
             sequence:
-              - include: condition_schema
+            - include: condition_schema
           view:
             type: str
             required: true
           results:
             type: seq
             sequence:
-              - type: str
+            - type: str
           continueonerror:
             type: bool
           continueonerrortype:
@@ -268,8 +288,8 @@ mapping:
           fieldMapping:
             type: seq
             sequence:
-              - type: map
-                allowempty: True
+            - type: map
+              allowempty: true
 
   system:
     type: bool
@@ -291,14 +311,34 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
 
 
 # playbook->tasks
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
 schema;task_schema:
   type: map
-  allowempty: True
+  allowempty: true
 
 # playbook->inputs
 schema;input_schema:
@@ -320,6 +360,26 @@ schema;input_schema:
       type: any
 
 # playbook->inputSections
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
+    required:xsoar:
+      type: bool
+    required:marketplacev2:
+      type: bool
+    required:xpanse:
+      type: bool
+    required:xsoar_saas:
+      type: bool
+    required:xsoar_on_prem:
+      type: bool
 schema;inputsSection_schema:
   type: map
   mapping:
@@ -332,9 +392,29 @@ schema;inputsSection_schema:
     inputs:
       type: seq
       sequence:
-        - type: str
+      - type: str
 
 # playbook->outputs
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
 schema;output_schema:
   type: map
   mapping:
@@ -349,7 +429,17 @@ schema;output_schema:
     description_x2:
       type: str
 
-# playbook->outputsSections
+# playbook->outputSections
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
 schema;outputsSection_schema:
   type: map
   mapping:
@@ -362,9 +452,29 @@ schema;outputsSection_schema:
     outputs:
       type: seq
       sequence:
-        - type: str
+      - type: str
 
 # playbook->tasks->conditions
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
 schema;condition_schema:
   type: map
   mapping:
@@ -374,13 +484,13 @@ schema;condition_schema:
     condition:
       type: seq
       sequence:
-        - include: arg_filters_schema
+      - include: arg_filters_schema
 
 
 schema;arg_filters_schema:
   type: seq
   sequence:
-    - include: arg_filter_schema
+  - include: arg_filter_schema
 
 schema;arg_filter_schema:
   type: map

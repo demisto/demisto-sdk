@@ -20,20 +20,29 @@ class IndicatorFieldParser(
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
-        self.cli_name = self.json_data.get("cliName")
-        self.type = self.json_data.get("type")
         self.associated_to_all = self.json_data.get("associatedToAll")
 
         self.connect_to_dependencies()
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "cliName"})
+        super().field_mapping.update(
+            {"object_id": "id", "cli_name": "cliName", "type": "type"}
+        )
         return super().field_mapping
 
     @property
+    def cli_name(self) -> Optional[str]:
+        return get_value(self.json_data, self.field_mapping.get("cli_name", ""))
+
+    @property
+    def type(self) -> str:
+        return get_value(self.json_data, self.field_mapping.get("type", ""))
+
+    @property
     def object_id(self) -> Optional[str]:
-        return get_value(self.json_data, self.field_mapping.get("object_id", ""))
+        id = get_value(self.json_data, self.field_mapping.get("object_id", ""))
+        return (id.lower().replace("_", "").replace("-", ""))[len("indicator") :]
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

@@ -1027,6 +1027,9 @@ class OldValidateManager:
             FileType.MODELING_RULE,
             FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
+            FileType.ASSETS_MODELING_RULE,
+            FileType.ASSETS_MODELING_RULE_XIF,
+            FileType.MODELING_RULE_TEST_DATA,
         ):
             logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
@@ -2563,6 +2566,7 @@ class OldValidateManager:
             FileType.XIF_FILE,
             FileType.MODELING_RULE_XIF,
             FileType.PARSING_RULE_XIF,
+            FileType.ASSETS_MODELING_RULE_XIF,
         ]:
             if not (
                 str(file_path).endswith("_test.py")

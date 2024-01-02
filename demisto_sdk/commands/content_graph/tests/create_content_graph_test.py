@@ -741,15 +741,19 @@ class TestCreateContentGraph:
                                 content_item_source.tested_by[0].object_id
                                 == content_item_target.object_id
                             )
+            sample_pack = next(p for p in packs if p.object_id == "SamplePack")
+            sample_pack2 = next(p for p in packs if p.object_id == "SamplePack2")
+            sample_pack3 = next(p for p in packs if p.object_id == "SamplePack3")
+            assert sample_pack.depends_on[0].content_item_to == sample_pack2
+            assert not sample_pack.depends_on[
+                0
+            ].is_test  # this is not a test dependency
 
-            assert packs[0].depends_on[0].content_item_to == packs[1]
-            assert not packs[0].depends_on[0].is_test  # this is not a test dependency
-
-            for p in packs[1].depends_on:
-                if p.content_item_to == packs[2]:
+            for p in sample_pack2.depends_on:
+                if p.content_item_to == sample_pack3:
                     # regular dependency
                     assert not p.is_test
-                elif p.content_item_to == packs[0]:
+                elif p.content_item_to == sample_pack:
                     # test dependency
                     assert p.is_test
                 else:
@@ -761,12 +765,15 @@ class TestCreateContentGraph:
                 content_type=ContentType.PACK,
                 all_level_dependencies=True,
             )
-            depends_on_pack1 = [r for r in packs[0].depends_on]
+            sample_pack = next(p for p in packs if p.object_id == "SamplePack")
+            sample_pack2 = next(p for p in packs if p.object_id == "SamplePack2")
+            sample_pack3 = next(p for p in packs if p.object_id == "SamplePack3")
+            depends_on_pack1 = [r for r in sample_pack.depends_on]
             assert depends_on_pack1
             for depends in depends_on_pack1:
-                if depends.content_item_to == packs[1]:
+                if depends.content_item_to == sample_pack2:
                     assert depends.is_direct
-                elif depends.content_item_to == packs[2]:
+                elif depends.content_item_to == sample_pack3:
                     assert not depends.is_direct
                 else:
                     assert False

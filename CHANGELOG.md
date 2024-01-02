@@ -1,5 +1,35 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
+* Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
+
+## 1.25.1
+* Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
+* Fixed an issue in **validate** where there is a specific value for marketplace in `isFetch` parameter.
+* Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
+* Added support for `excluding_support_level` property in **pre-commit** command to exclude specific support level from running hooks.
+* Added support for the `List` content-item to **prepare-content** and **split**.
+* **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
+* Fixed an issue in **generate-docs** where the description field was missing from an argument.
+* Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
+
+## 1.25.0
+* Added support to detect automatically the playground-id when running cli commands in xsoar-6.
+* Added support to return war-room entries when running cli commands.
+* Added support to automatically detect the correct file model by file path when reading files.
+* Fixed an issue where **run-playbook** command didn't work if the *url* argument was not provided.
+* Fixed an issue where **validate** command failed on valid complex layout rules and triggers.
+* Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
+* Added support for `skip` property in **pre-commit** hooks.
+* **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
+* Added the *IN150* and *IN161* errors to *allowed ignore errors* list.
+* Added support for `env`, `copy_files` property in **pre-commit** docker hooks.
+* Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
+* **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.
+* **Breaking change**: Removed the `--unit-test` argument in **pre-commit**. To skip unit tests, run with `--no-docker` or with `skip=pytest-in-docker`,
+* Fixed an issue where SDK commands were failing to execute correctly when supplied a path outside the Content repository.
+
+## 1.24.0
 * Fixed an issue where the error was not clear when trying to retrieve the server version.
 * Fixed an issue in **prepare-content** where tags were added to metadata because of test scripts.
 * Fixed an issue in **coverage-analyze** to exit gracefully in case that the .coverage file doesn't exist.
@@ -8,9 +38,9 @@
 * Fixed an issue where **run-playbook** command did not work.
 * Fixed an issue in **setup-env** command where the virtual environment failed to set up.
 * Fixed an issue in **pre-commit** command where `False` properties were deleted.
-* Fixed an issue in **coverage-analyze** command where the `report_dir` does not exist.
 * Added support for json5 file, allowing to write files and read files from specific git branches, local file system, or from any remote api .
 * Fixed an issue in **upload** command where the `marketplace` field was not taken into consideration when uploading single content-items.
+* Added support for *Assets Modeling Rule* new content item in all `demisto-sdk` commands.
 
 ## 1.23.0
 * Added support for inputs sections and outputs sections in a playbook.

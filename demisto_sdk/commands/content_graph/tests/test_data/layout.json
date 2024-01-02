@@ -1,0 +1,16 @@
+{
+    "fromVersion": "6.0.0",
+    "detailsV2": {
+        "tabs": []
+    },
+    "edit": {
+        "sections": []
+    },
+    "group": "incident",
+    "id": "Test",
+    "name": "Test",
+    "system": false,
+    "version": -1,
+    "description": "",
+    "marketplaces": ["xsoar"]
+}

@@ -24,6 +24,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 class IntegrationScript(ContentItem):
     type: str
+    subtype: Optional[str]
     docker_image: Optional[str]
     alt_docker_images: List[str] = []
     description: Optional[str] = Field("")
@@ -36,7 +37,9 @@ class IntegrationScript(ContentItem):
         """
         Get the python version from the script/integration docker-image in case it's a python image
         """
-        if python_version := get_python_version(self.docker_image):
+        if self.type == "python" and (
+            python_version := get_python_version(self.docker_image)
+        ):
             return str(python_version)
 
         return None

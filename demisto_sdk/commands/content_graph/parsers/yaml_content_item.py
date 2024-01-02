@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_value, get_yaml, get_yml_paths_in_dir
+from demisto_sdk.commands.common.tools import get_value, get_yaml
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
@@ -25,6 +25,7 @@ class YAMLContentItemParser(ContentItemParser):
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces)
+        self.path = self.get_path_with_suffix(".yml")
         self.yml_data: Dict[str, Any] = self.get_yaml(git_sha=git_sha)
 
         if not isinstance(self.yml_data, dict):
@@ -114,12 +115,4 @@ class YAMLContentItemParser(ContentItemParser):
     def get_yaml(
         self, git_sha: Optional[str] = None
     ) -> Dict[str, Union[str, List[str]]]:
-        if not self.path.is_dir():
-            yaml_path = self.path.as_posix()
-        else:
-            _, yaml_path = get_yml_paths_in_dir(self.path.as_posix())
-        if not yaml_path:
-            raise NotAContentItemException
-
-        self.path = Path(yaml_path)
-        return get_yaml(self.path.as_posix(), keep_order=False, git_sha=git_sha)
+        return get_yaml(str(self.path), git_sha=git_sha)

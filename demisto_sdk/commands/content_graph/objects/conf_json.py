@@ -20,6 +20,7 @@ class StrictBaseModel(BaseModel):
 
 class ConfJsonNode(BaseNode, content_type=ContentType.CONF_JSON):
     path: Path
+    fromversion: str
 
     def to_node(self):
         return Nodes(self.to_dict())

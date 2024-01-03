@@ -405,8 +405,16 @@ class Initializer:
                 invalid_content_items.append(file_path)
         return basecontent_with_path_set
 
-    def filter_files(self, files_list):
+    def filter_files(self, files_set: Set[Path]):
+        """Filter out all the files with suffixes that are not supported by BaseContent.
+
+        Args:
+            files_set (Set[Path]): The set of paths to filter
+
+        Returns:
+            Set: The set of filtered files.
+        """
         extensions_list_to_filter = [".png", ".md", ".svg"]
-        return [
-            file for file in files_list if file.suffix not in extensions_list_to_filter
-        ]
+        return set(
+            [file for file in files_set if file.suffix not in extensions_list_to_filter]
+        )

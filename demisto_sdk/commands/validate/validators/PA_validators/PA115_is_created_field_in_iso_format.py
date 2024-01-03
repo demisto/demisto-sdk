@@ -4,8 +4,8 @@ from typing import Iterable, List
 
 from dateutil import parser
 
+from demisto_sdk.commands.common.tools import check_timestamp_format
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.validate.tools import check_timestamp_format
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -38,7 +38,7 @@ class IsCreatedFieldInISOFormatValidator(BaseValidator[ContentTypes]):
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        content_item.created = parser.parse(content_item.created).isoformat() + "Z"  # type: ignore
+        content_item.created = parser.parse(content_item.created).isoformat() + "Z"  # type: ignore[arg-type]
         return FixResult(
             validator=self,
             message=self.fix_message.format(content_item.created),

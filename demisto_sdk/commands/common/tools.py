@@ -77,6 +77,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
+    ISO_TIMESTAMP_FORMAT,
     JOBS_DIR,
     LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
@@ -4341,3 +4342,12 @@ def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> 
 
         raise SecretManagerException
     return payload["params"]
+
+
+def check_timestamp_format(timestamp):
+    """Check that the timestamp is in ISO format"""
+    try:
+        datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)
+        return True
+    except ValueError:
+        return False

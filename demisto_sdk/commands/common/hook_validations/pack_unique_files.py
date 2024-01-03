@@ -54,6 +54,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    check_timestamp_format,
     extract_error_codes_from_file,
     get_core_pack_list,
     get_json,
@@ -62,7 +63,6 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-from demisto_sdk.commands.validate.tools import check_timestamp_format
 
 CONTRIBUTORS_LIST = ["partner", "developer", "community"]
 SUPPORTED_CONTRIBUTORS_LIST = ["partner", "developer"]

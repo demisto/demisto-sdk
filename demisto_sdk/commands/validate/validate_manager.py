@@ -75,6 +75,9 @@ class ValidateManager:
                                 validator.fix(validation_result.content_object)  # type: ignore
                             )
                         except Exception:
+                            logger.error(
+                                f"Could not fix {validation_result.validator.error_code} error for content item {str(validation_result.content_object.path)}"
+                            )
                             self.validation_results.append_validation_results(
                                 validation_result
                             )

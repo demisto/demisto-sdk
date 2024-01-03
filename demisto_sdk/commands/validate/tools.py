@@ -1,8 +1,6 @@
 import re
-from datetime import datetime
 from typing import Set
 
-from demisto_sdk.commands.common.constants import ISO_TIMESTAMP_FORMAT
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 
 
@@ -34,12 +32,3 @@ def collect_all_inputs_from_inputs_section(content_item: Playbook) -> Set[str]:
     inputs: dict = content_item.data.get("inputs", {})
     inputs_keys = [input["key"].strip() for input in inputs if input["key"]]
     return set(inputs_keys)
-
-
-def check_timestamp_format(timestamp):
-    """Check that the timestamp is in ISO format"""
-    try:
-        datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)
-        return True
-    except ValueError:
-        return False

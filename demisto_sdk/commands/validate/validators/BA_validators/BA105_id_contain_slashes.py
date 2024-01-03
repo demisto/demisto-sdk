@@ -72,7 +72,7 @@ class IDContainSlashesValidator(BaseValidator[ContentTypes]):
     error_code = "BA105"
     description = "Validate that the content item ID doesn't include any slashes (/)."
     error_message = (
-        "The {0} ID field ({1}) include a slash (/), please make sure to remove it."
+        "The {0} ID field ({1}) include a slash (/), make sure to remove it."
     )
     fix_message = "Removed slashes (/) from ID, new ID is {0}."
     related_field = "ID"

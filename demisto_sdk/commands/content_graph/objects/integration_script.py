@@ -71,7 +71,7 @@ class IntegrationScript(ContentItem):
     def get_supported_native_images(
         self, marketplace: MarketplaceVersions, ignore_native_image: bool = False
     ) -> List[str]:
-        if marketplace == MarketplaceVersions.XSOAR and not ignore_native_image:
+        if not ignore_native_image:
             if not Path(f"Tests/{NATIVE_IMAGE_FILE_NAME}").exists():
                 logger.debug(f"The {NATIVE_IMAGE_FILE_NAME} file could not be found.")
                 return []

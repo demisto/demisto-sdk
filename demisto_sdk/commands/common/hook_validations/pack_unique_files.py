@@ -66,6 +66,7 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
+from demisto_sdk.commands.validate.validators.tools import extract_non_approved_tags, filter_by_marketplace
 
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
@@ -861,8 +862,8 @@ class PackUniqueFilesValidator(BaseValidator):
         non_approved_tags = set()
         marketplaces = [x.value for x in list(MarketplaceVersions)]
         try:
-            pack_tags, is_valid_tag_prefixes = self.filter_by_marketplace(marketplaces)
-            non_approved_tags = self.extract_non_approved_tags(pack_tags, marketplaces)
+            pack_tags, is_valid_tag_prefixes = filter_by_marketplace(marketplaces, self._read_metadata_content())
+            non_approved_tags = extract_non_approved_tags(pack_tags, marketplaces)
             if non_approved_tags:
                 if self._add_error(
                     Errors.pack_metadata_non_approved_tags(non_approved_tags),
@@ -878,48 +879,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return is_valid_tag_prefixes
 
-    def filter_by_marketplace(self, marketplaces):
-        """Filtering pack_metadata tags by marketplace"""
-        pack_meta_file_content = self._read_metadata_content()
-
-        pack_tags: Dict[str, List[str]] = {}
-        for marketplace in marketplaces:
-            pack_tags[marketplace] = []
-        pack_tags["common"] = []
-
-        is_valid = True
-        for tag in pack_meta_file_content.get("tags", []):
-            if ":" in tag:
-                tag_data = tag.split(":")
-                tag_marketplaces = tag_data[0].split(",")
-
-                try:
-                    for tag_marketplace in tag_marketplaces:
-                        pack_tags[tag_marketplace].append(tag_data[1])
-                except KeyError:
-                    logger.warning(
-                        "[yellow]You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
-                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.[/yellow]'
-                    )
-                    is_valid = False
-
-            else:
-                pack_tags["common"].append(tag)
-
-        return pack_tags, is_valid
-
-    def extract_non_approved_tags(self, pack_tags, marketplaces) -> Set[str]:
-        approved_tags = tools.get_approved_tags_from_branch()
-
-        non_approved_tags = set(pack_tags.get("common", [])) - set(
-            approved_tags.get("common", [])
-        )
-        for marketplace in marketplaces:
-            non_approved_tags |= set(pack_tags.get(marketplace, [])) - set(
-                approved_tags.get(marketplace, [])
-            )
-
-        return non_approved_tags
 
     @error_codes("RN106,PA131")
     def _is_right_version(self):

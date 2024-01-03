@@ -476,9 +476,12 @@ class TestPlaybook:
 
             return False
 
-        def marketplaces_match_server_type():
+        def marketplaces_match_server_type() -> bool:
             """
-            Checks if the test has a marketplace value, and if so- if it suits the server machine we are on.
+            Checks if the test has a marketplace value, and if so- if it matches the server machine we are on.
+            A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
+            be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
+            machine marketplace. This function checks that the entry provided is the exact one that needs to run.
             """
             test_server_types: Set[str] = set()
             for marketplace in self.configuration.marketplaces or []:
@@ -493,7 +496,7 @@ class TestPlaybook:
                 f"in {self.build_context.server_type=}"
             )
             if not test_server_types:
-                return True
+                return True  # test doesn't have a marketplace value so it runs on all machines
 
             instance_names_log_message = (
                 f" for instance names: {', '.join(self.configuration.test_instance_names)}"
@@ -505,7 +508,7 @@ class TestPlaybook:
                 self.log_debug(
                     f"Running {self} with current server marketplace{instance_names_log_message}"
                 )
-                return True
+                return True  # test has a marketplace value that matched the build server marketplace
 
             log_message = (
                 f"Skipping {self} because it's marketplace values are: "
@@ -520,7 +523,7 @@ class TestPlaybook:
             skipped_tests_collected[
                 self.configuration.playbook_id
             ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
-            return False
+            return False  # test has a marketplace value that doesn't matched the build server marketplace
 
         return (
             in_filtered_tests()

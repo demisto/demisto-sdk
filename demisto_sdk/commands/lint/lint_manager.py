@@ -398,7 +398,7 @@ class LintManager:
             and branch_name == DEMISTO_GIT_PRIMARY_BRANCH
         ):
             # case 1: comparing master against the latest previous commit
-            last_common_commit = content_repo.repo.remote().refs.master.commit.parents[
+            last_common_commit = content_repo.repo.remote().refs[base_branch].commit.parents[
                 0
             ]
             logger.info(

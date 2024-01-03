@@ -252,7 +252,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         try:
             self.contributors: List[str] = get_json(
                 path / PACK_CONTRIBUTORS_FILENAME, git_sha=git_sha
-            )
+            ) or []
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")

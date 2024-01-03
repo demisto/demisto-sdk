@@ -341,6 +341,10 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
+        modified_files = self.filter_files(modified_files)
+        added_files = self.filter_files(added_files)
+        renamed_files = self.filter_files(renamed_files)
+        deleted_files = self.filter_files(deleted_files)
         basecontent_with_path_set: Set[BaseContent] = set()
         basecontent_with_path_set = basecontent_with_path_set.union(
             self.paths_to_basecontent_set(
@@ -400,3 +404,7 @@ class Initializer:
             except InvalidContentItemException:
                 invalid_content_items.append(file_path)
         return basecontent_with_path_set
+
+    def filter_files(self, files_list):
+        extensions_list_to_filter = [".png", ".md", ".svg"]
+        return [file for file in files_list if file.suffix not in extensions_list_to_filter]

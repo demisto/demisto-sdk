@@ -194,6 +194,9 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
             shutil.copyfile(
                 file_path, file_path.with_suffix(file_path.suffix + BACKUP_FILES_SUFFIX)
             )
+            logger.info(
+                f"Original configuration file was backed up to '{backup_file_path}'."
+            )
 
         config_data.write(
             str(file_path), pretty_print=True, xml_declaration=True, encoding="utf-8"

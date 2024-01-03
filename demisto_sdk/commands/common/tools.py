@@ -4344,7 +4344,7 @@ def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> 
     return payload["params"]
 
 
-def check_timestamp_format(timestamp):
+def check_timestamp_format(timestamp: str) -> bool:
     """Check that the timestamp is in ISO format"""
     try:
         datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)

@@ -42,6 +42,7 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
         self,
         content_item: ContentTypes,
     ) -> FixResult:
+        # By adding the contentItem as a fix result, when we attempt to save fields into the contentItem, we'll make sure to add the missing fields as a part of Pack object save method
         missing_fields = [
             field for field in PACK_METADATA_FIELDS if field not in content_item.pack_metadata_dict  # type: ignore[operator]
         ]

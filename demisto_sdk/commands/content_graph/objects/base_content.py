@@ -185,7 +185,7 @@ class BaseContent(BaseNode):
         self,
         path: Path,
         data: dict,
-        predefined_keys_to_keep: Optional[Tuple[str]] = None,
+        predefined_keys_to_keep: Optional[Tuple[str, ...]] = None,
     ):
         """Save the class vars into the dict data.
 

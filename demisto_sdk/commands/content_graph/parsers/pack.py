@@ -284,10 +284,10 @@ class PackParser(BaseContentParser, PackMetadataParser):
                     target=pack_id,
                     mandatorily=dependency.get("mandatory"),
                 )
-        except AttributeError:
+        except AttributeError as error:
             raise AttributeError(
                 f"Couldn't parse dependencies section for pack {self.name} pack_metadata. Dependencies section must be a valid dictionary."
-            )
+            ) from error
 
         if (
             self.object_id != BASE_PACK

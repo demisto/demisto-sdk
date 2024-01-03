@@ -31,7 +31,7 @@ class IsCreatedFieldInISOFormatValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not check_timestamp_format(content_item.created)
+            if not check_timestamp_format(content_item.created)  # type: ignore[arg-type]
         ]
 
     def fix(

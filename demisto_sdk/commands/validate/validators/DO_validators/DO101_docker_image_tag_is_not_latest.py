@@ -25,7 +25,7 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(content_item.docker_image),
                 content_object=content_item,
             )
             for content_item in content_items
@@ -39,17 +39,17 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
     ) -> FixResult:
         docker_image = content_item.docker_image_object
 
-        latest_docker_image = str(
+        latest_numeric_tag = str(
             self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
         )
         if content_item.docker_image:
             content_item.docker_image = content_item.docker_image.replace(
-                "latest", latest_docker_image
+                "latest", latest_numeric_tag
             )
         return FixResult(
             validator=self,
             message=self.fix_message.format(
-                content_item.docker_image, latest_docker_image
+                content_item.docker_image, latest_numeric_tag
             ),
             content_object=content_item,
         )

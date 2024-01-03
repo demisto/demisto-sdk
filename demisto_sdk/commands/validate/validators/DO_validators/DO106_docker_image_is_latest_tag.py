@@ -1,0 +1,84 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Iterable, List, Union
+
+from dateparser import parse
+
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    FixResult,
+    ValidationResult,
+)
+
+ContentTypes = Union[Integration, Script]
+
+
+class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
+    error_code = "DO106"
+    description = (
+        "Validate that the given content-item uses the latest tag of a docker image"
+    )
+    error_message = (
+        "docker image {0}'s tag {1} is not the latest tag, the latest tag is {2}"
+    )
+    fix_message = "docker image {0} has been updated to {1}"
+    related_field = "Docker image"
+    is_auto_fixable = True
+
+    def is_docker_image_older_than_three_days(self, docker_image) -> bool:
+        """
+        Return True if the docker image is more than 3 days old.
+
+        Returns:
+            bool: True if the docker is more than 3 days old.
+        """
+        three_days_ago: datetime = parse("3 days ago")  # type: ignore[assignment]
+        last_updated = self.dockerhub_client.get_docker_image_tag_creation_date(
+            docker_image.name, tag=docker_image.tag
+        )
+        return not last_updated or three_days_ago > last_updated
+
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        invalid_content_items = []
+        for content_item in content_items:
+            if content_item.type != "javascript":
+                docker_image = content_item.docker_image_object
+                docker_image_tag = docker_image.tag
+                docker_image_latest_tag = str(
+                    self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
+                )
+                if (
+                    docker_image_tag != docker_image_latest_tag
+                    and self.is_docker_image_older_than_three_days(docker_image)
+                ):
+                    invalid_content_items.append(
+                        ValidationResult(
+                            validator=self,
+                            message=self.error_message.format(
+                                content_item.docker_image, docker_image.tag
+                            ),
+                            content_object=content_item,
+                        )
+                    )
+        return invalid_content_items
+
+    def fix(
+        self,
+        content_item: ContentTypes,
+    ) -> FixResult:
+        docker_image = content_item.docker_image_object
+        latest_tag = str(
+            self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
+        )
+        if content_item.docker_image:
+            content_item.docker_image = content_item.docker_image.replace(
+                docker_image.tag, latest_tag
+            )
+        return FixResult(
+            validator=self,
+            message=self.fix_message.format(content_item.docker_image, latest_tag),
+            content_object=content_item,
+        )

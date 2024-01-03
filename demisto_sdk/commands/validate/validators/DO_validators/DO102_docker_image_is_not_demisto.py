@@ -15,8 +15,7 @@ ContentTypes = Union[Integration, Script]
 class DockerImageIsNotDemistoValidator(BaseValidator[ContentTypes]):
     error_code = "DO102"
     description = "Validate that the given content-item uses demisto docker image"
-    error_message = "docker image {0} is not a valid demisto-image, the recommended docker image is {1}"
-    fix_message = "docker image {0} has been updated to {1}"
+    error_message = "docker image {0} is not a valid demisto-image, demisto image should start with demisto/"
     related_field = "Docker image"
     is_auto_fixable = False
 
@@ -24,7 +23,7 @@ class DockerImageIsNotDemistoValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(content_item.docker_image),
                 content_object=content_item,
             )
             for content_item in content_items

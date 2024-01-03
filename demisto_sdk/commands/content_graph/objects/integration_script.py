@@ -23,6 +23,32 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 )
 
 
+class DockerImage:
+    def __init__(self, repository: str, image_name: str, tag: str):
+        self.repository = repository
+        self.image_name = image_name
+        self.tag = tag
+
+    @property
+    def name(self):
+        return f"{self.repository}/{self.image_name}"
+
+    def __str__(self):
+        return f"{self.repository}/{self.image_name}:{self.tag}"
+
+    @classmethod
+    def from_regex(cls, docker_image: str) -> "DockerImage":
+        pattern = re.compile(r"^([^/]+)/(.*?)(?::(.*))?$")
+        if matches := pattern.match(docker_image):
+            return cls(matches.group(1), matches.group(2), matches.group(3))
+
+        raise ValueError(f"docker-image {docker_image} is invalid")
+
+    @classmethod
+    def from_string(cls, docker_image: str) -> "DockerImage":
+        pass
+
+
 class IntegrationScript(ContentItem):
     type: str
     subtype: Optional[str]
@@ -50,30 +76,10 @@ class IntegrationScript(ContentItem):
         return [self.docker_image] + self.alt_docker_images if self.docker_image else []
 
     @property
-    def docker_image_object(self):
-        class DockerImage:
-            def __init__(self, repository: str, image_name: str, tag: str):
-                self.repository = repository  # e.g.: demisto/python3
-                self.image_name = image_name
-                self.tag = tag  # any tag
-
-            @property
-            def name(self):
-                return f"{self.repository}/{self.image_name}"
-
-            def __str__(self):
-                return f"{self.repository}/{self.image_name}:{self.tag}"
-
-            @classmethod
-            def from_string(cls, docker_image: str):
-                pattern = re.compile(r"^([^/]+)/(.*?)(?::(.*))?$")
-                if matches := pattern.match(docker_image):
-                    return cls(matches.group(1), matches.group(2), matches.group(3))
-
-                raise ValueError(f"docker-image {docker_image} is invalid")
+    def docker_image_object(self) -> DockerImage:
 
         if self.docker_image:
-            return DockerImage.from_string(self.docker_image)
+            return DockerImage.from_regex(self.docker_image)
 
         raise ValueError(f"The content item {self.path} does not have docker image")
 

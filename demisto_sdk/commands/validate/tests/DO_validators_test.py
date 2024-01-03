@@ -11,6 +11,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.DO_validators.DO101_docker_image_tag_is_not_latest import (
     LatestDockerImageTagValidator,
 )
+from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_is_not_demisto import (
+    DockerImageIsNotDemistoValidator,
+)
 from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_exist import (
     DockerImageExistValidator,
 )
@@ -113,8 +116,7 @@ def test_LatestDockerImageTagValidator_is_valid():
      - Running the DefaultDockerImageValidator validator
 
     Then:
-     - make sure the integration and script with default docker fail the validation.
-     - make sure the rest of scripts/integrations are valid.
+     - make sure the integrations/scripts with the "latest" tags are not valid
     """
     content_items = [
         create_integration_object(
@@ -142,3 +144,42 @@ def test_LatestDockerImageTagValidator_is_valid():
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
         assert content_item.docker_image == "demisto/python3:latest"
+
+
+def test_DockerImageIsNotDemistoValidator_is_valid():
+    """
+    Given:
+     - 1 integration and 1 script which uses a valid demisto version
+     - 1 integration and 1 script which do not use a valid demisto version
+     - 1 integration and 1 script that are javascript
+
+    When:
+     - Running the DefaultDockerImageValidator validator
+
+    Then:
+     - make sure the integrations/scripts that do not have valid demisto images are not valid
+    """
+    content_items = [
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=["repository/python3:latest"],  # integration with non-demisto image
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=["repository/python3:latest"],  # script with non-demisto image
+        ),
+        create_integration_object(),  # integration with demisto image
+        create_script_object(),  # script with demisto image
+        create_integration_object(
+            paths=["script.type"], values=["javascript"]
+        ),  # javascript integration
+        create_script_object(
+            paths=["type"], values=["javascript"]
+        ),  # javascript script
+    ]
+    results = DockerImageIsNotDemistoValidator().is_valid(content_items)
+    assert len(results) == 2
+    for result in results:
+        content_item: IntegrationScript = result.content_object
+        assert content_item.type == "python"
+        assert content_item.docker_image == "repository/python3:latest"

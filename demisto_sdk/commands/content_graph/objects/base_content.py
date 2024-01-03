@@ -97,6 +97,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     source_repo: str = "content"
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
+    not_in_repository: bool = False
 
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False

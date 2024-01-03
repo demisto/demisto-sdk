@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
 
 from more_itertools import always_iterable
@@ -11,7 +10,9 @@ from demisto_sdk.commands.content_graph.common import (
     Relationships,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+)
 
 
 class StrictBaseModel(BaseModel):
@@ -19,8 +20,7 @@ class StrictBaseModel(BaseModel):
         extra = Extra.forbid
 
 
-class ConfJsonNode(BaseNode, content_type=ContentType.CONF_JSON):
-    path: Path
+class ConfJson(BaseContent, content_type=ContentType.CONF_JSON):
     fromversion: str
 
     def to_node(self):
@@ -34,7 +34,7 @@ class ConfJsonNode(BaseNode, content_type=ContentType.CONF_JSON):
     def relationships(self) -> Relationships:
         relationships = Relationships()
 
-        class RelationshipDatum(BaseModel):
+        class RelationshipDatum(BaseModel, frozen=True):
             content_type: ContentType
             content_id: str
             relationship_type: RelationshipType
@@ -73,7 +73,7 @@ class ConfJsonNode(BaseNode, content_type=ContentType.CONF_JSON):
             (
                 ContentType.PACK,
                 self.body.nightly_packs,
-                RelationshipType.CONF_JSON_NIGHTLY_PACK,
+                RelationshipType.CONF_JSON_USES,
             ),
             (
                 ContentType.INTEGRATION,
@@ -114,7 +114,7 @@ class ConfJsonNode(BaseNode, content_type=ContentType.CONF_JSON):
                     )
 
         for relationship_datum in relationship_data:
-            relationships.add(  # TODO add_batch?
+            relationships.add(
                 relationship_datum.relationship_type,
                 source_id=self.object_id,
                 source_type=self.content_type,
@@ -188,4 +188,3 @@ class ConfJSON(StrictBaseModel):
     docker_thresholds: DockerThresholds
     test_marketplacev2: List[str]
     reputation_tests: List[str]
-    # self.relationships: Relationships = Relationships()

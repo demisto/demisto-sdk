@@ -186,8 +186,8 @@ class LintManager:
         # Get content repo object
         is_external_repo = False
         try:
-            git_repo = GitUtil().repo
-            remote_url = git_repo.remote().urls.__next__()
+            git_repo = GitUtil()
+            remote_url = git_repo.repo.remote().urls.__next__()
             is_fork_repo = "content" in remote_url
             is_external_repo = is_external_repository()
 
@@ -195,7 +195,7 @@ class LintManager:
                 raise git.InvalidGitRepositoryError
 
             facts["content_repo"] = git_repo  # type: ignore
-            logger.debug(f"Content path {git_repo.working_dir}")
+            logger.debug(f"Content path {git_repo.repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
             logger.info(
                 "[yellow]You are running demisto-sdk lint not in content repository![yellow]"
@@ -267,7 +267,7 @@ class LintManager:
 
     def _get_packages(
         self,
-        content_repo: git.Repo,  # noqa: TID251
+        content_repo: GitUtil,
         input: Union[str, List[str]],
         git: bool = False,
         all_packs: bool = False,
@@ -287,7 +287,7 @@ class LintManager:
         """
         pkgs: list
         if all_packs or git:
-            pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)  # type: ignore
+            pkgs = LintManager._get_all_packages(content_dir=content_repo.repo.working_dir)  # type: ignore
         else:  # specific pack as input, -i flag has been used
             pkgs = []
             if isinstance(input, str):
@@ -359,7 +359,7 @@ class LintManager:
 
     @staticmethod
     def _filter_changed_packages(
-        content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str  # noqa: TID251
+        content_repo: GitUtil, pkgs: List[PosixPath], base_branch: str
     ) -> List[PosixPath]:
         """Checks which packages had changes in them and should run on Lint.
         The diff is calculated using git, and is done by the following cases:
@@ -375,18 +375,32 @@ class LintManager:
         Returns:
             List[PosixPath]: A list of names of packages that should run.
         """
+        try:
+            active_branch = content_repo.repo.active_branch
+            commit = active_branch.commit
+            branch_name = active_branch.name
+        except TypeError as error:
+            logger.debug(f"Could not get active branch, {error}")
+            commit = content_repo.get_commit(
+                content_repo.repo.head.object.hexsha, from_remote=False
+            )
+            branch_name = ""
+
+        logger.debug(f"{commit=}, {branch_name=}")
 
         staged_files = {
-            content_repo.working_dir / Path(item.b_path).parent  # type: ignore[operator]
-            for item in content_repo.active_branch.commit.tree.diff(None, paths=pkgs)
+            content_repo.repo.working_dir / Path(item.b_path).parent  # type: ignore[operator]
+            for item in commit.tree.diff(None, paths=pkgs)
         }
 
         if (
             base_branch == DEMISTO_GIT_PRIMARY_BRANCH
-            and content_repo.active_branch.name == DEMISTO_GIT_PRIMARY_BRANCH
+            and branch_name == DEMISTO_GIT_PRIMARY_BRANCH
         ):
             # case 1: comparing master against the latest previous commit
-            last_common_commit = content_repo.remote().refs.master.commit.parents[0]
+            last_common_commit = content_repo.repo.remote().refs.master.commit.parents[
+                0
+            ]
             logger.info(
                 f"Comparing [cyan]master[/cyan] to its [cyan]previous commit: "
                 f"{last_common_commit}"
@@ -399,20 +413,19 @@ class LintManager:
             ):  # if the base branch is given as a commit hash
                 last_common_commit = base_branch
             else:
-                last_common_commit = content_repo.merge_base(
-                    content_repo.active_branch.commit,
-                    f"{content_repo.remote()}/{base_branch}",
+                last_common_commit = content_repo.repo.merge_base(
+                    commit,
+                    f"{content_repo.repo.remote()}/{base_branch}",
                 )[0]
-            logger.info(
-                f"Comparing [cyan]{content_repo.active_branch}[/cyan] to"
-                f" last common commit with [cyan]{last_common_commit}[/cyan]"
-            )
+            if branch_name:
+                logger.info(
+                    f"Comparing [cyan]{branch_name}[/cyan] to"
+                    f" last common commit with [cyan]{last_common_commit}[/cyan]"
+                )
 
         changed_from_base = {
-            content_repo.working_dir / Path(item.b_path).parent  # type: ignore[operator]
-            for item in content_repo.active_branch.commit.tree.diff(
-                last_common_commit, paths=pkgs
-            )
+            content_repo.repo.working_dir / Path(item.b_path).parent  # type: ignore[operator]
+            for item in commit.tree.diff(last_common_commit, paths=pkgs)
         }
         all_changed = staged_files.union(changed_from_base)
         pkgs_to_check = all_changed.intersection(pkgs)
@@ -481,7 +494,7 @@ class LintManager:
                         content_repo=""
                         if not self._facts["content_repo"]
                         else Path(  # type: ignore
-                            self._facts["content_repo"].working_dir
+                            self._facts["content_repo"].repo.working_dir
                         ),
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,

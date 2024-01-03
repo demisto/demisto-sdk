@@ -12,9 +12,7 @@ from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.clients.configs import (
     XsiamClientConfig,
-    XsoarClientConfig,
 )
-from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
     XsoarSaasClient,
 )
@@ -28,25 +26,21 @@ json = DEFAULT_JSON_HANDLER
 
 
 class XsiamClient(XsoarSaasClient):
+    """
+    api client for xsiam
+    """
+
     marketplace = MarketplaceVersions.MarketplaceV2
 
     @classmethod
-    def from_server_type(
-        cls, client_config: Optional[XsoarClientConfig] = None
-    ) -> "XsoarClient":
-        return super().from_server_type(client_config or XsiamClientConfig())
-
-    @classmethod
-    def is_server_type(cls, xsoar_info: Dict):
+    def is_xsiam(cls, _client: DefaultApi, product_mode: Optional[str] = None):
         """
         Returns whether the configured client is xsiam.
         """
-        product_mode = xsoar_info.get("productMode")
         if product_mode == "xsiam":
             return True
 
         # for old environments that do not have product-mode / deployment-mode
-        _client: DefaultApi = xsoar_info.get("client")
         try:
             # /ioc-rules is only an endpoint in XSIAM.
             response, status_code, response_headers = _client.generic_request(

@@ -3,7 +3,6 @@ import re
 import socket
 import time
 import urllib.parse
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
@@ -41,51 +40,28 @@ class XsoarClient(BaseModel):
     _ENTRY_TYPE_ERROR: int = 4
     config: XsoarClientConfig
     client: DefaultApi = Field(None, exclude=True)
-    about_xsoar: Dict = Field(None, exclude=True)
+    about: Dict = Field(None, exclude=True)
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
 
     class Config:
         arbitrary_types_allowed = True
 
     @classmethod
-    def is_server_type(cls, xsoar_info: Dict):
+    def is_xsoar_on_prem(
+        cls,
+        server_version: str,
+        product_mode: Optional[str] = None,
+        deployment_mode: Optional[str] = None,
+    ):
         """
         Returns whether the configured client is xsoar-on-prem.
         """
-        product_mode = xsoar_info.get("productMode")
-        deployment_mode = xsoar_info.get("deploymentMode")
-        server_version = xsoar_info.get("serverVersion")
         return (product_mode == "xsoar" and deployment_mode == "opp") or (
             server_version
             and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
         )
 
     @classmethod
-    def from_server_type(
-        cls, client_config: Optional[XsoarClientConfig] = None
-    ) -> "XsoarClient":
-        config = client_config or XsoarClientConfig()
-        _client = cls.get_xsoar_client(values={"config": config})
-        about_raw_response = cls.get_xsoar_about(_client)
-
-        if cls.is_server_type(
-            {
-                "productMode": about_raw_response.get("productMode"),
-                "deploymentMode": about_raw_response.get("deploymentMode"),
-                "serverVersion": about_raw_response.get("demistoVersion"),
-                "client": _client,
-            }
-        ):
-            logger.debug(f"server {config.base_api_url} is {cls} client")
-            return cls(
-                client=_client,
-                about_xsoar=about_raw_response,
-                config=config,
-            )
-        raise ValueError(f"server {config.base_api_url} is not {cls} client")
-
-    @classmethod
-    @lru_cache
     @retry(exceptions=ApiException)
     def get_xsoar_about(cls, client: DefaultApi) -> Dict[str, Any]:
         """
@@ -99,7 +75,7 @@ class XsoarClient(BaseModel):
                 raise ValueError(
                     f"the {client.api_client.configuration.host} URL is not the api-url",
                 )
-
+            logger.debug(f"about={raw_response}")
             return raw_response
         except ApiException as err:
             if err.status == requests.codes.unauthorized:
@@ -111,15 +87,14 @@ class XsoarClient(BaseModel):
 
     @validator("client", always=True, pre=True)
     def get_xsoar_client(
-        cls, v: Optional[DefaultApi] = None, values: Optional[Dict[str, Any]] = None
+        cls, v: Optional[DefaultApi], values: Dict[str, Any]
     ) -> DefaultApi:
         """
         Returns the client for xsoar endpoints.
         """
         if v:
             return v
-        _values = values or {}
-        config: XsoarClientConfig = _values["config"]
+        config: XsoarClientConfig = values["config"]
         return demisto_client.configure(
             config.base_api_url,
             api_key=config.api_key.get_secret_value(),
@@ -129,8 +104,8 @@ class XsoarClient(BaseModel):
             verify_ssl=config.verify_ssl,
         )
 
-    @validator("about_xsoar", always=True)
-    def get_xsoar_server_about(cls, v: Optional[Dict], values: Dict[str, Any]) -> Dict:
+    @validator("about", always=True)
+    def get_server_about(cls, v: Optional[Dict], values: Dict[str, Any]) -> Dict:
         return v or cls.get_xsoar_about(values["client"])
 
     @property
@@ -145,14 +120,14 @@ class XsoarClient(BaseModel):
         """
         Returns XSOAR version
         """
-        if xsoar_version := self.about_xsoar.get("demistoVersion"):
+        if xsoar_version := self.about.get("demistoVersion"):
             logger.debug(f"{self.base_url} xsoar-server version is {xsoar_version}")
             return Version(xsoar_version)
         raise RuntimeError(f"Could not get version from instance {self.xsoar_host_url}")
 
     @property
     def build_number(self) -> str:
-        if build_number := self.about_xsoar.get("buildNum"):
+        if build_number := self.about.get("buildNum"):
             return build_number
         raise RuntimeError(
             f"Could not get build number from instance {self.xsoar_host_url}"

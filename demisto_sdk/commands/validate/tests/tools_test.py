@@ -1,7 +1,7 @@
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import create_playbook_object
-from demisto_sdk.commands.validate.validators.tools import (
+from demisto_sdk.commands.validate.tools import (
     collect_all_inputs_from_inputs_section,
     collect_all_inputs_in_use,
 )

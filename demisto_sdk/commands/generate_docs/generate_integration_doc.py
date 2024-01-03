@@ -12,7 +12,9 @@ from demisto_sdk.commands.common import git_util
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER,
     DOCS_COMMAND_SECTION_REGEX,
+    INTEGRATIONS_DIR,
     INTEGRATIONS_README_FILE_NAME,
+    PACKS_DIR,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -22,7 +24,6 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    get_content_path,
     get_yaml,
 )
 from demisto_sdk.commands.generate_docs.common import (
@@ -67,6 +68,7 @@ class IntegrationDocUpdateManager:
         self.new_yaml_path = Path(input_path)
         self.new_readme_path = self.new_yaml_path.parent / INTEGRATIONS_README_FILE_NAME
         self.update_errors: List[str] = []
+        self.is_ui_contribution = is_contribution
 
         self.old_yaml_path = self.get_origin_master_integration_yml()
         self.old_readme_path = self.get_origin_master_integration_readme()
@@ -76,7 +78,6 @@ class IntegrationDocUpdateManager:
                 new=str(self.new_yaml_path), old=str(self.old_yaml_path)
             )
 
-        self.is_ui_contribution = is_contribution
         self.example_dict = example_dict if not is_contribution else {}
         self.command_permissions_dict = (
             command_permissions_dict if not is_contribution else {}
@@ -89,14 +90,30 @@ class IntegrationDocUpdateManager:
         """
 
         try:
-            yaml_relative_path = git_util.GitUtil(
-                get_content_path()
-            ).path_from_git_root(self.new_yaml_path)
-            logger.debug(f"Reading {str(yaml_relative_path)} from git path...")
-            remote_yaml_txt = TextFile.read_from_git_path(yaml_relative_path)
+            # UI contribution for existing integrations perform processing
+            # in a temp dir. Therefore, we need to normalize the
+            # /home/runner/work/contribution-management/contribution-management/content/../../../../../../tmp/tmpzi52ia6n/Integrations/SplunkPy/SplunkPy.yml
+            if self.is_ui_contribution:
+                # FIXME pack_name can be different than integration name
+                relative_integration_yml_path = Path(
+                    PACKS_DIR,
+                    self.new_yaml_path.parts[-2],
+                    INTEGRATIONS_DIR,
+                    self.new_yaml_path.parts[-2],
+                    self.new_yaml_path.parts[-1],
+                )
+                logger.debug(
+                    f"Reading {str(relative_integration_yml_path)} from git path..."
+                )
+                remote_yaml_txt = TextFile.read_from_git_path(
+                    relative_integration_yml_path
+                )
+            else:
+                logger.debug(f"Reading {str(self.new_yaml_path)} from git path...")
+                remote_yaml_txt = TextFile.read_from_git_path(self.new_yaml_path)
 
             tmp_file = tempfile.NamedTemporaryFile(
-                "w", suffix=yaml_relative_path.name, delete=False
+                "w", suffix=self.new_yaml_path.name, delete=False
             )
             logger.debug(
                 f"Writing {len(remote_yaml_txt)}B into temp file '{tmp_file.name}'..."
@@ -108,8 +125,9 @@ class IntegrationDocUpdateManager:
             FileNotFoundError,
             git_util.GitFileNotFoundError,
             GitFileReadError,
+            KeyError,
         ) as err:
-            msg = f"Could not find file '{str(yaml_relative_path)}': {str(err)}"
+            msg = f"Could not find file '{str(self.new_yaml_path)}': {str(err)}"
             logger.error(msg)
             self.update_errors.append(msg)
             path = None
@@ -127,15 +145,30 @@ class IntegrationDocUpdateManager:
         and return its path.
         """
 
+        # FIXME readme_relative_path for contrib becomes
+        # ../../../../../../tmp/tmpzi52ia6n/Integrations/SplunkPy/README.md
         try:
-            readme_relative_path = git_util.GitUtil(
-                get_content_path()
-            ).path_from_git_root(self.new_readme_path)
-            logger.debug(f"Reading {str(readme_relative_path)} from git path...")
-            remote_readme_txt = TextFile.read_from_git_path(readme_relative_path)
+            if self.is_ui_contribution:
+                # FIXME pack_name can be different than integration name
+                relative_integration_yml_path = Path(
+                    PACKS_DIR,
+                    self.new_readme_path.parts[-2],
+                    INTEGRATIONS_DIR,
+                    self.new_readme_path.parts[-2],
+                    INTEGRATIONS_README_FILE_NAME,
+                )
+                logger.debug(
+                    f"Reading {str(relative_integration_yml_path)} from git path..."
+                )
+                remote_readme_txt = TextFile.read_from_git_path(
+                    relative_integration_yml_path
+                )
+            else:
+                logger.debug(f"Reading {str(self.new_yaml_path)} from git path...")
+                remote_readme_txt = TextFile.read_from_git_path(self.new_readme_path)
 
             tmp_file = tempfile.NamedTemporaryFile(
-                "w", suffix=readme_relative_path.name, delete=False
+                "w", suffix=self.new_readme_path.name, delete=False
             )
             logger.debug(
                 f"Writing {len(remote_readme_txt)}B into temp file '{tmp_file.name}'..."
@@ -148,8 +181,9 @@ class IntegrationDocUpdateManager:
             FileNotFoundError,
             git_util.GitFileNotFoundError,
             GitFileReadError,
+            KeyError,
         ) as err:
-            msg = f"Could not find file '{str(readme_relative_path)}': {str(err)}"
+            msg = f"Could not find file '{str(self.new_readme_path)}': {str(err)}"
             logger.error(msg)
             self.update_errors.append(msg)
             path = None
@@ -377,7 +411,7 @@ def generate_integration_doc(
             example_dict, build_errors = build_example_dict(command_examples, insecure)
             errors.extend(build_errors)
         else:
-            errors.append(f"Command examples was not found: {examples}.")
+            errors.append("Command examples were not supplied.")
 
         if permissions == "per-command":
             command_permissions_dict: Any = {}

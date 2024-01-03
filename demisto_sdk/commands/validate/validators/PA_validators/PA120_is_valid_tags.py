@@ -2,14 +2,18 @@
 from __future__ import annotations
 
 from typing import Iterable, List
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        FixResult,
-        ValidationResult,
+from demisto_sdk.commands.validate.tools import (
+    extract_non_approved_tags,
+    filter_by_marketplace,
 )
-from demisto_sdk.commands.validate.validators.tools import extract_non_approved_tags, filter_by_marketplace
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    FixResult,
+    ValidationResult,
+)
 
 ContentTypes = Pack
 

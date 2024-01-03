@@ -40,7 +40,7 @@ class IntegrationDiffDetector:
         Checks differences between two integration yaml files.
 
         Return:
-            bool. return true if the new integration contains everything in the old integration.
+            `bool`. return `True` if the new integration contains everything in the old integration.
         """
 
         return True if self.get_differences() else False

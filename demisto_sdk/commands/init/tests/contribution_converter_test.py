@@ -808,6 +808,7 @@ def test_rearranging_before_conversion_indicator_fields(repo: Repo):
         CONTRIBUTION_TESTS, get_function_name(), "contribution_indicatorfield_only.zip"
     )
     expected = [INDICATOR_TYPES_DIR, LAYOUTS_DIR, INDICATOR_FIELDS_DIR, CLASSIFIERS_DIR]
+    expected.sort()
 
     contribution_converter = ContributionConverter(
         contribution=zip_path, base_dir=repo.path
@@ -818,6 +819,7 @@ def test_rearranging_before_conversion_indicator_fields(repo: Repo):
     )
 
     actual = [Path(d).name for d in unpacked_contribution_dirs]
+    actual.sort()
     assert actual == expected
 
 
@@ -849,6 +851,7 @@ def test_rearranging_before_conversion_indicator_and_incident_fields(repo: Repo)
         INDICATOR_FIELDS_DIR,
         CLASSIFIERS_DIR,
     ]
+    expected.sort()
 
     contribution_converter = ContributionConverter(
         contribution=zip_path, base_dir=repo.path
@@ -859,6 +862,7 @@ def test_rearranging_before_conversion_indicator_and_incident_fields(repo: Repo)
     )
 
     actual = [Path(d).name for d in unpacked_contribution_dirs]
+    actual.sort()
     assert actual == expected
 
 

@@ -12,9 +12,7 @@ from demisto_sdk.commands.common import git_util
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER,
     DOCS_COMMAND_SECTION_REGEX,
-    INTEGRATIONS_DIR,
     INTEGRATIONS_README_FILE_NAME,
-    PACKS_DIR,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -24,6 +22,7 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    get_content_path,
     get_yaml,
 )
 from demisto_sdk.commands.generate_docs.common import (
@@ -90,27 +89,17 @@ class IntegrationDocUpdateManager:
         """
 
         try:
-            # UI contribution for existing integrations perform processing
-            # in a temp dir. Therefore, we need to normalize the
-            # /home/runner/work/contribution-management/contribution-management/content/../../../../../../tmp/tmpzi52ia6n/Integrations/SplunkPy/SplunkPy.yml
+            # UI contribution for existing integrations perform the pack processing
+            # in a temp dir. Therefore, we need to get the get the path to the
+            # integration YAML from the set content path.
+
             if self.is_ui_contribution:
-                # FIXME pack_name can be different than integration name
-                relative_integration_yml_path = Path(
-                    PACKS_DIR,
-                    self.new_yaml_path.parts[-2],
-                    INTEGRATIONS_DIR,
-                    self.new_yaml_path.parts[-2],
-                    self.new_yaml_path.parts[-1],
-                )
-                logger.debug(
-                    f"Reading {str(relative_integration_yml_path)} from git path..."
-                )
-                remote_yaml_txt = TextFile.read_from_git_path(
-                    relative_integration_yml_path
-                )
+                yml_path = list(get_content_path().rglob(self.new_yaml_path.name))[0]
             else:
-                logger.debug(f"Reading {str(self.new_yaml_path)} from git path...")
-                remote_yaml_txt = TextFile.read_from_git_path(self.new_yaml_path)
+                yml_path = self.new_yaml_path
+
+            logger.debug(f"Reading {str(self.new_yaml_path)} from git path...")
+            remote_yaml_txt = TextFile.read_from_git_path(yml_path)
 
             tmp_file = tempfile.NamedTemporaryFile(
                 "w", suffix=self.new_yaml_path.name, delete=False
@@ -126,6 +115,7 @@ class IntegrationDocUpdateManager:
             git_util.GitFileNotFoundError,
             GitFileReadError,
             KeyError,
+            IndexError,
         ) as err:
             msg = f"Could not find file '{str(self.new_yaml_path)}': {str(err)}"
             logger.error(msg)
@@ -144,28 +134,21 @@ class IntegrationDocUpdateManager:
         Retrieve and save the origin/master integration README in a temporary file
         and return its path.
         """
-
-        # FIXME readme_relative_path for contrib becomes
-        # ../../../../../../tmp/tmpzi52ia6n/Integrations/SplunkPy/README.md
         try:
+            # UI contribution for existing integrations perform the pack processing
+            # in a temp dir. Therefore, we need to get the get the path to the
+            # integration README from the set content path.
+
             if self.is_ui_contribution:
-                # FIXME pack_name can be different than integration name
-                relative_integration_yml_path = Path(
-                    PACKS_DIR,
-                    self.new_readme_path.parts[-2],
-                    INTEGRATIONS_DIR,
-                    self.new_readme_path.parts[-2],
-                    INTEGRATIONS_README_FILE_NAME,
-                )
-                logger.debug(
-                    f"Reading {str(relative_integration_yml_path)} from git path..."
-                )
-                remote_readme_txt = TextFile.read_from_git_path(
-                    relative_integration_yml_path
-                )
+                readme_path = list(get_content_path().rglob(self.new_readme_path.name))[
+                    0
+                ]
             else:
-                logger.debug(f"Reading {str(self.new_yaml_path)} from git path...")
-                remote_readme_txt = TextFile.read_from_git_path(self.new_readme_path)
+                readme_path = self.new_readme_path
+
+            logger.debug(f"Reading {str(readme_path)} from git path...")
+
+            remote_readme_txt = TextFile.read_from_git_path(readme_path)
 
             tmp_file = tempfile.NamedTemporaryFile(
                 "w", suffix=self.new_readme_path.name, delete=False
@@ -197,15 +180,18 @@ class IntegrationDocUpdateManager:
 
     def can_update_docs(self) -> bool:
         """
-        Before generating a new README, we check whether it's a new integration or not.
+        Before generating a new README, we check whether it's possible to update the interation docs.
+        We check whether we:
+
+        - There's an integration diff. In case when we can't pull an integration YAML from `origin/master`,
+        we won't have an integration diff instance.
+        - There's an integration README from `origin/master`.
         If it's not new, we retrieve the integration YAML from `demisto/content` `origin/master``,
         and regenerate the changed sections.
         """
 
         can_update = False
-        logger.info(
-            "Checking whether we should update the existing integration README..."
-        )
+        logger.info("Checking whether we can update the existing integration README...")
         try:
 
             if not self.integration_diff:

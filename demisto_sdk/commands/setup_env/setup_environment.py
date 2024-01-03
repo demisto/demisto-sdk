@@ -129,30 +129,76 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
         )
         return
 
+    config_data = etree.parse(str(file_path))
+    added_entries_count = update_pycharm_config_xml_data(
+        config_data=config_data, python_discovery_paths=python_discovery_paths
+    )
+
+    if (
+        added_entries_count > 0
+    ):  # Apply changes to file only if there were relevant changes
+        backup_file_path = file_path.with_suffix(file_path.suffix + BACKUP_FILES_SUFFIX)
+
+        if not backup_file_path.exists():
+            # Backup the original file on the first time it is configured (if the backup file doesn't exist)
+            shutil.copyfile(
+                file_path, file_path.with_suffix(file_path.suffix + BACKUP_FILES_SUFFIX)
+            )
+            logger.info(
+                f"Original configuration file was backed up to '{backup_file_path}'."
+            )
+
+        config_data.write(
+            str(file_path), pretty_print=True, xml_declaration=True, encoding="utf-8"
+        )
+        logger.info(
+            f"Configuration file ('{file_path}') was successfully configured for automatic module discovery. "
+            f"New entries added: {added_entries_count}."
+        )
+
+    else:
+        logger.info(
+            f"All entries are already configured on the configuration file ('{file_path}'). No changes were made."
+        )
+
+
+def update_pycharm_config_xml_data(
+    config_data: etree._ElementTree, python_discovery_paths: List[Path]
+) -> int:
+    """
+    Configure and update the XML data within the configuration file
+    to add the given python paths to the module discovery.
+
+    Args:
+        config_data (etree._ElementTree): The XML data to update
+        python_discovery_paths (List[Path]): The python paths to add to the module discovery
+
+    Returns:
+        int: The number of added entries
+    """
     url_prefix = "file://$MODULE_DIR$"
     module_root_manager_name = "NewModuleRootManager"
     module_root_manager_component = f"component[@name='{module_root_manager_name}']"
-    module_root_manager_content = f"{module_root_manager_component}/content[@url='{url_prefix}']"
-    config_data = etree.parse(str(file_path))
+    module_root_manager_content = (
+        f"{module_root_manager_component}/content[@url='{url_prefix}']"
+    )
 
     # Generate the module root manager component if it doesn't exist
     if config_data.find(module_root_manager_component) is None:
         # Add spaces following last component
         root_data = config_data.getroot()
 
-        module_root_manager_component_data = etree.SubElement(
-            root_data, "component"
-        )
-        module_root_manager_component_data.set('name', module_root_manager_name)
+        module_root_manager_component_data = etree.SubElement(root_data, "component")
+        module_root_manager_component_data.set("name", module_root_manager_name)
 
     # Generate the content component if it doesn't exist
     if config_data.find(module_root_manager_content) is None:
         # Add spaces following last content item
-        module_root_manager_component_data = config_data.find(module_root_manager_component)
-
-        etree.SubElement(
-            module_root_manager_component_data, "content", url=url_prefix
+        module_root_manager_component_data = config_data.find(
+            module_root_manager_component
         )
+
+        etree.SubElement(module_root_manager_component_data, "content", url=url_prefix)
 
     source_folders = config_data.findall(module_root_manager_content + "/sourceFolder")
     existing_paths = set()
@@ -184,32 +230,7 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
 
     etree.indent(config_data)
 
-    if (
-        added_entries_count > 0
-    ):  # Apply changes to file only if there were relevant changes
-        backup_file_path = file_path.with_suffix(file_path.suffix + BACKUP_FILES_SUFFIX)
-
-        if not backup_file_path.exists():
-            # Backup the original file on the first time it is configured (if the backup file doesn't exist)
-            shutil.copyfile(
-                file_path, file_path.with_suffix(file_path.suffix + BACKUP_FILES_SUFFIX)
-            )
-            logger.info(
-                f"Original configuration file was backed up to '{backup_file_path}'."
-            )
-
-        config_data.write(
-            str(file_path), pretty_print=True, xml_declaration=True, encoding="utf-8"
-        )
-        logger.info(
-            f"Configuration file ('{file_path}') was successfully configured for automatic module discovery. "
-            f"New entries added: {added_entries_count}."
-        )
-
-    else:
-        logger.info(
-            f"All entries are already configured on the configuration file ('{file_path}'). No changes were made."
-        )
+    return added_entries_count
 
 
 def configure_module_discovery(ide_type: IDEType):

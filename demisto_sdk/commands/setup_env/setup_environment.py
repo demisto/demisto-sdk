@@ -205,7 +205,7 @@ def update_pycharm_config_xml_data(
 
     for source_folder in source_folders:
         if url := source_folder.get("url"):
-            existing_paths.add(Path(url.replace(url_prefix + "/", "")))
+            existing_paths.add(Path(url.replace(f"{url_prefix}/", "")))
 
     module_root_manager_content_data = config_data.find(module_root_manager_content)
     added_entries_count = 0
@@ -263,7 +263,7 @@ def configure_module_discovery(ide_type: IDEType):
         if CONTENT_PATH in python_discovery_paths:
             python_discovery_paths.remove(CONTENT_PATH)
 
-        config_file_path = CONTENT_PATH / ".idea" / (CONTENT_PATH.name.lower() + ".iml")
+        config_file_path = CONTENT_PATH / ".idea" / f"{CONTENT_PATH.name.lower()}.iml"
         update_pycharm_config_file(
             file_path=config_file_path,
             python_discovery_paths=python_discovery_paths,

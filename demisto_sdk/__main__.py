@@ -3458,7 +3458,7 @@ def update_content_graph(
 @main.command(short_help="Setup integration environments")
 @click.option(
     "--ide",
-    help="IDE type to configure the environment for. If not specified, the IDET will be auto-detected. Case-insensitive.",
+    help="IDE type to configure the environment for. If not specified, the IDE will be auto-detected. Case-insensitive.",
     default="auto-detect",
     type=click.Choice(
         ["auto-detect"] + [IDEType.value for IDEType in IDEType], case_sensitive=False

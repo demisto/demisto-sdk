@@ -416,5 +416,5 @@ class Initializer:
         """
         extensions_list_to_filter = [".png", ".md", ".svg"]
         return set(
-            [file for file in files_set if file.suffix not in extensions_list_to_filter]
+            file for file in files_set if file.suffix not in extensions_list_to_filter
         )

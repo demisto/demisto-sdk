@@ -344,6 +344,8 @@ def test_convert_contribution_zip_outputs_structure(
       converting the contribution zip file
     """
     pack_name = "ContribTestPack"
+    integration_name = "Sample"
+    script_name = "SampleScript"
 
     # ### Mock the content graph ### #
 
@@ -408,23 +410,34 @@ def test_convert_contribution_zip_outputs_structure(
     assert not target_dir.exists()
 
     assert (tmp_path / INTEGRATIONS_DIR).exists()
-    assert (tmp_path / INTEGRATIONS_DIR / "Sample").exists()
-    assert (tmp_path / INTEGRATIONS_DIR / "Sample" / "Sample_image.png").exists()
-    assert (tmp_path / INTEGRATIONS_DIR / "Sample" / "Sample.py").exists()
-    assert (tmp_path / INTEGRATIONS_DIR / "Sample" / "Sample.yml").exists()
+    assert (tmp_path / INTEGRATIONS_DIR / integration_name).exists()
     assert (
-        tmp_path / INTEGRATIONS_DIR / "Sample" / INTEGRATIONS_README_FILE_NAME
+        tmp_path / INTEGRATIONS_DIR / integration_name / f"{integration_name}_image.png"
     ).exists()
-    assert (tmp_path / INTEGRATIONS_DIR / "Sample" / "Sample_description.md").exists()
+    assert (
+        tmp_path / INTEGRATIONS_DIR / integration_name / f"{integration_name}.py"
+    ).exists()
+    assert (
+        tmp_path / INTEGRATIONS_DIR / integration_name / f"{integration_name}.yml"
+    ).exists()
+    assert (
+        tmp_path / INTEGRATIONS_DIR / integration_name / INTEGRATIONS_README_FILE_NAME
+    ).exists()
+    assert (
+        tmp_path
+        / INTEGRATIONS_DIR
+        / integration_name
+        / f"{integration_name}_description.md"
+    ).exists()
     assert not (tmp_path / INTEGRATIONS_DIR / "integration-integration0.yml").exists()
     assert not (
-        tmp_path / INTEGRATIONS_DIR / "Sample" / "integration-integration0.yml"
+        tmp_path / INTEGRATIONS_DIR / integration_name / "integration-integration0.yml"
     ).exists()
 
-    assert (tmp_path / SCRIPTS_DIR / "SampleScript" / "SampleScript.py").exists()
-    assert (tmp_path / SCRIPTS_DIR / "SampleScript" / "SampleScript.yml").exists()
+    assert (tmp_path / SCRIPTS_DIR / script_name / f"{script_name}.py").exists()
+    assert (tmp_path / SCRIPTS_DIR / script_name / f"{script_name}.yml").exists()
     assert (
-        tmp_path / SCRIPTS_DIR / "SampleScript" / INTEGRATIONS_README_FILE_NAME
+        tmp_path / SCRIPTS_DIR / script_name / INTEGRATIONS_README_FILE_NAME
     ).exists()
 
     assert tmp_path / PLAYBOOKS_DIR / "playbook-SamplePlaybook.yml"
@@ -454,53 +467,6 @@ def test_convert_contribution_zip_outputs_structure(
     assert (tmp_path / PACKS_README_FILE_NAME).exists()
     assert (tmp_path / ".secrets-ignore").exists()
     assert (tmp_path / ".pack-ignore").exists()
-
-    # scripts_path = converted_pack_path / "Scripts"
-    # sample_script_path = scripts_path / "SampleScript"
-    # script_yml = sample_script_path / "SampleScript.yml"
-    # script_py = sample_script_path / "SampleScript.py"
-    # script_readme_md = sample_script_path / "README.md"
-    # unified_script_in_sample = sample_script_path / "automation-script0.yml"
-    # unified_script = scripts_path / "automation-script0.yml"
-
-    # assert scripts_path.exists()
-    # assert sample_script_path.exists()
-    # assert script_yml.exists()
-    # assert script_py.exists()
-    # assert script_readme_md.exists()
-
-    # # generated script readme should not be empty
-    # script_statinfo = os.stat(script_readme_md)
-    # assert script_statinfo and script_statinfo.st_size > 0
-    # # unified yaml of the script should have been deleted
-    # assert not unified_script_in_sample.exists()
-    # assert not unified_script.exists()
-
-    # integrations_path = converted_pack_path / "Integrations"
-    # sample_integration_path = integrations_path / "Sample"
-    # integration_yml = sample_integration_path / "Sample.yml"
-    # integration_py = sample_integration_path / "Sample.py"
-    # integration_description = sample_integration_path / "Sample_description.md"
-    # integration_image = sample_integration_path / "Sample_image.png"
-    # integration_readme_md = sample_integration_path / "README.md"
-    # unified_yml = integrations_path / "integration-integration0.yml"
-    # unified_yml_in_sample = sample_integration_path / "integration-integration0.yml"
-    # integration_files = [
-    #     integration_yml,
-    #     integration_py,
-    #     integration_description,
-    #     integration_image,
-    #     integration_readme_md,
-    # ]
-    # for integration_file in integration_files:
-    #     assert integration_file.exists()
-    # # generated integration readme should not be empty
-    # statinfo = os.stat(integration_readme_md)
-    # assert statinfo and statinfo.st_size > 0
-
-    # # unified yaml of the integration should have been deleted
-    # assert not unified_yml.exists()
-    # assert not unified_yml_in_sample.exists()
 
 
 def test_convert_contribution_zip(

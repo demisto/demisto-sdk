@@ -8,11 +8,9 @@ import pytest
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
-    INTEGRATIONS_DIR,
     INTEGRATIONS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.files.text_file import TextFile
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -972,7 +970,7 @@ class TestGenerateIntegrationDoc:
     def teardown_class(cls):
         cls.rm_readme()
 
-    def test_generate_integration_doc(self, mocker, tmp_path: Path):
+    def test_generate_integration_doc(self, mocker: MockerFixture, tmp_path: Path):
         """
         Given
             - YML file representing an integration.
@@ -1736,7 +1734,9 @@ class TestIntegrationDocUpdate:
     def _get_function_name(self) -> str:
         return inspect.currentframe().f_back.f_code.co_name
 
-    def test_added_commands(self, mocker: MockerFixture, tmp_path: Path):
+    def test_added_commands(
+        self, mocker: MockerFixture, tmp_path: Path, git_repo: Repo
+    ):
         """
         Check that newly-added commands to the integration YAML
         are appended to the integration README.
@@ -1752,11 +1752,6 @@ class TestIntegrationDocUpdate:
         - The difference is 1 command.
         """
 
-        # Create content repo
-        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
-        content_temp_dir.mkdir()
-        repo = Repo(tmpdir=content_temp_dir, init_git=True)
-
         # Initialize Integration Python, YAML, README.
         py_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{self.integration_name}.py"
@@ -1775,13 +1770,13 @@ class TestIntegrationDocUpdate:
         markdown = readme_path.read_text()
 
         # Create Pack and Integration
-        repo.create_pack(self.pack_name)
-        repo.packs[0].create_integration(
+        git_repo.create_pack(self.pack_name)
+        git_repo.packs[0].create_integration(
             self.integration_name, code=py_code, yml=yml_code, readme=markdown
         )
 
-        repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
-        repo.git_util.repo.git.checkout("-b", "add_delete_cmd")
+        git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
+        git_repo.git_util.repo.git.checkout("-b", "add_delete_cmd")
 
         shutil.copyfile(
             os.path.join(
@@ -1789,28 +1784,18 @@ class TestIntegrationDocUpdate:
                 self._get_function_name(),
                 f"{self.integration_name}_added_cmd.yml",
             ),
-            os.path.join(repo.packs[0].integrations[0].yml.path),
+            os.path.join(git_repo.packs[0].integrations[0].yml.path),
         )
 
         mocker.patch.object(
-            repo.git_util,
-            "read_file_content",
-            return_value=Path(
-                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
-            ).read_bytes(),
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
-        master_text = repo.git_util.read_file_content(
-            path=os.path.join(repo.packs[0].integrations[0].yml.path),
-            commit_or_branch="master",
-            from_remote=False,
-        )
-
-        with Path(str(tmp_path), f"{self.integration_name}.yml").open("wb") as fd:
-            fd.write(master_text)
 
         diff = IntegrationDiffDetector(
-            old=os.path.join(str(tmp_path), f"{self.integration_name}.yml"),
-            new=os.path.join(repo.packs[0].integrations[0].yml.path),
+            old=str(yml_code_path),
+            new=os.path.join(git_repo.packs[0].integrations[0].yml.path),
         )
 
         actual = diff.get_added_commands()
@@ -1818,18 +1803,11 @@ class TestIntegrationDocUpdate:
 
         assert actual == expected
 
-        mocker.patch.object(
-            GitUtil,
-            "read_file_content",
-            return_value=Path(
-                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
-            ).read_bytes(),
-        )
         generate_integration_doc(
-            input_path=os.path.join(repo.packs[0].integrations[0].yml.path)
+            input_path=os.path.join(git_repo.packs[0].integrations[0].yml.path)
         )
 
-        actual = repo.packs[0].integrations[0].readme.read()
+        actual = git_repo.packs[0].integrations[0].readme.read()
 
         assert "aha-delete-idea" in actual
 
@@ -1839,15 +1817,12 @@ class TestIntegrationDocUpdate:
         """
         pass
 
-    def test_added_configuration(self, mocker: MockerFixture, tmp_path: Path):
+    def test_added_configuration(
+        self, mocker: MockerFixture, tmp_path: Path, git_repo: Repo
+    ):
         """
         TODO test a changed configuration
         """
-
-        # Create content repo
-        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
-        content_temp_dir.mkdir()
-        repo = Repo(tmpdir=content_temp_dir, init_git=True)
 
         # Initialize Integration Python, YAML, README.
         py_code_path = Path(
@@ -1867,13 +1842,13 @@ class TestIntegrationDocUpdate:
         markdown = readme_path.read_text()
 
         # Create Pack and Integration
-        repo.create_pack(self.pack_name)
-        repo.packs[0].create_integration(
+        git_repo.create_pack(self.pack_name)
+        git_repo.packs[0].create_integration(
             self.integration_name, code=py_code, yml=yml_code, readme=markdown
         )
 
-        repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
-        repo.git_util.repo.git.checkout("-b", "add_conf_project_id")
+        git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
+        git_repo.git_util.repo.git.checkout("-b", "add_conf_project_id")
 
         shutil.copyfile(
             os.path.join(
@@ -1881,44 +1856,25 @@ class TestIntegrationDocUpdate:
                 self._get_function_name(),
                 f"{self.integration_name}_added_conf.yml",
             ),
-            repo.packs[0].integrations[0].yml.path,
+            git_repo.packs[0].integrations[0].yml.path,
         )
 
         mocker.patch.object(
-            repo.git_util,
-            "read_file_content",
-            return_value=Path(
-                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
-            ).read_bytes(),
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
-        master_text = repo.git_util.read_file_content(
-            path=os.path.join(repo.packs[0].integrations[0].yml.path),
-            commit_or_branch="master",
-            from_remote=False,
-        )
-
-        with Path(str(tmp_path), f"{self.integration_name}.yml").open("wb") as fd:
-            fd.write(master_text)
 
         diff = IntegrationDiffDetector(
-            old=os.path.join(str(tmp_path), f"{self.integration_name}.yml"),
-            new=os.path.join(repo.packs[0].integrations[0].yml.path),
+            old=os.path.join(str(yml_code_path)),
+            new=os.path.join(git_repo.packs[0].integrations[0].yml.path),
         )
 
         assert diff.is_configuration_different()
 
-        mocker.patch.object(
-            GitUtil,
-            "read_file_content",
-            return_value=Path(
-                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
-            ).read_bytes(),
-        )
-        generate_integration_doc(
-            input_path=os.path.join(repo.packs[0].integrations[0].yml.path)
-        )
+        generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
-        actual = repo.packs[0].integrations[0].readme.read()
+        actual = git_repo.packs[0].integrations[0].readme.read()
 
         assert "Project ID" in actual
 
@@ -1984,41 +1940,20 @@ class TestIntegrationDocUpdate:
         )
 
         mocker.patch.object(
-            repo.git_util,
-            "read_file_content",
-            return_value=Path(
-                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
-            ).read_bytes(),
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
-        master_text = repo.git_util.read_file_content(
-            path=os.path.join(repo.packs[0].integrations[0].yml.path),
-            commit_or_branch="master",
-            from_remote=False,
-        )
-
-        with Path(str(tmp_path), f"{self.integration_name}.yml").open("wb") as fd:
-            fd.write(master_text)
 
         diff = IntegrationDiffDetector(
-            old=os.path.join(str(tmp_path), f"{self.integration_name}.yml"),
-            new=os.path.join(repo.packs[0].integrations[0].yml.path),
+            old=str(yml_code_path), new=repo.packs[0].integrations[0].yml.path
         )
 
         expected_modified_commands = ["aha-get-features", "aha-edit-idea"]
         actual_modified_commands = diff.get_modified_commands()
         assert expected_modified_commands == actual_modified_commands
 
-        # Return master branch integration YAML.
-        mocker.patch.object(
-            GitUtil,
-            "read_file_content",
-            return_value=Path(
-                TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
-            ).read_bytes(),
-        )
-        generate_integration_doc(
-            input_path=os.path.join(repo.packs[0].integrations[0].yml.path)
-        )
+        generate_integration_doc(input_path=repo.packs[0].integrations[0].yml.path)
 
         actual = repo.packs[0].integrations[0].readme.read()
 
@@ -2231,26 +2166,18 @@ class TestIntegrationDocUpdate:
         markdown = readme_path.read_text()
 
         # Create Pack and Integration
-        git_repo.create_pack(integration_name)
+        git_repo.create_pack(pack_name)
         git_repo.packs[0].create_integration(
             integration_name, yml=yml_code, readme=markdown
         )
 
-        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
-        mocker.patch.object(
-            GitUtil,
-            "path_from_git_root",
-            return_value=Path(
-                f"Packs/{pack_name}/{INTEGRATIONS_DIR}/{integration_name}/{integration_name}.yml"
-            ),
-        )
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
             side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
 
-        git_repo.git_util.commit_files("Add SplunkPy Pack")
+        git_repo.git_util.commit_files(f"Add {pack_name} Pack")
         shutil.copyfile(
             src=modified_yml_code_path, dst=git_repo.packs[0].integrations[0].yml.path
         )

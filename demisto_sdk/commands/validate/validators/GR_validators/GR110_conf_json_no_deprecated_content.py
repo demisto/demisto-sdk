@@ -6,6 +6,7 @@ from typing import Iterable, List
 from more_itertools import one
 
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJson
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -15,11 +16,11 @@ ContentTypes = ConfJson
 
 
 class ConfJSONLinkValidator(BaseValidator[ContentTypes]):
-    error_code = "GR109"
+    error_code = "GR110"
     description = (
-        "Validates that all content items mentioned in conf.json exist in the repo."
+        "Validates that all content items mentioned in conf.json are not deprecated."
     )
-    error_message = f"Cannot find content object(s) mentioned in conf.json, with id(s) {0} in the repo."
+    error_message = f"{0} is deprecated, remove it from conf.json"
     content_types = ContentTypes
     is_auto_fixable = False
 
@@ -29,19 +30,24 @@ class ConfJSONLinkValidator(BaseValidator[ContentTypes]):
                 object_id=one(content_items).object_id
             )  # type:ignore[assignment]
         )
-        missing_objects = [
+        deprecated_objects = [
             relationship.content_item_to
             for relationship in itertools.chain.from_iterable(
                 graph_conf_json.relationships_data.values()
             )
-            if relationship.content_item_to.not_in_repository
+            if (
+                isinstance(
+                    relationship.content_item_to, ContentItem
+                )  # TODO is this the best class to check against?
+                and relationship.content_item_to.deprecated
+            )
         ]
 
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(missing_object.object_id),
-                content_object=graph_conf_json,
+                content_object=missing_object,
             )
-            for missing_object in sorted(missing_objects, key=lambda o: o.object_id)
+            for missing_object in sorted(deprecated_objects, key=lambda o: o.object_id)
         ]

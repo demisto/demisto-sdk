@@ -45,17 +45,17 @@ class ConfJson(BaseContent, content_type=ContentType.CONF_JSON):
             (
                 ContentType.INTEGRATION,
                 (test.integrations for test in self.body.tests),
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_TESTS,
             ),
             (
                 ContentType.PLAYBOOK,
                 (test.playbookID for test in self.body.tests),
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_TESTS,
             ),
             (
                 ContentType.SCRIPT,
                 (test.scripts for test in self.body.tests),
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_SCRIPT_USED,
             ),
             (
                 ContentType.INTEGRATION,
@@ -73,32 +73,32 @@ class ConfJson(BaseContent, content_type=ContentType.CONF_JSON):
             (
                 ContentType.PACK,
                 self.body.nightly_packs,
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_NIGHTLY_PACK,
             ),
             (
                 ContentType.INTEGRATION,
                 self.body.unmockable_integrations,
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_UNMOCKABLE,
             ),
             (
                 ContentType.INTEGRATION,
                 self.body.parallel_integrations,
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_PARALLEL_INTEGRATION,
             ),
             (
                 ContentType.TEST_PLAYBOOK,
                 self.body.private_tests,
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_PRIVATE,
             ),
             (
                 ContentType.TEST_PLAYBOOK,
                 self.body.reputation_tests,
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_REPUTATION_TEST,
             ),
             (
                 ContentType.TEST_PLAYBOOK,
                 self.body.test_marketplacev2,
-                RelationshipType.CONF_JSON_USES,
+                RelationshipType.CONF_JSON_TESTS,
             ),
         ):
             for one_or_many_ids in filter(None, ids):

@@ -407,4 +407,6 @@ class Initializer:
 
     def filter_files(self, files_list):
         extensions_list_to_filter = [".png", ".md", ".svg"]
-        return [file for file in files_list if file.suffix not in extensions_list_to_filter]
+        return [
+            file for file in files_list if file.suffix not in extensions_list_to_filter
+        ]

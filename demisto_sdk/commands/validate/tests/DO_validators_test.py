@@ -8,7 +8,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
 )
-from demisto_sdk.commands.validate.validators.DO_validators.DO100_docker_image_tag_is_not_latest import (
+from demisto_sdk.commands.validate.validators.DO_validators.DO101_docker_image_tag_is_not_latest import (
     LatestDockerImageTagValidator,
 )
 from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_exist import (

@@ -14,8 +14,8 @@ ContentTypes = Union[Integration, Script]
 
 
 class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
-    error_code = "DO100"
-    description = "Validate that the given content-item does not use the 'latest' docker image, but always has a tag"
+    error_code = "DO101"
+    description = "Validate that the given content-item does not use the 'latest' docker image, but always has a versioned tag"
     error_message = "docker image {0} has the 'latest' tag is which is not allowed, use versioned tag"
     fix_message = "docker image {0} has been updated to {1}"
     related_field = "Docker image"
@@ -30,8 +30,7 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if content_item.type != "javascript"
-            and content_item.docker_image
-            and content_item.docker_image.endswith("latest")
+            and content_item.docker_image_object.tag == "latest"
         ]
 
     def fix(
@@ -41,7 +40,7 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
         docker_image = content_item.docker_image_object
 
         latest_docker_image = str(
-            self.dockerhub_client.get_latest_docker_image_tag(docker_image.repository)
+            self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
         )
         if content_item.docker_image:
             content_item.docker_image = content_item.docker_image.replace(

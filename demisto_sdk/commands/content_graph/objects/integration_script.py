@@ -52,15 +52,23 @@ class IntegrationScript(ContentItem):
     @property
     def docker_image_object(self):
         class DockerImage:
-            def __init__(self, repository: str, tag: str):
+            def __init__(self, repository: str, image_name: str, tag: str):
                 self.repository = repository  # e.g.: demisto/python3
+                self.image_name = image_name
                 self.tag = tag  # any tag
+
+            @property
+            def name(self):
+                return f"{self.repository}/{self.image_name}"
+
+            def __str__(self):
+                return f"{self.repository}/{self.image_name}:{self.tag}"
 
             @classmethod
             def from_string(cls, docker_image: str):
-                pattern = re.compile(r"^([^:/]+)(?::([^@]+))?(?:@(.+))?$")
+                pattern = re.compile(r"^([^/]+)/(.*?)(?::(.*))?$")
                 if matches := pattern.match(docker_image):
-                    return cls(matches.group(1), matches.group(2))
+                    return cls(matches.group(1), matches.group(2), matches.group(3))
 
                 raise ValueError(f"docker-image {docker_image} is invalid")
 

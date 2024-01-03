@@ -16,7 +16,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[Integration, Script]
 
 
-class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
+class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes]):
     error_code = "DO106"
     description = (
         "Validate that the given content-item uses the latest tag of a docker image"
@@ -58,7 +58,9 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
-                                content_item.docker_image, docker_image.tag
+                                content_item.docker_image,
+                                docker_image_tag,
+                                docker_image_latest_tag,
                             ),
                             content_object=content_item,
                         )

@@ -30,13 +30,13 @@ runs:
         poetry install -E generate-unit-tests
       shell: bash
 
-#    - name: Set up Node.js
-#      uses: actions/setup-node@v3
-#      with:
-#        node-version: ${{ inputs.node-version }}
-#
-#    - name: Install npm
-#      run: |
-#        npm install
-#        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
-#      shell: bash
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install npm
+      run: |
+        npm install
+        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+      shell: bash

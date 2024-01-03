@@ -140,39 +140,19 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
         # Add spaces following last component
         root_data = config_data.getroot()
 
-        # Add indentation
-        if len(root_data) > 0:
-            root_data[-1].tail = (
-                "\n" + " " * 2
-            )
-
-        else:
-            root_data.text = "\n" + " " * 2
-
         module_root_manager_component_data = etree.SubElement(
             root_data, "component"
         )
         module_root_manager_component_data.set('name', module_root_manager_name)
-        module_root_manager_component_data.tail = "\n" + "  " * 2
 
     # Generate the content component if it doesn't exist
     if config_data.find(module_root_manager_content) is None:
         # Add spaces following last content item
         module_root_manager_component_data = config_data.find(module_root_manager_component)
 
-        # Add indentation
-        if len(module_root_manager_component_data) > 0:
-            module_root_manager_component_data[-1].tail = (
-                "\n" + " " * 4
-            )
-
-        else:
-            module_root_manager_component_data.text = "\n" + " " * 4
-
-        module_root_manager_content_data = etree.SubElement(
+        etree.SubElement(
             module_root_manager_component_data, "content", url=url_prefix
         )
-        module_root_manager_content_data.tail = "\n" + "  " * 4
 
     source_folders = config_data.findall(module_root_manager_content + "/sourceFolder")
     existing_paths = set()
@@ -194,15 +174,6 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
         if python_path_relative in existing_paths:
             continue
 
-        # Add indentation
-        if len(module_root_manager_content_data) > 0:
-            module_root_manager_content_data[-1].tail = (
-                "\n" + " " * 6
-            )
-
-        else:
-            module_root_manager_content_data.text = "\n" + " " * 6
-
         etree.SubElement(
             module_root_manager_content_data,
             "sourceFolder",
@@ -211,9 +182,7 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
         )
         added_entries_count += 1
 
-    module_root_manager_content_data[-1].tail = (
-        "\n" + " " * 4
-    )  # Set indentation for closing tag ('</content>')
+    etree.indent(config_data)
 
     if (
         added_entries_count > 0

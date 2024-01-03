@@ -1,6 +1,7 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 
+from more_itertools import always_iterable
 from packaging.version import Version
 from pydantic import BaseModel, Extra, Field, validator
 
@@ -31,20 +32,99 @@ class ConfJsonNode(BaseNode, content_type=ContentType.CONF_JSON):
 
     @property
     def relationships(self) -> Relationships:
-        result = Relationships()
-        for skipped_integration in self.body.skipped_integrations:
-            result.add(
-                RelationshipType.USES_BY_ID,
+        relationships = Relationships()
+
+        class RelationshipDatum(BaseModel):
+            content_type: ContentType
+            content_id: str
+            relationship_type: RelationshipType
+
+        relationship_data: Set[RelationshipDatum] = set()  # prevents duplicates
+
+        for content_type, ids, relationship_type in (
+            (
+                ContentType.INTEGRATION,
+                (test.integrations for test in self.body.tests),
+                RelationshipType.CONF_JSON_USES,
+            ),
+            (
+                ContentType.PLAYBOOK,
+                (test.playbookID for test in self.body.tests),
+                RelationshipType.CONF_JSON_USES,
+            ),
+            (
+                ContentType.SCRIPT,
+                (test.scripts for test in self.body.tests),
+                RelationshipType.CONF_JSON_USES,
+            ),
+            (
+                ContentType.INTEGRATION,
+                filter(
+                    lambda s: not s.startswith("_comment"),
+                    self.body.skipped_integrations,
+                ),
+                RelationshipType.CONF_JSON_SKIPPED,
+            ),
+            (
+                ContentType.TEST_PLAYBOOK,
+                self.body.skipped_tests.keys(),
+                RelationshipType.CONF_JSON_SKIPPED,
+            ),
+            (
+                ContentType.PACK,
+                self.body.nightly_packs,
+                RelationshipType.CONF_JSON_NIGHTLY_PACK,
+            ),
+            (
+                ContentType.INTEGRATION,
+                self.body.unmockable_integrations,
+                RelationshipType.CONF_JSON_USES,
+            ),
+            (
+                ContentType.INTEGRATION,
+                self.body.parallel_integrations,
+                RelationshipType.CONF_JSON_USES,
+            ),
+            (
+                ContentType.TEST_PLAYBOOK,
+                self.body.private_tests,
+                RelationshipType.CONF_JSON_USES,
+            ),
+            (
+                ContentType.TEST_PLAYBOOK,
+                self.body.reputation_tests,
+                RelationshipType.CONF_JSON_USES,
+            ),
+            (
+                ContentType.TEST_PLAYBOOK,
+                self.body.test_marketplacev2,
+                RelationshipType.CONF_JSON_USES,
+            ),
+        ):
+            for one_or_many_ids in filter(None, ids):
+                for content_id in filter(  # type:ignore[var-annotated]
+                    None, always_iterable(one_or_many_ids)
+                ):
+                    relationship_data.add(
+                        RelationshipDatum(
+                            content_type=content_type,
+                            content_id=content_id,
+                            relationship_type=relationship_type,
+                        )
+                    )
+
+        for relationship_datum in relationship_data:
+            relationships.add(  # TODO add_batch?
+                relationship_datum.relationship_type,
                 source_id=self.object_id,
                 source_type=self.content_type,
                 source_fromversion=self.fromversion,
                 source_marketplaces=self.marketplaces,
-                target=skipped_integration,
-                target_type=ContentType.INTEGRATION,
+                target=relationship_datum.content_id,
+                target_type=relationship_datum.content_type,
                 target_fromversion=self.fromversion,
-                type="Skipped integration",
             )
-        return result
+        return relationships
 
 
 class DictWithSingleSimpleString(StrictBaseModel):

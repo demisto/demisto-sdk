@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.common.tools import get_current_usecases
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -20,10 +20,11 @@ class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
     fix_message = "Removed the following use cases: {0}"
     related_field = "useCases"
     is_auto_fixable = True
+    non_approved_usecases_dict: ClassVar[dict] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         non_approved_usecases = set()
-        current_usecases = get_current_usecases()
+        approved_usecases = get_current_usecases()
         return [
             ValidationResult(
                 validator=self,
@@ -31,14 +32,37 @@ class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (non_approved_usecases := set(content_item.use_cases) - set(current_usecases))  # type: ignore
+            if (
+                non_approved_usecases := self.get_non_approved_usecases(
+                    approved_usecases, content_item
+                )
+            )
         ]
 
+    def get_non_approved_usecases(
+        self, approved_usecases: List[str], content_item: ContentTypes
+    ) -> set:
+        """Extract the set of non approved usecases from the metadata's useCases field.
+
+        Args:
+            approved_usecases (List[str]): The list of approved useCases.
+            content_item (ContentTypes): the pack_metadata object.
+
+        Returns:
+            set: the set of non approved usecases
+        """
+        non_approved_usecases = set()
+        if non_approved_usecases := set(content_item.use_cases) - set(  # type: ignore[arg-type]
+            approved_usecases
+        ):
+            self.non_approved_usecases_dict[content_item.name] = non_approved_usecases
+        return non_approved_usecases
+
     def fix(self, content_item: ContentTypes) -> FixResult:
-        non_approved_usecases = set(content_item.use_cases) - set(get_current_usecases())  # type: ignore
+        non_approved_usecases = self.non_approved_usecases_dict[content_item.name]
         use_cases = content_item.use_cases
         for non_approved_usecase in non_approved_usecases:
-            use_cases.remove(non_approved_usecase)  # type: ignore
+            use_cases.remove(non_approved_usecase)  # type: ignore[union-attr]
         content_item.use_cases = use_cases
         return FixResult(
             validator=self,

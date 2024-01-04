@@ -36,44 +36,47 @@ def collect_all_inputs_from_inputs_section(content_item: Playbook) -> Set[str]:
     return set(inputs_keys)
 
 
-def filter_by_marketplace(marketplaces, pack_meta_file_content):
-        """Filtering pack_metadata tags by marketplace"""
+def filter_by_marketplace(marketplaces, pack_meta_file_content, return_is_valid=True):
+    """Filtering pack_metadata tags by marketplace"""
 
-        pack_tags: Dict[str, List[str]] = {}
-        for marketplace in marketplaces:
-            pack_tags[marketplace] = []
-        pack_tags["common"] = []
+    pack_tags: Dict[str, List[str]] = {}
+    for marketplace in marketplaces:
+        pack_tags[marketplace] = []
+    pack_tags["common"] = []
 
-        is_valid = True
-        for tag in pack_meta_file_content.get("tags", []):
-            if ":" in tag:
-                tag_data = tag.split(":")
-                tag_marketplaces = tag_data[0].split(",")
+    is_valid = True
+    for tag in pack_meta_file_content.get("tags", []):
+        if ":" in tag:
+            tag_data = tag.split(":")
+            tag_marketplaces = tag_data[0].split(",")
 
-                try:
-                    for tag_marketplace in tag_marketplaces:
-                        pack_tags[tag_marketplace].append(tag_data[1])
-                except KeyError:
-                    logger.warning(
-                        "[yellow]You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
-                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.[/yellow]'
-                    )
-                    is_valid = False
+            try:
+                for tag_marketplace in tag_marketplaces:
+                    pack_tags[tag_marketplace].append(tag_data[1])
+            except KeyError:
+                logger.warning(
+                    "[yellow]You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
+                    f' Valid tag prefixes are: { ", ".join(marketplaces)}.[/yellow]'
+                )
+                is_valid = False
 
-            else:
-                pack_tags["common"].append(tag)
-
+        else:
+            pack_tags["common"].append(tag)
+    if return_is_valid:
         return pack_tags, is_valid
+    else:
+        return pack_tags
+
 
 def extract_non_approved_tags(pack_tags, marketplaces) -> Set[str]:
-        approved_tags = get_approved_tags_from_branch()
+    approved_tags = get_approved_tags_from_branch()
 
-        non_approved_tags = set(pack_tags.get("common", [])) - set(
-            approved_tags.get("common", [])
+    non_approved_tags = set(pack_tags.get("common", [])) - set(
+        approved_tags.get("common", [])
+    )
+    for marketplace in marketplaces:
+        non_approved_tags |= set(pack_tags.get(marketplace, [])) - set(
+            approved_tags.get(marketplace, [])
         )
-        for marketplace in marketplaces:
-            non_approved_tags |= set(pack_tags.get(marketplace, [])) - set(
-                approved_tags.get(marketplace, [])
-            )
 
-        return non_approved_tags
+    return non_approved_tags

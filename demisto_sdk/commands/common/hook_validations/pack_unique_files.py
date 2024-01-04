@@ -5,7 +5,7 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, Tuple
 
 from dateutil import parser
 from git import GitCommandError
@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     DEMISTO_GIT_UPSTREAM,
     EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
+    MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_KEY_PACK_METADATA,
     MODULES,
     PACK_METADATA_CATEGORIES,
@@ -27,7 +28,6 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_DEPENDENCIES,
     PACK_METADATA_DESC,
     PACK_METADATA_EMAIL,
-    PACK_METADATA_FIELDS,
     PACK_METADATA_MANDATORY_FILLED_FIELDS,
     PACK_METADATA_MODULES,
     PACK_METADATA_NAME,
@@ -554,7 +554,9 @@ class PackUniqueFilesValidator(BaseValidator):
                     raise BlockingValidationFailureException()
 
             missing_fields = [
-                field for field in PACK_METADATA_FIELDS if field not in metadata.keys()
+                field
+                for field in MANDATORY_PACK_METADATA_FIELDS
+                if field not in metadata.keys()
             ]
             if missing_fields:
                 if self._add_error(
@@ -849,7 +851,9 @@ class PackUniqueFilesValidator(BaseValidator):
         non_approved_tags = set()
         marketplaces = [x.value for x in list(MarketplaceVersions)]
         try:
-            pack_tags, is_valid_tag_prefixes = filter_by_marketplace(marketplaces, self._read_metadata_content())
+            pack_tags, is_valid_tag_prefixes = filter_by_marketplace(
+                marketplaces, self._read_metadata_content()
+            )
             non_approved_tags = extract_non_approved_tags(pack_tags, marketplaces)
             if non_approved_tags:
                 if self._add_error(
@@ -865,7 +869,6 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
 
         return is_valid_tag_prefixes
-
 
     @error_codes("RN106,PA131")
     def _is_right_version(self):

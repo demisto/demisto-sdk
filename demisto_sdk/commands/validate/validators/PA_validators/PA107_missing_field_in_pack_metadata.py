@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
-from demisto_sdk.commands.common.constants import PACK_METADATA_FIELDS
+from demisto_sdk.commands.common.constants import MANDATORY_PACK_METADATA_FIELDS
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -20,6 +20,7 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
     error_message = "The following fields are missing from the file: {0}."
     related_field = "name, desc, support, currentVersion, author, url, categories, tags, useCases, keywords"
     is_auto_fixable = True
+    missing_fields_dict: ClassVar[dict] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -29,23 +30,28 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                missing_fields := [
-                    field
-                    for field in PACK_METADATA_FIELDS
-                    if field not in content_item.pack_metadata_dict  # type: ignore[operator]
-                ]
-            )
+            if (missing_fields := self.get_missing_fields(content_item))
         ]
+
+    def get_missing_fields(self, content_item: ContentTypes) -> List[str]:
+        """Extract the list of missing fields from the metadata file.
+
+        Args:
+            content_item (ContentTypes): the pack_metadata object.
+
+        Returns:
+            List[str]: the list of missing fields.
+        """
+        if missing_fields := [field for field in MANDATORY_PACK_METADATA_FIELDS if field not in content_item.pack_metadata_dict]:  # type: ignore[operator]
+            self.missing_fields_dict[content_item.name] = missing_fields
+        return missing_fields
 
     def fix(
         self,
         content_item: ContentTypes,
     ) -> FixResult:
         # By adding the contentItem as a fix result, when we attempt to save fields into the contentItem, we'll make sure to add the missing fields as a part of Pack object save method
-        missing_fields = [
-            field for field in PACK_METADATA_FIELDS if field not in content_item.pack_metadata_dict  # type: ignore[operator]
-        ]
+        missing_fields = self.missing_fields_dict[content_item.name]
         return FixResult(
             validator=self,
             message=self.fix_message.format(", ".join(missing_fields)),

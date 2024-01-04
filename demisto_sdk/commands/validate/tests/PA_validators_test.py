@@ -1,6 +1,6 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import PACK_METADATA_FIELDS
+from demisto_sdk.commands.common.constants import MANDATORY_PACK_METADATA_FIELDS
 from demisto_sdk.commands.validate.tests.test_tools import create_metadata_object
 from demisto_sdk.commands.validate.validators.PA_validators.PA107_missing_field_in_pack_metadata import (
     MissingFieldInPackMetadataValidator,
@@ -203,10 +203,14 @@ def test_IsCurrentVersionCorrectFormatValidator_is_valid(
     [
         ([create_metadata_object()], 0, []),
         (
-            [create_metadata_object(fields_to_delete=list(PACK_METADATA_FIELDS))],
+            [
+                create_metadata_object(
+                    fields_to_delete=list(MANDATORY_PACK_METADATA_FIELDS)
+                )
+            ],
             1,
             [
-                f"The following fields are missing from the file: {', '.join(PACK_METADATA_FIELDS)}."
+                f"The following fields are missing from the file: {', '.join(MANDATORY_PACK_METADATA_FIELDS)}."
             ],
         ),
     ],

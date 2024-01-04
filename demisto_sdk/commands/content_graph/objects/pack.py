@@ -13,8 +13,8 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
-    PACK_METADATA_FIELDS,
     ImagesFolderNames,
     MarketplaceVersions,
 )
@@ -521,4 +521,4 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def save(self):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
-        super()._save(file_path, data, predefined_keys_to_keep=PACK_METADATA_FIELDS)  # type: ignore
+        super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore

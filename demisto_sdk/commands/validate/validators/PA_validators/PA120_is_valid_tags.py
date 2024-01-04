@@ -1,7 +1,6 @@
-
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -21,42 +20,57 @@ ContentTypes = Pack
 class IsValidTagsValidator(BaseValidator[ContentTypes]):
     error_code = "PA120"
     description = "Validate that metadata's tag section include only approved tags."
-    error_message = "The following tags {0} are invalid..."
-    fix_message = ""
+    error_message = "The pack metadata contains non approved tags: {0}. The list of approved tags for each marketplace can be found on https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
+    fix_message = "Removed the following tags: {0}"
     related_field = "tags"
     is_auto_fixable = True
+    non_approved_tags_dict: ClassVar[dict] = {}
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        non_approved_tags = set()
-        marketplaces = [x.value for x in list(MarketplaceVersions)]
-        pack_tags, _ = filter_by_marketplace(marketplaces, content_item.pack_metadata_dict)
-        non_approved_tags = extract_non_approved_tags(pack_tags, marketplaces)
-        if non_approved_tags:
-            if self._add_error(
-                Errors.pack_metadata_non_approved_tags(non_approved_tags),
-                self.pack_meta_file,
-            ):
-                return False
+        marketplaces: List[str] = [x.value for x in list(MarketplaceVersions)]
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(", ".join(non_approved_tags)),
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.tags
-            and USE_CASE_TAG in content_item.tags
-            and not any(
-                [
-                    content_item.content_items.playbook,
-                    content_item.content_items.incident_type,
-                    content_item.content_items.layout,
-                ]
+            if (
+                non_approved_tags := self.get_non_approved_tags(
+                    marketplaces, content_item
+                )
             )
         ]
 
+    def get_non_approved_tags(
+        self, marketplaces: List[str], content_item: ContentTypes
+    ) -> set:
+        """Extract the set of non approved tag from the metadata's useCases field.
+
+        Args:
+            marketplaces (List[str]): The list of market places.
+            content_item (ContentTypes): the pack_metadata object.
+
+        Returns:
+            set: the set of non approved tags.
+        """
+        non_approved_tags = set()
+        if pack_tags := filter_by_marketplace(
+            marketplaces, content_item.pack_metadata_dict, False
+        ):
+            if non_approved_tags := extract_non_approved_tags(pack_tags, marketplaces):
+                self.non_approved_tags_dict[content_item.name] = non_approved_tags
+        return non_approved_tags
+
     def fix(self, content_item: ContentTypes) -> FixResult:
-        # Add your fix right here
-        pass
-            
+        tags = content_item.tags
+        for non_approved_tag in self.non_approved_tags_dict[content_item.name]:
+            tags.remove(non_approved_tag)  # type: ignore[union-attr]
+        content_item.tags = tags
+        return FixResult(
+            validator=self,
+            message=self.fix_message.format(
+                ", ".join(self.non_approved_tags_dict[content_item.name])
+            ),
+            content_object=content_item,
+        )

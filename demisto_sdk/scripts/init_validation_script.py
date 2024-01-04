@@ -157,7 +157,6 @@ class ValidationInitializer:
         self.git_statuses = ""
         self.fix_method = ""
         self.fix_message = ""
-        self.include_old_format_files_fix_method = ""
         self.run_on_deprecated = ""
         self.min_content_type_val = 1
         self.max_content_type_val = int(list(CONTENT_TYPES_DICT.keys())[-1])
@@ -406,13 +405,9 @@ Fill the content types as the numbers they appear as: """
         Generate the expected_git_statuses section string.
         """
         if self.git_statuses_str:
-            git_statuses_ls = self.git_statuses_str.split(",")
-            if "A" not in git_statuses_ls and "D" not in git_statuses_ls:
-                self.include_old_format_files_fix_method = (
-                    ", old_content_object: Optional[BaseContent]=None"
-                )
             git_statuses_enum_ls = [
-                GIT_STATUSES_DICT[git_status] for git_status in git_statuses_ls
+                GIT_STATUSES_DICT[git_status]
+                for git_status in self.git_statuses_str.split(",")
             ]
             git_statuses_enum_str = str(git_statuses_enum_ls).replace("'", "")
             self.git_statuses = f"\n    expected_git_statuses = {git_statuses_enum_str}"
@@ -470,7 +465,7 @@ Fill the content types as the numbers they appear as: """
         Generate the fix function is fix is supported by the validation.
         """
         if self.support_fix:
-            self.fix_method = f"""def fix(self, content_item: ContentTypes{self.include_old_format_files_fix_method}) -> FixResult:
+            self.fix_method = """def fix(self, content_item: ContentTypes) -> FixResult:
         # Add your fix right here
         pass
             """

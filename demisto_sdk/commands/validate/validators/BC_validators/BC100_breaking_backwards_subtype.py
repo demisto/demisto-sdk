@@ -1,4 +1,4 @@
-from typing import Iterable, List, Union, cast
+from typing import ClassVar, Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -17,40 +17,53 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the pack name subtype of the new file matches the old one."
     )
-    error_message = "Possible backwards compatibility break, You've changed the subtype, please undo."
+    error_message = "Possible backwards compatibility break, You've changed the file's subtype from {0} to {1}, please undo."
     related_field = "subtype"
-    fix_message = "Changing subtype back to the old one ({0})."
+    fix_message = "Changing subtype back to ({0})."
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     is_auto_fixable = True
+    old_subtype_dict: ClassVar[dict] = {}
 
     def is_valid(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
-        validation_results = []
-        for content_item in content_items:
-            old_obj = cast(ContentTypes, content_item.old_base_content_object)
-            if (
-                content_item.type == "python"
-                and content_item.subtype != old_obj.subtype
-            ):
-                validation_results.append(
-                    ValidationResult(
-                        content_object=content_item,
-                        message=self.error_message.format(content_item.name),
-                        validator=self,
-                    )
-                )
-        return validation_results
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    content_item.subtype, self.old_subtype_dict[content_item.name]
+                ),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if self.is_subtype_changed(content_item)
+        ]
+
+    def is_subtype_changed(self, content_item: ContentTypes) -> bool:
+        """Check if the subtype was changed for a given metadata file and update the `old_subtype_dict` accordingly.
+
+        Args:
+            content_item (ContentTypes): The metadata object.
+
+        Returns:
+            bool: Wether the subtype was changed or not.
+        """
+        old_obj = cast(ContentTypes, content_item.old_base_content_object)
+        is_subtype_changed = (
+            content_item.type == "python" and content_item.subtype != old_obj.subtype
+        )
+        if is_subtype_changed:
+            self.old_subtype_dict[content_item.name] = old_obj.subtype
+        return is_subtype_changed
 
     def fix(
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        old_content_object = cast(ContentTypes, content_item.old_base_content_object)
-        content_item.subtype = old_content_object.subtype
+        content_item.subtype = self.old_subtype_dict[content_item.name]
         return FixResult(
             validator=self,
-            message=self.fix_message.format(old_content_object.subtype),
+            message=self.fix_message.format(content_item.subtype),
             content_object=content_item,
         )

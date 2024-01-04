@@ -27,6 +27,6 @@ class DockerImageIsNotDemistoValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.type != "javascript"
+            if not content_item.is_javascript
             and content_item.docker_image_object.repository != "demisto"
         ]

@@ -3,8 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Iterable, List, Union
 
+import requests
 from dateparser import parse
 
+from demisto_sdk.commands.common.docker.dockerhub_client import (
+    DockerHubRequestException,
+)
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -44,12 +49,22 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []
         for content_item in content_items:
-            if content_item.type != "javascript":
+            if not content_item.is_javascript:
                 docker_image = content_item.docker_image_object
                 docker_image_tag = docker_image.tag
-                docker_image_latest_tag = str(
-                    self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
-                )
+                try:
+                    docker_image_latest_tag = str(
+                        self.dockerhub_client.get_latest_docker_image_tag(
+                            docker_image.name
+                        )
+                    )
+                except DockerHubRequestException as error:
+                    if error.exception.response.status_code == requests.codes.not_found:
+                        logger.debug(
+                            f"Docker image {content_item.docker_image} for content-item {content_item.content_type} does not exist, skipping {self.error_code}"
+                        )
+                        continue
+                    raise
                 if (
                     docker_image_tag != docker_image_latest_tag
                     and self.is_docker_image_older_than_three_days(docker_image)

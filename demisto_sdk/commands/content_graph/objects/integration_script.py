@@ -87,6 +87,10 @@ class IntegrationScript(ContentItem):
     def is_powershell(self) -> bool:
         return self.type == "powershell"
 
+    @property
+    def is_javascript(self) -> bool:
+        return self.type == "javascript"
+
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,

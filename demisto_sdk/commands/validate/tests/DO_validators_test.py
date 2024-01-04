@@ -24,6 +24,9 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO107_docker_image_d
 from demisto_sdk.commands.validate.validators.DO_validators.DO109_docker_image_is_not_deprecated import (
     DockerImageIsNotDeprecatedValidator,
 )
+from demisto_sdk.commands.validate.validators.DO_validators.DO110_docker_image_is_not_native_image import (
+    DockerImageIsNotNativeImageValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -425,3 +428,47 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
             "demisto/aiohttp:3.10.13.55555",
             "demisto/algorithmia:1.0.0.32342",
         )
+
+
+def test_DockerImageIsNotNativeImageValidator_is_valid():
+    """
+    Given:
+     - 1 integration and 1 script which uses a native-image
+     - 1 integration and 1 script which do not a native-image
+     - 1 integration and 1 script that are javascript
+
+    When:
+     - Running the DockerImageIsNotNativeImageValidator validator
+
+    Then:
+     - make sure the integrations/scripts with the demisto/py3-native are not valid
+     - make sure that javascripts integrations/scripts are ignored
+    """
+    content_items = [
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=[
+                "demisto/py3-native"
+            ],  # integration with native image configured as its docker image
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=[
+                "demisto/py3-native"
+            ],  # script with native image configured as its docker image
+        ),
+        create_integration_object(),  # integration without native image configured
+        create_script_object(),  # script without native image configured
+        create_integration_object(
+            paths=["script.type"], values=["javascript"]
+        ),  # javascript integration
+        create_script_object(
+            paths=["type"], values=["javascript"]
+        ),  # javascript script
+    ]
+    results = DockerImageIsNotNativeImageValidator().is_valid(content_items)
+    assert len(results) == 2
+    for result in results:
+        content_item: IntegrationScript = result.content_object
+        assert content_item.type == "python"
+        assert content_item.docker_image == "demisto/py3-native"

@@ -1103,7 +1103,7 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 @click.option(
     "--prev-ver",
     help="Previous branch or SHA1 commit to run checks against",
-    default="master",
+    default=os.getenv("DEMISTO_DEFAULT_BRANCH", default="master"),
 )
 @click.option(
     "--test-xml",

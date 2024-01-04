@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Tuple
 import pytest
 from pytest_mock import MockerFixture
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_README_FILE_NAME,
 )
@@ -980,6 +981,7 @@ class TestGenerateIntegrationDoc:
             - Validate that the integration README was created correctly, specifically that line numbers are not being reset after a table.
             - Test that the predefined values and default values are added to the README.
         """
+        # TODO add mock for readme/yaml
         import demisto_sdk.commands.generate_docs.common as common
 
         fake_readme = os.path.join(
@@ -1004,7 +1006,9 @@ class TestGenerateIntegrationDoc:
                 )
                 assert "Number of users to return. Max 300. Default is 30." in fake_data
 
-    def test_generate_integration_doc_new_contribution(self, tmp_path: Path):
+    def test_generate_integration_doc_new_contribution(
+        self, tmp_path: Path, mocker: MockerFixture, git_repo: Repo
+    ):
         """
         Given
             - YML file representing a new integration contribution.
@@ -1014,14 +1018,28 @@ class TestGenerateIntegrationDoc:
             - Validate that the integration README was created correctly,
              specifically that the `xx version` line does not exists in the file.
         """
-        fake_readme = os.path.join(
-            os.path.dirname(TEST_INTEGRATION_PATH), "fake_new_contribution_README.md"
+
+        readme_path = Path(
+            Path(TEST_INTEGRATION_PATH).parent, "fake_new_contribution_README.md"
         )
+        yml_code_path = Path(TEST_INTEGRATION_PATH)
+
+        git_repo.create_pack("TestPack")
+        git_repo.packs[0].create_integration("TestIntegration")
+
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
+        )
+
         # Generate doc
         generate_integration_doc(
-            TEST_INTEGRATION_PATH, is_contribution=True, output=str(tmp_path)
+            str(yml_code_path), is_contribution=True, output=str(tmp_path)
         )
-        with open(fake_readme) as fake_file:
+        with open(readme_path) as fake_file:
             with open(
                 os.path.join(str(tmp_path), INTEGRATIONS_README_FILE_NAME)
             ) as real_file:
@@ -1032,6 +1050,10 @@ class TestGenerateIntegrationDoc:
                     not in fake_data
                 )
 
+    def test_generate_integration_doc_contrib_existing_integration(self):
+        # TODO add
+        pass
+
     def test_generate_integration_doc_passes_markdownlint(self, tmp_path: Path):
         """
         Given: An integrations
@@ -1039,6 +1061,7 @@ class TestGenerateIntegrationDoc:
         Then: The generated readme will have no markdown errors
 
         """
+        # TODO add mock for readme/yaml
         generate_integration_doc(
             TEST_INTEGRATION_PATH, is_contribution=False, output=str(tmp_path)
         )
@@ -1062,6 +1085,7 @@ class TestGenerateIntegrationDoc:
             - Test that the predefined values and default values are added to the README.
             - Test that credentials parameter name shown in README is using display password field.
         """
+        # TODO add mock for readme/yaml
         readme = os.path.join(
             os.path.dirname(TEST_INTEGRATION_2_PATH), INTEGRATIONS_README_FILE_NAME
         )
@@ -1734,9 +1758,7 @@ class TestIntegrationDocUpdate:
     def _get_function_name(self) -> str:
         return inspect.currentframe().f_back.f_code.co_name
 
-    def test_added_commands(
-        self, mocker: MockerFixture, tmp_path: Path, git_repo: Repo
-    ):
+    def test_added_commands(self, mocker: MockerFixture, git_repo: Repo):
         """
         Check that newly-added commands to the integration YAML
         are appended to the integration README.
@@ -1817,11 +1839,19 @@ class TestIntegrationDocUpdate:
         """
         pass
 
-    def test_added_configuration(
-        self, mocker: MockerFixture, tmp_path: Path, git_repo: Repo
-    ):
+    def test_added_configuration(self, mocker: MockerFixture, git_repo: Repo):
         """
-        TODO test a changed configuration
+        Test to check a scenario where an integration configuration is added.
+
+        Given:
+        - A content repo with an integration
+
+        When:
+        - A new integration configuration was added.
+
+        Then:
+        - The integration configuration section should have the
+        new option added.
         """
 
         # Initialize Integration Python, YAML, README.
@@ -1878,7 +1908,9 @@ class TestIntegrationDocUpdate:
 
         assert "Project ID" in actual
 
-    def test_modified_commands(self, mocker: MockerFixture, tmp_path: Path):
+    def test_modified_commands(
+        self, mocker: MockerFixture, tmp_path: Path, git_repo: Repo
+    ):
         """
         Test to verify that if any modified commands are added to the integration,
         they're sections are rerendered.
@@ -1899,11 +1931,6 @@ class TestIntegrationDocUpdate:
         - All modified integration commands changes are reflected in the README.
         """
 
-        # Create content repo
-        content_temp_dir = Path(str(tmp_path)) / self.repo_dir_name
-        content_temp_dir.mkdir()
-        repo = Repo(tmpdir=content_temp_dir, init_git=True)
-
         # Initialize Integration Python, YAML, README.
         py_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{self.integration_name}.py"
@@ -1922,13 +1949,13 @@ class TestIntegrationDocUpdate:
         markdown = readme_path.read_text()
 
         # Create Pack and Integration
-        repo.create_pack(self.pack_name)
-        repo.packs[0].create_integration(
+        git_repo.create_pack(self.pack_name)
+        git_repo.packs[0].create_integration(
             self.integration_name, code=py_code, yml=yml_code, readme=markdown
         )
 
-        repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
-        repo.git_util.repo.git.checkout("-b", "modify_cmds")
+        git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
+        git_repo.git_util.repo.git.checkout("-b", "modify_cmds")
 
         shutil.copyfile(
             os.path.join(
@@ -1936,7 +1963,7 @@ class TestIntegrationDocUpdate:
                 self._get_function_name(),
                 f"{self.integration_name}_modified_cmds.yml",
             ),
-            repo.packs[0].integrations[0].yml.path,
+            git_repo.packs[0].integrations[0].yml.path,
         )
 
         mocker.patch.object(
@@ -1946,16 +1973,16 @@ class TestIntegrationDocUpdate:
         )
 
         diff = IntegrationDiffDetector(
-            old=str(yml_code_path), new=repo.packs[0].integrations[0].yml.path
+            old=str(yml_code_path), new=git_repo.packs[0].integrations[0].yml.path
         )
 
         expected_modified_commands = ["aha-get-features", "aha-edit-idea"]
         actual_modified_commands = diff.get_modified_commands()
         assert expected_modified_commands == actual_modified_commands
 
-        generate_integration_doc(input_path=repo.packs[0].integrations[0].yml.path)
+        generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
-        actual = repo.packs[0].integrations[0].readme.read()
+        actual = git_repo.packs[0].integrations[0].readme.read()
 
         assert (
             "| from_date | Show features created after this date. | Optional |"

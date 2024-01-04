@@ -71,6 +71,7 @@ class IntegrationDocUpdateManager:
 
         self.old_yaml_path = self.get_origin_master_integration_yml()
         self.old_readme_path = self.get_origin_master_integration_readme()
+        # TODO if remote yml/readme don't exist, take from local primary branch.
 
         if self.old_yaml_path:
             self.integration_diff = IntegrationDiffDetector(
@@ -136,7 +137,7 @@ class IntegrationDocUpdateManager:
         """
         try:
             # UI contribution for existing integrations perform the pack processing
-            # in a temp dir. Therefore, we need to get the get the path to the
+            # in a temp dir. Therefore, we need to get the path to the
             # integration README from the set content path.
 
             if self.is_ui_contribution:
@@ -181,7 +182,7 @@ class IntegrationDocUpdateManager:
     def can_update_docs(self) -> bool:
         """
         Before generating a new README, we check whether it's possible to update the interation docs.
-        We check whether we:
+        We check whether:
 
         - There's an integration diff. In case when we can't pull an integration YAML from `origin/master`,
         we won't have an integration diff instance.
@@ -435,6 +436,12 @@ def generate_integration_doc(
                 doc_text, append_errors = append_or_replace_command_in_docs(
                     doc_text, command_section_str, specific_command
                 )
+
+                if command_errors:
+                    errors.extend(command_errors)
+                if append_errors:
+                    errors.extend(append_errors)
+
         elif update_mgr.can_update_docs():
             doc_text, update_errors = update_mgr.update_docs(errors)
 

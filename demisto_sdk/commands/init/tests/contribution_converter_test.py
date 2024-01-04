@@ -14,6 +14,7 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from pytest_mock import MockerFixture
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     INCIDENT_FIELDS_DIR,
@@ -1332,13 +1333,7 @@ class TestReadmes:
         )
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
-        mocker.patch.object(
-            GitUtil,
-            "path_from_git_root",
-            return_value=Path(
-                f"Packs/{self.existing_pack_name}/{INTEGRATIONS_DIR}/{self.existing_integration_name}/{self.existing_integration_name}.yml"
-            ),
-        )
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
@@ -1440,13 +1435,7 @@ class TestReadmes:
         )
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
-        mocker.patch.object(
-            GitUtil,
-            "path_from_git_root",
-            return_value=Path(
-                f"Packs/{self.existing_pack_name}/{INTEGRATIONS_DIR}/{self.existing_integration_name}/{self.existing_integration_name}.yml"
-            ),
-        )
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
@@ -1501,13 +1490,7 @@ class TestReadmes:
         contribution_temp_dir.mkdir()
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
-        mocker.patch.object(
-            GitUtil,
-            "path_from_git_root",
-            return_value=Path(
-                f"Packs/{self.existing_pack_name}/{INTEGRATIONS_DIR}/{self.existing_integration_name}/{self.existing_integration_name}.yml"
-            ),
-        )
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
@@ -1577,13 +1560,7 @@ class TestReadmes:
         pack.create_integration("SplunkPy", yml=yml_code, readme=markdown)
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
-        mocker.patch.object(
-            GitUtil,
-            "path_from_git_root",
-            return_value=Path(
-                f"Packs/{pack_name}/{INTEGRATIONS_DIR}/{integration_name}/{integration_name}.yml"
-            ),
-        )
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
@@ -1598,9 +1575,11 @@ class TestReadmes:
                 json.load(m).get(pack_name).get("detected_content_items")
             )
 
-        contrib_zip = Path(CONTRIBUTION_TESTS, self._get_function_name(), "pack.zip")
+        contrib_zip = os.path.join(
+            CONTRIBUTION_TESTS, self._get_function_name(), "pack.zip"
+        )
         converter = ContributionConverter(
-            contribution=str(contrib_zip),
+            contribution=contrib_zip,
             create_new=False,
             working_dir_path=str(tmp_path),
             pack_dir_name=pack_name,

@@ -21,8 +21,8 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_i
 from demisto_sdk.commands.validate.validators.DO_validators.DO107_docker_image_does_not_exist_in_dockerhub import (
     DockerImageDoesNotExistInDockerhubValidator,
 )
-from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_does_not_exist_in_yml import (
-    DockerImageExistValidator,
+from demisto_sdk.commands.validate.validators.DO_validators.DO109_docker_image_is_not_deprecated import (
+    DockerImageIsNotDeprecatedValidator,
 )
 
 
@@ -104,7 +104,7 @@ def test_DockerImageExistValidator_is_valid(
         "get_latest_docker_image_tag",
         return_value="3.1.1.1",
     )
-    results = DockerImageExistValidator().is_valid(content_items)
+    results = DockerImageIsNotDeprecatedValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     for result, expected_msg in zip(results, expected_msgs):
         assert result.message == expected_msg
@@ -344,4 +344,84 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
         assert content_item.docker_image in (
             "demisto/python3:3.10.13.55555",
             "demisto/ml:1.0.0.32342",
+        )
+
+
+def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
+    """
+    Given:
+     - 1 integration and 1 script which uses a deprecated docker image
+     - 1 integration and 1 script which do not use a deprecated docker image
+     - 1 integration and 1 script that are javascript
+
+    When:
+     - Running the DockerImageDoesNotExistInDockerhubValidator validator
+
+    Then:
+     - make sure the integrations/scripts that use deprecated docker images are not valid
+     - make sure that javascripts integrations/scripts are ignored
+    """
+    from demisto_sdk.commands.common.git_content_config import GitContentConfig
+
+    mocker.patch.object(
+        GitContentConfig,
+        "_search_github_repo",
+        return_value=("githubusercontent.com", "demisto/dockerfiles"),
+    )
+
+    requests_mock.get(
+        "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json",
+        json=[
+            {
+                "image_name": "demisto/aiohttp",
+                "reason": "Use the demisto/py3-tools docker image instead.",
+                "created_time_utc": "2022-05-31T17:51:17.226278Z",
+            },
+            {
+                "image_name": "demisto/algorithmia",
+                "reason": "Use the demisto/py3-tools docker image instead.",
+                "created_time_utc": "2022-05-31T17:51:30.043632Z",
+            },
+        ],
+    )
+
+    content_items = [
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=[
+                "demisto/aiohttp:3.10.13.55555"
+            ],  # integration with demisto image that does not exist
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=[
+                "demisto/algorithmia:1.0.0.32342"
+            ],  # script with demisto image that does not exist
+        ),
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=[
+                "demisto/python3:3.10.13.79623"
+            ],  # integration with demisto image that exists
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=["demisto/ml:1.0.0.33340"],  # script with demisto image that exists
+        ),
+        create_integration_object(
+            paths=["script.type"], values=["javascript"]
+        ),  # javascript integration
+        create_script_object(
+            paths=["type"], values=["javascript"]
+        ),  # javascript script
+    ]
+
+    results = DockerImageIsNotDeprecatedValidator().is_valid(content_items)
+    assert len(results) == 2
+    for result in results:
+        content_item: IntegrationScript = result.content_object
+        assert content_item.type == "python"
+        assert content_item.docker_image in (
+            "demisto/aiohttp:3.10.13.55555",
+            "demisto/algorithmia:1.0.0.32342",
         )

@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageExistValidator(BaseValidator[ContentTypes]):
+class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
     error_code = "DO109"
     description = "Validate that the given content item has a docker_image."
     error_message = "The {0} docker image is deprecated, {1}"

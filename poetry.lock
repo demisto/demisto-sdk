@@ -3523,20 +3523,6 @@ pytest = ">=5.0"
 dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
-name = "pytest-split"
-version = "0.8.1"
-description = "Pytest plugin which splits the test suite to equally sized sub suites based on test execution time."
-optional = false
-python-versions = ">=3.7.1,<4.0"
-files = [
-    {file = "pytest_split-0.8.1-py3-none-any.whl", hash = "sha256:74b110ea091bd147cc1c5f9665a59506e5cedfa66f96a89fb03e4ab447c2c168"},
-    {file = "pytest_split-0.8.1.tar.gz", hash = "sha256:2d88bd3dc528689a7a3f58fc12ea165c3aa62e90795e420dfad920afe5612d6d"},
-]
-
-[package.dependencies]
-pytest = ">=5,<8"
-
-[[package]]
 name = "pytest-subprocess"
 version = "1.5.0"
 description = "A plugin to fake subprocess for pytest"
@@ -5115,4 +5101,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "a39f6752b74e9b3c0dfcd35b6c0411b87ca266403550237610493f6363cf1317"
+content-hash = "d3844d8bf325e79119699b48e8694da884a14a701e9851838e73c13123b1bc42"

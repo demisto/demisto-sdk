@@ -25,12 +25,16 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 class DockerImage:
     def __init__(self, repository: str, image_name: str, tag: str):
-        self.repository = repository
-        self.image_name = image_name
-        self.tag = tag
+        self.repository = repository  # the repository e.g.: demisto
+        self.image_name = image_name  # the image name e.g.: python3, pan-os-python
+        self.tag = tag  # the tag
 
     @property
     def name(self):
+        """
+        Returns the repositroy + image name. .e.g: demisto/python3, demisto/pan-os-python
+        Returns:
+        """
         return f"{self.repository}/{self.image_name}"
 
     def __str__(self):

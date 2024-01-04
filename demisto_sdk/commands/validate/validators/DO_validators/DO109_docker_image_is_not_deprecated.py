@@ -1,0 +1,48 @@
+from __future__ import annotations
+
+from typing import Iterable, List, Union
+
+from demisto_sdk.commands.common.files.json_file import JsonFile
+from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    ValidationResult,
+)
+
+ContentTypes = Union[Integration, Script]
+
+
+class DockerImageExistValidator(BaseValidator[ContentTypes]):
+    error_code = "DO109"
+    description = "Validate that the given content item has a docker_image."
+    error_message = "The {0} docker image is deprecated, {1}"
+    related_field = "Docker image"
+    is_auto_fixable = False
+
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        deprecated_dockers = JsonFile.read_from_github_api(
+            path="/docker/deprecated_images.json",
+            git_content_config=GitContentConfig(repo_name="demisto/dockerfiles"),
+            verify_ssl=False,
+        )
+        deprecated_dockers_to_reasons = {
+            record.get("image_name", ""): record.get("reason")
+            for record in deprecated_dockers
+        }
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    content_item.docker_image,
+                    deprecated_dockers_to_reasons.get(
+                        content_item.docker_image_object.name
+                    ),
+                ),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if not content_item.is_javascript
+            and deprecated_dockers_to_reasons.get(content_item.docker_image_object.name)
+        ]

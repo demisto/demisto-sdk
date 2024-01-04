@@ -1,0 +1,34 @@
+from __future__ import annotations
+
+from typing import Iterable, List, Union
+
+from demisto_sdk.commands.common.files.json_file import JsonFile
+from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    ValidationResult,
+)
+
+ContentTypes = Union[Integration, Script]
+
+
+class DockerImageIsNotNativeImageValidator(BaseValidator[ContentTypes]):
+    error_code = "DO110"
+    description = "Validate that the given content item uses a docker image that is not the native image."
+    error_message = "The docker image is {1} native-image, use a different image"
+    related_field = "Docker image"
+    is_auto_fixable = False
+
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(content_item.docker_image),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if not content_item.is_javascript
+            and content_item.docker_image_object.name != "demisto/py3-native"
+        ]

@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-import requests
-
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
 )
@@ -33,17 +31,15 @@ class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
                     self.dockerhub_client.get_image_tag_metadata(
                         docker_image_object.name, tag=docker_image_object.tag
                     )
-                except DockerHubRequestException as error:
-                    if error.exception.response.status_code == requests.codes.not_found:
-                        invalid_content_items.append(
-                            ValidationResult(
-                                validator=self,
-                                message=self.error_message.format(
-                                    content_item.docker_image
-                                ),
-                                content_object=content_item,
-                            )
+                except DockerHubRequestException:
+                    invalid_content_items.append(
+                        ValidationResult(
+                            validator=self,
+                            message=self.error_message.format(
+                                content_item.docker_image
+                            ),
+                            content_object=content_item,
                         )
-                    else:
-                        raise error
+                    )
+
         return invalid_content_items

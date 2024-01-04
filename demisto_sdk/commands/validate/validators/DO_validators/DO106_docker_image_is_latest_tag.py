@@ -3,13 +3,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Iterable, List, Union
 
-import requests
 from dateparser import parse
 
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -59,12 +57,13 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                         )
                     )
                 except DockerHubRequestException as error:
-                    if error.exception.response.status_code == requests.codes.not_found:
-                        logger.debug(
-                            f"Docker image {content_item.docker_image} for content-item {content_item.content_type} does not exist, skipping {self.error_code}"
+                    invalid_content_items.append(
+                        ValidationResult(
+                            validator=self,
+                            message=str(error),
+                            content_object=content_item,
                         )
-                        continue
-                    raise
+                    )
                 if (
                     docker_image_tag != docker_image_latest_tag
                     and self.is_docker_image_older_than_three_days(docker_image)

@@ -1,4 +1,5 @@
 import pytest
+from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -16,6 +17,9 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_i
 )
 from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
     DockerImageTagIsLatestNumericVersionValidator,
+)
+from demisto_sdk.commands.validate.validators.DO_validators.DO107_docker_image_does_not_exist_in_dockerhub import (
+    DockerImageDoesNotExistInDockerhubValidator,
 )
 from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_does_not_exist_in_yml import (
     DockerImageExistValidator,
@@ -263,4 +267,81 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
         assert content_item.docker_image in (
             "demisto/python3:3.10.13.78623",
             "demisto/ml:1.0.0.32340",
+        )
+
+
+def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
+    """
+    Given:
+     - 1 integration and 1 script which uses a valid demisto image that exists in dockerhub
+     - 1 integration and 1 script which uses a demisto image that does not exist in dockerhub
+     - 1 integration and 1 script that are javascript
+
+    When:
+     - Running the DockerImageDoesNotExistInDockerhubValidator validator
+
+    Then:
+     - make sure the integrations/scripts that do not exist in dockerhub are not valid
+     - make sure that javascripts integrations/scripts are ignored
+    """
+    content_items = [
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=[
+                "demisto/python3:3.10.13.55555"
+            ],  # integration with demisto image that does not exist
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=[
+                "demisto/ml:1.0.0.32342"
+            ],  # script with demisto image that does not exist
+        ),
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=[
+                "demisto/python3:3.10.13.79623"
+            ],  # integration with demisto image that exists
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=["demisto/ml:1.0.0.33340"],  # script with demisto image that exists
+        ),
+        create_integration_object(
+            paths=["script.type"], values=["javascript"]
+        ),  # javascript integration
+        create_script_object(
+            paths=["type"], values=["javascript"]
+        ),  # javascript script
+    ]
+
+    requests_mock.get(
+        "https://auth.docker.io/token",
+        json={"token": "1234", "issued_at": "1234", "expires_in": 300},
+    )
+    requests_mock.get(
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.79623",
+        json={"tags": ["3.10.13.78623", "3.10.13.79623"]},
+    )
+    requests_mock.get(
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/ml/tags/1.0.0.33340",
+        json={"tags": ["1.0.0.32340", "1.0.0.33340"]},
+    )
+    requests_mock.get(
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.55555",
+        exc=HTTPError("error"),
+    )
+    requests_mock.get(
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/ml/tags/1.0.0.32342",
+        exc=HTTPError("error"),
+    )
+
+    results = DockerImageDoesNotExistInDockerhubValidator().is_valid(content_items)
+    assert len(results) == 2
+    for result in results:
+        content_item: IntegrationScript = result.content_object
+        assert content_item.type == "python"
+        assert content_item.docker_image in (
+            "demisto/python3:3.10.13.55555",
+            "demisto/ml:1.0.0.32342",
         )

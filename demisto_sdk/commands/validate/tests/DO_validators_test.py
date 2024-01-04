@@ -17,7 +17,7 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_i
 from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
     DockerImageTagIsLatestNumericVersionValidator,
 )
-from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_exist import (
+from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_does_not_exist_in_yml import (
     DockerImageExistValidator,
 )
 

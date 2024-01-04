@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import dateparser
 import requests
 from packaging.version import InvalidVersion, Version
-from requests.exceptions import ConnectionError, HTTPError, Timeout
+from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
@@ -23,6 +23,16 @@ class DockerHubAuthScope(str, Enum):
     PUSH = "push"  # Grants write access to the repository, allowing you to push images.
     DELETE = "delete"  # Grants permission to delete images from the repository.
     REPOSITORY = "repository"  # Grants full access to the repository, including both pull and push permissions.
+
+
+class DockerHubRequestException(Exception):
+    def __init__(self, message: str, exception: RequestException):
+        super().__init__(message)
+        self.message = message
+        self.exception = exception
+
+    def __str__(self):
+        return f"Error - {self.message} - Exception - {self.exception}"
 
 
 class DockerHubClient:
@@ -238,10 +248,11 @@ class DockerHubClient:
             return self.do_registry_get_request(
                 f"/manifests/{tag}", docker_image=docker_image
             )
-        except HTTPError as error:
-            raise RuntimeError(
-                f"Failed to get docker-image {docker_image} manifest"
-            ) from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to image manifests of docker-image {docker_image}:{tag}",
+                exception=error,
+            )
 
     def get_image_digest(self, docker_image: str, tag: str) -> str:
         """
@@ -271,10 +282,11 @@ class DockerHubClient:
             return self.do_registry_get_request(
                 f"/blobs/{image_digest}", docker_image=docker_image
             )
-        except HTTPError as error:
-            raise RuntimeError(
-                f"Failed to get docker-image {docker_image}'s digest metadata"
-            ) from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to retrieve image blobs of docker-image {docker_image} with digest {image_digest}",
+                exception=error,
+            )
 
     def get_image_env(self, docker_image: str, tag: str) -> List[str]:
         """
@@ -304,10 +316,11 @@ class DockerHubClient:
             response = self.do_registry_get_request(
                 "/tags/list", docker_image=docker_image
             )
-        except HTTPError as error:
-            raise RuntimeError(
-                f"Failed to get docker-image {docker_image} tags"
-            ) from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to retrieve image tags of docker-image {docker_image}",
+                exception=error,
+            )
 
         return response.get("tags") or []
 
@@ -323,10 +336,11 @@ class DockerHubClient:
             return self.do_docker_hub_get_request(
                 f"/repositories/{docker_image}/tags/{tag}"
             )
-        except HTTPError as error:
-            raise RuntimeError(
-                f"Failed to get docker image {docker_image}'s {tag} metadata"
-            ) from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to retrieve tag metadata of docker-image {docker_image}:{tag}",
+                exception=error,
+            )
 
     def get_docker_image_tag_creation_date(
         self, docker_image: str, tag: str
@@ -378,8 +392,10 @@ class DockerHubClient:
         """
         try:
             return self.do_docker_hub_get_request(f"/repositories/{repo}")
-        except HTTPError as error:
-            raise RuntimeError(f"Failed to get repository {repo}'s images") from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to retreive images of repository {repo}", exception=error
+            )
 
     def get_repository_images_names(self, repo: str = DEFAULT_REPOSITORY) -> List[str]:
         """

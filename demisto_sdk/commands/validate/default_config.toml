@@ -1,12 +1,6 @@
 [use_git]
 select = [
-    "BA101", "BA106", "BA116", "BA118",
-    "PA108",
-    "BC100",
-    "GR106",
-    "DO108",
-    "IN108",
-    "IN130"
+    "DO107"
 ]
 warning = []
 ignorable_errors = ["BA101", "BA116"]

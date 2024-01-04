@@ -115,8 +115,8 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     "sample_file, expected_updated_sample_file",
     [
         (
-                Path("tests_data/idea_configuration/expected_updated_files/sample1.iml"),
-                Path("tests_data/idea_configuration/expected_updated_files/sample1.iml"),
+            Path("tests_data/idea_configuration/expected_updated_files/sample1.iml"),
+            Path("tests_data/idea_configuration/expected_updated_files/sample1.iml"),
         ),
         (
             Path("tests_data/idea_configuration/samples/sample2.iml"),

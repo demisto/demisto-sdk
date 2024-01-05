@@ -44,6 +44,15 @@ class DockerImage:
         """
         return f"{self.repository}/{self.image_name}"
 
+    @property
+    def is_valid(self) -> bool:
+        if not self.repository or not self.image_name or not self.tag:
+            logger.warning(
+                f"Docker image {self} is not valid, should be in the form of repository/image-name:tag"
+            )
+            return False
+        return True
+
     def __str__(self):
         return f"{self.repository}/{self.image_name}:{self.tag}"
 

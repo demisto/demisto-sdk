@@ -49,12 +49,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
         for content_item in content_items:
             if not content_item.is_javascript:
                 docker_image = content_item.docker_image_object
-                docker_image_tag = docker_image.tag
-                if (
-                    not docker_image_tag
-                    or not docker_image.image_name
-                    or not docker_image.repository
-                ):
+                if not docker_image.is_valid:
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
@@ -62,6 +57,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                             content_object=content_item,
                         )
                     )
+                docker_image_tag = docker_image.tag
                 try:
                     docker_image_latest_tag = str(
                         self.dockerhub_client.get_latest_docker_image_tag(

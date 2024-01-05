@@ -26,7 +26,7 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
-                validator=self,
+                validator=self, 
                 message=self.error_message.format(content_item.docker_image),
                 content_object=content_item,
             )

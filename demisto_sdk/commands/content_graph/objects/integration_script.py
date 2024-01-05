@@ -24,10 +24,17 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 
 class DockerImage:
-    def __init__(self, repository: Optional[str] = None, image_name: Optional[str] = None, tag: Optional[str] = None):
-        self.repository = repository or ''  # the repository e.g.: demisto
-        self.image_name = image_name or ''  # the image name e.g.: python3, pan-os-python
-        self.tag = tag or ''  # the tag
+    def __init__(
+        self,
+        repository: Optional[str] = None,
+        image_name: Optional[str] = None,
+        tag: Optional[str] = None,
+    ):
+        self.repository = repository or ""  # the repository e.g.: demisto
+        self.image_name = (
+            image_name or ""
+        )  # the image name e.g.: python3, pan-os-python
+        self.tag = tag or ""  # the tag
 
     @property
     def name(self):

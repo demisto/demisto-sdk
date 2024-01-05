@@ -1,6 +1,6 @@
 [use_git]
 select = [
-    "DO109"
+    "DO107"
 ]
 warning = []
 ignorable_errors = ["BA101", "BA116"]

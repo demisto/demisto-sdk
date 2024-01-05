@@ -28,6 +28,20 @@ class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
             if not content_item.is_javascript:
                 docker_image_object = content_item.docker_image_object
                 try:
+                    if (
+                        not docker_image_object.repository
+                        or not docker_image_object.image_name
+                        or not docker_image_object.tag
+                    ):
+                        invalid_content_items.append(
+                            ValidationResult(
+                                validator=self,
+                                message=self.error_message.format(
+                                    content_item.docker_image
+                                ),
+                                content_object=content_item,
+                            )
+                        )
                     self.dockerhub_client.get_image_tag_metadata(
                         docker_image_object.name, tag=docker_image_object.tag
                     )

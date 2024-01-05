@@ -40,7 +40,6 @@ class DockerImage:
     def name(self):
         """
         Returns the repositroy + image name. .e.g: demisto/python3, demisto/pan-os-python
-        Returns:
         """
         return f"{self.repository}/{self.image_name}"
 
@@ -52,6 +51,14 @@ class DockerImage:
             )
             return False
         return True
+
+    @property
+    def is_tag_latest(self) -> bool:
+        return self.tag == "latest"
+
+    @property
+    def is_demisto_repository(self) -> bool:
+        return self.repository == "demisto"
 
     def __str__(self):
         return f"{self.repository}/{self.image_name}:{self.tag}"

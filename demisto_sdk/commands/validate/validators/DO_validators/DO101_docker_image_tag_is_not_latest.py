@@ -26,13 +26,13 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
-                validator=self, 
+                validator=self,
                 message=self.error_message.format(content_item.docker_image),
                 content_object=content_item,
             )
             for content_item in content_items
             if not content_item.is_javascript
-            and content_item.docker_image_object.tag == "latest"
+            and content_item.docker_image_object.is_tag_latest
         ]
 
     def fix(

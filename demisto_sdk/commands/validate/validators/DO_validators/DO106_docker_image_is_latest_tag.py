@@ -53,11 +53,10 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
-                            message=f"Docker image {docker_image.name} is invalid, cannot determine if it uses the latest tag",
+                            message=f"Docker image {content_item.docker_image} is invalid, cannot determine if it uses the latest tag",
                             content_object=content_item,
                         )
                     )
-                docker_image_tag = docker_image.tag
                 try:
                     docker_image_latest_tag = str(
                         self.dockerhub_client.get_latest_docker_image_tag(
@@ -73,7 +72,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                         )
                     )
                 if (
-                    docker_image_tag != docker_image_latest_tag
+                    docker_image.tag != docker_image_latest_tag
                     and self.is_docker_image_older_than_three_days(docker_image)
                 ):
                     invalid_content_items.append(
@@ -81,7 +80,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                             validator=self,
                             message=self.error_message.format(
                                 content_item.docker_image,
-                                docker_image_tag,
+                                docker_image.tag,
                                 docker_image_latest_tag,
                             ),
                             content_object=content_item,

@@ -28,5 +28,5 @@ class DockerImageIsNotNativeImageValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if not content_item.is_javascript
-            and content_item.docker_image_object.name == "demisto/py3-native"
+            and content_item.docker_image_object.is_native_image
         ]

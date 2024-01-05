@@ -60,6 +60,10 @@ class DockerImage:
     def is_demisto_repository(self) -> bool:
         return self.repository == "demisto"
 
+    @property
+    def is_native_image(self) -> bool:
+        return self.name == "demisto/py3-native"
+
     def __str__(self):
         return f"{self.repository}/{self.image_name}:{self.tag}"
 

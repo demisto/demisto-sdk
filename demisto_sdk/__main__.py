@@ -306,10 +306,11 @@ def split(ctx, config, **kwargs):
         FileType.GENERIC_MODULE,
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
+        FileType.LISTS,
         FileType.ASSETS_MODELING_RULE,
     ]:
         logger.info(
-            "[red]File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.[/red]"
+            "[red]File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.[/red]"
         )
         return 1
 
@@ -331,6 +332,7 @@ def split(ctx, config, **kwargs):
             output=kwargs.get("output"),  # type: ignore[arg-type]
             no_auto_create_dir=kwargs.get("no_auto_create_dir"),  # type: ignore[arg-type]
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
+            file_type=file_type,
         )
         return json_splitter.split_json()
 
@@ -1101,7 +1103,7 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 @click.option(
     "--prev-ver",
     help="Previous branch or SHA1 commit to run checks against",
-    default="master",
+    default=os.getenv("DEMISTO_DEFAULT_BRANCH", default="master"),
 )
 @click.option(
     "--test-xml",
@@ -3490,6 +3492,12 @@ def update_content_graph(
     default=False,
     help="Whether to run test-module on the configured XSOAR/XSIAM instance",
 )
+@click.option(
+    "--clean",
+    is_flag=True,
+    default=False,
+    help="Clean the repo out of the temp files that were created by `lint`",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
     input,
@@ -3499,6 +3507,7 @@ def setup_env(
     secret_id,
     instance_name,
     run_test_module,
+    clean,
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup_env,
@@ -3514,6 +3523,7 @@ def setup_env(
         secret_id=secret_id,
         instance_name=instance_name,
         test_module=run_test_module,
+        clean=clean,
     )
 
 

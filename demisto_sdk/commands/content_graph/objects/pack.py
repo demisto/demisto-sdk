@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     MARKETPLACE_MIN_VERSION,
+    PACK_METADATA_FIELDS,
     ImagesFolderNames,
     MarketplaceVersions,
 )
@@ -115,9 +116,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
     ignored_errors_dict: dict = Field({}, exclude=True)
+    pack_readme: str = Field({}, exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+    pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
 
     @classmethod
     def from_orm(cls, obj) -> "Pack":
@@ -518,4 +521,4 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def save(self):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
-        super()._save(file_path, data)
+        super()._save(file_path, data, predefined_keys_to_keep=PACK_METADATA_FIELDS)  # type: ignore

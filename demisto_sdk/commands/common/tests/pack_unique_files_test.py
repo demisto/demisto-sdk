@@ -334,29 +334,6 @@ class TestPackUniqueFilesValidator:
             "The pack price was changed from 2 to 3 - revert the change",
         )
 
-    def test_check_timestamp_format(self):
-        """
-        Given
-        - timestamps in various formats.
-
-        When
-        - Running check_timestamp_format on them.
-
-        Then
-        - Ensure True for iso format and False for any other format.
-        """
-        fake_validator = PackUniqueFilesValidator("fake")
-        good_format_timestamp = "2020-04-14T00:00:00Z"
-        missing_z = "2020-04-14T00:00:00"
-        missing_t = "2020-04-14 00:00:00Z"
-        only_date = "2020-04-14"
-        with_hyphen = "2020-04-14T00-00-00Z"
-        assert fake_validator.check_timestamp_format(good_format_timestamp)
-        assert not fake_validator.check_timestamp_format(missing_t)
-        assert not fake_validator.check_timestamp_format(missing_z)
-        assert not fake_validator.check_timestamp_format(only_date)
-        assert not fake_validator.check_timestamp_format(with_hyphen)
-
     def test_validate_pack_dependencies_invalid_id_set(self, mocker, repo):
         """
         Given
@@ -1003,12 +980,6 @@ class TestPackUniqueFilesValidator:
         )
         assert self.validator.validate_pack_readme_file_is_not_empty()
 
-    def test_validate_pack_readme_file_is_not_empty_missing_file(self):
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack")
-        )
-        assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
-
     def test_validate_pack_readme_valid_images(self, mocker):
         """
         Given
@@ -1063,7 +1034,7 @@ class TestPackUniqueFilesValidator:
             not in errors
         )
 
-    def test_validate_pack_readme_invalid_images(self):
+    def test_validate_pack_readme_invalid_images(self, mocker):
         """
         Given
             - A pack README file with invalid absolute and relative image paths in it.
@@ -1078,6 +1049,7 @@ class TestPackUniqueFilesValidator:
         self.validator = PackUniqueFilesValidator(
             os.path.join(self.FILES_PATH, "DummyPack2")
         )
+        mocker.patch("demisto_sdk.commands.common.tools.sleep")
 
         with requests_mock.Mocker() as m:
             # Mock get requests

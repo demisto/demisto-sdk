@@ -246,7 +246,7 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
         DefaultApi, "generic_request", side_effect=_generic_request_side_effect
     )
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         get_client_from_server_type(
             base_url="https://test5.com", api_key="test", auth_id="1"
         )

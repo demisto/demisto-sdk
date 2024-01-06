@@ -87,7 +87,8 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
                 )
             except DockerHubRequestException as error:
                 logger.error(
-                    f"Could not get the latest tag of {recommended_docker_image_name} when trying to update deprecated docker of content-item {content_item.name}\nerror: {error}"
+                    f"Could not get the latest tag of {recommended_docker_image_name} when trying "
+                    f"to update deprecated docker of content-item {content_item.name}\nerror: {error}"
                 )
                 message = f"Could not update docker-image {docker_image} of content-item {content_item.name}"
         else:

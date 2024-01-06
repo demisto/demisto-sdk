@@ -15,7 +15,7 @@ ContentTypes = Union[Integration, Script]
 class DockerImageIsNotNativeImageValidator(BaseValidator[ContentTypes]):
     error_code = "DO110"
     description = "Validate that the given content item uses a docker image that is not the native image."
-    error_message = "The docker image is {0} native-image, use a different image"
+    error_message = "The docker image {0} is native-image, do not use a native-image"
     related_field = "Docker image"
     is_auto_fixable = False
 

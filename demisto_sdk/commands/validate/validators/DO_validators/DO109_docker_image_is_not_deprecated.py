@@ -78,7 +78,7 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
                     )
                 )
                 message = self.fix_message.format(
-                    content_item.docker_image,
+                    docker_image,
                     str(
                         self.dockerhub_client.get_latest_docker_image_tag(
                             recommended_docker_image_name
@@ -89,7 +89,7 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
                 logger.error(
                     f"Could not get the latest tag of {recommended_docker_image_name} when trying to update deprecated docker of content-item {content_item.name}\nerror: {error}"
                 )
-                message = f"Could not update docker-image {docker_image} for content-item {content_item.name}"
+                message = f"Could not update docker-image {docker_image} of content-item {content_item.name}"
         else:
             message = f"Could not update docker-image {docker_image} of content-item {content_item.name}"
 

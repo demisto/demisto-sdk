@@ -107,9 +107,9 @@ class IntegrationDocUpdateManager:
         )
 
         try:
-            if self.is_ui_contribution:
+            if self.is_ui_contribution or not remote:
                 path = list(get_content_path().rglob(self.new_yaml_path.name))[0]
-            else:
+            elif remote:
                 remote_yaml_txt = TextFile.read_from_git_path(
                     self.new_yaml_path, from_remote=remote
                 )
@@ -229,6 +229,8 @@ class IntegrationDocUpdateManager:
                 msg = "Unable to update docs because integration README doesn't exist in remote."
                 logger.error(msg)
                 self.update_errors.append(msg)
+
+            # TODO Not sure this is actually needed since integration_diff should be enough
             elif self.old_yaml_path and not filecmp.cmp(
                 self.new_yaml_path, self.old_yaml_path
             ):

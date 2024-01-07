@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.docker.dockerhub_client import (
+    DockerHubRequestException,
+)
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -40,18 +44,23 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         docker_image = content_item.docker_image_object
-
-        latest_numeric_tag = str(
-            self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
-        )
-        if content_item.docker_image:
-            content_item.docker_image = content_item.docker_image.replace(
-                "latest", latest_numeric_tag
+        try:
+            latest_numeric_tag = str(
+                self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
             )
+            message = self.fix_message.format(
+                content_item.docker_image, f"{docker_image.name}:{latest_numeric_tag}"
+            )
+            content_item.docker_image = f"{docker_image.name}:{latest_numeric_tag}"
+        except DockerHubRequestException as error:
+            logger.error(
+                f"Could not get the latest tag of {docker_image.name} when trying "
+                f"to update docker of content-item {content_item.name}\nerror: {error}"
+            )
+            message = f"Could not update docker-image {content_item.docker_image}"
+
         return FixResult(
             validator=self,
-            message=self.fix_message.format(
-                content_item.docker_image, latest_numeric_tag
-            ),
+            message=message,
             content_object=content_item,
         )

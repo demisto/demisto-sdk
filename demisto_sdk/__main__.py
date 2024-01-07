@@ -159,7 +159,7 @@ def logging_setup_decorator(func, *args, **kwargs):
     )
     @click.option(
         "--log-file-path",
-        help="Path to save the log file on.",
+        help="Path to save log files onto."
     )
     @functools.wraps(func)
     def wrapper(*args, **kwargs):

@@ -67,6 +67,7 @@ from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,
     arg_to_list,
+    check_timestamp_format,
     compare_context_path_in_yml_and_readme,
     extract_field_from_mapping,
     field_to_cli_name,
@@ -3303,3 +3304,26 @@ def test_set_value(dict, paths, value, expected_dict):
     """
     set_value(dict, paths, value)
     assert expected_dict == dict
+
+
+def test_check_timestamp_format():
+    """
+    Given
+    - timestamps in various formats.
+
+    When
+    - Running check_timestamp_format on them.
+
+    Then
+    - Ensure True for iso format and False for any other format.
+    """
+    good_format_timestamp = "2020-04-14T00:00:00Z"
+    missing_z = "2020-04-14T00:00:00"
+    missing_t = "2020-04-14 00:00:00Z"
+    only_date = "2020-04-14"
+    with_hyphen = "2020-04-14T00-00-00Z"
+    assert check_timestamp_format(good_format_timestamp)
+    assert not check_timestamp_format(missing_t)
+    assert not check_timestamp_format(missing_z)
+    assert not check_timestamp_format(only_date)
+    assert not check_timestamp_format(with_hyphen)

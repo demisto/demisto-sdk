@@ -40,7 +40,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
     run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
-    graph_initialized: (ClassVar[bool]): If the graph was initialized or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
     dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
     """
@@ -53,7 +52,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
-    graph_initialized: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
     dockerhub_api_client: ClassVar[DockerHubClient] = None  # type: ignore[assignment]
 
@@ -109,15 +107,14 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     @property
     def graph(self) -> ContentGraphInterface:
-        if not BaseValidator.graph_initialized:
+        if not self.graph_interface:
             logger.info("Graph validations were selected, will init graph")
-            BaseValidator.graph_initialized = True
             BaseValidator.graph_interface = ContentGraphInterface()
             update_content_graph(
                 BaseValidator.graph_interface,
                 use_git=True,
             )
-        return BaseValidator.graph_interface
+        return self.graph_interface
 
     @property
     def dockerhub_client(self) -> DockerHubClient:

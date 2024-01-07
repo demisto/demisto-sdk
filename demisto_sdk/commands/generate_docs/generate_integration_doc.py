@@ -22,10 +22,10 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    get_content_path,
     get_yaml,
 )
 from demisto_sdk.commands.generate_docs.common import (
+    CONFIGURATION_SECTION_STEPS,
     add_lines,
     build_example_dict,
     generate_numbered_section,
@@ -39,11 +39,6 @@ from demisto_sdk.commands.integration_diff.integration_diff_detector import (
 )
 
 CREDENTIALS = 9
-SETUP_SECTION_CONSTANTS = (
-    "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-    "3. Click **Add instance** to create and configure a new integration instance.",
-    "4. Click **Test** to validate the URLs, token, and connection.",
-)
 
 
 class IntegrationDocUpdateManager:
@@ -67,7 +62,6 @@ class IntegrationDocUpdateManager:
         self.new_yaml_path = Path(input_path)
         self.new_readme_path = self.new_yaml_path.parent / INTEGRATIONS_README_FILE_NAME
         self.update_errors: List[str] = []
-        self.is_ui_contribution = is_contribution
 
         self.old_yaml_path = self.get_origin_master_integration_yml()
         self.old_readme_path = self.get_origin_master_integration_readme()
@@ -94,13 +88,9 @@ class IntegrationDocUpdateManager:
             # in a temp dir. Therefore, we need to get the get the path to the
             # integration YAML from the set content path.
 
-            if self.is_ui_contribution:
-                yml_path = list(get_content_path().rglob(self.new_yaml_path.name))[0]
-            else:
-                yml_path = self.new_yaml_path
-
-            logger.debug(f"Reading {str(self.new_yaml_path)} from git path...")
-            remote_yaml_txt = TextFile.read_from_git_path(yml_path)
+            # TODO move to debug
+            logger.info(f"Reading {str(self.new_yaml_path)} from git path...")
+            remote_yaml_txt = TextFile.read_from_git_path(self.new_yaml_path)
 
             tmp_file = tempfile.NamedTemporaryFile(
                 "w", suffix=self.new_yaml_path.name, delete=False
@@ -140,16 +130,10 @@ class IntegrationDocUpdateManager:
             # in a temp dir. Therefore, we need to get the path to the
             # integration README from the set content path.
 
-            if self.is_ui_contribution:
-                readme_path = list(get_content_path().rglob(self.new_readme_path.name))[
-                    0
-                ]
-            else:
-                readme_path = self.new_readme_path
+            # TODO move to debug
+            logger.info(f"Reading {str(self.new_readme_path)} from git path...")
 
-            logger.debug(f"Reading {str(readme_path)} from git path...")
-
-            remote_readme_txt = TextFile.read_from_git_path(readme_path)
+            remote_readme_txt = TextFile.read_from_git_path(self.new_readme_path)
 
             tmp_file = tempfile.NamedTemporaryFile(
                 "w", suffix=self.new_readme_path.name, delete=False
@@ -192,7 +176,6 @@ class IntegrationDocUpdateManager:
         """
 
         can_update = False
-        logger.info("Checking whether we can update the existing integration README...")
         try:
 
             if not self.integration_diff:
@@ -443,6 +426,7 @@ def generate_integration_doc(
                     errors.extend(append_errors)
 
         elif update_mgr.can_update_docs():
+            logger.info("Updating the existing documentation...")
             doc_text, update_errors = update_mgr.update_docs(errors)
 
             if update_errors:
@@ -536,9 +520,9 @@ def generate_setup_section(yaml_data: dict):
     default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
 
     section = [
-        SETUP_SECTION_CONSTANTS[0],
-        "2. Search for {}.".format(yaml_data["display"]),
-        SETUP_SECTION_CONSTANTS[1],
+        CONFIGURATION_SECTION_STEPS.STEP_1.value,
+        CONFIGURATION_SECTION_STEPS.STEP_2_TEMPLATE.value.format(yaml_data["display"]),
+        CONFIGURATION_SECTION_STEPS.STEP_3.value,
     ]
     access_data: List[Dict] = []
 
@@ -571,7 +555,7 @@ def generate_setup_section(yaml_data: dict):
             access_data, "", horizontal_rule=False, numbered_section=True
         )
     )
-    section.append(SETUP_SECTION_CONSTANTS[2])
+    section.append(CONFIGURATION_SECTION_STEPS.STEP_4.value)
     section.append("")
 
     return section
@@ -1205,8 +1189,12 @@ def replace_integration_conf_section(
         # We take the first and the second-to-last index of the old section
         # and use the section range to replace it with the new section.
         # Second-to-last index because the last element is an empty string
-        old_config_start_line = doc_text_lines.index(SETUP_SECTION_CONSTANTS[0])
-        old_config_end_line = doc_text_lines.index(SETUP_SECTION_CONSTANTS[2])
+        old_config_start_line = doc_text_lines.index(
+            CONFIGURATION_SECTION_STEPS.STEP_1.value
+        )
+        old_config_end_line = doc_text_lines.index(
+            CONFIGURATION_SECTION_STEPS.STEP_4.value
+        )
 
         doc_text_lines[
             old_config_start_line : old_config_end_line + 1

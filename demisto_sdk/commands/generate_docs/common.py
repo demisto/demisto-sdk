@@ -1,6 +1,7 @@
 import html
 import os.path
 import re
+from enum import Enum
 from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -15,6 +16,15 @@ class HEADER_TYPE:
     H1 = "#"
     H2 = "##"
     H3 = "###"
+
+
+class CONFIGURATION_SECTION_STEPS(Enum):
+    STEP_1 = "1. Navigate to **Settings** > **Integrations** > **Servers & Services**."
+    STEP_2_TEMPLATE = "2. Search for {}."
+    STEP_3 = (
+        "3. Click **Add instance** to create and configure a new integration instance."
+    )
+    STEP_4 = "4. Click **Test** to validate the URLs, token, and connection."
 
 
 def save_output(path, file_name, content):

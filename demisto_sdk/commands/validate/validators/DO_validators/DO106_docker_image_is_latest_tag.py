@@ -5,7 +5,6 @@ from typing import Iterable, List, Union
 
 from dateparser import parse
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
 )

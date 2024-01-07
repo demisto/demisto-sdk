@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import glob
-import logging
 import os
 import re
 import shlex
@@ -130,7 +129,6 @@ from demisto_sdk.commands.common.constants import (
     urljoin,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
@@ -140,6 +138,7 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface

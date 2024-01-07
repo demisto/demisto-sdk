@@ -80,3 +80,20 @@ def extract_non_approved_tags(pack_tags, marketplaces) -> Set[str]:
         )
 
     return non_approved_tags
+
+
+def validate_categories_approved(categories, approved_list):
+    """
+    Check that the pack categories contain only approved categories.
+
+    Args:
+        categories (list): the list of the pack's categories.
+        approved_list (list): the predefined approved categories list.
+
+    Returns:
+        bool: True if all the pack categories is from the approved list. Otherwise, return False.
+    """
+    for category in categories:
+        if category not in approved_list:
+            return False
+    return True

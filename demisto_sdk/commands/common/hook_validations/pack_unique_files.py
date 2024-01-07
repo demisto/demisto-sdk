@@ -68,6 +68,7 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import PackDepende
 from demisto_sdk.commands.validate.tools import (
     extract_non_approved_tags,
     filter_by_marketplace,
+    validate_categories_approved,
 )
 
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
@@ -1129,28 +1130,12 @@ class PackUniqueFilesValidator(BaseValidator):
             return True
         categories = self._read_metadata_content().get("categories", [])
         approved_list = tools.get_current_categories()
-        if not len(categories) == 1 or not self.validate_categories_approved(
+        if not len(categories) == 1 or not validate_categories_approved(
             categories, approved_list
         ):
             if self._add_error(
                 Errors.categories_field_does_not_match_standard(approved_list),
                 self.pack_meta_file,
             ):
-                return False
-        return True
-
-    def validate_categories_approved(self, categories, approved_list):
-        """
-        Check that the pack categories contain only approved categories.
-
-        Args:
-            categories (list): the list of the pack's categories.
-            approved_list (list): the predefined approved categories list.
-
-        Returns:
-            bool: True if all the pack categories is from the approved list. Otherwise, return False.
-        """
-        for category in categories:
-            if category not in approved_list:
                 return False
         return True

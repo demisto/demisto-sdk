@@ -141,8 +141,7 @@ $supported_content_types
 $class_declaration
     error_code = "$error_code"
     description = "$error_description"
-    error_message = "$error_message"
-    fix_message = "$fix_message"
+    error_message = "$error_message"$fix_message
     related_field = "$related_field"
     is_auto_fixable = $is_auto_fixable$expected_git_statuses$support_deprecated
 
@@ -347,11 +346,12 @@ Fill the content types as the numbers they appear as: """
             )
         if support_fix in ["Y", "y"]:
             self.support_fix = True
-            self.fix_message = str(
+            fix_message = str(
                 input(
                     "Please enter the fix message or press enter to leave blank for now: "
                 )
             )
+            self.fix_message = f'\n    fix_message = "{fix_message}"'
         else:
             self.support_fix = False
 

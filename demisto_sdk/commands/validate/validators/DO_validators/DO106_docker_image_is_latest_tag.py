@@ -26,7 +26,6 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
     description = (
         "Validate that the given content-item uses the latest tag of a docker image"
     )
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     error_message = (
         "docker image {0}'s tag {1} is not the latest tag, the latest tag is {2}"
     )

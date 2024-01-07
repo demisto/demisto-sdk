@@ -1528,7 +1528,7 @@ class TestReadmes:
 
         Given:
         - A content repo.
-        - A contribution zip (taken from https://github.com/demisto/contribution-management/actions/runs/7370121179/job/20056135116#step:7:298)
+        - A contribution zip
 
         When:
         - The contributed content is up-to-date with master.

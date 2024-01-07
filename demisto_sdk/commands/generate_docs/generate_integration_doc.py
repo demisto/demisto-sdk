@@ -12,6 +12,7 @@ from demisto_sdk.commands.common import git_util
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER,
     DOCS_COMMAND_SECTION_REGEX,
+    INTEGRATIONS_DIR,
     INTEGRATIONS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
@@ -64,6 +65,7 @@ class IntegrationDocUpdateManager:
         self.new_readme_path = self.new_yaml_path.parent / INTEGRATIONS_README_FILE_NAME
         self.update_errors: List[str] = []
         self.is_ui_contribution = is_contribution
+        self.integration_name = self.new_yaml_path.stem
 
         self.old_yaml_path = self.get_integration_yml_path(
             remote=True
@@ -87,36 +89,40 @@ class IntegrationDocUpdateManager:
         Retrieve and save integration YAML in a temporary file
         and return its path.
 
+        UI contribution for existing integrations perform the pack processing
+        in a temp dir. Therefore, we need to get the get the path to the
+        integration YAML from the set content path.
+
         Args:
         - `remote` (``bool``): Indicating whether we should download the
         file from remote or get it locally.
+
+        Returns:
+        - `Path` if the YAML was found, `None` otherwise.
         """
 
+        # TODO move to debug
+        logger.info(
+            f"Reading {self.integration_name} YAML from {'remote' if remote else 'local'} git path..."
+        )
+
         try:
-            # UI contribution for existing integrations perform the pack processing
-            # in a temp dir. Therefore, we need to get the get the path to the
-            # integration YAML from the set content path.
-
             if self.is_ui_contribution:
-                yml_path = list(get_content_path().rglob(self.new_yaml_path.name))[0]
+                path = list(get_content_path().rglob(self.new_yaml_path.name))[0]
             else:
-                yml_path = self.new_yaml_path
+                remote_yaml_txt = TextFile.read_from_git_path(
+                    self.new_yaml_path, from_remote=remote
+                )
 
-            # TODO move to debug
-            logger.info(
-                f"Reading {str(yml_path)} from {'remote' if remote else 'local'} git path..."
-            )
-            remote_yaml_txt = TextFile.read_from_git_path(yml_path, from_remote=remote)
-
-            tmp_file = tempfile.NamedTemporaryFile(
-                "w", suffix=self.new_yaml_path.name, delete=False
-            )
-            logger.debug(
-                f"Writing {len(remote_yaml_txt)}B into temp file '{tmp_file.name}'..."
-            )
-            tmp_file.write(remote_yaml_txt)
-            logger.debug(f"Finished writing to temp file '{tmp_file.name}'")
-            path = Path(tmp_file.name)
+                tmp_file = tempfile.NamedTemporaryFile(
+                    "w", suffix=self.new_yaml_path.name, delete=False
+                )
+                logger.debug(
+                    f"Writing {len(remote_yaml_txt)}B into temp file '{tmp_file.name}'..."
+                )
+                tmp_file.write(remote_yaml_txt)
+                logger.debug(f"Finished writing to temp file '{tmp_file.name}'")
+                path = Path(tmp_file.name)
         except (
             FileNotFoundError,
             git_util.GitFileNotFoundError,
@@ -134,50 +140,58 @@ class IntegrationDocUpdateManager:
             self.update_errors.append(msg)
             path = None
         finally:
-            return path
+            logger.info(f"Path returned: '{path}'")
+            return path if path and path.exists() else None
 
     def get_integration_readme_path(self, remote: bool) -> Optional[Path]:
         """
         Retrieve and save the origin/master integration README in a temporary file
         and return its path.
+
+        UI contribution for existing integrations perform the pack processing
+        in a temp dir. Therefore, we need to get the path to the
+        integration README from the set content path.
+
+        Args:
+        - `remote` (``bool``): Whether to retrieve the README from remote or local.
+
+        Returns:
+        - `Path` if the README was found in remote/local, `None` if not.
         """
         try:
-            # UI contribution for existing integrations perform the pack processing
-            # in a temp dir. Therefore, we need to get the path to the
-            # integration README from the set content path.
-
-            if self.is_ui_contribution:
-                readme_path = (
-                    self.old_yaml_path.parent / INTEGRATIONS_README_FILE_NAME
-                )  # type:ignore
-            else:
-                readme_path = self.new_readme_path
-
             # TODO move to debug
             logger.info(
-                f"Reading {str(readme_path)} from {'remote' if remote else 'local'} git path..."
+                f"Reading {self.integration_name} README from {'remote' if remote else 'local'} git path..."
             )
 
-            remote_readme_txt = TextFile.read_from_git_path(
-                readme_path, from_remote=remote
-            )
+            if self.is_ui_contribution or not remote:
+                path = list(
+                    get_content_path().rglob(
+                        f"{INTEGRATIONS_DIR}/{self.integration_name}/{INTEGRATIONS_README_FILE_NAME}"
+                    )
+                )[0]
+            elif remote:
+                remote_readme_txt = TextFile.read_from_git_path(
+                    self.new_readme_path, from_remote=remote
+                )
 
-            tmp_file = tempfile.NamedTemporaryFile(
-                "w", suffix=self.new_readme_path.name, delete=False
-            )
-            logger.debug(
-                f"Writing {len(remote_readme_txt)}B into temp file '{tmp_file.name}'..."
-            )
-            tmp_file.write(remote_readme_txt)
-            logger.debug(f"Finished writing to temp file '{tmp_file.name}'")
+                tmp_file = tempfile.NamedTemporaryFile(
+                    "w", suffix=INTEGRATIONS_README_FILE_NAME, delete=False
+                )
+                logger.debug(
+                    f"Writing {len(remote_readme_txt)}B into temp file '{tmp_file.name}'..."
+                )
+                tmp_file.write(remote_readme_txt)
+                logger.debug(f"Finished writing to temp file '{tmp_file.name}'")
 
-            path = Path(tmp_file.name)
+                path = Path(tmp_file.name)
         except (
             FileNotFoundError,
             git_util.GitFileNotFoundError,
             GitFileReadError,
             KeyError,
             NameError,
+            IndexError,
         ) as err:
             msg = f"Could not find file '{str(self.new_readme_path)}' in {'remote' if remote else 'local'}: {str(err)}"
             logger.error(msg)
@@ -189,7 +203,8 @@ class IntegrationDocUpdateManager:
             self.update_errors.append(msg)
             path = None
         finally:
-            return path
+            logger.info(f"Path returned: '{path}'")
+            return path if path and path.exists() else None
 
     def can_update_docs(self) -> bool:
         """
@@ -214,9 +229,11 @@ class IntegrationDocUpdateManager:
                 msg = "Unable to update docs because integration README doesn't exist in remote."
                 logger.error(msg)
                 self.update_errors.append(msg)
-            elif not filecmp.cmp(self.new_yaml_path, str(self.old_yaml_path)):
+            elif self.old_yaml_path and not filecmp.cmp(
+                self.new_yaml_path, self.old_yaml_path
+            ):
                 can_update = True
-        except TypeError as err:
+        except (TypeError, FileNotFoundError) as err:
             msg = f"Could not create an compare integration '{self.new_yaml_path}' with origin ': {str(err)}"
             logger.error(msg)
             self.update_errors.append(msg)

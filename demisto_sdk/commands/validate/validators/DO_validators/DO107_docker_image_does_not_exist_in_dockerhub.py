@@ -44,7 +44,7 @@ class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
                         docker_image_object.name, tag=docker_image_object.tag
                     )
                 except DockerHubRequestException as error:
-                    logger.debug(f"Error for DO107 = {error}")
+                    logger.debug(f"DockerHubRequestException for DO107 = {error}")
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,

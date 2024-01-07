@@ -236,6 +236,7 @@ class BaseContent(BaseNode):
         git_status: Optional[GitStatuses] = None,
         old_file_path: Optional[Path] = None,
         git_sha: Optional[str] = None,
+        metadata_only: bool = False,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         # if the file was added or renamed - add a pointer to the object created from the old file content / path.
@@ -254,7 +255,7 @@ class BaseContent(BaseNode):
         ):  # if the path given is a pack
             try:
                 return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
-                    PackParser(path, git_sha=git_sha)
+                    PackParser(path, git_sha=git_sha, metadata_only=metadata_only)
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {str(path)}")

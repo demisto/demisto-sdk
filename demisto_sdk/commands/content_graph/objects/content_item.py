@@ -33,6 +33,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
+    lazy_property,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -74,7 +75,7 @@ class ContentItem(BaseContent):
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
 
-    @property
+    @lazy_property
     def support_level(self) -> str:
         return (
             self.in_pack.support_level
@@ -123,7 +124,7 @@ class ContentItem(BaseContent):
         if not pack:
             if pack_name := get_pack_name(self.path):
                 pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name
+                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         if pack:
             self.pack = pack

@@ -227,7 +227,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     content_type = ContentType.PACK
 
-    def __init__(self, path: Path, git_sha: Optional[str] = None) -> None:
+    def __init__(
+        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False
+    ) -> None:
         """Parses a pack and its content items.
 
         Args:
@@ -256,9 +258,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")
-        self.parse_pack_folders()
         self.parse_ignored_errors()
-
+        if not metadata_only:
+            self.parse_pack_folders()
         logger.debug(f"Successfully parsed {self.node_id}")
 
     @property

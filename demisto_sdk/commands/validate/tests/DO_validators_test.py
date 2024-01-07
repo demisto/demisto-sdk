@@ -224,7 +224,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
         create_integration_object(
             paths=["script.dockerimage"],
             values=[
-                "demisto/python3:3.10.13.79623"
+                "demisto/python3:3.10.13.99999"
             ],  # integration with demisto image that is the latest tag
         ),
         create_script_object(
@@ -247,7 +247,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
     )
     requests_mock.get(
         f"{DockerHubClient.DEFAULT_REGISTRY}/demisto/python3/tags/list",
-        json={"tags": ["3.10.13.78623", "3.10.13.79623"]},
+        json={"tags": ["3.10.13.88888", "3.10.13.99999"]},
     )
     requests_mock.get(
         f"{DockerHubClient.DEFAULT_REGISTRY}/demisto/ml/tags/list",

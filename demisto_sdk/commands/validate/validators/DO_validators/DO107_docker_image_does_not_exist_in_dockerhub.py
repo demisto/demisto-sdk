@@ -5,6 +5,7 @@ from typing import Iterable, List, Union
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -27,21 +28,23 @@ class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
         for content_item in content_items:
             if not content_item.is_javascript:
                 docker_image_object = content_item.docker_image_object
-                try:
-                    if not docker_image_object.is_valid:
-                        invalid_content_items.append(
-                            ValidationResult(
-                                validator=self,
-                                message=self.error_message.format(
-                                    content_item.docker_image
-                                ),
-                                content_object=content_item,
-                            )
+                if not docker_image_object.is_valid:
+                    invalid_content_items.append(
+                        ValidationResult(
+                            validator=self,
+                            message=self.error_message.format(
+                                content_item.docker_image
+                            ),
+                            content_object=content_item,
                         )
+                    )
+                    continue
+                try:
                     self.dockerhub_client.get_image_tag_metadata(
                         docker_image_object.name, tag=docker_image_object.tag
                     )
-                except DockerHubRequestException:
+                except DockerHubRequestException as error:
+                    logger.debug(f"Error for DO107 = {error}")
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,

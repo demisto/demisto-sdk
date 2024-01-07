@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Union
+from typing import ClassVar, Dict, Iterable, List, Union
 
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
@@ -27,23 +27,29 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
     related_field = "Docker image"
     fix_message = "deprecated docker image {0} has been updated to {1}"
     is_auto_fixable = True
+    deprecated_dockers_to_reasons: ClassVar[
+        Dict[str, str]
+    ] = {}  # map between deprecated docker to the reason its deprecated
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        deprecated_dockers = JsonFile.read_from_github_api(
-            path="/docker/deprecated_images.json",
-            git_content_config=GitContentConfig(repo_name="demisto/dockerfiles"),
-            verify_ssl=False,
-        )
-        deprecated_dockers_to_reasons = {
-            record.get("image_name", ""): record.get("reason")
-            for record in deprecated_dockers
-        }
+
+        if not self.deprecated_dockers_to_reasons:
+            deprecated_dockers = JsonFile.read_from_github_api(
+                path="/docker/deprecated_images.json",
+                git_content_config=GitContentConfig(repo_name="demisto/dockerfiles"),
+                verify_ssl=False,
+            )
+            DockerImageIsNotDeprecatedValidator.deprecated_dockers_to_reasons = {
+                record.get("image_name", ""): record.get("reason")
+                for record in deprecated_dockers
+            }
+
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
                     content_item.docker_image,
-                    deprecated_dockers_to_reasons.get(
+                    self.deprecated_dockers_to_reasons.get(
                         content_item.docker_image_object.name
                     ),
                 ),
@@ -51,25 +57,18 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if not content_item.is_javascript
-            and deprecated_dockers_to_reasons.get(content_item.docker_image_object.name)
+            and self.deprecated_dockers_to_reasons.get(
+                content_item.docker_image_object.name
+            )
         ]
 
     def fix(
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        deprecated_dockers = JsonFile.read_from_github_api(
-            path="/docker/deprecated_images.json",
-            git_content_config=GitContentConfig(repo_name="demisto/dockerfiles"),
-            verify_ssl=False,
-        )
-        deprecated_dockers_to_reasons = {
-            record.get("image_name", ""): record.get("reason")
-            for record in deprecated_dockers
-        }
         docker_image = content_item.docker_image_object
         if match := re.search(
-            r"(demisto/[^ ]+)", deprecated_dockers_to_reasons[docker_image.name]
+            r"(demisto/[^ ]+)", self.deprecated_dockers_to_reasons[docker_image.name]
         ):
             recommended_docker_image_name = match.group(1)
             try:

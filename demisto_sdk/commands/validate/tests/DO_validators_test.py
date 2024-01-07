@@ -428,6 +428,7 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
             "demisto/aiohttp:3.10.13.55555",
             "demisto/algorithmia:1.0.0.32342",
         )
+    assert DockerImageIsNotDeprecatedValidator.deprecated_dockers_to_reasons
 
 
 def test_DockerImageIsNotNativeImageValidator_is_valid():

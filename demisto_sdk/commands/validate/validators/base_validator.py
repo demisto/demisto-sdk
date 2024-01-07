@@ -39,7 +39,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
     run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
-    graph_initialized: (ClassVar[bool]): If the graph was initialized or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
     """
 

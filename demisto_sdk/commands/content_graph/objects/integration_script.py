@@ -47,7 +47,7 @@ class DockerImage:
         Validates that the structure of the docker-image is valid.
 
         Returns:
-            bool: True if the structure if valid, False if not.
+            bool: True if the structure is valid, False if not.
         """
         if not self.repository or not self.image_name or not self.tag:
             logger.warning(

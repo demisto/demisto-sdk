@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.clients.configs import (
 )
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import (
+    MINIMUM_XSOAR_SAAS_VERSION,
     IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
@@ -41,11 +42,26 @@ class XsoarClient(BaseModel):
     _ENTRY_TYPE_ERROR: int = 4
     config: XsoarClientConfig
     client: DefaultApi = Field(None, exclude=True)
-    about_xsoar: Dict = Field(None, exclude=True)
+    about: Dict = Field(None, exclude=True)
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
 
     class Config:
         arbitrary_types_allowed = True
+
+    @classmethod
+    def is_xsoar_on_prem(
+        cls,
+        server_version: str,
+        product_mode: Optional[str] = None,
+        deployment_mode: Optional[str] = None,
+    ):
+        """
+        Returns whether the configured client is xsoar-on-prem.
+        """
+        return (product_mode == "xsoar" and deployment_mode == "opp") or (
+            server_version
+            and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
+        )
 
     @classmethod
     @retry(exceptions=ApiException)
@@ -61,7 +77,7 @@ class XsoarClient(BaseModel):
                 raise ValueError(
                     f"the {client.api_client.configuration.host} URL is not the api-url",
                 )
-
+            logger.debug(f"about={raw_response}")
             return raw_response
         except ApiException as err:
             if err.status == requests.codes.unauthorized:
@@ -90,8 +106,8 @@ class XsoarClient(BaseModel):
             verify_ssl=config.verify_ssl,
         )
 
-    @validator("about_xsoar", always=True)
-    def get_xsoar_server_about(cls, v: Optional[Dict], values: Dict[str, Any]) -> Dict:
+    @validator("about", always=True)
+    def get_server_about(cls, v: Optional[Dict], values: Dict[str, Any]) -> Dict:
         return v or cls.get_xsoar_about(values["client"])
 
     @property
@@ -106,14 +122,14 @@ class XsoarClient(BaseModel):
         """
         Returns XSOAR version
         """
-        if xsoar_version := self.about_xsoar.get("demistoVersion"):
+        if xsoar_version := self.about.get("demistoVersion"):
             logger.debug(f"{self.base_url} xsoar-server version is {xsoar_version}")
             return Version(xsoar_version)
         raise RuntimeError(f"Could not get version from instance {self.xsoar_host_url}")
 
     @property
     def build_number(self) -> str:
-        if build_number := self.about_xsoar.get("buildNum"):
+        if build_number := self.about.get("buildNum"):
             return build_number
         raise RuntimeError(
             f"Could not get build number from instance {self.xsoar_host_url}"

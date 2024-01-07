@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    get_content_path,
     get_yaml,
 )
 from demisto_sdk.commands.generate_docs.common import (
@@ -62,9 +63,10 @@ class IntegrationDocUpdateManager:
         self.new_yaml_path = Path(input_path)
         self.new_readme_path = self.new_yaml_path.parent / INTEGRATIONS_README_FILE_NAME
         self.update_errors: List[str] = []
+        self.is_ui_contribution = is_contribution
 
-        self.old_yaml_path = self.get_origin_master_integration_yml()
-        self.old_readme_path = self.get_origin_master_integration_readme()
+        self.old_yaml_path = self.get_integration_yml_path()
+        self.old_readme_path = self.get_integration_readme_path()
         # TODO if remote yml/readme don't exist, take from local primary branch.
 
         if self.old_yaml_path:
@@ -77,7 +79,7 @@ class IntegrationDocUpdateManager:
             command_permissions_dict if not is_contribution else {}
         )
 
-    def get_origin_master_integration_yml(self) -> Optional[Path]:
+    def get_integration_yml_path(self) -> Optional[Path]:
         """
         Retrieve and save the origin/master integration YAML in a temporary file
         and return its path.
@@ -88,9 +90,14 @@ class IntegrationDocUpdateManager:
             # in a temp dir. Therefore, we need to get the get the path to the
             # integration YAML from the set content path.
 
+            if self.is_ui_contribution:
+                yml_path = list(get_content_path().rglob(self.new_yaml_path.name))[0]
+            else:
+                yml_path = self.new_yaml_path
+
             # TODO move to debug
-            logger.info(f"Reading {str(self.new_yaml_path)} from git path...")
-            remote_yaml_txt = TextFile.read_from_git_path(self.new_yaml_path)
+            logger.info(f"Reading {str(yml_path)} from git path...")
+            remote_yaml_txt = TextFile.read_from_git_path(yml_path)
 
             tmp_file = tempfile.NamedTemporaryFile(
                 "w", suffix=self.new_yaml_path.name, delete=False
@@ -120,7 +127,7 @@ class IntegrationDocUpdateManager:
         finally:
             return path
 
-    def get_origin_master_integration_readme(self) -> Optional[Path]:
+    def get_integration_readme_path(self) -> Optional[Path]:
         """
         Retrieve and save the origin/master integration README in a temporary file
         and return its path.
@@ -130,10 +137,17 @@ class IntegrationDocUpdateManager:
             # in a temp dir. Therefore, we need to get the path to the
             # integration README from the set content path.
 
-            # TODO move to debug
-            logger.info(f"Reading {str(self.new_readme_path)} from git path...")
+            if self.is_ui_contribution:
+                readme_path = list(get_content_path().rglob(self.new_readme_path.name))[
+                    0
+                ]
+            else:
+                readme_path = self.new_readme_path
 
-            remote_readme_txt = TextFile.read_from_git_path(self.new_readme_path)
+            # TODO move to debug
+            logger.info(f"Reading {str(readme_path)} from git path...")
+
+            remote_readme_txt = TextFile.read_from_git_path(readme_path)
 
             tmp_file = tempfile.NamedTemporaryFile(
                 "w", suffix=self.new_readme_path.name, delete=False

@@ -1774,11 +1774,7 @@ class TestIntegrationDocUpdate:
         - The difference is 1 command.
         """
 
-        # Initialize Integration Python, YAML, README.
-        py_code_path = Path(
-            TEST_FILES, self._get_function_name(), f"{self.integration_name}.py"
-        )
-        py_code = py_code_path.read_text()
+        # Initialize Integration YAML, README.
 
         yml_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
@@ -1794,7 +1790,7 @@ class TestIntegrationDocUpdate:
         # Create Pack and Integration
         git_repo.create_pack(self.pack_name)
         git_repo.packs[0].create_integration(
-            self.integration_name, code=py_code, yml=yml_code, readme=markdown
+            self.integration_name, yml=yml_code, readme=markdown
         )
 
         git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
@@ -1854,11 +1850,7 @@ class TestIntegrationDocUpdate:
         new option added.
         """
 
-        # Initialize Integration Python, YAML, README.
-        py_code_path = Path(
-            TEST_FILES, self._get_function_name(), f"{self.integration_name}.py"
-        )
-        py_code = py_code_path.read_text()
+        # Initialize Integration YAML, README.
 
         yml_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
@@ -1874,7 +1866,7 @@ class TestIntegrationDocUpdate:
         # Create Pack and Integration
         git_repo.create_pack(self.pack_name)
         git_repo.packs[0].create_integration(
-            self.integration_name, code=py_code, yml=yml_code, readme=markdown
+            self.integration_name, yml=yml_code, readme=markdown
         )
 
         git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
@@ -1931,11 +1923,7 @@ class TestIntegrationDocUpdate:
         - All modified integration commands changes are reflected in the README.
         """
 
-        # Initialize Integration Python, YAML, README.
-        py_code_path = Path(
-            TEST_FILES, self._get_function_name(), f"{self.integration_name}.py"
-        )
-        py_code = py_code_path.read_text()
+        # Initialize Integration YAML, README.
 
         yml_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
@@ -1951,7 +1939,7 @@ class TestIntegrationDocUpdate:
         # Create Pack and Integration
         git_repo.create_pack(self.pack_name)
         git_repo.packs[0].create_integration(
-            self.integration_name, code=py_code, yml=yml_code, readme=markdown
+            self.integration_name, yml=yml_code, readme=markdown
         )
 
         git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")

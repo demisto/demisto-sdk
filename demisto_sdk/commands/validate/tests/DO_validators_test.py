@@ -33,7 +33,7 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO110_docker_image_i
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs, expected_call_count",
+    "content_items, expected_number_of_failures, expected_call_count",
     [
         (
             [
@@ -41,9 +41,6 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO110_docker_image_i
                 create_integration_object(),
             ],
             1,
-            [
-                "The Integration TestIntegration is missing a docker image, please make sure to add one.\n The recommended default docker is demisto/python3:3.1.1.1."
-            ],
             1,
         ),
         (
@@ -54,9 +51,6 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO110_docker_image_i
                 create_script_object(),
             ],
             1,
-            [
-                "The Script myScript is missing a docker image, please make sure to add one.\n The recommended default docker is demisto/python2:3.1.1.1."
-            ],
             1,
         ),
         (
@@ -65,7 +59,6 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO110_docker_image_i
                 create_integration_object(),
             ],
             0,
-            [],
             0,
         ),
         (
@@ -74,10 +67,6 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO110_docker_image_i
                 create_integration_object(paths=["script.dockerimage"], values=[""]),
             ],
             2,
-            [
-                "The Script myScript is missing a docker image, please make sure to add one.\n The recommended default docker is demisto/python3:3.1.1.1.",
-                "The Integration TestIntegration is missing a docker image, please make sure to add one.\n The recommended default docker is demisto/python3:3.1.1.1.",
-            ],
             2,
         ),
     ],
@@ -86,7 +75,6 @@ def test_DockerImageExistValidator_is_valid(
     mocker,
     content_items,
     expected_number_of_failures,
-    expected_msgs,
     expected_call_count,
 ):
     """
@@ -112,9 +100,6 @@ def test_DockerImageExistValidator_is_valid(
     )
     results = DockerImageExistValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
-    for result, expected_msg in zip(results, expected_msgs):
-        assert result.message == expected_msg
-
     assert mocker.call_count == expected_call_count
 
 

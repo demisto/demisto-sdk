@@ -65,24 +65,31 @@ class IntegrationDocUpdateManager:
         self.update_errors: List[str] = []
         self.is_ui_contribution = is_contribution
 
-        self.old_yaml_path = self.get_integration_yml_path()
-        self.old_readme_path = self.get_integration_readme_path()
-        # TODO if remote yml/readme don't exist, take from local primary branch.
+        self.old_yaml_path = self.get_integration_yml_path(
+            remote=True
+        ) or self.get_integration_yml_path(remote=False)
 
         if self.old_yaml_path:
             self.integration_diff = IntegrationDiffDetector(
                 new=str(self.new_yaml_path), old=str(self.old_yaml_path)
             )
+            self.old_readme_path = self.get_integration_readme_path(
+                remote=True
+            ) or self.get_integration_readme_path(remote=False)
 
         self.example_dict = example_dict if not is_contribution else {}
         self.command_permissions_dict = (
             command_permissions_dict if not is_contribution else {}
         )
 
-    def get_integration_yml_path(self) -> Optional[Path]:
+    def get_integration_yml_path(self, remote: bool) -> Optional[Path]:
         """
-        Retrieve and save the origin/master integration YAML in a temporary file
+        Retrieve and save integration YAML in a temporary file
         and return its path.
+
+        Args:
+        - `remote` (``bool``): Indicating whether we should download the
+        file from remote or get it locally.
         """
 
         try:
@@ -96,8 +103,10 @@ class IntegrationDocUpdateManager:
                 yml_path = self.new_yaml_path
 
             # TODO move to debug
-            logger.info(f"Reading {str(yml_path)} from git path...")
-            remote_yaml_txt = TextFile.read_from_git_path(yml_path)
+            logger.info(
+                f"Reading {str(yml_path)} from {'remote' if remote else 'local'} git path..."
+            )
+            remote_yaml_txt = TextFile.read_from_git_path(yml_path, from_remote=remote)
 
             tmp_file = tempfile.NamedTemporaryFile(
                 "w", suffix=self.new_yaml_path.name, delete=False
@@ -115,7 +124,7 @@ class IntegrationDocUpdateManager:
             KeyError,
             IndexError,
         ) as err:
-            msg = f"Could not find file '{str(self.new_yaml_path)}': {str(err)}"
+            msg = f"Could not find file '{str(self.new_yaml_path)}' in {'remote' if remote else 'local'}: {str(err)}"
             logger.error(msg)
             self.update_errors.append(msg)
             path = None
@@ -127,7 +136,7 @@ class IntegrationDocUpdateManager:
         finally:
             return path
 
-    def get_integration_readme_path(self) -> Optional[Path]:
+    def get_integration_readme_path(self, remote: bool) -> Optional[Path]:
         """
         Retrieve and save the origin/master integration README in a temporary file
         and return its path.
@@ -138,16 +147,20 @@ class IntegrationDocUpdateManager:
             # integration README from the set content path.
 
             if self.is_ui_contribution:
-                readme_path = list(get_content_path().rglob(self.new_readme_path.name))[
-                    0
-                ]
+                readme_path = (
+                    self.old_yaml_path.parent / INTEGRATIONS_README_FILE_NAME
+                )  # type:ignore
             else:
                 readme_path = self.new_readme_path
 
             # TODO move to debug
-            logger.info(f"Reading {str(readme_path)} from git path...")
+            logger.info(
+                f"Reading {str(readme_path)} from {'remote' if remote else 'local'} git path..."
+            )
 
-            remote_readme_txt = TextFile.read_from_git_path(readme_path)
+            remote_readme_txt = TextFile.read_from_git_path(
+                readme_path, from_remote=remote
+            )
 
             tmp_file = tempfile.NamedTemporaryFile(
                 "w", suffix=self.new_readme_path.name, delete=False
@@ -164,8 +177,9 @@ class IntegrationDocUpdateManager:
             git_util.GitFileNotFoundError,
             GitFileReadError,
             KeyError,
+            NameError,
         ) as err:
-            msg = f"Could not find file '{str(self.new_readme_path)}': {str(err)}"
+            msg = f"Could not find file '{str(self.new_readme_path)}' in {'remote' if remote else 'local'}: {str(err)}"
             logger.error(msg)
             self.update_errors.append(msg)
             path = None

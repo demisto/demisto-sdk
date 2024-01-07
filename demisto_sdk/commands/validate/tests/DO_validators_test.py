@@ -21,6 +21,9 @@ from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_i
 from demisto_sdk.commands.validate.validators.DO_validators.DO107_docker_image_does_not_exist_in_dockerhub import (
     DockerImageDoesNotExistInDockerhubValidator,
 )
+from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_does_not_exist_in_yml import (
+    DockerImageExistValidator,
+)
 from demisto_sdk.commands.validate.validators.DO_validators.DO109_docker_image_is_not_deprecated import (
     DockerImageIsNotDeprecatedValidator,
 )
@@ -107,7 +110,7 @@ def test_DockerImageExistValidator_is_valid(
         "get_latest_docker_image_tag",
         return_value="3.1.1.1",
     )
-    results = DockerImageIsNotDeprecatedValidator().is_valid(content_items)
+    results = DockerImageExistValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     for result, expected_msg in zip(results, expected_msgs):
         assert result.message == expected_msg

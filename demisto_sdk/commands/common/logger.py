@@ -61,7 +61,7 @@ def environment_variable_to_int(variable_name: str, default_value: int) -> int:
 
     except ValueError:
         logger.warning(
-            f"'{variable_name}' environment variable is set to '{value}', "
+            f"'{variable_name}' environment variable is set to '{env_var}', "
             f"which is not a valid integer value. Default value '{default_value}' will be used."
         )
 

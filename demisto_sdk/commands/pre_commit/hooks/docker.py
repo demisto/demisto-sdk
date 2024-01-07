@@ -222,7 +222,7 @@ class DockerHook(Hook):
                 for file in copy_files:
                     source: Path = CONTENT_PATH / file
                     target = obj.path.parent / Path(file).name
-                    if source != target and source.exists():
+                    if source != target and source.exists() and not target.exists():
                         shutil.copy(
                             CONTENT_PATH / file, obj.path.parent / Path(file).name
                         )

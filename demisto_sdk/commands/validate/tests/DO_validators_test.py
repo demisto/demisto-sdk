@@ -119,14 +119,18 @@ def test_LatestDockerImageTagValidator_is_valid():
     """
     content_items = [
         create_integration_object(
-            paths=["script.dockerimage"],
+            paths=["name", "script.dockerimage"],
             values=[
-                "demisto/python3:latest"
+                "LatestDockerImageIntegrationScript",
+                "demisto/python3:latest",
             ],  # integration with 'latest' as the docker tag
         ),
         create_script_object(
-            paths=["dockerimage"],
-            values=["demisto/python3:latest"],  # script with 'latest' as the docker tag
+            paths=["name", "dockerimage"],
+            values=[
+                "LatestDockerImageIntegrationScript",
+                "demisto/python3:latest",
+            ],  # script with 'latest' as the docker tag
         ),
         create_integration_object(),  # integration without 'latest' docker tag
         create_script_object(),  # script without 'latest' docker tag
@@ -143,6 +147,7 @@ def test_LatestDockerImageTagValidator_is_valid():
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
         assert content_item.docker_image == "demisto/python3:latest"
+        assert content_item.name == "LatestDockerImageIntegrationScript"
 
 
 def test_DockerImageIsNotDemistoValidator_is_valid():
@@ -161,12 +166,18 @@ def test_DockerImageIsNotDemistoValidator_is_valid():
     """
     content_items = [
         create_integration_object(
-            paths=["script.dockerimage"],
-            values=["repository/python3:latest"],  # integration with non-demisto image
+            paths=["name", "script.dockerimage"],
+            values=[
+                "NonDemistoImageIntegrationScript",
+                "repository/python3:latest",
+            ],  # integration with non-demisto image
         ),
         create_script_object(
-            paths=["dockerimage"],
-            values=["repository/python3:latest"],  # script with non-demisto image
+            paths=["name", "dockerimage"],
+            values=[
+                "NonDemistoImageIntegrationScript",
+                "repository/python3:latest",
+            ],  # script with non-demisto image
         ),
         create_integration_object(),  # integration with demisto image
         create_script_object(),  # script with demisto image
@@ -183,6 +194,7 @@ def test_DockerImageIsNotDemistoValidator_is_valid():
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
         assert content_item.docker_image == "repository/python3:latest"
+        assert content_item.name == "NonDemistoImageIntegrationScript"
 
 
 def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests_mock):
@@ -201,15 +213,17 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
     """
     content_items = [
         create_integration_object(
-            paths=["script.dockerimage"],
+            paths=["name", "script.dockerimage"],
             values=[
-                "demisto/python3:3.10.13.78623"
+                "NotLatestTagIntegrationScript",
+                "demisto/python3:3.10.13.78623",
             ],  # integration with demisto image that is not the latest tag
         ),
         create_script_object(
-            paths=["dockerimage"],
+            paths=["name", "dockerimage"],
             values=[
-                "demisto/ml:1.0.0.32340"
+                "NotLatestTagIntegrationScript",
+                "demisto/ml:1.0.0.32340",
             ],  # script with demisto image that is not the latest tag
         ),
         create_integration_object(
@@ -255,10 +269,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
     for result in results:
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
-        assert content_item.docker_image in (
-            "demisto/python3:3.10.13.78623",
-            "demisto/ml:1.0.0.32340",
-        )
+        assert content_item.name == "NotLatestTagIntegrationScript"
 
 
 def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
@@ -277,15 +288,17 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
     """
     content_items = [
         create_integration_object(
-            paths=["script.dockerimage"],
+            paths=["name", "script.dockerimage"],
             values=[
-                "demisto/python3:3.10.13.55555"
+                "NonExistentDockerImageIntegrationScript",
+                "demisto/python3:3.10.13.55555",
             ],  # integration with demisto image that does not exist
         ),
         create_script_object(
-            paths=["dockerimage"],
+            paths=["name", "dockerimage"],
             values=[
-                "demisto/ml:1.0.0.32342"
+                "NonExistentDockerImageIntegrationScript",
+                "demisto/ml:1.0.0.32342",
             ],  # script with demisto image that does not exist
         ),
         create_integration_object(
@@ -332,10 +345,7 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
     for result in results:
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
-        assert content_item.docker_image in (
-            "demisto/python3:3.10.13.55555",
-            "demisto/ml:1.0.0.32342",
-        )
+        assert content_item.name == "NonExistentDockerImageIntegrationScript"
 
 
 def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
@@ -378,16 +388,18 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
 
     content_items = [
         create_integration_object(
-            paths=["script.dockerimage"],
+            paths=["name", "script.dockerimage"],
             values=[
-                "demisto/aiohttp:3.10.13.55555"
-            ],  # integration with demisto image that does not exist
+                "DeprecatedDockerImageIntegrationScript",
+                "demisto/aiohttp:3.10.13.55555",
+            ],  # integration with demisto image that is deprecated
         ),
         create_script_object(
-            paths=["dockerimage"],
+            paths=["name", "dockerimage"],
             values=[
-                "demisto/algorithmia:1.0.0.32342"
-            ],  # script with demisto image that does not exist
+                "DeprecatedDockerImageIntegrationScript",
+                "demisto/algorithmia:1.0.0.32342",
+            ],  # script with demisto image that is deprecated
         ),
         create_integration_object(
             paths=["script.dockerimage"],
@@ -412,10 +424,9 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
     for result in results:
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
-        assert content_item.docker_image in (
-            "demisto/aiohttp:3.10.13.55555",
-            "demisto/algorithmia:1.0.0.32342",
-        )
+        assert content_item.name == "DeprecatedDockerImageIntegrationScript"
+
+    # validate that the mapping between to deprecated dockers to their reasons is filled up
     assert DockerImageIsNotDeprecatedValidator.deprecated_dockers_to_reasons
 
 
@@ -435,15 +446,17 @@ def test_DockerImageIsNotNativeImageValidator_is_valid():
     """
     content_items = [
         create_integration_object(
-            paths=["script.dockerimage"],
+            paths=["name", "script.dockerimage"],
             values=[
-                "demisto/py3-native"
+                "NativeImageDockerIntegrationScript",
+                "demisto/py3-native",
             ],  # integration with native image configured as its docker image
         ),
         create_script_object(
-            paths=["dockerimage"],
+            paths=["name", "dockerimage"],
             values=[
-                "demisto/py3-native"
+                "NativeImageDockerIntegrationScript",
+                "demisto/py3-native",
             ],  # script with native image configured as its docker image
         ),
         create_integration_object(),  # integration without native image configured
@@ -461,3 +474,4 @@ def test_DockerImageIsNotNativeImageValidator_is_valid():
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
         assert content_item.docker_image == "demisto/py3-native"
+        assert content_item.name == "NativeImageDockerIntegrationScript"

@@ -26,15 +26,13 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class DockerImage:
     def __init__(
         self,
-        repository: Optional[str] = None,
-        image_name: Optional[str] = None,
-        tag: Optional[str] = None,
+        repository: str = "",
+        image_name: str = "",
+        tag: str = "",
     ):
-        self.repository = repository or ""  # the repository e.g.: demisto
-        self.image_name = (
-            image_name or ""
-        )  # the image name e.g.: python3, pan-os-python
-        self.tag = tag or ""  # the tag
+        self.repository = repository  # the repository e.g.: demisto
+        self.image_name = image_name  # the image name e.g.: python3, pan-os-python
+        self.tag = tag  # the tag
 
     @property
     def name(self):
@@ -45,6 +43,12 @@ class DockerImage:
 
     @property
     def is_valid(self) -> bool:
+        """
+        Validates that the structure of the docker-image is valid.
+
+        Returns:
+            bool: True if the structure if valid, False if not.
+        """
         if not self.repository or not self.image_name or not self.tag:
             logger.warning(
                 f"Docker image {self} is not valid, should be in the form of repository/image-name:tag"
@@ -74,10 +78,6 @@ class DockerImage:
             return cls(matches.group(1), matches.group(2), matches.group(3))
         else:
             return cls()
-
-    @classmethod
-    def from_string(cls, docker_image: str) -> "DockerImage":
-        pass
 
 
 class IntegrationScript(ContentItem):

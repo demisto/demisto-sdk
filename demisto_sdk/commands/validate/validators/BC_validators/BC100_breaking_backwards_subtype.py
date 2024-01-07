@@ -17,7 +17,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the pack name subtype of the new file matches the old one."
     )
-    error_message = "Possible backwards compatibility break, You've changed the file's subtype from {0} to {1}, please undo."
+    error_message = "Possible backwards compatibility break, You've changed the {0} subtype from {1} to {2}, please undo."
     related_field = "subtype"
     fix_message = "Changing subtype back to ({0})."
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
@@ -32,7 +32,9 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.subtype, self.old_subtype_dict[content_item.name]
+                    content_item.content_type,
+                    self.old_subtype_dict[content_item.name],
+                    content_item.subtype,
                 ),
                 content_object=content_item,
             )

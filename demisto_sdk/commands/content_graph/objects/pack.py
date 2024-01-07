@@ -116,7 +116,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
     ignored_errors_dict: dict = Field({}, exclude=True)
-    pack_readme: str = Field({}, exclude=True)
+    pack_readme: str = Field("", exclude=True)
+    latest_rn_version: str = Field("", exclude=True)
+    latest_rn_content: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )

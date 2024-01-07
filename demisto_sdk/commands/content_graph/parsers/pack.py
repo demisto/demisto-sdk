@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.tools import (
     capital_case,
     get_json,
     get_pack_ignore_content,
+    get_pack_latest_rn_version,
 )
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
@@ -267,6 +268,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.parse_pack_folders()
         self.parse_ignored_errors()
         self.parse_pack_readme()
+        self.get_rn_info()
 
         logger.debug(f"Successfully parsed {self.node_id}")
 
@@ -349,6 +351,18 @@ class PackParser(BaseContentParser, PackMetadataParser):
             raise NotAContentItemException(
                 f"Couldn't find README.md file for pack at path {self.path}.\nPlease make sure the file exists."
             )
+
+    def get_rn_info(self):
+        self.latest_rn_version = get_pack_latest_rn_version(self.path)
+        if self.latest_rn_version:
+            try:
+                rn_path = f"{self.path}/ReleaseNotes/{self.latest_rn_version.replace('.', '_')}.md"
+                with open(rn_path) as f:
+                    self.latest_rn_content = f.read()
+            except FileNotFoundError:
+                raise NotAContentItemException(
+                    f"Couldn't find latest rn file (version {self.latest_rn_version}) for pack at path {self.path}.\nPlease make sure the file exists."
+                )
 
     @cached_property
     def field_mapping(self):

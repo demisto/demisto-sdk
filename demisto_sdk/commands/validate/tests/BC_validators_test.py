@@ -21,7 +21,7 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
             [create_integration_object(), create_integration_object()],
             1,
             [
-                "Possible backwards compatibility break, You've changed the subtype, please undo."
+                "Possible backwards compatibility break, You've changed the Integration subtype from python3 to python2, please undo."
             ],
         ),
         (
@@ -32,7 +32,7 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
             [create_integration_object(), create_script_object()],
             1,
             [
-                "Possible backwards compatibility break, You've changed the subtype, please undo."
+                "Possible backwards compatibility break, You've changed the Integration subtype from python3 to python2, please undo."
             ],
         ),
         (
@@ -43,8 +43,8 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
             [create_integration_object(), create_script_object()],
             2,
             [
-                "Possible backwards compatibility break, You've changed the subtype, please undo.",
-                "Possible backwards compatibility break, You've changed the subtype, please undo.",
+                "Possible backwards compatibility break, You've changed the Integration subtype from python3 to python2, please undo.",
+                "Possible backwards compatibility break, You've changed the Script subtype from python3 to python2, please undo.",
             ],
         ),
         (
@@ -92,13 +92,13 @@ def test_BreakingBackwardsSubtypeValidator(
             create_integration_object(paths=["script.subtype"], values=["python2"]),
             create_integration_object(),
             "python3",
-            "Changing subtype back to the old one (python3).",
+            "Changing subtype back to (python3).",
         ),
         (
             create_script_object(paths=["subtype"], values=["python2"]),
             create_script_object(),
             "python3",
-            "Changing subtype back to the old one (python3).",
+            "Changing subtype back to (python3).",
         ),
     ],
 )
@@ -115,9 +115,7 @@ def test_BreakingBackwardsSubtypeValidator_fix(
     Then
         - Make sure the the object subtype was changed to match the old_content_item subtype, and that the right fix msg is returned.
     """
-    content_item.old_base_content_object = old_content_item
-    assert (
-        BreakingBackwardsSubtypeValidator().fix(content_item).message
-        == expected_fix_msg
-    )
+    validator = BreakingBackwardsSubtypeValidator()
+    validator.old_subtype_dict[content_item.name] = "python3"
+    assert validator.fix(content_item).message == expected_fix_msg
     assert content_item.subtype == expected_subtype

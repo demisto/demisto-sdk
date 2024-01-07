@@ -1,7 +1,6 @@
 """
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
-import glob
 import os
 import re
 from pathlib import Path
@@ -61,6 +60,7 @@ from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_json,
     get_local_remote_file,
+    get_pack_latest_rn_version,
     get_remote_file,
     pack_name_to_path,
 )
@@ -194,24 +194,6 @@ class PackUniqueFilesValidator(BaseValidator):
     def _get_pack_file_path(self, file_name=""):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
-
-    def _get_pack_latest_rn_version(self):
-        """
-        Extract all the Release notes from the pack and reutrn the highest version of release note in the Pack.
-
-        Return:
-            (str): The lastest version of RN.
-        """
-        list_of_files = glob.glob(self.pack_path + "/ReleaseNotes/*")
-        list_of_release_notes = [Path(file).name for file in list_of_files]
-        list_of_versions = [
-            rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
-        ]
-        if list_of_versions:
-            list_of_versions.sort(key=Version)
-            return list_of_versions[-1]
-        else:
-            return ""
 
     @error_codes("PA128,PA100")
     def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
@@ -879,7 +861,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
         current_version = self.metadata_content.get("currentVersion", "0.0.0")
-        rn_version = self._get_pack_latest_rn_version()
+        rn_version = get_pack_latest_rn_version(self.pack_path)
         if not rn_version and current_version == "1.0.0":
             return True
         if not rn_version:

@@ -281,7 +281,7 @@ class DockerHook(Hook):
         change_working_directory = new_hook.pop("change_working_directory", False)
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet -u {os.getuid()}:4000 {"-w "} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet -u {os.getuid()}:4000 {dev_image}'
         ret_hooks = []
         for (
             integration_script,

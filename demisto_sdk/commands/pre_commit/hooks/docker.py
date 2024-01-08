@@ -278,7 +278,7 @@ class DockerHook(Hook):
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
-        run_in_cwd = new_hook.pop("run_in_cwd", False)
+        change_working_directory = new_hook.pop("change_working_directory", False)
         new_hook[
             "entry"
         ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet -u {os.getuid()}:4000 {"-w "} {dev_image}'
@@ -309,7 +309,7 @@ class DockerHook(Hook):
                 hook[
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
-                if run_in_cwd:
+                if change_working_directory:
                     hook[
                         "entry"
                     ] = f"-w {integration_script.path.parent} {hook['entry']}"

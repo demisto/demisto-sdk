@@ -1315,7 +1315,6 @@ ERROR_CODE: Dict = {
         "code": "ST112",
         "related_field": "",
     },
-    "invalid_yml_file": {"code": "ST113", "related_field": ""},
     # WD - Widgets
     "remove_field_from_widget": {
         "code": "WD100",

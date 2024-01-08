@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.common.constants import MODULES
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -20,30 +20,36 @@ class IsValidModulesValidator(BaseValidator[ContentTypes]):
     related_field = "modules"
     is_auto_fixable = True
     fix_message = "Removed the following label from the modules field: {0}."
+    non_approved_modules_dict: ClassVar[dict] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(", ".join(non_approved_modules)),
                 content_object=content_item,
             )
             for content_item in content_items
-            if not set(content_item.modules).issubset(MODULES)  # type: ignore[union-attr, arg-type]
+            if (non_approved_modules := self.get_non_approved_modules(content_item))  # type: ignore[union-attr, arg-type]
         ]
+
+    def get_non_approved_modules(self, content_item: ContentTypes):
+        self.non_approved_modules_dict[content_item.name] = [
+            module for module in content_item.modules if module not in MODULES  # type: ignore[union-attr]
+        ]
+        return self.non_approved_modules_dict[content_item.name]
 
     def fix(
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        not_approved_labels = [
-            module for module in content_item.modules if module not in MODULES  # type: ignore[union-attr, arg-type]
-        ]
         content_item.modules = [
-            module for module in content_item.modules if module in MODULES  # type: ignore[union-attr, arg-type]
+            module for module in content_item.modules if module not in self.non_approved_modules_dict[content_item.name]  # type: ignore[union-attr, arg-type]
         ]
         return FixResult(
             validator=self,
-            message=self.fix_message.format(", ".join(not_approved_labels)),
+            message=self.fix_message.format(
+                ", ".join(self.non_approved_modules_dict[content_item.name])
+            ),
             content_object=content_item,
         )

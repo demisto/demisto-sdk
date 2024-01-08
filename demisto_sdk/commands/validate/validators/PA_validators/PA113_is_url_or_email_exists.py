@@ -12,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-class IsUrlOrEmailExistsValidator(BaseValidator[ContentTypes]):
+class IsURLOrEmailExistsValidator(BaseValidator[ContentTypes]):
     error_code = "PA113"
     description = "Validate that a partner/developer pack has at least an email or a url address fields filled."
     error_message = "The pack must include either an email or an URL addresses."

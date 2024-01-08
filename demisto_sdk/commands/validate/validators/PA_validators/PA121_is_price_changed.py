@@ -31,7 +31,8 @@ class IsPriceChangedValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.price, self.old_prices_dict[content_item.name]
+                    self.old_prices_dict[content_item.name] or "not included",
+                    content_item.price or "not included",
                 ),
                 content_object=content_item,
             )

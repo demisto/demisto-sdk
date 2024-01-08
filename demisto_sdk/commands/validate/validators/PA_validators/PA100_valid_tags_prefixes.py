@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    FixResult,
     ValidationResult,
 )
 
@@ -16,27 +17,56 @@ APPROVED_PREFIXES = {x.value for x in list(MarketplaceVersions)}
 class ValidTagsPrefixesValidator(BaseValidator[ContentTypes]):
     error_code = "PA100"
     description = "Validate that all the tags in tags field have a valid prefix."
-    error_message = f"The pack metadata contains tag(s) with an invalid prefix: {0}.\nThe approved prefixes are: {', '.join(APPROVED_PREFIXES)}."
+    error_message = "The pack metadata contains tag(s) with an invalid prefix: {0}.\nThe approved prefixes are: {1}."
     related_field = "tags"
-    is_auto_fixable = False
+    unapproved_tags_dict: ClassVar[dict] = {}
+    is_auto_fixable = True
+    fix_message = "removed the following invalid tags: {0}."
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        validation_results: List[ValidationResult] = []
-        for content_item in content_items:
-            temp_tags: List[str] = []
-            for tag in content_item.tags or []:
-                if ":" in tag:
-                    tag_data = tag.split(":")
-                    marketplaces = tag_data[0].split(",")
-                    for marketplace in marketplaces:
-                        if marketplace not in APPROVED_PREFIXES:
-                            temp_tags.append(tag)
-            if temp_tags:
-                validation_results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format_map(", ".join(temp_tags)),  # type: ignore
-                        content_object=content_item,
-                    )
-                )
-        return validation_results
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(", ".join(invalid_tags), ", ".join(APPROVED_PREFIXES)),  # type: ignore
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (invalid_tags := self.get_invalid_tags(content_item))
+        ]
+
+    def get_invalid_tags(self, content_item: ContentTypes):
+        """Extract the list of invalid tags from the metadata file.
+
+        Args:
+            content_item (ContentTypes): the pack_metadata object.
+
+        Returns:
+            List[str]: the list of invalid tags.
+        """
+        invalid_tags = []
+        for tag in content_item.tags or []:
+            if ":" in tag:
+                tag_data = tag.split(":")
+                marketplaces = tag_data[0].split(",")
+                for marketplace in marketplaces:
+                    if marketplace not in APPROVED_PREFIXES:
+                        invalid_tags.append(tag)
+        self.unapproved_tags_dict[content_item.name] = invalid_tags
+        return invalid_tags
+
+    def fix(
+        self,
+        content_item: ContentTypes,
+    ) -> FixResult:
+        content_item.tags = [
+            tag
+            for tag in content_item.tags  # type: ignore[union-attr]
+            if tag not in self.unapproved_tags_dict[content_item.name]
+        ]
+        return FixResult(
+            validator=self,
+            message=self.fix_message.format(
+                ", ".join(self.unapproved_tags_dict[content_item.name])
+            ),
+            content_object=content_item,
+        )

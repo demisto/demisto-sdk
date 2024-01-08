@@ -16,14 +16,17 @@ ContentTypes = Pack
 class IsVersionMatchRnValidator(BaseValidator[ContentTypes]):
     error_code = "PA101"
     description = "Validate that the version mentioned in the Pack metadata matches the latest RN version."
-    error_message = "The currentVersion in the metadata ({0}) doesn't match the latest rn version {1}"
+    error_message = "The currentVersion in the metadata ({0}) doesn't match the latest rn version ({1})."
     related_field = "currentVersion"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(),
+                message=self.error_message.format(
+                    content_item.current_version,
+                    (content_item.latest_rn_version or "none"),
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
@@ -31,6 +34,7 @@ class IsVersionMatchRnValidator(BaseValidator[ContentTypes]):
                 content_item.current_version != "1.0.0"
                 and not content_item.latest_rn_version
             )
-            or Version(content_item.current_version)  # type:ignore[arg-type]
+            or content_item.latest_rn_version
+            and Version(content_item.current_version)  # type:ignore[arg-type]
             != Version(content_item.latest_rn_version)
         ]

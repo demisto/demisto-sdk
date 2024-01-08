@@ -19,7 +19,7 @@ class ShouldIncludeModulesValidator(BaseValidator[ContentTypes]):
         "Validate that the pack has the marketplacev2 label if it include modules."
     )
     error_message = "Module field can be added only for XSIAM packs (marketplacev2)."
-    fix_message = "Emptied the nodules field."
+    fix_message = "Emptied the modules field."
     related_field = "modules"
     is_auto_fixable = True
 

@@ -16,7 +16,7 @@ ContentTypes = Pack
 class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
     error_code = "PA103"
     description = "Validate that the pack categories are valid."
-    error_message = "The pack metadata categories field doesn't match the standard,\nplease make sure the field contain only one category from the following options:\n{0}"
+    error_message = "The pack metadata categories field doesn't match the standard,\nplease make sure the field contain only one category from the following options: {0}."
     related_field = "categories"
     is_auto_fixable = False
 
@@ -25,7 +25,7 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(approved_list),
+                message=self.error_message.format(", ".join(approved_list)),
                 content_object=content_item,
             )
             for content_item in content_items

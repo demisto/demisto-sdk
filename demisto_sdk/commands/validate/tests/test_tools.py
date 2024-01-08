@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
@@ -177,7 +178,7 @@ def create_metadata_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     fields_to_delete: Optional[List[str]] = None,
-):
+) -> PackMetadata:
     """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
 
     Args:
@@ -193,7 +194,7 @@ def create_metadata_object(
     pack = REPO.create_pack()
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
-    return PackParser(Path(pack.path))
+    return BaseContent.from_path(Path(pack.path))
 
 
 def remove_fields_from_dict(

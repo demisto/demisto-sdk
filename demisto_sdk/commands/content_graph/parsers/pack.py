@@ -353,7 +353,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             )
 
     def get_rn_info(self):
-        self.latest_rn_version = get_pack_latest_rn_version(self.path)
+        self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
         if self.latest_rn_version:
             try:
                 rn_path = f"{self.path}/ReleaseNotes/{self.latest_rn_version.replace('.', '_')}.md"

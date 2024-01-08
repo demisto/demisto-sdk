@@ -86,28 +86,26 @@ def test_BreakingBackwardsSubtypeValidator(
 
 
 @pytest.mark.parametrize(
-    "content_item, old_content_item, expected_subtype, expected_fix_msg",
+    "content_item, expected_subtype, expected_fix_msg",
     [
         (
             create_integration_object(paths=["script.subtype"], values=["python2"]),
-            create_integration_object(),
             "python3",
             "Changing subtype back to (python3).",
         ),
         (
             create_script_object(paths=["subtype"], values=["python2"]),
-            create_script_object(),
             "python3",
             "Changing subtype back to (python3).",
         ),
     ],
 )
 def test_BreakingBackwardsSubtypeValidator_fix(
-    content_item, old_content_item, expected_subtype, expected_fix_msg
+    content_item, expected_subtype, expected_fix_msg
 ):
     """
     Given
-        - content_item and old_content_item.
+        - content_item.
         - Case 1: an Integration content item where the subtype is different from the subtype of the old_content_item.
         - Case 2: a Script content item where the subtype is different from the subtype of the old_content_item.
     When

@@ -65,7 +65,7 @@ class Hook:
         if not use_args:
             hook["files"] = join_files(files_to_run_on_hook)
         else:
-            hook["args"].extend((file.absolute() for file in files_to_run_on_hook))
+            hook["args"].extend((str(file.absolute()) for file in files_to_run_on_hook))
             hook["pass_filenames"] = False
         return len(files_to_run_on_hook)
 

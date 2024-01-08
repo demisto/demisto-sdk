@@ -310,7 +310,9 @@ class DockerHook(Hook):
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
                 if run_in_cwd:
-                    hook["entry"] = f"-w {integration_script.path.parent}"
+                    hook[
+                        "entry"
+                    ] = f"-w {integration_script.path.parent} {hook['entry']}"
             if self._set_files_on_hook(
                 hook, files, should_filter=False
             ):  # no need to filter again, we have only filtered files

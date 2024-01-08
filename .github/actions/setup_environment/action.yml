@@ -20,8 +20,6 @@ runs:
 
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v8
-      with:
-        python-version: ${{ inputs.python-version }}
 
     - name: Check Poetry Consistency
       run: |

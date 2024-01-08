@@ -22,9 +22,13 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
+    - name: Setup Poetry
+      uses: Gr1N/setup-poetry@v8
+      with:
+        python-version: ${{ inputs.python-version }}
+
     - name: Install SDK dependencies with poetry
       run: |
-        sudo curl -sSL https://install.python-poetry.org | python3 -
         poetry --version
         poetry check --lock
         poetry install -E generate-unit-tests

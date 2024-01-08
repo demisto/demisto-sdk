@@ -18,7 +18,7 @@ ContentTypes = Union[Integration, Script]
 
 
 class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
-    error_code = "DO101"
+    error_code = "DO100"
     description = "Validate that the given content-item does not use the tag 'latest' in its docker image"
     error_message = (
         "docker image {0} has the 'latest' tag which is not allowed, use versioned tag"

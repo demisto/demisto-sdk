@@ -21,7 +21,7 @@ ContentTypes = Union[Integration, Script]
 
 
 class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes]):
-    error_code = "DO106"
+    error_code = "DO102"
     description = (
         "Validate that the given content-item uses the latest tag of a docker image"
     )

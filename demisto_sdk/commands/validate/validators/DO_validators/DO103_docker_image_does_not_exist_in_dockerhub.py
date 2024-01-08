@@ -17,7 +17,7 @@ ContentTypes = Union[Integration, Script]
 
 
 class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
-    error_code = "DO107"
+    error_code = "DO104"
     description = "Validate that the given content item's docker-image actually exists in dockerhub"
     error_message = "The {0} docker-image does not exist in dockerhub"
     related_field = "Docker image"

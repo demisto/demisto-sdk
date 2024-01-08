@@ -72,7 +72,7 @@ def test_DockerImageExistValidator_is_valid(
         - Case 3: Shouldn't fail at all.
         - Case 4: Should fail all content items.
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO108_docker_image_does_not_exist_in_yml import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO104_docker_image_does_not_exist_in_yml import (
         DockerImageExistValidator,
     )
 
@@ -100,7 +100,7 @@ def test_LatestDockerImageTagValidator_is_valid():
      - make sure the integrations/scripts with the "latest" tags are not valid
      - make sure that javascripts integrations/scripts are ignored
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO101_docker_image_tag_is_not_latest import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO100_docker_image_tag_is_not_latest import (
         LatestDockerImageTagValidator,
     )
 
@@ -151,7 +151,7 @@ def test_DockerImageIsNotDemistoValidator_is_valid():
      - make sure the integrations/scripts that are not valid demisto images fail
      - make sure that javascripts integrations/scripts are ignored
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_is_not_demisto import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO101_docker_image_is_not_demisto import (
         DockerImageIsNotDemistoValidator,
     )
 
@@ -202,7 +202,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
      - make sure the integrations/scripts that do not have the latest tag are not valid
      - make sure that javascripts integrations/scripts are ignored
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_is_latest_tag import (
         DockerImageTagIsLatestNumericVersionValidator,
     )
 
@@ -278,7 +278,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_fix(requests_mock):
     Then:
      - make sure docker-image is getting updated to the latest docker tag
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_is_latest_tag import (
         DockerImageTagIsLatestNumericVersionValidator,
     )
 
@@ -318,7 +318,7 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
      - make sure the integrations/scripts that do not exist in dockerhub are not valid
      - make sure that javascripts integrations/scripts are ignored
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO107_docker_image_does_not_exist_in_dockerhub import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO103_docker_image_does_not_exist_in_dockerhub import (
         DockerImageDoesNotExistInDockerhubValidator,
     )
 
@@ -399,7 +399,7 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
      - make sure that javascripts integrations/scripts are ignored
     """
     from demisto_sdk.commands.common.git_content_config import GitContentConfig
-    from demisto_sdk.commands.validate.validators.DO_validators.DO109_docker_image_is_not_deprecated import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO105_docker_image_is_not_deprecated import (
         DockerImageIsNotDeprecatedValidator,
     )
 
@@ -472,7 +472,7 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
 def test_DockerImageIsNotDeprecatedValidator_fix(mocker, requests_mock):
 
     from demisto_sdk.commands.common.git_content_config import GitContentConfig
-    from demisto_sdk.commands.validate.validators.DO_validators.DO109_docker_image_is_not_deprecated import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO105_docker_image_is_not_deprecated import (
         DockerImageIsNotDeprecatedValidator,
     )
 
@@ -537,7 +537,7 @@ def test_DockerImageIsNotNativeImageValidator_is_valid():
      - make sure the integrations/scripts with the demisto/py3-native are not valid
      - make sure that javascripts integrations/scripts are ignored
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO110_docker_image_is_not_native_image import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_not_native_image import (
         DockerImageIsNotNativeImageValidator,
     )
 

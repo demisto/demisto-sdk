@@ -319,7 +319,7 @@ class DockerHook(Hook):
                         "entry"
                     ] = f"-w {integration_script.path.parent} {hook['entry']}"
             if self._set_files_on_hook(
-                hook, files, should_filter=False
+                hook, files, should_filter=False, use_args=change_working_directory
             ):  # no need to filter again, we have only filtered files
                 # disable multiprocessing on hook
                 hook["require_serial"] = True

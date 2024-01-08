@@ -44,7 +44,11 @@ class Hook:
         self._exclude_hooks_by_support_level()
 
     def _set_files_on_hook(
-        self, hook: dict, files: Iterable[Path], should_filter: bool = True
+        self,
+        hook: dict,
+        files: Iterable[Path],
+        should_filter: bool = True,
+        use_args: bool = False,
     ) -> int:
         """
 
@@ -58,7 +62,11 @@ class Hook:
         files_to_run_on_hook = set(files)
         if should_filter:
             files_to_run_on_hook = self.filter_files_matching_hook_config(files)
-        hook["files"] = join_files(files_to_run_on_hook)
+        if not use_args:
+            hook["files"] = join_files(files_to_run_on_hook)
+        else:
+            hook["args"].extend((file.absolute() for file in files_to_run_on_hook))
+            hook["pass_filenames"] = False
         return len(files_to_run_on_hook)
 
     def filter_files_matching_hook_config(

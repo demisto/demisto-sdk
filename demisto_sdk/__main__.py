@@ -157,10 +157,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         help="Minimum logging threshold for the file logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
-    @click.option(
-        "--log-file-path",
-        help="Path to save log files onto."
-    )
+    @click.option("--log-file-path", help="Path to save log files onto.")
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(

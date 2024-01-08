@@ -21,16 +21,21 @@ runs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
+        cache: poetry
 
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v8
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Install SDK dependencies with poetry
+    - name: Check Poetry Consistency
       run: |
         poetry --version
         poetry check --lock
+      shell: bash
+
+    - name: Install SDK dependencies with poetry
+      run: |
         poetry install -E generate-unit-tests
       shell: bash
 

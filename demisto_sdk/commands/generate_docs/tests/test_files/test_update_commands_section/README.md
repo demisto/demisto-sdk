@@ -20,23 +20,24 @@ This integration was integrated and tested with API version December 02, 2022 re
 You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.
 After you successfully execute a command, a DBot message appears in the War Room with the command details.
 ### aha-get-features
+
 ***
 Lists all features from service, unless a specific feature is specified.
-
 
 #### Base Command
 
 `aha-get-features`
+
 #### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
-| from_date | Show features created after this date. Default is 2020-01-01. | Optional | 
+| from_date | Show features created after this date. | Optional | 
 | feature_name | The name of a specific feature to retrieve. | Optional | 
 | fields | A comma-separated list of fields to include in the Aha! service response. Default is name,reference_num,id,created_at. | Optional | 
 | page | The specific results page to retrieve. Default is 1. | Optional | 
-| per_page | The maximum number of results per page. Default is 30. | Optional | 
-
+| per_page | The maximum number of results per page. Default is 50. | Optional | 
+| assigned_to_user | The user the feature is assigned to. | Optional | 
 
 #### Context Output
 
@@ -48,6 +49,9 @@ Lists all features from service, unless a specific feature is specified.
 | AHA.Feature.workflow_status | String | The feature status description. | 
 | AHA.Feature.description | String | The feature description. | 
 | AHA.Feature.created_at | Date | The feature creation date. | 
+
+
+
 
 #### Command example
 ```!aha-get-features```
@@ -120,19 +124,20 @@ Lists all ideas from service, unless a specific idea is specified.
 ```!aha-get-ideas idea_name=DEMO-I-2895 fields=workflow_status```
 
 ### aha-edit-idea
-***
-Edit an idea status to Shipped.
 
+***
+Edit an idea
 
 #### Base Command
 
 `aha-edit-idea`
+
 #### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
 | idea_name | The name of the idea to edit. | Required | 
-
+| workflow_status | The status to change the idea to. Default is Shipped. | Optional | 
 
 #### Context Output
 
@@ -144,6 +149,12 @@ Edit an idea status to Shipped.
 | AHA.Idea.workflow_status | String | The idea status description. | 
 | AHA.Idea.description | String | The idea description. | 
 | AHA.Idea.created_at | Date | The idea creation date. | 
+| AHA.Idea.updated_at | Date | The idea update date. | 
+
+| AHA.Idea.updated_at | Date | The idea update date. | 
+
+| AHA.Idea.updated_at | Date | The idea update date. | 
+
 
 #### Command example
 ```!aha-edit-idea idea_name=DEMO-I-2895```

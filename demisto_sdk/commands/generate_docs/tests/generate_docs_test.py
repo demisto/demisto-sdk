@@ -26,14 +26,9 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_setup_section,
     generate_single_command_section,
     get_command_examples,
-    replace_integration_commands_section,
-    replace_integration_conf_section,
 )
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
-)
-from demisto_sdk.commands.integration_diff.integration_diff_detector import (
-    IntegrationDiffDetector,
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
@@ -1756,7 +1751,7 @@ class TestIntegrationDocUpdate:
     pack_name = integration_name = "AHA"
 
     def _get_function_name(self) -> str:
-        return inspect.currentframe().f_back.f_code.co_name
+        return inspect.currentframe().f_back.f_code.co_name  # type:ignore
 
     def test_added_commands(self, mocker: MockerFixture, git_repo: Repo):
         """
@@ -1775,9 +1770,13 @@ class TestIntegrationDocUpdate:
         """
 
         # Initialize Integration YAML, README.
-
         yml_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
+        )
+        modified_yml_path = Path(
+            TEST_FILES,
+            self._get_function_name(),
+            f"{self.integration_name}_added_cmd.yml",
         )
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
@@ -1785,55 +1784,76 @@ class TestIntegrationDocUpdate:
         readme_path = Path(
             TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
-        markdown = readme_path.read_text()
 
-        # Create Pack and Integration
-        git_repo.create_pack(self.pack_name)
-        git_repo.packs[0].create_integration(
-            self.integration_name, yml=yml_code, readme=markdown
-        )
-
-        git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
-        git_repo.git_util.repo.git.checkout("-b", "add_delete_cmd")
-
-        shutil.copyfile(
-            os.path.join(
-                TEST_FILES,
-                self._get_function_name(),
-                f"{self.integration_name}_added_cmd.yml",
-            ),
-            os.path.join(git_repo.packs[0].integrations[0].yml.path),
-        )
-
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
             side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
 
-        diff = IntegrationDiffDetector(
-            old=str(yml_code_path),
-            new=os.path.join(git_repo.packs[0].integrations[0].yml.path),
+        # Create Pack and Integration
+        git_repo.create_pack(self.pack_name)
+        git_repo.packs[0].create_integration(
+            self.integration_name, yml=yml_code, readme=readme_path.read_text()
         )
 
-        actual = diff.get_added_commands()
-        expected = ["aha-delete-idea"]
-
-        assert actual == expected
-
-        generate_integration_doc(
-            input_path=os.path.join(git_repo.packs[0].integrations[0].yml.path)
+        shutil.copyfile(
+            src=modified_yml_path, dst=git_repo.packs[0].integrations[0].yml.path
         )
+
+        generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
         actual = git_repo.packs[0].integrations[0].readme.read()
 
         assert "aha-delete-idea" in actual
 
-    def test_identical_integration_yaml(self):
+    def test_identical_integration_yaml(self, mocker: MockerFixture, git_repo: Repo):
         """
-        TODO Add a test where the integration yamls are identical
+        Test where the integration YAMLs are identical.
+
+        Given:
+        - A content repo with an integration (YAML + README).
+        - An integration YAML.
+
+        When:
+        - The supplied integration YAML is identical to the one in the repo.
+
+        Then:
+        - The generated README is unchaged/identical to the one in the repo.
         """
-        pass
+
+        yml_code_path = Path(
+            TEST_FILES, "test_added_commands", f"{self.integration_name}.yml"
+        )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
+
+        readme_path = Path(
+            TEST_FILES, "test_added_commands", INTEGRATIONS_README_FILE_NAME
+        )
+
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yml_code_path.read_text(), readme_path.read_text()],
+        )
+
+        # Create Pack and Integration
+        git_repo.create_pack(self.pack_name)
+        git_repo.packs[0].create_integration(
+            self.integration_name, yml=yml_code, readme=readme_path.read_text()
+        )
+
+        generate_integration_doc(input_path=str(yml_code_path))
+
+        actual = git_repo.packs[0].integrations[0].readme.read()
+        expected = readme_path.read_text()
+
+        assert actual == expected
 
     def test_added_configuration(self, mocker: MockerFixture, git_repo: Repo):
         """
@@ -1855,44 +1875,35 @@ class TestIntegrationDocUpdate:
         yml_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
         )
+        modified_yml_path = Path(
+            TEST_FILES,
+            self._get_function_name(),
+            f"{self.integration_name}_added_conf.yml",
+        )
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
 
         readme_path = Path(
             TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
-        markdown = readme_path.read_text()
 
-        # Create Pack and Integration
-        git_repo.create_pack(self.pack_name)
-        git_repo.packs[0].create_integration(
-            self.integration_name, yml=yml_code, readme=markdown
-        )
-
-        git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
-        git_repo.git_util.repo.git.checkout("-b", "add_conf_project_id")
-
-        shutil.copyfile(
-            os.path.join(
-                TEST_FILES,
-                self._get_function_name(),
-                f"{self.integration_name}_added_conf.yml",
-            ),
-            git_repo.packs[0].integrations[0].yml.path,
-        )
-
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
             side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
 
-        diff = IntegrationDiffDetector(
-            old=os.path.join(str(yml_code_path)),
-            new=os.path.join(git_repo.packs[0].integrations[0].yml.path),
+        # Create Pack and Integration
+        git_repo.create_pack(self.pack_name)
+        git_repo.packs[0].create_integration(
+            self.integration_name, yml=yml_code, readme=readme_path.read_text()
         )
 
-        assert diff.is_configuration_different()
+        shutil.copyfile(
+            src=modified_yml_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
 
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
@@ -1900,15 +1911,13 @@ class TestIntegrationDocUpdate:
 
         assert "Project ID" in actual
 
-    def test_modified_commands(
-        self, mocker: MockerFixture, tmp_path: Path, git_repo: Repo
-    ):
+    def test_update_commands_section(self, mocker: MockerFixture, git_repo: Repo):
         """
-        Test to verify that if any modified commands are added to the integration,
-        they're sections are rerendered.
+        Test to check an integration commands section update.
 
         Given:
-        - A Pack with an integration.
+        - A new integration YAML.
+        - An old integration YAML.
 
         When:
         - The integration commands have the following changes:
@@ -1920,13 +1929,17 @@ class TestIntegrationDocUpdate:
             - The `AHA.Idea.updated_at` context path was added to the `output` of the `aha-edit-idea` command.
 
         Then:
-        - All modified integration commands changes are reflected in the README.
+        - 2 errors are returned for missing command examples.
+        - The new configuration option is present in the README.
         """
-
-        # Initialize Integration YAML, README.
 
         yml_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{self.integration_name}.yml"
+        )
+        modified_yml_path = Path(
+            TEST_FILES,
+            self._get_function_name(),
+            f"{self.integration_name}_modified_cmds.yml",
         )
         with yml_code_path.open("r") as stream:
             yml_code = yaml.load(stream)
@@ -1934,39 +1947,24 @@ class TestIntegrationDocUpdate:
         readme_path = Path(
             TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
-        markdown = readme_path.read_text()
 
-        # Create Pack and Integration
-        git_repo.create_pack(self.pack_name)
-        git_repo.packs[0].create_integration(
-            self.integration_name, yml=yml_code, readme=markdown
-        )
-
-        git_repo.git_util.commit_files(commit_message=f"Added {self.pack_name} Pack")
-        git_repo.git_util.repo.git.checkout("-b", "modify_cmds")
-
-        shutil.copyfile(
-            os.path.join(
-                TEST_FILES,
-                self._get_function_name(),
-                f"{self.integration_name}_modified_cmds.yml",
-            ),
-            git_repo.packs[0].integrations[0].yml.path,
-        )
-
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
             side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
 
-        diff = IntegrationDiffDetector(
-            old=str(yml_code_path), new=git_repo.packs[0].integrations[0].yml.path
+        # Create Pack and Integration
+        git_repo.create_pack(self.pack_name)
+        git_repo.packs[0].create_integration(
+            self.integration_name, yml=yml_code, readme=readme_path.read_text()
         )
 
-        expected_modified_commands = ["aha-get-features", "aha-edit-idea"]
-        actual_modified_commands = diff.get_modified_commands()
-        assert expected_modified_commands == actual_modified_commands
+        shutil.copyfile(
+            src=modified_yml_path, dst=git_repo.packs[0].integrations[0].yml.path
+        )
 
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
@@ -1989,158 +1987,6 @@ class TestIntegrationDocUpdate:
             in actual
         )
         assert "| AHA.Idea.updated_at | Date | The idea update date. |" in actual
-
-    def test_replace_integration_conf_section(self):
-        """
-        Test to check an integration configuration section replacement.
-
-        Given:
-        - A new integration YAML.
-        - An old integration YAML.
-
-        When:
-        - The new integration YAML has an added configuration option "Project ID".
-
-        Then:
-        - No errors are returned.
-        - The new configuration option is present in the README.
-        """
-
-        integration_diff = IntegrationDiffDetector(
-            os.path.join(TEST_FILES, "test_added_configuration", "AHA_added_conf.yml"),
-            os.path.join(TEST_FILES, "test_added_configuration", "AHA.yml"),
-        )
-
-        doc_text, err = replace_integration_conf_section(
-            doc_text=Path(
-                TEST_FILES, "test_added_configuration", INTEGRATIONS_README_FILE_NAME
-            ).read_text(),
-            new_integration_yml=integration_diff.new_yaml_data,
-        )
-
-        assert not err
-        assert "Project ID" in doc_text
-
-    def test_replace_integration_conf_section_error(self):
-        """
-        Test to check an integration configuration section replacement in case of an error.
-
-        Given:
-        - A new integration YAML.
-        - An old integration YAML.
-
-        When:
-        - The README of the integration doesn't contain the configuration section.
-
-        Then:
-        - Errors are returned.
-        - The original README text is returned.
-        """
-
-        original_doc_text = "# Test Integration Configuration\n\nLorem ipsum"
-
-        integration_diff = IntegrationDiffDetector(
-            os.path.join(TEST_FILES, "test_added_configuration", "AHA_added_conf.yml"),
-            os.path.join(TEST_FILES, "test_added_configuration", "AHA.yml"),
-        )
-
-        doc_text, err = replace_integration_conf_section(
-            doc_text=original_doc_text,
-            new_integration_yml=integration_diff.new_yaml_data,
-        )
-
-        assert "Unable to find configuration section line in README" in err
-        assert doc_text == original_doc_text
-
-    def test_replace_integration_commands_section(self):
-        """
-        Test to check an integration commands section replacement.
-
-        Given:
-        - A new integration YAML.
-        - An old integration YAML.
-
-        When:
-        - The integration commands have the following changes:
-            - The `defaultValue` field was removed from `from_date` argument in the `aha-get-features` command.
-            - The `defaultValue` field was changed (30 -> 50) from `per_page` argument in the`aha-get-features` command.
-            - The `assigned_to_user` argument was added to the `aha-get-features` command.
-            - The `description` field was changed in the `aha-edit-idea` command.
-            - The `workflow_status` argument was added to the `aha-edit-idea` command.
-            - The `AHA.Idea.updated_at` context path was added to the `output` of the `aha-edit-idea` command.
-
-        Then:
-        - 2 errors are returned for missing command examples.
-        - The new configuration option is present in the README.
-        """
-
-        integration_diff = IntegrationDiffDetector(
-            os.path.join(TEST_FILES, "test_modified_commands", "AHA_modified_cmds.yml"),
-            os.path.join(TEST_FILES, "test_modified_commands", "AHA.yml"),
-        )
-
-        doc_text, errors = replace_integration_commands_section(
-            doc_text=Path(
-                TEST_FILES, "test_modified_commands", INTEGRATIONS_README_FILE_NAME
-            ).read_text(),
-            old_integration_yml=integration_diff.old_yaml_data,
-            new_integration_yml=integration_diff.new_yaml_data,
-            commands=integration_diff.get_modified_commands(),
-        )
-
-        assert len(errors) == 2
-
-        assert (
-            "| from_date | Show features created after this date. | Optional |"
-            in doc_text
-        )
-        assert (
-            "| per_page | The maximum number of results per page. Default is 50."
-            in doc_text
-        )
-        assert (
-            "| assigned_to_user | The user the feature is assigned to. | Optional |"
-            in doc_text
-        )
-        assert (
-            "| workflow_status | The status to change the idea to. Default is Shipped. | Optional |"
-            in doc_text
-        )
-        assert "| AHA.Idea.updated_at | Date | The idea update date. |" in doc_text
-
-    def test_replace_integration_commands_section_errors(self):
-        """
-        Test to check an integration commands section replacement.
-
-        Given:
-        - A new integration YAML.
-        - An old integration YAML.
-
-        When:
-        - The commands section of the integration README doesn't contain the commands.
-
-        Then:
-        - 2 errors are returned for missing command examples.
-        - The original README is returned.
-        """
-
-        original_doc_text = "# Test Integration Configuration\n\nLorem ipsum"
-
-        integration_diff = IntegrationDiffDetector(
-            os.path.join(TEST_FILES, "test_modified_commands", "AHA_modified_cmds.yml"),
-            os.path.join(TEST_FILES, "test_modified_commands", "AHA.yml"),
-        )
-
-        doc_text, errors = replace_integration_commands_section(
-            doc_text=original_doc_text,
-            old_integration_yml=integration_diff.old_yaml_data,
-            new_integration_yml=integration_diff.new_yaml_data,
-            commands=integration_diff.get_modified_commands(),
-        )
-
-        assert len(errors) == 4
-
-        assert doc_text == original_doc_text
 
     def test_added_conf_cmd_modified_cmd(self, git_repo: Repo, mocker: MockerFixture):
         """
@@ -2168,33 +2014,32 @@ class TestIntegrationDocUpdate:
         yml_code_path = Path(
             TEST_FILES, self._get_function_name(), f"{integration_name}.yml"
         )
-        with yml_code_path.open("r") as stream:
-            yml_code = yaml.load(stream)
-
-        modified_yml_code_path = Path(
+        modified_yml_path = Path(
             TEST_FILES, self._get_function_name(), f"{integration_name}_update.yml"
         )
+        with yml_code_path.open("r") as stream:
+            yml_code = yaml.load(stream)
 
         readme_path = Path(
             TEST_FILES, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
-        markdown = readme_path.read_text()
 
         # Create Pack and Integration
         git_repo.create_pack(pack_name)
         git_repo.packs[0].create_integration(
-            integration_name, yml=yml_code, readme=markdown
+            integration_name, yml=yml_code, readme=readme_path.read_text()
         )
 
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
             side_effect=[yml_code_path.read_text(), readme_path.read_text()],
         )
 
-        git_repo.git_util.commit_files(f"Add {pack_name} Pack")
         shutil.copyfile(
-            src=modified_yml_code_path, dst=git_repo.packs[0].integrations[0].yml.path
+            src=modified_yml_path, dst=git_repo.packs[0].integrations[0].yml.path
         )
 
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
@@ -2206,7 +2051,7 @@ class TestIntegrationDocUpdate:
         ] == "| limit | Maximum number of records to return. Default is 100. | Optional |"
         actual[805] == "| new_arg | New argument for testing. | Optional | "
         actual[812] == "| Splunk.Test | String | Test output for Splunk | "
-        assert actual[1139:1161] == [
+        assert actual[1149:1171] == [
             "### splunk-test-cmd",
             "",
             "***",

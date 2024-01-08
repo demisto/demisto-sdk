@@ -390,10 +390,9 @@ def logging_setup(
 
         # Can't use 'logger.error' here, as the logger is not yet initialized.
         if not log_file_directory_path.is_dir():
-            print(  # noqa: T201
+            exit(
                 f"Error: Configured logs path '{log_file_directory_path}' does not exist."
             )
-            exit(1)
 
         log_file_path = log_file_directory_path / LOG_FILE_NAME
         LOG_FILE_PATH = log_file_path
@@ -425,7 +424,7 @@ def logging_setup(
     logger.propagate = False
 
     logger.debug(f"Python version: {sys.version}")
-    logger.debug(f"Working dir: {os.getcwd()}")
+    logger.debug(f"Working dir: {Path.cwd()}")
     logger.debug(f"Platform: {platform.system()}")
 
     if LOG_FILE_PATH and LOG_FILE_PATH_PRINT:
@@ -453,7 +452,3 @@ def set_demisto_handlers_to_logger(
         else handlers[0].level
     )
     _logger.level = log_level
-
-
-def get_log_file() -> Optional[Path]:
-    return LOG_FILE_PATH

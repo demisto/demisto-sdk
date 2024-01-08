@@ -1,5 +1,5 @@
 name: SDK Release
-on: 
+on:
   workflow_dispatch:
     inputs:
       pr_number:

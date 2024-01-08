@@ -488,10 +488,10 @@ class TestPlaybook:
                 test_server_types.update(
                     MARKETPLACE_VERSIONS_TO_SERVER_TYPE[marketplace]
                 )
+                self.log_info(f'IN FOR LOOP, {marketplace=}, {test_server_types=}')
             self.log_info(
-                f"MARKETPLACES FOR TEST PLAYBOOK:\n"
+                f"MARKETPLACES FOR TEST PLAYBOOK {self.configuration.playbook_id}:\n"
                 f"{self.configuration.marketplaces=} ({test_server_types=})\n"
-                f"for {self.configuration.playbook_id=}\n"
                 f"with {self.configuration.test_instance_names=}\n"
                 f"in {self.build_context.server_type=}"
             )

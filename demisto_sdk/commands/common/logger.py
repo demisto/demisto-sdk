@@ -29,16 +29,20 @@ def environment_variable_to_bool(
     Returns:
         bool: The environment variable value if it is set and is a valid boolean value, otherwise the default value.
     """
-    env_var = os.getenv(variable_name, default_value)
+    env_var = os.getenv(variable_name)
 
-    if isinstance(env_var, bool):
-        return env_var
+    if not env_var:
+        return default_value
 
-    return (
-        isinstance(env_var, str)
-        and env_var.casefold() in STRING_TO_BOOL_MAP
-        and STRING_TO_BOOL_MAP[env_var]
-    )
+    if isinstance(env_var, str) and env_var.casefold() in STRING_TO_BOOL_MAP:
+        return STRING_TO_BOOL_MAP[env_var.casefold()]
+
+    else:
+        logger.warning(
+            f"'{variable_name}' environment variable is set to '{env_var}', "
+            f"which is not a valid value. Default value '{default_value}' will be used."
+        )
+        return default_value
 
 
 def environment_variable_to_int(variable_name: str, default_value: int) -> int:
@@ -53,10 +57,10 @@ def environment_variable_to_int(variable_name: str, default_value: int) -> int:
     Returns:
         int: The environment variable value if it is set and is a valid integer value, otherwise the default value.
     """
-    env_var = os.getenv(variable_name, default_value)
+    env_var = os.getenv(variable_name)
 
-    if isinstance(env_var, int):
-        return env_var
+    if not env_var:
+        return default_value
 
     try:
         return int(env_var)
@@ -67,7 +71,7 @@ def environment_variable_to_int(variable_name: str, default_value: int) -> int:
             f"which is not a valid integer value. Default value '{default_value}' will be used."
         )
 
-    return default_value
+        return default_value
 
 
 neo4j_log = logging.getLogger("neo4j")

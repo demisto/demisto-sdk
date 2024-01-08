@@ -278,9 +278,10 @@ class DockerHook(Hook):
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
+        run_in_cwd = new_hook.pop("run_in_cwd", False)
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet -u {os.getuid()}:4000 {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet -u {os.getuid()}:4000 {"-w "} {dev_image}'
         ret_hooks = []
         for (
             integration_script,
@@ -308,6 +309,8 @@ class DockerHook(Hook):
                 hook[
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
+                if run_in_cwd:
+                    hook["entry"] = f"-w {integration_script.path.parent}"
             if self._set_files_on_hook(
                 hook, files, should_filter=False
             ):  # no need to filter again, we have only filtered files

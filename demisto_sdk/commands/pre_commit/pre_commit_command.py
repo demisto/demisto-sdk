@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -349,7 +350,7 @@ def group_by_language(
         integrations_scripts = pool.map(
             BaseContent.from_path, integrations_scripts_mapping.keys()
         )
-
+        pool.map(ContentItem.get_pack, filter(None, integrations_scripts))  # type: ignore
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
         if not integration_script or not isinstance(

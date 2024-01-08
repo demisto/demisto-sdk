@@ -1,51 +1,63 @@
 from pathlib import Path
 
-import e2e_tests_utils
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.clients import get_client_from_marketplace
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
+from tests_end_to_end import e2e_tests_utils
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 
 def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
+    """This flow checks:
+    1. Creates a new playbook and uploads it demisto-sdk upload command.
+    2. Downloads the playbook using demisto-sdk upload command.
+    3. Generates docs for the playbook using demisto-sdk generate-docs command.
+    4. Formatting the playbook using the demisto-sdk format command.
+    5. Validates the playbook using the demisto-sdk validate command.
+    6. Uploads the playbook using the demisto-sdk upload command.
+    """
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
-    e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
+    git_path = Path(f"{tmpdir}/git")
+    git_path.mkdir(exist_ok=True)
+
     e2e_tests_utils.git_clone_demisto_sdk(
         destination_folder=f"{tmpdir}/git/demisto-sdk",
         sdk_git_branch=DEMISTO_GIT_PRIMARY_BRANCH,
     )
-    from TestSuite.playbook import Playbook
-    from TestSuite.repo import Repo
 
     repo = Repo(tmpdir)
-
-    unique_id = 456
-    pack_name = "foo_" + str(unique_id)
-    pack = repo.create_pack(name=pack_name)
-    playbook_name = "pb_" + pack_name
-    playbook: Playbook = pack.create_playbook(name=playbook_name)
-    playbook.create_default_playbook(name=playbook_name)
-    source_playbook_path = Path(playbook.path)
-    assert source_playbook_path.exists()
+    pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
+    (
+        playbook,
+        playbook_name,
+        source_playbook_path,
+    ) = e2e_tests_utils.create_playbook(pack, pack_name)
+    assert Path(source_playbook_path).exists()
 
     logger.info(f"Trying to upload playbook from {source_playbook_path}")
     Uploader(input=source_playbook_path, insecure=True).upload()
 
     # Preparing updated pack folder
-    e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
+    directory_path = Path(f"{tmpdir}/Packs/{pack_name}_testsuite")
+    directory_path.mkdir(exist_ok=True, parents=True)
 
     logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_testsuite/Playbooks"
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_testsuite",
-        input=[playbook_name],
+        input=(playbook_name,),
         insecure=True,
     ).download()
     dest_playbook_path = Path(
@@ -66,7 +78,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
             assume_answer=True,
         )
         logger.info(f"Validating playbook {dest_playbook_path}")
-        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+        OldValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {dest_playbook_path}")
         Uploader(
@@ -75,61 +87,54 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         ).upload()
 
 
-def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
-    unique_id = 789
-    pack_name = "foo_" + str(unique_id)
-    playbook_name = "pb_" + str(unique_id)
-    dest_playbook_path = Path(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
+def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, verify_ssl: bool = False):
+    """This flow checks:
+    1. Creates a new playbook and uploading it to the machine using an http request.
+    2. Downloads the playbook using demisto-sdk download command.
+    3. Downloads the script CommonServerUserPowerShell using demisto-sdk upload command.
+    4. Generates docs for the playbook using demisto-sdk generate-docs command.
+    5. Formatting the playbook using the demisto-sdk format command.
+    6. Validates the playbook using the demisto-sdk validate command.
+    7. Uploads the playbook using the demisto-sdk upload command.
+    8. Deletes the playbook using an http request.
+    """
+    demisto_client = get_client_from_marketplace(
+        MarketplaceVersions.XSOAR_SAAS, verify_ssl=verify_ssl
     )
 
-    unique_id = 789
-    pack_name = "foo_" + str(unique_id)
-    playbook_name = "pb_" + str(unique_id)
-
-    demisto_client = e2e_tests_utils.connect_to_server(insecure=insecure)
-    body = [
-        {
-            "name": playbook_name,
-            "propagationLabels": ["all"],
-            "tasks": {
-                "0": {
-                    "id": "0",
-                    "unqiueId": "0",
-                    "type": "start",
-                    "nextTasks": None,
-                    "task": {},
-                }
-            },
-        }
-    ]
-
-    header_params = {
-        "Accept": "application/json",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Content-Type": "application/json",
-    }
+    repo = Repo(tmpdir)
+    pack, pack_name, source_pack_path = e2e_tests_utils.create_pack(repo)
+    (
+        playbook,
+        playbook_name,
+        dest_playbook_path,
+    ) = e2e_tests_utils.create_playbook(pack, pack_name)
 
     try:
-        demisto_client.api_client.call_api(
-            resource_path="/playbook/save",
-            method="POST",
-            header_params=header_params,
-            body=body,
-        )
+        # uploads the playbook using API to emulate a playbook that has been created through the UI
+        demisto_client.client.import_playbook(file=dest_playbook_path)
     except ApiException as ae:
-        logger.info(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
-        assert False
+        if "already exists" in str(ae):
+            logger.info(f"*** Playbook {playbook_name} already exists.")
+        else:
+            logger.info(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
+            raise
 
     # Preparing updated pack folder
-    e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
+    directory_path = Path(f"{tmpdir}/Packs/{pack_name}_client")
+    directory_path.mkdir(exist_ok=True, parents=True)
+
+    Downloader(
+        list_files=True,
+        insecure=True,
+    ).download()
 
     logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks"
     )
     Downloader(
         output=f"{tmpdir}/Packs/{pack_name}_client",
-        input=[playbook_name],
+        input=(playbook_name,),
         insecure=True,
     ).download()
     dest_playbook_path = Path(
@@ -153,10 +158,15 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
             assume_answer=True,
         )
         logger.info(f"Validating playbook {dest_playbook_path}")
-        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+        OldValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {dest_playbook_path}")
         Uploader(
             input=dest_playbook_path,
             insecure=True,
         ).upload()
+
+    try:
+        demisto_client.delete_playbook(playbook_name, playbook_name)
+    except ApiException as ae:
+        logger.info(f"*** Failed to delete playbook {playbook_name}, reason: {ae}.")

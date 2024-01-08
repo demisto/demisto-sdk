@@ -4,7 +4,6 @@ This module is designed to validate the existence and structure of content pack 
 import glob
 import os
 import re
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
@@ -29,17 +28,17 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_DESC,
     PACK_METADATA_EMAIL,
     PACK_METADATA_FIELDS,
-    PACK_METADATA_KEYWORDS,
+    PACK_METADATA_MANDATORY_FILLED_FIELDS,
     PACK_METADATA_MODULES,
     PACK_METADATA_NAME,
     PACK_METADATA_SUPPORT,
-    PACK_METADATA_TAGS,
     PACK_METADATA_URL,
     PACK_METADATA_USE_CASES,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
+    PARTNER_SUPPORT,
     VERSION_REGEX,
     MarketplaceVersions,
 )
@@ -55,6 +54,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    check_timestamp_format,
     extract_error_codes_from_file,
     get_core_pack_list,
     get_json,
@@ -66,7 +66,6 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import PackDepende
 
 CONTRIBUTORS_LIST = ["partner", "developer", "community"]
 SUPPORTED_CONTRIBUTORS_LIST = ["partner", "developer"]
-ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
 MAXIMUM_DESCRIPTION_FIELD_LENGTH = 130
 SUPPORT_TYPES = ["community", "xsoar"] + SUPPORTED_CONTRIBUTORS_LIST
@@ -282,15 +281,6 @@ class PackUniqueFilesValidator(BaseValidator):
         current_marketplaces = current_meta_file_content.get("marketplaces", [])
         return set(old_marketplaces) != set(current_marketplaces)
 
-    @staticmethod
-    def check_timestamp_format(timestamp):
-        """Check that the timestamp is in ISO format"""
-        try:
-            datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)
-            return True
-        except ValueError:
-            return False
-
     # secrets validation
     def validate_secrets_file(self):
         """Validate everything related to .secrets-ignore file"""
@@ -345,7 +335,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("IM109")
     def validate_author_image_exists(self):
-        if self.metadata_content.get(PACK_METADATA_SUPPORT) == "partner":
+        if self.metadata_content.get(PACK_METADATA_SUPPORT) == PARTNER_SUPPORT:
             author_image_path = os.path.join(self.pack_path, "Author_image.png")
             if not Path(author_image_path).exists():
                 if self._add_error(
@@ -366,7 +356,7 @@ class PackUniqueFilesValidator(BaseValidator):
             Path(playbooks_path).exists() and len(os.listdir(playbooks_path)) != 0
         )
         if (
-            self.support == "partner" or contains_playbooks
+            self.support == PARTNER_SUPPORT or contains_playbooks
         ) and self._check_if_file_is_empty(self.readme_file):
             if self._add_error(Errors.empty_readme_error(), self.readme_file):
                 return False
@@ -597,7 +587,7 @@ class PackUniqueFilesValidator(BaseValidator):
             # check created field in iso format
             created_field = metadata.get(PACK_METADATA_CREATED, "")
             if created_field:
-                if not self.check_timestamp_format(created_field):
+                if not check_timestamp_format(created_field):
                     suggested_value = parser.parse(created_field).isoformat() + "Z"
                     if self._add_error(
                         Errors.pack_timestamp_field_not_in_iso_format(
@@ -608,12 +598,7 @@ class PackUniqueFilesValidator(BaseValidator):
                         return False
 
             # check metadata list fields and validate that no empty values are contained in this fields
-            for list_field in (
-                PACK_METADATA_KEYWORDS,
-                PACK_METADATA_TAGS,
-                PACK_METADATA_CATEGORIES,
-                PACK_METADATA_USE_CASES,
-            ):
+            for list_field in PACK_METADATA_MANDATORY_FILLED_FIELDS:
                 field = metadata[list_field]
                 if field and len(field) == 1:
                     value = field[0]

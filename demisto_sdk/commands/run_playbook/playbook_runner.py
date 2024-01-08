@@ -1,9 +1,12 @@
 import os
-import time
 
-import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
+from demisto_sdk.commands.common.clients import get_client_from_server_type
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_BASE_URL,
+    InvestigationPlaybookState,
+)
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -14,8 +17,7 @@ class PlaybookRunner:
         playbook_id (str): the ID of the playbook to run
         should_wait (bool): whether to wait until the playbook run is completed or not.
         timeout (int): timeout for the command. The playbook will continue to run in Demisto
-        demisto_client (DefaultApi): Demisto-SDK client object.
-        base_link_to_workplan (str): the base link to see the full playbook run in Demisto.
+        instance_api_client (XsoarClient): Demisto-SDK client object.
     """
 
     def __init__(
@@ -33,9 +35,10 @@ class PlaybookRunner:
             (not insecure) if insecure else None
         )  # we set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         # if url parameter is not provided, demisto_client will search the DEMISTO_BASE_URL env variable
-        self.demisto_client = demisto_client.configure(base_url=url, verify_ssl=verify)
 
-        self.base_link_to_workplan = self.get_base_link_to_workplan(url)
+        self.instance_api_client = get_client_from_server_type(
+            url or os.getenv(DEMISTO_BASE_URL), verify_ssl=verify
+        )
 
     def run_playbook(self) -> int:
         """Run a playbook in Demisto.
@@ -45,112 +48,60 @@ class PlaybookRunner:
         """
         # create an incident with the given playbook
         try:
-            incident_id = self.create_incident_with_playbook(
-                incident_name=f"inc_{self.playbook_id}", playbook_id=self.playbook_id
+            incident = self.instance_api_client.create_incident(
+                name=f"incident-test-{self.playbook_id}-playbook",
+                attached_playbook_id=self.playbook_id,
             )
-        except ApiException as a:
-            logger.info(f"[red]{a}[/red]")
+        except ApiException as error:
+            logger.error(
+                f"Could not create incident in {self.instance_api_client.base_url} to test playbook {self.playbook_id}, error\n{error})"
+            )
             return 1
-
-        work_plan_link = self.base_link_to_workplan + str(incident_id)
-        if self.should_wait:
-            logger.info(
-                f"[green]Waiting for the playbook to finish running.. \n"
-                f"To see the playbook run in real-time please go to : {work_plan_link}[/green]"
-            )
-
-            elasped_time = 0
-            start_time = time.time()
-
-            while elasped_time < self.timeout:
-                playbook_results = self.get_playbook_results_dict(incident_id)
-                if playbook_results["state"] == "inprogress":
-                    time.sleep(10)
-                    elasped_time = int(time.time() - start_time)
-                else:  # the playbook has finished running
-                    break
-
-            # Ended the loop because of timeout
-            if elasped_time >= self.timeout:
-                logger.info(
-                    f"[red]The command had timed out while the playbook is in progress.\n"
-                    f"To keep tracking the playbook please go to : {work_plan_link}[/red]"
-                )
-            else:
-                if playbook_results["state"] == "failed":
-                    logger.info(
-                        "[red]The playbook finished running with status: FAILED[/red]"
-                    )
-                else:
-                    logger.info(
-                        "[green]The playbook has completed its run successfully[/green]"
-                    )
-
-        # The command does not wait for the playbook to finish running
-        else:
-            logger.info(f"To see results please go to : {work_plan_link}")
-
-        return 0
-
-    def create_incident_with_playbook(
-        self, incident_name: str, playbook_id: str
-    ) -> int:
-        """Create an incident in Demisto with the given incident_name and the given playbook_id
-
-        Args:
-            incident_name (str): The name of the incident
-            playbook_id (str): The id of the playbook
-
-        Raises:
-            ApiException: if the client has failed to create an incident
-
-        Returns:
-            int. The new incident's ID.
-        """
-
-        create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
-        create_incident_request.create_investigation = True
-        create_incident_request.playbook_id = playbook_id
-        create_incident_request.name = incident_name
-
-        try:
-            response = self.demisto_client.create_incident(
-                create_incident_request=create_incident_request
-            )
-        except ApiException as e:
-            logger.info(
-                f'[red]Failed to create incident with playbook id : "{playbook_id}", '
-                "possible reasons are:\n"
-                "1. This playbook name does not exist \n"
-                "2. Schema problems in the playbook \n"
-                "3. Unauthorized api key[/red]"
-            )
-            raise e
 
         logger.info(
             f"[green]The playbook: {self.playbook_id} was triggered successfully.[/green]"
         )
-        return response.id
 
-    def get_playbook_results_dict(self, inc_id):
-        playbook_results = self.demisto_client.generic_request(
-            method="GET", path=f"/inv-playbook/{inc_id}"
+        incident_id = incident.id
+        work_plan_link = self.instance_api_client.get_incident_work_plan_url(
+            incident_id
         )
-        return eval(playbook_results[0])
 
-    def get_base_link_to_workplan(self, url):
-        """Create a base link to the workplan in the specified demisto instance
+        if self.should_wait:
+            logger.info(
+                f"Waiting for the playbook to finish running.. \n"
+                f"To see the playbook run in real-time, visit: {work_plan_link}"
+            )
+            try:
+                playbook_state_raw_response = (
+                    self.instance_api_client.poll_playbook_state(
+                        incident_id,
+                        expected_states=(
+                            InvestigationPlaybookState.COMPLETED,
+                            InvestigationPlaybookState.FAILED,
+                        ),
+                        timeout=self.timeout,
+                    )
+                )
+            except RuntimeError:
+                logger.error(
+                    f"playbook {self.playbook_id} could not complete in {self.timeout} seconds"
+                )
+                return 1
 
-        Args:
-            url(str): URL to a demisto instance. Could be None if not provided
-
-        Returns:
-            str: The link to the workplan
-        """
-
-        if url:
-            return f"{url}/#/WorkPlan/"
+            playbook_state = playbook_state_raw_response.get("state")
+            if playbook_state == InvestigationPlaybookState.FAILED:
+                logger.error(
+                    f"[red]The playbook finished running with status: {InvestigationPlaybookState.FAILED}"
+                )
+            else:
+                logger.info(
+                    f"[green]The playbook {self.playbook_id} has completed its run successfully[/green]"
+                )
 
         else:
-            base_url = os.environ.get("DEMISTO_BASE_URL")
-            return f"{base_url}/#/WorkPlan/"
+            logger.info(
+                f"[green]playbook execution results can be found in {work_plan_link}[/green]"
+            )
+
+        return 0

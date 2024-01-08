@@ -13,6 +13,9 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     MAX_FETCH_PARAM,
+    PARTNER_SUPPORT,
+    SUPPORT_LEVEL_HEADER,
+    XSOAR_SUPPORT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
@@ -1948,6 +1951,59 @@ class TestIntegrationValidator:
             == is_valid
         )
 
+    @pytest.mark.parametrize(
+        "support_level_header, is_valid",
+        [
+            (XSOAR_SUPPORT, True),
+            (PARTNER_SUPPORT, False),
+        ],
+    )
+    def test_is_partner_collector_has_xsoar_support_level_header(
+        self, mocker, pack, support_level_header: str, is_valid: bool
+    ):
+        """
+        Given
+        - Case A: support_level_header = xsoar
+        - Case B: support_level_header = partner
+
+        When
+        - run is_partner_collector_has_xsoar_support_level_header
+
+        Then
+        - Case A: make sure the validation succeed
+        - Case B: make sure the validation fails
+        """
+        name = "test"
+        yml = {
+            "commonfields": {"id": name, "version": -1},
+            "name": name,
+            "display": name,
+            "description": name,
+            "category": "category",
+            "script": {
+                "type": "python",
+                "subtype": "python3",
+                "script": "",
+                "isfetchevents": True,
+                "commands": [],
+            },
+            "configuration": [],
+            SUPPORT_LEVEL_HEADER: support_level_header,
+        }
+
+        integration = pack.create_integration(name, yml=yml)
+        validator = IntegrationValidator(
+            mock_structure(integration.path, current_file=integration.yml.read_dict())
+        )
+        mocker.patch.object(
+            IntegrationValidator,
+            "get_metadata_file_content",
+            return_value={"support": PARTNER_SUPPORT},
+        )
+        assert (
+            validator.is_partner_collector_has_xsoar_support_level_header() == is_valid
+        )
+
 
 class TestIsFetchParamsExist:
     def setup_method(self):
@@ -2024,6 +2080,20 @@ class TestIsFetchParamsExist:
                 ),
             ]
         )
+
+    def test_specific_for_marketplace(self):
+        """
+        Given:
+            a schema whit a custom value for specific marketplace on fetch
+
+        When:
+            running is_valid_fetch
+
+        Then:
+            validate that the validation pass
+        """
+        self.validator.current_file["configuration"][-1]["defaultValue:xsoar"] = "test"
+        assert self.validator.is_valid_fetch()
 
     def test_not_fetch(self, mocker):
         self.test_malformed_field(mocker)
@@ -2231,6 +2301,16 @@ class TestIsFeedParamsExist:
         for item in configuration:
             if item.get("additionalinfo"):
                 item["additionalinfo"] = f"""{item['additionalinfo']}."""
+        assert (
+            self.validator.all_feed_params_exist() is True
+        ), "all_feed_params_exist() returns False instead True"
+
+    def test_value_for_marketplace_feed(self):
+        configuration = self.validator.current_file["configuration"]
+        for item in configuration:
+            if item.get("name") == "feed":
+                item["name:xsoar"] = "test-name"
+                item["something:xsoar"] = "test"
         assert (
             self.validator.all_feed_params_exist() is True
         ), "all_feed_params_exist() returns False instead True"

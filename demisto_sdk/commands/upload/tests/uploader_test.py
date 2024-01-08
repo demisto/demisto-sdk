@@ -39,6 +39,7 @@ from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadat
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.widget import Widget
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
     mock_pack,
@@ -134,6 +135,7 @@ def test_upload_folder(
     )
     content_path = f"{git_path()}/demisto_sdk/tests/test_files/"
     mocker.patch.object(content_item, "CONTENT_PATH", Path(content_path))
+    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
     path = Path(content_path, path_end)
 
@@ -925,6 +927,7 @@ class TestZippedPackUpload:
         mocker.patch.object(
             PackMetadata, "_get_tags_from_landing_page", retrun_value={}
         )
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with TemporaryDirectory() as dir:
             click.Context(command=upload).invoke(

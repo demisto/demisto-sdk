@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import PreCommitModes
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 
 
@@ -24,28 +24,28 @@ class SourceryHook(Hook):
         tools.write_dict(tf.name, data=config_file)
         return tf.name
 
-    def prepare_hook(
-        self, python_version_to_files: dict, config_file_path: Path, **kwargs
-    ):
+    def prepare_hook(self):
         """
         Prepares the Sourcery hook for each Python version.
         Changes the hook's name, files and the "--config" argument according to the Python version.
         Args:
-            python_version_to_files (dict): A dictionary mapping Python versions to files.
-            config_file_path (Path): The path to the configuration file.
         Returns:
             None
         """
-        for python_version in python_version_to_files:
+        config_file = CONTENT_PATH / self._get_property("config_file", ".sourcery.yml")
+        if not config_file.exists():
+            return
+        self.base_hook.pop("config_file", None)
+        for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"sourcery-py{python_version}",
             }
             hook.update(deepcopy(self.base_hook))
             hook["args"].append(
-                f"--config={self._get_temp_config_file(config_file_path, python_version)}"
+                f"--config={self._get_temp_config_file(config_file, python_version)}"
             )
-            if not self.mode == PreCommitModes.NIGHTLY:
-                hook["args"].append("--fix")
-            hook["files"] = join_files(python_version_to_files[python_version])
+            hook["files"] = join_files(
+                self.context.python_version_to_files[python_version]
+            )
 
             self.hooks.append(hook)

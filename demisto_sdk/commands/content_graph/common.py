@@ -7,6 +7,12 @@ from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Set
 from neo4j import graph
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.tools import (
+    get_dict_from_file,
+    get_json,
+    get_remote_file,
+)
 
 NEO4J_ADMIN_DOCKER = ""
 
@@ -24,6 +30,8 @@ NEO4J_FOLDER = "neo4j-data"
 PACK_METADATA_FILENAME = "pack_metadata.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
+
+SERVER_CONTENT_ITEMS_PATH = "Tests/Marketplace/server_content_items.json"
 
 
 class Neo4jRelationshipResult(NamedTuple):
@@ -47,6 +55,8 @@ class RelationshipType(str, enum.Enum):
 
 class ContentType(str, enum.Enum):
     BASE_CONTENT = "BaseContent"
+    BASE_NODE = "BaseNode"
+    BASE_PLAYBOOK = "BasePlaybook"
     CLASSIFIER = "Classifier"
     COMMAND = "Command"
     COMMAND_OR_SCRIPT = "CommandOrScript"
@@ -72,7 +82,9 @@ class ContentType(str, enum.Enum):
     PLAYBOOK = "Playbook"
     PREPROCESS_RULE = "PreProcessRule"
     REPORT = "Report"
+    BASE_SCRIPT = "BaseScript"
     SCRIPT = "Script"
+    TEST_SCRIPT = "TestScript"
     TEST_PLAYBOOK = "TestPlaybook"
     TRIGGER = "Trigger"
     WIDGET = "Widget"
@@ -81,15 +93,24 @@ class ContentType(str, enum.Enum):
     WIZARD = "Wizard"
     XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = "LayoutRule"
+    ASSETS_MODELING_RULE = "AssetsModelingRule"
 
     @property
     def labels(self) -> List[str]:
-        labels: Set[str] = {ContentType.BASE_CONTENT.value, self.value}
+        labels: Set[str] = {ContentType.BASE_NODE.value, self.value}
+        if self.value != ContentType.COMMAND:
+            labels.add(ContentType.BASE_CONTENT.value)
+        if self.value in [ContentType.TEST_PLAYBOOK.value, ContentType.PLAYBOOK.value]:
+            labels.add(ContentType.BASE_PLAYBOOK.value)
+        if self.value in [ContentType.SCRIPT.value, ContentType.TEST_SCRIPT.value]:
+            labels.add(ContentType.BASE_SCRIPT.value)
 
-        if self.value == ContentType.TEST_PLAYBOOK.value:
-            labels.add(ContentType.PLAYBOOK.value)
-
-        if self in [ContentType.SCRIPT, ContentType.COMMAND]:
+        if self in [
+            ContentType.SCRIPT,
+            ContentType.COMMAND,
+            ContentType.BASE_SCRIPT,
+            ContentType.TEST_SCRIPT,
+        ]:
             labels.add(ContentType.COMMAND_OR_SCRIPT.value)
 
         return list(labels)
@@ -179,7 +200,11 @@ class ContentType(str, enum.Enum):
 
     @staticmethod
     def abstract_types() -> List["ContentType"]:
-        return [ContentType.BASE_CONTENT, ContentType.COMMAND_OR_SCRIPT]
+        return [
+            ContentType.BASE_NODE,
+            ContentType.BASE_CONTENT,
+            ContentType.COMMAND_OR_SCRIPT,
+        ]
 
     @staticmethod
     def non_content_items() -> List["ContentType"]:
@@ -220,6 +245,26 @@ class ContentType(str, enum.Enum):
                     for tir_folder in pack_folder.iterdir():
                         if tir_folder.is_dir() and not tir_folder.name.startswith("."):
                             yield tir_folder
+
+    @staticmethod
+    def by_schema(path: Path) -> "ContentType":
+        """
+        Determines a content type value of a given file by accessing it and making minimal checks on its schema.
+        """
+        from demisto_sdk.commands.content_graph.objects.base_content import (
+            CONTENT_TYPE_TO_MODEL,
+        )
+
+        parsed_dict = get_dict_from_file(str(path))
+        if parsed_dict and isinstance(parsed_dict, tuple):
+            _dict = parsed_dict[0]
+        else:
+            _dict = parsed_dict
+        for content_type in ContentType.content_items():
+            if content_type_obj := CONTENT_TYPE_TO_MODEL.get(content_type):
+                if content_type_obj.match(_dict, path):
+                    return content_type
+        raise ValueError(f"Could not find content type in path {path}")
 
 
 class Relationships(dict):
@@ -314,508 +359,24 @@ def lazy_property(property_func: Callable):
     return LazyProperty(_lazy_decorator)
 
 
-SERVER_CONTENT_ITEMS: dict = {
-    ContentType.INCIDENT_FIELD: [
-        "name",
-        "details",
-        "severity",
-        "owner",
-        "created",
-        "modified",
-        "dbotCreatedBy",
-        "type",
-        "dbotSource",
-        "category",
-        "dbotStatus",
-        "playbookId",
-        "dbotCreated",
-        "dbotClosed",
-        "closed",
-        "occurred",
-        "activated",
-        "openDuration",
-        "lastOpen",
-        "dbotDueDate",
-        "dueDate",
-        "dbotModified",
-        "dbotTotalTime",
-        "reason",
-        "closeReason",
-        "closeNotes",
-        "closingUserId",
-        "activatingingUserId",
-        "reminder",
-        "notifyTime",
-        "lastJobRunTime",
-        "sla",
-        "phase",
-        "rawPhase",
-        "rawName",
-        "rawType",
-        "parent",
-        "roles",
-        "xsoarReadOnlyRoles",
-        "labels",
-        "attachment",
-        "runStatus",
-        "sourceBrand",
-        "sourceInstance",
-        "CustomFields",
-        "droppedCount",
-        "linkedCount",
-        "linkedIncidents",
-        "feedBased",
-        "isDebug",
-        "dbotMirrorId",
-        "dbotMirrorInstance",
-        "dbotMirrorDirection",
-        "dbotDirtyFields",
-        "dbotCurrentDirtyFields",
-        "dbotMirrorTags",
-        "dbotMirrorLastSync",
-        "timestamp",
-        "slaField",
-    ],
-    ContentType.INDICATOR_FIELD: [
-        "name",
-        "relatedIncCount",
-        "timestamp",
-        "indicator_type",
-        "value",
-        "source",
-        "investigationIDs",
-        "lastSeen",
-        "calculatedTime",
-        "firstSeen",
-        "score",
-        "md5",
-        "sha1",
-        "sha256",
-        "sha512",
-        "ssdeep",
-        "imphash",
-        "size",
-        "filetype",
-        "comment",
-        "expiration",
-        "manualExpirationTime",
-        "expirationStatus",
-        "expirationdate",
-        "sourceInstances",
-        "sourceBrands",
-        "modifiedTime",
-        "comments",
-        "modified",
-        "isShared",
-        "registrarname",
-        "indicatortype",
-        "aggregatedReliability",
-        "starttime",
-        "indicatorIDs",
-        "indicatorsValues",
-        "verdict",
-        "reputation",
-    ],
-    ContentType.SCRIPT: [
-        "getAPIKeyFromLicense",
-        "handleIndicatorFormatterCache",
-        "dockerImageUpdate",
-        "addSystem",
-        "getEntries",
-        "getContext",
-        "getFindings",
-        "delContext",
-        "getEntry",
-        "closeInvestigation",
-        "reopenInvestigation",
-        "setSeverity",
-        "setOwner",
-        "setPhase",
-        "taskReopen",
-        "taskComplete",
-        "taskAssign",
-        "setTaskDueDate",
-        "todoRemove",
-        "todoAdd",
-        "todoReopen",
-        "todoComplete",
-        "todoAssign",
-        "todoDueDate",
-        "addOneTimeEntitlement",
-        "addEntitlement",
-        "setPlaybook",
-        "setIncident",
-        "resetDirtyFields",
-        "investigate",
-        "setIncidentReminder",
-        "createEntry",
-        "addEntries",
-        "createNewIncident",
-        "setPlaybookAccordingToType",
-        "getUserByEmail",
-        "getUserByUsername",
-        "getFilePath",
-        "getIncidents",
-        "addTask",
-        "scheduleEntry",
-        "cancelScheduledEntry",
-        "markAsEvidence",
-        "markAsNote",
-        "setYourselfAs",
-        "appendIndicatorField",
-        "removeIndicatorField",
-        "enrichIndicators",
-        "getList",
-        "setList",
-        "createList",
-        "addToList",
-        "removeFromList",
-        "setEntriesTags",
-        "resetEntriesTags",
-        "findIndicators",
-        "getIndicator",
-        "deleteIndicators",
-        "executeCommandAt",
-        "getUsers",
-        "getRoles",
-        "setRoleShifts",
-        "setIndicator",
-        "setIndicators",
-        "createNewIndicator",
-        "associateIndicatorToIncident",
-        "associateIndicatorsToIncident",
-        "unAssociateIndicatorToIncident",
-        "unAssociateIndicatorsFromIncident",
-        "addChildInvestigation",
-        "pauseInvestigation",
-        "generateSummaryReport",
-        "generateGeneralReport",
-        "resumeInvestigation",
-        "getOwnerSuggestion",
-        "getIndicatorScoreCache",
-        "restrictInvestigation",
-        "linkIncidents",
-        "mdToHtml",
-        "relatedIncidents",
-        "maliciousRatio",
-        "similarSsdeep",
-        "extractIndicators",
-        "isWhitelisted",
-        "invite",
-        "startTimer",
-        "resetTimer",
-        "stopTimer",
-        "pauseTimer",
-        "createMLModel",
-        "deleteMLModel",
-        "evaluateMLModel",
-        "getMLModel",
-        "reevaluateMLModel",
-        "shareIndicators",
-        "expireIndicators",
-        "getWorkersStatistics",
-        "excludeIndicators",
-        "getMirrorStatistics",
-        "getSyncMirrorRecords",
-        "purgeClosedSyncMirrorRecords",
-        "getInvPlaybookMetaData",
-        "getDBStatistics",
-        "getInternalData",
-        "drawCanvas",
-        "deleteRelationships",
-        "searchRelationships",
-        "getSystemDiagnostics",
-        "triggerDebugMirroringRun",
-        "stopScheduleEntry",
-        # Filters
-        "isEqual",
-        "isNotEqual",
-        "isEqualCase",
-        "isNotEqualCase",
-        "isEqualNumber",
-        "isNotEqualNumber",
-        "isEqualString",
-        "isNotEqualString",
-        "contains",
-        "notContains",
-        "containsString",
-        "notContainsString",
-        "startWith",
-        "notStartWith",
-        "endWith",
-        "notEndWith",
-        "inList",
-        "notInList",
-        "match",
-        "stringHasLength",
-        "isEqual",
-        "isNotEqual",
-        "greaterThan",
-        "greaterThanOrEqual",
-        "lessThan",
-        "lessThanOrEqual",
-        "isSame",
-        "isBefore",
-        "isAfter",
-        "isTrue",
-        "isFalse",
-        "isExists",
-        "isNotExists",
-        "isEmpty",
-        "isNotEmpty",
-        "contains",
-        "notContains",
-        "in",
-        "notIn",
-        "hasLength",
-        "isIdenticalIncident",
-        "isNotIdenticalIncident",
-        "containsGeneral",
-        "notContainsGeneral",
-        # Transformers
-        "toUpperCase",
-        "toLowerCase",
-        "substringFrom",
-        "substringTo",
-        "substring",
-        "split",
-        "splitAndTrim",
-        "trim",
-        "replace",
-        "replaceMatch",
-        "concat",
-        "strLength",
-        "round",
-        "floor",
-        "ceil",
-        "addition",
-        "subtraction",
-        "multiply",
-        "division",
-        "modulo",
-        "toPercent",
-        "abs",
-        "precision",
-        "quadraticEquation",
-        "toString",
-        "toUnix",
-        "getField",
-        "sort",
-        "count",
-        "atIndex",
-        "join",
-        "uniq",
-        "indexOf",
-        "slice",
-        "sliceByItem",
-        "splice",
-        "Stringify",
-        "append",
-        "ConvertKeysToTableFieldFormat",
-        # XSIAM scripts aliases
-        "setAlert",
-        "setAlertReminder",
-        "createNewAlert",
-        "getAlerts",
-        "associateIndicatorToAlert",
-        "unAssociateIndicatorToAlert",
-        "linkAlerts",
-        "relatedAlerts",
-        "associateIndicatorsToAlert",
-        "unAssociateIndicatorsFromAlert",
-    ],
-    ContentType.COMMAND: [
-        # activedir-login integration commands
-        "ad-default-domain",
-        "ad-authenticate",
-        "ad-authentication-roles",
-        "ad-authenticate-and-roles",
-        "ad-groups",
-        # activedir integration commands
-        "ad-search",
-        "ad-expire-password",
-        "ad-set-new-password",
-        "ad-unlock-account",
-        "ad-disable-account",
-        "ad-enable-account",
-        "ad-remove-from-group",
-        "ad-add-to-group",
-        "ad-create-user",
-        "ad-update-user",
-        "ad-delete-user",
-        "ad-modify-computer-ou",
-        "ad-create-contact",
-        "ad-update-contact",
-        # carbonblackprotection integration commands
-        "cbp-fileCatalog-search",
-        "cbp-fileInstance-search",
-        "cbp-fileRule-search",
-        "cbp-fileRule-get",
-        "cbp-fileRule-delete",
-        "cbp-fileRule-update",
-        "cbp-fileAnalysis-get",
-        "cbp-fileAnalysis-createOrUpdate",
-        "cbp-fileAnalysis-search",
-        "cbp-fileUpload-get",
-        "cbp-fileUpload-download",
-        "cbp-fileUpload-createOrUpdate",
-        "cbp-fileUpload-search",
-        "cbp-connector-get",
-        "cbp-connector-search",
-        "cbp-computer-search",
-        "cbp-computer-get",
-        "cbp-computer-update",
-        "cbp-notification-search",
-        "cbp-publisher-search",
-        "cbp-event-search",
-        "cbp-approvalRequest-search",
-        "cbp-serverConfig-search",
-        "cbp-policy-search",
-        # carbonblack integration commands
-        "cb-version",
-        "cb-process",
-        "cb-process-events",
-        "cb-binary",
-        "cb-binary-get",
-        "cb-alert",
-        "cb-list-sensors",
-        "cb-list-sessions",
-        "cb-sensor-info",
-        "cb-session-create",
-        "cb-session-close",
-        "cb-keepalive",
-        "cb-session-info",
-        "cb-archive",
-        "cb-command-create",
-        "cb-list-commands",
-        "cb-command-info",
-        "cb-command-cancel",
-        "cb-list-files",
-        "cb-file-info",
-        "cb-file-delete",
-        "cb-file-get",
-        "cb-watchlist-get",
-        "cb-watchlist-new",
-        "cb-watchlist-set",
-        "cb-watchlist-del",
-        "cb-terminate-process",
-        "cb-quarantine-device",
-        "cb-unquarantine-device",
-        "cb-block-hash",
-        "cb-unblock-hash",
-        "cb-get-hash-blacklist",
-        "cb-get-process",
-        "cb-get-processes",
-        # cylance integration commands
-        "file",
-        "cy-upload",
-        # duo integration commands
-        "duo-authenticate",
-        "duo-authenticate-status",
-        "duo-check",
-        "duo-preauth",
-        # elasticsearch integration commands
-        "search",
-        # fcm integration commands
-        "fcm-push",
-        # google integration commands
-        "googleapps-list-users",
-        "googleapps-get-user",
-        "googleapps-delete-user",
-        "googleapps-get-user-roles",
-        "googleapps-revoke-user-role",
-        "googleapps-gmail-search",
-        "googleapps-gmail-get-mail",
-        "googleapps-device-action",
-        "googleapps-get-devices-for-user",
-        "googleapps-get-tokens-for-user",
-        "googleapps-chrome-device-action",
-        "googleapps-get-chrome-devices-for-user",
-        "googleapps-gmail-get-attachment",
-        # kafka integration commands
-        "kafka-publish-msg",
-        "kafka-print-topics",
-        "kafka-consume-msg",
-        "kafka-fetch-partitions",
-        # mail-sender integration commands
-        "send-mail",
-        # mattermost integration commands
-        "send-notification",
-        "mattermost-send",
-        "mattermost-send-file",
-        "mattermost-close-channel",
-        "close-channel",
-        "mattermost-mirror-investigation",
-        "mirror-investigation",
-        # esm integration commands
-        "search",
-        "esmFetchAllFields",
-        # mysql integration commands
-        "query",
-        # nexpose integration commands
-        "vulnerability-list",
-        "vulnerability-details",
-        "generate-adhoc-report",
-        "send-xml",
-        # pagerduty integration commands
-        "PagerDutyGetUsersOnCall",
-        "PagerDutyGetAllSchedules",
-        "PagerDutyGetUsersOnCallNow",
-        "PagerDutyIncidents",
-        "pagerDutySubmitEvent",
-        # remoteaccess integration commands
-        "ssh",
-        "copy-to",
-        "copy-from",
-        # sharedagent integration commands
-        "sharedagent_create",
-        "execute",
-        "sharedagent_remove",
-        "sharedagent_status",
-        # slack integration commands
-        "send-notification",
-        "slack-send",
-        "mirror-investigation",
-        "slack-mirror-investigation",
-        "close-channel",
-        "slack-close-channel",
-        "slack-send-file",
-        # mssql integration commands
-        "query",
-        # threatcentral integration commands
-        "Threat-Central",
-    ],
-    ContentType.INTEGRATION: [
-        "mail-listener",
-        "osxcollector",
-        "volatility",
-        "threatcentral",
-        "mattermost",
-        "indicators-share",
-        "sharedagent",
-        "activedir",
-        "activedir-login",
-        "esm",
-        "saml",
-        "pagerduty",
-        "mail-sender",
-        "carbonblack",
-        "carbonblackprotection",
-        "slack",
-        "nexpose",
-        "duo",
-        "cylance",
-        "remoteaccess",
-        "elasticsearch",
-        "mysql",
-        "mssql",
-        "google",
-        "crowdstrike-streaming-api",
-        "kafka",
-        "syslog",
-        "fcm",
-    ],
-}
+def get_server_content_items() -> Dict[ContentType, list]:
+    """Reads a JSON file containing server content items from content repository
+    and returns a dict representation of it in the required format.
+
+    Returns:
+        Dict[ContentType, list]: A mapping of content types to the list of server content items.
+    """
+
+    try:
+        json_data: dict = get_json(SERVER_CONTENT_ITEMS_PATH)
+    except FileNotFoundError:
+        json_data = get_remote_file(
+            SERVER_CONTENT_ITEMS_PATH,
+            git_content_config=GitContentConfig(
+                repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+            ),
+        )
+    return {ContentType(k): v for k, v in json_data.items()}
 
 
 # Used to remove content-private nodes, as a temporary temporary workaround.

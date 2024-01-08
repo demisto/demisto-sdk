@@ -24,9 +24,11 @@ from demisto_sdk.commands.common.constants import (
     MAX_FETCH_PARAM,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
+    PARTNER_SUPPORT,
     PYTHON_SUBTYPES,
     RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
+    SUPPORT_LEVEL_HEADER,
     TYPE_PWSH,
     XSOAR_CONTEXT_STANDARD_URL,
     XSOAR_SUPPORT,
@@ -178,6 +180,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_native_image_does_not_exist_in_yml(),
             self.validate_unit_test_exists(),
             self.is_line_ends_with_dot(),
+            self.is_partner_collector_has_xsoar_support_level_header(),
         ]
 
         return all(answers)
@@ -1322,8 +1325,12 @@ class IntegrationValidator(ContentEntityValidator):
 
             # ignore optional fields
             for param in params:
-                for field in ["defaultvalue", "section", "advanced", "required"]:
-                    param.pop(field, None)
+                for field in param.copy():
+                    if (
+                        field in ["defaultvalue", "section", "advanced", "required"]
+                        or ":" in field
+                    ):
+                        param.pop(field, None)
 
             for fetch_required_param in fetch_required_params:
                 # If this condition returns true, we'll go over the params dict and we'll check if there's a param that match the fetch_required_param name.
@@ -1419,6 +1426,9 @@ class IntegrationValidator(ContentEntityValidator):
             for param in self.current_file.get("configuration", [])
         }
         for param_name, param_details in params.items():
+            for detail in param_details.copy():
+                if ":" in detail:
+                    param_details.pop(detail)
             if "defaultvalue" in param_details and param_name != "feed":
                 param_details.pop("defaultvalue")
             if "hidden" in param_details:
@@ -2394,6 +2404,34 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, self.file_path):
                     return False
 
+        return True
+
+    @error_codes("IN162")
+    def is_partner_collector_has_xsoar_support_level_header(self) -> bool:
+        """
+        Validates that event collectors under partner supported packs always has the supportlevelheader = xsoar key:value.
+        """
+        if (script := (self.current_file.get("script") or {})) and (
+            script.get("isfetchevents") or script.get("isfetcheventsandassets")
+        ):
+            pack_name = get_pack_name(self.file_path)
+            if pack_name:
+                metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+                metadata_content = self.get_metadata_file_content(metadata_path)
+
+                support_level_header = self.current_file.get(SUPPORT_LEVEL_HEADER)
+                if (
+                    metadata_content.get("support", "").lower() == PARTNER_SUPPORT
+                    and support_level_header != XSOAR_SUPPORT
+                ):
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.partner_collector_does_not_have_xsoar_support_level(
+                        self.file_path
+                    )
+                    if self.handle_error(error_message, error_code, self.file_path):
+                        return False
         return True
 
     @error_codes("DS108")

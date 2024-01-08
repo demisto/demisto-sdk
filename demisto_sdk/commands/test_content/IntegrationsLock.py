@@ -6,12 +6,12 @@ from typing import Generator
 import pytz
 import requests
 from google.api_core.exceptions import NotFound, PreconditionFailed
-from google.cloud import storage
+from google.cloud import storage  # type: ignore[attr-defined]
 from google.resumable_media.common import InvalidResponse
 
 LOCKS_PATH = "content-locks"
 BUCKET_NAME = os.environ.get("GCS_ARTIFACTS_BUCKET")
-BUILD_NUM = os.environ.get("CI_BUILD_ID")
+BUILD_NUM = os.environ.get("CI_JOB_ID")
 WORKFLOW_ID = os.environ.get("CI_PIPELINE_ID")
 CIRCLE_STATUS_TOKEN = os.environ.get("CIRCLECI_STATUS_TOKEN")
 GITLAB_STATUS_TOKEN = os.environ.get("GITLAB_STATUS_TOKEN", "")

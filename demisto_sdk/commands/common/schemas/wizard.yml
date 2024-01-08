@@ -25,25 +25,25 @@ mapping:
     type: seq
     required: true
     sequence:
-      - type: map
-        required: true
-        mapping:
-          name:
-            type: str
-            required: true
-          min_required:
-            type: int
-            required: true
-          packs:
-            type: seq
-            required: true
-            sequence:
-            - type: map
-              mapping:
-                name:
-                  type: str
-                display_name:
-                  type: str
+    - type: map
+      required: true
+      mapping:
+        name:
+          type: str
+          required: true
+        min_required:
+          type: int
+          required: true
+        packs:
+          type: seq
+          required: true
+          sequence:
+          - type: map
+            mapping:
+              name:
+                type: str
+              display_name:
+                type: str
   wizard:
     type: map
     required: true
@@ -52,22 +52,42 @@ mapping:
         type: seq
         required: true
         sequence:
-          - include: integrations_schema
+        - include: integrations_schema
       supporting_integrations:
         type: seq
         required: true
         sequence:
-          - include: integrations_schema
+        - include: integrations_schema
       set_playbook:
         type: seq
         required: true
         sequence:
-          - include: playbook_schema
+        - include: playbook_schema
       next:
         type: seq
         sequence:
-          - include: next_schema
+        - include: next_schema
 
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
 schema;integrations_schema:
   type: map
   mapping:
@@ -90,6 +110,26 @@ schema;integrations_schema:
     incident_type:
       type: str
 
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
 schema;playbook_schema:
   type: map
   mapping:
@@ -99,6 +139,16 @@ schema;playbook_schema:
     link_to_integration:
       type: str
 
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
 schema;next_schema:
   type: map
   required: true
@@ -114,3 +164,13 @@ schema;next_schema:
           type: str
         new:
           type: str
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str

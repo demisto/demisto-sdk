@@ -30,3 +30,17 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
                 files={"file": str(self.path)},
                 content_type="multipart/form-data",
             )
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if (
+            isinstance(_dict, dict)
+            and {
+                "isAllFeeds",
+                "selectedFeeds",
+                "isFeed",
+            }.issubset(_dict.keys())
+            and path.suffix == ".json"
+        ):
+            return True
+        return False

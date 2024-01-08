@@ -117,6 +117,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
 
     assert metadata.get("id") == "TestPack"
     assert metadata.get("name") == "HelloWorld"
+    assert metadata.get("display_name") == "HelloWorld"
     assert (
         metadata.get("description")
         == "This is the Hello World integration for getting started."
@@ -146,7 +147,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     )
     assert metadata.get("categories") == ["Utilities"]
     assert metadata.get("useCases") == ["Identity And Access Management"]
-    assert metadata.get("keywords") == []
+    assert metadata.get("keywords") == ["common"]
     assert metadata.get("searchRank") == 0
     assert metadata.get("excludedDependencies") == []
     assert metadata.get("videos") == []
@@ -247,6 +248,7 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
 
     assert metadata.get("id") == "TestPack"
     assert metadata.get("name") == "HelloWorld2"
+    assert metadata.get("display_name") == "HelloWorld2"
     assert (
         metadata.get("description")
         == "This is the Hello World 2 integration for getting started."

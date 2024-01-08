@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, Set
 
 import demisto_client
@@ -13,3 +14,15 @@ class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignor
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_dashboard
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if (
+            ("layout" in _dict or "kind" in _dict)
+            and "typeId" not in _dict
+            and "color" not in _dict
+            and "regex" not in _dict
+            and path.suffix == ".json"
+        ):
+            return True
+        return False

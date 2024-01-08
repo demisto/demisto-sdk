@@ -3,7 +3,7 @@ mapping:
   templates_data:
     type: seq
     sequence:
-      - include: templates_data_schema
+    - include: templates_data_schema
   fromVersion:
     type: str
   toVersion:
@@ -11,7 +11,7 @@ mapping:
   widgets_data:
     type: seq
     sequence:
-      - include: widgets_data_schema
+    - include: widgets_data_schema
 
 
 schema;templates_data_schema:
@@ -41,7 +41,7 @@ schema;templates_data_schema:
       type: seq
       required: true
       sequence:
-        - include: layout_schema
+      - include: layout_schema
 
 schema;layout_schema:
   type: map
@@ -53,7 +53,7 @@ schema;layout_schema:
       type: seq
       required: true
       sequence:
-        - include: layout_data_schema
+      - include: layout_data_schema
 
 schema;layout_data_schema:
   type: map
@@ -91,3 +91,13 @@ schema;widgets_data_schema:
       type: map
       required: false
       allowempty: true
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str

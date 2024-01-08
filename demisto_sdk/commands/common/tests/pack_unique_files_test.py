@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_USE_CASES,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
+    PARTNER_SUPPORT,
     XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.common.errors import Errors
@@ -26,7 +27,7 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PackUniqueFilesValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
@@ -187,7 +188,7 @@ class TestPackUniqueFilesValidator:
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         pack_metadata_no_email_and_url["email"] = ""
         pack_metadata_no_email_and_url["url"] = ""
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -254,7 +255,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             PackUniqueFilesValidator, "validate_pack_name", return_value=True
         )
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator,
             "get_master_private_repo_meta_file",
@@ -322,7 +323,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
@@ -332,29 +333,6 @@ class TestPackUniqueFilesValidator:
             logger_error.call_args_list,
             "The pack price was changed from 2 to 3 - revert the change",
         )
-
-    def test_check_timestamp_format(self):
-        """
-        Given
-        - timestamps in various formats.
-
-        When
-        - Running check_timestamp_format on them.
-
-        Then
-        - Ensure True for iso format and False for any other format.
-        """
-        fake_validator = PackUniqueFilesValidator("fake")
-        good_format_timestamp = "2020-04-14T00:00:00Z"
-        missing_z = "2020-04-14T00:00:00"
-        missing_t = "2020-04-14 00:00:00Z"
-        only_date = "2020-04-14"
-        with_hyphen = "2020-04-14T00-00-00Z"
-        assert fake_validator.check_timestamp_format(good_format_timestamp)
-        assert not fake_validator.check_timestamp_format(missing_t)
-        assert not fake_validator.check_timestamp_format(missing_z)
-        assert not fake_validator.check_timestamp_format(only_date)
-        assert not fake_validator.check_timestamp_format(with_hyphen)
 
     def test_validate_pack_dependencies_invalid_id_set(self, mocker, repo):
         """
@@ -800,6 +778,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     raise GitCommandError("A", "B")
@@ -852,6 +834,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     return None
@@ -899,6 +885,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 remote_file_path = (
                     "remote_path/prev_ver:Packs/PackName/pack_metadata.json"
@@ -942,7 +932,7 @@ class TestPackUniqueFilesValidator:
              - Ensure result is False for empty README.md file and True otherwise.
         """
         self.validator = PackUniqueFilesValidator(self.FAKE_PACK_PATH)
-        self.validator.support = "partner"
+        self.validator.support = PARTNER_SUPPORT
         mocker.patch.object(
             PackUniqueFilesValidator, "_read_file_content", return_value=text
         )
@@ -989,12 +979,6 @@ class TestPackUniqueFilesValidator:
             PackUniqueFilesValidator, "_read_file_content", return_value="text"
         )
         assert self.validator.validate_pack_readme_file_is_not_empty()
-
-    def test_validate_pack_readme_file_is_not_empty_missing_file(self):
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack")
-        )
-        assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
 
     def test_validate_pack_readme_valid_images(self, mocker):
         """
@@ -1050,7 +1034,7 @@ class TestPackUniqueFilesValidator:
             not in errors
         )
 
-    def test_validate_pack_readme_invalid_images(self):
+    def test_validate_pack_readme_invalid_images(self, mocker):
         """
         Given
             - A pack README file with invalid absolute and relative image paths in it.
@@ -1065,6 +1049,7 @@ class TestPackUniqueFilesValidator:
         self.validator = PackUniqueFilesValidator(
             os.path.join(self.FILES_PATH, "DummyPack2")
         )
+        mocker.patch("demisto_sdk.commands.common.tools.sleep")
 
         with requests_mock.Mocker() as m:
             # Mock get requests

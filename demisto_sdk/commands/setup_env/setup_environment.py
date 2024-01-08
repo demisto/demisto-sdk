@@ -215,6 +215,9 @@ def update_pycharm_config_xml_data(
             python_path_relative = python_path.relative_to(CONTENT_PATH)
 
         except ValueError:  # Skip paths that are not within the project root
+            logger.debug(
+                f"Skipping path '{python_path}' as it is not part of the project."
+            )
             continue
 
         if python_path_relative in existing_paths:
@@ -258,8 +261,8 @@ def configure_module_discovery(ide_type: IDEType):
     elif ide_type == IDEType.PYCHARM:
         python_discovery_paths = PYTHONPATH.copy()
 
-        # Remove the 'CONTENT_PATH' from the python discovery paths as it is already configured by default,
-        # and the paths are relative to the project root (which is 'CONTENT_PATH').
+        # Remove 'CONTENT_PATH' from the python discovery paths as it is already configured by default,
+        # and all the configured paths are relative to the project root (which is 'CONTENT_PATH').
         if CONTENT_PATH in python_discovery_paths:
             python_discovery_paths.remove(CONTENT_PATH)
 

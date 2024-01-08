@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import typer
-from git import Repo
+from git import Repo  # noqa: TID251
 from pydantic import ValidationError
 
 from demisto_sdk.commands.common.handlers import (
@@ -90,7 +90,9 @@ class Changelog:
 
         """
         if not is_release(self.pr_name):
-            raise ValueError("The PR name should match `demisto-sdk release 0.0.0` to start a release.")
+            raise ValueError(
+                "The PR name should match `demisto-sdk release 0.0.0` to start a release."
+            )
 
         # get all log files as `LogFileObject`
         logs = read_log_files()
@@ -146,7 +148,7 @@ def validate_log_yml(pr_number: str) -> None:
     try:
         LogFileObject(**data)
     except ValidationError as e:
-        logger.error(extract_errors(str(e), CHANGELOG_FOLDER / f'{pr_number}.yml'))
+        logger.error(extract_errors(str(e), CHANGELOG_FOLDER / f"{pr_number}.yml"))
         sys.exit(1)
 
 

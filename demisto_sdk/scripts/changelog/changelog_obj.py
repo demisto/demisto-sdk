@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict, List, Union
 
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, validator
 
 INITIAL_DESCRIPTION = "enter description about this PR"
 INITIAL_TYPE = "<breaking|feature|fix|internal>"
@@ -56,7 +56,7 @@ class LogEntry(BaseModel):
             raise ValueError(
                 f"The type {value} is not supported, please use one of the following: {LogType.list()}"
             )
-        
+
         return value
 
     @validator("description", pre=True)

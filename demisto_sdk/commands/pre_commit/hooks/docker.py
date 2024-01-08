@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from docker.errors import DockerException
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
@@ -279,9 +280,13 @@ class DockerHook(Hook):
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
         change_working_directory = new_hook.pop("change_working_directory", False)
+        docker_version = init_global_docker_client().version()["Version"]
+        quiet = True
+        if Version(docker_version) < Version("19.03"):
+            quiet = False
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet -u {os.getuid()}:4000 {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u {os.getuid()}:4000 {dev_image}'
         ret_hooks = []
         for (
             integration_script,

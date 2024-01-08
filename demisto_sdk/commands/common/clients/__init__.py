@@ -3,9 +3,7 @@ from functools import lru_cache
 from typing import Optional
 
 import demisto_client
-import requests
-from demisto_client.demisto_api.rest import ApiException
-from packaging.version import Version
+import pydantic
 
 from demisto_sdk.commands.common.clients.configs import (
     XsiamClientConfig,
@@ -21,11 +19,11 @@ from demisto_sdk.commands.common.constants import (
     AUTH_ID,
     DEMISTO_BASE_URL,
     DEMISTO_KEY,
+    DEMISTO_PASSWORD,
+    DEMISTO_USERNAME,
     DEMISTO_VERIFY_SSL,
-    MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
 
 
@@ -95,6 +93,8 @@ def get_client_from_server_type(
     base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL, ""),
     api_key: Optional[str] = os.getenv(DEMISTO_KEY, ""),
     auth_id: Optional[str] = os.getenv(AUTH_ID, ""),
+    username: Optional[str] = os.getenv(DEMISTO_USERNAME, ""),
+    password: Optional[str] = os.getenv(DEMISTO_PASSWORD, ""),
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False)),
 ) -> XsoarClient:
     """
@@ -104,6 +104,8 @@ def get_client_from_server_type(
         base_url: the base URL, if not provided will take from DEMISTO_BASE_URL env var
         api_key: the api key, if not provided will take from DEMISTO_API_KEY env var
         auth_id: the auth ID, if not provided will take from XSIAM_AUTH_ID env var
+        username: the username to authenticate, relevant only for xsoar on prem
+        password: the password to authenticate, relevant only for xsoar on prem
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not,
                     if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
 
@@ -113,44 +115,72 @@ def get_client_from_server_type(
     _client = demisto_client.configure(
         base_url=base_url,
         api_key=api_key,
-        auth_id=auth_id,
         verify_ssl=verify_ssl,
+        username=username,
+        password=password,
     )
 
-    try:
-        # /ioc-rules is only an endpoint in XSIAM.
-        response, status_code, response_headers = _client.generic_request(
-            "/ioc-rules", "GET"
-        )
-        if "text/html" in response_headers.get("Content-Type"):
-            raise ApiException(
-                status=400,
-                reason=f"endpoint /ioc-rules does not exist in {_client.api_client.configuration.host}",
-            )
-        if status_code != requests.codes.ok:
-            raise ApiException(status=status_code, reason=response)
+    about = XsoarClient.get_xsoar_about(_client)
+    product_mode = about.get("productMode")
+    deployment_mode = about.get("deploymentMode")
+    server_version = about.get("demistoVersion")
 
+    if XsiamClient.is_xsiam(_client, product_mode=product_mode):
         return XsiamClient(
-            client=_client,
             config=XsiamClientConfig(
-                base_api_url=base_url, api_key=api_key, auth_id=auth_id
+                base_api_url=base_url,
+                api_key=api_key,
+                auth_id=auth_id,
+                verify_ssl=verify_ssl,
+                about=about,
             ),
+            client=_client,
+            about_xsoar=about,
         )
-    except ApiException as e:
-        logger.debug(f"instance is not XSIAM instance, error:{e}")
-        about_raw_response = XsoarClient.get_xsoar_about(_client)
-        if server_version := about_raw_response.get("demistoVersion"):
-            if Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION):
-                return XsoarSaasClient(
-                    client=_client,
-                    about_xsoar=about_raw_response,
-                    config=XsoarSaasClientConfig(
-                        base_api_url=base_url, api_key=api_key, auth_id=auth_id
-                    ),
-                )
-            return XsoarClient(
+
+    if XsoarSaasClient.is_xsoar_saas(
+        server_version, product_mode=product_mode, deployment_mode=deployment_mode
+    ):
+        try:
+            return XsoarSaasClient(
+                config=XsoarSaasClientConfig(
+                    base_api_url=base_url,
+                    api_key=api_key,
+                    auth_id=auth_id,
+                    verify_ssl=verify_ssl,
+                ),
                 client=_client,
-                about_xsoar=about_raw_response,
-                config=XsoarClientConfig(base_api_url=base_url, api_key=api_key),
+                about=about,
             )
-        raise RuntimeError(f"Could not determine the correct api-client for {base_url}")
+        except pydantic.ValidationError:
+            # xsoar-on-prem that can have server version > 8.0.0
+            return XsoarClient(
+                config=XsoarClientConfig(
+                    base_api_url=base_url,
+                    api_key=api_key,
+                    auth_id=auth_id,
+                    user=username,
+                    password=password,
+                    verify_ssl=verify_ssl,
+                ),
+                client=_client,
+                about=about,
+            )
+
+    if XsoarClient.is_xsoar_on_prem(
+        server_version, product_mode=product_mode, deployment_mode=deployment_mode
+    ):
+        return XsoarClient(
+            config=XsoarClientConfig(
+                base_api_url=base_url,
+                api_key=api_key,
+                auth_id=auth_id,
+                user=username,
+                password=password,
+                verify_ssl=verify_ssl,
+            ),
+            client=_client,
+            about=about,
+        )
+
+    raise RuntimeError(f"Could not determine the correct api-client for {base_url}")

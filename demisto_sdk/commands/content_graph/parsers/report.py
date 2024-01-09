@@ -34,5 +34,5 @@ class ReportParser(JSONContentItemParser, content_type=ContentType.REPORT):
             if widget_data.get("dataType") == "scripts":
                 if script_name := widget_data.get("query"):
                     self.add_dependency_by_id(
-                        script_name, ContentType.BASE_SCRIPT, is_mandatory=False
+                        script_name, ContentType.SCRIPT, is_mandatory=False
                     )

@@ -68,7 +68,7 @@ class IncidentFieldParser(
                 )
 
         if script := self.json_data.get("script"):
-            self.add_dependency_by_id(script, ContentType.BASE_SCRIPT)
+            self.add_dependency_by_id(script, ContentType.SCRIPT)
 
         if field_calc_script := self.json_data.get("fieldCalcScript"):
-            self.add_dependency_by_id(field_calc_script, ContentType.BASE_SCRIPT)
+            self.add_dependency_by_id(field_calc_script, ContentType.SCRIPT)

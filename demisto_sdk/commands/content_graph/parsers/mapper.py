@@ -44,12 +44,12 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         for filter in complex_value.get("filters", []):
             if filter:
                 filter_script = filter[0].get("operator").split(".")[-1]
-                self.add_dependency_by_id(filter_script, ContentType.BASE_SCRIPT)
+                self.add_dependency_by_id(filter_script, ContentType.SCRIPT)
 
         for transformer in complex_value.get("transformers", []):
             if transformer:
                 transformer_script = transformer.get("operator").split(".")[-1]
-                self.add_dependency_by_id(transformer_script, ContentType.BASE_SCRIPT)
+                self.add_dependency_by_id(transformer_script, ContentType.SCRIPT)
 
     def connect_to_dependencies(self) -> None:
         """Collects the incident types, incident fields, filters and transformers

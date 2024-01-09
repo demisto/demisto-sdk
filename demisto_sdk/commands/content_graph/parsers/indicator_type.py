@@ -52,7 +52,7 @@ class IndicatorTypeParser(
                 )
                 for script in associated_scripts:
                     self.add_dependency_by_id(
-                        script, ContentType.BASE_SCRIPT, is_mandatory=False
+                        script, ContentType.SCRIPT, is_mandatory=False
                     )
 
         if reputation_command := self.json_data.get("reputationCommand"):

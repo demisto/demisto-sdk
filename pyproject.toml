@@ -124,7 +124,7 @@ pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 black = "^22.10.0"
 ipykernel = "^6.16.1"
-ruff = "^0.1.2"
+ruff = "^0.1.11"
 
 [tool.poetry.extras]
 build = ["gsutil"]

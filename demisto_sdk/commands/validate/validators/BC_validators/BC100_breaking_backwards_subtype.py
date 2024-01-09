@@ -22,7 +22,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     fix_message = "Changing subtype back to ({0})."
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     is_auto_fixable = True
-    old_subtype_dict: ClassVar[dict] = {}
+    old_subtype: ClassVar[dict] = {}
 
     def is_valid(
         self,
@@ -33,7 +33,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     content_item.content_type,
-                    self.old_subtype_dict[content_item.name],
+                    self.old_subtype[content_item.name],
                     content_item.subtype,
                 ),
                 content_object=content_item,
@@ -43,7 +43,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         ]
 
     def is_subtype_changed(self, content_item: ContentTypes) -> bool:
-        """Check if the subtype was changed for a given metadata file and update the `old_subtype_dict` accordingly.
+        """Check if the subtype was changed for a given metadata file and update the `old_subtype` accordingly.
 
         Args:
             content_item (ContentTypes): The metadata object.
@@ -56,14 +56,14 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
             content_item.type == "python" and content_item.subtype != old_obj.subtype
         )
         if is_subtype_changed:
-            self.old_subtype_dict[content_item.name] = old_obj.subtype
+            self.old_subtype[content_item.name] = old_obj.subtype
         return is_subtype_changed
 
     def fix(
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        content_item.subtype = self.old_subtype_dict[content_item.name]
+        content_item.subtype = self.old_subtype[content_item.name]
         return FixResult(
             validator=self,
             message=self.fix_message.format(content_item.subtype),

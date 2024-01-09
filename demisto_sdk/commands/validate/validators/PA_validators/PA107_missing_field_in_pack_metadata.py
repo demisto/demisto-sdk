@@ -20,7 +20,7 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
     error_message = "The following fields are missing from the file: {0}."
     related_field = "name, desc, support, currentVersion, author, url, categories, tags, useCases, keywords"
     is_auto_fixable = True
-    missing_fields_dict: ClassVar[dict] = {}
+    missing_fields: ClassVar[dict] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -43,7 +43,7 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
             List[str]: the list of missing fields.
         """
         if missing_fields := [field for field in MANDATORY_PACK_METADATA_FIELDS if field not in content_item.pack_metadata_dict]:  # type: ignore[operator]
-            self.missing_fields_dict[content_item.name] = missing_fields
+            self.missing_fields[content_item.name] = missing_fields
         return missing_fields
 
     def fix(
@@ -51,7 +51,7 @@ class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         # By adding the contentItem as a fix result, when we attempt to save fields into the contentItem, we'll make sure to add the missing fields as a part of Pack object save method
-        missing_fields = self.missing_fields_dict[content_item.name]
+        missing_fields = self.missing_fields[content_item.name]
         return FixResult(
             validator=self,
             message=self.fix_message.format(", ".join(missing_fields)),

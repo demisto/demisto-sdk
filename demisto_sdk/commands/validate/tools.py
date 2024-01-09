@@ -36,7 +36,9 @@ def collect_all_inputs_from_inputs_section(content_item: Playbook) -> Set[str]:
     return set(inputs_keys)
 
 
-def filter_by_marketplace(marketplaces, pack_meta_file_content, return_is_valid=True):
+def filter_by_marketplace(
+    marketplaces: List, pack_meta_file_content: Dict, return_is_valid=True
+):
     """Filtering pack_metadata tags by marketplace"""
 
     pack_tags: Dict[str, List[str]] = {}
@@ -68,7 +70,9 @@ def filter_by_marketplace(marketplaces, pack_meta_file_content, return_is_valid=
         return pack_tags
 
 
-def extract_non_approved_tags(pack_tags, marketplaces) -> Set[str]:
+def extract_non_approved_tags(
+    pack_tags: Dict[str, List[str]], marketplaces: List
+) -> Set[str]:
     approved_tags = get_approved_tags_from_branch()
 
     non_approved_tags = set(pack_tags.get("common", [])) - set(
@@ -82,7 +86,7 @@ def extract_non_approved_tags(pack_tags, marketplaces) -> Set[str]:
     return non_approved_tags
 
 
-def validate_categories_approved(categories, approved_list):
+def validate_categories_approved(categories: list, approved_list: list):
     """
     Check that the pack categories contain only approved categories.
 

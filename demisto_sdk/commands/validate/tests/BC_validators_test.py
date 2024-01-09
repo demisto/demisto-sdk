@@ -114,6 +114,6 @@ def test_BreakingBackwardsSubtypeValidator_fix(
         - Make sure the the object subtype was changed to match the old_content_item subtype, and that the right fix msg is returned.
     """
     validator = BreakingBackwardsSubtypeValidator()
-    validator.old_subtype_dict[content_item.name] = "python3"
+    validator.old_subtype[content_item.name] = "python3"
     assert validator.fix(content_item).message == expected_fix_msg
     assert content_item.subtype == expected_subtype

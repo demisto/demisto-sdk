@@ -10,7 +10,6 @@ from dateutil import parser
 from git import GitCommandError
 from packaging.version import Version, parse
 
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -58,10 +57,13 @@ from demisto_sdk.commands.common.tools import (
     check_timestamp_format,
     extract_error_codes_from_file,
     get_core_pack_list,
+    get_current_categories,
+    get_current_usecases,
     get_json,
     get_local_remote_file,
     get_pack_latest_rn_version,
     get_remote_file,
+    is_external_repository,
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
@@ -752,13 +754,13 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
              bool: True if the usecases are approved, otherwise False
         """
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
 
         non_approved_usecases = set()
         try:
             pack_meta_file_content = self._read_metadata_content()
-            current_usecases = tools.get_current_usecases()
+            current_usecases = get_current_usecases()
             non_approved_usecases = set(
                 pack_meta_file_content[PACK_METADATA_USE_CASES]
             ) - set(current_usecases)
@@ -799,7 +801,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
             bool: True if the tags are approved, otherwise False
         """
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
 
         is_valid = True
@@ -827,7 +829,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
              bool: True if the tags are approved, otherwise False
         """
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
 
         is_valid_tag_prefixes = True
@@ -1126,10 +1128,10 @@ class PackUniqueFilesValidator(BaseValidator):
         Returns:
             bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
         """
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
         categories = self._read_metadata_content().get("categories", [])
-        approved_list = tools.get_current_categories()
+        approved_list = get_current_categories()
         if not len(categories) == 1 or not validate_categories_approved(
             categories, approved_list
         ):

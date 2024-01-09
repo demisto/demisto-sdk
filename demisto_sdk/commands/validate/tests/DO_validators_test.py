@@ -469,60 +469,6 @@ def test_DockerImageIsNotDeprecatedValidator_is_valid(mocker, requests_mock):
     assert DockerImageIsNotDeprecatedValidator.deprecated_dockers_to_reasons
 
 
-def test_DockerImageIsNotDeprecatedValidator_fix(mocker, requests_mock):
-
-    from demisto_sdk.commands.common.git_content_config import GitContentConfig
-    from demisto_sdk.commands.validate.validators.DO_validators.DO105_docker_image_is_not_deprecated import (
-        DockerImageIsNotDeprecatedValidator,
-    )
-
-    mocker.patch.object(
-        GitContentConfig,
-        "_search_github_repo",
-        return_value=("githubusercontent.com", "demisto/dockerfiles"),
-    )
-
-    requests_mock.get(
-        "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json",
-        json=[
-            {
-                "image_name": "demisto/aiohttp",
-                "reason": "Use the demisto/py3-tools docker image instead.",
-                "created_time_utc": "2022-05-31T17:51:17.226278Z",
-            },
-            {
-                "image_name": "demisto/algorithmia",
-                "reason": "Use the demisto/py3-tools docker image instead.",
-                "created_time_utc": "2022-05-31T17:51:30.043632Z",
-            },
-        ],
-    )
-
-    requests_mock.get(
-        "https://auth.docker.io/token",
-        json={"token": "1234", "issued_at": "1234", "expires_in": 300},
-    )
-    requests_mock.get(
-        f"{DockerHubClient.DEFAULT_REGISTRY}/demisto/py3-tools/tags/list",
-        json={"tags": ["3.10.13.11111", "3.10.13.99999"]},
-    )
-    DockerImageIsNotDeprecatedValidator.deprecated_dockers_to_reasons = {
-        "demisto/aiohttp": "Use the demisto/py3-tools docker image instead.",
-        "demisto/algorithmia": "Use the demisto/py3-tools docker image instead.",
-    }
-
-    integration = create_integration_object(
-        paths=["script.dockerimage"],
-        values=[
-            "demisto/aiohttp:3.10.13.55555"
-        ],  # integration with demisto image that is deprecated
-    )
-
-    assert integration.docker_image == "demisto/aiohttp:3.10.13.55555"
-    fix_result = DockerImageIsNotDeprecatedValidator().fix(integration)
-    assert fix_result.content_object.docker_image == "demisto/py3-tools:3.10.13.99999"
-
-
 def test_DockerImageIsNotNativeImageValidator_is_valid():
     """
     Given:

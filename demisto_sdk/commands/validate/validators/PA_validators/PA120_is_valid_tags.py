@@ -56,7 +56,7 @@ class IsValidTagsValidator(BaseValidator[ContentTypes]):
         """
         non_approved_tags = set()
         if pack_tags := filter_by_marketplace(
-            marketplaces, content_item.pack_metadata_dict, False
+            marketplaces, content_item.pack_metadata_dict, False  # type: ignore[arg-type]
         ):
             if non_approved_tags := extract_non_approved_tags(pack_tags, marketplaces):
                 self.non_approved_tags_dict[content_item.name] = non_approved_tags

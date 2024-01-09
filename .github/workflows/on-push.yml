@@ -29,8 +29,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_environment
+      - name: Setup Test Environment (Python ${{ matrix.python-version }})
+        uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -71,8 +71,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_environment
+      - name: Setup Test Environment (Python ${{ matrix.python-version }})
+        uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -108,8 +108,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_environment
+      - name: Setup Test Environment (Python ${{ matrix.python-version }})
+        uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -160,43 +160,38 @@ jobs:
     runs-on: ubuntu-latest
     name: Test Content Infrastructure
     steps:
-#      - name: Checkout SDK
-#        uses: actions/checkout@v3
+      - name: Checkout SDK
+        uses: actions/checkout@v3
 
-#      - name: Checkout content
-#        uses: actions/checkout@v3
-#        with:
-#          repository: demisto/content
-#          path: content
-#          fetch-depth: 0
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          repository: demisto/content
+          path: content
+          fetch-depth: 0
 
-#      - name: cd content repository
-#        run: |
-#          cd content
-
-      - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_environment
+      - name: Setup Python Environment From Content Repository
+        uses: ./.github/actions/setup_poetry_python_environment
         with:
           python-version: '3.10'
-
-      - name: Un-install content version of SDK
-        run: |
-          poetry run pip uninstall demisto-sdk -y
+          working-directory: content
 
       - name: Install current SDK branch
         run: |
+          poetry run pip uninstall demisto-sdk -y
           poetry run pip install git+https://github.com/demisto/demisto-sdk@$(git rev-parse HEAD)
+        working-directory: content
 
       - name: Run content unit tests
         env:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |
-          cd content
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v
           poetry run pytest ./Tests/tests -v
           poetry run pytest ./Tests/private_build/tests -v
           poetry run pytest Utils -v
+        working-directory: content
 
   test-pre-commit:
     runs-on: ubuntu-latest
@@ -205,8 +200,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_environment
+      - name: Setup Python Environment From Content Repository
+        uses: ./.github/actions/setup_poetry_python_environment
         with:
           python-version: '3.10'
 
@@ -226,9 +221,9 @@ jobs:
 
       - name: run pre-commit on changed files
         continue-on-error: true
+        working-directory: content
         run: |
           source $(poetry env info --path)/bin/activate
-          cd content
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
@@ -240,7 +235,7 @@ jobs:
 
       - name: run pre-commit on input files
         continue-on-error: true
+        working-directory: content
         run: |
           source $(poetry env info --path)/bin/activate
-          cd content
           demisto-sdk pre-commit --format --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3

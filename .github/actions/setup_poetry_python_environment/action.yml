@@ -1,5 +1,5 @@
-name: 'Setup environment for demisto-sdk'
-description: 'Setup environment for every demisto-sdk workflow job'
+name: 'Setup python environment for demisto-sdk jobs'
+description: 'Setup python environment for demisto-sdk jobs'
 author: 'Demisto-SDK'
 
 inputs:
@@ -12,6 +12,7 @@ inputs:
     type: string
     default: "16"
     description: "The node version to install"
+  working-directory: "."
 
 
 runs:
@@ -20,31 +21,23 @@ runs:
 
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v8
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Check Poetry Consistency
       run: |
         poetry --version
         poetry check --lock
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
-    - name: Install SDK dependencies with poetry
+    - name: Install dependencies with poetry
       run: |
         poetry install -E generate-unit-tests
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
         # cache: poetry
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ inputs.node-version }}
-
-    - name: Install npm
-      run: |
-        npm install
-        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
-      shell: bash

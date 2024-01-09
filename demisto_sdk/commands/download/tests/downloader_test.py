@@ -13,6 +13,8 @@ import pytest
 from urllib3.response import HTTPResponse
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_BASE_URL,
+    DEMISTO_KEY,
     JOBS_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
@@ -28,9 +30,15 @@ from TestSuite.test_tools import str_in_call_args_list
 TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
 TESTS_ENV_FOLDER = Path(__file__).parent / "tests_env"
 
-# Avoid missing environment variables errors
-os.environ["DEMISTO_BASE_URL"] = "https://fake-xsoar-server.com"
-os.environ["DEMISTO_API_KEY"] = "fake_api_key"
+
+@pytest.fixture(autouse=True)
+def set_env_vars():
+    # Avoid missing environment variables errors
+    os.environ[DEMISTO_BASE_URL] = "https://fake-xsoar-server.com"
+    os.environ[DEMISTO_KEY] = "fake_api_key"
+    yield
+    os.environ.pop(DEMISTO_BASE_URL, None)
+    os.environ.pop(DEMISTO_KEY, None)
 
 
 def load_test_data(file_name: str, folder: str | None = None) -> dict:

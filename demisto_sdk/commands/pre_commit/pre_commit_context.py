@@ -1,4 +1,5 @@
 import itertools
+import multiprocessing
 import os
 import shutil
 from collections import defaultdict
@@ -103,12 +104,20 @@ class PreCommitContext:
             if version not in {"javascript", "powershell"}
         }
 
+    @staticmethod
+    def _get_support_level(item: Tuple[Path, Optional[IntegrationScript]]):
+        path, obj = item
+        return (path, obj.support_level) if obj else (path, None)
+
     @cached_property
     def support_level_to_files(self) -> Dict[str, Set[Path]]:
+
+        with multiprocessing.Pool() as pool:
+            results = pool.map(self._get_support_level, self.files_to_run_with_objects)
         support_level_to_files = defaultdict(set)
-        for path, obj in self.files_to_run_with_objects:
-            if obj:
-                support_level_to_files[obj.support_level].add(path)
+        for path, support_level in results:
+            if support_level is not None:
+                support_level_to_files[support_level].add(path)
         return support_level_to_files
 
     @staticmethod

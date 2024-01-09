@@ -230,7 +230,7 @@ class BaseContent(BaseNode):
         raise NotImplementedError()
 
     @staticmethod
-    @lru_cache
+    @lru_cache(None)
     def from_path(
         path: Path,
         git_status: Optional[GitStatuses] = None,

@@ -33,7 +33,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
-    lazy_property,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -75,7 +74,7 @@ class ContentItem(BaseContent):
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
 
-    @lazy_property
+    @property
     def support_level(self) -> str:
         return (
             self.in_pack.support_level
@@ -113,12 +112,6 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        return self.get_pack()
-
-    def get_pack(self) -> Optional["Pack"]:
-        # This function converts the pack attribute, which is a parser object to the pack model
-        # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
-        # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
         pack = self.pack
         if not pack or isinstance(pack, fields.FieldInfo):
             pack = None

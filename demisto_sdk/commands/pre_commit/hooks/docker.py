@@ -286,7 +286,7 @@ class DockerHook(Hook):
             quiet = False
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u {os.getuid()}:4000 {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u 1000:4000 {dev_image}'
         ret_hooks = []
         for (
             integration_script,

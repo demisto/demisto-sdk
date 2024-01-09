@@ -34,7 +34,7 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
             and self.are_all_content_items_deprecated(content_item)
         ]
 
-    def are_all_content_items_deprecated(self, content_item: ContentTypes):
+    def are_all_content_items_deprecated(self, content_item: ContentTypes) -> bool:
         for integration in content_item.content_items.integration:
             if not integration.deprecated:
                 return False

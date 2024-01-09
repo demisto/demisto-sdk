@@ -1,8 +1,18 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
+* Fixed an issue where **lint** command didn't work on detached heads.
+* Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
+* Added support to check the version of the modeling rule against the demisto version of the XSIAM tenant when running the **modeling-rule test** command, and skip incompatible modeling rules.
+* Internal: Fixed an issue where `nativeimage` tags were not uploaded to buckets.
+* Fixed an issue where **lint -g** crashed when comparing changes against branches which are not `master`.
+* Fixed an issue in **prepare-content** command where the `incident to alert` process was not triggered when the playbook is set to only XSIAM.
+
+## 1.25.1
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
 * Fixed an issue in **validate** where there is a specific value for marketplace in `isFetch` parameter.
 * Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
+* Added support for `excluding_support_level` property in **pre-commit** command to exclude specific support level from running hooks.
 * Added support for the `List` content-item to **prepare-content** and **split**.
 * **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
 * Fixed an issue in **generate-docs** where the description field was missing from an argument.

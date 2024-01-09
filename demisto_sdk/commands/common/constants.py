@@ -103,10 +103,10 @@ ASSETS_MODELING_RULE = "assetsmodelingrule"
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
 DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
-DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "code.pan.run")
+DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "gitlab.xdr.pan.local")
 DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
-    "CI_PROJECT_ID", "2596"
-)  # the default is the id of the content repo in code.pan.run
+    "CI_PROJECT_ID", "1061"
+)  # the default is the id of the content repo in gitlab.xdr.pan.local
 
 # authentication ENV VARIABLES
 DEMISTO_BASE_URL = "DEMISTO_BASE_URL"
@@ -120,13 +120,12 @@ DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
 
 
 # Marketplaces
-TEST_XDR_PREFIX = os.getenv("TEST_XDR_PREFIX", "")
 
-DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = TEST_XDR_PREFIX + "marketplace-dist"
-DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = TEST_XDR_PREFIX + "marketplace-v2-dist"
-DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = TEST_XDR_PREFIX + "xpanse-dist"
-DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = TEST_XDR_PREFIX + "marketplace-saas-dist"
-DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = TEST_XDR_PREFIX + "marketplace-dist-dev"
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = "marketplace-dist"
+DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
+DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
 
 class FileType(str, Enum):
@@ -802,6 +801,12 @@ PACK_METADATA_FIELDS = (
     PACK_METADATA_USE_CASES,
     PACK_METADATA_KEYWORDS,
 )
+PACK_METADATA_MANDATORY_FILLED_FIELDS = [
+    PACK_METADATA_KEYWORDS,
+    PACK_METADATA_TAGS,
+    PACK_METADATA_CATEGORIES,
+    PACK_METADATA_USE_CASES,
+]
 API_MODULES_PACK = "ApiModules"
 API_MODULE_FILE_SUFFIX = "ApiModule"
 API_MODULE_PY_REGEX = r"{}{}/{}/{}/([^/]+)/([^.]+)\.py".format(
@@ -1457,7 +1462,7 @@ LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION = "6.0.0"
 GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
 FEATURE_BRANCHES = ["v4.5.0"]
-VERSION_REGEX = r"(\d+\.){2}\d+"
+VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1942,6 +1947,10 @@ XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
+
+
+#  date formats:
+ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 class ImagesFolderNames(str, Enum):

@@ -91,7 +91,7 @@ inputs:
   playbookInputQuery:
   required: false
   value: {}
-inputsSections:
+inputSections:
 - name: InputsSection 1
   description: This is a description for section 1.
   inputs:
@@ -105,7 +105,7 @@ outputs:
 - contextPath: DBotScore.Indicator
   description: The indicator that was tested.
   type: string
-outputsSections:
+outputSections:
 - name: OutputsSection
   description: This is a description.
   outputs:

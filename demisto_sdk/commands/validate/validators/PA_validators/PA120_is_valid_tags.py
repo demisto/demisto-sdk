@@ -21,7 +21,7 @@ class IsValidTagsValidator(BaseValidator[ContentTypes]):
     error_code = "PA120"
     description = "Validate that metadata's tag section include only approved tags."
     error_message = "The pack metadata contains non approved tags: {0}. The list of approved tags for each marketplace can be found on https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
-    fix_message = "Removed the following tags: {0}"
+    fix_message = "Removed the following tags: {0}."
     related_field = "tags"
     is_auto_fixable = True
     non_approved_tags_dict: ClassVar[dict] = {}

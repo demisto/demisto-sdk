@@ -203,11 +203,11 @@ class PackMetadataParser:
 
     @property
     def categories(self):
-        return [capital_case(c) for c in self.pack_metadata_dict["categories"]]
+        return [capital_case(c) for c in self.pack_metadata_dict.get("categories", [])]
 
     @property
     def use_cases(self):
-        return [capital_case(c) for c in self.pack_metadata_dict["useCases"]]
+        return [capital_case(c) for c in self.pack_metadata_dict.get("useCases", [])]
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():

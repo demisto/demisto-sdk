@@ -33,7 +33,7 @@ class IsValidPackNameValidator(BaseValidator[ContentTypes]):
             if len(content_item.name) < 3
             or content_item.name[0].islower()
             or any(
-                excluded_word in content_item.name.lower()
+                excluded_word.lower() in content_item.name.lower()
                 for excluded_word in INCORRECT_PACK_NAME_WORDS
             )
         ]

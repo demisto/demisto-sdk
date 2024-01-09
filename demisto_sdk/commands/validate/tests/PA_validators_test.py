@@ -1,8 +1,17 @@
 import pytest
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    MANDATORY_PACK_METADATA_FIELDS,
     MODULES,
+    PACK_METADATA_AUTHOR,
+    PACK_METADATA_CATEGORIES,
+    PACK_METADATA_CURR_VERSION,
+    PACK_METADATA_DESC,
+    PACK_METADATA_KEYWORDS,
+    PACK_METADATA_NAME,
+    PACK_METADATA_SUPPORT,
+    PACK_METADATA_TAGS,
+    PACK_METADATA_USE_CASES,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_metadata_object,
@@ -47,8 +56,17 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA117_is_valid_suppo
 from demisto_sdk.commands.validate.validators.PA_validators.PA118_is_valid_certificate import (
     IsValidCertificateValidator,
 )
+from demisto_sdk.commands.validate.validators.PA_validators.PA119_is_valid_use_cases import (
+    IsValidUseCasesValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA120_is_valid_tags import (
+    IsValidTagsValidator,
+)
 from demisto_sdk.commands.validate.validators.PA_validators.PA121_is_price_changed import (
     IsPriceChangedValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA125_is_valid_pack_name import (
+    IsValidPackNameValidator,
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA127_is_valid_url_field import (
     IsValidURLFieldValidator,
@@ -244,12 +262,22 @@ def test_IsCurrentVersionCorrectFormatValidator_is_valid(
         (
             [
                 create_metadata_object(
-                    fields_to_delete=list(MANDATORY_PACK_METADATA_FIELDS)
+                    fields_to_delete=[
+                        PACK_METADATA_NAME,
+                        PACK_METADATA_DESC,
+                        PACK_METADATA_SUPPORT,
+                        PACK_METADATA_CURR_VERSION,
+                        PACK_METADATA_AUTHOR,
+                        PACK_METADATA_CATEGORIES,
+                        PACK_METADATA_TAGS,
+                        PACK_METADATA_USE_CASES,
+                        PACK_METADATA_KEYWORDS,
+                    ]
                 )
             ],
             1,
             [
-                f"The following fields are missing from the file: {', '.join(MANDATORY_PACK_METADATA_FIELDS)}."
+                f"The following fields are missing from the file: {', '.join([PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT, PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_CATEGORIES, PACK_METADATA_TAGS, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS])}."
             ],
         ),
     ],
@@ -950,7 +978,7 @@ def test_IsPriceChangedValidator_fix(
     "content_items, expected_number_of_failures",
     [
         ([create_metadata_object()], 0),
-        ([create_metadata_object(["url"], [["github.com"]])], 0),
+        ([create_metadata_object(["url"], ["github.com"])], 0),
         ([create_metadata_object(["url", "support"], ["github.com", "developer"])], 1),
         ([create_metadata_object(["url", "support"], ["github.com", "partner"])], 1),
         (
@@ -1024,4 +1052,236 @@ def test_IsValidURLFieldValidator_fix():
         IsValidURLFieldValidator().fix(content_item).message  # type: ignore
         == "Fixed the URL to include the issues endpoint. URL is now: github.com/issues."
     )
-    assert content_item.created == "github.com/issues"
+    assert content_item.url == "github.com/issues"
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        ([create_metadata_object()], 0, []),
+        (
+            [
+                create_metadata_object(["name"], ["Valid_name"]),
+                create_metadata_object(["name"], ["Va"]),
+                create_metadata_object(["name"], ["name_with_lower_letter"]),
+                create_metadata_object(["name"], ["Name_with_Pack"]),
+                create_metadata_object(["name"], ["Name_with_partner"]),
+            ],
+            4,
+            [
+                "Invalid pack name (Va), pack name should be at least 3 characters long, start with a capital letter, must not contain the words: Pack, Playbook, Integration, Script, partner, community.",
+                "Invalid pack name (name_with_lower_letter), pack name should be at least 3 characters long, start with a capital letter, must not contain the words: Pack, Playbook, Integration, Script, partner, community.",
+                "Invalid pack name (Name_with_Pack), pack name should be at least 3 characters long, start with a capital letter, must not contain the words: Pack, Playbook, Integration, Script, partner, community.",
+                "Invalid pack name (Name_with_partner), pack name should be at least 3 characters long, start with a capital letter, must not contain the words: Pack, Playbook, Integration, Script, partner, community.",
+            ],
+        ),
+    ],
+)
+def test_IsValidPackNameValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items.
+        - Case 1: One pack_metadata with valid name.
+        - Case 2: Five pack_metadatas:
+            - One pack with a valid name
+            - One pack with a name shorter than 3 chars.
+            - One pack with a name starting with small letter.
+            - One pack with a name with the word pack.
+            - One pack with a name with the word partner.
+    When
+    - Calling the IsValidPackNameValidator is_valid function.
+    Then
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail all the last 4 packs.
+    """
+    results = IsValidPackNameValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        ([create_metadata_object(["tags"], [["Spam"]])], 0, []),
+        (
+            [
+                create_metadata_object(["tags"], [[]]),
+                create_metadata_object(["tags"], [["Machine Learning", "Spam"]]),
+                create_metadata_object(["tags"], [["NonApprovedTag", "GDPR"]]),
+                create_metadata_object(["tags"], [["marketplacev2:Data Source"]]),
+                create_metadata_object(
+                    ["tags"], [["marketplacev2:NonApprovedTag", "Spam"]]
+                ),
+            ],
+            2,
+            [
+                "The pack metadata contains non approved tags: NonApprovedTag. The list of approved tags for each marketplace can be found on https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
+                "The pack metadata contains non approved tags: NonApprovedTag. The list of approved tags for each marketplace can be found on https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
+            ],
+        ),
+    ],
+)
+def test_IsValidTagsValidator_is_valid(
+    mocker, content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items.
+        - Case 1: One pack_metadata with valid name.
+        - Case 2: Four pack_metadatas: Two with approved tags and two with non-approved tags.
+    When
+    - Calling the IsValidTagsValidator is_valid function.
+    Then
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail only 2 packs.
+    """
+    mocker.patch.object(
+        tools,
+        "get_dict_from_file",
+        return_value=(
+            {
+                "approved_list": {
+                    "common": ["Machine Learning", "Spam", "GDPR"],
+                    "xsoar": [],
+                    "marketplacev2": ["Data Source"],
+                    "xpanse": [],
+                }
+            },
+            "json",
+        ),
+    )
+    results = IsValidTagsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidTagsValidator_fix():
+    """
+    Given
+        A pack_metadata with an invalid tag field
+    When
+    - Calling the IsValidTagsValidator fix function.
+    Then
+        - Make sure that the invalid tags were removed and that the right msg was returned.
+    """
+    content_item = create_metadata_object(paths=["tags"], values=[["tag_1", "tag_2"]])
+    assert content_item.tags == ["tag_1", "tag_2"]
+    validator = IsValidTagsValidator()
+    validator.non_approved_tags_dict[content_item.name] = ["tag_1"]
+    assert validator.fix(content_item).message == "Removed the following tags: tag_1."
+    assert content_item.tags == ["tag_2"]
+
+
+@pytest.mark.parametrize(
+    "content_items, approved_use_cases, expected_number_of_failures, expected_msgs",
+    [
+        ([create_metadata_object([], [])], ["Identity And Access Management"], 0, []),
+        ([create_metadata_object(["useCases"], [[]])], [], 0, []),
+        (
+            [
+                create_metadata_object(["useCases"], [["Phishing"]]),
+                create_metadata_object(["useCases"], [["Malware", "Case Management"]]),
+                create_metadata_object(["useCases"], [["invalid_use_Case"]]),
+                create_metadata_object(
+                    ["useCases"],
+                    [
+                        [
+                            "Malware",
+                            "Case Management",
+                            "invalid_use_Case_1",
+                            "invalid_use_Case_2",
+                        ]
+                    ],
+                ),
+            ],
+            ["Phishing", "Malware", "Case Management"],
+            2,
+            [
+                "The pack metadata contains non approved usecases: Invalid_use_Case.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
+                "The pack metadata contains non approved usecases: Invalid_use_Case_1, Invalid_use_Case_2.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
+            ],
+        ),
+    ],
+)
+def test_IsValidUseCasesValidator_is_valid(
+    mocker,
+    content_items,
+    approved_use_cases,
+    expected_number_of_failures,
+    expected_msgs,
+):
+    """
+    Given
+    content_items.
+        - Case 1: One pack_metadata with valid useCases.
+        - Case 2: One pack_metadata without useCases and an empty approved list mock.
+        - Case 3: For pack_metadatas:
+            - One pack_metadata with an empty useCases section.
+            - One pack_metadata with valid useCases section.
+            - One pack_metadata with an invalid useCases section.
+            - One pack_metadata with useCases section containing two valid and two invalid useCases.
+    When
+    - Calling the IsValidUseCasesValidator is_valid function.
+    Then
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Shouldn't fail.
+        - Case 3: Should fail only the last 2 packs.
+    """
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.PA_validators.PA119_is_valid_use_cases.get_current_usecases",
+        return_value=approved_use_cases,
+    )
+    results = IsValidUseCasesValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidUseCasesValidator_fix():
+    """
+    Given
+        A pack_metadata with both valid & invalid useCases.
+    When
+    - Calling the IsValidUseCasesValidator fix function.
+    Then
+        - Make sure that the invalid useCases were removed and that the right msg was returned.
+    """
+    content_item = create_metadata_object(
+        ["useCases"],
+        [["Malware", "Case Management", "invalid_use_Case_1", "invalid_use_Case_2"]],
+    )
+    assert content_item.use_cases == [
+        "Malware",
+        "Case Management",
+        "Invalid_use_Case_1",
+        "Invalid_use_Case_2",
+    ]
+    validator = IsValidUseCasesValidator()
+    validator.non_approved_usecases_dict[content_item.name] = [
+        "Invalid_use_Case_1",
+        "Invalid_use_Case_2",
+    ]
+    assert (
+        validator.fix(content_item).message
+        == "Removed the following use cases: Invalid_use_Case_1, Invalid_use_Case_2."
+    )
+    assert content_item.use_cases == ["Malware", "Case Management"]

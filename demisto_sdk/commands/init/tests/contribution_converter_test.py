@@ -1555,9 +1555,10 @@ class TestReadmes:
         readme_path = Path(
             CONTRIBUTION_TESTS, self._get_function_name(), INTEGRATIONS_README_FILE_NAME
         )
-        markdown = readme_path.read_text()
 
-        pack.create_integration("SplunkPy", yml=yml_code, readme=markdown)
+        pack.create_integration(
+            integration_name, yml=yml_code, readme=readme_path.read_text()
+        )
 
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
         mocker.patch.object(tools, "is_external_repository", return_value=True)

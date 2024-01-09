@@ -784,6 +784,10 @@ class TestValidators:
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Analytics & SIEM"],
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
+            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
+        )
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = OldValidateManager(skip_conf_json=True)
@@ -851,6 +855,10 @@ class TestValidators:
         mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Analytics & SIEM"],
+        )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
+            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
         )
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")

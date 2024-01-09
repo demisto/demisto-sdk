@@ -58,7 +58,7 @@ class ConfigReader:
         return ConfiguredValidations(
             section.get("select", []),
             section.get("warning", []),
-            section.get("ignorable_errors", []),
+            self.config_file_content.get("ignorable_errors", []),
             self.config_file_content.get("support_level", {})
             if not ignore_support_level
             else {},

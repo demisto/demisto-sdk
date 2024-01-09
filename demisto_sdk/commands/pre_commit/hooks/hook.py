@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable, List, Set
 
 from packaging.version import Version
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.pre_commit.hooks.utils import get_property
 from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
@@ -65,7 +66,9 @@ class Hook:
         if not use_args:
             hook["files"] = join_files(files_to_run_on_hook)
         else:
-            hook["args"].extend((str(file.absolute()) for file in files_to_run_on_hook))
+            hook["args"].extend(
+                (str(CONTENT_PATH / file) for file in files_to_run_on_hook)
+            )
             hook["pass_filenames"] = False
         return len(files_to_run_on_hook)
 

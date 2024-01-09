@@ -4353,7 +4353,7 @@ def check_timestamp_format(timestamp: str) -> bool:
         return False
 
 
-def get_pack_latest_rn_version(pack_path):
+def get_pack_latest_rn_version(pack_path: str) -> str:
     """
     Extract all the Release notes from the pack and return the highest version of release note in the Pack.
 

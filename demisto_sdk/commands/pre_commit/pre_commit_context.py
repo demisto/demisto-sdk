@@ -4,7 +4,8 @@ import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import cached_property
-from multiprocessing import Pool
+
+# from multiprocessing import Pool
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -112,12 +113,12 @@ class PreCommitContext:
     @cached_property
     def support_level_to_files(self) -> Dict[str, Set[Path]]:
 
-        with Pool() as pool:
-            results = pool.map(self._get_support_level, self.files_to_run_with_objects)
+        # with Pool() as pool:
+        #     results = pool.map(self._get_support_level, self.files_to_run_with_objects)
         support_level_to_files = defaultdict(set)
-        for path, support_level in results:
-            if support_level is not None:
-                support_level_to_files[support_level].add(path)
+        for path, obj in self.files_to_run_with_objects:
+            if obj is not None:
+                support_level_to_files[obj.support_level].add(path)
         return support_level_to_files
 
     @staticmethod

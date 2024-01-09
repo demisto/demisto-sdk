@@ -202,7 +202,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
      - make sure the integrations/scripts that do not have the latest tag are not valid
      - make sure that javascripts integrations/scripts are ignored
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_is_latest_tag import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
         DockerImageTagIsLatestNumericVersionValidator,
     )
 
@@ -278,7 +278,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_fix(requests_mock):
     Then:
      - make sure docker-image is getting updated to the latest docker tag
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_is_latest_tag import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
         DockerImageTagIsLatestNumericVersionValidator,
     )
 
@@ -537,7 +537,7 @@ def test_DockerImageIsNotNativeImageValidator_is_valid():
      - make sure the integrations/scripts with the demisto/py3-native are not valid
      - make sure that javascripts integrations/scripts are ignored
     """
-    from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_not_native_image import (
+    from demisto_sdk.commands.validate.validators.DO_validators.DO102_docker_image_is_not_native_image import (
         DockerImageIsNotNativeImageValidator,
     )
 

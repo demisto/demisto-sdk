@@ -160,15 +160,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Test Content Infrastructure
     steps:
-      - name: Checkout SDK
-        uses: actions/checkout@v3
+#      - name: Checkout SDK
+#        uses: actions/checkout@v3
 
-      - name: Checkout content
-        uses: actions/checkout@v3
-        with:
-          repository: demisto/content
-          path: content
-          fetch-depth: 0
+#      - name: Checkout content
+#        uses: actions/checkout@v3
+#        with:
+#          repository: demisto/content
+#          path: content
+#          fetch-depth: 0
 
       - name: cd content repository
         run: |

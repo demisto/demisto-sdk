@@ -55,7 +55,7 @@ class PreCommitContext:
         PRECOMMIT_CONFIG.mkdir()
         PRECOMMIT_DOCKER_CONFIGS.mkdir()
 
-        self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
+        self.precommit_template: dict = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)  # type: ignore[assignment]
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:
             logger.info(

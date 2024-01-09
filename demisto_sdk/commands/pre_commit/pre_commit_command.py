@@ -203,7 +203,7 @@ class PreCommitRunner:
         )
         for i, hook in enumerate(docker_hooks):
             pre_commit_context.precommit_template["repos"] = [local_repo]
-            pre_commit_context.precommit_template["exclude"] = ""
+            pre_commit_context.precommit_template.pop("exclude", None)
             local_repo["hooks"] = [hook]
             path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
             write_dict(path, data=pre_commit_context.precommit_template)

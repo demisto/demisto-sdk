@@ -170,9 +170,9 @@ jobs:
 #          path: content
 #          fetch-depth: 0
 
-      - name: cd content repository
-        run: |
-          cd content
+#      - name: cd content repository
+#        run: |
+#          cd content
 
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment

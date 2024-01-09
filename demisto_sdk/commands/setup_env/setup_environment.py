@@ -141,9 +141,7 @@ def update_pycharm_config_file(file_path: Path, python_discovery_paths: List[Pat
 
         if not backup_file_path.exists():
             # Backup the original file on the first time it is configured (if the backup file doesn't exist)
-            shutil.copyfile(
-                file_path, file_path.with_suffix(file_path.suffix + BACKUP_FILES_SUFFIX)
-            )
+            shutil.copyfile(file_path, backup_file_path)
             logger.info(
                 f"Original configuration file was backed up to '{backup_file_path}'."
             )

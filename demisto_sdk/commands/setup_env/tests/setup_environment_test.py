@@ -112,20 +112,22 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
 
 
 @pytest.mark.parametrize(
-    "sample_file, expected_updated_sample_file",
+    "sample_file, expected_updated_sample_file, expected_added_entries",
     [
         (
+            Path("tests_data/idea_configuration/samples/sample1.iml"),
             Path("tests_data/idea_configuration/expected_updated_files/sample1.iml"),
-            Path("tests_data/idea_configuration/expected_updated_files/sample1.iml"),
+            1,
         ),
         (
             Path("tests_data/idea_configuration/samples/sample2.iml"),
             Path("tests_data/idea_configuration/expected_updated_files/sample2.iml"),
+            2,
         ),
     ],
 )
 def test_update_pycharm_config_xml_data(
-    sample_file: Path, expected_updated_sample_file: Path
+    sample_file: Path, expected_updated_sample_file: Path, expected_added_entries: int
 ):
     """
     Given:
@@ -140,7 +142,7 @@ def test_update_pycharm_config_xml_data(
     assert sample_file.exists()
     assert expected_updated_sample_file.exists()
 
-    python_discovery_paths = [Path("test1/test2"), Path("test3/test4")]
+    python_discovery_paths = [Path("test0/test1"), Path("test2/test3")]
 
     sample_file_content = etree.parse(str(sample_file))
     expected_updated_sample_file_content = expected_updated_sample_file.read_text()
@@ -150,7 +152,7 @@ def test_update_pycharm_config_xml_data(
         python_discovery_paths=python_discovery_paths,
     )
 
-    assert added_entries == len(python_discovery_paths)
+    assert added_entries == expected_added_entries
 
     sample_file_content_str = etree.tostring(
         sample_file_content, pretty_print=True, xml_declaration=True, encoding="utf-8"

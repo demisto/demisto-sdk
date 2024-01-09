@@ -317,7 +317,7 @@ class DockerHook(Hook):
                 if change_working_directory:
                     hook[
                         "entry"
-                    ] = f"-w {integration_script.path.parent} {hook['entry']}"
+                    ] = f"-w {integration_script.path.parent.relative_to(Path('/src'))} {hook['entry']}"
             if self._set_files_on_hook(
                 hook,
                 files,

@@ -163,38 +163,29 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v3
 
-      - name: Get commit hash
-        id: get-commit
-        run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
-
       - name: Checkout content
         uses: actions/checkout@v3
         with:
           repository: demisto/content
           path: content
+          fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v3
+      - name: cd content repository
+        run: |
+          cd content
+
+      - name: Python ${{ matrix.python-version }} - Setup Environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
 
-      - name: Setup Poetry
-        uses: Gr1N/setup-poetry@v8
-
-      - name: Install content
-        run: |
-          cd content
-          poetry install --with ci
-
       - name: Un-install content version of SDK
         run: |
-          cd content
           poetry run pip uninstall demisto-sdk -y
 
       - name: Install current SDK branch
         run: |
-          cd content
-          poetry run pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
+          poetry run pip install git+https://github.com/demisto/demisto-sdk@$(git rev-parse HEAD)
 
       - name: Run content unit tests
         env:
@@ -211,20 +202,13 @@ jobs:
     runs-on: ubuntu-latest
     name: Test Pre-Commit
     steps:
-      - name: Install poetry
-        run: pipx install poetry
-
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup python
-        uses: actions/setup-python@v4
+      - name: Python ${{ matrix.python-version }} - Setup Environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
-          cache: 'poetry'
-
-      - name: Install dependencies
-        run: poetry install
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -232,7 +216,6 @@ jobs:
           fetch-depth: 0
           repository: demisto/content
           path: content
-
 
       - name: Cache Pre commit
         id: cache-pre-commit
@@ -250,7 +233,7 @@ jobs:
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.py
-          
+
           echo "# test" >> Tests/collect_tests.py
           git add .
           demisto-sdk pre-commit --format --validate --show-diff-on-failure --verbose

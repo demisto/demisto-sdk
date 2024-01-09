@@ -19,9 +19,7 @@ runs:
   steps:
 
     - name: Setup Poetry
-      run: |
-        sudo curl -sSL https://install.python-poetry.org | python3 -
-      shell: bash
+      uses: Gr1N/setup-poetry@v8
 
     - name: Check Poetry Consistency
       run: |

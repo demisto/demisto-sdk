@@ -22,7 +22,7 @@ repos:
     - -o
     - requirements.txt
 - repo: https://github.com/demisto/demisto-sdk
-  rev: v1.25.0
+  rev: v1.25.1
   hooks:
   - id: update-additional-dependencies
 - repo: https://github.com/pre-commit/mirrors-mypy

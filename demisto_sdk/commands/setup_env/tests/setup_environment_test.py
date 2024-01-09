@@ -15,6 +15,7 @@ from demisto_sdk.commands.setup_env.setup_environment import (
     setup_env,
 )
 
+TESTS_DATA_DIR = Path(__file__).parent / "tests_data"
 
 @pytest.mark.parametrize("create_virtualenv", [False, True])
 def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
@@ -115,13 +116,13 @@ def test_setup_env_vscode(mocker, monkeypatch, pack, create_virtualenv):
     "sample_file, expected_updated_sample_file, expected_added_entries",
     [
         (
-            Path("tests_data/idea_configuration/samples/sample1.iml"),
-            Path("tests_data/idea_configuration/expected_updated_files/sample1.iml"),
+            TESTS_DATA_DIR / "idea_configuration" / "samples" / "sample1.iml",
+            TESTS_DATA_DIR / "idea_configuration" / "expected_updated_files" / "sample1.iml",
             1,
         ),
         (
-            Path("tests_data/idea_configuration/samples/sample2.iml"),
-            Path("tests_data/idea_configuration/expected_updated_files/sample2.iml"),
+            TESTS_DATA_DIR / "idea_configuration" / "samples" / "sample2.iml",
+            TESTS_DATA_DIR / "idea_configuration" / "expected_updated_files" / "sample2.iml",
             2,
         ),
     ],

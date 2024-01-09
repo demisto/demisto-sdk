@@ -1,10 +1,10 @@
 import itertools
-import multiprocessing
 import os
 import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import cached_property
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -112,7 +112,7 @@ class PreCommitContext:
     @cached_property
     def support_level_to_files(self) -> Dict[str, Set[Path]]:
 
-        with multiprocessing.Pool() as pool:
+        with ThreadPool() as pool:
             results = pool.map(self._get_support_level, self.files_to_run_with_objects)
         support_level_to_files = defaultdict(set)
         for path, support_level in results:

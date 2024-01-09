@@ -674,6 +674,7 @@ class TestValidators:
         mocker.patch.object(
             ReadMeValidator, "verify_readme_image_paths", return_value=True
         )
+        mocker.patch.object(OldValidateManager, "is_node_exist", return_value=True)
         validate_manager = OldValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -942,12 +943,14 @@ class TestValidators:
             ScriptValidator, "is_there_separators_in_names", return_value=True
         )
         mocker.patch.object(ScriptValidator, "is_docker_image_valid", return_value=True)
+
         self.mock_unifier()
         validate_manager = OldValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)
         assert is_valid
 
-    def test_pack_validation(self):
+    def test_pack_validation(self, mocker):
+        mocker.patch.object(OldValidateManager, "is_node_exist", return_value=True)
         validate_manager = OldValidateManager(file_path=VALID_PACK, skip_conf_json=True)
         is_valid = validate_manager.run_validation_on_package(VALID_PACK, None)
         assert is_valid

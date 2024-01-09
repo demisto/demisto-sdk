@@ -50,6 +50,7 @@ class Hook:
         files: Iterable[Path],
         should_filter: bool = True,
         use_args: bool = False,
+        base_path: Path = CONTENT_PATH,
     ) -> int:
         """
 
@@ -67,7 +68,7 @@ class Hook:
             hook["files"] = join_files(files_to_run_on_hook)
         else:
             hook["args"].extend(
-                (str(CONTENT_PATH / file) for file in files_to_run_on_hook)
+                (str(base_path / file) for file in files_to_run_on_hook)
             )
             hook["pass_filenames"] = False
         return len(files_to_run_on_hook)

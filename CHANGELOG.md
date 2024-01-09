@@ -6,6 +6,7 @@
 * Added support to check the version of the modeling rule against the demisto version of the XSIAM tenant when running the **modeling-rule test** command, and skip incompatible modeling rules.
 * Internal: Fixed an issue where `nativeimage` tags were not uploaded to buckets.
 * Fixed an issue where **lint -g** crashed when comparing changes against branches which are not `master`.
+* Fixed an issue in **prepare-content** command where the `incident to alert` process was not triggered when the playbook is set to only XSIAM.
 
 ## 1.25.1
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.

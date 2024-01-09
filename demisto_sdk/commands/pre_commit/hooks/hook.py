@@ -64,9 +64,8 @@ class Hook:
         files_to_run_on_hook = set(files)
         if should_filter:
             files_to_run_on_hook = self.filter_files_matching_hook_config(files)
-        if not use_args:
-            hook["files"] = join_files(files_to_run_on_hook)
-        else:
+        hook["files"] = join_files(files_to_run_on_hook)
+        if use_args:
             hook["args"].extend(
                 (str(base_path / file) for file in files_to_run_on_hook)
             )

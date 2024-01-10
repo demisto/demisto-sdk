@@ -12,7 +12,6 @@ inputs:
     type: string
     default: "16"
     description: "The node version to install"
-  working-directory: "."
 
 
 runs:
@@ -21,20 +20,17 @@ runs:
 
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v8
-      working-directory: ${{ inputs.working-directory }}
 
     - name: Check Poetry Consistency
       run: |
         poetry --version
         poetry check --lock
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
 
     - name: Install dependencies with poetry
       run: |
         poetry install -E generate-unit-tests
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
 
     - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v4

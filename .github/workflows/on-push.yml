@@ -168,30 +168,37 @@ jobs:
         with:
           repository: demisto/content
           path: content
-          fetch-depth: 0
 
-      - name: Setup Python Environment From Content Repository
-        uses: ./.github/actions/setup_poetry_python_environment
+      - name: Setup Python
+        uses: actions/setup-python@v3
         with:
           python-version: '3.10'
-          working-directory: content
 
+      - name: Setup Poetry
+        uses: Gr1N/setup-poetry@v8
+
+      - name: Install content
+        run: |
+          cd content
+          poetry install --with ci
+      - name: Uninstsall content version of SDK
+        run: |
+          cd content
+          poetry run pip uninstall demisto-sdk -y
       - name: Install current SDK branch
         run: |
-          poetry run pip uninstall demisto-sdk -y
+          cd content
           poetry run pip install git+https://github.com/demisto/demisto-sdk@$(git rev-parse HEAD)
-        working-directory: content
-
       - name: Run content unit tests
         env:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |
+          cd content
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v
           poetry run pytest ./Tests/tests -v
           poetry run pytest ./Tests/private_build/tests -v
           poetry run pytest Utils -v
-        working-directory: content
 
   test-pre-commit:
     runs-on: ubuntu-latest

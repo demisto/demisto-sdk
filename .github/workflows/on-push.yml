@@ -169,6 +169,10 @@ jobs:
           repository: demisto/content
           path: content
 
+      - name: Get commit hash
+        id: get-commit
+        run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
+
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
@@ -188,7 +192,7 @@ jobs:
       - name: Install current SDK branch
         run: |
           cd content
-          poetry run pip install git+https://github.com/demisto/demisto-sdk@$(git rev-parse HEAD)
+          poetry run pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
       - name: Run content unit tests
         env:
           PYTHONPATH: ${{ github.workspace }}/content

@@ -1,4 +1,3 @@
-
 import pytest
 
 from demisto_sdk.commands.common.constants import (
@@ -16,31 +15,40 @@ from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
 MP_V2 = [MarketplaceVersions.MarketplaceV2.value]
-MP_XSOAR_AND_V2 = [MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value]
+MP_XSOAR_AND_V2 = [
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.MarketplaceV2.value,
+]
 
 
 @pytest.fixture
 def prepared_graph_repo(graph_repo, mocker):
 
-    mocker.patch.object(GR106_duplicated_script_name, 'CONTENT_PATH', new=graph_repo.path)
+    mocker.patch.object(
+        GR106_duplicated_script_name, "CONTENT_PATH", new=graph_repo.path
+    )
 
     pack = graph_repo.create_pack()
-    
-    pack.create_script('test_incident_1').set_data(marketplaces=MP_XSOAR_AND_V2)
-    pack.create_script('test_alert_1').set_data(marketplaces=MP_XSOAR_AND_V2)
-    
-    pack.create_script('test_incident_2').set_data(marketplaces=MP_XSOAR)
-    pack.create_script('test_alert_2').set_data(marketplaces=MP_XSOAR)
-    
-    pack.create_script('test_incident_3').set_data(skipprepare=[SKIP_PREPARE_SCRIPT_NAME], marketplaces=MP_V2)
-    pack.create_script('test_alert_3').set_data(skipprepare=[SKIP_PREPARE_SCRIPT_NAME], marketplaces=MP_V2)
-    
-    pack.create_script('test_incident_4').set_data(marketplaces=MP_XSOAR_AND_V2)
-    pack.create_script('test_alert_4').set_data(marketplaces=MP_XSOAR)
-    
+
+    pack.create_script("test_incident_1").set_data(marketplaces=MP_XSOAR_AND_V2)
+    pack.create_script("test_alert_1").set_data(marketplaces=MP_XSOAR_AND_V2)
+
+    pack.create_script("test_incident_2").set_data(marketplaces=MP_XSOAR)
+    pack.create_script("test_alert_2").set_data(marketplaces=MP_XSOAR)
+
+    pack.create_script("test_incident_3").set_data(
+        skipprepare=[SKIP_PREPARE_SCRIPT_NAME], marketplaces=MP_V2
+    )
+    pack.create_script("test_alert_3").set_data(
+        skipprepare=[SKIP_PREPARE_SCRIPT_NAME], marketplaces=MP_V2
+    )
+
+    pack.create_script("test_incident_4").set_data(marketplaces=MP_XSOAR_AND_V2)
+    pack.create_script("test_alert_4").set_data(marketplaces=MP_XSOAR)
+
     BaseValidator.graph_interface = graph_repo.create_graph()
     return graph_repo
-    
+
 
 def test_DuplicatedScriptNameValidator_is_valid(prepared_graph_repo: Repo):
     """
@@ -62,5 +70,3 @@ def test_DuplicatedScriptNameValidator_is_valid(prepared_graph_repo: Repo):
 
     assert len(results) == 1
     assert "test_alert_1.yml" == results[0].content_object.path.name
-    
-

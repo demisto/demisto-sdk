@@ -55,6 +55,8 @@ def setup_method(mocker, repo: Repo):
             }
         },
     )
+
+
 @pytest.fixture
 def repository(mocker):
     repository = ContentDTO(
@@ -465,8 +467,10 @@ def find_model_for_id(packs: List[Pack], source_id: str):
                     if command.name == source_id:
                         return command
     return None
+
+
 ###### TO BE DELETED AFTER USING THE TestSuite OBJECTS IN ALL GRAPH TEST - END ######
-def create_mini_content(graph_repo : Repo):
+def create_mini_content(graph_repo: Repo):
     """
     Create the following content in the repo
     - A pack SamplePack, containing:
@@ -486,29 +490,33 @@ def create_mini_content(graph_repo : Repo):
     Args:
         graph_repo (Repo): the repo to work with
     """
-    sample_pack = graph_repo.create_pack('SamplePack')
+    sample_pack = graph_repo.create_pack("SamplePack")
     sample_pack.create_script(
-        'SampleScript',
-        code='demisto.execute_command("SampleScriptTwo", dArgs)'
+        "SampleScript", code='demisto.execute_command("SampleScriptTwo", dArgs)'
     )
     integration = sample_pack.create_integration(
-        name='SampleIntegration',
-        code='from TestApiModule import *'
+        name="SampleIntegration", code="from TestApiModule import *"
     )
-    integration.set_commands(['test-command'])
-    integration.set_data(tests=['SampleTestPlaybook'], defaultclassifier='SampleClassifier')
-    
-    
-    sample_pack_2 = graph_repo.create_pack('SamplePack2')
-    sample_pack_2.create_script('TestApiModule', code='demisto.execute_command("SampleScriptTwo", dArgs)')
-    sample_pack_2.create_test_playbook('SampleTestPlaybook')
-    sample_pack_2.create_classifier('SampleClassifier')
-    
-    sample_pack_3 = graph_repo.create_pack('SamplePack3')
-    sample_pack_3.create_script('SampleScriptTwo')
+    integration.set_commands(["test-command"])
+    integration.set_data(
+        tests=["SampleTestPlaybook"], defaultclassifier="SampleClassifier"
+    )
+
+    sample_pack_2 = graph_repo.create_pack("SamplePack2")
+    sample_pack_2.create_script(
+        "TestApiModule", code='demisto.execute_command("SampleScriptTwo", dArgs)'
+    )
+    sample_pack_2.create_test_playbook("SampleTestPlaybook")
+    sample_pack_2.create_classifier("SampleClassifier")
+
+    sample_pack_3 = graph_repo.create_pack("SamplePack3")
+    sample_pack_3.create_script("SampleScriptTwo")
+
 
 class TestCreateContentGraph:
-    def test_create_content_graph_end_to_end(self, graph_repo: Repo, tmp_path: Path, mocker):
+    def test_create_content_graph_end_to_end(
+        self, graph_repo: Repo, tmp_path: Path, mocker
+    ):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -594,10 +602,7 @@ class TestCreateContentGraph:
                 for file in extracted_files
             )
 
-    def test_create_content_graph_relationships(
-        self,
-        graph_repo: Repo
-    ):
+    def test_create_content_graph_relationships(self, graph_repo: Repo):
         """
         Given:
             - A repo contain content structure defined in create_mini_content
@@ -609,36 +614,45 @@ class TestCreateContentGraph:
         create_mini_content(graph_repo)
 
         interface = graph_repo.create_graph()
-        
+
         sample_pack = graph_repo.packs[0]
         sample_pack_graph_obj = sample_pack.get_graph_object(interface)
         sample_pack_2_graph_obj = graph_repo.packs[1].get_graph_object(interface)
         sample_pack_3_graph_obj = graph_repo.packs[2].get_graph_object(interface)
-        
+
         integration_graph_obj = sample_pack.integrations[0].get_graph_object(interface)
-        sample_pack_script_graph_obj = sample_pack.scripts[0].get_graph_object(interface)
+        sample_pack_script_graph_obj = sample_pack.scripts[0].get_graph_object(
+            interface
+        )
         # assert sample_pack depends on sample_pack_2 and sample_pack_3
         for rel_type, relations in sample_pack_graph_obj.relationships_data.items():
             for r in relations:
                 if rel_type == RelationshipType.DEPENDS_ON:
-                    assert r.content_item_to in [sample_pack_2_graph_obj, sample_pack_3_graph_obj]
+                    assert r.content_item_to in [
+                        sample_pack_2_graph_obj,
+                        sample_pack_3_graph_obj,
+                    ]
                 elif rel_type == RelationshipType.IN_PACK:
                     assert r.content_item_to in [
                         integration_graph_obj,
-                        sample_pack_script_graph_obj
+                        sample_pack_script_graph_obj,
                     ]
                 else:
                     assert False
-        
+
         # assert integration relationships
         rel_map = {
             RelationshipType.USES: sample_pack_2_graph_obj.content_items.classifier[0],
-            RelationshipType.TESTED_BY: sample_pack_2_graph_obj.content_items.test_playbook[0],
+            RelationshipType.TESTED_BY: sample_pack_2_graph_obj.content_items.test_playbook[
+                0
+            ],
             RelationshipType.IMPORTS: sample_pack_2_graph_obj.content_items.script[0],
             RelationshipType.IN_PACK: sample_pack_graph_obj,
         }
         for rel_type, rel_to_obj in rel_map.items():
-            content_item_to = next(iter(integration_graph_obj.relationships_data[rel_type])).content_item_to
+            content_item_to = next(
+                iter(integration_graph_obj.relationships_data[rel_type])
+            ).content_item_to
             assert content_item_to == rel_to_obj or content_item_to.not_in_repository
 
     def test_create_content_graph_two_integrations_with_same_command(
@@ -655,28 +669,40 @@ class TestCreateContentGraph:
             - Make sure only one command node was created.
         """
         pack = graph_repo.create_pack()
-        pack.create_integration('SampleIntegration1').set_commands(['test-command'])
-        pack.create_integration('SampleIntegration2').set_commands(['test-command'])
-        
+        pack.create_integration("SampleIntegration1").set_commands(["test-command"])
+        pack.create_integration("SampleIntegration2").set_commands(["test-command"])
+
         interface = graph_repo.create_graph()
-        
-        assert pack.integrations[0].get_graph_object(interface).object_id == "SampleIntegration1"
-        assert pack.integrations[1].get_graph_object(interface).object_id == "SampleIntegration2"
-        assert len(interface.search(MarketplaceVersions.XSOAR, content_type=ContentType.COMMAND)) == 1
-  
-    def test_create_content_graph_playbook_uses_script_not_in_repository(self, graph_repo: Repo):
+
+        assert (
+            pack.integrations[0].get_graph_object(interface).object_id
+            == "SampleIntegration1"
+        )
+        assert (
+            pack.integrations[1].get_graph_object(interface).object_id
+            == "SampleIntegration2"
+        )
+        assert (
+            len(
+                interface.search(
+                    MarketplaceVersions.XSOAR, content_type=ContentType.COMMAND
+                )
+            )
+            == 1
+        )
+
+    def test_create_content_graph_playbook_uses_script_not_in_repository(
+        self, graph_repo: Repo
+    ):
         pack = graph_repo.create_pack()
-        pack.create_playbook().add_default_task(task_script_name='NotExistingScript')
-        
+        pack.create_playbook().add_default_task(task_script_name="NotExistingScript")
+
         interface = graph_repo.create_graph()
         script = interface.search(object_id="NotExistingScript")[0]
-        
+
         assert script.not_in_repository
-  
-    def test_create_content_graph_duplicate_widgets(
-        self,
-        graph_repo: Repo
-    ):
+
+    def test_create_content_graph_duplicate_widgets(self, graph_repo: Repo):
         """
         Given:
             - A repository with a pack TestPack, containing two widgets
@@ -687,30 +713,56 @@ class TestCreateContentGraph:
             - Make sure both widgets exist in the graph.
         """
         pack = graph_repo.create_pack()
-        
+
         widget1 = pack.create_widget().object
         widget2 = pack.create_widget().object
-        
-        widget1.object_id = widget2.object_id = 'SampleWidget'
+
+        widget1.object_id = widget2.object_id = "SampleWidget"
 
         widget1.save()
         widget2.save()
-        
+
         interface = graph_repo.create_graph()
-        
+
         assert len(interface.search(object_id="SampleWidget")) == 2
 
-    def test_create_content_graph_duplicate_integrations_different_marketplaces(self, graph_repo: Repo):
+    def test_create_content_graph_duplicate_integrations_different_marketplaces(
+        self, graph_repo: Repo
+    ):
         pack = graph_repo.create_pack()
-        pack.create_integration().set_data(**{'commonfields.id': 'SampleIntegration', 'marketplaces':[MarketplaceVersions.XSOAR.value]})
-        pack.create_integration().set_data(**{'commonfields.id': 'SampleIntegration', 'marketplaces':[MarketplaceVersions.MarketplaceV2.value]})
-        
+        pack.create_integration().set_data(
+            **{
+                "commonfields.id": "SampleIntegration",
+                "marketplaces": [MarketplaceVersions.XSOAR.value],
+            }
+        )
+        pack.create_integration().set_data(
+            **{
+                "commonfields.id": "SampleIntegration",
+                "marketplaces": [MarketplaceVersions.MarketplaceV2.value],
+            }
+        )
+
         interface = graph_repo.create_graph()
-        
-        assert len(interface.search(object_id='SampleIntegration')) == 2
-        assert len(interface.search(MarketplaceVersions.XSOAR, object_id='SampleIntegration')) == 1
-        assert len(interface.search(MarketplaceVersions.MarketplaceV2, object_id='SampleIntegration')) == 1
-         
+
+        assert len(interface.search(object_id="SampleIntegration")) == 2
+        assert (
+            len(
+                interface.search(
+                    MarketplaceVersions.XSOAR, object_id="SampleIntegration"
+                )
+            )
+            == 1
+        )
+        assert (
+            len(
+                interface.search(
+                    MarketplaceVersions.MarketplaceV2, object_id="SampleIntegration"
+                )
+            )
+            == 1
+        )
+
     def test_create_content_graph_duplicate_integrations_different_fromversion(
         self,
         graph_repo: Repo,
@@ -725,18 +777,19 @@ class TestCreateContentGraph:
             - Make sure the integrations are not recognized as duplicates and the command succeeds.
         """
         pack = graph_repo.create_pack()
-        
-        pack.create_integration().set_data(**{'commonfields.id': 'SampleIntegration', 'toversion':'6.0.0'})
-        pack.create_integration().set_data(**{'commonfields.id': 'SampleIntegration', 'toversion':'6.0.2'})
-        
+
+        pack.create_integration().set_data(
+            **{"commonfields.id": "SampleIntegration", "toversion": "6.0.0"}
+        )
+        pack.create_integration().set_data(
+            **{"commonfields.id": "SampleIntegration", "toversion": "6.0.2"}
+        )
+
         interface = graph_repo.create_graph()
-        
+
         assert len(interface.search(object_id="SampleIntegration")) == 2
 
-    def test_create_content_graph_empty_repository(
-        self,
-        graph_repo: Repo
-    ):
+    def test_create_content_graph_empty_repository(self, graph_repo: Repo):
         """
         Given:
             - An empty repository.
@@ -783,10 +836,10 @@ class TestCreateContentGraph:
         assert len(packs) == 1
         assert len(scripts) == 2
         assert len(all_content_items) == 3
-        
+
         with ChangeCWD(graph_repo.path):
             content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
-        scripts_path = tmp_path / pack.name / 'Scripts'
+        scripts_path = tmp_path / pack.name / "Scripts"
         assert (scripts_path / "script-getIncident.yml").exists()
         assert (scripts_path / "script-getAlert.yml").exists()
         assert (scripts_path / "script-setIncident.yml").exists()
@@ -806,19 +859,21 @@ class TestCreateContentGraph:
         """
         graph_repo.create_pack("NonCorePack")
         graph_repo.create_pack("Core").set_data(
-            dependencies={"NonCorePack": {"mandatory": True, "display_name": "Non Core Pack"}}
+            dependencies={
+                "NonCorePack": {"mandatory": True, "display_name": "Non Core Pack"}
+            }
         )
-        
+
         interface = graph_repo.create_graph()
-        
-        where_test_null = 'WHERE r.is_test IS NULL'
+
+        where_test_null = "WHERE r.is_test IS NULL"
         query = "MATCH p=()-[r:DEPENDS_ON]->() {where} RETURN p"
-        data = interface.run_single_query(query.format(where=''))[0]['p']
+        data = interface.run_single_query(query.format(where=""))[0]["p"]
         empty_data = interface.run_single_query(query.format(where=where_test_null))
-        
-        assert data[0]['object_id'] == 'Core'
-        assert data[1] == 'DEPENDS_ON'
-        assert data[2]['object_id'] == 'NonCorePack'
+
+        assert data[0]["object_id"] == "Core"
+        assert data[1] == "DEPENDS_ON"
+        assert data[2]["object_id"] == "NonCorePack"
         assert not empty_data
 
     # @pytest.mark.parametrize(

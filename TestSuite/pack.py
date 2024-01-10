@@ -231,7 +231,7 @@ class Pack(TestSuiteBase):
 
         self._assets_modeling_rules_path = self._pack_path / ASSETS_MODELING_RULES_DIR
         self._assets_modeling_rules_path.mkdir(exist_ok=True)
-        
+
         super().__init__(self._pack_path)
 
     def create_integration(
@@ -352,10 +352,10 @@ class Pack(TestSuiteBase):
         obj.write_text(content)
         return obj
 
-    def create_classifier(self, name:str = None, content: dict = None) -> Classifier:
+    def create_classifier(self, name: str = None, content: dict = None) -> Classifier:
         prefix = "classifier"
         if not name:
-            name = f'{prefix}{len(self.classifiers)}'
+            name = f"{prefix}{len(self.classifiers)}"
         classifier = Classifier(name, self._classifiers_path, content)
         self.classifiers.append(classifier)
         return classifier
@@ -363,7 +363,7 @@ class Pack(TestSuiteBase):
     def create_mapper(self, name: str = None, content: dict = None) -> Mapper:
         prefix = "classifier-mapper"
         if not name:
-            name = f'{prefix}{len(self.mappers)}'
+            name = f"{prefix}{len(self.mappers)}"
         mapper = Mapper(name, self._mappers_path, content)
         self.mappers.append(mapper)
         return mapper
@@ -371,40 +371,48 @@ class Pack(TestSuiteBase):
     def create_dashboard(self, name: str = None, content: dict = None) -> Dashboard:
         prefix = "dashboard"
         if not name:
-            name = f'{prefix}{len(self.dashboards)}'
+            name = f"{prefix}{len(self.dashboards)}"
         dashboard = Dashboard(name, self._dashboards_path, content)
         self.dashboards.append(dashboard)
         return dashboard
 
-    def create_incident_field(self, name: str = None, content: dict = None) -> IncidentField:
+    def create_incident_field(
+        self, name: str = None, content: dict = None
+    ) -> IncidentField:
         prefix = "incidentfield"
         if not name:
-            name = f'{prefix}{len(self.incident_fields)}'
+            name = f"{prefix}{len(self.incident_fields)}"
         incident_field = IncidentField(name, self._incidents_field_path, content)
 
         self.incident_fields.append(incident_field)
         return incident_field
 
-    def create_incident_type(self, name: str = None, content: dict = None) ->IncidentType:
+    def create_incident_type(
+        self, name: str = None, content: dict = None
+    ) -> IncidentType:
         prefix = "incidenttype"
-        if not name :
-            name = f'{prefix}{len(self.incident_types)}'
+        if not name:
+            name = f"{prefix}{len(self.incident_types)}"
         incident_type = IncidentType(name, self._incident_types_path, content)
         self.incident_types.append(incident_type)
         return incident_type
 
-    def create_indicator_field(self, name: str = None, content: dict = None) -> IndicatorField:
+    def create_indicator_field(
+        self, name: str = None, content: dict = None
+    ) -> IndicatorField:
         prefix = "indicatorfield"
         if not name:
-            name = f'{prefix}{len(self.indicator_fields)}'
+            name = f"{prefix}{len(self.indicator_fields)}"
         indicator_field = IndicatorField(name, self._indicator_fields, content)
         self.indicator_fields.append(indicator_field)
         return indicator_field
 
-    def create_indicator_type(self, name: str = None, content: dict = None) -> IndicatorType:
+    def create_indicator_type(
+        self, name: str = None, content: dict = None
+    ) -> IndicatorType:
         prefix = "reputation"
         if not name:
-            name = f'{prefix}{len(self.indicator_types)}'
+            name = f"{prefix}{len(self.indicator_types)}"
         indicator_type = IndicatorType(name, self._indicator_types, content)
         self.indicator_types.append(indicator_type)
         return indicator_type
@@ -423,31 +431,38 @@ class Pack(TestSuiteBase):
         self.generic_types.append(generic_type)
         return generic_type
 
-    def create_generic_module(self, name: str = None, content: dict = None) -> GenericModule:
+    def create_generic_module(
+        self, name: str = None, content: dict = None
+    ) -> GenericModule:
         prefix = "genericmodule"
         if not name:
-            name = f'{prefix}{len(self.generic_modules)}'
-        
+            name = f"{prefix}{len(self.generic_modules)}"
+
         generic_module = GenericModule(name, self._generic_modules_path, content)
         self.generic_modules.append(generic_module)
         return generic_module
 
-    def create_generic_definition(self, name: str = None, content: dict = None) -> GenericDefinition:
+    def create_generic_definition(
+        self, name: str = None, content: dict = None
+    ) -> GenericDefinition:
         prefix = "genericdefinition"
         if not name:
-            name= f'{prefix}{len(self.generic_definitions)}'
-        generic_definition = GenericDefinition(name, self._generic_definitions_path, content)
+            name = f"{prefix}{len(self.generic_definitions)}"
+        generic_definition = GenericDefinition(
+            name, self._generic_definitions_path, content
+        )
         self.generic_definitions.append(generic_definition)
         return generic_definition
 
-    def create_job(self,
+    def create_job(
+        self,
         is_feed: bool,
         name: Optional[str] = None,
         selected_feeds: Optional[List[str]] = None,
         details: str = "",
     ) -> Job:
         job = Job(
-            pure_name=name or f'job{len(self.jobs)}',
+            pure_name=name or f"job{len(self.jobs)}",
             jobs_dir_path=self._jobs_path,
             is_feed=is_feed,
             selected_feeds=selected_feeds,
@@ -461,7 +476,7 @@ class Pack(TestSuiteBase):
 
     def create_layout(self, name: str = None, content: dict = None) -> Layout:
         if not name:
-            name = f'layout{len(self.layouts)}'
+            name = f"layout{len(self.layouts)}"
         layout = Layout(name, self._layout_path, content)
         self.layouts.append(layout)
         return layout
@@ -477,24 +492,24 @@ class Pack(TestSuiteBase):
         return layoutcontainer
 
     def create_report(self, name: str = None, content: dict = None) -> Report:
-        
+
         if not name:
             name = f"report{len(self.reports)}"
         report = Report(name, self._report_path, content)
         self.reports.append(report)
         return report
 
-    def create_widget(self, name: str | None = None, content: dict = None) -> Widget:
+    def create_widget(self, name: str = None, content: dict = None) -> Widget:
         if not name:
             name = f"widget{len(self.widgets)}"
-        
+
         widget = Widget(name, self._widget_path, content)
         self.widgets.append(widget)
         return widget
 
     def create_wizard(
         self,
-        name: str | None = None,
+        name: str = None,
         categories_to_packs: Optional[Dict[str, List[dict]]] = None,
         fetching_integrations: Optional[List[str]] = None,
         set_playbooks: Optional[List[dict]] = None,
@@ -526,7 +541,7 @@ class Pack(TestSuiteBase):
     def create_list(self, name: str = None, content: dict = None) -> ContentList:
 
         if not name:
-            name = f'list{len(self.lists)}'
+            name = f"list{len(self.lists)}"
         content_list = ContentList(name, self._lists_path, content)
         self.lists.append(content_list)
         return content_list
@@ -696,25 +711,31 @@ class Pack(TestSuiteBase):
         self.assets_modeling_rules.append(rule)
         return rule
 
-    def create_correlation_rule(self, name: str = None, content: dict = None) -> CorrelationRule:
+    def create_correlation_rule(
+        self, name: str = None, content: dict = None
+    ) -> CorrelationRule:
         if not name:
-            name = f'correlation_rule{len(self.correlation_rules)}'
+            name = f"correlation_rule{len(self.correlation_rules)}"
         correlation_rule = CorrelationRule(
             name, self._correlation_rules_path, self.repo_path, content
         )
         self.correlation_rules.append(correlation_rule)
         return correlation_rule
 
-    def create_xsiam_dashboard(self, name: str = None, content: dict = None) -> XSIAMDashboard:
+    def create_xsiam_dashboard(
+        self, name: str = None, content: dict = None
+    ) -> XSIAMDashboard:
         if not name:
-            name = f'XSIAMDashboard{len(self.xsiam_dashboards)}'
+            name = f"XSIAMDashboard{len(self.xsiam_dashboards)}"
         xsiam_dashboard = XSIAMDashboard(name, self._xsiam_dashboards_path, content)
         self.xsiam_dashboards.append(xsiam_dashboard)
         return xsiam_dashboard
 
-    def create_xsiam_report(self, name: str = None, content: dict = None) -> XSIAMReport:
+    def create_xsiam_report(
+        self, name: str = None, content: dict = None
+    ) -> XSIAMReport:
         if not name:
-            name = f'XSIAMReport{len(self.xsiam_reports)}'
+            name = f"XSIAMReport{len(self.xsiam_reports)}"
         xsiam_report = XSIAMReport(name, self._xsiam_reports_path, content)
         self.xsiam_reports.append(xsiam_report)
         return xsiam_report
@@ -739,7 +760,7 @@ class Pack(TestSuiteBase):
 
     def create_layout_rule(self, name: str = None, content: dict = None) -> LayoutRule:
         if not name:
-            name = f'layout_rule{len(self.layout_rules)}'
+            name = f"layout_rule{len(self.layout_rules)}"
         layout_rule = LayoutRule(name, self._xsiam_layout_rules_path, content)
         self.layout_rules.append(layout_rule)
         return layout_rule

@@ -87,11 +87,9 @@ class Repo:
             }
         )
         self.graph_interface: Optional[ContentGraphInterface] = None
-        self.git_util: Optional[GitUtil]
+        self.git_util: Optional[GitUtil] = None
         if init_git:
             self.init_git()
-        else:
-            self.git_util = None
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
@@ -309,7 +307,7 @@ class Repo:
         for i in range(number_of_packs):
             self.setup_one_pack(f"pack_{i}", marketplaces)
 
-    def create_graph(self, output_path: Path | None = None):
+    def create_graph(self, output_path: Path = None):
         if not self.graph_interface:
             self.init_git()
             self.graph_interface = ContentGraphInterface()
@@ -317,7 +315,7 @@ class Repo:
             with ChangeCWD(self.path):
                 create_content_graph(self.graph_interface, output_path=output_path)
         return self.graph_interface
-    
+
     def create_pack(self, name: Optional[str] = None):
         if name is None:
             name = f"pack_{len(self.packs)}"
@@ -331,7 +329,7 @@ class Repo:
             self.git_util = GitUtil(self.path)
             self.git_util.commit_files("Initial Commit")
             self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)
-    
+
     def working_dir(self):
         return self.path
 

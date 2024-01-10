@@ -21,9 +21,5 @@ class CorrelationRule(YAML):
 
     def create_default_correlation_rule(self):
         self.write_dict(
-            {
-                "global_rule_id": self.name,
-                "name": self.name,
-                "fromversion": "6.10.0"
-            }
+            {"global_rule_id": self.name, "name": self.name, "fromversion": "6.10.0"}
         )

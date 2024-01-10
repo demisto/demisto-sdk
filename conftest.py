@@ -91,18 +91,18 @@ def repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
 
 
 @pytest.fixture
-def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
+def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Generator:
     """
     Initializes a repo with graph required mocks.
     """
     import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
     import demisto_sdk.commands.content_graph.objects.base_content as bc
-    
+
     repo = get_repo(request, tmp_path_factory)
-    
+
     bc.CONTENT_PATH = Path(repo.path)
-    neo4j_path = bc.CONTENT_PATH.parent.parent / 'neo4j'
-    
+    neo4j_path = bc.CONTENT_PATH.parent.parent / "neo4j"
+
     mock.patch.object(ContentGraphInterface, "repo_path", bc.CONTENT_PATH)
     mock.patch.object(neo4j_service, "REPO_PATH", neo4j_path)
     mock.patch(
@@ -116,10 +116,10 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Re
             }
         },
     )
-        
+
     yield repo
-    if (neo4j_path / 'neo4j-data/data').exists():
-        shutil.rmtree(neo4j_path / 'neo4j-data/data')
+    if (neo4j_path / "neo4j-data/data").exists():
+        shutil.rmtree(neo4j_path / "neo4j-data/data")
 
 
 @pytest.fixture

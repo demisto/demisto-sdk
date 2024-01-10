@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from demisto_sdk.commands.common.constants import SAMPLES_DIR
+from demisto_sdk.commands.common.tools import set_value
 from TestSuite.json_based import JSONBased
 from TestSuite.test_suite_base import TestSuiteBase
-from demisto_sdk.commands.common.tools import set_value
 
 if TYPE_CHECKING:
     from TestSuite.repo import Repo

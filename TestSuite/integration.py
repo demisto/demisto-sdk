@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import get_value, set_value
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -161,10 +160,10 @@ class Integration(TestSuiteBase):
             set_value(yml_contents, key_path, val)
         self.yml.write_dict(yml_contents)
         self.clear_from_path_cache()
-    
-    def set_commands(self, commands: list[str]):
+
+    def set_commands(self, commands: List[str]):
         commands_data = [
             {"name": command, "description": f"{command}-description"}
             for command in commands
         ]
-        self.set_data(**{'script.commands': commands_data})
+        self.set_data(**{"script.commands": commands_data})

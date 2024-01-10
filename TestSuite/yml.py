@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.tools import set_value
 from TestSuite.file import File
 from TestSuite.test_suite_base import TestSuiteBase
-from demisto_sdk.commands.common.tools import set_value
 
 yaml = YAML_Handler()
 
@@ -41,8 +41,7 @@ class YAML(TestSuiteBase, File):
             set_value(yml_contents, key_path, val)
         self.write_dict(yml_contents)
         self.clear_from_path_cache()
-        
-        
+
     def delete_key(self, key: str):
         yml_contents = self.read_dict()
         if key in yml_contents:

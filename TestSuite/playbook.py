@@ -2,11 +2,10 @@ from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.tools import set_value
 from TestSuite.file import File
-from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
-from demisto_sdk.commands.common.tools import set_value
 
 yaml = YAML_Handler()
 
@@ -34,12 +33,12 @@ class Playbook(YAML):
         else:
             # build test playbook
             self.create_default_test_playbook()
-    
+
     @property
     def yml(self):
         # for backward compatible
         return self
-    
+
     def build(
         self,
         yml: Optional[dict] = None,
@@ -92,7 +91,7 @@ class Playbook(YAML):
             return
 
         if task_script_name:
-            set_value(task, 'task.scriptName', task_script_name)
+            set_value(task, "task.scriptName", task_script_name)
         original_yml = self.read_dict()
         tasks = original_yml["tasks"]
         last_task = tasks[next(reversed(tasks))]

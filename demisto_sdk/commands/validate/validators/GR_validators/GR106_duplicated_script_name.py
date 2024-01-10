@@ -33,7 +33,8 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         when the script name included `alert`.
         """
         file_paths_to_objects = {
-            str(content_item.path.relative_to(CONTENT_PATH)): content_item for content_item in content_items
+            str(content_item.path.relative_to(CONTENT_PATH)): content_item
+            for content_item in content_items
         }
         query_results = self.graph.get_duplicate_script_name_included_incident(
             list(file_paths_to_objects)

@@ -4,12 +4,7 @@ from TestSuite.json_based import JSONBased
 
 
 class Widget(JSONBased):
-    def __init__(
-        self,
-        name: str,
-        widgets_dir_path: Path,
-        content: dict
-    ):
+    def __init__(self, name: str, widgets_dir_path: Path, content: dict = None):
         super().__init__(widgets_dir_path, name, "widget", json_content=content)
 
     def create_default(self):
@@ -39,5 +34,3 @@ class Widget(JSONBased):
                 "fromVersion": "6.8.0",
             }
         )
-
-

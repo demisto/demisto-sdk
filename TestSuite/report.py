@@ -1,8 +1,6 @@
-import json
 from pathlib import Path
 
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import suite_join_path
 
 
 class Report(JSONBased):

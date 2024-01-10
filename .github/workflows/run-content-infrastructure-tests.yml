@@ -32,7 +32,7 @@ jobs:
           cd content
           poetry install --with ci
 
-      - name: Uninstsall content version of SDK
+      - name: Uninstall content version of SDK
         run: |
           cd content
           poetry run pip uninstall demisto-sdk -y

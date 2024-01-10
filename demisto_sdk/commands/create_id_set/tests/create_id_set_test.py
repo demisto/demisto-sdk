@@ -265,7 +265,7 @@ def test_create_id_set_flow(repo, mocker):
         assert len(entity_content_in_id_set) == factor * number_of_packs_to_create
 
 
-def test_create_id_set_flow_xpanse(repo, mocker):
+def test_create_id_set_flow_xpanse(repo, monkeypatch):
     """
     Given
         create-id-set sdk command, content repo that contains xpanse packs.
@@ -275,7 +275,7 @@ def test_create_id_set_flow_xpanse(repo, mocker):
         Make sure the id set is created as expected.
     """
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
-    mocker.patch.dict(os.environ, {"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL": "-1"})
+    monkeypatch.setenv("DEMISTO_SDK_ID_SET_REFRESH_INTERVAL", value="-1")
     number_of_packs_to_create = 10
     repo.setup_content_repo(
         number_of_packs=number_of_packs_to_create,

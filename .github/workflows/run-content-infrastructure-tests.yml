@@ -7,14 +7,14 @@ jobs:
 
     steps:
       - name: Checkout SDK
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name:  Get commit hash
         id: get-commit
         run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
 
       - name: Checkout content
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: demisto/content
           path: content

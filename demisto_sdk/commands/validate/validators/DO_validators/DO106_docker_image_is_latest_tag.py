@@ -47,7 +47,15 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
             )
             return not last_updated or three_days_ago > last_updated
         except DockerHubRequestException as error:
-            logger.error(f"Could not get {docker_image} creation time, error:\n{error}")
+            if error.exception.response.status_code == requests.codes.not_found:
+                logger.debug(
+                    f"Could not get {docker_image} creation time because the image does not have the tag {docker_image.tag}"
+                )
+            else:
+                logger.error(
+                    f"Could not get {docker_image} creation time, error:{error}"
+                )
+            # return true if docker-image exist, but has a wrong tag
             return True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

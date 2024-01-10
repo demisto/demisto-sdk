@@ -116,9 +116,7 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Re
             }
         },
     )
-    
-    neo4j_service.stop()
-    
+        
     yield repo
     if (neo4j_path / 'neo4j-data/data').exists():
         shutil.rmtree(neo4j_path / 'neo4j-data/data')

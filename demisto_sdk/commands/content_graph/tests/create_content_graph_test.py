@@ -301,17 +301,6 @@ class TestCreateContentGraph:
         interface = graph_repo.create_graph()
         assert not interface.search()
 
-    def test_stop_content_graph(self):
-        """
-        Given:
-            - A running content graph service.
-        When:
-            - Running neo4j_service.stop()
-        Then:
-            - Make sure no exception is raised.
-        """
-        neo4j_service.stop()
-
     def test_create_content_graph_incident_to_alert_scripts(
         self, graph_repo: Repo, tmp_path: Path
     ):

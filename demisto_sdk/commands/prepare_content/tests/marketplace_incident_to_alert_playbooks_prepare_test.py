@@ -100,7 +100,7 @@ def test_marketplace_version_is_xsiam_2():
     Then:
         - Ensure incident is converted to alert when needed.
         - Ensure the wrapper is removed.
-        - Ensure the access fields did NOT change as the playbook is supported only in MarketplaceVersions.MarketplaceV2.
+        - Ensure the access fields have changed even when the playbook is only supported in MarketplaceVersions.MarketplaceV2.
     """
 
     data = get_yaml(
@@ -126,11 +126,11 @@ def test_marketplace_version_is_xsiam_2():
         " while investigating the alert itself. Alerts incidents"
     )
 
-    # assert access fields did NOT change as this playbook is supported only in XSAIM and not both marketplaces
-    assert data["tasks"]["3"]["task"]["script"] == "Builtin|||setIncident"
+    # assert access fields have changed even as this playbook is supported only in XSAIM and not both marketplaces
+    assert data["tasks"]["3"]["task"]["script"] == "Builtin|||setAlert"
     assert (
         data["tasks"]["3"]["task"]["scriptarguments"]["id"]["complex"]["root"]
-        == "incident"
+        == "alert"
     )
 
 

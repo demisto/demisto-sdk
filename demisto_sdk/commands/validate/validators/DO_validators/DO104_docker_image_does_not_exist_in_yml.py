@@ -13,7 +13,7 @@ ContentTypes = Union[Integration, Script]
 
 
 class DockerImageExistValidator(BaseValidator[ContentTypes]):
-    error_code = "DO108"
+    error_code = "DO104"
     description = "Validate that the given content item has a docker_image."
     error_message = "The {0} {1} is missing a docker image.\n The recommended default docker is {2}."
     related_field = "Docker image"

@@ -108,11 +108,7 @@ class IntegrationScript(ContentItem):
 
     @property
     def docker_image_object(self) -> DockerImage:
-
-        if self.docker_image:
-            return DockerImage.from_regex(self.docker_image)
-
-        raise ValueError(f"The content item {self.path} does not have docker image")
+        return DockerImage.from_regex(self.docker_image or "")
 
     @property
     def is_powershell(self) -> bool:

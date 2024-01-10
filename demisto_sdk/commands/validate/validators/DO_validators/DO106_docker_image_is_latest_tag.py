@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Iterable, List, Union
 
+import requests
 from dateparser import parse
 
 from demisto_sdk.commands.common.docker.dockerhub_client import (
@@ -40,10 +41,14 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
             bool: True if the docker is more than 3 days old.
         """
         three_days_ago: datetime = parse("3 days ago")  # type: ignore[assignment]
-        last_updated = self.dockerhub_client.get_docker_image_tag_creation_date(
-            docker_image.name, tag=docker_image.tag
-        )
-        return not last_updated or three_days_ago > last_updated
+        try:
+            last_updated = self.dockerhub_client.get_docker_image_tag_creation_date(
+                docker_image.name, tag=docker_image.tag
+            )
+            return not last_updated or three_days_ago > last_updated
+        except DockerHubRequestException as error:
+            logger.error(f"Could not get {docker_image} creation time, error:\n{error}")
+            return True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []
@@ -66,10 +71,15 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                         )
                     )
                 except DockerHubRequestException as error:
+                    logger.error(f"DO106 - Error when fetching latest tag:\n{error}")
+                    if error.exception.response.status_code == requests.codes.not_found:
+                        message = f"The docker-image {content_item.docker_image} does not exist, hence could not validate its latest tag"
+                    else:
+                        message = str(error)
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
-                            message=str(error),
+                            message=message,
                             content_object=content_item,
                         )
                     )

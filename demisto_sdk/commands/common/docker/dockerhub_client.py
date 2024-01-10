@@ -128,12 +128,14 @@ class DockerHubClient:
             headers: headers if needed
             params: params if needed
         """
+        auth = None if headers and "Authorization" in headers else self.auth
+
         response = self._session.get(
             url,
             headers=headers,
             params=params,
             verify=self.verify_ssl,
-            auth=self.auth,
+            auth=auth,
         )
         response.raise_for_status()
         try:

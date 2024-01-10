@@ -28,7 +28,6 @@ ignorable_errors = [
 select = [
     "BA101", "BA105", "BA106","BA116", "BA118",
     "GR106",
-    "DO108",
     "IN108",
     "IN130",
     "DO100",

@@ -1203,7 +1203,6 @@ def test_IsValidTagsValidator_fix():
                             "Malware",
                             "Case Management",
                             "invalid_use_Case_1",
-                            "invalid_use_Case_2",
                         ]
                     ],
                 ),
@@ -1212,7 +1211,7 @@ def test_IsValidTagsValidator_fix():
             2,
             [
                 "The pack metadata contains non approved usecases: Invalid_use_Case.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
-                "The pack metadata contains non approved usecases: Invalid_use_Case_1, Invalid_use_Case_2.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
+                "The pack metadata contains non approved usecases: Invalid_use_Case_1.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
             ],
         ),
     ],
@@ -1233,7 +1232,7 @@ def test_IsValidUseCasesValidator_is_valid(
             - One pack_metadata with an empty useCases section.
             - One pack_metadata with valid useCases section.
             - One pack_metadata with an invalid useCases section.
-            - One pack_metadata with useCases section containing two valid and two invalid useCases.
+            - One pack_metadata with useCases section containing two valid and one invalid useCases.
     When
     - Calling the IsValidUseCasesValidator is_valid function.
     Then

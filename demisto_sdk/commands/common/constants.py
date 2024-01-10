@@ -2,11 +2,15 @@ import os
 import re
 from enum import Enum
 from functools import reduce
+from pathlib import Path
 from typing import Dict, List
 
 from packaging.version import Version
 
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
+
+
+SDK_DATA_DIR = Path.home() / ".demisto-sdk"
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"

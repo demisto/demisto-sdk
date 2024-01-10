@@ -10,7 +10,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 # NOTE: Do not add internal imports here, as it may cause circular imports.
-from demisto_sdk.commands.common.constants import STRING_TO_BOOL_MAP
+from demisto_sdk.commands.common.constants import SDK_DATA_DIR, STRING_TO_BOOL_MAP
+
+DEFAULT_LOGS_DIR = SDK_DATA_DIR / "logs"
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
@@ -389,28 +391,37 @@ def logging_setup(
 
     log_handlers: List[logging.Handler] = [console_handler]
 
-    if log_file_path_str := (log_file_path or os.getenv("DEMISTO_SDK_LOG_FILE_PATH")):
-        log_file_directory_path = Path(log_file_path_str)
+    if log_file_directory_path_str := (
+        log_file_path or os.getenv("DEMISTO_SDK_LOG_FILE_PATH")
+    ):
+        log_file_directory_path = Path(log_file_directory_path_str)
 
-        # Can't use 'logger.error' here, as the logger is not yet initialized.
-        if not log_file_directory_path.is_dir():
+    else:  # Use Default
+        log_file_directory_path = DEFAULT_LOGS_DIR
+
+    if not log_file_directory_path.is_dir():
+        if log_file_directory_path == DEFAULT_LOGS_DIR:
+            log_file_directory_path.mkdir(parents=True, exist_ok=True)
+
+        else:
+            # Can't use 'logger.error' here, as the logger is not yet initialized.
             exit(
                 f"Error: Configured logs path '{log_file_directory_path}' does not exist."
             )
 
-        log_file_path = log_file_directory_path / LOG_FILE_NAME
-        LOG_FILE_PATH = log_file_path
+    log_file_path = log_file_directory_path / LOG_FILE_NAME
+    LOG_FILE_PATH = log_file_path
 
-        file_handler = RotatingFileHandler(
-            filename=log_file_path,
-            mode="a",
-            maxBytes=DEMISTO_SDK_LOG_FILE_SIZE,
-            backupCount=DEMISTO_SDK_LOG_FILE_COUNT,
-        )
-        file_handler.set_name(FILE_HANDLER)
-        file_handler.setLevel(file_log_threshold or logging.DEBUG)
-        file_handler.setFormatter(fmt=NoColorFileFormatter())
-        log_handlers.append(file_handler)
+    file_handler = RotatingFileHandler(
+        filename=log_file_path,
+        mode="a",
+        maxBytes=DEMISTO_SDK_LOG_FILE_SIZE,
+        backupCount=DEMISTO_SDK_LOG_FILE_COUNT,
+    )
+    file_handler.set_name(FILE_HANDLER)
+    file_handler.setLevel(file_log_threshold or logging.DEBUG)
+    file_handler.setFormatter(fmt=NoColorFileFormatter())
+    log_handlers.append(file_handler)
 
     log_level = (
         min(*[handler.level for handler in log_handlers])

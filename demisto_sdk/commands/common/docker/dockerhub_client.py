@@ -97,10 +97,12 @@ class DockerHubClient:
         )
         try:
             response.raise_for_status()
-        except RequestException as error:
-            logger.warning(f"Error when trying to get dockerhub token, error\n:{error}")
-            if error.response.status_code == requests.codes.unauthorized:
-                logger.debug("Trying to get dockerhub token without username/password")
+        except RequestException as _error:
+            logger.warning(
+                f"Error when trying to get dockerhub token, error\n:{_error}"
+            )
+            if _error.response.status_code == requests.codes.unauthorized:
+                logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
                         "https://auth.docker.io/token",
@@ -112,10 +114,14 @@ class DockerHubClient:
                     response.raise_for_status()
                 except RequestException as error:
                     raise DockerHubRequestException(
-                        f"Failed to get docker hub token:\n{error}", exception=error
+                        f"Failed to get dockerhub token without username:password:\n{error}",
+                        exception=error,
                     )
             else:
-                raise
+                raise DockerHubRequestException(
+                    "Failed to get dockerhub token with username:password",
+                    exception=_error,
+                )
         try:
             raw_json_response = response.json()
         except JSONDecodeError as e:

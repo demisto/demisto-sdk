@@ -1,5 +1,5 @@
-name: 'Setup environment for demisto-sdk'
-description: 'Setup environment for every demisto-sdk workflow job'
+name: 'Setup test environment for running all tests (unit/integration/graph) in the demisto-sdk'
+description: 'Setup test environment for running all tests (unit/integration/graph) in the demisto-sdk'
 author: 'Demisto-SDK'
 
 inputs:
@@ -12,11 +12,6 @@ inputs:
     type: string
     default: "16"
     description: "The node version to install"
-  repository:
-    required: false
-    type: string
-    default: ""
-    description: "Whether to checkout to any other repository "
 
 
 runs:

@@ -6,17 +6,17 @@ inputs:
   python-version:
     required: true
     type: string
-    description: "The python version"
+    description: "The python version to setup"
   working-dir:
     required: false
     type: string
     default: ${{ github.workspace }}
-    description: "The node version to install"
+    description: "On which working directory to run the setup-env, for example it can be done in content"
   poetry-install-arguments:
     required: false
     type: string
     default: "-E generate-unit-tests"
-    description: "The node version to install"
+    description: "the arguments for the poetry install command"
 
 runs:
   using: 'composite'

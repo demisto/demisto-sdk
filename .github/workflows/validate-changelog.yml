@@ -5,22 +5,15 @@ jobs:
   validate-changelog:
     runs-on: ubuntu-latest
     steps:
-
-      - name: Setup Poetry
-        uses: Gr1N/setup-poetry@v8
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup python
-        uses: actions/setup-python@v4
+         
+      - name: Python ${{ matrix.python-version }} - Setup Environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
-
-      - name: Install dependencies
-        run: poetry install
 
       - name: Validate Changelog
         env:

@@ -292,6 +292,8 @@ class BaseContent(BaseNode):
             obj = model.from_orm(content_item_parser)  # type: ignore
             if obj:
                 obj.git_status = git_status
+            # this will populate the pack object in the content item
+            obj.in_pack  # type: ignore[attr-defined]
             return obj
         except Exception as e:
             logger.error(

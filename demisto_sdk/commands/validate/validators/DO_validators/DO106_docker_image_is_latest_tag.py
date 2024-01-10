@@ -110,13 +110,13 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
             latest_tag = str(
                 self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
             )
+            message = self.fix_message.format(
+                content_item.docker_image, f"{docker_image.name}:{latest_tag}"
+            )
             if content_item.docker_image:
                 content_item.docker_image = content_item.docker_image.replace(
                     docker_image.tag, latest_tag
                 )
-            message = self.fix_message.format(
-                content_item.docker_image, f"{docker_image.name}:{latest_tag}"
-            )
         except DockerHubRequestException as error:
             logger.error(
                 f"Could not get the latest tag of {docker_image.name} when trying "

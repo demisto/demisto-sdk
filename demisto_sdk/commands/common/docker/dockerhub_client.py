@@ -95,8 +95,27 @@ class DockerHubClient:
             },
             auth=self.auth,
         )
-        if not response.ok:
-            raise RuntimeError(f"Failed to get docker hub token: {response.text}")
+        try:
+            response.raise_for_status()
+        except RequestException as error:
+            logger.warning(f"Error when trying to get dockerhub token, error\n:{error}")
+            if error.response.status_code == requests.codes.unauthorized:
+                logger.debug("Trying to get dockerhub token without username/password")
+                try:
+                    response = self._session.get(
+                        "https://auth.docker.io/token",
+                        params={
+                            "service": "registry.docker.io",
+                            "scope": f"repository:{repo}:{scope}",
+                        },
+                    )
+                    response.raise_for_status()
+                except RequestException as error:
+                    raise DockerHubRequestException(
+                        f"Failed to get docker hub token:\n{error}", exception=error
+                    )
+            else:
+                raise
         try:
             raw_json_response = response.json()
         except JSONDecodeError as e:

@@ -968,10 +968,10 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
-        current_repo = GitUtil().repo
+        current_repo = GitUtil()
 
         # if running on master branch in private repo - do not run the test
-        if current_repo.active_branch == DEMISTO_GIT_PRIMARY_BRANCH:
+        if current_repo.get_current_git_branch_or_hash() == DEMISTO_GIT_PRIMARY_BRANCH:
             logger.debug(
                 "[yellow]Running on master branch - skipping price change validation[/yellow]"
             )

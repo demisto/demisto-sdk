@@ -1,17 +1,14 @@
 import os
 from pathlib import Path
 
-from TestSuite.test_suite_base import TestSuiteBase
 
-
-class File(TestSuiteBase):
+class File:
     def __init__(self, tmp_path: Path, repo_path: str, txt: str = ""):
         self._tmp_path = tmp_path
         self._repo_path = repo_path
         self.path = str(self._tmp_path)
         self.rel_path = os.path.relpath(self.path, self._repo_path)
         self.write(txt)
-        super().__init__(self._tmp_path)
 
     def write(self, txt: str):
         self._tmp_path.write_text(txt, encoding="utf-8")

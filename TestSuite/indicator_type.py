@@ -18,8 +18,8 @@ class IndicatorType(JSONBased):
     def create_default(self):
         self.write_json(
             {
-                "id": self.name,
-                "details": self.name,
+                "id": self.id,
+                "details": self.id,
                 "preProcessingScript": "",
                 "fromVersion": "6.10.0",
             }

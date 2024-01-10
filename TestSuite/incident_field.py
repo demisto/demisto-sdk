@@ -18,10 +18,10 @@ class IncidentField(JSONBased):
     def create_default(self):
         self.write_json(
             {
-                "id": self.name,
+                "id": self.id,
                 "description": "test description",
-                "cliName": self.name.lower(),
-                "name": self.name,
+                "cliName": self.id.lower(),
+                "name": self.id,
                 "associatedToAll": False,
                 "type": "shortText",
                 "associatedTypes": [],

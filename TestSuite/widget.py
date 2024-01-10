@@ -15,9 +15,9 @@ class Widget(JSONBased):
     def create_default(self):
         self.write_json(
             {
-                "id": self.name,
+                "id": self.id,
                 "version": -1,
-                "name": self.name,
+                "name": self.id,
                 "dataType": "indicators",
                 "widgetType": "line",
                 "size": 1000,

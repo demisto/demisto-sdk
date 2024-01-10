@@ -13,11 +13,11 @@ class Classifier(JSONBased):
         self.write_json(
             {
                 "feed": False,
-                "id": self.name,
+                "id": self.id,
                 "keyTypeMap": {"Test": "Test type"},
                 "mapping": None,
-                "name": self.name,
-                "nameRaw": self.name,
+                "name": self.id,
+                "nameRaw": self.id,
                 "packID": "",
                 "packName": "",
                 "transformer": {"simple": "Field"},

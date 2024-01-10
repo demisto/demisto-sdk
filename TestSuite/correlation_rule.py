@@ -24,5 +24,6 @@ class CorrelationRule(YAML):
             {
                 "global_rule_id": self.name,
                 "name": self.name,
+                "fromversion": "6.10.0"
             }
         )

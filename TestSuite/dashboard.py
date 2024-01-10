@@ -13,11 +13,11 @@ class Dashboard(JSONBased):
     def create_default(self):
         self.write_json(
             {
-                "id": self.name,
+                "id": self.id,
                 "packID": "",
                 "packName": "",
-                "name": self.name,
-                "prevName": self.name,
+                "name": self.id,
+                "prevName": self.id,
                 "layout": [],
                 "owner": "admin",
             }

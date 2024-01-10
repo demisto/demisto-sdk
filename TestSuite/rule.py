@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from demisto_sdk.commands.common.constants import SAMPLES_DIR
 from TestSuite.json_based import JSONBased
 from TestSuite.test_suite_base import TestSuiteBase
+from demisto_sdk.commands.common.tools import set_value
 
 if TYPE_CHECKING:
     from TestSuite.repo import Repo
@@ -64,3 +65,10 @@ class Rule(TestSuiteBase):
                 )
                 sample_file.write_json(sample)
                 self.samples.append(sample_file)
+
+    def set_data(self, **key_path_to_val):
+        yml_contents = self.yml.read_dict()
+        for key_path, val in key_path_to_val.items():
+            set_value(yml_contents, key_path, val)
+        self.yml.write_dict(yml_contents)
+        self.clear_from_path_cache()

@@ -18,8 +18,8 @@ class GenericType(JSONBased):
     def create_default(self):
         self.write_json(
             {
-                "id": self.name,
-                "name": self.name,
+                "id": self.id,
+                "name": self.id,
                 "definitionId": self.name,
                 "fromVersion": "6.10.0",
             }

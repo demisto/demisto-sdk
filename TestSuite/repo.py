@@ -5,11 +5,16 @@ from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.content_graph.commands.create import create_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
+)
 from TestSuite.conf_json import ConfJSON
 from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
 from TestSuite.global_secrets import GlobalSecrets
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
+from TestSuite.test_tools import ChangeCWD
 
 DEFAULT_MARKETPLACES = ["xsoar"]
 
@@ -81,18 +86,17 @@ class Repo:
                 "Wizards": [],
             }
         )
-
+        self.graph_interface: Optional[ContentGraphInterface] = None
         self.git_util: Optional[GitUtil]
         if init_git:
-            GitUtil.REPO_CLS.init(self.path)
-            self.git_util = GitUtil(self.path)
-            self.git_util.commit_files("Initial Commit")
-            self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)
+            self.init_git()
         else:
             self.git_util = None
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
+        if self.graph_interface:
+            self.graph_interface.close()
 
     def setup_one_pack(
         self, name: Optional[str] = None, marketplaces: List[str] = DEFAULT_MARKETPLACES
@@ -305,6 +309,15 @@ class Repo:
         for i in range(number_of_packs):
             self.setup_one_pack(f"pack_{i}", marketplaces)
 
+    def create_graph(self, output_path: Path | None = None):
+        if not self.graph_interface:
+            self.init_git()
+            self.graph_interface = ContentGraphInterface()
+            self.graph_interface.repo_path = Path(self.path)
+            with ChangeCWD(self.path):
+                create_content_graph(self.graph_interface, output_path=output_path)
+        return self.graph_interface
+    
     def create_pack(self, name: Optional[str] = None):
         if name is None:
             name = f"pack_{len(self.packs)}"
@@ -312,6 +325,13 @@ class Repo:
         self.packs.append(pack)
         return pack
 
+    def init_git(self):
+        if not self.git_util:
+            GitUtil.REPO_CLS.init(self.path)
+            self.git_util = GitUtil(self.path)
+            self.git_util.commit_files("Initial Commit")
+            self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)
+    
     def working_dir(self):
         return self.path
 

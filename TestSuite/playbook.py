@@ -6,6 +6,7 @@ from TestSuite.file import File
 from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
+from demisto_sdk.commands.common.tools import set_value
 
 yaml = YAML_Handler()
 
@@ -33,7 +34,11 @@ class Playbook(YAML):
         else:
             # build test playbook
             self.create_default_test_playbook()
-        
+    
+    @property
+    def yml(self):
+        # for backward compatible
+        return self
     
     def build(
         self,
@@ -71,7 +76,7 @@ class Playbook(YAML):
             yml["id"] = yml["name"] = name
             self.build(yml=yml)
 
-    def add_default_task(self):
+    def add_default_task(self, task_script_name: str = None):
         task = None
         task_filename = "default_playbook/tasks/task-sample.yml"
         with open(
@@ -86,6 +91,8 @@ class Playbook(YAML):
             )
             return
 
+        if task_script_name:
+            set_value(task, 'task.scriptName', task_script_name)
         original_yml = self.read_dict()
         tasks = original_yml["tasks"]
         last_task = tasks[next(reversed(tasks))]

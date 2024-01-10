@@ -18,10 +18,10 @@ class Report(JSONBased):
                 "nextScheduledTime": "0001-01-01T00:00:00Z",
                 "latestScheduledReportTime": "0001-01-01T00:00:00Z",
                 "latestReportTime": "0001-01-01T00:00:00Z",
-                "name": self.name,
+                "name": self.id,
                 "sections": [],
                 "type": "pdf",
-                "id": self.name,
+                "id": self.id,
                 "fromVersion": "6.10.0",
                 "description": "Default test report description.",
             }

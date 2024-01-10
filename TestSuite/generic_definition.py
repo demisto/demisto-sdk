@@ -20,8 +20,8 @@ class GenericDefinition(JSONBased):
             {
                 "version": -1,
                 "fromVersion": "6.10.0",
-                "id": self.name,
-                "name": self.name,
-                "pluralName": self.name,
+                "id": self.id,
+                "name": self.id,
+                "pluralName": self.id,
             }
         )

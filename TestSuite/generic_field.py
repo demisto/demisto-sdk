@@ -19,9 +19,9 @@ class GenericField(JSONBased):
         self.write_json(
             {
                 "cliName": self.name.lower(),
-                "id": self.name,
-                "name": self.name,
-                "definitionId": self.name,
+                "id": self.id,
+                "name": self.id,
+                "definitionId": self.id,
                 "type": "shortText",
                 "fromVersion": "6.10.0",
             }

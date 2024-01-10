@@ -6,6 +6,7 @@ from typing import Union
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from TestSuite.test_suite_base import TestSuiteBase
+from demisto_sdk.commands.common.tools import set_value
 
 json = JSON_Handler()
 
@@ -13,6 +14,7 @@ json = JSON_Handler()
 class JSONBased(TestSuiteBase):
     def __init__(self, dir_path: Path, name: str, prefix: str, json_content: dict = None):
         self._dir_path = dir_path
+        self.id = name
         if prefix:
             self.name = f'{prefix.rstrip("-")}-{name}.json'
         else:
@@ -60,6 +62,13 @@ class JSONBased(TestSuiteBase):
         file_content = self.read_json_as_dict()
         file_content.update(obj)
         self.write_json(file_content)
+        
+    def set_data(self, **key_path_to_val):
+        content = self.read_json_as_dict()
+        for key_path, val in key_path_to_val.items():
+            set_value(content, key_path, val)
+        self.write_json(content)
+        self.clear_from_path_cache()
 
     def remove(self, key: str):
         file_content = self.read_json_as_dict()

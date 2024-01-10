@@ -18,9 +18,9 @@ class GenericModule(JSONBased):
     def create_default(self):
         self.write_json(
             {
-                "id": self.name,
-                "name": self.name,
-                "definitionIds": [self.name],
+                "id": self.id,
+                "name": self.id,
+                "definitionIds": [self.id],
                 "fromVersion": "6.10.0",
             }
         )

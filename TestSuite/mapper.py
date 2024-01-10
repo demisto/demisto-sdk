@@ -13,14 +13,14 @@ class Mapper(JSONBased):
             {
                 "description": "test description",
                 "feed": False,
-                "id": self.name,
+                "id": self.id,
                 "keyTypeMap": {},
                 "mapping": {
                     "dbot_classification_incident_type_all": {
                         "dontMapEventToLabels": True,
                     }
                 },
-                "name": self.name,
+                "name": self.id,
                 "nameRaw": "test",
                 "packID": "",
                 "packName": "",

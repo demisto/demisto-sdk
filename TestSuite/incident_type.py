@@ -18,9 +18,9 @@ class IncidentType(JSONBased):
     def create_default(self):
         self.write_json(
             {
-                "id": self.name,
+                "id": self.id,
                 "description": "test description",
-                "name": self.name,
+                "name": self.id,
                 "hours": 0,
                 "days": 3,
                 "weeks": 1,

@@ -232,9 +232,9 @@ jobs:
 
       - name: run pre-commit on changed files
         continue-on-error: true
-        working-directory: content
         run: |
           source $(poetry env info --path)/bin/activate
+          cd content
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
@@ -246,7 +246,7 @@ jobs:
 
       - name: run pre-commit on input files
         continue-on-error: true
-        working-directory: content
         run: |
           source $(poetry env info --path)/bin/activate
+          cd content
           demisto-sdk pre-commit --format --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3

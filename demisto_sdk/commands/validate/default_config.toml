@@ -9,6 +9,13 @@ select = [
     "IN108",
     "IN130",
     "PB118",
+    "DO100",
+    "DO101",
+    "DO102",
+    "DO103",
+    "DO104",
+    "DO105",
+    "DO106"
 ]
 warning = []
 ignorable_errors = [
@@ -21,9 +28,13 @@ ignorable_errors = [
 select = [
     "BA101", "BA105", "BA106","BA116", "BA118",
     "GR106",
-    "DO108",
     "IN108",
     "IN130",
+    "DO100",
+    "DO101",
+    "DO102",
+    "DO103",
+    "DO104",
     "PA107", "PA108", "PA111", "PA115", "PA130"
 ]
 warning = []

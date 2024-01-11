@@ -161,3 +161,7 @@ def test_get_new_log_entries(changelog_folder_mock: Path):
     results = get_new_log_entries(logs)
     for type_ in (log_type for log_type in LogType):
         assert type_ in results
+
+
+def test_for_test():
+    assert "dont merge" == "dont merge"

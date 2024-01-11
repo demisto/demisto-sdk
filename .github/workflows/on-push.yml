@@ -249,7 +249,7 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
 
   pre-commit-checks:
     runs-on: ubuntu-latest

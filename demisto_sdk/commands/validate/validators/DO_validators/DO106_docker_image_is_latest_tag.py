@@ -63,6 +63,15 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
         for content_item in content_items:
             if not content_item.is_javascript:
                 docker_image = content_item.docker_image_object
+                if not docker_image.is_valid:
+                    invalid_content_items.append(
+                        ValidationResult(
+                            validator=self,
+                            message=f"Docker image {content_item.docker_image} format is invalid, cannot determine if it uses the latest tag",
+                            content_object=content_item,
+                        )
+                    )
+                    continue
                 try:
                     docker_image_latest_tag = str(
                         self.dockerhub_client.get_latest_docker_image_tag(

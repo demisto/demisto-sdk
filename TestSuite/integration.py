@@ -15,7 +15,12 @@ yaml = YAML_Handler()
 
 class Integration:
     def __init__(
-        self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False
+        self,
+        tmpdir: Path,
+        name,
+        repo,
+        create_unified: Optional[bool] = False,
+        _type: str = "python",
     ):
         # Save entities
         self.name = name
@@ -30,9 +35,15 @@ class Integration:
         self.create_unified = create_unified
 
         self.path = str(self._tmpdir_integration_path)
-        self.code = File(
-            self._tmpdir_integration_path / f"{self.name}.py", self._repo.path
-        )
+        self.type = _type
+        if self.type == "python":
+            self.code = File(
+                self._tmpdir_integration_path / f"{self.name}.py", self._repo.path
+            )
+        else:
+            self.code = File(
+                self._tmpdir_integration_path / f"{self.name}.js", self._repo.path
+            )
         self.test = File(
             self._tmpdir_integration_path / f"{self.name}_test.py", self._repo.path
         )
@@ -69,7 +80,10 @@ class Integration:
         if code is not None:
             self.code.write(code)
         else:
-            self.code.write("from CommonServerPython import *\n\n\n")
+            if self.type == "python":
+                self.code.write("from CommonServerPython import *\n\n\n")
+            else:  # javascript
+                self.code.write("console.log('Hello World');")
 
         self.test.write("from CommonServerPython import *\n\n\n")
 

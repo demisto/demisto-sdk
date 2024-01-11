@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -20,6 +21,63 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+
+
+class DockerImage:
+    def __init__(
+        self,
+        repository: str = "",
+        image_name: str = "",
+        tag: str = "",
+    ):
+        self.repository = repository  # the repository e.g.: demisto
+        self.image_name = image_name  # the image name e.g.: python3, pan-os-python
+        self.tag = tag  # the tag
+
+    @property
+    def name(self):
+        """
+        Returns the repositroy + image name. .e.g: demisto/python3, demisto/pan-os-python
+        """
+        return f"{self.repository}/{self.image_name}"
+
+    @property
+    def is_valid(self) -> bool:
+        """
+        Validates that the structure of the docker-image is valid.
+
+        Returns:
+            bool: True if the structure is valid, False if not.
+        """
+        if not self.repository or not self.image_name or not self.tag:
+            logger.warning(
+                f"Docker image {self} is not valid, should be in the form of repository/image-name:tag"
+            )
+            return False
+        return True
+
+    @property
+    def is_tag_latest(self) -> bool:
+        return self.tag == "latest"
+
+    @property
+    def is_demisto_repository(self) -> bool:
+        return self.repository == "demisto"
+
+    @property
+    def is_native_image(self) -> bool:
+        return self.name == "demisto/py3-native"
+
+    def __str__(self):
+        return f"{self.repository}/{self.image_name}:{self.tag}"
+
+    @classmethod
+    def from_regex(cls, docker_image: str) -> "DockerImage":
+        pattern = re.compile(r"^([^/]+)/(.*?)(?::(.*))?$")
+        if matches := pattern.match(docker_image):
+            return cls(matches.group(1), matches.group(2), matches.group(3))
+        else:
+            return cls()
 
 
 class IntegrationScript(ContentItem):
@@ -49,8 +107,16 @@ class IntegrationScript(ContentItem):
         return [self.docker_image] + self.alt_docker_images if self.docker_image else []
 
     @property
+    def docker_image_object(self) -> DockerImage:
+        return DockerImage.from_regex(self.docker_image or "")
+
+    @property
     def is_powershell(self) -> bool:
         return self.type == "powershell"
+
+    @property
+    def is_javascript(self) -> bool:
+        return self.type == "javascript"
 
     def prepare_for_upload(
         self,

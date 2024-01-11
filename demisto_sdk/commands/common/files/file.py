@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional, Type, Union
 import requests
 from bs4.dammit import UnicodeDammit
 from pydantic import BaseModel, PrivateAttr, validator
-from requests.exceptions import RequestException
+from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import retry
 
 
 class File(ABC, BaseModel):
@@ -389,6 +390,7 @@ class File(ABC, BaseModel):
         )
 
     @classmethod
+    @retry(times=5, exceptions=(Timeout, ConnectionError))
     @lru_cache
     def read_from_http_request(
         cls,

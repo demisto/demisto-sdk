@@ -225,8 +225,11 @@ jobs:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit
 
+      - name: Create SDK Config File For Demisto-SDK
+        run: |
+          echo -e "[validate]\nskip_pack_release_notes=true\nno_docker_checks=true" > .demisto-sdk-conf
+
       - name: run pre-commit on changed files
-        continue-on-error: true
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
@@ -240,7 +243,6 @@ jobs:
           demisto-sdk pre-commit --format --validate --show-diff-on-failure --verbose
 
       - name: run pre-commit on input files
-        continue-on-error: true
         run: |
           source $(poetry env info --path)/bin/activate
           cd content

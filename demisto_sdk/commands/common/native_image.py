@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.content_constant_paths import NATIVE_IMAGE_PATH
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import PydanticSingleton
-from demisto_sdk.commands.common.tools import extract_docker_image_from_text
+from demisto_sdk.commands.content_graph.objects.integration_script import DockerImage
 
 
 class NativeImage(BaseModel):
@@ -142,11 +142,7 @@ class ScriptIntegrationSupportedNativeImages:
         docker_image: Optional[str] = None,
     ):
         self.id = _id
-        self.docker_image = (
-            extract_docker_image_from_text(text=docker_image, with_no_tag=True)
-            if docker_image
-            else docker_image
-        )
+        self.docker_image = DockerImage.from_regex(docker_image or "").image_name
         self.native_image_config = native_image_config
 
     def __docker_image_to_native_images_support(self) -> List[str]:

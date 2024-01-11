@@ -230,6 +230,7 @@ jobs:
           # skip in the demisto-sdk pre-commit docker/release-notes validations
           cd content
           echo -e "[validate]\nskip_pack_release_notes=true\nno_docker_checks=true" > .demisto-sdk-conf
+          ls -agit co
 
       - name: run pre-commit on changed files
         run: |

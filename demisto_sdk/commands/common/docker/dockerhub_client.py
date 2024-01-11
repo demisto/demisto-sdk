@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import dateparser
 import requests
 from packaging.version import InvalidVersion, Version
-from requests.exceptions import ConnectionError, HTTPError, Timeout
+from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
@@ -23,6 +23,16 @@ class DockerHubAuthScope(str, Enum):
     PUSH = "push"  # Grants write access to the repository, allowing you to push images.
     DELETE = "delete"  # Grants permission to delete images from the repository.
     REPOSITORY = "repository"  # Grants full access to the repository, including both pull and push permissions.
+
+
+class DockerHubRequestException(Exception):
+    def __init__(self, message: str, exception: RequestException):
+        super().__init__(message)
+        self.message = message
+        self.exception = exception
+
+    def __str__(self):
+        return f"Error - {self.message} - Exception - {self.exception}"
 
 
 class DockerHubClient:
@@ -85,8 +95,33 @@ class DockerHubClient:
             },
             auth=self.auth,
         )
-        if not response.ok:
-            raise RuntimeError(f"Failed to get docker hub token: {response.text}")
+        try:
+            response.raise_for_status()
+        except RequestException as _error:
+            logger.warning(
+                f"Error when trying to get dockerhub token, error\n:{_error}"
+            )
+            if _error.response.status_code == requests.codes.unauthorized and self.auth:
+                logger.debug("Trying to get dockerhub token without username:password")
+                try:
+                    response = self._session.get(
+                        "https://auth.docker.io/token",
+                        params={
+                            "service": "registry.docker.io",
+                            "scope": f"repository:{repo}:{scope}",
+                        },
+                    )
+                    response.raise_for_status()
+                except RequestException as error:
+                    raise DockerHubRequestException(
+                        f"Failed to get dockerhub token without username:password:\n{error}",
+                        exception=error,
+                    )
+            else:
+                raise DockerHubRequestException(
+                    "Failed to get dockerhub token with username:password",
+                    exception=_error,
+                )
         try:
             raw_json_response = response.json()
         except JSONDecodeError as e:
@@ -118,12 +153,14 @@ class DockerHubClient:
             headers: headers if needed
             params: params if needed
         """
+        auth = None if headers and "Authorization" in headers else self.auth
+
         response = self._session.get(
             url,
             headers=headers,
             params=params,
             verify=self.verify_ssl,
-            auth=self.auth,
+            auth=auth,
         )
         response.raise_for_status()
         try:
@@ -167,7 +204,7 @@ class DockerHubClient:
             url,
             headers={key: value for key, value in headers}
             if headers
-            else None or {"Accept": "application/json"},
+            else {"Accept": "application/json"},
             params=_params,
         )
 
@@ -238,10 +275,11 @@ class DockerHubClient:
             return self.do_registry_get_request(
                 f"/manifests/{tag}", docker_image=docker_image
             )
-        except HTTPError as error:
-            raise RuntimeError(
-                f"Failed to get docker-image {docker_image} manifest"
-            ) from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to image manifests of docker-image {docker_image}:{tag}",
+                exception=error,
+            )
 
     def get_image_digest(self, docker_image: str, tag: str) -> str:
         """
@@ -271,10 +309,11 @@ class DockerHubClient:
             return self.do_registry_get_request(
                 f"/blobs/{image_digest}", docker_image=docker_image
             )
-        except HTTPError as error:
-            raise RuntimeError(
-                f"Failed to get docker-image {docker_image}'s digest metadata"
-            ) from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to retrieve image blobs of docker-image {docker_image} with digest {image_digest}",
+                exception=error,
+            )
 
     def get_image_env(self, docker_image: str, tag: str) -> List[str]:
         """
@@ -304,10 +343,11 @@ class DockerHubClient:
             response = self.do_registry_get_request(
                 "/tags/list", docker_image=docker_image
             )
-        except HTTPError as error:
-            raise RuntimeError(
-                f"Failed to get docker-image {docker_image} tags"
-            ) from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to retrieve image tags of docker-image {docker_image}",
+                exception=error,
+            )
 
         return response.get("tags") or []
 
@@ -323,10 +363,31 @@ class DockerHubClient:
             return self.do_docker_hub_get_request(
                 f"/repositories/{docker_image}/tags/{tag}"
             )
-        except HTTPError as error:
-            raise RuntimeError(
-                f"Failed to get docker image {docker_image}'s {tag} metadata"
-            ) from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to retrieve tag metadata of docker-image {docker_image}:{tag}",
+                exception=error,
+            )
+
+    def is_docker_image_exist(self, docker_image: str, tag: str) -> bool:
+        """
+        Returns whether a docker image exists.
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            tag: The tag of the docker image
+        """
+        try:
+            self.get_image_tag_metadata(docker_image, tag=tag)
+            return True
+        except DockerHubRequestException as error:
+            if error.exception.response.status_code == requests.codes.not_found:
+                logger.debug(f"docker-image {docker_image}:{tag} does not exist")
+                return False
+            logger.debug(
+                f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
+            )
+            return tag in self.get_image_tags(docker_image)
 
     def get_docker_image_tag_creation_date(
         self, docker_image: str, tag: str
@@ -378,8 +439,10 @@ class DockerHubClient:
         """
         try:
             return self.do_docker_hub_get_request(f"/repositories/{repo}")
-        except HTTPError as error:
-            raise RuntimeError(f"Failed to get repository {repo}'s images") from error
+        except RequestException as error:
+            raise DockerHubRequestException(
+                f"Failed to retreive images of repository {repo}", exception=error
+            )
 
     def get_repository_images_names(self, repo: str = DEFAULT_REPOSITORY) -> List[str]:
         """

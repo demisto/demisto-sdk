@@ -52,7 +52,7 @@ class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
                     if error.exception.response.status_code == requests.codes.not_found:
                         message = self.error_message.format(content_item.docker_image)
                     else:
-                        message = f"Error when trying to fetch {content_item.docker_image} tag metadata"
+                        message = f"Error when trying to fetch {content_item.docker_image} tag metadata, {error=}"
 
                     invalid_content_items.append(
                         ValidationResult(

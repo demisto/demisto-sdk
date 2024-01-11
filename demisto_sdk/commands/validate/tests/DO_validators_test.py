@@ -1,7 +1,10 @@
 import pytest
-from requests.exceptions import HTTPError
+import requests
 
-from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
+from demisto_sdk.commands.common.docker.dockerhub_client import (
+    DockerHubClient,
+    DockerHubRequestException,
+)
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -367,13 +370,21 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
         f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/ml/tags/1.0.0.33340",
         json={"tags": ["1.0.0.32340", "1.0.0.33340"]},
     )
+    response = requests.Response()
+    response.status_code = 401
     requests_mock.get(
         f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.55555",
-        exc=HTTPError("error"),
+        exc=DockerHubRequestException(
+            "error",
+            exception=requests.RequestException(response=response),
+        ),
     )
     requests_mock.get(
         f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/ml/tags/1.0.0.32342",
-        exc=HTTPError("error"),
+        exc=DockerHubRequestException(
+            "error",
+            exception=requests.RequestException(response=response),
+        ),
     )
 
     results = DockerImageDoesNotExistInDockerhubValidator().is_valid(content_items)

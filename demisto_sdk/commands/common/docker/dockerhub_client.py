@@ -77,15 +77,15 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
-            now = datetime.now()
-            if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
-                # minus 60 seconds to be on the safe side
-                _expiration_time: datetime = expiration_time + timedelta(
-                    seconds=token_metadata.get("expires_in_seconds") - 60
-                )
-                if _expiration_time.replace(tzinfo=None) < now:
-                    return token_metadata.get("token")
+        # if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
+        #     now = datetime.now()
+        #     if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
+        #         # minus 60 seconds to be on the safe side
+        #         _expiration_time: datetime = expiration_time + timedelta(
+        #             seconds=token_metadata.get("expires_in_seconds") - 60
+        #         )
+        #         if _expiration_time.replace(tzinfo=None) < now:
+        #             return token_metadata.get("token")
 
         response = self._session.get(
             "https://auth.docker.io/token",
@@ -130,11 +130,11 @@ class DockerHubClient:
             ) from e
 
         token = raw_json_response.get("token")
-        self._docker_hub_auth_tokens[f"{repo}:{scope}"] = {
-            "token": token,
-            "issued_at": raw_json_response.get("issued_at"),
-            "expires_in_seconds": raw_json_response.get("expires_in"),
-        }
+        # self._docker_hub_auth_tokens[f"{repo}:{scope}"] = {
+        #     "token": token,
+        #     "issued_at": raw_json_response.get("issued_at"),
+        #     "expires_in_seconds": raw_json_response.get("expires_in"),
+        # }
 
         return token
 

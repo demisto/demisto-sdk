@@ -163,7 +163,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         logging_setup(
             console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
             file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log_file_path") or None,
+            log_file_path=kwargs.get("log_file_path"),
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -1266,7 +1266,7 @@ def coverage_analyze(ctx, **kwargs):
     logger = logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
         file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
+        log_file_path=kwargs.get("log_file_path"),
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
@@ -2691,7 +2691,7 @@ def postman_codegen(
     logger = logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
         file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
+        log_file_path=kwargs.get("log_file_path"),
     )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,

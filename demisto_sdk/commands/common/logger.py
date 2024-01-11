@@ -396,18 +396,17 @@ def logging_setup(
     ):
         log_file_directory_path = Path(log_file_directory_path_str)
 
-    else:  # Use Default
-        log_file_directory_path = DEFAULT_LOGS_DIR
-
-    if not log_file_directory_path.is_dir():
-        if log_file_directory_path == DEFAULT_LOGS_DIR:
-            log_file_directory_path.mkdir(parents=True, exist_ok=True)
-
-        else:
+        if not log_file_directory_path.is_dir():
             # Can't use 'logger.error' here, as the logger is not yet initialized.
             exit(
                 f"Error: Configured logs path '{log_file_directory_path}' does not exist."
             )
+
+    else:  # Use default log files path
+        log_file_directory_path = DEFAULT_LOGS_DIR
+        log_file_directory_path.mkdir(
+            parents=True, exist_ok=True
+        )  # Generate directory if it doesn't exist
 
     log_file_path = log_file_directory_path / LOG_FILE_NAME
     LOG_FILE_PATH = log_file_path

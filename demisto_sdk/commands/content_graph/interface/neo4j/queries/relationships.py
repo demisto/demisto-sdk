@@ -32,7 +32,7 @@ def build_target_properties(
     identifier: str = "object_id",
     with_content_type: bool = False,
 ) -> str:
-    properties = {identifier: "rel_data.target", "not_in_repository": False}
+    properties = {identifier: "rel_data.target"}
     if with_content_type:
         properties["content_type"] = "rel_data.target_type"
     return node_map(properties)
@@ -76,27 +76,26 @@ def build_uses_relationships_query(
     return f"""// Creates USES relationships between parsed nodes.
 // Note: if a target node is created, it means the node does not exist in the repository.
 UNWIND $data AS rel_data
-
-// Get all content items with the specified properties
 MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
-    WITH source, rel_data
-    MERGE (target:{ContentType.BASE_NODE}{
-        build_target_properties(identifier=target_identifier)
-    })
-ON CREATE
-    // If created, mark "not in repository" (all repository nodes were created already)
-    SET
-        target.not_in_repository = true,
-        target.object_id = rel_data.target,
-        target.name = rel_data.target,
-        target.cli_name = rel_data.target,
-        target.content_type = rel_data.target_type
-// filter by the correct label
-WITH source, rel_data, target
-MATCH (target)
-WHERE rel_data.target_type IN labels(target) OR target.not_in_repository
+// Get all content items with the specified properties
+CALL apoc.merge.node(
+    [rel_data.target_type, "{ContentType.BASE_NODE}"],
+    {build_target_properties(identifier=target_identifier)},
+    {{
+        not_in_repository: true,
+        object_id: rel_data.target,
+        name: rel_data.target,
+        cli_name: rel_data.target,
+        content_type: rel_data.target_type
+    }}
+) YIELD node as target
 
+WITH source, target, rel_data
 // Get or create the relationship and set its "mandatorily" field based on relationship data
+OPTIONAL MATCH (target2:{ContentType.BASE_NODE}{{{target_identifier}: rel_data.target, not_in_repository: false}})
+WHERE rel_data.target_type in labels(target2)
+WITH source, target, rel_data, target2
+WHERE target2 IS NULL OR target.not_in_repository = false
 MERGE (source)-[r:{RelationshipType.USES}]->(target)
 ON CREATE
     SET r.mandatorily = rel_data.mandatorily

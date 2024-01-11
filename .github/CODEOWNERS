@@ -10,7 +10,7 @@ demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun
 .circleci/ @GuyAfik
 
 # Github Actions
-.github/workflows
+.github/workflows @GuyAfik
 
 # Dependencies
 Pipfile* @GuyAfik

@@ -229,7 +229,7 @@ jobs:
         run: |
           # skip in the demisto-sdk pre-commit docker/release-notes validations
           cd content
-          echo -e "[validate]run-specific-validations=BA101" > .demisto-sdk-conf
+          echo -e "[validate]run_specific_validations=BA101" > .demisto-sdk-conf
 
       - name: run pre-commit on changed files
         run: |

@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from pydantic import Field
 
@@ -85,6 +85,7 @@ class IntegrationScript(ContentItem):
     subtype: Optional[str]
     docker_image: Optional[str]
     alt_docker_images: List[str] = []
+    supported_native_images: Set[str] = set()
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)

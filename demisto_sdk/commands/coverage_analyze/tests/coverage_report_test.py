@@ -223,10 +223,9 @@ class TestFileMinCoverage:
     def test_with_exist_file(
         self, file_path, current_cover, expected_min_cover, tmpdir, monkeypatch
     ):
-        file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport()
-        cov_report._original_summary = {file_path: current_cover}
+        cov_report._original_summary = {os.path.relpath(file_path): current_cover}
         assert cov_report.file_min_coverage(file_path) == expected_min_cover
 
     data_test_with_custom_epsilon_file = [
@@ -244,10 +243,9 @@ class TestFileMinCoverage:
     def test_with_custom_epsilon_file(
         self, file_path, epsilon, expected_min_cover, tmpdir, monkeypatch
     ):
-        file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport(allowed_coverage_degradation_percentage=epsilon)
-        cov_report._original_summary = {file_path: 80.0}
+        cov_report._original_summary = {os.path.relpath(file_path): 80.0}
         assert cov_report.file_min_coverage(file_path) == expected_min_cover
 
 

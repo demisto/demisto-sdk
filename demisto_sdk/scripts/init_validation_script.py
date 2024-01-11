@@ -87,7 +87,7 @@ CONTENT_TYPES_DICT = {
         "content_type": "ModelingRule",
     },
     "19": {
-        "import": "from demisto_sdk.commands.content_graph.objects.parsing_Rule import ParsingRule",
+        "import": "from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule",
         "content_type": "ParsingRule",
     },
     "20": {

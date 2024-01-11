@@ -19,6 +19,7 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
     description = "Validate that the given content item uses a docker image that is not deprecated"
     error_message = "The {0} docker image is deprecated, {1}"
     related_field = "Docker image"
+    is_auto_fixable = False
     deprecated_dockers_to_reasons: ClassVar[
         Dict[str, str]
     ] = {}  # map between deprecated docker to the reason its deprecated

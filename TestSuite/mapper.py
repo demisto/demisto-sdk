@@ -7,7 +7,10 @@ class Mapper(JSONBased):
     def __init__(self, name: str, mapper_dir_path: Path, json_content: dict = None):
         self.mapper_tmp_path = mapper_dir_path / f"{name}.json"
         super().__init__(
-            dir_path=mapper_dir_path, name=name, prefix="", json_content=json_content
+            dir_path=mapper_dir_path,
+            name=name,
+            prefix="classifier-mapper",
+            json_content=json_content,
         )
 
     def create_default(self):

@@ -108,92 +108,92 @@ class Pack(TestSuiteBase):
 
         # Create base pack
         self._pack_path = packs_dir / self.name
-        self._pack_path.mkdir(exist_ok=True)
+        self._pack_path.mkdir()
         self.path = str(self._pack_path)
 
         # Create repo structure
         self._integrations_path = self._pack_path / "Integrations"
-        self._integrations_path.mkdir(exist_ok=True)
+        self._integrations_path.mkdir()
 
         self._scripts_path = self._pack_path / "Scripts"
-        self._scripts_path.mkdir(exist_ok=True)
+        self._scripts_path.mkdir()
 
         self._playbooks_path = self._pack_path / "Playbooks"
-        self._playbooks_path.mkdir(exist_ok=True)
+        self._playbooks_path.mkdir()
 
         self._test_playbooks_path = self._pack_path / "TestPlaybooks"
-        self._test_playbooks_path.mkdir(exist_ok=True)
+        self._test_playbooks_path.mkdir()
 
         self._classifiers_path = self._pack_path / "Classifiers"
-        self._classifiers_path.mkdir(exist_ok=True)
+        self._classifiers_path.mkdir()
 
         self._mappers_path = self._classifiers_path
 
         self._dashboards_path = self._pack_path / "Dashboards"
-        self._dashboards_path.mkdir(exist_ok=True)
+        self._dashboards_path.mkdir()
 
         self._incidents_field_path = self._pack_path / "IncidentFields"
-        self._incidents_field_path.mkdir(exist_ok=True)
+        self._incidents_field_path.mkdir()
 
         self._incident_types_path = self._pack_path / "IncidentTypes"
-        self._incident_types_path.mkdir(exist_ok=True)
+        self._incident_types_path.mkdir()
 
         self._indicator_fields = self._pack_path / "IndicatorFields"
-        self._indicator_fields.mkdir(exist_ok=True)
+        self._indicator_fields.mkdir()
 
         self._indicator_types = self._pack_path / "IndicatorTypes"
-        self._indicator_types.mkdir(exist_ok=True)
+        self._indicator_types.mkdir()
 
         self._generic_fields_path = self._pack_path / "GenericFields"
-        self._generic_fields_path.mkdir(exist_ok=True)
+        self._generic_fields_path.mkdir()
 
         self._generic_types_path = self._pack_path / "GenericTypes"
-        self._generic_types_path.mkdir(exist_ok=True)
+        self._generic_types_path.mkdir()
 
         self._generic_modules_path = self._pack_path / "GenericModules"
-        self._generic_modules_path.mkdir(exist_ok=True)
+        self._generic_modules_path.mkdir()
 
         self._generic_definitions_path = self._pack_path / "GenericDefinitions"
-        self._generic_definitions_path.mkdir(exist_ok=True)
+        self._generic_definitions_path.mkdir()
 
         self._layout_path = self._pack_path / "Layouts"
-        self._layout_path.mkdir(exist_ok=True)
+        self._layout_path.mkdir()
 
         self._report_path = self._pack_path / "Reports"
-        self._report_path.mkdir(exist_ok=True)
+        self._report_path.mkdir()
 
         self._widget_path = self._pack_path / "Widgets"
-        self._widget_path.mkdir(exist_ok=True)
+        self._widget_path.mkdir()
 
         self._wizard_path = self._pack_path / "Wizards"
-        self._wizard_path.mkdir(exist_ok=True)
+        self._wizard_path.mkdir()
 
         self._release_notes = self._pack_path / "ReleaseNotes"
-        self._release_notes.mkdir(exist_ok=True)
+        self._release_notes.mkdir()
 
         self._lists_path = self._pack_path / "Lists"
-        self._lists_path.mkdir(exist_ok=True)
+        self._lists_path.mkdir()
 
         self._parsing_rules_path = self._pack_path / PARSING_RULES_DIR
-        self._parsing_rules_path.mkdir(exist_ok=True)
+        self._parsing_rules_path.mkdir()
 
         self._modeling_rules_path = self._pack_path / MODELING_RULES_DIR
-        self._modeling_rules_path.mkdir(exist_ok=True)
+        self._modeling_rules_path.mkdir()
 
         self._correlation_rules_path = self._pack_path / CORRELATION_RULES_DIR
-        self._correlation_rules_path.mkdir(exist_ok=True)
+        self._correlation_rules_path.mkdir()
 
         self._xsiam_dashboards_path = self._pack_path / XSIAM_DASHBOARDS_DIR
-        self._xsiam_dashboards_path.mkdir(exist_ok=True)
+        self._xsiam_dashboards_path.mkdir()
 
         self._xsiam_reports_path = self._pack_path / XSIAM_REPORTS_DIR
-        self._xsiam_reports_path.mkdir(exist_ok=True)
+        self._xsiam_reports_path.mkdir()
 
         self._triggers_path = self._pack_path / TRIGGER_DIR
-        self._triggers_path.mkdir(exist_ok=True)
+        self._triggers_path.mkdir()
 
         self._xdrc_templates_path = self._pack_path / XDRC_TEMPLATE_DIR
-        self._xdrc_templates_path.mkdir(exist_ok=True)
+        self._xdrc_templates_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -222,15 +222,15 @@ class Pack(TestSuiteBase):
         self.author_image.write(DEFAULT_IMAGE_BASE64)
 
         self._jobs_path = self._pack_path / "Jobs"
-        self._jobs_path.mkdir(exist_ok=True)
+        self._jobs_path.mkdir()
 
         self._xsiam_layout_rules_path = self._pack_path / LAYOUT_RULES_DIR
-        self._xsiam_layout_rules_path.mkdir(exist_ok=True)
+        self._xsiam_layout_rules_path.mkdir()
 
         self.contributors: Optional[TextBased] = None
 
         self._assets_modeling_rules_path = self._pack_path / ASSETS_MODELING_RULES_DIR
-        self._assets_modeling_rules_path.mkdir(exist_ok=True)
+        self._assets_modeling_rules_path.mkdir()
 
         super().__init__(self._pack_path)
 
@@ -353,25 +353,22 @@ class Pack(TestSuiteBase):
         return obj
 
     def create_classifier(self, name: str = None, content: dict = None) -> Classifier:
-        prefix = "classifier"
         if not name:
-            name = f"{prefix}{len(self.classifiers)}"
+            name = f"classifier{len(self.classifiers)}"
         classifier = Classifier(name, self._classifiers_path, content)
         self.classifiers.append(classifier)
         return classifier
 
     def create_mapper(self, name: str = None, content: dict = None) -> Mapper:
-        prefix = "classifier-mapper"
         if not name:
-            name = f"{prefix}{len(self.mappers)}"
+            name = f"classifier-mapper{len(self.mappers)}"
         mapper = Mapper(name, self._mappers_path, content)
         self.mappers.append(mapper)
         return mapper
 
     def create_dashboard(self, name: str = None, content: dict = None) -> Dashboard:
-        prefix = "dashboard"
         if not name:
-            name = f"{prefix}{len(self.dashboards)}"
+            name = f"dashboard{len(self.dashboards)}"
         dashboard = Dashboard(name, self._dashboards_path, content)
         self.dashboards.append(dashboard)
         return dashboard
@@ -379,9 +376,8 @@ class Pack(TestSuiteBase):
     def create_incident_field(
         self, name: str = None, content: dict = None
     ) -> IncidentField:
-        prefix = "incidentfield"
         if not name:
-            name = f"{prefix}{len(self.incident_fields)}"
+            name = f"incidentfield{len(self.incident_fields)}"
         incident_field = IncidentField(name, self._incidents_field_path, content)
 
         self.incident_fields.append(incident_field)
@@ -390,9 +386,8 @@ class Pack(TestSuiteBase):
     def create_incident_type(
         self, name: str = None, content: dict = None
     ) -> IncidentType:
-        prefix = "incidenttype"
         if not name:
-            name = f"{prefix}{len(self.incident_types)}"
+            name = f"incidenttype{len(self.incident_types)}"
         incident_type = IncidentType(name, self._incident_types_path, content)
         self.incident_types.append(incident_type)
         return incident_type
@@ -400,9 +395,8 @@ class Pack(TestSuiteBase):
     def create_indicator_field(
         self, name: str = None, content: dict = None
     ) -> IndicatorField:
-        prefix = "indicatorfield"
         if not name:
-            name = f"{prefix}{len(self.indicator_fields)}"
+            name = f"indicatorfield{len(self.indicator_fields)}"
         indicator_field = IndicatorField(name, self._indicator_fields, content)
         self.indicator_fields.append(indicator_field)
         return indicator_field
@@ -410,23 +404,22 @@ class Pack(TestSuiteBase):
     def create_indicator_type(
         self, name: str = None, content: dict = None
     ) -> IndicatorType:
-        prefix = "reputation"
         if not name:
-            name = f"{prefix}{len(self.indicator_types)}"
+            name = f"reputation{len(self.indicator_types)}"
         indicator_type = IndicatorType(name, self._indicator_types, content)
         self.indicator_types.append(indicator_type)
         return indicator_type
 
     def create_generic_field(self, name, content: dict = None) -> GenericField:
         dir_path = self._generic_fields_path / name
-        dir_path.mkdir(exist_ok=True)
+        dir_path.mkdir()
         generic_field = GenericField(name, dir_path, content)
         self.generic_fields.append(generic_field)
         return generic_field
 
     def create_generic_type(self, name, content: dict = None) -> GenericType:
         dir_path = self._generic_types_path / name
-        dir_path.mkdir(exist_ok=True)
+        dir_path.mkdir()
         generic_type = GenericType(name, dir_path, content)
         self.generic_types.append(generic_type)
         return generic_type
@@ -434,9 +427,8 @@ class Pack(TestSuiteBase):
     def create_generic_module(
         self, name: str = None, content: dict = None
     ) -> GenericModule:
-        prefix = "genericmodule"
         if not name:
-            name = f"{prefix}{len(self.generic_modules)}"
+            name = f"genericmodule{len(self.generic_modules)}"
 
         generic_module = GenericModule(name, self._generic_modules_path, content)
         self.generic_modules.append(generic_module)
@@ -445,9 +437,8 @@ class Pack(TestSuiteBase):
     def create_generic_definition(
         self, name: str = None, content: dict = None
     ) -> GenericDefinition:
-        prefix = "genericdefinition"
         if not name:
-            name = f"{prefix}{len(self.generic_definitions)}"
+            name = f"genericdefinition{len(self.generic_definitions)}"
         generic_definition = GenericDefinition(
             name, self._generic_definitions_path, content
         )
@@ -601,7 +592,7 @@ class Pack(TestSuiteBase):
 
     def create_doc_file(self, name: str = "image") -> File:
         doc_file_dir = self._pack_path / "doc_files"
-        doc_file_dir.mkdir(exist_ok=True)
+        doc_file_dir.mkdir()
         return File(doc_file_dir / f"{name}.png", self._repo.path)
 
     def create_contributors_file(self, content) -> TextBased:
@@ -715,7 +706,7 @@ class Pack(TestSuiteBase):
         self, name: str = None, content: dict = None
     ) -> CorrelationRule:
         if not name:
-            name = f"correlation_rule{len(self.correlation_rules)}"
+            name = f"correlationrule{len(self.correlation_rules)}"
         correlation_rule = CorrelationRule(
             name, self._correlation_rules_path, self.repo_path, content
         )
@@ -751,7 +742,7 @@ class Pack(TestSuiteBase):
         self, name, json_content: dict = None, yaml_content: dict = None
     ) -> XDRCTemplate:
         xdrc_template_dir: Path = self._xdrc_templates_path / f"{self.name}_{name}"
-        xdrc_template_dir.mkdir(exist_ok=True)
+        xdrc_template_dir.mkdir()
         xdrc_template = XDRCTemplate(
             name, xdrc_template_dir, json_content, yaml_content
         )

@@ -11,7 +11,7 @@ class GenericModule(JSONBased):
         super().__init__(
             dir_path=generic_module_dir_path,
             name=name,
-            prefix="",
+            prefix="genericmodule",
             json_content=json_content,
         )
 

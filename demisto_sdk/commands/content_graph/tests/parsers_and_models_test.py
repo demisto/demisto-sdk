@@ -1561,7 +1561,7 @@ class TestParsersAndModels:
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
 
-        pack.create_classifier("classifier-sample", load_json("classifier.json"))
+        pack.create_classifier("sample", load_json("classifier.json"))
         with open(f"{pack.path}/.pack-ignore", "w") as f:
             f.write("[file:classifier-sample.json]\nignore=SC100")
 

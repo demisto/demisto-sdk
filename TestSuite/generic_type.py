@@ -11,7 +11,7 @@ class GenericType(JSONBased):
         super().__init__(
             dir_path=generic_type_dir_path,
             name=name,
-            prefix="",
+            prefix="generictype",
             json_content=json_content,
         )
 

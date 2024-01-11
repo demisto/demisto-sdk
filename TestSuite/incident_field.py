@@ -11,7 +11,7 @@ class IncidentField(JSONBased):
         super().__init__(
             dir_path=incident_field_dir_path,
             name=name,
-            prefix="",
+            prefix="incidentfield",
             json_content=json_content,
         )
 

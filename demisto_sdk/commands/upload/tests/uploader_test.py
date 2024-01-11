@@ -1038,7 +1038,7 @@ class TestItemDetacher:
         assert (
             ItemDetacher(
                 client=API_CLIENT,
-                file_path=f"{playbook1.path}/MyPlay1.yml",
+                file_path=playbook1.path,
                 marketplace=MarketplaceVersions.XSOAR,
             ).find_item_id_to_detach()
             == "sample playbook"

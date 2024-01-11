@@ -11,7 +11,7 @@ class GenericDefinition(JSONBased):
         super().__init__(
             dir_path=generic_definition_dir_path,
             name=name,
-            prefix="",
+            prefix="genericdefinition",
             json_content=json_content,
         )
 

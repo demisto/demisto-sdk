@@ -11,7 +11,7 @@ class GenericField(JSONBased):
         super().__init__(
             dir_path=generic_field_dir_path,
             name=name,
-            prefix="",
+            prefix="genericfield",
             json_content=json_content,
         )
 

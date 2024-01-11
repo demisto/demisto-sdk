@@ -7,7 +7,7 @@ class Report(JSONBased):
     def __init__(self, name: str, report_dir_path: Path, json_content: dict = None):
         self.report_tmp_path = report_dir_path / f"{name}.json"
 
-        super().__init__(report_dir_path, name, "", json_content=json_content)
+        super().__init__(report_dir_path, name, "report", json_content=json_content)
 
     def create_default(self):
         self.write_json(

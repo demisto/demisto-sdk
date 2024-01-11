@@ -11,7 +11,7 @@ class IndicatorField(JSONBased):
         super().__init__(
             dir_path=indicator_field_dir_path,
             name=name,
-            prefix="",
+            prefix="indicatorfield",
             json_content=json_content,
         )
 

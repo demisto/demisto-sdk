@@ -9,7 +9,7 @@ class Classifier(JSONBased):
         super().__init__(
             dir_path=classifier_dir_path,
             name=name,
-            prefix="",
+            prefix="classifier",
             json_content=json_content,
         )
 

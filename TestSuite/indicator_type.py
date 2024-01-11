@@ -11,7 +11,7 @@ class IndicatorType(JSONBased):
         super().__init__(
             dir_path=indicator_type_dir_path,
             name=name,
-            prefix="",
+            prefix="reputation",
             json_content=json_content,
         )
 

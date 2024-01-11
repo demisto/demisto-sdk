@@ -26,7 +26,7 @@ class JSONBased(TestSuiteBase):
         self.path = str(self._file_path)
         super().__init__(self._file_path)
 
-        if json_content:
+        if json_content is not None:
             self.write_json(json_content)
         else:
             self.create_default()

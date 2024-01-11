@@ -227,6 +227,7 @@ jobs:
 
       - name: Create SDK Config File For Demisto-SDK
         run: |
+          cd content
           echo -e "[validate]\nskip_pack_release_notes=true\nno_docker_checks=true" > .demisto-sdk-conf
 
       - name: run pre-commit on changed files

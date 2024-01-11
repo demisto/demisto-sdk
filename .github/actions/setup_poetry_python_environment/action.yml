@@ -1,0 +1,45 @@
+name: 'Setup python environment for demisto-sdk jobs'
+description: 'Setup python environment for demisto-sdk jobs'
+author: 'Demisto-SDK'
+
+inputs:
+  python-version:
+    required: true
+    type: string
+    description: "The python version to setup"
+  working-dir:
+    required: false
+    type: string
+    default: ${{ github.workspace }}
+    description: "On which working directory to run the setup-env, for example it can be done in content"
+  poetry-install-arguments:
+    required: false
+    type: string
+    default: "-E generate-unit-tests"
+    description: "the arguments for the poetry install command"
+
+runs:
+  using: 'composite'
+  steps:
+
+    - name: Setup Poetry
+      uses: Gr1N/setup-poetry@v8
+
+    - name: Check Poetry Consistency
+      run: |
+        cd ${{ inputs.working-dir }}
+        poetry --version
+        poetry check --lock
+      shell: bash
+
+    - name: Install dependencies with poetry
+      run: |
+        cd ${{ inputs.working-dir }}
+        poetry install ${{ inputs.poetry-install-arguments }}
+      shell: bash
+
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+        # cache: poetry

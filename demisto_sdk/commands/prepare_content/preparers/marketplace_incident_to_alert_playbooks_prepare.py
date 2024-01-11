@@ -42,7 +42,6 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
         if (
             current_marketplace == MarketplaceVersions.MarketplaceV2
             and MarketplaceVersions.MarketplaceV2 in supported_marketplaces
-            and len(supported_marketplaces) > 1
         ):
             data = prepare_playbook_access_fields(data, playbook)
 

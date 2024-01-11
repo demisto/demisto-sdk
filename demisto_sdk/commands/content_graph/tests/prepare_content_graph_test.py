@@ -50,7 +50,6 @@ def setup_method(mocker, repo: Repo):
             }
         },
     )
-    neo4j_service.stop()
 
 
 @pytest.fixture

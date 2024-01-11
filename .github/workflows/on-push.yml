@@ -1,0 +1,247 @@
+name: CI - On Push
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - "**"
+
+concurrency:
+  group: tests-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
+jobs:
+  unit-tests:
+    name: Unit Tests / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10" ]
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Test Environment (Python ${{ matrix.python-version }})
+        uses: ./.github/actions/setup_test_environment
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run Unit Tests
+        run: |
+          source "$(poetry env info --path)/bin/activate"
+
+          # Due to race conditions in the tests bringing up and down the node server, have the server available
+          # For all the tests.
+          node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
+          node_pid=$!
+
+          mkdir unit-tests
+          poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml || pytest_exit_code=$?
+          echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
+
+          kill $node_pid
+
+      - name: Python ${{ matrix.python-version }} - Test Summary Upload
+        uses: ./.github/actions/test_summary
+        with:
+          python-version: ${{ matrix.python-version }}
+          artifacts-folder-name: unit-tests
+          junit-path: unit-tests/junit.xml
+
+  integration-tests:
+    name: Integration Tests / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10" ]
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Test Environment (Python ${{ matrix.python-version }})
+        uses: ./.github/actions/setup_test_environment
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run Integration Tests
+        run: |
+          source "$(poetry env info --path)/bin/activate"
+
+          mkdir integration-tests
+          poetry run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html:integration-tests/coverage --junitxml=integration-tests/junit.xml || pytest_exit_code=$?
+          echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
+
+          exit $pytest_exit_code
+
+      - name: Python ${{ matrix.python-version }} - Test Summary Upload
+        uses: ./.github/actions/test_summary
+        with:
+          python-version: ${{ matrix.python-version }}
+          artifacts-folder-name: integration-tests
+          junit-path: integration-tests/junit.xml
+
+  graph-tests:
+    name: Graph Tests / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10" ]
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Test Environment (Python ${{ matrix.python-version }})
+        uses: ./.github/actions/setup_test_environment
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run Graph Tests
+        run: |
+          source "$(poetry env info --path)/bin/activate"
+
+          mkdir graph-tests
+          poetry run pytest -v demisto_sdk/commands/content_graph --cov=demisto_sdk --cov-report=html:graph-tests/coverage --junitxml=graph-tests/junit.xml || pytest_exit_code=$?
+          echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
+
+      - name: Python ${{ matrix.python-version }} - Test Summary Upload
+        uses: ./.github/actions/test_summary
+        with:
+          python-version: ${{ matrix.python-version }}
+          artifacts-folder-name: graph-tests
+          junit-path: graph-tests/junit.xml
+
+  coverage:
+    needs: [unit-tests, integration-tests, graph-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+      - name: Run coverage
+        run: |
+          pip install coverage
+          coverage combine **/.coverage
+          coverage report
+          coverage xml
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+      - name: Coveralls v2
+        run: |
+          if [ -n "$COVERALLS_REPO_TOKEN" ]; then
+            pip install coveralls
+            coveralls
+          else
+            echo "Skipping coveralls"
+          fi
+
+  test-content-infrastructure:
+    runs-on: ubuntu-latest
+    name: Test Content Infrastructure
+    steps:
+      - name: Checkout SDK
+        uses: actions/checkout@v3
+
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          repository: demisto/content
+          path: content
+
+      - name: Get commit hash
+        id: get-commit
+        run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
+
+      - name: Python ${{ matrix.python-version }} - Setup Environment
+        uses: ./.github/actions/setup_poetry_python_environment
+        with:
+          python-version: '3.10'
+          working-dir: content
+          poetry-install-arguments: "--with ci"
+
+      - name: Un-install content version of SDK
+        run: |
+          cd content
+          poetry run pip uninstall demisto-sdk -y
+      - name: Install current SDK branch
+        run: |
+          cd content
+          poetry run pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
+      - name: Run content unit tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/content
+        run: |
+          cd content
+          poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
+          poetry run pytest ./Tests/Marketplace/Tests/ -v
+          poetry run pytest ./Tests/tests -v
+          poetry run pytest ./Tests/private_build/tests -v
+          poetry run pytest Utils -v
+
+  test-pre-commit:
+    runs-on: ubuntu-latest
+    name: Test Demisto-SDK Pre-Commit Command
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment From Content Repository
+        uses: ./.github/actions/setup_poetry_python_environment
+        with:
+          python-version: '3.10'
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          repository: demisto/content
+          path: content
+
+      - name: Cache Pre commit
+        id: cache-pre-commit
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit
+
+      - name: run pre-commit on changed files
+        continue-on-error: true
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cd content
+          echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
+          echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
+          echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
+          echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.py
+
+          echo "# test" >> Tests/collect_tests.py
+          git add .
+          demisto-sdk pre-commit --format --validate --show-diff-on-failure --verbose
+
+      - name: run pre-commit on input files
+        continue-on-error: true
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cd content
+          demisto-sdk pre-commit --format --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3

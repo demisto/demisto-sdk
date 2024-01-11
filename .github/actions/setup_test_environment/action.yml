@@ -1,5 +1,5 @@
-name: 'Setup environment for demisto-sdk'
-description: 'Setup environment for every demisto-sdk workflow job'
+name: 'Setup test environment for running all tests (unit/integration/graph) in the demisto-sdk'
+description: 'Setup test environment for running all tests (unit/integration/graph) in the demisto-sdk'
 author: 'Demisto-SDK'
 
 inputs:
@@ -18,27 +18,10 @@ runs:
   using: 'composite'
   steps:
 
-    - name: Setup Poetry
-      run: |
-        sudo curl -sSL https://install.python-poetry.org | python3 -
-      shell: bash
-
-    - name: Check Poetry Consistency
-      run: |
-        poetry --version
-        poetry check --lock
-      shell: bash
-
-    - name: Install SDK dependencies with poetry
-      run: |
-        poetry install -E generate-unit-tests
-      shell: bash
-
-    - name: Set up Python ${{ inputs.python-version }}
-      uses: actions/setup-python@v4
+    - name: Python ${{ matrix.python-version }} - Setup Environment
+      uses: ./.github/actions/setup_poetry_python_environment
       with:
         python-version: ${{ inputs.python-version }}
-        # cache: poetry
 
     - name: Set up Node.js
       uses: actions/setup-node@v3

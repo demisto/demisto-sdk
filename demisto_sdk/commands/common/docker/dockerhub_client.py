@@ -77,15 +77,15 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        # if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
-        #     now = datetime.now()
-        #     if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
-        #         # minus 60 seconds to be on the safe side
-        #         _expiration_time: datetime = expiration_time + timedelta(
-        #             seconds=token_metadata.get("expires_in_seconds") - 60
-        #         )
-        #         if _expiration_time.replace(tzinfo=None) < now:
-        #             return token_metadata.get("token")
+        if token_metadata := self._docker_hub_auth_tokens.get(f"{repo}:{scope}"):
+            now = datetime.now()
+            if expiration_time := dateparser.parse(token_metadata.get("issued_at")):
+                # minus 60 seconds to be on the safe side
+                _expiration_time: datetime = expiration_time + timedelta(
+                    seconds=token_metadata.get("expires_in_seconds") - 60
+                )
+                if _expiration_time.replace(tzinfo=None) < now:
+                    return token_metadata.get("token")
 
         response = self._session.get(
             "https://auth.docker.io/token",
@@ -101,7 +101,7 @@ class DockerHubClient:
             logger.warning(
                 f"Error when trying to get dockerhub token, error\n:{_error}"
             )
-            if _error.response.status_code == requests.codes.unauthorized:
+            if _error.response.status_code == requests.codes.unauthorized and self.auth:
                 logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
@@ -130,11 +130,11 @@ class DockerHubClient:
             ) from e
 
         token = raw_json_response.get("token")
-        # self._docker_hub_auth_tokens[f"{repo}:{scope}"] = {
-        #     "token": token,
-        #     "issued_at": raw_json_response.get("issued_at"),
-        #     "expires_in_seconds": raw_json_response.get("expires_in"),
-        # }
+        self._docker_hub_auth_tokens[f"{repo}:{scope}"] = {
+            "token": token,
+            "issued_at": raw_json_response.get("issued_at"),
+            "expires_in_seconds": raw_json_response.get("expires_in"),
+        }
 
         return token
 
@@ -204,7 +204,7 @@ class DockerHubClient:
             url,
             headers={key: value for key, value in headers}
             if headers
-            else None or {"Accept": "application/json"},
+            else {"Accept": "application/json"},
             params=_params,
         )
 
@@ -368,6 +368,26 @@ class DockerHubClient:
                 f"Failed to retrieve tag metadata of docker-image {docker_image}:{tag}",
                 exception=error,
             )
+
+    def is_docker_image_exist(self, docker_image: str, tag: str) -> bool:
+        """
+        Returns whether a docker image exists.
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+            tag: The tag of the docker image
+        """
+        try:
+            self.get_image_tag_metadata(docker_image, tag=tag)
+            return True
+        except DockerHubRequestException as error:
+            if error.exception.response.status_code == requests.codes.not_found:
+                logger.debug(f"docker-image {docker_image}:{tag} does not exist")
+                return False
+            logger.debug(
+                f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
+            )
+            return tag in self.get_image_tags(docker_image)
 
     def get_docker_image_tag_creation_date(
         self, docker_image: str, tag: str

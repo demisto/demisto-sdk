@@ -2,12 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-import requests
-
-from demisto_sdk.commands.common.docker.dockerhub_client import (
-    DockerHubRequestException,
-)
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -30,34 +24,18 @@ class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
         for content_item in content_items:
             if not content_item.is_javascript:
                 docker_image_object = content_item.docker_image_object
-                if not docker_image_object.is_valid:
+                if (
+                    not docker_image_object.is_valid
+                    or not self.dockerhub_client.is_docker_image_exist(
+                        docker_image_object.name, tag=docker_image_object.tag
+                    )
+                ):
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
                                 content_item.docker_image
                             ),
-                            content_object=content_item,
-                        )
-                    )
-                    continue
-                try:
-                    self.dockerhub_client.get_image_tag_metadata(
-                        docker_image_object.name, tag=docker_image_object.tag
-                    )
-                except DockerHubRequestException as error:
-                    logger.debug(
-                        f"DockerHubRequestException for {self.error_message} = {error}"
-                    )
-                    if error.exception.response.status_code == requests.codes.not_found:
-                        message = self.error_message.format(content_item.docker_image)
-                    else:
-                        message = f"Error when trying to fetch {content_item.docker_image} tag metadata, {error.exception}"
-
-                    invalid_content_items.append(
-                        ValidationResult(
-                            validator=self,
-                            message=message,
                             content_object=content_item,
                         )
                     )

@@ -714,13 +714,8 @@ class TestCreateContentGraph:
         """
         pack = graph_repo.create_pack()
 
-        widget1 = pack.create_widget().object
-        widget2 = pack.create_widget().object
-
-        widget1.object_id = widget2.object_id = "SampleWidget"
-
-        widget1.save()
-        widget2.save()
+        pack.create_widget().set_data(id="SampleWidget")
+        pack.create_widget().set_data(id="SampleWidget")
 
         interface = graph_repo.create_graph()
 

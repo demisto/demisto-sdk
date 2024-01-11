@@ -21,7 +21,7 @@ class Layout(JSONBased):
                 },
                 "group": "incident",
                 "id": self.id,
-                "name": "TestDefault",
+                "name": self.id,
                 "quickView": {"sections": []},
                 "system": False,
                 "version": -1,

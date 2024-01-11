@@ -214,14 +214,14 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
             paths=["name", "script.dockerimage"],
             values=[
                 "NotLatestTagIntegrationScript",
-                "demisto/python3:3.10.13.78623",
+                "demisto/python3:3.10.13.11111",
             ],  # integration with demisto image that is not the latest tag
         ),
         create_script_object(
             paths=["name", "dockerimage"],
             values=[
                 "NotLatestTagIntegrationScript",
-                "demisto/ml:1.0.0.32340",
+                "demisto/ml:1.0.0.11111",
             ],  # script with demisto image that is not the latest tag
         ),
         create_integration_object(
@@ -233,7 +233,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
         create_script_object(
             paths=["dockerimage"],
             values=[
-                "demisto/ml:1.0.0.33340"
+                "demisto/ml:1.0.0.99999"
             ],  # script with demisto image that is the latest tag
         ),
         create_integration_object(
@@ -250,11 +250,11 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
     )
     requests_mock.get(
         f"{DockerHubClient.DEFAULT_REGISTRY}/demisto/python3/tags/list",
-        json={"tags": ["3.10.13.88888", "3.10.13.99999"]},
+        json={"tags": ["3.10.13.11111", "3.10.13.99999"]},
     )
     requests_mock.get(
         f"{DockerHubClient.DEFAULT_REGISTRY}/demisto/ml/tags/list",
-        json={"tags": ["1.0.0.32340", "1.0.0.33340"]},
+        json={"tags": ["1.0.0.11111", "1.0.0.99999"]},
     )
     mocker.patch.object(
         DockerImageTagIsLatestNumericVersionValidator,
@@ -330,25 +330,25 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
             paths=["name", "script.dockerimage"],
             values=[
                 "NonExistentDockerImageIntegrationScript",
-                "demisto/python3:3.10.13.55555",
+                "demisto/python3:3.10.13.11111",
             ],  # integration with demisto image that does not exist
         ),
         create_script_object(
             paths=["name", "dockerimage"],
             values=[
                 "NonExistentDockerImageIntegrationScript",
-                "demisto/ml:1.0.0.32342",
+                "demisto/ml:1.0.0.11111",
             ],  # script with demisto image that does not exist
         ),
         create_integration_object(
             paths=["script.dockerimage"],
             values=[
-                "demisto/python3:3.10.13.79623"
+                "demisto/python3:3.10.13.99999"
             ],  # integration with demisto image that exists
         ),
         create_script_object(
             paths=["dockerimage"],
-            values=["demisto/ml:1.0.0.33340"],  # script with demisto image that exists
+            values=["demisto/ml:1.0.0.99999"],  # script with demisto image that exists
         ),
         create_integration_object(
             paths=["script.type"], values=["javascript"]
@@ -363,24 +363,24 @@ def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):
         json={"token": "1234", "issued_at": "1234", "expires_in": 300},
     )
     requests_mock.get(
-        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.79623",
-        json={"tags": ["3.10.13.78623", "3.10.13.79623"]},
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.99999",
+        json={"success": True},
     )
     requests_mock.get(
-        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/ml/tags/1.0.0.33340",
-        json={"tags": ["1.0.0.32340", "1.0.0.33340"]},
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/ml/tags/1.0.0.99999",
+        json={"success": True},
     )
     response = requests.Response()
-    response.status_code = 401
+    response.status_code = 404
     requests_mock.get(
-        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.55555",
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/python3/tags/3.10.13.11111",
         exc=DockerHubRequestException(
             "error",
             exception=requests.RequestException(response=response),
         ),
     )
     requests_mock.get(
-        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/ml/tags/1.0.0.32342",
+        f"{DockerHubClient.DOCKER_HUB_API_BASE_URL}/repositories/demisto/ml/tags/1.0.0.11111",
         exc=DockerHubRequestException(
             "error",
             exception=requests.RequestException(response=response),

@@ -23,6 +23,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
+    args: List[dict]
 
     # From HAS_COMMAND relationship
     deprecated: bool = Field(False)
@@ -50,9 +51,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = False
     is_feed: bool = False
+    is_beta: bool = False
     long_running: bool = False
     category: str
     commands: List[Command] = []
+    params: List = []
 
     @property
     def imports(self) -> List["Script"]:

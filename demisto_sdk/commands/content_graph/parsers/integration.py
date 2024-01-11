@@ -19,6 +19,7 @@ class CommandParser:
     name: str
     deprecated: bool
     description: str
+    args: List[dict]
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -35,6 +36,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
         self.is_feed = self.script_info.get("feed", False)
+        self.is_beta = self.script_info.get("beta", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.is_long_running = self.script_info.get("longRunning", False)
         self.commands: List[CommandParser] = []
@@ -51,6 +53,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 "type": "script.type",
                 "subtype": "script.subtype",
                 "alt_docker_images": "script.alt_dockerimages",
+                "configuration": "configuration",
             }
         )
         return super().field_mapping
@@ -58,6 +61,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
     @property
     def display_name(self) -> Optional[str]:
         return get_value(self.yml_data, self.field_mapping.get("display_name", ""))
+
+    @property
+    def params(self) -> Optional[List]:
+        return get_value(self.yml_data, self.field_mapping.get("configuration", ""), [])
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.
@@ -68,6 +75,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             name = command_data.get("name")
             deprecated = command_data.get("deprecated", False) or self.deprecated
             description = command_data.get("description")
+            args = command_data.get("arguments", [])
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -77,7 +85,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 description=description,
             )
             self.commands.append(
-                CommandParser(name=name, description=description, deprecated=deprecated)
+                CommandParser(
+                    name=name, description=description, deprecated=deprecated, args=args
+                )
             )
 
     def connect_to_dependencies(self) -> None:

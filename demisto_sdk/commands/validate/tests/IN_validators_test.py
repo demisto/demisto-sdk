@@ -4,6 +4,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
+    IsValidProxyAndInsecureValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subtype import (
     ValidSubtypeValidator,
 )
@@ -178,6 +181,50 @@ def test_IsIntegrationRunnableValidator_is_valid(
         - Case 5: Should pass.
     """
     results = IsIntegrationRunnableValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert (
+        not results
+        or results[0].message
+        == "Could not find any runnable command in the integration.\nMust have at least one of: a command under the `commands` section, `isFetch: true`, `feed: true`, or `longRunning: true`."
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[[{"name": "proxy", "display": "a"}]],
+                ),
+            ],
+            0,
+        ),
+    ],
+)
+def test_IsValidProxyAndInsecureValidator_is_valid(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: An integration without any commands, and isfetch, feed, and longRunnings keys are set to false.
+        - Case 2: An integration without any commands, and feed, and longRunnings keys are set to false, and isfetch is set to True.
+        - Case 3: An integration without any commands, and isfetch, feed, and longRunnings keys are set to false, and feed is set to True.
+        - Case 4: An integration without any commands, and isfetch, and feed keys are set to false, and longRunnings is set to True.
+        - Case 5: An integration with one command, and isfetch, feed, and longRunnings keys are set to false.
+    When
+    - Calling the IsValidProxyAndInsecureValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Should pass.
+        - Case 3: Should pass.
+        - Case 4: Should pass.
+        - Case 5: Should pass.
+    """
+    results = IsValidProxyAndInsecureValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert (
         not results

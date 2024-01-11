@@ -1360,6 +1360,12 @@ RELIABILITY_PARAMETER_NAMES = [
     "reliability",
 ]
 
+COMMON_PARAMS_DISPLAY_NAME = {
+    "insecure": "Trust any certificate (not secure)",
+    "unsecure": "Trust any certificate (not secure)",
+    "proxy": "Use system proxy settings",
+}
+
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}

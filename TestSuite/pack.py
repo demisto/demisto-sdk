@@ -272,7 +272,11 @@ class Pack(TestSuiteBase):
             ) as image_file:
                 image = image_file.read()
         integration = Integration(
-            self._integrations_path, name, self._repo, create_unified=create_unified
+            self._integrations_path,
+            name,
+            self._repo,
+            create_unified=create_unified,
+            _type=yml.get("script", {}).get("type", "python"),
         )
         integration.build(
             code, yml, readme, description, changelog, image, commands_txt, test
@@ -307,7 +311,11 @@ class Pack(TestSuiteBase):
                 "skipprepare": skip_prepare,
             }
         script = Script(
-            self._scripts_path, name, self._repo, create_unified=create_unified
+            self._scripts_path,
+            name,
+            self._repo,
+            create_unified=create_unified,
+            _type=yml.get("type", "python"),
         )
         script.build(code, yml, readme, description, changelog, image)
         self.scripts.append(script)

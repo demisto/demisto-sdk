@@ -482,19 +482,14 @@ class TestPlaybook:
             A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
             be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
             machine marketplace. This function checks that the entry provided is the exact one that needs to run.
+            Entries might differ in any field, the most common one is instance_names.
             """
             test_server_types: Set[str] = set()
             for marketplace in self.configuration.marketplaces or []:
                 test_server_types.update(
                     MARKETPLACE_VERSIONS_TO_SERVER_TYPE[marketplace]
                 )
-                self.log_info(f'IN FOR LOOP, {marketplace=}, {test_server_types=}')
-            self.log_info(
-                f"MARKETPLACES FOR TEST PLAYBOOK {self.configuration.playbook_id}:\n"
-                f"{self.configuration.marketplaces=} ({test_server_types=})\n"
-                f"with {self.configuration.test_instance_names=}\n"
-                f"in {self.build_context.server_type=}"
-            )
+
             if not test_server_types:
                 return True  # test doesn't have a marketplace value so it runs on all machines
 

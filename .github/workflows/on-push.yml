@@ -237,6 +237,8 @@ jobs:
           source $(poetry env info --path)/bin/activate
           cd content
           ls -a
+          git status
+          cat .demisto-sdk-conf
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml

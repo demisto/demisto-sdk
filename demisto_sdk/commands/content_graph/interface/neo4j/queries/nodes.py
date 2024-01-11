@@ -157,9 +157,7 @@ def remove_nodes(tx: Transaction, content_type_to_identifiers: dict) -> None:
 
 
 def remove_server_nodes(tx: Transaction) -> None:
-    remove_nodes(
-        tx, get_server_content_items(tag="add_server_nodes")
-    )  # TODO remove before merge
+    remove_nodes(tx, get_server_content_items())
 
 
 def remove_content_private_nodes(tx: Transaction) -> None:

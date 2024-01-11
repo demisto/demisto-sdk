@@ -90,12 +90,16 @@ CALL apoc.merge.node(
     }}
 ) YIELD node as target
 
-WITH source, target, rel_data
-// Get or create the relationship and set its "mandatorily" field based on relationship data
+// We want to make sure that the we need to create the relationship
+// If the target node is not in the repository, we need to create the relationship only if there is not equivalent target does not exists in the repository
+// If the target node is in the repository, we need to create the relationship anyway
 OPTIONAL MATCH (existing_target:{ContentType.BASE_NODE}{{{target_identifier}: rel_data.target, not_in_repository: false}})
 WHERE rel_data.target_type in labels(existing_target)
 WITH source, target, rel_data, existing_target
 WHERE existing_target IS NULL OR target.not_in_repository = false
+
+// Get or create the relationship and set its "mandatorily" field based on relationship data
+
 MERGE (source)-[r:{RelationshipType.USES}]->(target)
 ON CREATE
     SET r.mandatorily = rel_data.mandatorily

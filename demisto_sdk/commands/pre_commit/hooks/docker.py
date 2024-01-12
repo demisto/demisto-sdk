@@ -336,9 +336,12 @@ class DockerHook(Hook):
         quiet = True
         if Version(docker_version) < Version("19.03"):
             quiet = False
+        remove_container = True
+        if os.getenv("GITLAB_CONTENT_CI"):
+            remove_container = False
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} --network none -u {os.getuid()}:4000 --rm=false {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} --network none -u {os.getuid()}:4000 {"" if remove_container else "--rm=false"} {dev_image}'
         ret_hooks = []
         for (
             integration_script,

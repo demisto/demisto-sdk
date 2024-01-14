@@ -1669,19 +1669,19 @@ class TestPackValidation:
             ContentEntityValidator, "validate_readme_exists", return_value=True
         )
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases",
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_usecases",
             return_value=[],
         )
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
-            return_value=[],
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
+            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
         )
         mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
         )
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags_from_branch",
+            "demisto_sdk.commands.validate.tools.get_approved_tags_from_branch",
             return_value={},
         )
         runner = CliRunner(mix_stderr=False)
@@ -1721,7 +1721,7 @@ class TestPackValidation:
         )
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases",
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_usecases",
             return_value=[],
         )
         mocker.patch(
@@ -1729,7 +1729,7 @@ class TestPackValidation:
             return_value=[],
         )
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags_from_branch",
+            "demisto_sdk.commands.validate.tools.get_approved_tags_from_branch",
             return_value={},
         )
         runner = CliRunner(mix_stderr=False)

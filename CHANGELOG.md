@@ -9,6 +9,7 @@
 * Fixed an issue where **lint -g** crashed when comparing changes against branches which are not `master`.
 * Fixed an issue in **prepare-content** command where the `incident to alert` process was not triggered when the playbook is set to only XSIAM.
 * Fixed an issue where **validate -g** command crashed when comparing changes against branches when in detached head state.
+* Add support for tests to run on specified marketplaces.
 
 ## 1.25.1
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
@@ -19,6 +20,7 @@
 * **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
 * Fixed an issue in **generate-docs** where the description field was missing from an argument.
 * Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
+* Fixed false positives in **validate** in `GR103` validations
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

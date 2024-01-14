@@ -674,6 +674,7 @@ class TestValidators:
         mocker.patch.object(
             ReadMeValidator, "verify_readme_image_paths", return_value=True
         )
+        mocker.patch.object(OldValidateManager, "is_node_exist", return_value=True)
         validate_manager = OldValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -784,6 +785,10 @@ class TestValidators:
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Analytics & SIEM"],
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
+            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
+        )
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = OldValidateManager(skip_conf_json=True)
@@ -851,6 +856,10 @@ class TestValidators:
         mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Analytics & SIEM"],
+        )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
+            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
         )
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
@@ -934,12 +943,14 @@ class TestValidators:
             ScriptValidator, "is_there_separators_in_names", return_value=True
         )
         mocker.patch.object(ScriptValidator, "is_docker_image_valid", return_value=True)
+
         self.mock_unifier()
         validate_manager = OldValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)
         assert is_valid
 
-    def test_pack_validation(self):
+    def test_pack_validation(self, mocker):
+        mocker.patch.object(OldValidateManager, "is_node_exist", return_value=True)
         validate_manager = OldValidateManager(file_path=VALID_PACK, skip_conf_json=True)
         is_valid = validate_manager.run_validation_on_package(VALID_PACK, None)
         assert is_valid

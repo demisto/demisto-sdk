@@ -6,6 +6,7 @@ from typing import Iterable, List, Union
 import requests
 from dateparser import parse
 
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
 )
@@ -33,18 +34,17 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
     related_field = "Docker image"
     is_auto_fixable = True
 
-    def is_docker_image_older_than_three_days(self, docker_image) -> bool:
+    @staticmethod
+    def is_docker_image_older_than_three_days(docker_image: DockerImage) -> bool:
         """
         Return True if the docker image is more than 3 days old.
 
-        Returns:
-            bool: True if the docker is more than 3 days old.
+        Args:
+            docker_image: the docker image object.
         """
         three_days_ago: datetime = parse("3 days ago")  # type: ignore[assignment]
         try:
-            last_updated = self.dockerhub_client.get_docker_image_tag_creation_date(
-                docker_image.name, tag=docker_image.tag
-            )
+            last_updated = docker_image.creation_date
             return not last_updated or three_days_ago > last_updated
         except DockerHubRequestException as error:
             if error.exception.response.status_code == requests.codes.not_found:
@@ -73,11 +73,8 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                     )
                     continue
                 try:
-                    docker_image_latest_tag = str(
-                        self.dockerhub_client.get_latest_docker_image_tag(
-                            docker_image.name
-                        )
-                    )
+
+                    docker_image_latest_tag = str(docker_image.latest_tag)
                 except DockerHubRequestException as error:
                     logger.error(f"DO106 - Error when fetching latest tag:\n{error}")
                     if error.exception.response.status_code == requests.codes.not_found:
@@ -115,9 +112,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
     ) -> FixResult:
         docker_image = content_item.docker_image_object
         try:
-            latest_tag = str(
-                self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
-            )
+            latest_tag = str(docker_image.latest_tag)
             message = self.fix_message.format(
                 content_item.docker_image, f"{docker_image.name}:{latest_tag}"
             )

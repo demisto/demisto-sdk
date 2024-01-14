@@ -322,6 +322,6 @@ jobs:
           sudo rm -rf /var/lib/neo4j/import
           # Update content graph from the bucket
           demisto-sdk update-content-graph -g -o ./tmp/content_graph
-          
+
           # Update content graph from the the previous content graph that was created/built
           demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph

@@ -1,6 +1,4 @@
 # Changelog
-## Unreleased
-
 ## 1.25.2
 * Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
 * Fixed an issue where **lint** command didn't work on detached heads.
@@ -22,7 +20,6 @@
 * **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
 * Fixed an issue in **generate-docs** where the description field was missing from an argument.
 * Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
-* Fixed false positives in **validate** in `GR103` validations
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

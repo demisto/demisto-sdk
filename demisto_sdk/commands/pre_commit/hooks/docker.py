@@ -318,7 +318,7 @@ class DockerHook(Hook):
             remove_container = False
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} --network none -u {os.getuid()}:4000 {"" if remove_container else "--rm=false"} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} --network none -u {os.getuid()}:4000 {"--rm=false" if not remove_container else ""} {dev_image}'
         ret_hooks = []
         for (
             integration_script,
@@ -368,7 +368,6 @@ class DockerHook(Hook):
             hook.pop("copy_files", None)
             hook.pop("split_by_object", None)
             hook.pop("split_by_network", None)
-            hook.pop("split_by_isolated", None)
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

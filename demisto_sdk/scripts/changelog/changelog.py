@@ -1,4 +1,3 @@
-import itertools
 import re
 import sys
 from pathlib import Path
@@ -6,6 +5,7 @@ from typing import Dict, List
 
 import typer
 from git import Repo  # noqa: TID251
+from more_itertools import bucket
 from pydantic import ValidationError
 
 from demisto_sdk.commands.common.handlers import (
@@ -160,7 +160,7 @@ def read_log_files() -> List[LogFileObject]:
     changelogs: List[LogFileObject] = []
     errors: Dict[Path, str] = {}
     for path in CHANGELOG_FOLDER.iterdir():
-        if path.suffix.endswith(".md"):  # exclude README file
+        if path.name == "README.md":  # exclude README file
             continue
 
         if not isinstance(log_file := get_yaml(path), dict):
@@ -187,8 +187,8 @@ def get_new_log_entries(logs: List[LogFileObject]) -> Dict[str, List[LogLine]]:
         unreleased_logs.extend(log_file.get_log_entries())
 
     new_log_entries: Dict[str, List[LogLine]] = {}
-    for type_, log_lines in itertools.groupby(unreleased_logs, lambda x: x.type):
-        new_log_entries[type_] = list(log_lines)
+    for type_ in (unreleased_logs_sorted := bucket(unreleased_logs, lambda x: x.type)):
+        new_log_entries[type_] = list(unreleased_logs_sorted[type_])
     return new_log_entries
 
 
@@ -223,7 +223,7 @@ def update_changelog_md(new_changelog: str) -> None:
 
 def clear_changelogs_folder() -> None:
     for path in CHANGELOG_FOLDER.iterdir():
-        if path.suffix.endswith(".md"):
+        if path.name == "README.md":
             continue
         path.unlink()
     logger.info("Cleanup of `.changelog` folder completed successfully")

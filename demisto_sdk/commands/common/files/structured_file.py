@@ -25,9 +25,10 @@ class StructuredFile(TextFile, ABC):
         cls,
         file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
+        encoding: Optional[str] = None,
     ) -> Any:
         return super().read_from_file_content(
-            file_content, handler=cls.validate_handler(handler)
+            file_content, handler=cls.validate_handler(handler), encoding=encoding
         )
 
     def load(self, file_content: bytes) -> Any:

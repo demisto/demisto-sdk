@@ -65,7 +65,7 @@ class IsValidTagsValidator(BaseValidator[ContentTypes]):
     def fix(self, content_item: ContentTypes) -> FixResult:
         tags = content_item.tags
         for non_approved_tag in self.non_approved_tags_dict[content_item.name]:
-            tags.remove(non_approved_tag)  # type: ignore[union-attr]
+            tags.remove(non_approved_tag)
         content_item.tags = tags
         return FixResult(
             validator=self,

@@ -14,6 +14,27 @@ concurrency:
 
 
 jobs:
+  validate-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Python ${{ matrix.python-version }} - Setup Environment
+        uses: ./.github/actions/setup_poetry_python_environment
+        with:
+          python-version: '3.10'
+
+      - name: Validate Changelog
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "Validating changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
+          poetry run python ./Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py -n "$PR_NUMBER" -t "$PR_TITLE"
+
   unit-tests:
     name: Unit Tests / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest

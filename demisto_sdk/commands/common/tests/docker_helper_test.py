@@ -35,14 +35,16 @@ def test_init_global_docker_client():
 )
 def test_get_python_version_from_image(image: str, output: str, expected: str, mocker):
     from demisto_sdk.commands.common import docker_helper
+    from demisto_sdk.commands.common.files.file import File
 
     class ImageMock:
         def __init__(self, attrs):
             self.attrs = attrs
 
     mocker.patch.object(docker_helper, "init_global_docker_client")
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+    mocker.patch.object(
+        File,
+        "read_from_github_api",
         return_value={
             "docker_images": {
                 "python3": {

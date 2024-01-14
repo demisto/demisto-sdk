@@ -34,7 +34,9 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
 
     @classmethod
     def __from_github(
-        cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = DEMISTO_GIT_PRIMARY_BRANCH
+        cls,
+        file_name: str = DOCKER_IMAGES_METADATA_NAME,
+        tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     ):
         """
         Get the docker_images_metadata.json from the dockerfiles-info repo and load it to a pydantic object.
@@ -53,10 +55,12 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
                 tag=tag,
                 git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
                 verify_ssl=False,
-                encoding="utf-8-sig"
+                encoding="utf-8-sig",
             )
         except FileReadError:
-            logger.error(f'Could not read {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repository')
+            logger.error(
+                f"Could not read {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repository"
+            )
             dockerfiles_metadata = {"docker_images": {}}
 
         return cls.parse_obj(dockerfiles_metadata)
@@ -78,11 +82,15 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             try:
                 docker_image = DockerImage.parse(docker_image)
             except ValueError as error:
-                logger.debug(f'Could not parse docker-image {docker_image}, error:{error}')
+                logger.debug(
+                    f"Could not parse docker-image {docker_image}, error:{error}"
+                )
                 return None
 
         try:
-            docker_image_metadata = (self.docker_images.get(docker_image.image_name) or {}).get(docker_image.tag)
+            docker_image_metadata = (
+                self.docker_images.get(docker_image.image_name) or {}
+            ).get(docker_image.tag)
             return getattr(docker_image_metadata, docker_metadata_key)
         except Exception as err:
             logger.debug(
@@ -90,7 +98,9 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             )
             return None
 
-    def python_version(self, docker_image: Union[str, DockerImage]) -> Optional[Version]:
+    def python_version(
+        self, docker_image: Union[str, DockerImage]
+    ) -> Optional[Version]:
         """
         Get the python version of a docker image.
         """

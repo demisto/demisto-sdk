@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import ClassVar, Iterable, List
@@ -26,7 +25,6 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     invalid_rep_commands: ClassVar[dict] = {}
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -35,7 +33,9 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                     "\n".join(
                         [
                             f"The {key} command display name should be '{val['display']}', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8."
-                            for key, val in self.invalid_rep_commands[content_item.name].items()
+                            for key, val in self.invalid_rep_commands[
+                                content_item.name
+                            ].items()
                         ]
                     )
                 ),
@@ -43,39 +43,50 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if not all(
-                [self.validate_rep_command(command, content_item.name) for command in content_item.commands if command.name in BANG_COMMAND_NAMES]
+                [
+                    self.validate_rep_command(command, content_item.name)
+                    for command in content_item.commands
+                    if command.name in BANG_COMMAND_NAMES
+                ]
             )
         ]
-        
+
     def validate_rep_command(self, rep_command: Command, integration_name):
         flag_found_arg = False
         for arg in rep_command.args:
             arg_name = arg.get("name")
             if arg_name in BANG_COMMAND_ARGS_MAPPING_DICT["default"]:
                 flag_found_arg = True
-                if arg.get("default", False) in ("false", False) or arg.get("isArray", False) in ("false", False):
-                    self.invalid_rep_commands[integration_name] = self.invalid_rep_commands.get(integration_name, {})
+                if arg.get("default", False) in ("false", False) or arg.get(
+                    "isArray", False
+                ) in ("false", False):
+                    self.invalid_rep_commands[
+                        integration_name
+                    ] = self.invalid_rep_commands.get(integration_name, {})
                     self.invalid_rep_commands[integration_name][rep_command.name] = {
                         "arguments": {
                             "name": arg_name,
                             "default": True,
-                            "isArray": True
+                            "isArray": True,
                         }
                     }
                     return False
-            if not flag_found_arg and BANG_COMMAND_ARGS_MAPPING_DICT.get("required", True):
-                self.invalid_rep_commands[integration_name] = self.invalid_rep_commands.get(integration_name, {})
+            if not flag_found_arg and BANG_COMMAND_ARGS_MAPPING_DICT.get(
+                "required", True
+            ):
+                self.invalid_rep_commands[
+                    integration_name
+                ] = self.invalid_rep_commands.get(integration_name, {})
                 self.invalid_rep_commands[integration_name][rep_command.name] = {
                     "arguments": {
                         "name": arg_name,
                         "default": True,
                         "isArray": True,
-                        "required": True
+                        "required": True,
                     }
                 }
                 return False
         return True
-
 
     def fix(
         self,
@@ -93,7 +104,8 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                                 break
         return FixResult(
             validator=self,
-            message=self.fix_message.format(", ".join(list(self.invalid_rep_commands[content_item.name].keys()))),
+            message=self.fix_message.format(
+                ", ".join(list(self.invalid_rep_commands[content_item.name].keys()))
+            ),
             content_object=content_item,
         )
-            

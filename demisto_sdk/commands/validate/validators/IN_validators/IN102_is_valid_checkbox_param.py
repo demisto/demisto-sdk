@@ -1,13 +1,12 @@
-
 from __future__ import annotations
 
 from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        FixResult,
-        ValidationResult,
+    BaseValidator,
+    FixResult,
+    ValidationResult,
 )
 
 ContentTypes = Integration
@@ -22,35 +21,47 @@ class IsValidCheckboxParamValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     misconfigured_checkbox_params_by_integration: ClassVar[dict] = {}
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    [
-                        ", ".join(misconfigured_checkbox_params)
-                    ]
+                    [", ".join(misconfigured_checkbox_params)]
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
             if (
-                misconfigured_checkbox_params := self.get_misconfigured_checkbox_params(content_item.params, content_item.name)
+                misconfigured_checkbox_params := self.get_misconfigured_checkbox_params(
+                    content_item.params, content_item.name
+                )
             )
         ]
-    
 
     def get_misconfigured_checkbox_params(self, params, integration_name):
-        self.misconfigured_checkbox_params_by_integration[integration_name] = [param.get("name", "") for param in params if param.get("type", 0) == 8 and param.get("name", "") not in ("insecure", "unsecure", "proxy", "isFetch") and param.get("required", False) not in ("true", True)]
+        self.misconfigured_checkbox_params_by_integration[integration_name] = [
+            param.get("name", "")
+            for param in params
+            if param.get("type", 0) == 8
+            and param.get("name", "")
+            not in ("insecure", "unsecure", "proxy", "isFetch")
+            and param.get("required", False) not in ("true", True)
+        ]
         return self.misconfigured_checkbox_params_by_integration[integration_name]
-    
+
     def fix(self, content_item: ContentTypes) -> FixResult:
         for param in content_item.params:
-            if param.get("name", "") in self.misconfigured_checkbox_params_by_integration[content_item.name]:
+            if (
+                param.get("name", "")
+                in self.misconfigured_checkbox_params_by_integration[content_item.name]
+            ):
                 param.update({"required": True})
         return FixResult(
             validator=self,
-            message=self.fix_message.format(", ".join(self.misconfigured_checkbox_params_by_integration[content_item.name])),
+            message=self.fix_message.format(
+                ", ".join(
+                    self.misconfigured_checkbox_params_by_integration[content_item.name]
+                )
+            ),
             content_object=content_item,
         )

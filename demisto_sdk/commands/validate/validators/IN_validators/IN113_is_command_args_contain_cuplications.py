@@ -41,17 +41,16 @@ class IsCommandArgsContainCuplicationsValidator(BaseValidator[ContentTypes]):
         ]
 
     def is_containing_dups(self, commands: List[Command]) -> Dict[str, set]:
-        duplicated_args_by_command = {}
+        duplicated_args_by_command: Dict[str, set] = {}
         for command in commands:
             appeared_set = set()
+            duplicated_args = set()
             for command in commands:
-                if duplicated_args := set(
-                    arg.get("name", "")
-                    for arg in command.args
-                    if (
-                        arg.get("name", "") in appeared_set
-                        or appeared_set.add(arg.get("name", ""))
-                    )
-                ):
+                for arg in command.args:
+                    if arg.get("name", "") in appeared_set:
+                        duplicated_args.add(arg.get("name", ""))
+                    else:
+                        appeared_set.add(arg.get("name", ""))
+                if duplicated_args:
                     duplicated_args_by_command[command.name] = duplicated_args
         return duplicated_args_by_command

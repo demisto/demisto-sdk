@@ -24,6 +24,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
     args: List[dict]
+    outputs: List[dict]
 
     # From HAS_COMMAND relationship
     deprecated: bool = Field(False)

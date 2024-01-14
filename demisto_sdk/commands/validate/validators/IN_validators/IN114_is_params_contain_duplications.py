@@ -31,10 +31,10 @@ class IsParamsContainDuplicationsValidator(BaseValidator[ContentTypes]):
 
     def is_containing_dups(self, params) -> Set[str]:
         appeared_set = set()
-        return set(
-            param.get("name")
-            for param in params
-            if (
-                param.get("name") in appeared_set or appeared_set.add(param.get("name"))
-            )
-        )
+        dups_set: Set[str] = set()
+        for param in params:
+            if param.get("name") in appeared_set:
+                dups_set.add(param.get("name"))
+            else:
+                appeared_set.add(param.get("name"))
+        return dups_set

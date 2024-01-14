@@ -20,6 +20,7 @@ class CommandParser:
     deprecated: bool
     description: str
     args: List[dict]
+    outputs: List[dict]
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -76,6 +77,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             deprecated = command_data.get("deprecated", False) or self.deprecated
             description = command_data.get("description")
             args = command_data.get("arguments", [])
+            outputs = command_data.get("outputs", [])
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -86,7 +88,11 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             )
             self.commands.append(
                 CommandParser(
-                    name=name, description=description, deprecated=deprecated, args=args
+                    name=name,
+                    description=description,
+                    deprecated=deprecated,
+                    args=args,
+                    outputs=outputs,
                 )
             )
 

@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Log files will now be saved by default to `$HOME/.demisto-sdk/logs`. Can be overridden by the `--log-file-path` flag or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable.
+* Log files will now be saved by default to `$HOME/.demisto-sdk/logs`. This behavior can be overridden by the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable.
 * Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
 * Fixed an issue where **lint** command didn't work on detached heads.
 * Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.

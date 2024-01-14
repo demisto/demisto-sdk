@@ -13,7 +13,9 @@ from demisto_sdk.commands.common.logger import logger
 
 class DockerImage:
 
-    DOCKER_IMAGE_REGX = r"^([^/]+)/(.*?)(?::(.*))?$"  # regex to extract parts of a docker-image
+    DOCKER_IMAGE_REGX = (
+        r"^([^/]+)/(.*?)(?::(.*))?$"  # regex to extract parts of a docker-image
+    )
     DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )

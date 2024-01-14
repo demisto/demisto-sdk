@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -22,7 +23,7 @@ class DockerImageExistValidator(BaseValidator[ContentTypes]):
     @staticmethod
     def get_latest_image(content_item):
         docker_name = f"demisto/{content_item.subtype if content_item.type == 'python' else 'powershell'}"
-        return f"{docker_name}:{content_item.docker_image_object.latest_tag}"
+        return DockerHubClient().get_latest_docker_image(docker_name)
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

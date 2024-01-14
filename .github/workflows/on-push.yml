@@ -292,3 +292,36 @@ jobs:
       - name: Run Pytest collection
         run: |
           poetry run pytest --collect-only .
+
+  test-update-graph:
+    runs-on: ubuntu-latest
+    name: Test Graph
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_poetry_python_environment
+        with:
+          python-version: '3.10'
+
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          repository: demisto/content
+          path: content
+
+      - name: Run Graph
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cd content
+          mkdir ./tmp
+          # create content graph from scratch
+          demisto-sdk create-content-graph
+          # clean import folder
+          sudo rm -rf /var/lib/neo4j/import
+          # Update content graph from the bucket
+          demisto-sdk update-content-graph -g -o ./tmp/content_graph
+          
+          # Update content graph from the the previous content graph that was created/built
+          demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph

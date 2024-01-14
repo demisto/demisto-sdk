@@ -52,7 +52,7 @@ class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
             set: the set of non approved usecases
         """
         non_approved_usecases = set()
-        if non_approved_usecases := set(content_item.use_cases) - set(  # type: ignore[arg-type]
+        if non_approved_usecases := set(content_item.use_cases) - set(
             approved_usecases
         ):
             self.non_approved_usecases_dict[content_item.name] = non_approved_usecases
@@ -62,7 +62,7 @@ class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
         non_approved_usecases = self.non_approved_usecases_dict[content_item.name]
         use_cases = content_item.use_cases
         for non_approved_usecase in non_approved_usecases:
-            use_cases.remove(non_approved_usecase)  # type: ignore[union-attr]
+            use_cases.remove(non_approved_usecase)
         content_item.use_cases = use_cases
         return FixResult(
             validator=self,

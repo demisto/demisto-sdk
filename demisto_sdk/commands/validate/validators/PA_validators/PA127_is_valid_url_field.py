@@ -31,7 +31,8 @@ class IsValidURLFieldValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if content_item.support in SUPPORTED_CONTRIBUTORS_LIST
-            and (metadata_url := content_item.url.lower().strip())  # type: ignore[union-attr]
+            and content_item.url
+            and (metadata_url := content_item.url.lower().strip())
             and len(re.findall("github.com", metadata_url)) > 0
             and not metadata_url.endswith("/issues")
         ]

@@ -62,7 +62,7 @@ class ValidTagsPrefixesValidator(BaseValidator[ContentTypes]):
     ) -> FixResult:
         content_item.tags = [
             tag
-            for tag in content_item.tags  # type: ignore[union-attr]
+            for tag in content_item.tags
             if tag not in self.unapproved_tags_dict[content_item.name]
         ]
         return FixResult(

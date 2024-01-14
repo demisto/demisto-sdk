@@ -30,12 +30,12 @@ class IsValidModulesValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (non_approved_modules := self.get_non_approved_modules(content_item))  # type: ignore[union-attr, arg-type]
+            if (non_approved_modules := self.get_non_approved_modules(content_item))
         ]
 
     def get_non_approved_modules(self, content_item: ContentTypes):
         self.non_approved_modules_dict[content_item.name] = [
-            module for module in content_item.modules if module not in MODULES  # type: ignore[union-attr]
+            module for module in content_item.modules if module not in MODULES
         ]
         return self.non_approved_modules_dict[content_item.name]
 

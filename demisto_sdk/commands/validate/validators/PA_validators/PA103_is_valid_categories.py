@@ -30,5 +30,5 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if not len(content_item.categories) == 1  # type:ignore[arg-type]
-            or not validate_categories_approved(content_item.categories, approved_list)  # type: ignore[arg-type]
+            or not validate_categories_approved(content_item.categories, approved_list)
         ]

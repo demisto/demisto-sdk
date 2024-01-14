@@ -4369,7 +4369,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def using_unknown_content(content_name: str, unknown_content_names: List[str]):
+    def using_unknown_content(content_name: str, unknown_content_names: Set[str]):
         return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
 
     @staticmethod
@@ -4377,6 +4377,7 @@ class Errors:
     def multiple_packs_with_same_display_name(
         content_name: str, pack_display_names: List[str]
     ):
+        pack_display_names = [f"'{name}'" for name in pack_display_names]
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "
 
     @staticmethod

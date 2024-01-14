@@ -98,7 +98,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
             if "setIncident" in command:
                 for indicator_field in get_fields_by_script_argument(task):
                     if indicator_field and indicator_field not in IGNORED_FIELDS:
-                        self.add_dependency_by_id(
+                        self.add_dependency_by_cli_name(
                             indicator_field,
                             ContentType.INCIDENT_FIELD,
                             is_mandatory=False,
@@ -107,7 +107,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
             elif "setIndicator" in command:
                 for indicator_field in get_fields_by_script_argument(task):
                     if indicator_field and indicator_field not in IGNORED_FIELDS:
-                        self.add_dependency_by_id(
+                        self.add_dependency_by_cli_name(
                             indicator_field,
                             ContentType.INDICATOR_FIELD,
                             is_mandatory=False,
@@ -185,7 +185,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
         if field_mapping := task.get("task", {}).get("fieldMapping"):
             for incident_field in field_mapping:
                 if incident_field not in BUILT_IN_FIELDS:
-                    self.add_dependency_by_id(
+                    self.add_dependency_by_cli_name(
                         incident_field, ContentType.INCIDENT_FIELD, is_mandatory
                     )
 

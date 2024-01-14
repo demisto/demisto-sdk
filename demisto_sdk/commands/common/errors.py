@@ -1315,7 +1315,6 @@ ERROR_CODE: Dict = {
         "code": "ST112",
         "related_field": "",
     },
-    "invalid_yml_file": {"code": "ST113", "related_field": ""},
     # WD - Widgets
     "remove_field_from_widget": {
         "code": "WD100",
@@ -3303,7 +3302,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_invalid_modules():
-        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+        return f"Module field can include only label from the following options: {', '.join(MODULES)}."
 
     @staticmethod
     @error_code_decorator

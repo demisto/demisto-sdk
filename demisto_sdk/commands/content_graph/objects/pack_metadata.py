@@ -37,25 +37,25 @@ class PackMetadata(BaseModel):
     url: Optional[str]
     email: Optional[str]
     eulaLink: Optional[str]
-    author: Optional[str] = Field("")
-    author_image: Optional[str] = Field("", alias="authorImage")
-    certification: Optional[str] = Field("")
+    author: str = Field("")
+    author_image: str = Field("", alias="authorImage")
+    certification: str = Field("")
     price: Optional[int]
     hidden: Optional[bool]
     server_min_version: Optional[str] = Field(alias="serverMinVersion")
     current_version: Optional[str] = Field(alias="currentVersion")
-    version_info: Optional[str] = Field("", alias="versionInfo")
+    version_info: str = Field("", alias="versionInfo")
     commit: Optional[str]
     downloads: Optional[int]
-    tags: Optional[List[str]] = Field([])
-    categories: Optional[List[str]] = Field([])
-    use_cases: Optional[List[str]] = Field(alias="useCases")
+    tags: List[str] = Field([])
+    categories: List[str] = Field([])
+    use_cases: List[str] = Field([], alias="useCases")
     keywords: Optional[List[str]]
     search_rank: Optional[int] = Field(alias="searchRank")
-    excluded_dependencies: Optional[List[str]] = Field([], alias="excludedDependencies")
-    videos: Optional[List[str]] = Field([])
-    modules: Optional[List[str]] = Field([])
-    integrations: Optional[List[str]] = Field([])
+    excluded_dependencies: List[str] = Field([], alias="excludedDependencies")
+    videos: List[str] = Field([])
+    modules: List[str] = Field([])
+    integrations: List[str] = Field([])
 
     # For private packs
     premium: Optional[bool]

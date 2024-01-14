@@ -131,8 +131,8 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
             "custom_category",
             True,
             {
+                "ignorable_errors": ["BA101"],
                 "custom_category": {
-                    "ignorable_errors": ["BA101"],
                     "select": ["BA101", "BC100", "PA108"],
                 },
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},

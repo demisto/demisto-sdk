@@ -167,6 +167,7 @@ class File(ABC, BaseModel):
         cls,
         file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
+        encoding: Optional[str] = None,
     ) -> Any:
         """
         Read a file from its representation in bytes.
@@ -174,6 +175,7 @@ class File(ABC, BaseModel):
         Args:
             file_content: the file content in bytes / bytesIo
             handler: whether a custom handler is required, if not takes the default.
+            encoding: whether to decode the file with special encoding
 
         Returns:
             Any: the file content in the desired format
@@ -186,6 +188,8 @@ class File(ABC, BaseModel):
         model_attributes: Dict[str, Any] = {"_input_path_content": file_content}
         if handler:
             model_attributes["handler"] = handler
+        if encoding:
+            model_attributes["default_encoding"] = encoding
 
         # builds up the object without validations, when loading from file content, no need to init path and git_util
         model = cls.construct(**model_attributes)
@@ -293,6 +297,7 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
         verify_ssl: bool = True,
+        encoding: Optional[str] = None,
     ) -> Any:
         """
         Reads a file from Github api.
@@ -304,6 +309,7 @@ class File(ABC, BaseModel):
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
             verify_ssl: whether SSL should be verified
+            encoding: whether to decode the remote file with special encoding
 
         Returns:
             Any: the file content in the desired format
@@ -331,6 +337,7 @@ class File(ABC, BaseModel):
                 handler=handler,
                 clear_cache=clear_cache,
                 verify=verify_ssl,
+                encoding=encoding,
             )
         except FileReadError as e:
             logger.warning(
@@ -357,6 +364,7 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
         verify_ssl: bool = True,
+        encoding: Optional[str] = None
     ) -> Any:
         """
         Reads a file from Gitlab api.
@@ -368,6 +376,7 @@ class File(ABC, BaseModel):
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
             verify_ssl: whether SSL should be verified
+            encoding: whether to decode the remote file with special encoding
 
         Returns:
             Any: the file content in the desired format
@@ -387,6 +396,7 @@ class File(ABC, BaseModel):
             handler=handler,
             clear_cache=clear_cache,
             verify=verify_ssl,
+            encoding=encoding
         )
 
     @classmethod
@@ -401,6 +411,7 @@ class File(ABC, BaseModel):
         timeout: Optional[int] = None,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
+        encoding: Optional[str] = None,
     ) -> Any:
         """
         Reads a file from any api via http request.
@@ -413,6 +424,7 @@ class File(ABC, BaseModel):
             timeout: timeout for the request
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
+            encoding: whether to decode the remote file with special encoding
 
         Returns:
             Any: the file content in the desired format
@@ -438,7 +450,9 @@ class File(ABC, BaseModel):
             raise HttpFileReadError(url, exc=e)
 
         try:
-            return cls.read_from_file_content(response.content, handler=handler)
+            return cls.read_from_file_content(
+                response.content, handler=handler, encoding=encoding
+            )
         except FileContentReadError as e:
             logger.exception(f"Could not read file from {url} as {cls.__name__} file")
             raise HttpFileReadError(url, exc=e)
@@ -484,7 +498,7 @@ class File(ABC, BaseModel):
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         raise NotImplementedError(
-            "__write must be implemented for each File concrete object"
+            "_write must be implemented for each File concrete object"
         )
 
     def write(

@@ -19,9 +19,10 @@ class DockerImageExistValidator(BaseValidator[ContentTypes]):
     related_field = "Docker image"
     is_auto_fixable = False
 
-    def get_latest_image(self, content_item):
+    @staticmethod
+    def get_latest_image(content_item):
         docker_name = f"demisto/{content_item.subtype if content_item.type == 'python' else 'powershell'}"
-        return f"{docker_name}:{self.dockerhub_client.get_latest_docker_image_tag(docker_name)}"
+        return f"{docker_name}:{content_item.docker_image_object.latest_tag}"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

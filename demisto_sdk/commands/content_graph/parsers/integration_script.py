@@ -4,10 +4,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.native_image import (
-    NativeImageConfig,
-    ScriptIntegrationSupportedNativeImages,
-)
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
@@ -43,16 +39,6 @@ class IntegrationScriptParser(YAMLContentItemParser):
     def alt_docker_images(self) -> List[str]:
         return get_value(
             self.yml_data, self.field_mapping.get("alt_docker_images", []), []
-        )
-
-    @property
-    def supported_native_images(self) -> Set[str]:
-        return ScriptIntegrationSupportedNativeImages(
-            _id=self.object_id or "",
-            native_image_config=NativeImageConfig.get_instance(),
-            docker_image=self.docker_image,
-        ).get_supported_native_docker_tags(
-            {"native:ga", "native:maintenance", "native:dev"}
         )
 
     @property

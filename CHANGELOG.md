@@ -1,5 +1,5 @@
 # Changelog
-## Unreleased
+## 1.25.2
 * Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
 * Fixed an issue where **lint** command didn't work on detached heads.
 * Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
@@ -9,6 +9,7 @@
 * Fixed an issue where **lint -g** crashed when comparing changes against branches which are not `master`.
 * Fixed an issue in **prepare-content** command where the `incident to alert` process was not triggered when the playbook is set to only XSIAM.
 * Fixed an issue where **validate -g** command crashed when comparing changes against branches when in detached head state.
+* Add support for tests to run on specified marketplaces.
 
 ## 1.25.1
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
@@ -18,8 +19,6 @@
 * Added support for the `List` content-item to **prepare-content** and **split**.
 * **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
 * Fixed an issue in **generate-docs** where the description field was missing from an argument.
-* Fixed an issue where contributions (Playbooks, Scripts, Integration) added to an existing Pack don't generate `README`s.
-* Added support in **generate-docs** for auto-update of `README`s of modified integrations.
 * Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
 
 ## 1.25.0

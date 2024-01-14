@@ -296,6 +296,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target (str): The identifier of the target content object (e.g, its node_id).
             kwargs: Additional information about the relationship.
         """
+        # target type has to be the base type, because in the server they are the same
+        if target_type == ContentType.SCRIPT:
+            target_type = ContentType.BASE_SCRIPT
+        if target_type == ContentType.PLAYBOOK:
+            target_type = ContentType.BASE_PLAYBOOK
         self.relationships.add(
             relationship,
             source_id=self.object_id,
@@ -352,6 +357,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         """
         self.add_relationship(
             RelationshipType.USES_BY_NAME,
+            target=dependency_name,
+            target_type=dependency_type,
+            mandatorily=is_mandatory,
+        )
+
+    def add_dependency_by_cli_name(
+        self,
+        dependency_name: str,
+        dependency_type: ContentType,
+        is_mandatory: bool = True,
+    ):
+        self.add_relationship(
+            RelationshipType.USES_BY_CLI_NAME,
             target=dependency_name,
             target_type=dependency_type,
             mandatorily=is_mandatory,

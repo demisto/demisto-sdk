@@ -35,10 +35,12 @@ class DockerHubRequestException(Exception):
         return f"Error - {self.message} - Exception - {self.exception}"
 
 
+@lru_cache
 class DockerHubClient:
 
     DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
     DOCKER_HUB_API_BASE_URL = "https://hub.docker.com/v2"
+    TOKEN_URL = "https://auth.docker.io/token"
 
     def __init__(
         self,
@@ -87,12 +89,14 @@ class DockerHubClient:
                 if _expiration_time.replace(tzinfo=None) < now:
                     return token_metadata.get("token")
 
+        params = {
+            "service": "registry.docker.io",
+            "scope": f"repository:{repo}:{scope}",
+        }
+
         response = self._session.get(
-            "https://auth.docker.io/token",
-            params={
-                "service": "registry.docker.io",
-                "scope": f"repository:{repo}:{scope}",
-            },
+            self.TOKEN_URL,
+            params=params,
             auth=self.auth,
         )
         try:
@@ -105,11 +109,8 @@ class DockerHubClient:
                 logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
-                        "https://auth.docker.io/token",
-                        params={
-                            "service": "registry.docker.io",
-                            "scope": f"repository:{repo}:{scope}",
-                        },
+                        self.TOKEN_URL,
+                        params=params,
                     )
                     response.raise_for_status()
                 except RequestException as error:
@@ -382,7 +383,9 @@ class DockerHubClient:
             return True
         except DockerHubRequestException as error:
             if error.exception.response.status_code == requests.codes.not_found:
-                logger.debug(f"docker-image {docker_image}:{tag} does not exist")
+                logger.debug(
+                    f"docker-image {docker_image}:{tag} does not exist in dockerhub"
+                )
                 return False
             logger.debug(
                 f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
@@ -428,6 +431,19 @@ class DockerHubClient:
 
         return max(version_tags)
 
+    def get_latest_docker_image(self, docker_image: str) -> str:
+        """
+        Returns the latest docker-image including the tag.
+
+        Args:
+            docker_image: The docker-image name, e.g: demisto/pan-os-python
+
+        Returns:
+            str: the full docker-image included the tag, for example demisto/pan-os-python:2.0.0
+
+        """
+        return f"{docker_image}/{self.get_latest_docker_image_tag(docker_image)}"
+
     def get_repository_images(
         self, repo: str = DEFAULT_REPOSITORY
     ) -> List[Dict[str, Any]]:
@@ -441,7 +457,7 @@ class DockerHubClient:
             return self.do_docker_hub_get_request(f"/repositories/{repo}")
         except RequestException as error:
             raise DockerHubRequestException(
-                f"Failed to retreive images of repository {repo}", exception=error
+                f"Failed to retrieve images of repository {repo}", exception=error
             )
 
     def get_repository_images_names(self, repo: str = DEFAULT_REPOSITORY) -> List[str]:

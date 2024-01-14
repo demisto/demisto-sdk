@@ -596,7 +596,8 @@ def get_remote_file(
         if default_value is None:
             raise NoInternetConnectionException
         return default_value
-
+    if not tag:
+        tag = DEMISTO_GIT_PRIMARY_BRANCH
     tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
     if not git_content_config:
         try:

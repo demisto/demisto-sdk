@@ -14,6 +14,14 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 )
 
 
+@pytest.fixture(autouse=True)
+def dockerhub_client() -> DockerHubClient:
+    dockerhub_client = DockerHubClient(username="test", password="test")
+    dockerhub_client.do_registry_get_request.cache_clear()
+    dockerhub_client.do_docker_hub_get_request.cache_clear()
+    return dockerhub_client
+
+
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_call_count",
     [
@@ -79,14 +87,13 @@ def test_DockerImageExistValidator_is_valid(
         DockerImageExistValidator,
     )
 
-    mocker = mocker.patch.object(
-        DockerHubClient,
-        "get_latest_docker_image_tag",
-        return_value="3.1.1.1",
+    _mocker = mocker.patch.object(
+        DockerImageExistValidator, "get_latest_image", return_value="1.0.0"
     )
+
     results = DockerImageExistValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
-    assert mocker.call_count == expected_call_count
+    assert _mocker.call_count == expected_call_count
 
 
 def test_LatestDockerImageTagValidator_is_valid():

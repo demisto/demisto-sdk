@@ -12,7 +12,10 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 @pytest.fixture()
 def dockerhub_client() -> DockerHubClient:
-    return DockerHubClient(username="test", password="test")
+    dockerhub_client = DockerHubClient(username="test", password="test")
+    dockerhub_client.do_registry_get_request.cache_clear()
+    dockerhub_client.do_docker_hub_get_request.cache_clear()
+    return dockerhub_client
 
 
 def test_get_token_with_new_token(requests_mock, dockerhub_client: DockerHubClient):

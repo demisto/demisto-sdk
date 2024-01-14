@@ -456,6 +456,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: [],
             }
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -543,6 +547,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -591,7 +599,10 @@ class TestPackUniqueFilesValidator:
             }
         )
 
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(
             tools,
             "get_dict_from_file",
@@ -628,7 +639,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):

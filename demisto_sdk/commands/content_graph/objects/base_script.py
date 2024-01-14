@@ -46,7 +46,6 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         data = super().prepare_for_upload(current_marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(
-            marketplace=current_marketplace,
             ignore_native_image=kwargs.get("ignore_native_image") or False,
         ):
             logger.debug(

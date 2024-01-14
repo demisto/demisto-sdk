@@ -15,7 +15,6 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
@@ -53,7 +52,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
-    dockerhub_api_client: ClassVar[DockerHubClient] = None  # type: ignore[assignment]
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -67,7 +65,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         ignorable_errors: list,
         support_level_dict: dict,
     ) -> bool:
-        """check wether to run validation on the given content item or not.
+        """check whether to run validation on the given content item or not.
 
         Args:
             content_item (BaseContent): The content item to run the validation on.
@@ -115,15 +113,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                 use_git=True,
             )
         return self.graph_interface
-
-    @property
-    def dockerhub_client(self) -> DockerHubClient:
-        if not self.dockerhub_api_client:
-            logger.info(
-                "docker validations were selected, creating init DockerHubClient object"
-            )
-            BaseValidator.dockerhub_api_client = DockerHubClient()
-        return self.dockerhub_api_client
 
     def __dir__(self):
         # Exclude specific properties from being displayed when hovering over 'self'

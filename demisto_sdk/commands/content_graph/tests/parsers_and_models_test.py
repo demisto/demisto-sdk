@@ -1584,7 +1584,7 @@ class TestParsersAndModels:
             expected_tags=["TIM"],
             expected_categories=["Utilities"],
             expected_use_cases=["Identity And Access Management"],
-            expected_keywords=[],
+            expected_keywords=["common"],
             expected_marketplaces=[
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.XSOAR,

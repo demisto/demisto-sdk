@@ -51,9 +51,7 @@ class IntegrationScript(ContentItem):
 
     @property
     def docker_image_object(self) -> DockerImage:
-        a = DockerImage.parse(self.docker_image or "")
-        b = a.python_version
-        return a
+        return DockerImage.parse(self.docker_image or "")
 
     @property
     def is_powershell(self) -> bool:

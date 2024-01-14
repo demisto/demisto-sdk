@@ -364,7 +364,7 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
         verify_ssl: bool = True,
-        encoding: Optional[str] = None
+        encoding: Optional[str] = None,
     ) -> Any:
         """
         Reads a file from Gitlab api.
@@ -396,7 +396,7 @@ class File(ABC, BaseModel):
             handler=handler,
             clear_cache=clear_cache,
             verify=verify_ssl,
-            encoding=encoding
+            encoding=encoding,
         )
 
     @classmethod

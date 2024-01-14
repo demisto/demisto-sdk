@@ -40,6 +40,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
+    get_dev_native_image,
 )
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (
@@ -1609,11 +1610,7 @@ class Linter:
 
                     elif docker_image_flag == DockerImageFlagOption.NATIVE_DEV.value:
                         # Desirable docker image to run on is the dev native image - get the latest tag from Docker Hub
-                        native_image_ref = (
-                            native_image_config.get_native_image_reference(
-                                "native:dev", include_dev=True
-                            )
-                        )
+                        native_image_ref = get_dev_native_image()
 
                     else:
                         # Desirable docker image to run on is a versioned native image - get the docker ref from the

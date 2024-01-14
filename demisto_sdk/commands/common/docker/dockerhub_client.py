@@ -383,7 +383,9 @@ class DockerHubClient:
             return True
         except DockerHubRequestException as error:
             if error.exception.response.status_code == requests.codes.not_found:
-                logger.debug(f"docker-image {docker_image}:{tag} does not exist in dockerhub")
+                logger.debug(
+                    f"docker-image {docker_image}:{tag} does not exist in dockerhub"
+                )
                 return False
             logger.debug(
                 f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"

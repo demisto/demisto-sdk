@@ -11,6 +11,7 @@ from git import GitCommandError
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
     PACK_METADATA_DESC,
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
@@ -75,7 +76,9 @@ class TestPackUniqueFilesValidator:
         )
     )
     FAKE_PATH_NAME = "fake_pack"
-    validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
+    validator = PackUniqueFilesValidator(
+        FAKE_PATH_NAME, prev_ver=DEMISTO_GIT_PRIMARY_BRANCH
+    )
     validator.pack_path = FAKE_PACK_PATH
 
     def restart_validator(self):
@@ -456,6 +459,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: [],
             }
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -543,6 +550,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -591,7 +602,10 @@ class TestPackUniqueFilesValidator:
             }
         )
 
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(
             tools,
             "get_dict_from_file",
@@ -628,7 +642,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):

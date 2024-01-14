@@ -40,6 +40,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
+    dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
     """
 
     error_code: ClassVar[str]
@@ -64,7 +65,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         ignorable_errors: list,
         support_level_dict: dict,
     ) -> bool:
-        """check wether to run validation on the given content item or not.
+        """check whether to run validation on the given content item or not.
 
         Args:
             content_item (BaseContent): The content item to run the validation on.
@@ -121,7 +122,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
         )
-        fields = {"graph": {"exclude": True}}  # Exclude the property from the repr
+        # Exclude the properties from the repr
+        fields = {"graph": {"exclude": True}, "dockerhub_client": {"exclude": True}}
 
 
 class BaseResult(BaseModel):

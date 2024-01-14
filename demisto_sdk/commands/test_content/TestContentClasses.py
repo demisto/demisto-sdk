@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILTER_CONF,
+    MarketplaceVersions,
     PB_Status,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -52,7 +53,7 @@ from demisto_sdk.commands.test_content.tools import (
 ENV_RESULTS_PATH = "./artifacts/env_results.json"
 FAILED_MATCH_INSTANCE_MSG = (
     "{} Failed to run.\n There are {} instances of {}, please select one of them by using "
-    "the instance_name argument in conf.json. The options are:\n{}"
+    "the instance_names argument in conf.json. The options are:\n{}"
 )
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
@@ -60,8 +61,18 @@ MAX_RETRIES = 3
 RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
 SLACK_MEM_CHANNEL_ID = "CM55V7J8K"
+XSOAR_SERVER_TYPE = "XSOAR"
 XSIAM_SERVER_TYPE = "XSIAM"
+XPANSE_SERVER_TYPE = "XPANSE"
 XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
+
+MARKETPLACE_VERSIONS_TO_SERVER_TYPE = {
+    MarketplaceVersions.XSOAR: {XSOAR_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE},
+    MarketplaceVersions.MarketplaceV2: {XSIAM_SERVER_TYPE},
+    MarketplaceVersions.XPANSE: {XPANSE_SERVER_TYPE},
+    MarketplaceVersions.XSOAR_SAAS: {XSOAR_SAAS_SERVER_TYPE},
+    MarketplaceVersions.XSOAR_ON_PREM: {XSOAR_SERVER_TYPE},
+}
 
 __all__ = [
     "BuildContext",
@@ -148,6 +159,9 @@ class TestConfiguration:
         self.test_instance_names: List[str] = self._parse_instance_names_conf(
             test_configuration
         )
+        self.marketplaces: List[MarketplaceVersions] = self._parse_marketplaces_conf(
+            test_configuration
+        )
         self.instance_configuration: dict = test_configuration.get(
             "instance_configuration", {}
         )
@@ -171,6 +185,25 @@ class TestConfiguration:
         if not isinstance(instance_names_conf, list):
             instance_names_conf = [instance_names_conf]
         return instance_names_conf
+
+    @staticmethod
+    def _parse_marketplaces_conf(
+        test_configuration,
+    ) -> List[MarketplaceVersions]:
+        marketplaces_conf = test_configuration.get("marketplaces", [])
+        if not isinstance(marketplaces_conf, list):
+            marketplaces_conf = [marketplaces_conf]
+        marketplaces_conf = [
+            MarketplaceVersions(marketplace) for marketplace in marketplaces_conf
+        ]
+
+        if MarketplaceVersions.XSOAR in marketplaces_conf:
+            marketplaces_conf.append(MarketplaceVersions.XSOAR_SAAS)
+
+        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_conf:
+            marketplaces_conf.append(MarketplaceVersions.XSOAR)
+
+        return marketplaces_conf
 
     def __str__(self):
         return str(self.raw_dict)
@@ -292,6 +325,10 @@ class TestPlaybook:
         self.test_suite.add_property(
             "playbook.test_instance_names",
             ",".join(self.configuration.test_instance_names),
+        )
+        self.test_suite.add_property(
+            "playbook.marketplaces",
+            ",".join(self.configuration.marketplaces),
         )
         self.test_suite.add_property(
             "playbook.integrations", ",".join(map(str, self.integrations))
@@ -439,12 +476,57 @@ class TestPlaybook:
 
             return False
 
+        def marketplaces_match_server_type() -> bool:
+            """
+            Checks if the test has a marketplace value, and if so- if it matches the server machine we are on.
+            A test playbook might have several entries, each with a different marketplace. This might cause the test playbook to
+            be in the filtered tests list, even when the provided entry is not be the one that runs with the current sever
+            machine marketplace. This function checks that the entry provided is the exact one that needs to run.
+            Entries might differ in any field, the most common one is instance_names.
+            """
+            test_server_types: Set[str] = set()
+            for marketplace in self.configuration.marketplaces or []:
+                test_server_types.update(
+                    MARKETPLACE_VERSIONS_TO_SERVER_TYPE[marketplace]
+                )
+
+            if not test_server_types:
+                return True  # test doesn't have a marketplace value so it runs on all machines
+
+            instance_names_log_message = (
+                f" for instance names: {', '.join(self.configuration.test_instance_names)}"
+                if self.configuration.test_instance_names
+                else ""
+            )
+
+            if self.build_context.server_type in test_server_types:
+                self.log_debug(
+                    f"Running {self} with current server marketplace{instance_names_log_message}"
+                )
+                return True  # test has a marketplace value that matched the build server marketplace
+
+            log_message = (
+                f"Skipping {self} because it's marketplace values are: "
+                f"{', '.join(self.configuration.marketplaces)}{instance_names_log_message}, "
+                f"which is not compatible with the current server marketplace value"
+            )
+            self.close_test_suite([Skipped(log_message)])
+            if self.configuration.playbook_id in self.build_context.filtered_tests:
+                self.log_warning(log_message)
+            else:
+                self.log_debug(log_message)
+            skipped_tests_collected[
+                self.configuration.playbook_id
+            ] = f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
+            return False  # test has a marketplace value that doesn't matched the build server marketplace
+
         return (
             in_filtered_tests()
             and not nightly_test_in_non_nightly_build()
             and not skipped_test()
             and not version_mismatch()
             and not test_has_skipped_integration()
+            and marketplaces_match_server_type()
         )
 
     def run_test_module_on_integrations(self, client: DefaultApi) -> bool:

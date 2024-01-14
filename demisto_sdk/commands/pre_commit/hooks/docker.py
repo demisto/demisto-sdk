@@ -13,7 +13,6 @@ from docker.errors import DockerException
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
-    TESTS_REQUIRE_ISOLATED_PACK_IGNORE,
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -170,28 +169,11 @@ def should_enable_network(
     return False
 
 
-def should_enable_isolated(
-    split_by_isolated: bool, integration_script: IntegrationScript
-) -> bool:
-    if not split_by_isolated:
-        return False
-    pack = integration_script.in_pack
-    if pack and (config := pack.ignored_errors_dict):
-        if TESTS_REQUIRE_ISOLATED_PACK_IGNORE in config:
-            ignored_integrations_scripts_ids = config[
-                TESTS_REQUIRE_ISOLATED_PACK_IGNORE
-            ]
-            if integration_script.object_id in ignored_integrations_scripts_ids:
-                return True
-    return False
-
-
 def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
     split_by_obj: bool = False,
     split_by_network: bool = False,
-    split_by_isolated: bool = False,
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
@@ -213,7 +195,6 @@ def _split_by_objects(
             split_by_obj
             or (config_arg and (obj.path.parent / config_arg[1]).exists())
             or should_enable_network(split_by_network, obj)
-            or should_enable_isolated(split_by_isolated, obj)
         ):
             object_to_files[obj].add((file, obj))
         else:
@@ -271,7 +252,6 @@ class DockerHook(Hook):
                         )
         split_by_obj = self._get_property("split_by_object", False)
         split_by_network = self._get_property("split_by_network", False)
-        split_by_isolated = self._get_property("split_by_isolated", False)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
@@ -284,7 +264,6 @@ class DockerHook(Hook):
                 config_arg,
                 split_by_obj,
                 split_by_network,
-                split_by_isolated,
             )
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
@@ -297,7 +276,6 @@ class DockerHook(Hook):
                 object_to_files,
                 config_arg,
                 split_by_network,
-                split_by_isolated,
             )
             self.hooks.extend(hooks)
         end_time = time.time()
@@ -314,7 +292,6 @@ class DockerHook(Hook):
         ],
         config_arg: Optional[Tuple],
         split_by_network: bool = False,
-        split_by_isolated: bool = False,
     ):
         """
         Given the docker image and files to run on it, create new hooks to insert
@@ -337,7 +314,7 @@ class DockerHook(Hook):
         if Version(docker_version) < Version("19.03"):
             quiet = False
         remove_container = True
-        if os.getenv("GITLAB_CONTENT_CI"):
+        if os.getenv("CONTENT_GITLAB_CI"):
             remove_container = False
         new_hook[
             "entry"
@@ -365,10 +342,6 @@ class DockerHook(Hook):
                     hook["args"] = args
                 if should_enable_network(split_by_network, integration_script):
                     hook["entry"] = hook["entry"].replace("--network none", "")
-                if should_enable_isolated(split_by_isolated, integration_script):
-                    # run directly the hooks, without script runner
-                    hook["args"] = ["-m"] + hook["args"][1:-1]
-                    change_working_directory = True
                 hook[
                     "id"
                 ] = f"{hook['id']}-{integration_script.object_id}"  # for uniqueness

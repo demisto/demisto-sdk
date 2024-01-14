@@ -27,14 +27,16 @@ class ValidTagsPrefixesValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(", ".join(invalid_tags), ", ".join(APPROVED_PREFIXES)),  # type: ignore
+                message=self.error_message.format(
+                    ", ".join(invalid_tags), ", ".join(APPROVED_PREFIXES)
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
             if (invalid_tags := self.get_invalid_tags(content_item))
         ]
 
-    def get_invalid_tags(self, content_item: ContentTypes):
+    def get_invalid_tags(self, content_item: ContentTypes) -> List[str]:
         """Extract the list of invalid tags from the metadata file.
 
         Args:

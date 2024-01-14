@@ -42,7 +42,7 @@ class IsValidUseOfUsecaseTagValidator(BaseValidator[ContentTypes]):
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         tags = content_item.tags
-        tags.remove(USE_CASE_TAG)  # type: ignore
+        tags.remove(USE_CASE_TAG)  # type: ignore[union-attr]
         content_item.tags = tags
         return FixResult(
             validator=self,

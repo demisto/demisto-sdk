@@ -18,7 +18,6 @@ class IsValidCertificateValidator(BaseValidator[ContentTypes]):
     error_message = (
         "The certification field ({0}) is invalid. It can be one of the following: {1}."
     )
-    fix_message = ""
     related_field = "certification"
     is_auto_fixable = False
 

@@ -68,7 +68,7 @@ def merge_coverage_report():
     coverage_path.unlink(missing_ok=True)
     cov = coverage.Coverage(data_file=coverage_path)
     coverage_paths = CONTENT_PATH / ".pre-commit" / "coverage"
-    if not (files := list(coverage_paths.iterdir())):
+    if not coverage_path.exists() or not (files := list(coverage_paths.iterdir())):
         logger.warning("No coverage files found, skipping coverage report.")
         return
     fixed_files = [str(file) for file in files if fix_coverage_report_path(Path(file))]
@@ -80,7 +80,9 @@ def merge_coverage_report():
 
 def merge_junit_reports():
     junit_reports_path = CONTENT_PATH / ".pre-commit" / "pytest-junit"
-
+    if not junit_reports_path.exists():
+        logger.warning("No junit reports found, skipping junit report.")
+        return
     report_files = junit_reports_path.iterdir()
     if reports := [JUnitXml.fromfile(str(file)) for file in report_files]:
         report = reports[0]

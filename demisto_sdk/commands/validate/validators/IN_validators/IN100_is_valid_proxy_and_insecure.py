@@ -17,7 +17,7 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
     error_code = "IN100"
     description = "Validate that the proxy & insecure params are configured correctly."
     error_message = "The following params are invalid:\n{0}"
-    fix_message = ""
+    fix_message = "Corrected the following params: {0}."
     related_field = "configuration"
     is_auto_fixable = True
     fixed_params: ClassVar[dict] = {}
@@ -50,37 +50,37 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
         ]
 
     def is_valid_param(self, integration_name, params, expected_names):
-        param = {}
+        current_param = {}
         for param in params:
             if param["name"] in expected_names:
-                param = param
+                current_param = param
                 break
-        if not param:
-            return True
-        if not all(
+        if current_param and any(
             [
-                param["display"] != COMMON_PARAMS_DISPLAY_NAME[param["name"]],
-                param.get("defaultvalue", "") not in (False, "false"),
-                param.get("required", False),
-                param.get("type", "") != 8,
+                current_param.get("display", "")
+                != COMMON_PARAMS_DISPLAY_NAME[current_param["name"]],
+                current_param.get("defaultvalue", "") not in (False, "false", ""),
+                current_param.get("required", False),
+                current_param.get("type", "") != 8,
             ]
         ):
             self.fixed_params[integration_name] = self.fixed_params.get(
                 integration_name, {}
             )
-            self.fixed_params[integration_name][param["name"]] = {
-                "display": COMMON_PARAMS_DISPLAY_NAME[param["name"]],
+            self.fixed_params[integration_name][current_param["name"]] = {
+                "display": COMMON_PARAMS_DISPLAY_NAME[current_param["name"]],
                 "defaultvalue": False,
                 "required": False,
                 "type": 8,
             }
-        return False
+            return False
+        return True
 
     def fix(
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        for key, val in self.fixed_params[content_item.name]:
+        for key, val in self.fixed_params[content_item.name].items():
             for param in content_item.params:
                 if param["name"] == key:
                     param.update(val)

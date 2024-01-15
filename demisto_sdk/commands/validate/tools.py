@@ -101,3 +101,21 @@ def validate_categories_approved(categories: list, approved_list: list):
         if category not in approved_list:
             return False
     return True
+
+
+def find_param(params: List[dict], param_to_find: str) -> dict:
+    """_summary_
+
+    Args:
+        params (List[dict]): The integration's params list.
+        param_to_find (str): The name of the param we wish to find.
+
+    Returns:
+        dict: The param with the given name or an empty string.
+    """
+    max_fetch_param = {}
+    for param in params:
+        if param.get("name", "") == param_to_find:
+            max_fetch_param = param
+            break
+    return max_fetch_param

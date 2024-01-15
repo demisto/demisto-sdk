@@ -7,6 +7,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
     IsValidProxyAndInsecureValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN102_is_valid_checkbox_param import (
+    IsValidCheckboxParamValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subtype import (
     ValidSubtypeValidator,
 )
@@ -190,44 +193,375 @@ def test_IsIntegrationRunnableValidator_is_valid(
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures",
+    "content_items, expected_number_of_failures, expected_msgs",
     [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "insecure",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "unscure",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "proxy",
+                                "type": 8,
+                                "required": False,
+                                "display": "Use system proxy settings",
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
         (
             [
                 create_integration_object(
                     paths=["configuration"],
                     values=[[{"name": "proxy", "display": "a"}]],
                 ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [{"name": "proxy", "display": "Use system proxy settingss"}]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "proxy",
+                                "display": "Use system proxy settings",
+                                "type": 1,
+                                "required": False,
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "proxy",
+                                "display": "Use system proxy settings",
+                                "type": 8,
+                                "required": True,
+                            }
+                        ]
+                    ],
+                ),
             ],
-            0,
+            4,
+            [
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8.",
+            ],
         ),
     ],
 )
 def test_IsValidProxyAndInsecureValidator_is_valid(
-    content_items, expected_number_of_failures
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
     content_items iterables.
-        - Case 1: An integration without any commands, and isfetch, feed, and longRunnings keys are set to false.
-        - Case 2: An integration without any commands, and feed, and longRunnings keys are set to false, and isfetch is set to True.
-        - Case 3: An integration without any commands, and isfetch, feed, and longRunnings keys are set to false, and feed is set to True.
-        - Case 4: An integration without any commands, and isfetch, and feed keys are set to false, and longRunnings is set to True.
-        - Case 5: An integration with one command, and isfetch, feed, and longRunnings keys are set to false.
+        - Case 1: Four valid integrations:
+            - One integration without proxy / insecure params.
+            - One integration with valid insecure param.
+            - One integration with valid unsecure param.
+            - One integration with valid proxy param.
+        - Case 2: Four invalid integrations:
+            - One integration with proxy param with a wrong display name.
+            - One integration with proxy param without required and type fields.
+            - One integration with proxy param with a wrong type.
+            - One integration with proxy param with a required field set to true.
     When
     - Calling the IsValidProxyAndInsecureValidator is valid function.
     Then
         - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should fail.
-        - Case 2: Should pass.
-        - Case 3: Should pass.
-        - Case 4: Should pass.
-        - Case 5: Should pass.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all.
     """
     results = IsValidProxyAndInsecureValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
-    assert (
-        not results
-        or results[0].message
-        == "Could not find any runnable command in the integration.\nMust have at least one of: a command under the `commands` section, `isFetch: true`, `feed: true`, or `longRunning: true`."
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
     )
+
+
+def test_IsValidProxyAndInsecureValidator_fix():
+    """
+    Given
+        An integration with invalid proxy & insecure params.
+    When
+    - Calling the IsValidProxyAndInsecureValidator fix function.
+    Then
+        - Make sure that all the relevant fields were added/fixed and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {"name": "proxy", "display": "a"},
+                {
+                    "name": "insecure",
+                    "type": 1,
+                    "required": True,
+                    "display": "Trust any certificate (not secure)",
+                },
+            ]
+        ],
+    )
+    assert content_item.params == [
+        {"name": "proxy", "display": "a"},
+        {
+            "name": "insecure",
+            "type": 1,
+            "required": True,
+            "display": "Trust any certificate (not secure)",
+        },
+    ]
+    validator = IsValidProxyAndInsecureValidator()
+    validator.fixed_params[content_item.name] = {
+        "insecure": {
+            "name": "insecure",
+            "type": 8,
+            "required": False,
+            "display": "Trust any certificate (not secure)",
+        },
+        "proxy": {
+            "name": "proxy",
+            "type": 8,
+            "required": False,
+            "display": "Use system proxy settings",
+        },
+    }
+    assert (
+        validator.fix(content_item).message
+        == "Corrected the following params: insecure, proxy."
+    )
+    assert content_item.params == [
+        {
+            "name": "proxy",
+            "type": 8,
+            "required": False,
+            "display": "Use system proxy settings",
+        },
+        {
+            "name": "insecure",
+            "type": 8,
+            "required": False,
+            "display": "Trust any certificate (not secure)",
+        },
+    ]
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [{"name": "test_param_1", "type": 8, "display": "test param 1"}]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [{"name": "test_param_2", "type": 0, "display": "test param 2"}]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_param_3",
+                                "type": 8,
+                                "display": "test param 3",
+                                "required": False,
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_param_4",
+                                "type": 8,
+                                "display": "test param 4",
+                                "required": True,
+                            },
+                            {
+                                "name": "test_param_5",
+                                "type": 8,
+                                "display": "test param 5",
+                                "required": False,
+                            },
+                            {
+                                "name": "test_param_6",
+                                "type": 8,
+                                "display": "test param 6",
+                                "required": False,
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            3,
+            [
+                "The following checkbox params required field is not set to True: test_param_1.\nMake sure to set it to True.",
+                "The following checkbox params required field is not set to True: test_param_3.\nMake sure to set it to True.",
+                "The following checkbox params required field is not set to True: test_param_5, test_param_6.\nMake sure to set it to True.",
+            ],
+        ),
+    ],
+)
+def test_IsValidCheckboxParamValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Four integrations:
+            - One integration with a param of type 8 but no required field.
+            - One integration with a param of type 0 and no required field.
+            - One integration with a param of type 8 but required field set to False.
+            - One integration with 3 param of type 8, one's required field is set to True and the other two are set to False.
+    When
+    - Calling the IsValidCheckboxParamValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should fail all except test_param 2 & 4.
+    """
+    results = IsValidCheckboxParamValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidCheckboxParamValidator_fix():
+    """
+    Given
+        An integration with invalid proxy & insecure params.
+    When
+    - Calling the IsValidCheckboxParamValidator fix function.
+    Then
+        - Make sure that all the relevant fields were added/fixed and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "test_param_4",
+                    "type": 8,
+                    "display": "test param 4",
+                    "required": True,
+                },
+                {
+                    "name": "test_param_5",
+                    "type": 8,
+                    "display": "test param 5",
+                    "required": False,
+                },
+                {
+                    "name": "test_param_6",
+                    "type": 8,
+                    "display": "test param 6",
+                    "required": False,
+                },
+            ]
+        ],
+    )
+    assert content_item.params == [
+        {
+            "name": "test_param_4",
+            "type": 8,
+            "display": "test param 4",
+            "required": True,
+        },
+        {
+            "name": "test_param_5",
+            "type": 8,
+            "display": "test param 5",
+            "required": False,
+        },
+        {
+            "name": "test_param_6",
+            "type": 8,
+            "display": "test param 6",
+            "required": False,
+        },
+    ]
+    validator = IsValidCheckboxParamValidator()
+    validator.misconfigured_checkbox_params_by_integration[content_item.name] = [
+        "test_param_5",
+        "test_param_6",
+    ]
+    assert (
+        validator.fix(content_item).message
+        == "Set required field of the following params was set to True: test_param_5, test_param_6."
+    )
+    assert content_item.params == [
+        {
+            "name": "test_param_4",
+            "type": 8,
+            "display": "test param 4",
+            "required": True,
+        },
+        {
+            "name": "test_param_5",
+            "type": 8,
+            "display": "test param 5",
+            "required": True,
+        },
+        {
+            "name": "test_param_6",
+            "type": 8,
+            "display": "test param 6",
+            "required": True,
+        },
+    ]

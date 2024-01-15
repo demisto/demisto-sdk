@@ -26,7 +26,7 @@ class IsValidCheckboxParamValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    [", ".join(misconfigured_checkbox_params)]
+                    ", ".join(misconfigured_checkbox_params)
                 ),
                 content_object=content_item,
             )

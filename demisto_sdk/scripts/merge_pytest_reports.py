@@ -80,7 +80,9 @@ def merge_coverage_report():
 
 def merge_junit_reports():
     junit_reports_path = CONTENT_PATH / ".pre-commit" / "pytest-junit"
-
+    if not junit_reports_path.exists():
+        logger.warning("No junit reports found, skipping junit report.")
+        return
     report_files = junit_reports_path.iterdir()
     if reports := [JUnitXml.fromfile(str(file)) for file in report_files]:
         report = reports[0]

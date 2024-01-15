@@ -14,6 +14,14 @@ class TestSuiteBase:
         return BaseContent.from_path(self.obj_path)
 
     def get_graph_object(self, interface: ContentGraphInterface):
+        """Returns content item from the graph, enriched with the relationships.
+
+        Args:
+            interface (ContentGraphInterface): The ContentGraphInterface instance to work with.
+
+        Returns:
+            Union[Pack, ContentItem]: The content item found
+        """
         return interface.from_path(self.obj_path)
 
     @abstractmethod

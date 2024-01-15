@@ -4,7 +4,6 @@ from zipfile import ZipFile
 
 import pytest
 
-import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
@@ -12,9 +11,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
-)
-from demisto_sdk.commands.content_graph.interface import (
-    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects import IncidentField, Layout, Mapper
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
@@ -30,31 +26,13 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.widget import Widget
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
-
 # Fixtures for mock content object models
 ###### TO BE DELETED AFTER USING THE TestSuite OBJECTS IN ALL GRAPH TEST - START ######
-def setup_method(mocker, repo: Repo):
-    """Auto-used fixture for setup before every test run"""
-    import demisto_sdk.commands.content_graph.objects.base_content as bc
-
-    bc.CONTENT_PATH = Path(repo.path)
-    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
-    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
-        return_value={
-            "docker_images": {
-                "python3": {
-                    "3.10.11.54799": {"python_version": "3.10.11"},
-                    "3.10.12.63474": {"python_version": "3.10.11"},
-                }
-            }
-        },
-    )
 
 
 @pytest.fixture
@@ -871,50 +849,61 @@ class TestCreateContentGraph:
         assert data[2]["object_id"] == "NonCorePack"
         assert not empty_data
 
-    # @pytest.mark.parametrize(
-    #     "docker_image, expected_python_version, is_taken_from_dockerhub",
-    #     [
-    #         ("demisto/python3:3.10.11.54799", "3.10.11", False),
-    #         ("demisto/pan-os-python:1.0.0.68955", "3.10.12", True),
-    #     ],
-    # )
-    # def test_create_content_graph_with_python_version(
-    #     self,
-    #     mocker,
-    #     graph_repo: Repo,
-    #     docker_image: str,
-    #     expected_python_version: str,
-    #     is_taken_from_dockerhub: bool,
-    # ):
-    #     """
-    #     Given:
-    #         Case A: docker image that its python version exists in the dockerfiles metadata file
-    #         Case B: docker image that its python version does not exist in the dockerfiles metadata file
+    @pytest.mark.parametrize(
+        "docker_image, expected_python_version, is_taken_from_dockerhub",
+        [
+            ("demisto/python3:3.10.11.54799", "3.10.11", False),
+            ("demisto/pan-os-python:1.0.0.68955", "3.10.12", True),
+        ],
+    )
+    def test_create_content_graph_with_python_version(
+        self,
+        mocker,
+        graph_repo: Repo,
+        docker_image: str,
+        expected_python_version: str,
+        is_taken_from_dockerhub: bool,
+    ):
+        """
+        Given:
+            Case A: docker image that its python version exists in the dockerfiles metadata file
+            Case B: docker image that its python version does not exist in the dockerfiles metadata file
 
-    #     When:
-    #         - Running create_content_graph()
+        When:
+            - Running create_content_graph()
 
-    #     Then:
-    #         - make sure that in both cases the python_version (lazy property) was loaded into the Integration
-    #           model because we want it in the graph metadata
-    #         Case A: the python version was taken from the dockerfiles metadata file
-    #         Case B: the python version was taken from the dockerhub api
-    #     """
-    #     from packaging.version import Version
+        Then:
+            - make sure that in both cases the python_version (lazy property) was loaded into the Integration
+              model because we want it in the graph metadata
+            Case A: the python version was taken from the dockerfiles metadata file
+            Case B: the python version was taken from the dockerhub api
+        """
+        from packaging.version import Version
 
-    #     dockerhub_api_mocker = mocker.patch(
-    #         "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
-    #         return_value=Version(expected_python_version),
-    #     )
+        dockerhub_api_mocker = mocker.patch(
+            "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
+            return_value=Version(expected_python_version),
+        )
+        mocker.patch(
+            "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+            return_value={
+                "docker_images": {
+                    "python3": {
+                        "3.10.11.54799": {"python_version": "3.10.11"},
+                        "3.10.12.63474": {"python_version": "3.10.11"},
+                    }
+                }
+            },
+        )
 
-    #     pack = graph_repo.create_pack()
-    #     pack.create_integration(docker_image=docker_image)
-    #     mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
+        pack = graph_repo.create_pack()
+        pack.create_integration(docker_image=docker_image)
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
-    #     interface = graph_repo.create_graph()
-    #     integrations = interface.search(
-    #         marketplace=MarketplaceVersions.XSOAR,
-    #         content_type=ContentType.INTEGRATION,
-    #     )
-    #     assert expected_python_version == integrations[0].to_dict()["python_version"]
-    #     assert dockerhub_api_mocker.called == is_taken_from_dockerhub
+        interface = graph_repo.create_graph()
+        integrations = interface.search(
+            marketplace=MarketplaceVersions.XSOAR,
+            content_type=ContentType.INTEGRATION,
+        )
+        assert expected_python_version == integrations[0].python_version
+        assert dockerhub_api_mocker.called == is_taken_from_dockerhub

@@ -105,17 +105,6 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Ge
 
     mock.patch.object(ContentGraphInterface, "repo_path", bc.CONTENT_PATH)
     mock.patch.object(neo4j_service, "REPO_PATH", neo4j_path)
-    mock.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
-        return_value={
-            "docker_images": {
-                "python3": {
-                    "3.10.11.54799": {"python_version": "3.10.11"},
-                    "3.10.12.63474": {"python_version": "3.10.11"},
-                }
-            }
-        },
-    )
 
     yield repo
     if (neo4j_path / "neo4j-data/data").exists():

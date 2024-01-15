@@ -22,13 +22,6 @@ from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.content_graph.tests import create_content_graph_test
-
-
-@pytest.fixture(autouse=True)
-def setup_method(mocker, graph_repo):
-    """Auto-used fixture for setup before every test run"""
-    create_content_graph_test.setup_method(mocker, graph_repo)
 
 
 def create_mini_content(repository: ContentDTO):  # noqa: F811

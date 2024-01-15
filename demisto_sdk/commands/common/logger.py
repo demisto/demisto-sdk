@@ -12,7 +12,6 @@ from typing import Dict, List, Optional, Union
 # NOTE: Do not add internal imports here, as it may cause circular imports.
 from demisto_sdk.commands.common.constants import LOGS_DIR, STRING_TO_BOOL_MAP
 
-
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
 

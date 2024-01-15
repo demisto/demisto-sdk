@@ -10,7 +10,16 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 # NOTE: Do not add internal imports here, as it may cause circular imports.
-from demisto_sdk.commands.common.constants import LOGS_DIR, STRING_TO_BOOL_MAP
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_LOG_FILE_COUNT,
+    DEMISTO_SDK_LOG_FILE_PATH,
+    DEMISTO_SDK_LOG_FILE_SIZE,
+    DEMISTO_SDK_LOG_NO_COLORS,
+    DEMISTO_SDK_LOG_NOTIFY_PATH,
+    LOG_FILE_NAME,
+    LOGS_DIR,
+    STRING_TO_BOOL_MAP,
+)
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
@@ -80,10 +89,9 @@ neo4j_log.setLevel(logging.CRITICAL)
 CONSOLE_HANDLER = "console-handler"
 FILE_HANDLER = "file-handler"
 
-LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 LOG_FILE_PATH: Optional[Path] = None
 LOG_FILE_PATH_PRINT = environment_variable_to_bool(
-    "DEMISTO_SDK_LOG_NOTIFY_PATH", default_value=True
+    DEMISTO_SDK_LOG_NOTIFY_PATH, default_value=True
 )
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -104,12 +112,8 @@ DEPRECATED_PARAMETERS = {
 }
 
 SUCCESS_LEVEL: int = 25
-DEMISTO_SDK_LOG_FILE_SIZE = environment_variable_to_int(
-    "DEMISTO_SDK_LOG_FILE_SIZE", 1_048_576
-)  # 1MB
-DEMISTO_SDK_LOG_FILE_COUNT = environment_variable_to_int(
-    "DEMISTO_SDK_LOG_FILE_COUNT", 10
-)
+LOG_FILE_SIZE = environment_variable_to_int(DEMISTO_SDK_LOG_FILE_SIZE, 1_048_576)  # 1MB
+LOG_FILE_COUNT = environment_variable_to_int(DEMISTO_SDK_LOG_FILE_COUNT, 10)
 
 FILE_LOG_RECORD_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s"
 
@@ -382,7 +386,7 @@ def logging_setup(
     console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(console_log_threshold or logging.INFO)
 
-    if environment_variable_to_bool("DEMISTO_SDK_LOG_NO_COLORS"):
+    if environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS):
         console_handler.setFormatter(fmt=NoColorFileFormatter())
     else:
         console_handler.setFormatter(fmt=ColorConsoleFormatter())
@@ -390,7 +394,7 @@ def logging_setup(
     log_handlers: List[logging.Handler] = [console_handler]
 
     if log_file_directory_path_str := (
-        log_file_path or os.getenv("DEMISTO_SDK_LOG_FILE_PATH")
+        log_file_path or os.getenv(DEMISTO_SDK_LOG_FILE_PATH)
     ):
         log_file_directory_path = Path(log_file_directory_path_str)
 
@@ -412,8 +416,8 @@ def logging_setup(
     file_handler = RotatingFileHandler(
         filename=log_file_path,
         mode="a",
-        maxBytes=DEMISTO_SDK_LOG_FILE_SIZE,
-        backupCount=DEMISTO_SDK_LOG_FILE_COUNT,
+        maxBytes=LOG_FILE_SIZE,
+        backupCount=LOG_FILE_COUNT,
     )
     file_handler.set_name(FILE_HANDLER)
     file_handler.setLevel(file_log_threshold or logging.DEBUG)

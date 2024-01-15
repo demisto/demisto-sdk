@@ -45,9 +45,7 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
     ) -> FixResult:
         docker_image = content_item.docker_image_object
         try:
-            latest_numeric_tag = str(
-                self.dockerhub_client.get_latest_docker_image_tag(docker_image.name)
-            )
+            latest_numeric_tag = docker_image.latest_tag
             message = self.fix_message.format(
                 content_item.docker_image, f"{docker_image.name}:{latest_numeric_tag}"
             )

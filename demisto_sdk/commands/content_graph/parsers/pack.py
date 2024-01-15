@@ -16,8 +16,10 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
+    get_file,
     get_json,
     get_pack_ignore_content,
+    get_pack_latest_rn_version,
 )
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
@@ -202,11 +204,11 @@ class PackMetadataParser:
 
     @property
     def categories(self):
-        return [capital_case(c) for c in self.pack_metadata_dict["categories"]]
+        return [capital_case(c) for c in self.pack_metadata_dict.get("categories", [])]
 
     @property
     def use_cases(self):
-        return [capital_case(c) for c in self.pack_metadata_dict["useCases"]]
+        return [capital_case(c) for c in self.pack_metadata_dict.get("useCases", [])]
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():
@@ -266,7 +268,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         logger.debug(f"Parsing {self.node_id}")
         self.parse_pack_folders()
         self.parse_ignored_errors()
-        self.parse_pack_readme()
+        self.get_rn_info()
 
         logger.debug(f"Successfully parsed {self.node_id}")
 
@@ -339,15 +341,16 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """Sets the pack's ignored_errors field."""
         self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {})  # type: ignore
 
-    def parse_pack_readme(self):
-        """Sets the pack's readme field."""
-        path = f"{self.path}/README.md"
-        try:
-            with open(path) as f:
-                self.pack_readme = f.read()
-        except FileNotFoundError:
-            raise NotAContentItemException(
-                f"Couldn't find README.md file for pack at path {self.path}.\nPlease make sure the file exists."
+    def get_rn_info(self):
+        self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
+        if self.latest_rn_version:
+            self.latest_rn_content = get_file(
+                str(
+                    self.path
+                    / "ReleaseNotes"
+                    / f"{self.latest_rn_version.replace('.', '_')}.md"
+                ),
+                return_content=True,
             )
 
     @cached_property

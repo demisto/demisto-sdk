@@ -777,26 +777,28 @@ DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_COMMAND_REGEX,
 ]
 
-PACK_METADATA_NAME = "name"
-PACK_METADATA_DESC = "description"
-PACK_METADATA_SUPPORT = "support"
-PACK_METADATA_MIN_VERSION = "serverMinVersion"
-PACK_METADATA_CURR_VERSION = "currentVersion"
-PACK_METADATA_AUTHOR = "author"
-PACK_METADATA_URL = "url"
-PACK_METADATA_EMAIL = "email"
-PACK_METADATA_CATEGORIES = "categories"
-PACK_METADATA_MODULES = "modules"
-PACK_METADATA_TAGS = "tags"
-PACK_METADATA_CREATED = "created"
-PACK_METADATA_CERTIFICATION = "certification"
-PACK_METADATA_USE_CASES = "useCases"
-PACK_METADATA_KEYWORDS = "keywords"
-PACK_METADATA_PRICE = "price"
-PACK_METADATA_DEPENDENCIES = "dependencies"
-PACK_METADATA_IRON_BANK_TAG = "Iron Bank"
+PACK_METADATA_NAME: str = "name"
+PACK_METADATA_DESC: str = "description"
+PACK_METADATA_SUPPORT: str = "support"
+PACK_METADATA_MIN_VERSION: str = "serverMinVersion"
+PACK_METADATA_CURR_VERSION: str = "currentVersion"
+PACK_METADATA_AUTHOR: str = "author"
+PACK_METADATA_URL: str = "url"
+PACK_METADATA_EMAIL: str = "email"
+PACK_METADATA_CATEGORIES: str = "categories"
+PACK_METADATA_MODULES: str = "modules"
+PACK_METADATA_TAGS: str = "tags"
+PACK_METADATA_CREATED: str = "created"
+PACK_METADATA_CERTIFICATION: str = "certification"
+PACK_METADATA_USE_CASES: str = "useCases"
+PACK_METADATA_KEYWORDS: str = "keywords"
+PACK_METADATA_PRICE: str = "price"
+PACK_METADATA_DEPENDENCIES: str = "dependencies"
+PACK_METADATA_IRON_BANK_TAG: str = "Iron Bank"
 
-PACK_METADATA_FIELDS = (
+ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
+USE_CASE_TAG: str = "Use Case"
+MANDATORY_PACK_METADATA_FIELDS = (
     PACK_METADATA_NAME,
     PACK_METADATA_DESC,
     PACK_METADATA_SUPPORT,
@@ -1415,18 +1417,37 @@ IOC_OUTPUTS_DICT = {
     "url": {"URL.Data"},
     "endpoint": {"Endpoint.Hostname", "Endpoint.IPAddress", "Endpoint.ID"},
 }
+
+# support types:
 XSOAR_SUPPORT = "xsoar"
 PARTNER_SUPPORT = "partner"
+COMMUNITY_SUPPORT = "community"
+DEVELOPER_SUPPORT = "developer"
+PACK_SUPPORT_OPTIONS = [
+    XSOAR_SUPPORT,
+    PARTNER_SUPPORT,
+    DEVELOPER_SUPPORT,
+    COMMUNITY_SUPPORT,
+]
+CONTRIBUTORS_LIST = [PARTNER_SUPPORT, DEVELOPER_SUPPORT, COMMUNITY_SUPPORT]
+SUPPORTED_CONTRIBUTORS_LIST = [DEVELOPER_SUPPORT, PARTNER_SUPPORT]
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"
-PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
 XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
 XSOAR_CONTEXT_AND_OUTPUTS_URL = (
     "https://xsoar.pan.dev/docs/integrations/context-and-outputs"
 )
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
-EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
+EXCLUDED_DISPLAY_NAME_WORDS = [PARTNER_SUPPORT, COMMUNITY_SUPPORT]
+INCORRECT_PACK_NAME_WORDS = [
+    "Pack",
+    "Playbook",
+    "Integration",
+    "Script",
+    PARTNER_SUPPORT,
+    COMMUNITY_SUPPORT,
+]
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
 SUPPORT_LEVEL_HEADER = "supportlevelheader"

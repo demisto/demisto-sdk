@@ -26,7 +26,6 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.widget import Widget
-from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -885,12 +884,16 @@ class TestCreateContentGraph:
             return_value=Version(expected_python_version),
         )
         mocker.patch(
+            "demisto_sdk.commands.common.docker_images_metadata.DockerImagesMetadata._instance",
+            None,
+        )
+        mocker.patch(
             "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
             return_value={
                 "docker_images": {
                     "python3": {
                         "3.10.11.54799": {"python_version": "3.10.11"},
-                        "3.10.12.63474": {"python_version": "3.10.11"},
+                        "3.10.12.63474": {"python_version": "3.10.12"},
                     }
                 }
             },
@@ -898,7 +901,6 @@ class TestCreateContentGraph:
 
         pack = graph_repo.create_pack()
         pack.create_integration(docker_image=docker_image)
-        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         interface = graph_repo.create_graph()
         integrations = interface.search(

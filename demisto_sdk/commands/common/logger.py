@@ -10,9 +10,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 # NOTE: Do not add internal imports here, as it may cause circular imports.
-from demisto_sdk.commands.common.constants import SDK_DATA_DIR, STRING_TO_BOOL_MAP
+from demisto_sdk.commands.common.constants import LOGS_DIR, STRING_TO_BOOL_MAP
 
-DEFAULT_LOGS_DIR = SDK_DATA_DIR / "logs"
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
@@ -403,7 +402,7 @@ def logging_setup(
             )
 
     else:  # Use default log files path
-        log_file_directory_path = DEFAULT_LOGS_DIR
+        log_file_directory_path = LOGS_DIR
         log_file_directory_path.mkdir(
             parents=True, exist_ok=True
         )  # Generate directory if it doesn't exist

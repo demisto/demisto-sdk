@@ -10,7 +10,8 @@ from packaging.version import Version
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
 
 
-SDK_DATA_DIR = Path.home() / ".demisto-sdk"
+PROJECT_DATA_DIR = Path.home() / ".demisto-sdk"
+LOGS_DIR = PROJECT_DATA_DIR / "logs"
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"

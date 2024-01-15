@@ -121,9 +121,10 @@ Supported commands:
 ---
 
 ### Logs
+
 Log files are generated and stored automatically by default in the user's home directory:  
 **Linux / macOS**: `$HOME/.demisto-sdk/logs`  
-**Windows**: `%USERPROFILE%\.demisto-sdk\logs`
+**Windows**: `%USERPROFILE%\.demisto-sdk\logs`  
 
 The default directory can be overriden using the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable.
 

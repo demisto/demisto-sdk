@@ -2,7 +2,7 @@ import enum
 import os
 import re
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Set
+from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Set
 
 from neo4j import graph
 
@@ -31,7 +31,7 @@ PACK_METADATA_FILENAME = "pack_metadata.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
-SERVER_CONTENT_ITEMS_PATH = "Tests/Marketplace/server_content_items.json"
+SERVER_CONTENT_ITEMS_PATH = Path("Tests/Marketplace/server_content_items.json")
 
 
 class Neo4jRelationshipResult(NamedTuple):
@@ -49,6 +49,7 @@ class RelationshipType(str, enum.Enum):
     USES = "USES"
     USES_BY_ID = "USES_BY_ID"
     USES_BY_NAME = "USES_BY_NAME"
+    USES_BY_CLI_NAME = "USES_BY_CLI_NAME"
     USES_COMMAND_OR_SCRIPT = "USES_COMMAND_OR_SCRIPT"
     USES_PLAYBOOK = "USES_PLAYBOOK"
 
@@ -359,22 +360,25 @@ def lazy_property(property_func: Callable):
     return LazyProperty(_lazy_decorator)
 
 
-def get_server_content_items() -> Dict[ContentType, list]:
+def get_server_content_items(tag: Optional[str] = None) -> Dict[ContentType, list]:
     """Reads a JSON file containing server content items from content repository
     and returns a dict representation of it in the required format.
-
+    Args:
+        tag (Optional[str], optional): A tag to get the server content items from.
+            If not specified, the server content items will be read from the local file.
     Returns:
         Dict[ContentType, list]: A mapping of content types to the list of server content items.
     """
-
-    try:
-        json_data: dict = get_json(SERVER_CONTENT_ITEMS_PATH)
-    except FileNotFoundError:
+    from_remote = tag is not None or not SERVER_CONTENT_ITEMS_PATH.exists()
+    if not from_remote:
+        json_data: dict = get_json(str(SERVER_CONTENT_ITEMS_PATH))
+    else:
         json_data = get_remote_file(
-            SERVER_CONTENT_ITEMS_PATH,
+            str(SERVER_CONTENT_ITEMS_PATH),
             git_content_config=GitContentConfig(
                 repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
             ),
+            tag=tag,
         )
     return {ContentType(k): v for k, v in json_data.items()}
 

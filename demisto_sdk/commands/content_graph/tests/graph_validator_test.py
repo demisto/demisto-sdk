@@ -595,7 +595,7 @@ def test_is_file_using_unknown_content(
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,
-        "Content item 'SampleIntegration' using content items: SampleClassifier which"
+        "Content item 'SampleIntegration' using content items: 'SampleClassifier' which"
         " cannot be found in the repository",
     )
 

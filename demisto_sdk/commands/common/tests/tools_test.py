@@ -13,6 +13,7 @@ import requests
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     DOC_FILES_DIR,
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
@@ -627,7 +628,7 @@ class TestGetRemoteFileLocally:
     FILE_CONTENT = '{"id": "some_file"}'
 
     git_util = Content.git_util()
-    main_branch = git_util.handle_prev_ver()[1]
+    main_branch = DEMISTO_GIT_PRIMARY_BRANCH
 
     def setup_method(self):
         # create local git repo

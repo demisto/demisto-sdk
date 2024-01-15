@@ -324,9 +324,9 @@ class TestParsersAndModels:
             dependency_ids={
                 "Github": ContentType.INCIDENT_TYPE,
                 "DevSecOps New Git PR": ContentType.INCIDENT_TYPE,
-                "isEqualString": ContentType.SCRIPT,
-                "isNotEmpty": ContentType.SCRIPT,
-                "getField": ContentType.SCRIPT,
+                "isEqualString": ContentType.BASE_SCRIPT,
+                "isNotEmpty": ContentType.BASE_SCRIPT,
+                "getField": ContentType.BASE_SCRIPT,
             },
         )
         model = Classifier.from_orm(parser)
@@ -399,8 +399,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DetectionsCount": ContentType.SCRIPT,
-                "DetectionsData": ContentType.SCRIPT,
+                "DetectionsCount": ContentType.BASE_SCRIPT,
+                "DetectionsData": ContentType.BASE_SCRIPT,
             },
         )
         model = Dashboard.from_orm(parser)
@@ -595,7 +595,7 @@ class TestParsersAndModels:
             parser.relationships,
             dependency_ids={
                 "Traps": ContentType.LAYOUT,
-                "Palo Alto Networks - Endpoint Malware Investigation": ContentType.PLAYBOOK,
+                "Palo Alto Networks - Endpoint Malware Investigation": ContentType.BASE_PLAYBOOK,
             },
         )
         model = IncidentType.from_orm(parser)
@@ -683,7 +683,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "URLReputation": ContentType.SCRIPT,
+                "URLReputation": ContentType.BASE_SCRIPT,
                 "url": ContentType.COMMAND,
                 "urlRep": ContentType.LAYOUT,
             },
@@ -807,7 +807,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "job-TestJob_playbook": ContentType.PLAYBOOK,
+                "job-TestJob_playbook": ContentType.BASE_PLAYBOOK,
             },
         )
         model = Job.from_orm(parser)
@@ -989,7 +989,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "substringTo": ContentType.SCRIPT,
+                "substringTo": ContentType.BASE_SCRIPT,
             },
             dependency_names={
                 "DevSecOps New Git PR": ContentType.INCIDENT_TYPE,
@@ -1034,7 +1034,7 @@ class TestParsersAndModels:
             dependency_ids={
                 "description": ContentType.INCIDENT_FIELD,
                 "azuredevopsprojectname": ContentType.INCIDENT_FIELD,
-                "MapValuesTransformer": ContentType.SCRIPT,
+                "MapValuesTransformer": ContentType.BASE_SCRIPT,
             },
             dependency_names={
                 "Azure DevOps": ContentType.INCIDENT_TYPE,
@@ -1176,7 +1176,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DeleteContext": ContentType.SCRIPT,
+                "DeleteContext": ContentType.BASE_SCRIPT,
             },
         )
         model = Playbook.from_orm(parser)
@@ -1211,8 +1211,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "ProofpointTAPMostAttackedUsers": ContentType.SCRIPT,
-                "ProofpointTapTopClickers": ContentType.SCRIPT,
+                "ProofpointTAPMostAttackedUsers": ContentType.BASE_SCRIPT,
+                "ProofpointTapTopClickers": ContentType.BASE_SCRIPT,
             },
         )
         model = Report.from_orm(parser)
@@ -1290,7 +1290,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DeleteContext": ContentType.SCRIPT,
+                "DeleteContext": ContentType.BASE_SCRIPT,
             },
         )
         model = TestPlaybook.from_orm(parser)
@@ -1324,7 +1324,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "NGFW Scan": ContentType.PLAYBOOK,
+                "NGFW Scan": ContentType.BASE_PLAYBOOK,
             },
         )
         model = Trigger.from_orm(parser)
@@ -1393,7 +1393,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "FeedIntegrationErrorWidget": ContentType.SCRIPT,
+                "FeedIntegrationErrorWidget": ContentType.BASE_SCRIPT,
             },
         )
         model = Widget.from_orm(parser)

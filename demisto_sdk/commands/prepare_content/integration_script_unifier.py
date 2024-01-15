@@ -14,6 +14,8 @@ from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedSc
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
+    COMMUNITY_SUPPORT,
+    CONTRIBUTORS_LIST,
     DEFAULT_IMAGE_PREFIX,
     PARTNER_SUPPORT,
     SUPPORT_LEVEL_HEADER,
@@ -58,8 +60,6 @@ CONTRIBUTOR_COMMUNITY_DETAILED_DESC = (
     "t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions)."
 )
 
-CONTRIBUTORS_LIST = ["partner", "developer", "community"]
-COMMUNITY_CONTRIBUTOR = "community"
 INTEGRATIONS_DOCS_REFERENCE = "https://xsoar.pan.dev/docs/reference/integrations/"
 
 
@@ -596,7 +596,7 @@ class IntegrationScriptUnifier(Unifier):
         if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
             contributor_type = support_level_header
 
-        if contributor_type == COMMUNITY_CONTRIBUTOR:
+        if contributor_type == COMMUNITY_SUPPORT:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
         elif contributor_type == PARTNER_SUPPORT:
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(

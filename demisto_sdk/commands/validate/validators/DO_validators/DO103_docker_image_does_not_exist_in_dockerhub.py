@@ -26,9 +26,7 @@ class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
                 docker_image_object = content_item.docker_image_object
                 if (
                     not docker_image_object.is_valid
-                    or not self.dockerhub_client.is_docker_image_exist(
-                        docker_image_object.name, tag=docker_image_object.tag
-                    )
+                    or not docker_image_object.is_image_exist
                 ):
                     invalid_content_items.append(
                         ValidationResult(

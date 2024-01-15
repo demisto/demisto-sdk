@@ -53,12 +53,12 @@ class ConfigReader:
             Tuple[List, List, List, dict]: the select, warning, and ignorable errors sections from the given category,
             and the support_level dict with errors to ignore.
         """
-        flag = self.category_to_run or USE_GIT if use_git else VALIDATE_ALL
+        flag = self.category_to_run or (USE_GIT if use_git else VALIDATE_ALL)
         section = self.config_file_content.get(flag, {})
         return ConfiguredValidations(
             section.get("select", []),
             section.get("warning", []),
-            section.get("ignorable_errors", []),
+            self.config_file_content.get("ignorable_errors", []),
             self.config_file_content.get("support_level", {})
             if not ignore_support_level
             else {},

@@ -1,4 +1,3 @@
-import logging
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -18,14 +17,13 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content.objects.pack_objects import PackMetaData
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
 )
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from TestSuite.test_tools import ChangeCWD
-
-logger = logging.getLogger("demisto-sdk")
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"

@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import Callable, List, Optional, Union
 
@@ -8,8 +7,6 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call-arg]

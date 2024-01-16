@@ -1,4 +1,0 @@
-changes:
-- description: Fixed false positives in **validate** in `GR103` validations
-  type: fix
-pr_number: 3873

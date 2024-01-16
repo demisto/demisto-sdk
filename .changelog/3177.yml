@@ -1,6 +1,0 @@
-changes:
-- description: Add command `sdk-changelog` for creating a yml file to describe the development changes in the SDK
-  type: internal
-- description: Locking the `CHANGELOG.md` file for changes when the PR is not a release process
-  type: internal
-pr_number: 3177

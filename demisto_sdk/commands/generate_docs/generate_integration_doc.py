@@ -476,7 +476,11 @@ def generate_integration_doc(
     skip_breaking_changes: bool = False,
     is_contribution: bool = False,
 ):
-    """Generate integration documentation.
+    """
+    Generate integration documentation.
+    If the `command` argument is supplied, a new command section is appended to the existing README.
+    If the integration exists in version control, an update is run on the modified sections of the existing README.
+    Otherwise, create a new README.
 
     Args:
         input_path: path to the yaml integration
@@ -638,7 +642,22 @@ with (Path(__file__).parent / "default_additional_information.json").open() as f
     )
 
 
-def generate_setup_section(yaml_data: dict):
+def generate_setup_section(yaml_data: dict) -> List[str]:
+
+    """
+    Generate the configuration section of the README.
+    This section includes:
+    - The steps to set up the integration instance.
+    - The configuration options table.
+
+    Arguments:
+    - `yaml_data` (``dict``): The integration YAML in dictionary format.
+
+    Returns:
+    - `List[str]` of the section lines.
+
+    """
+
     default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
 
     section = [

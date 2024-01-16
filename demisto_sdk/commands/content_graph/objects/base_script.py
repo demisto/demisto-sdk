@@ -18,6 +18,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.content_graph.parsers.base_script import Argument
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_scripts_prepare import (
     MarketplaceIncidentToAlertScriptsPreparer,
 )
@@ -26,6 +27,7 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # type: ignore[call-arg]
     tags: List[str]
     skip_prepare: List[str]
+    arguments: List[Argument] = []
 
     def metadata_fields(self) -> Set[str]:
         return (

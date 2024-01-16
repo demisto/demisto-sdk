@@ -37,9 +37,9 @@ class IsDeprecatedCorrectlyValidator(BaseValidator[ContentTypes]):
             if content_item.deprecated
             and not any(
                 (
-                    re.search(DEPRECATED_DESC_REGEX, content_item.description),
+                    re.search(DEPRECATED_DESC_REGEX, content_item.description),  # type: ignore[arg-type]
                     re.search(
-                        DEPRECATED_NO_REPLACE_DESC_REGEX, content_item.description
+                        DEPRECATED_NO_REPLACE_DESC_REGEX, content_item.description  # type: ignore[arg-type]
                     ),
                 )
             )

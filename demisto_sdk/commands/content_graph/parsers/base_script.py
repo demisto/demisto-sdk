@@ -57,6 +57,10 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
             self.add_command_or_script_dependency(cmd)
 
     @property
+    def runas(self) -> str:
+        return self.yml_data.get("runas") or ""
+
+    @property
     def code(self) -> Optional[str]:
         """Gets the script code.
         If the script is unified, it is taken from the yml file.

@@ -16,8 +16,10 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
+    get_file,
     get_json,
     get_pack_ignore_content,
+    get_pack_latest_rn_version,
 )
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
@@ -121,15 +123,15 @@ class PackMetadataParser:
     """A pack metadata parser."""
 
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
-        self.name: str = metadata["name"]
-        self.display_name: str = metadata["name"]
-        self.description: str = metadata["description"]
+        self.name: str = metadata.get("name", "")
+        self.display_name: str = metadata.get("name", "")
+        self.description: str = metadata.get("description", "")
+        self.support: str = metadata.get("support", "")
         self.created: str = metadata.get("created") or NOW
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None
         )  # default: True, private default: False
-        self.support: str = metadata["support"]
         self.email: str = metadata.get("email") or ""
         self.eulaLink: str = (
             metadata.get("eulaLink")
@@ -144,7 +146,7 @@ class PackMetadataParser:
         self.commit: str = GitUtil().get_current_commit_hash() or ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
-        self.keywords: List[str] = metadata["keywords"] or []
+        self.keywords: List[str] = metadata.get("keywords", [])
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
         self.marketplaces: List[str] = (
@@ -175,12 +177,12 @@ class PackMetadataParser:
             metadata.get("contentCommitHash") or ""
         )
 
-        self.pack_metadata: dict = metadata
+        self.pack_metadata_dict: dict = metadata
 
     @property
     def url(self) -> str:
-        if "url" in self.pack_metadata and self.pack_metadata["url"]:
-            return self.pack_metadata.get("url", "")
+        if "url" in self.pack_metadata_dict and self.pack_metadata_dict["url"]:
+            return self.pack_metadata_dict.get("url", "")
         return (
             "https://www.paloaltonetworks.com/cortex" if self.support == "xsoar" else ""
         )
@@ -189,12 +191,12 @@ class PackMetadataParser:
     def certification(self):
         if self.support in ["xsoar", "partner"]:
             return "certified"
-        return self.pack_metadata.get("certification") or ""
+        return self.pack_metadata_dict.get("certification") or ""
 
     @property
     def author(self):
         return (
-            self.pack_metadata.get(
+            self.pack_metadata_dict.get(
                 "author", "Cortex XSOAR" if self.support == "xsoar" else ""
             )
             or ""
@@ -202,11 +204,11 @@ class PackMetadataParser:
 
     @property
     def categories(self):
-        return [capital_case(c) for c in self.pack_metadata["categories"]]
+        return [capital_case(c) for c in self.pack_metadata_dict.get("categories", [])]
 
     @property
     def use_cases(self):
-        return [capital_case(c) for c in self.pack_metadata["useCases"]]
+        return [capital_case(c) for c in self.pack_metadata_dict.get("useCases", [])]
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():
@@ -241,9 +243,17 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
         try:
             metadata = get_json(path / PACK_METADATA_FILENAME, git_sha=git_sha)
+            if not metadata or not isinstance(metadata, dict):
+                raise NotAContentItemException(
+                    f"Please make sure that the {PACK_METADATA_FILENAME} is a non-empty dict for pack {path=}"
+                )
         except FileNotFoundError:
             raise NotAContentItemException(
-                f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
+                f"{PACK_METADATA_FILENAME} not found in pack in {path=}.\nPlease make sure the file exists and is a valid json file."
+            )
+        except OSError:
+            raise NotAContentItemException(
+                f"{PACK_METADATA_FILENAME} in {path=} couldn't be open."
             )
 
         PackMetadataParser.__init__(self, path, metadata)
@@ -252,13 +262,14 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.relationships: Relationships = Relationships()
         self.connect_pack_dependencies(metadata)
         try:
-            self.contributors: List[str] = get_json(
-                path / PACK_CONTRIBUTORS_FILENAME, git_sha=git_sha
+            self.contributors: List[str] = (
+                get_json(path / PACK_CONTRIBUTORS_FILENAME, git_sha=git_sha) or []
             )
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")
         self.parse_ignored_errors()
+        self.get_rn_info()
         if not metadata_only:
             self.parse_pack_folders()
         logger.debug(f"Successfully parsed {self.node_id}")
@@ -269,13 +280,18 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def connect_pack_dependencies(self, metadata: Dict[str, Any]) -> None:
         dependency: Dict[str, Dict[str, Any]]
-        for pack_id, dependency in metadata.get("dependencies", {}).items():
-            self.relationships.add(
-                RelationshipType.DEPENDS_ON,
-                source=self.object_id,
-                target=pack_id,
-                mandatorily=dependency.get("mandatory"),
-            )
+        try:
+            for pack_id, dependency in metadata.get("dependencies", {}).items():
+                self.relationships.add(
+                    RelationshipType.DEPENDS_ON,
+                    source=self.object_id,
+                    target=pack_id,
+                    mandatorily=dependency.get("mandatory"),
+                )
+        except AttributeError as error:
+            raise AttributeError(
+                f"Couldn't parse dependencies section for pack {self.name} pack_metadata. Dependencies section must be a valid dictionary."
+            ) from error
 
         if (
             self.object_id != BASE_PACK
@@ -326,6 +342,18 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
         self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {})  # type: ignore
+
+    def get_rn_info(self):
+        self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
+        if self.latest_rn_version:
+            self.latest_rn_content = get_file(
+                str(
+                    self.path
+                    / "ReleaseNotes"
+                    / f"{self.latest_rn_version.replace('.', '_')}.md"
+                ),
+                return_content=True,
+            )
 
     @cached_property
     def field_mapping(self):

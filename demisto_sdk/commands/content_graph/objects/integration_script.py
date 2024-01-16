@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
 )
@@ -49,8 +50,16 @@ class IntegrationScript(ContentItem):
         return [self.docker_image] + self.alt_docker_images if self.docker_image else []
 
     @property
+    def docker_image_object(self) -> DockerImage:
+        return DockerImage.parse(self.docker_image or "")
+
+    @property
     def is_powershell(self) -> bool:
         return self.type == "powershell"
+
+    @property
+    def is_javascript(self) -> bool:
+        return self.type == "javascript"
 
     def prepare_for_upload(
         self,
@@ -69,9 +78,9 @@ class IntegrationScript(ContentItem):
         return data
 
     def get_supported_native_images(
-        self, marketplace: MarketplaceVersions, ignore_native_image: bool = False
+        self, ignore_native_image: bool = False
     ) -> List[str]:
-        if marketplace == MarketplaceVersions.XSOAR and not ignore_native_image:
+        if not ignore_native_image:
             if not Path(f"Tests/{NATIVE_IMAGE_FILE_NAME}").exists():
                 logger.debug(f"The {NATIVE_IMAGE_FILE_NAME} file could not be found.")
                 return []

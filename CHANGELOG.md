@@ -1,7 +1,20 @@
 # Changelog
-## Unreleased
+## 1.25.3
+* Fixed false positives in **validate** in `GR103` validations [#3873](https://github.com/demisto/demisto-sdk/pull/3873)
+* Add command `sdk-changelog` for creating a yml file to describe the development changes in the SDK [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+* Locking the `CHANGELOG.md` file for changes when the PR is not a release process [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+
+## 1.25.2
 * Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
+* Fixed an issue where **lint** command didn't work on detached heads.
 * Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
+* Added support to check the version of the modeling rule against the demisto version of the XSIAM tenant when running the **modeling-rule test** command, and skip incompatible modeling rules.
+* Added support for JetBrains IDEs (PyCharm, IDEA, etc.) to the **setup-env** command, and added a new `--ide` flag.
+* Internal: Fixed an issue where `nativeimage` tags were not uploaded to buckets.
+* Fixed an issue where **lint -g** crashed when comparing changes against branches which are not `master`.
+* Fixed an issue in **prepare-content** command where the `incident to alert` process was not triggered when the playbook is set to only XSIAM.
+* Fixed an issue where **validate -g** command crashed when comparing changes against branches when in detached head state.
+* Add support for tests to run on specified marketplaces.
 
 ## 1.25.1
 * Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.

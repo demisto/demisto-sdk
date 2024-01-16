@@ -1,4 +1,5 @@
 # Site packages
+import platform
 import sys
 
 import click
@@ -55,6 +56,7 @@ from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
+from demisto_sdk.commands.setup_env.setup_environment import IDEType
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import (
     init_test_data,
@@ -212,6 +214,12 @@ def main(ctx, config, version, release_notes, **kwargs):
     import dotenv
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
+
+    if platform.system() == "Windows":
+        logger.warning(
+            "Using Demisto-SDK on Windows is not supported. Use WSL2 or run in a container."
+        )
+
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
     ) and not is_sdk_defined_working_offline():  # If the key exists/called to version
@@ -1103,7 +1111,7 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 @click.option(
     "--prev-ver",
     help="Previous branch or SHA1 commit to run checks against",
-    default="master",
+    default=os.getenv("DEMISTO_DEFAULT_BRANCH", default="master"),
 )
 @click.option(
     "--test-xml",
@@ -2614,7 +2622,6 @@ def find_dependencies(ctx, **kwargs):
     output_path = kwargs.get("output_path", ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get("dependency", "")
     try:
-
         PackDependencies.find_dependencies_manager(
             id_set_path=str(id_set_path),
             update_pack_metadata=update_pack_metadata,
@@ -3456,6 +3463,14 @@ def update_content_graph(
 
 @main.command(short_help="Setup integration environments")
 @click.option(
+    "--ide",
+    help="IDE type to configure the environment for. If not specified, the IDE will be auto-detected. Case-insensitive.",
+    default="auto-detect",
+    type=click.Choice(
+        ["auto-detect"] + [IDEType.value for IDEType in IDEType], case_sensitive=False
+    ),
+)
+@click.option(
     "-i",
     "--input",
     type=PathsParamType(
@@ -3467,40 +3482,41 @@ def update_content_graph(
     "--create-virtualenv",
     is_flag=True,
     default=False,
-    help="Create a virtualenv for the environment",
+    help="Create a virtualenv for the environment.",
 )
 @click.option(
     "--overwrite-virtualenv",
     is_flag=True,
     default=False,
-    help="Overwrite existing virtualenvs. Use with the create-virtualenv flag",
+    help="Overwrite existing virtualenvs. Relevant only if the 'create-virtualenv' flag is used.",
 )
 @click.option(
     "--secret-id",
-    help="Secret ID, to use with Google Secret Manager instance with `DEMISTO_SDK_GCP_PROJECT_ID` environment variable set.",
+    help="Secret ID to use for the Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.",
     required=False,
 )
 @click.option(
     "--instance-name",
     required=False,
-    help="Instance name to configure in XSOAR/XSIAM.",
+    help="Instance name to configure in XSOAR / XSIAM.",
 )
 @click.option(
     "--run-test-module",
     required=False,
     is_flag=True,
     default=False,
-    help="Whether to run test-module on the configured XSOAR/XSIAM instance",
+    help="Whether to run test-module on the configured XSOAR / XSIAM instance.",
 )
 @click.option(
     "--clean",
     is_flag=True,
     default=False,
-    help="Clean the repo out of the temp files that were created by `lint`",
+    help="Clean the repository of temporary files created by the 'lint' command.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
     input,
+    ide,
     file_paths,
     create_virtualenv,
     overwrite_virtualenv,
@@ -3513,11 +3529,32 @@ def setup_env(
         setup_env,
     )
 
+    if ide == "auto-detect":
+        # Order decides which IDEType will be selected for configuration if multiple IDEs are detected
+        if (CONTENT_PATH / ".vscode").exists():
+            logger.info(
+                "Visual Studio Code IDEType has been detected and will be configured."
+            )
+            ide_type = IDEType.VSCODE
+        elif (CONTENT_PATH / ".idea").exists():
+            logger.info(
+                "PyCharm / IDEA IDEType has been detected and will be configured."
+            )
+            ide_type = IDEType.PYCHARM
+        else:
+            raise RuntimeError(
+                "Could not detect IDEType. Please select a specific IDEType using the --ide flag."
+            )
+
+    else:
+        ide_type = IDEType(ide)
+
     if input:
         file_paths = tuple(input.split(","))
 
     setup_env(
-        file_paths,
+        file_paths=file_paths,
+        ide_type=ide_type,
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,
         secret_id=secret_id,

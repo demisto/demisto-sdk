@@ -31,7 +31,6 @@ def setup_method(mocker, repo: Repo):
     bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -147,7 +146,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     )
     assert metadata.get("categories") == ["Utilities"]
     assert metadata.get("useCases") == ["Identity And Access Management"]
-    assert metadata.get("keywords") == []
+    assert metadata.get("keywords") == ["common"]
     assert metadata.get("searchRank") == 0
     assert metadata.get("excludedDependencies") == []
     assert metadata.get("videos") == []

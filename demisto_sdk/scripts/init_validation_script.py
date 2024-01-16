@@ -87,7 +87,7 @@ CONTENT_TYPES_DICT = {
         "content_type": "ModelingRule",
     },
     "19": {
-        "import": "from demisto_sdk.commands.content_graph.objects.parsing_Rule import ParsingRule",
+        "import": "from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule",
         "content_type": "ParsingRule",
     },
     "20": {
@@ -141,8 +141,7 @@ $supported_content_types
 $class_declaration
     error_code = "$error_code"
     description = "$error_description"
-    error_message = "$error_message"
-    fix_message = "$fix_message"
+    error_message = "$error_message"$fix_message
     related_field = "$related_field"
     is_auto_fixable = $is_auto_fixable$expected_git_statuses$support_deprecated
 
@@ -157,7 +156,6 @@ class ValidationInitializer:
         self.git_statuses = ""
         self.fix_method = ""
         self.fix_message = ""
-        self.include_old_format_files_fix_method = ""
         self.run_on_deprecated = ""
         self.min_content_type_val = 1
         self.max_content_type_val = int(list(CONTENT_TYPES_DICT.keys())[-1])
@@ -348,11 +346,12 @@ Fill the content types as the numbers they appear as: """
             )
         if support_fix in ["Y", "y"]:
             self.support_fix = True
-            self.fix_message = str(
+            fix_message = str(
                 input(
                     "Please enter the fix message or press enter to leave blank for now: "
                 )
             )
+            self.fix_message = f'\n    fix_message = "{fix_message}"'
         else:
             self.support_fix = False
 
@@ -406,13 +405,9 @@ Fill the content types as the numbers they appear as: """
         Generate the expected_git_statuses section string.
         """
         if self.git_statuses_str:
-            git_statuses_ls = self.git_statuses_str.split(",")
-            if "A" not in git_statuses_ls and "D" not in git_statuses_ls:
-                self.include_old_format_files_fix_method = (
-                    ", old_content_object: Optional[BaseContent]=None"
-                )
             git_statuses_enum_ls = [
-                GIT_STATUSES_DICT[git_status] for git_status in git_statuses_ls
+                GIT_STATUSES_DICT[git_status]
+                for git_status in self.git_statuses_str.split(",")
             ]
             git_statuses_enum_str = str(git_statuses_enum_ls).replace("'", "")
             self.git_statuses = f"\n    expected_git_statuses = {git_statuses_enum_str}"
@@ -470,7 +465,7 @@ Fill the content types as the numbers they appear as: """
         Generate the fix function is fix is supported by the validation.
         """
         if self.support_fix:
-            self.fix_method = f"""def fix(self, content_item: ContentTypes{self.include_old_format_files_fix_method}) -> FixResult:
+            self.fix_method = """def fix(self, content_item: ContentTypes) -> FixResult:
         # Add your fix right here
         pass
             """

@@ -10,6 +10,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     cast,
 )
@@ -180,7 +181,19 @@ class BaseContent(BaseNode):
     git_status: Optional[GitStatuses]
     old_base_content_object: Optional["BaseContent"] = None
 
-    def _save(self, path: Path, data: dict):
+    def _save(
+        self,
+        path: Path,
+        data: dict,
+        predefined_keys_to_keep: Optional[Tuple[str, ...]] = None,
+    ):
+        """Save the class vars into the dict data.
+
+        Args:
+            path (Path): The path of the file to save the new data into.
+            data (dict): the data dict.
+            predefined_keys_to_keep (Optional[Tuple[str]], optional): keys to keep even if they're not defined.
+        """
         for key, val in self.field_mapping.items():
             attr = getattr(self, key)
             if key == "marketplaces":
@@ -194,7 +207,7 @@ class BaseContent(BaseNode):
                     and MarketplaceVersions.XSOAR in attr
                 ):
                     attr.remove(MarketplaceVersions.XSOAR_ON_PREM)
-            if attr:
+            if attr or (predefined_keys_to_keep and val in predefined_keys_to_keep):
                 set_value(data, val, attr)
         write_dict(path, data, indent=4)
 

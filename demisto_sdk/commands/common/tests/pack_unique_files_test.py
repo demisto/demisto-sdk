@@ -11,6 +11,7 @@ from git import GitCommandError
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
     PACK_METADATA_DESC,
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
@@ -75,7 +76,9 @@ class TestPackUniqueFilesValidator:
         )
     )
     FAKE_PATH_NAME = "fake_pack"
-    validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
+    validator = PackUniqueFilesValidator(
+        FAKE_PATH_NAME, prev_ver=DEMISTO_GIT_PRIMARY_BRANCH
+    )
     validator.pack_path = FAKE_PACK_PATH
 
     def restart_validator(self):

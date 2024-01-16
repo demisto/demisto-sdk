@@ -1,5 +1,10 @@
 # Changelog
-## Unreleased
+## 1.25.3
+* Fixed false positives in **validate** in `GR103` validations [#3873](https://github.com/demisto/demisto-sdk/pull/3873)
+* Add command `sdk-changelog` for creating a yml file to describe the development changes in the SDK [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+* Locking the `CHANGELOG.md` file for changes when the PR is not a release process [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+
+## 1.25.2
 * Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
 * Fixed an issue where **lint** command didn't work on detached heads.
 * Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
@@ -20,7 +25,6 @@
 * **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
 * Fixed an issue in **generate-docs** where the description field was missing from an argument.
 * Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
-* Fixed false positives in **validate** in `GR103` validations
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

@@ -362,9 +362,9 @@ class ContributionConverter:
             generate_integration_doc(
                 yml_path, is_contribution=is_contribution, examples=None
             )
-        if file_type == "script":
-            generate_script_doc(input_path=yml_path, examples=None)
-        if file_type == "playbook":
+        elif file_type == "script":
+            generate_script_doc(input_path=yml_path, examples=None, use_graph=False)
+        elif file_type == "playbook":
             generate_playbook_doc(yml_path)
 
         dir_output = os.path.dirname(os.path.realpath(yml_path))

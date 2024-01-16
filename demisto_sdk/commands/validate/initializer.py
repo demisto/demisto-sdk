@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.tools import (
     specify_files_from_directory,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import (
     ContentDTO,
@@ -26,6 +27,7 @@ from demisto_sdk.commands.content_graph.objects.repository import (
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     InvalidContentItemException,
 )
+from demisto_sdk.commands.validate.validators.base_validator import ValidatableTypes
 
 
 class Initializer:
@@ -276,18 +278,18 @@ class Initializer:
 
         return filtered_modified_files, filtered_added_files, filtered_renamed_files
 
-    def gather_objects_to_run_on(self) -> Set[BaseContent]:
+    def gather_objects_to_run_on(self) -> Set[ValidatableTypes]:
         """
         Filter the file that should run according to the given flag (-i/-g/-a).
 
         Returns:
             Set[BaseContent]: the set of files that should run.
         """
-        content_objects_to_run: Set[BaseContent] = set()
+        content_objects_to_run: Set[ValidatableTypes] = set()
         if self.use_git:
             content_objects_to_run = self.get_files_from_git()
         elif self.file_path:
-            content_objects_to_run = self.paths_to_basecontent_set(
+            content_objects_to_run = self.collect_validatable_objects(
                 set(self.file_path.split(",")), None
             )
         elif self.all_files:
@@ -299,36 +301,36 @@ class Initializer:
             self.use_git = (True,)
             self.committed_only = True
             content_objects_to_run = self.get_files_from_git()
-        content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
-            content_objects_to_run
-        )
+        content_objects_to_run_with_packs: Set[
+            ValidatableTypes
+        ] = self.get_items_from_packs(content_objects_to_run)
         return content_objects_to_run_with_packs
 
     def get_items_from_packs(
-        self, content_objects_to_run: Set[BaseContent]
-    ) -> Set[BaseContent]:
+        self, content_objects_to_run: Set[ValidatableTypes]
+    ) -> Set[ValidatableTypes]:
         """Gets the packs content items from the Packs objects in the given set if they weren't there before.
 
         Args:
-            content_objects_to_run (Set[BaseContent]): The set of BaseContent items to pick the Pack objects from.
+            content_objects_to_run (Set[ValidatableTypes]): The set of ValidatableTypes items to pick the Pack objects from.
 
         Returns:
-            Set[BaseContent]: The given set unified with the content items from inside the Pack objects.
+            Set[ValidatableTypes]: The given set unified with the content items from inside the Pack objects.
         """
-        content_objects_to_run_with_packs: Set[BaseContent] = set()
+        result: Set[ValidatableTypes] = set()
         for content_object in content_objects_to_run:
             if isinstance(content_object, Pack):
                 for content_item in content_object.content_items:
                     if content_item not in content_objects_to_run:
-                        content_objects_to_run_with_packs.add(content_item)
-            content_objects_to_run_with_packs.add(content_object)
-        return content_objects_to_run_with_packs
+                        result.add(content_item)
+            result.add(content_object)
+        return result
 
-    def get_files_from_git(self) -> Set[BaseContent]:
+    def get_files_from_git(self) -> Set[ValidatableTypes]:
         """Return all files added/changed/deleted.
 
         Returns:
-            Set[BaseContent]: The set of all the files from git successfully casted to BaseContent
+            Set[ValidatableTypes]: The set of all the files from git successfully casted to BaseContent
         """
         self.validate_git_installed()
         self.set_prev_ver()
@@ -345,32 +347,35 @@ class Initializer:
         added_files = self.filter_files(added_files)
         renamed_files = self.filter_files(renamed_files)
         deleted_files = self.filter_files(deleted_files)
-        basecontent_with_path_set: Set[BaseContent] = set()
-        basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_set(
+        result: Set[ValidatableTypes] = set()
+        result = result.union(
+            self.collect_validatable_objects(
                 modified_files, GitStatuses.MODIFIED, git_sha=self.prev_ver
             )
         )
-        basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_set(
+        result = result.union(
+            self.collect_validatable_objects(
                 renamed_files, GitStatuses.RENAMED, git_sha=self.prev_ver
             )
         )
-        basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_set(
+        result = result.union(
+            self.collect_validatable_objects(
                 added_files, GitStatuses.ADDED, git_sha=self.prev_ver
             )
         )
-        basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_set(
+        result = result.union(
+            self.collect_validatable_objects(
                 deleted_files, GitStatuses.DELETED, git_sha=self.prev_ver
             )
         )
-        return basecontent_with_path_set
+        return result
 
-    def paths_to_basecontent_set(
-        self, files_set: set, git_status: Optional[str], git_sha: Optional[str] = None
-    ) -> Set[BaseContent]:
+    def collect_validatable_objects(
+        self,
+        files_set: set,
+        git_status: Optional[str],
+        git_sha: Optional[str] = None,
+    ) -> Set[ValidatableTypes]:
         """Return a set of all the successful casts to BaseContent from given set of files.
 
         Args:
@@ -380,30 +385,41 @@ class Initializer:
         Returns:
             Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
         """
-        basecontent_with_path_set: Set[BaseContent] = set()
-        invalid_content_items: List[str] = []
+        result: Set[ValidatableTypes] = set()
+        invalid: List[str] = []
         for file_path in files_set:
             try:
                 if git_status == GitStatuses.RENAMED:
                     temp_obj: Optional[BaseContent] = BaseContent.from_path(
-                        Path(file_path[0]),
+                        Path(
+                            file_path[0]
+                        ),  # When renaming (only), we get the old and new paths
                         git_status=git_status,
                         old_file_path=Path(file_path[1]),
                         git_sha=git_sha,
                     )
+
                 elif git_status == GitStatuses.ADDED:
                     temp_obj = BaseContent.from_path(Path(file_path), git_status)
+
                 else:
+                    if file_path.relative_to(CONTENT_PATH) == Path(
+                        "Tests/conf.json"
+                    ):  # TODO replace with constant
+                        # not BaseContent, but is validated
+                        result.add(ConfJSON.from_path(file_path))
+                        continue
+
                     temp_obj = BaseContent.from_path(
                         Path(file_path), git_status, git_sha=git_sha
                     )
                 if temp_obj is None:
-                    invalid_content_items.append(file_path)
+                    invalid.append(file_path)
                 else:
-                    basecontent_with_path_set.add(temp_obj)
+                    result.add(temp_obj)
             except InvalidContentItemException:
-                invalid_content_items.append(file_path)
-        return basecontent_with_path_set
+                invalid.append(file_path)
+        return result
 
     def filter_files(self, files_set: Set[Path]):
         """Filter out all the files with suffixes that are not supported by BaseContent.

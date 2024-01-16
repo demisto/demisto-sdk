@@ -1,130 +1,24 @@
+from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
 
 from more_itertools import always_iterable
 from packaging.version import Version
 from pydantic import BaseModel, Extra, Field, validator
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
-    Nodes,
     Relationships,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContent,
-)
+
+CONF_JSON_RELATIVE_PATH = "Tests/conf.json"
 
 
 class StrictBaseModel(BaseModel):
     class Config:
         extra = Extra.forbid
-
-
-class ConfJson(BaseContent, content_type=ContentType.CONF_JSON):
-    fromversion: str
-
-    def to_node(self):
-        return Nodes(self.to_dict())
-
-    @property
-    def body(self) -> "ConfJSON":
-        return ConfJSON.parse_file(self.path)  # TODO consider loading just once
-
-    @property
-    def relationships(self) -> Relationships:
-        relationships = Relationships()
-
-        class RelationshipDatum(BaseModel, frozen=True):
-            content_type: ContentType
-            content_id: str
-            relationship_type: RelationshipType
-
-        relationship_data: Set[RelationshipDatum] = set()  # prevents duplicates
-
-        for content_type, ids, relationship_type in (
-            (
-                ContentType.INTEGRATION,
-                (test.integrations for test in self.body.tests),
-                RelationshipType.CONF_JSON_TESTS,
-            ),
-            (
-                ContentType.PLAYBOOK,
-                (test.playbookID for test in self.body.tests),
-                RelationshipType.CONF_JSON_TESTS,
-            ),
-            (
-                ContentType.SCRIPT,
-                (test.scripts for test in self.body.tests),
-                RelationshipType.CONF_JSON_SCRIPT_USED,
-            ),
-            (
-                ContentType.INTEGRATION,
-                filter(
-                    lambda s: not s.startswith("_comment"),
-                    self.body.skipped_integrations,
-                ),
-                RelationshipType.CONF_JSON_SKIPPED,
-            ),
-            (
-                ContentType.TEST_PLAYBOOK,
-                self.body.skipped_tests.keys(),
-                RelationshipType.CONF_JSON_SKIPPED,
-            ),
-            (
-                ContentType.PACK,
-                self.body.nightly_packs,
-                RelationshipType.CONF_JSON_NIGHTLY_PACK,
-            ),
-            (
-                ContentType.INTEGRATION,
-                self.body.unmockable_integrations,
-                RelationshipType.CONF_JSON_UNMOCKABLE,
-            ),
-            (
-                ContentType.INTEGRATION,
-                self.body.parallel_integrations,
-                RelationshipType.CONF_JSON_PARALLEL_INTEGRATION,
-            ),
-            (
-                ContentType.TEST_PLAYBOOK,
-                self.body.private_tests,
-                RelationshipType.CONF_JSON_PRIVATE,
-            ),
-            (
-                ContentType.TEST_PLAYBOOK,
-                self.body.reputation_tests,
-                RelationshipType.CONF_JSON_REPUTATION_TEST,
-            ),
-            (
-                ContentType.TEST_PLAYBOOK,
-                self.body.test_marketplacev2,
-                RelationshipType.CONF_JSON_TESTS,
-            ),
-        ):
-            for one_or_many_ids in filter(None, ids):
-                for content_id in filter(  # type:ignore[var-annotated]
-                    None, always_iterable(one_or_many_ids)
-                ):
-                    relationship_data.add(
-                        RelationshipDatum(
-                            content_type=content_type,
-                            content_id=content_id,
-                            relationship_type=relationship_type,
-                        )
-                    )
-
-        for relationship_datum in relationship_data:
-            relationships.add(
-                relationship_datum.relationship_type,
-                source_id=self.object_id,
-                source_type=self.content_type,
-                source_fromversion=self.fromversion,
-                source_marketplaces=self.marketplaces,
-                target=relationship_datum.content_id,
-                target_type=relationship_datum.content_type,
-                target_fromversion=self.fromversion,
-            )
-        return relationships
 
 
 class DictWithSingleSimpleString(StrictBaseModel):
@@ -188,3 +82,104 @@ class ConfJSON(StrictBaseModel):
     docker_thresholds: DockerThresholds
     test_marketplacev2: List[str]
     reputation_tests: List[str]
+
+    @staticmethod
+    def from_path(path: Path = CONTENT_PATH / CONF_JSON_RELATIVE_PATH) -> "ConfJSON":
+        body: dict = get_json(path)  # type:ignore[assignment]
+        return ConfJSON(**body)
+
+    @property
+    def relationships(self) -> Relationships:
+        relationships = Relationships()
+
+        class RelationshipDatum(BaseModel, frozen=True):
+            content_type: ContentType
+            content_id: str
+            relationship_type: RelationshipType
+
+        relationship_data: Set[RelationshipDatum] = set()  # prevents duplicates
+
+        for content_type, ids, relationship_type in (
+            (
+                ContentType.INTEGRATION,
+                (test.integrations for test in self.tests),
+                RelationshipType.CONF_JSON_TESTS,
+            ),
+            (
+                ContentType.PLAYBOOK,
+                (test.playbookID for test in self.tests),
+                RelationshipType.CONF_JSON_TESTS,
+            ),
+            (
+                ContentType.SCRIPT,
+                (test.scripts for test in self.tests),
+                RelationshipType.CONF_JSON_SCRIPT_USED,
+            ),
+            (
+                ContentType.INTEGRATION,
+                filter(
+                    lambda s: not s.startswith("_comment"),
+                    self.skipped_integrations,
+                ),
+                RelationshipType.CONF_JSON_SKIPPED,
+            ),
+            (
+                ContentType.TEST_PLAYBOOK,
+                self.skipped_tests.keys(),
+                RelationshipType.CONF_JSON_SKIPPED,
+            ),
+            (
+                ContentType.PACK,
+                self.nightly_packs,
+                RelationshipType.CONF_JSON_NIGHTLY_PACK,
+            ),
+            (
+                ContentType.INTEGRATION,
+                self.unmockable_integrations,
+                RelationshipType.CONF_JSON_UNMOCKABLE,
+            ),
+            (
+                ContentType.INTEGRATION,
+                self.parallel_integrations,
+                RelationshipType.CONF_JSON_PARALLEL_INTEGRATION,
+            ),
+            (
+                ContentType.TEST_PLAYBOOK,
+                self.private_tests,
+                RelationshipType.CONF_JSON_PRIVATE,
+            ),
+            (
+                ContentType.TEST_PLAYBOOK,
+                self.reputation_tests,
+                RelationshipType.CONF_JSON_REPUTATION_TEST,
+            ),
+            (
+                ContentType.TEST_PLAYBOOK,
+                self.test_marketplacev2,
+                RelationshipType.CONF_JSON_TESTS,
+            ),
+        ):
+            for one_or_many_ids in filter(None, ids):
+                for content_id in filter(  # type:ignore[var-annotated]
+                    None, always_iterable(one_or_many_ids)
+                ):
+                    relationship_data.add(
+                        RelationshipDatum(
+                            content_type=content_type,
+                            content_id=content_id,
+                            relationship_type=relationship_type,
+                        )
+                    )
+
+        # for relationship_datum in relationship_data:
+        #     relationships.add(
+        #         relationship_datum.relationship_type,
+        #         source_id=self.object_id,
+        #         source_type=self.content_type,
+        #         source_fromversion=self.fromversion,
+        #         source_marketplaces=self.marketplaces,
+        #         target=relationship_datum.content_id,
+        #         target_type=relationship_datum.content_type,
+        #         target_fromversion=self.fromversion,
+        #     )
+        # return relationships

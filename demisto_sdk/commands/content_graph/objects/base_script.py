@@ -75,7 +75,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             Argument(
                 name=argument.get("name", ""),
                 deprecated=argument.get("deprecated", False),
-                description=argument.get("description"),
+                description=argument.get("description", ""),
                 default_value=argument.get("defaultValue"),
             )
             for argument in get_yaml(self.path).get("args", [])

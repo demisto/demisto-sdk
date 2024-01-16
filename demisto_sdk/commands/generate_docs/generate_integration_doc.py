@@ -85,7 +85,7 @@ class IntegrationDocUpdateManager:
 
         self.example_dict = example_dict if not is_contribution else {}
         self.command_permissions_dict = (
-            command_permissions_dict if not is_contribution else {}
+            command_permissions_dict if not is_contribution else None
         )
 
     def get_integration_yml_path(self, remote: bool) -> Optional[Path]:
@@ -351,7 +351,7 @@ class IntegrationDocUpdateManager:
                 error = f"Unable to replace '{modified_command}' section in README: {str(e)}"
                 self.update_errors.append(error)
 
-    def get_sections_to_update(self) -> Tuple[bool, List[str], List[str]]:
+    def _get_sections_to_update(self) -> Tuple[bool, List[str], List[str]]:
 
         return (
             self.integration_diff.is_configuration_different(),
@@ -369,7 +369,7 @@ class IntegrationDocUpdateManager:
             update_configuration,
             modified_commands,
             added_commands,
-        ) = self.get_sections_to_update()
+        ) = self._get_sections_to_update()
 
         # In case the configuration section has changed
         # we want to replace the section with the new
@@ -832,7 +832,7 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
 def generate_commands_section(
     yaml_data: dict,
     example_dict: dict,
-    command_permissions_dict: dict,
+    command_permissions_dict: Optional[dict],
     command: Optional[str] = None,
 ) -> Tuple[list, list]:
     """Generate the commands section the the README.md file.

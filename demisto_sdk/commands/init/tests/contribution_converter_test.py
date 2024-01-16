@@ -1618,6 +1618,7 @@ class TestReadmes:
         assert "+ | new_arg | New argument for testing. | Optional | " in added_lines
         assert "+ | Splunk.Test | string | Test output | " in added_lines
         assert "+ ### splunkt-test-cmd" in added_lines
+        assert "#### Required Permissions" not in added_lines
 
 
 @pytest.mark.helper

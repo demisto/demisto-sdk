@@ -1987,6 +1987,7 @@ class TestIntegrationDocUpdate:
             in actual
         )
         assert "| AHA.Idea.updated_at | Date | The idea update date. |" in actual
+        assert "#### Required Permissions" not in actual
 
     def test_added_conf_cmd_modified_cmd(self, git_repo: Repo, mocker: MockerFixture):
         """

@@ -17,6 +17,7 @@ VERSION_NAME_REGEX = r"v([0-9]+)$"
 
 
 class IsContentItemNameVersionCorrectlyValidator(BaseValidator[ContentTypes]):
+    error_code = "BA150"  # TODO - update the code
     description = "Checks if script/integration name is versioned correctly, e.g.: ends with V<number>."
     error_message = (
         "The name {0} of {1} is incorrect , "

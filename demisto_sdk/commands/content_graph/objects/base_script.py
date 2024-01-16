@@ -1,4 +1,5 @@
-from typing import Callable, List, Set
+from dataclasses import dataclass
+from typing import Callable, List, Optional, Set
 
 import demisto_client
 from pydantic import DirectoryPath
@@ -9,25 +10,36 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    get_yaml,
     write_dict,
 )
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    RelationshipType,
+    lazy_property,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.content_graph.parsers.base_script import Argument
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_scripts_prepare import (
     MarketplaceIncidentToAlertScriptsPreparer,
 )
 
 
+@dataclass
+class Argument:
+    name: str
+    description: str
+    deprecated: bool = False
+    default_value: Optional[str] = None
+
+
 class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # type: ignore[call-arg]
     tags: List[str]
     skip_prepare: List[str]
-    arguments: List[Argument] = []
 
     def metadata_fields(self) -> Set[str]:
         return (
@@ -56,6 +68,18 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             data["nativeimage"] = supported_native_images
 
         return data
+
+    @lazy_property
+    def arguments(self) -> List[Argument]:
+        return [
+            Argument(
+                name=argument.get("name", ""),
+                deprecated=argument.get("deprecated", False),
+                description=argument.get("description"),
+                default_value=argument.get("defaultValue"),
+            )
+            for argument in get_yaml(self.path).get("args", [])
+        ]
 
     @property
     def imported_by(self) -> List[BaseNode]:

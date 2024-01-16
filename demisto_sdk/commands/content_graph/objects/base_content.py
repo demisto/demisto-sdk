@@ -160,7 +160,9 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         """
         self.__add_lazy_properties()
 
-        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        json_dct = json.loads(
+            self.json(exclude={"commands", "database_id", "arguments"})
+        )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type

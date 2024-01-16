@@ -36,6 +36,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
+        self.is_mappable = self.script_info.get("ismappable", False)
         self.is_feed = self.script_info.get("feed", False)
         self.is_beta = self.script_info.get("beta", False)
         self.long_running = self.script_info.get("longRunning", False)

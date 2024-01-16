@@ -23,10 +23,11 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
-    args: List[dict]
-    outputs: List[dict]
 
     # From HAS_COMMAND relationship
+    args: List[dict] = Field([], exclude=True)
+    outputs: List[dict] = Field([], exclude=True)
+
     deprecated: bool = Field(False)
     description: Optional[str] = Field("")
 
@@ -53,6 +54,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch_assets: bool = False
     is_feed: bool = False
     is_beta: bool = False
+    is_mappable: bool = False
     long_running: bool = False
     category: str
     commands: List[Command] = []
@@ -131,3 +133,19 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         if "category" in _dict and path.suffix == ".yml":
             return True
         return False
+
+    def save(self):
+        super().save()
+        data = self.data
+        data["script"]["commands"] = []
+        yml_commands = []
+        for command in self.commands:
+            yml_commands.append(
+                {
+                    "name": command.name,
+                    "deprecated": command.deprecated,
+                    "description": command.description,
+                }
+            )
+
+        data["script"]["commands"] = yml_commands

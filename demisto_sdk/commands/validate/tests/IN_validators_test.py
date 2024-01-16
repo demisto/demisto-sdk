@@ -10,6 +10,10 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy
 from demisto_sdk.commands.validate.validators.IN_validators.IN102_is_valid_checkbox_param import (
     IsValidCheckboxParamValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN104_is_valid_category import (
+    IsValidCategoryValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN106_is_containing_default_arg import IsValidRepCommandValidator
 from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subtype import (
     ValidSubtypeValidator,
 )
@@ -565,3 +569,284 @@ def test_IsValidCheckboxParamValidator_fix():
             "required": True,
         },
     ]
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        ([create_integration_object()], 0, []),
+        (
+            [create_integration_object(["category"], [""])],
+            1,
+            [
+                "The Integration's category (empty category section) doesn't match the standard,\nplease make sure that the field is a category from the following options: Network Security, Utilities, Forensics & Malware Analysis."
+            ],
+        ),
+        (
+            [
+                create_integration_object(["category"], ["Utilities"]),
+                create_integration_object(["category"], ["Random Category..."]),
+                create_integration_object(),
+            ],
+            1,
+            [
+                "The Integration's category (Random Category...) doesn't match the standard,\nplease make sure that the field is a category from the following options: Network Security, Utilities, Forensics & Malware Analysis."
+            ],
+        ),
+    ],
+)
+def test_IsValidCategoryValidator_is_valid(
+    mocker, content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items.
+        - Case 1: One integration with n valid category.
+        - Case 2: One integration with an empty category field.
+        - Case 3: Three integrations:
+            - Two integrations with a valid category.
+            - One integration with an invalid category.
+    When
+    - Calling the IsValidCategoryValidator is_valid function.
+    Then
+        - Make sure the right amount of pack metadatas failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+        - Case 3: Should fail only the pack_metadata with the "Random Category..."
+    """
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.IN_validators.IN104_is_valid_category.get_current_categories",
+        return_value=["Network Security", "Utilities", "Forensics & Malware Analysis"],
+    )
+    results = IsValidCategoryValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(paths=["script.commands"], values=[[]],),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [{
+                                    "name": "ip",
+                                    "default": True,
+                                    "isArray": True,
+                                    "required": True,
+                                }],
+                                "outputs": []
+                            }
+                        ]
+                    ],
+                ),
+            ], 0, [],
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "endpoint",
+                                "description": "endpoint command",
+                                "deprecated": False,
+                                "arguments": [{
+                                    "name": "ip",
+                                    "isArray": True,
+                                    "required": True,
+                                }],
+                            },
+                            {
+                                "name": "domain",
+                                "description": "domain command",
+                                "deprecated": False,
+                                "arguments": [{
+                                    "name": "domain",
+                                    "isArray": True,
+                                    "required": True,
+                                }],
+                                "outputs": []
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [{
+                                    "name": "ip",
+                                    "default": True,
+                                    "isArray": True,
+                                    "required": True,
+                                }]
+                            },
+                            {
+                                "name": "url",
+                                "description": "url command",
+                                "deprecated": False,
+                                "arguments": [{
+                                    "name": "url",
+                                    "isArray": True,
+                                    "required": True,
+                                }],
+                                "outputs": []
+                            }
+                        ]
+                    ],
+                ),
+            ], 0, [],
+        ),
+    ],
+)
+def test_IsValidRepCommandValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Four integrations:
+            - One integration with a param of type 8 but no required field.
+            - One integration with a param of type 0 and no required field.
+            - One integration with a param of type 8 but required field set to False.
+            - One integration with 3 param of type 8, one's required field is set to True and the other two are set to False.
+    When
+    - Calling the IsValidRepCommandValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should fail all except test_param 2 & 4.
+    """
+    results = IsValidRepCommandValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+# def test_IsValidRepCommandValidator_fix():
+#     """
+#     Given
+#         An integration with invalid proxy & insecure params.
+#     When
+#     - Calling the IsValidRepCommandValidator fix function.
+#     Then
+#         - Make sure that all the relevant fields were added/fixed and that the right msg was returned.
+#     """
+#     content_item = create_integration_object(
+#         paths=["configuration"],
+#         values=[
+#             [
+#                 {
+#                     "name": "test_param_4",
+#                     "type": 8,
+#                     "display": "test param 4",
+#                     "required": True,
+#                 },
+#                 {
+#                     "name": "test_param_5",
+#                     "type": 8,
+#                     "display": "test param 5",
+#                     "required": False,
+#                 },
+#                 {
+#                     "name": "test_param_6",
+#                     "type": 8,
+#                     "display": "test param 6",
+#                     "required": False,
+#                 },
+#             ]
+#         ],
+#     )
+#     assert content_item.params == [
+#         {
+#             "name": "test_param_4",
+#             "type": 8,
+#             "display": "test param 4",
+#             "required": True,
+#         },
+#         {
+#             "name": "test_param_5",
+#             "type": 8,
+#             "display": "test param 5",
+#             "required": False,
+#         },
+#         {
+#             "name": "test_param_6",
+#             "type": 8,
+#             "display": "test param 6",
+#             "required": False,
+#         },
+#     ]
+#     validator = IsValidRepCommandValidator()
+#     validator.misconfigured_checkbox_params_by_integration[content_item.name] = [
+#         "test_param_5",
+#         "test_param_6",
+#     ]
+#     assert (
+#         validator.fix(content_item).message
+#         == "Set required field of the following params was set to True: test_param_5, test_param_6."
+#     )
+#     assert content_item.params == [
+#         {
+#             "name": "test_param_4",
+#             "type": 8,
+#             "display": "test param 4",
+#             "required": True,
+#         },
+#         {
+#             "name": "test_param_5",
+#             "type": 8,
+#             "display": "test param 5",
+#             "required": True,
+#         },
+#         {
+#             "name": "test_param_6",
+#             "type": 8,
+#             "display": "test param 6",
+#             "required": True,
+#         },
+#     ]

@@ -19,7 +19,7 @@ ContentTypes = Integration
 class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
     error_code = "IN106"
     description = "Validate that the command is valid as a reputation command."
-    error_message = ""
+    error_message = "The following reputation commands are invalid:\n{0}"
     fix_message = "Fixed the following reputation commands to match the standards: {0}"
     related_field = "script"
     is_auto_fixable = True
@@ -32,7 +32,7 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n".join(
                         [
-                            f"The {key} command display name should be '{val['display']}', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8."
+                            f"- The {key} command display name should be '{val['display']}', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8."
                             for key, val in self.invalid_rep_commands[
                                 content_item.name
                             ].items()
@@ -55,7 +55,7 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
         flag_found_arg = False
         for arg in rep_command.args:
             arg_name = arg.get("name")
-            if arg_name in BANG_COMMAND_ARGS_MAPPING_DICT["default"]:
+            if arg_name in BANG_COMMAND_ARGS_MAPPING_DICT.get(arg_name, {}).get("default", False):
                 flag_found_arg = True
                 if arg.get("default", False) in ("false", False) or arg.get(
                     "isArray", False

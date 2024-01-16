@@ -1,13 +1,16 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.common.constants import (
+    GET_MAPPING_FIELDS_COMMAND,
+    GET_MAPPING_FIELDS_COMMAND_NAME,
+)
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        FixResult,
-        ValidationResult,
+    BaseValidator,
+    FixResult,
+    ValidationResult,
 )
 
 ContentTypes = Integration
@@ -21,13 +24,27 @@ class IsValidAsMappableIntegrationValidator(BaseValidator[ContentTypes]):
     related_field = "ismappable, commands"
     is_auto_fixable = True
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        # Add your validation right here
-        pass
-    
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if content_item.is_mappable
+            and not any(
+                [
+                    command.name == GET_MAPPING_FIELDS_COMMAND_NAME
+                    for command in content_item.commands
+                ]
+            )
+        ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        # Add your fix right here
-        pass
-            
+        content_item.commands.append(Command(**GET_MAPPING_FIELDS_COMMAND))
+        return FixResult(
+            validator=self,
+            message=self.fix_message,
+            content_object=content_item,
+        )

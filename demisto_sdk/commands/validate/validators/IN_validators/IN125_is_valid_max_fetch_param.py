@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -23,7 +22,6 @@ class IsValidMaxFetchParamValidator(BaseValidator[ContentTypes]):
     related_field = "defaultvalue"
     is_auto_fixable = True
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -32,7 +30,9 @@ class IsValidMaxFetchParamValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.is_fetch and (max_fetch_param := find_param(content_item.params, MAX_FETCH)) and not max_fetch_param.get("defaultvalue")
+            if content_item.is_fetch
+            and (max_fetch_param := find_param(content_item.params, MAX_FETCH))
+            and not max_fetch_param.get("defaultvalue")
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:

@@ -1354,6 +1354,11 @@ ACCEPTED_FILE_EXTENSIONS = [
     ".lock",
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
+GET_MAPPING_FIELDS_COMMAND_NAME = "get-mapping-fields"
+GET_MAPPING_FIELDS_COMMAND = {
+    "description": "Retrieves a User Profile schema which holds all of the user fields in the application. Used for outgoing mapping through the Get Schema option.",
+    "name": GET_MAPPING_FIELDS_COMMAND_NAME,
+}
 
 RELIABILITY_PARAMETER_NAMES = [
     "integration_reliability",  # First item in the list will be used in errors

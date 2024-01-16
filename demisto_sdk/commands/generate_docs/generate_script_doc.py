@@ -75,48 +75,31 @@ def generate_script_doc(
         used_in: List = []
         if use_graph:
             with ContentGraphInterface() as graph:
-                try:
-                    update_content_graph(
-                        graph,
-                        use_git=True,
-                        output_path=graph.output_path,
+                update_content_graph(
+                    graph,
+                    use_git=True,
+                    output_path=graph.output_path,
+                )
+                result = graph.search(path=get_relative_path_from_packs_dir(input_path))
+                if not isinstance(result, List) or result == []:
+                    logger.error(
+                        f"The requested script {input_path} wasn't found in the graph."
                     )
-                    result = graph.search(
-                        path=get_relative_path_from_packs_dir(input_path)
-                    )
-                    if not isinstance(result, List) or result == []:
+                else:
+                    script_object = result[0]
+                    if not isinstance(script_object, Script):
                         logger.error(
-                            f"The requested script {input_path} wasn't found in the graph."
+                            "The object returned from the graph isn't a script."
                         )
                     else:
-                        script_object = result[0]
-                        if not isinstance(script_object, Script):
-                            logger.error(
-                                "The object returned from the graph isn't a script."
-                            )
-                        else:
-                            used_in.extend(
-                                relationship.content_item_to.object_id
-                                for relationship in script_object.used_by
-                            )
-                            dependencies.extend(
-                                relationship.content_item_to.object_id
-                                for relationship in script_object.uses
-                            )
-                except Exception as err:
-                    logger.error(
-                        f"Error searching script dependencies from the content graph: {str(err)}."
-                    )
-                    logger.info("Rerunning script README generation without graph...")
-                    generate_script_doc(
-                        input_path=input_path,
-                        examples=examples,
-                        output=output,
-                        permissions=permissions,
-                        limitations=limitations,
-                        insecure=insecure,
-                        use_graph=False,
-                    )
+                        used_in.extend(
+                            relationship.content_item_to.object_id
+                            for relationship in script_object.used_by
+                        )
+                        dependencies.extend(
+                            relationship.content_item_to.object_id
+                            for relationship in script_object.uses
+                        )
         else:
             logger.info(
                 f"Skipping fetching dependencies and used_in for the script {input_path} "

@@ -1,0 +1,4 @@
+changes:
+- description: Added graph capabilities in **TestSuite**.
+  type: internal
+pr_number: 3932

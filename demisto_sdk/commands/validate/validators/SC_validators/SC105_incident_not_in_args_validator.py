@@ -24,7 +24,7 @@ class IsScriptArgumentsContainIncidentWordValidator(BaseValidator[ContentTypes])
         for content_item in content_items:
             wrong_arg_names = []
             for argument in content_item.arguments:
-                if "incident" in argument.name:
+                if "incident" in argument.name and not argument.deprecated:
                     wrong_arg_names.append(argument.name)
             if wrong_arg_names:
                 invalid_content_items.append(

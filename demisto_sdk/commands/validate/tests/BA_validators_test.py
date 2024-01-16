@@ -52,6 +52,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA_error_code1_name_has_invalid_version import (
     IsContentItemNameVersionCorrectlyValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA_error_code2_content_item_is_deprecated_correctly import (
+    IsDeprecatedCorrectlyValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -945,3 +948,43 @@ def test_IsContentItemNameVersionCorrectlyValidator_fix():
     script = create_script_object(paths=["name"], values=["Testv2"])
     fix_result = IsContentItemNameVersionCorrectlyValidator().fix(script)
     assert fix_result.content_object.name == "TestV2"
+
+
+def test_IsDeprecatedCorrectlyValidator_is_valid():
+    """
+    Given:
+     - 1 integration and 1 script which are deprecated incorrectly
+     - 1 integration and 1 script which are deprecated correctly
+     - 1 integration and 1 script which are not deprecated
+
+    When:
+     - Running the IsDeprecatedCorrectlyValidator validator
+
+    Then:
+     - make sure the script and integration which are deprecated incorrectly fails the validation
+
+    """
+    content_items = [
+        create_integration_object(
+            paths=["deprecated", "description"], values=[True, "Some description"]
+        ),
+        create_script_object(
+            paths=["deprecated", "comment"], values=[True, "Some description"]
+        ),
+        create_integration_object(
+            paths=["deprecated", "description"],
+            values=[True, "Deprecated. Use OtherIntegrationName instead."],
+        ),
+        create_script_object(
+            paths=["deprecated", "comment"],
+            values=[True, "Deprecated. No available replacement."],
+        ),
+        create_integration_object(paths=["description"], values=["Some description"]),
+        create_script_object(paths=["comment"], values=["Some description"]),
+    ]
+
+    results = IsDeprecatedCorrectlyValidator().is_valid(content_items)
+    assert len(results) == 2
+    for result in results:
+        assert result.content_object.deprecated
+        assert result.content_object.description == "Some description"

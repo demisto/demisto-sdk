@@ -1,5 +1,4 @@
 import logging
-import os
 
 import pytest
 
@@ -102,14 +101,17 @@ def test_insert_into_escapes(msg: str, string: str, expected: str):
     ],
 )
 def test_environment_variable_to_bool_values(
-    environment_variable_value: str, default_value: bool, expected_result: bool
+    monkeypatch,
+    environment_variable_value: str,
+    default_value: bool,
+    expected_result: bool,
 ):
-    os.environ["TEST_ENVIRONMENT_VARIABLE"] = environment_variable_value
+    monkeypatch.setenv("TEST_ENVIRONMENT_VARIABLE", environment_variable_value)
+
     assert (
         environment_variable_to_bool("TEST_ENVIRONMENT_VARIABLE", default_value)
         == expected_result
     )
-    del os.environ["TEST_ENVIRONMENT_VARIABLE"]
 
 
 @pytest.mark.parametrize(
@@ -120,10 +122,9 @@ def test_environment_variable_to_bool_values(
     ],
 )
 def test_environment_variable_to_bool_env_not_set(
-    default_value: bool, expected_result: bool
+    monkeypatch, default_value: bool, expected_result: bool
 ):
-    if os.environ.get("TEST_ENVIRONMENT_VARIABLE"):
-        del os.environ["TEST_ENVIRONMENT_VARIABLE"]
+    monkeypatch.delenv("TEST_ENVIRONMENT_VARIABLE", raising=False)
 
     assert (
         environment_variable_to_bool("TEST_ENVIRONMENT_VARIABLE", default_value)
@@ -139,14 +140,17 @@ def test_environment_variable_to_bool_env_not_set(
     ],
 )
 def test_environment_variable_to_int_values(
-    environment_variable_value: str, default_value: int, expected_result: int
+    monkeypatch,
+    environment_variable_value: str,
+    default_value: int,
+    expected_result: int,
 ):
-    os.environ["TEST_ENVIRONMENT_VARIABLE"] = environment_variable_value
+    monkeypatch.setenv("TEST_ENVIRONMENT_VARIABLE", environment_variable_value)
+
     assert (
         environment_variable_to_int("TEST_ENVIRONMENT_VARIABLE", default_value)
         == expected_result
     )
-    del os.environ["TEST_ENVIRONMENT_VARIABLE"]
 
 
 @pytest.mark.parametrize(
@@ -156,10 +160,9 @@ def test_environment_variable_to_int_values(
     ],
 )
 def test_environment_variable_to_int_env_not_set(
-    default_value: int, expected_result: int
+    monkeypatch, default_value: int, expected_result: int
 ):
-    if os.environ.get("TEST_ENVIRONMENT_VARIABLE"):
-        del os.environ["TEST_ENVIRONMENT_VARIABLE"]
+    monkeypatch.delenv("TEST_ENVIRONMENT_VARIABLE", raising=False)
 
     assert (
         environment_variable_to_int("TEST_ENVIRONMENT_VARIABLE", default_value)

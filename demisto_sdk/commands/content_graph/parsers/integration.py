@@ -77,8 +77,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             name = command_data.get("name")
             deprecated = command_data.get("deprecated", False) or self.deprecated
             description = command_data.get("description")
-            args = command_data.get("arguments", [])
-            outputs = command_data.get("outputs", [])
+            args = command_data.get("arguments") or []
+            outputs = command_data.get("outputs") or []
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,

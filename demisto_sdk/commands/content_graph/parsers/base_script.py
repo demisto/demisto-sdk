@@ -11,10 +11,19 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+from dataclasses import dataclass
 
 EXECUTE_CMD_PATTERN = re.compile(
     r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE
 )
+
+
+@dataclass
+class Argument:
+    name: str
+    description: str
+    deprecated: bool = False
+    default_value: Optional[str] = None
 
 
 class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SCRIPT):
@@ -42,6 +51,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
                 "type": "type",
                 "subtype": "subtype",
                 "alt_docker_images": "alt_dockerimages",
+                "arguments": "args"
             }
         )
         return super().field_mapping
@@ -55,6 +65,18 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
 
         for cmd in self.get_command_executions():
             self.add_command_or_script_dependency(cmd)
+
+    @property
+    def arguments(self):
+        return [
+            Argument(
+                name=argument.get("name", ""),
+                deprecated=argument.get("deprecated", False),
+                description=argument.get("description", ""),
+                default_value=argument.get("defaultValue"),
+            )
+            for argument in self.yml_data.get("args", [])
+        ]
 
     @property
     def runas(self) -> str:

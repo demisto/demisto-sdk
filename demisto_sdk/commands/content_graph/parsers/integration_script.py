@@ -39,7 +39,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
         )
         if not docker_image:
             return None
-        return DockerImage.parse(docker_image)
+        return DockerImage(docker_image)
 
     @property
     def alt_docker_images(self) -> List[str]:

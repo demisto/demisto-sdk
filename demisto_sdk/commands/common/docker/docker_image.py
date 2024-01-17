@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Optional, Union, Dict
+from typing import Optional
 
 from packaging.version import Version
 
@@ -10,7 +10,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.logger import logger
 
-class DockerImage:
+
+class DockerImage(str):
 
     DOCKER_IMAGE_REGX = (
         r"^([^/]+)/(.*?)(?::(.*))?$"  # regex to extract parts of a docker-image
@@ -18,66 +19,26 @@ class DockerImage:
     DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
+    _dockerhub_client = DockerHubClient()
 
-    def __init__(
-        self,
-        dockerhub_client: DockerHubClient,
-        repository: str = "",
-        image_name: str = "",
-        tag: str = "",
-    ):
-        self._dockerhub_client = dockerhub_client
-        self.repository = repository  # the repository e.g.: demisto
-        self.image_name = image_name  # the image name e.g.: python3, pan-os-python
-        self.tag = tag  # the tag
-        super().__init__(str(self))
-
-    @classmethod
-    def parse(
-        cls,
-        docker_image: str,
-        dockerhub_client: Optional[DockerHubClient] = None,
-        raise_if_not_valid: bool = False,
-    ) -> "DockerImage":
-        """
-        Parses a docker-image into repository, image name and its tag
-
-        Args:
-            docker_image: the docker image to parse
-            dockerhub_client: client to interact with dockerhub client
-            raise_if_not_valid: raise ValueError if the docker-image structure is not valid
-        """
-        _dockerhub_client = dockerhub_client or DockerHubClient()
+    def __new__(cls, docker_image: str, raise_if_not_valid: bool = False):
+        instance = super().__new__(cls, docker_image)
         pattern = re.compile(cls.DOCKER_IMAGE_REGX)
         if matches := pattern.match(docker_image):
-            docker_image_object = cls(
-                _dockerhub_client,
-                repository=matches.group(1),
-                image_name=matches.group(2),
-                tag=matches.group(3),
-            )
+            instance.repository = matches.group(1)
+            instance.image_name = matches.group(2)
+            instance.tag = matches.group(3)
         else:
-            docker_image_object = cls(_dockerhub_client)
+            instance.repository = ""
+            instance.image_name = ""
+            instance.tag = ""
 
-        if raise_if_not_valid and not docker_image_object.is_valid:
+        if raise_if_not_valid and not instance.is_valid:
             raise ValueError(
                 f"Docker image {docker_image} is not valid, should be in the form of repository/image-name:tag"
             )
 
-        return docker_image_object
-
-    def __eq__(self, other: Union[str, "DockerImage"]) -> bool:
-        return str(self) == str(other)
-
-    def __str__(self) -> str:
-        docker_image = ""
-        if self.repository:
-            docker_image += self.repository
-        if self.image_name:
-            docker_image += f"/{self.image_name}"
-        if self.tag:
-            docker_image += f":{self.tag}"
-        return docker_image
+        return instance
 
     @property
     def name(self):

@@ -39,7 +39,7 @@ class IntegrationScript(ContentItem):
         Get the python version from the script/integration docker-image in case it's a python image
         """
         if self.type == "python" and (
-            python_version := get_python_version(str(self.docker_image))
+            python_version := get_python_version(self.docker_image)
         ):
             return str(python_version)
 
@@ -47,11 +47,7 @@ class IntegrationScript(ContentItem):
 
     @property
     def docker_images(self) -> List[str]:
-        return (
-            [str(self.docker_image)] + self.alt_docker_images
-            if self.docker_image
-            else []
-        )
+        return [self.docker_image] + self.alt_docker_images if self.docker_image else []
 
     @property
     def is_powershell(self) -> bool:

@@ -19,7 +19,6 @@ class Wizard(JSONBased):
         supporting_integrations: Optional[List[str]] = None,
     ):
         super().__init__(wizards_dir_path, name, "wizard")
-        self.id = name
         self.categories_to_packs = categories_to_packs or {}
         self.fetching_integrations = fetching_integrations or []
         self.set_playbooks = set_playbooks or []

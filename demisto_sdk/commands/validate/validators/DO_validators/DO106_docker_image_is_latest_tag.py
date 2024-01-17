@@ -63,7 +63,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
         for content_item in content_items:
             if not content_item.is_javascript:
                 docker_image = content_item.docker_image
-                if not docker_image.is_valid:
+                if docker_image and not docker_image.is_valid:
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
@@ -90,7 +90,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                     )
                     continue
                 if (
-                    docker_image.tag != docker_image_latest_tag
+                    docker_image and docker_image.tag != docker_image_latest_tag
                     and self.is_docker_image_older_than_three_days(docker_image)
                 ):
                     invalid_content_items.append(
@@ -110,7 +110,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        docker_image = content_item.docker_image
+        docker_image: DockerImage = content_item.docker_image
         try:
             latest_tag = str(docker_image.latest_tag)
             message = self.fix_message.format(

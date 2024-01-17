@@ -66,6 +66,9 @@ class DockerImage:
 
         return docker_image_object
 
+    def __eq__(self, other: "DockerImage") -> bool:
+        return str(self) == str(other)
+
     def __str__(self):
         return f"{self.repository}/{self.image_name}:{self.tag}"
 

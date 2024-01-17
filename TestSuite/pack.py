@@ -13,19 +13,35 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
+from TestSuite.classifier import Classifier
+from TestSuite.content_list import ContentList
 from TestSuite.correlation_rule import CorrelationRule
+from TestSuite.dashboard import Dashboard
 from TestSuite.file import File
+from TestSuite.generic_definition import GenericDefinition
+from TestSuite.generic_field import GenericField
+from TestSuite.generic_module import GenericModule
+from TestSuite.generic_type import GenericType
+from TestSuite.incident_field import IncidentField
+from TestSuite.incident_type import IncidentType
+from TestSuite.indicator_field import IndicatorField
+from TestSuite.indicator_type import IndicatorType
 from TestSuite.integration import Integration
 from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
+from TestSuite.layout import Layout
 from TestSuite.layout_rule import LayoutRule
+from TestSuite.mapper import Mapper
 from TestSuite.playbook import Playbook
+from TestSuite.report import Report
 from TestSuite.rule import Rule
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
+from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
 from TestSuite.trigger import Trigger
+from TestSuite.widget import Widget
 from TestSuite.wizard import Wizard
 from TestSuite.xdrc_template import XDRCTemplate
 from TestSuite.xsiam_dashboard import XSIAMDashboard
@@ -33,7 +49,7 @@ from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
 
 
-class Pack:
+class Pack(TestSuiteBase):
     """A class that mocks a pack inside to content repo
 
     Note:
@@ -58,22 +74,22 @@ class Pack:
         self.repo_path = repo.path
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
-        self.classifiers: List[JSONBased] = list()
-        self.mappers: List[JSONBased] = list()
-        self.dashboards: List[JSONBased] = list()
-        self.incident_types: List[JSONBased] = list()
-        self.incident_fields: List[JSONBased] = list()
-        self.indicator_fields: List[JSONBased] = list()
-        self.indicator_types: List[JSONBased] = list()
-        self.generic_fields: List[JSONBased] = list()
-        self.generic_types: List[JSONBased] = list()
-        self.generic_modules: List[JSONBased] = list()
-        self.generic_definitions: List[JSONBased] = list()
-        self.layouts: List[JSONBased] = list()
+        self.classifiers: List[Classifier] = list()
+        self.mappers: List[Mapper] = list()
+        self.dashboards: List[Dashboard] = list()
+        self.incident_types: List[IncidentType] = list()
+        self.incident_fields: List[IncidentField] = list()
+        self.indicator_fields: List[IndicatorField] = list()
+        self.indicator_types: List[IndicatorType] = list()
+        self.generic_fields: List[GenericField] = list()
+        self.generic_types: List[GenericType] = list()
+        self.generic_modules: List[GenericModule] = list()
+        self.generic_definitions: List[GenericDefinition] = list()
+        self.layouts: List[Layout] = list()
         self.layoutcontainers: List[JSONBased] = list()
-        self.reports: List[JSONBased] = list()
-        self.widgets: List[JSONBased] = list()
-        self.lists: List[JSONBased] = list()
+        self.reports: List[Report] = list()
+        self.widgets: List[Widget] = list()
+        self.lists: List[ContentList] = list()
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
@@ -82,9 +98,9 @@ class Pack:
         self.parsing_rules: List[Rule] = list()
         self.modeling_rules: List[Rule] = list()
         self.correlation_rules: List[YAML] = list()
-        self.xsiam_dashboards: List[JSONBased] = list()
-        self.xsiam_reports: List[JSONBased] = list()
-        self.triggers: List[JSONBased] = list()
+        self.xsiam_dashboards: List[XSIAMDashboard] = list()
+        self.xsiam_reports: List[XSIAMReport] = list()
+        self.triggers: List[Trigger] = list()
         self.wizards: List[Wizard] = list()
         self.xdrc_templates: List[XDRCTemplate] = list()
         self.layout_rules: List[LayoutRule] = list()
@@ -216,6 +232,8 @@ class Pack:
         self._assets_modeling_rules_path = self._pack_path / ASSETS_MODELING_RULES_DIR
         self._assets_modeling_rules_path.mkdir()
 
+        super().__init__(self._pack_path)
+
     def create_integration(
         self,
         name: Optional[str] = None,
@@ -342,99 +360,95 @@ class Pack:
         obj.write_text(content)
         return obj
 
-    def create_classifier(self, name, content: dict = None) -> JSONBased:
-        prefix = "classifier"
-        classifier = self._create_json_based(
-            name, prefix, content, dir_path=self._classifiers_path
-        )
+    def create_classifier(self, name: str = None, content: dict = None) -> Classifier:
+        if not name:
+            name = f"classifier{len(self.classifiers)}"
+        classifier = Classifier(name, self._classifiers_path, content)
         self.classifiers.append(classifier)
         return classifier
 
-    def create_mapper(self, name, content: dict = None) -> JSONBased:
-        prefix = "classifier-mapper"
-        mapper = self._create_json_based(
-            name, prefix, content, dir_path=self._mappers_path
-        )
+    def create_mapper(self, name: str = None, content: dict = None) -> Mapper:
+        if not name:
+            name = f"classifier-mapper{len(self.mappers)}"
+        mapper = Mapper(name, self._mappers_path, content)
         self.mappers.append(mapper)
         return mapper
 
-    def create_dashboard(self, name, content: dict = None) -> JSONBased:
-        prefix = "dashboard"
-        dashboard = self._create_json_based(
-            name, prefix, content, dir_path=self._dashboards_path
-        )
+    def create_dashboard(self, name: str = None, content: dict = None) -> Dashboard:
+        if not name:
+            name = f"dashboard{len(self.dashboards)}"
+        dashboard = Dashboard(name, self._dashboards_path, content)
         self.dashboards.append(dashboard)
         return dashboard
 
     def create_incident_field(
-        self, name, content: dict = None, release_notes: bool = False
-    ) -> JSONBased:
-        prefix = "incidentfield"
-        incident_field = self._create_json_based(
-            name, prefix, content, dir_path=self._incidents_field_path
-        )
-        if release_notes:
-            # release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
-            # dir_path=self._incidents_field_path)
-            # self.incident_fields.append(release_notes)
-            pass
+        self, name: str = None, content: dict = None
+    ) -> IncidentField:
+        if not name:
+            name = f"incidentfield{len(self.incident_fields)}"
+        incident_field = IncidentField(name, self._incidents_field_path, content)
+
         self.incident_fields.append(incident_field)
         return incident_field
 
-    def create_incident_type(self, name, content: dict = None) -> JSONBased:
-        prefix = "incidenttype"
-        incident_type = self._create_json_based(
-            name, prefix, content, dir_path=self._incident_types_path
-        )
+    def create_incident_type(
+        self, name: str = None, content: dict = None
+    ) -> IncidentType:
+        if not name:
+            name = f"incidenttype{len(self.incident_types)}"
+        incident_type = IncidentType(name, self._incident_types_path, content)
         self.incident_types.append(incident_type)
         return incident_type
 
-    def create_indicator_field(self, name, content: dict = None) -> JSONBased:
-        prefix = "incidentfield"
-        indicator_field = self._create_json_based(
-            name, prefix, content, dir_path=self._indicator_fields
-        )
+    def create_indicator_field(
+        self, name: str = None, content: dict = None
+    ) -> IndicatorField:
+        if not name:
+            name = f"indicatorfield{len(self.indicator_fields)}"
+        indicator_field = IndicatorField(name, self._indicator_fields, content)
         self.indicator_fields.append(indicator_field)
         return indicator_field
 
-    def create_indicator_type(self, name, content: dict = None) -> JSONBased:
-        prefix = "reputation"
-        indicator_type = self._create_json_based(
-            name, prefix, content, dir_path=self._indicator_types
-        )
+    def create_indicator_type(
+        self, name: str = None, content: dict = None
+    ) -> IndicatorType:
+        if not name:
+            name = f"reputation{len(self.indicator_types)}"
+        indicator_type = IndicatorType(name, self._indicator_types, content)
         self.indicator_types.append(indicator_type)
         return indicator_type
 
-    def create_generic_field(self, name, content: dict = None) -> JSONBased:
+    def create_generic_field(self, name, content: dict = None) -> GenericField:
         dir_path = self._generic_fields_path / name
         dir_path.mkdir()
-        prefix = "genericfield"
-        generic_field = self._create_json_based(
-            name, prefix, content, dir_path=dir_path
-        )
+        generic_field = GenericField(name, dir_path, content)
         self.generic_fields.append(generic_field)
         return generic_field
 
-    def create_generic_type(self, name, content: dict = None) -> JSONBased:
+    def create_generic_type(self, name, content: dict = None) -> GenericType:
         dir_path = self._generic_types_path / name
         dir_path.mkdir()
-        prefix = "generictype"
-        generic_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        generic_type = GenericType(name, dir_path, content)
         self.generic_types.append(generic_type)
         return generic_type
 
-    def create_generic_module(self, name, content: dict = None) -> JSONBased:
-        prefix = "genericmodule"
-        generic_module = self._create_json_based(
-            name, prefix, content, dir_path=self._generic_modules_path
-        )
+    def create_generic_module(
+        self, name: str = None, content: dict = None
+    ) -> GenericModule:
+        if not name:
+            name = f"genericmodule{len(self.generic_modules)}"
+
+        generic_module = GenericModule(name, self._generic_modules_path, content)
         self.generic_modules.append(generic_module)
         return generic_module
 
-    def create_generic_definition(self, name, content: dict = None) -> JSONBased:
-        prefix = "genericdefinition"
-        generic_definition = self._create_json_based(
-            name, prefix, content, dir_path=self._generic_definitions_path
+    def create_generic_definition(
+        self, name: str = None, content: dict = None
+    ) -> GenericDefinition:
+        if not name:
+            name = f"genericdefinition{len(self.generic_definitions)}"
+        generic_definition = GenericDefinition(
+            name, self._generic_definitions_path, content
         )
         self.generic_definitions.append(generic_definition)
         return generic_definition
@@ -447,7 +461,7 @@ class Pack:
         details: str = "",
     ) -> Job:
         job = Job(
-            pure_name=name or str(len(self.jobs)),
+            pure_name=name or f"job{len(self.jobs)}",
             jobs_dir_path=self._jobs_path,
             is_feed=is_feed,
             selected_feeds=selected_feeds,
@@ -459,11 +473,10 @@ class Pack:
         self.jobs.append(job)
         return job
 
-    def create_layout(self, name, content: dict = None) -> JSONBased:
-        prefix = "layout"
-        layout = self._create_json_based(
-            name, prefix, content, dir_path=self._layout_path
-        )
+    def create_layout(self, name: str = None, content: dict = None) -> Layout:
+        if not name:
+            name = f"layout{len(self.layouts)}"
+        layout = Layout(name, self._layout_path, content)
         self.layouts.append(layout)
         return layout
 
@@ -477,30 +490,32 @@ class Pack:
         self.layoutcontainers.append(layoutcontainer)
         return layoutcontainer
 
-    def create_report(self, name, content: dict = None) -> JSONBased:
-        prefix = "report"
-        report = self._create_json_based(
-            name, prefix, content, dir_path=self._report_path
-        )
+    def create_report(self, name: str = None, content: dict = None) -> Report:
+
+        if not name:
+            name = f"report{len(self.reports)}"
+        report = Report(name, self._report_path, content)
         self.reports.append(report)
         return report
 
-    def create_widget(self, name, content: dict = None) -> JSONBased:
-        prefix = "widget"
-        widget = self._create_json_based(
-            name, prefix, content, dir_path=self._widget_path
-        )
+    def create_widget(self, name: str = None, content: dict = None) -> Widget:
+        if not name:
+            name = f"widget{len(self.widgets)}"
+
+        widget = Widget(name, self._widget_path, content)
         self.widgets.append(widget)
         return widget
 
     def create_wizard(
         self,
-        name,
+        name: str = None,
         categories_to_packs: Optional[Dict[str, List[dict]]] = None,
         fetching_integrations: Optional[List[str]] = None,
         set_playbooks: Optional[List[dict]] = None,
         supporting_integrations: Optional[List[str]] = None,
     ) -> Wizard:
+        if name is None:
+            name = f"wizard{len(self.wizards)}"
         wizard = Wizard(
             name=name,
             wizards_dir_path=self._wizard_path,
@@ -522,13 +537,13 @@ class Pack:
         self.wizards.append(wizard)
         return wizard
 
-    def create_list(self, name, content: dict = None) -> JSONBased:
-        prefix = "list"
-        list_item = self._create_json_based(
-            name, prefix, content, dir_path=self._lists_path
-        )
-        self.lists.append(list_item)
-        return list_item
+    def create_list(self, name: str = None, content: dict = None) -> ContentList:
+
+        if not name:
+            name = f"list{len(self.lists)}"
+        content_list = ContentList(name, self._lists_path, content)
+        self.lists.append(content_list)
+        return content_list
 
     def create_playbook(
         self,
@@ -538,10 +553,6 @@ class Pack:
     ) -> Playbook:
         if name is None:
             name = f"playbook-{len(self.playbooks)}"
-        if yml is None:
-            yml = {
-                "tasks": {},
-            }
         playbook = Playbook(self._playbooks_path, name, self._repo)
         playbook.build(
             yml,
@@ -559,10 +570,6 @@ class Pack:
     ) -> Playbook:
         if name is None:
             name = f"playbook-{len(self.test_playbooks)}"
-        if yml is None:
-            yml = {
-                "tasks": {},
-            }
         playbook = Playbook(
             self._test_playbooks_path, name, self._repo, is_test_playbook=True
         )
@@ -703,24 +710,38 @@ class Pack:
         self.assets_modeling_rules.append(rule)
         return rule
 
-    def create_correlation_rule(self, name, content: dict = None) -> CorrelationRule:
+    def create_correlation_rule(
+        self, name: str = None, content: dict = None
+    ) -> CorrelationRule:
+        if not name:
+            name = f"correlationrule{len(self.correlation_rules)}"
         correlation_rule = CorrelationRule(
             name, self._correlation_rules_path, self.repo_path, content
         )
         self.correlation_rules.append(correlation_rule)
         return correlation_rule
 
-    def create_xsiam_dashboard(self, name, content: dict = None) -> XSIAMDashboard:
+    def create_xsiam_dashboard(
+        self, name: str = None, content: dict = None
+    ) -> XSIAMDashboard:
+        if not name:
+            name = f"XSIAMDashboard{len(self.xsiam_dashboards)}"
         xsiam_dashboard = XSIAMDashboard(name, self._xsiam_dashboards_path, content)
         self.xsiam_dashboards.append(xsiam_dashboard)
         return xsiam_dashboard
 
-    def create_xsiam_report(self, name, content: dict = None) -> XSIAMReport:
+    def create_xsiam_report(
+        self, name: str = None, content: dict = None
+    ) -> XSIAMReport:
+        if not name:
+            name = f"XSIAMReport{len(self.xsiam_reports)}"
         xsiam_report = XSIAMReport(name, self._xsiam_reports_path, content)
         self.xsiam_reports.append(xsiam_report)
         return xsiam_report
 
-    def create_trigger(self, name, content: dict = None) -> Trigger:
+    def create_trigger(self, name: str = None, content: dict = None) -> Trigger:
+        if not name:
+            name = f"trigger_{len(self.triggers)}"
         trigger = Trigger(name, self._triggers_path, content)
         self.triggers.append(trigger)
         return trigger
@@ -736,7 +757,12 @@ class Pack:
         self.xdrc_templates.append(xdrc_template)
         return xdrc_template
 
-    def create_layout_rule(self, name, content: dict = None) -> LayoutRule:
+    def create_layout_rule(self, name: str = None, content: dict = None) -> LayoutRule:
+        if not name:
+            name = f"layout_rule{len(self.layout_rules)}"
         layout_rule = LayoutRule(name, self._xsiam_layout_rules_path, content)
         self.layout_rules.append(layout_rule)
         return layout_rule
+
+    def set_data(self, **key_path_to_val):
+        self.pack_metadata.set_data(**key_path_to_val)

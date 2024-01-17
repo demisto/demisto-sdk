@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import replace_incident_to_alert
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -32,7 +33,8 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         when the script name included `alert`.
         """
         file_paths_to_objects = {
-            str(content_item.path): content_item for content_item in content_items
+            str(content_item.path.relative_to(CONTENT_PATH)): content_item
+            for content_item in content_items
         }
         query_results = self.graph.get_duplicate_script_name_included_incident(
             list(file_paths_to_objects)

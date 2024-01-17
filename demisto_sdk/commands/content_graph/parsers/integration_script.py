@@ -36,8 +36,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
     def docker_image(self) -> DockerImage:
         docker_image = get_value(
             self.yml_data, self.field_mapping.get("docker_image", ""), ""
-        )
-        return DockerImage(docker_image or "")
+        ) or ""
+        return DockerImage(docker_image)
 
     @property
     def alt_docker_images(self) -> List[str]:

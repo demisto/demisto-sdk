@@ -1,4 +1,8 @@
 # Changelog
+## 9.9.10
+* Added warning when running on Windows (not supported) [#3950](https://github.com/demisto/demisto-sdk/pull/3950)
+* Added graph capabilities in **TestSuite**. [#3932](https://github.com/demisto/demisto-sdk/pull/3932)
+
 ## 1.25.3
 * Fixed false positives in **validate** in `GR103` validations [#3873](https://github.com/demisto/demisto-sdk/pull/3873)
 * Add command `sdk-changelog` for creating a yml file to describe the development changes in the SDK [#3177](https://github.com/demisto/demisto-sdk/pull/3177)

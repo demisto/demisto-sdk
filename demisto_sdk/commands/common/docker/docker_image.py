@@ -25,13 +25,13 @@ class DockerImage(str):
         instance = super().__new__(cls, docker_image)
         pattern = re.compile(cls.DOCKER_IMAGE_REGX)
         if matches := pattern.match(docker_image):
-            instance.repository = matches.group(1)
-            instance.image_name = matches.group(2)
-            instance.tag = matches.group(3)
+            instance._repository = matches.group(1)  # type: ignore[attr-defined]
+            instance._image_name = matches.group(2)  # type: ignore[attr-defined]
+            instance._tag = matches.group(3)  # type: ignore[attr-defined]
         else:
-            instance.repository = ""
-            instance.image_name = ""
-            instance.tag = ""
+            instance._repository = ""  # type: ignore[attr-defined]
+            instance._image_name = ""  # type: ignore[attr-defined]
+            instance._tag = ""  # type: ignore[attr-defined]
 
         if raise_if_not_valid and not instance.is_valid:
             raise ValueError(
@@ -39,6 +39,18 @@ class DockerImage(str):
             )
 
         return instance
+
+    @property
+    def repository(self) -> str:
+        return getattr(self, "_repository", "")
+
+    @property
+    def image_name(self) -> str:
+        return getattr(self, "_image_name", "")
+
+    @property
+    def tag(self) -> str:
+        return getattr(self, "_tag", "")
 
     @property
     def name(self):

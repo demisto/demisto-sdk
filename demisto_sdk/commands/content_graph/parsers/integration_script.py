@@ -33,12 +33,10 @@ class IntegrationScriptParser(YAMLContentItemParser):
         return super().field_mapping
 
     @cached_property
-    def docker_image(self) -> Optional[DockerImage]:
+    def docker_image(self) -> DockerImage:
         docker_image = get_value(
             self.yml_data, self.field_mapping.get("docker_image", ""), ""
         )
-        if not docker_image:
-            return None
         return DockerImage(docker_image)
 
     @property

@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 
 from packaging.version import Version
 
@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.logger import logger
-
 
 class DockerImage:
 
@@ -31,6 +30,7 @@ class DockerImage:
         self.repository = repository  # the repository e.g.: demisto
         self.image_name = image_name  # the image name e.g.: python3, pan-os-python
         self.tag = tag  # the tag
+        super().__init__(str(self))
 
     @classmethod
     def parse(

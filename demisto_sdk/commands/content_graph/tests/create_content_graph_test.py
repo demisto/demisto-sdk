@@ -29,6 +29,8 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
+
 
 # Fixtures for mock content object models
 ###### TO BE DELETED AFTER USING THE TestSuite OBJECTS IN ALL GRAPH TEST - START ######
@@ -94,7 +96,7 @@ def mock_integration(
         marketplaces=[MarketplaceVersions.XSOAR],
         deprecated=False,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage.parse("demisto/python3:3.10.11.54799"),
         category="blabla",
         commands=[Command(name="test-command", description="")],
     )
@@ -126,7 +128,7 @@ def mock_script(
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage.parse("demisto/python3:3.10.11.54799"),
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,

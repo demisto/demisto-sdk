@@ -296,7 +296,7 @@ class DockerHook(Hook):
             remove_container = False
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u {os.getuid()}:4000 {"--rm=false" if not remove_container else ""} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u 4000:4000 {"--rm=false" if not remove_container else ""} {dev_image}'
         ret_hooks = []
         for (
             integration_script,

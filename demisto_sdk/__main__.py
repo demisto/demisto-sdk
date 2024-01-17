@@ -203,6 +203,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
         file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
         log_file_path=kwargs.get("log_file_path"),
+        skip_log_file_creation=True,  # Log file creation is handled in the logger setup of the sub-command
     )
     handle_deprecated_args(ctx.args)
 
@@ -1262,12 +1263,8 @@ def lint(ctx, **kwargs):
     type=str,
 )
 @click.pass_context
+@logging_setup_decorator
 def coverage_analyze(ctx, **kwargs):
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path"),
-    )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
     try:
@@ -2675,6 +2672,7 @@ def find_dependencies(ctx, **kwargs):
 )
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def postman_codegen(
     ctx,
     config,
@@ -2688,11 +2686,6 @@ def postman_codegen(
     **kwargs,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path"),
-    )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
     )

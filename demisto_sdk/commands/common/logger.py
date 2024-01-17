@@ -363,6 +363,7 @@ def logging_setup(
     console_log_threshold: Union[int, str] = logging.INFO,
     file_log_threshold: Union[int, str] = logging.DEBUG,
     log_file_path: Optional[Union[str, Path]] = None,
+    skip_log_file_creation: bool = False,
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
@@ -406,23 +407,27 @@ def logging_setup(
 
     else:  # Use default log files path
         log_file_directory_path = LOGS_DIR
-        log_file_directory_path.mkdir(
-            parents=True, exist_ok=True
-        )  # Generate directory if it doesn't exist
 
-    log_file_path = log_file_directory_path / LOG_FILE_NAME
-    LOG_FILE_PATH = log_file_path
+    if not skip_log_file_creation:
+        if log_file_directory_path == LOGS_DIR:
+            log_file_directory_path.mkdir(
+                parents=True, exist_ok=True
+            )  # Generate directory if it doesn't exist
 
-    file_handler = RotatingFileHandler(
-        filename=log_file_path,
-        mode="a",
-        maxBytes=LOG_FILE_SIZE,
-        backupCount=LOG_FILE_COUNT,
-    )
-    file_handler.set_name(FILE_HANDLER)
-    file_handler.setLevel(file_log_threshold or logging.DEBUG)
-    file_handler.setFormatter(fmt=NoColorFileFormatter())
-    log_handlers.append(file_handler)
+        # Add log file handler
+        log_file_path = log_file_directory_path / LOG_FILE_NAME
+        LOG_FILE_PATH = log_file_path
+
+        file_handler = RotatingFileHandler(
+            filename=log_file_path,
+            mode="a",
+            maxBytes=LOG_FILE_SIZE,
+            backupCount=LOG_FILE_COUNT,
+        )
+        file_handler.set_name(FILE_HANDLER)
+        file_handler.setLevel(file_log_threshold or logging.DEBUG)
+        file_handler.setFormatter(fmt=NoColorFileFormatter())
+        log_handlers.append(file_handler)
 
     log_level = (
         min(*[handler.level for handler in log_handlers])

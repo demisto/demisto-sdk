@@ -1,6 +1,6 @@
+import logging
 from contextlib import contextmanager
 from datetime import datetime
-import logging
 from pathlib import Path
 from shutil import rmtree
 
@@ -335,7 +335,7 @@ def test_load_user_metadata_no_metadata_file(repo, mocker, monkeypatch):
 
     assert str_in_call_args_list(
         logger_error.call_args_list,
-        "Pack Number 1 pack is missing pack_metadata.json file."
+        "Pack Number 1 pack is missing pack_metadata.json file.",
     )
 
 
@@ -372,7 +372,7 @@ def test_load_user_metadata_invalid_price(repo, mocker, monkeypatch):
 
     assert str_in_call_args_list(
         logger_error.call_args_list,
-        "Pack Number 1 pack price is not valid. The price was set to 0."
+        "Pack Number 1 pack price is not valid. The price was set to 0.",
     )
 
 
@@ -399,8 +399,7 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, mocker, monkeypatch):
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
     assert str_in_call_args_list(
-        logger_error.call_args_list,
-        "Failed loading Pack Number 1 user metadata."
+        logger_error.call_args_list, "Failed loading Pack Number 1 user metadata."
     )
 
 

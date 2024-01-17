@@ -176,7 +176,7 @@ def test_handle_error(mocker):
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
     assert str_in_call_args_list(
         logger_warning.call_args_list,
-        "path/to/file_name: [BA101] - ignore-file-specific\n"
+        "path/to/file_name: [BA101] - ignore-file-specific\n",
     )
     formatted_error = base_validator.handle_error(
         "Error-message", "ST109", "path/to/file_name"

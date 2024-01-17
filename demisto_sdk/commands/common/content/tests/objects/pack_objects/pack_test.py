@@ -120,6 +120,7 @@ def test_sign_pack_exception_thrown(repo, mocker, monkeypatch):
 
     """
     import subprocess
+
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
@@ -133,7 +134,7 @@ def test_sign_pack_exception_thrown(repo, mocker, monkeypatch):
     content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
     assert str_in_call_args_list(
         logger_error.call_args_list,
-        "Error while trying to sign pack Pack1.\n not enough values to unpack (expected 2, got 0)"
+        "Error while trying to sign pack Pack1.\n not enough values to unpack (expected 2, got 0)",
     )
 
 
@@ -165,8 +166,8 @@ def test_sign_pack_error_from_subprocess(repo, mocker, fake_process, monkeypatch
     content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
 
     assert str_in_call_args_list(
-            logger_error.call_args_list, "Failed to sign pack for Pack1 - b'error\\n'"
-        )
+        logger_error.call_args_list, "Failed to sign pack for Pack1 - b'error\\n'"
+    )
 
 
 def test_sign_pack_success(repo, mocker, fake_process, monkeypatch):

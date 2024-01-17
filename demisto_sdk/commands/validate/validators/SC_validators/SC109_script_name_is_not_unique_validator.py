@@ -14,7 +14,9 @@ ContentTypes = Script
 
 class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     error_code = "SC109"  # TODO - update the code
-    description = "Validate that there are no scripts with the same type and the same name."
+    description = (
+        "Validate that there are no scripts with the same type and the same name."
+    )
     error_message = (
         "Cannot create a script with the name {0}, because a script with the name {1} already exists.\n"
         "(it will not be possible to create a new script whose name includes the word Alert/Alerts "

@@ -365,13 +365,15 @@ def logging_setup(
     log_file_path: Optional[Union[str, Path]] = None,
     skip_log_file_creation: bool = False,
 ) -> logging.Logger:
-    """Init logger object for logging in demisto-sdk
-        For more info - https://docs.python.org/3/library/logging.html
+    """
+    Initialize and configure the logger object for logging in demisto-sdk
+    For more info - https://docs.python.org/3/library/logging.html
 
     Args:
-        console_log_threshold: Minimum console log threshold. Defaults to logging.INFO
-        file_log_threshold: Minimum console log threshold. Defaults to logging.INFO
-        log_file_path: Path to log file. Defaults to LOG_FILE_PATH
+        console_log_threshold (int | str, optional): Minimum console log threshold. Defaults to logging.INFO.
+        file_log_threshold(int | str, optional): Minimum console log threshold. Defaults to logging.DEBUG.
+        log_file_path (str | Path | None, optional): Path to log file. Defaults to None.
+        skip_log_file_creation (bool, optional): Whether to skip log file creation. Defaults to False.
 
     Returns:
         logging.Logger: logger object
@@ -394,22 +396,20 @@ def logging_setup(
 
     log_handlers: List[logging.Handler] = [console_handler]
 
-    if log_file_directory_path_str := (
-        log_file_path or os.getenv(DEMISTO_SDK_LOG_FILE_PATH)
-    ):
-        log_file_directory_path = Path(log_file_directory_path_str)
-
-        if not log_file_directory_path.is_dir():
-            # Can't use 'logger.error' here, as the logger is not yet initialized.
-            exit(
-                f"Error: Configured logs path '{log_file_directory_path}' does not exist."
-            )
-
-    else:  # Use default log files path
-        log_file_directory_path = LOGS_DIR
-
     if not skip_log_file_creation:
-        if log_file_directory_path == LOGS_DIR:
+        if log_file_directory_path_str := (
+            log_file_path or os.getenv(DEMISTO_SDK_LOG_FILE_PATH)
+        ):
+            log_file_directory_path = Path(log_file_directory_path_str)
+
+            if not log_file_directory_path.is_dir():
+                # Can't use 'logger.error' here, as the logger is not yet initialized.
+                exit(
+                    f"Error: Configured logs path '{log_file_directory_path}' does not exist."
+                )
+
+        else:  # Use default log files path
+            log_file_directory_path = LOGS_DIR
             log_file_directory_path.mkdir(
                 parents=True, exist_ok=True
             )  # Generate directory if it doesn't exist

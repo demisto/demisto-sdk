@@ -629,7 +629,7 @@ class GitUtil:
             self.fetch()
 
         except Exception as e:
-            logger.warning("Failed to fetch remote branch. Generating diff without fetching.")
+            logger.warning("Failed to fetch remote branch. Continuing without fetching.")
             logger.debug(f"Error: {e}")
 
         remote, branch = self.handle_prev_ver(prev_ver)

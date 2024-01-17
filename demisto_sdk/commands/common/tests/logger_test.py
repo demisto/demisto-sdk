@@ -106,6 +106,17 @@ def test_environment_variable_to_bool_values(
     default_value: bool,
     expected_result: bool,
 ):
+    """
+    Given:
+        - An environment variable name.
+        - A default value.
+    When:
+        - The environment variable is set to a valid bool value.
+        - The environment variable is set to an invalid bool value.
+    Then:
+        - If the environment variable is set to a valid bool value, the function should return its value as a bool.
+        - If the environment variable is set to an invalid bool value, the function should return the default value.
+    """
     monkeypatch.setenv("TEST_ENVIRONMENT_VARIABLE", environment_variable_value)
 
     assert (
@@ -124,6 +135,15 @@ def test_environment_variable_to_bool_values(
 def test_environment_variable_to_bool_env_not_set(
     monkeypatch, default_value: bool, expected_result: bool
 ):
+    """
+    Given:
+        - An environment variable name.
+        - A default value.
+    When:
+        - The environment variable is not set.
+    Then:
+        - The function should return the default value.
+    """
     monkeypatch.delenv("TEST_ENVIRONMENT_VARIABLE", raising=False)
 
     assert (
@@ -145,6 +165,17 @@ def test_environment_variable_to_int_values(
     default_value: int,
     expected_result: int,
 ):
+    """
+    Given:
+        - An environment variable name.
+        - A default value.
+    When:
+        - The environment variable is set to a valid int value.
+        - The environment variable is set to an invalid int value.
+    Then:
+        - If the environment variable is set to a valid int value, the function should return its value as an int.
+        - If the environment variable is set to an invalid int value, the function should return the default value.
+    """
     monkeypatch.setenv("TEST_ENVIRONMENT_VARIABLE", environment_variable_value)
 
     assert (
@@ -162,6 +193,15 @@ def test_environment_variable_to_int_values(
 def test_environment_variable_to_int_env_not_set(
     monkeypatch, default_value: int, expected_result: int
 ):
+    """
+    Given:
+        - An environment variable name.
+        - A default value.
+    When:
+        - The environment variable is not set.
+    Then:
+        - The function should return the default value.
+    """
     monkeypatch.delenv("TEST_ENVIRONMENT_VARIABLE", raising=False)
 
     assert (

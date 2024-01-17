@@ -41,6 +41,10 @@ class DockerImage(str):
         return instance
 
     @property
+    def summary(self) -> str:
+        return f"DockerImage(docker-image={self}, valid={self.is_valid}, creation-date={self.creation_date}, python-version:{self.python_version}, latest-tag={self.latest_tag})"
+
+    @property
     def repository(self) -> str:
         return getattr(self, "_repository", "")
 
@@ -97,11 +101,11 @@ class DockerImage(str):
         if self.is_valid:
             if "pwsh" == self.image_name or "powershell" == self.image_name:
                 logger.debug(
-                    f"The {self} is a powershell image, does not have python version"
+                    f"The {self} image is a powershell image, does not have python version"
                 )
                 return None
 
-            if match := self.DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(str(self)):
+            if match := self.DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(self):
                 return Version(match.group("python_version"))
 
             logger.debug(f"Could not get python version for image {self} from regex")

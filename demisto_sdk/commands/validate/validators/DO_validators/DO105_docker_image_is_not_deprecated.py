@@ -50,7 +50,5 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if not content_item.is_javascript
-            and self.deprecated_dockers_to_reasons.get(
-                content_item.docker_image.name
-            )
+            and self.deprecated_dockers_to_reasons.get(content_item.docker_image.name)
         ]

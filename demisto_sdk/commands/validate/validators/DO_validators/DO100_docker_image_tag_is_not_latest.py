@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,
 )
@@ -44,13 +45,15 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        docker_image = content_item.docker_image_object
+        docker_image = content_item.docker_image
         try:
             latest_numeric_tag = docker_image.latest_tag
             message = self.fix_message.format(
-                content_item.docker_image, f"{docker_image.name}:{latest_numeric_tag}"
+                docker_image, f"{docker_image.name}:{latest_numeric_tag}"
             )
-            content_item.docker_image = f"{docker_image.name}:{latest_numeric_tag}"
+            content_item.docker_image = DockerImage(
+                f"{docker_image.name}:{latest_numeric_tag}"
+            )
         except DockerHubRequestException as error:
             logger.error(
                 f"Could not get the latest tag of {docker_image.name} when trying "

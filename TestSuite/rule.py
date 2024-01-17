@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from demisto_sdk.commands.common.constants import SAMPLES_DIR
+from demisto_sdk.commands.common.tools import set_value
 from TestSuite.json_based import JSONBased
+from TestSuite.test_suite_base import TestSuiteBase
 
 if TYPE_CHECKING:
     from TestSuite.repo import Repo
@@ -17,7 +19,7 @@ from TestSuite.yml import YAML
 yaml = YAML_Handler()
 
 
-class Rule:
+class Rule(TestSuiteBase):
     def __init__(
         self,
         tmpdir: Path,
@@ -39,6 +41,7 @@ class Rule:
 
         self.samples: list[JSONBased] = []
         self.samples_dir_path = tmpdir / self.name / SAMPLES_DIR
+        super().__init__(self._tmpdir_rule_path)
 
     def build(
         self,
@@ -62,3 +65,10 @@ class Rule:
                 )
                 sample_file.write_json(sample)
                 self.samples.append(sample_file)
+
+    def set_data(self, **key_path_to_val):
+        yml_contents = self.yml.read_dict()
+        for key_path, val in key_path_to_val.items():
+            set_value(yml_contents, key_path, val)
+        self.yml.write_dict(yml_contents)
+        self.clear_from_path_cache()

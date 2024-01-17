@@ -161,6 +161,8 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         self.__add_lazy_properties()
 
         json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        if "docker_image" in json_dct:
+            json_dct["docker_image"] = str(json_dct["docker_image"])
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type

@@ -62,7 +62,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
         invalid_content_items = []
         for content_item in content_items:
             if not content_item.is_javascript:
-                docker_image = content_item.docker_image_object
+                docker_image = content_item.docker_image
                 if not docker_image.is_valid:
                     invalid_content_items.append(
                         ValidationResult(
@@ -110,15 +110,15 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        docker_image = content_item.docker_image_object
+        docker_image = content_item.docker_image
         try:
             latest_tag = str(docker_image.latest_tag)
             message = self.fix_message.format(
                 content_item.docker_image, f"{docker_image.name}:{latest_tag}"
             )
             if content_item.docker_image:
-                content_item.docker_image = content_item.docker_image.replace(
-                    docker_image.tag, latest_tag
+                content_item.docker_image = DockerImage.parse(
+                    f"{docker_image.name}:{latest_tag}"
                 )
         except DockerHubRequestException as error:
             logger.error(

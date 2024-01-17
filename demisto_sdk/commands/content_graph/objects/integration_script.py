@@ -26,7 +26,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class IntegrationScript(ContentItem):
     type: str
     subtype: Optional[str]
-    docker_image: Optional[str]
+    docker_image: Optional[DockerImage]
     alt_docker_images: List[str] = []
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
@@ -47,11 +47,11 @@ class IntegrationScript(ContentItem):
 
     @property
     def docker_images(self) -> List[str]:
-        return [self.docker_image] + self.alt_docker_images if self.docker_image else []
-
-    @property
-    def docker_image_object(self) -> DockerImage:
-        return DockerImage.parse(self.docker_image or "")
+        return (
+            [str(self.docker_image)] + self.alt_docker_images
+            if self.docker_image
+            else []
+        )
 
     @property
     def is_powershell(self) -> bool:

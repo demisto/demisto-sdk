@@ -23,7 +23,7 @@ class DockerImageDoesNotExistInDockerhubValidator(BaseValidator[ContentTypes]):
         invalid_content_items = []
         for content_item in content_items:
             if not content_item.is_javascript:
-                docker_image_object = content_item.docker_image_object
+                docker_image_object = content_item.docker_image
                 if (
                     not docker_image_object.is_valid
                     or not docker_image_object.is_image_exist

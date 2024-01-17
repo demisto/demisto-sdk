@@ -10,19 +10,14 @@ class XSIAMDashboard(JSONBased):
         self.xsiam_dashboard_tmp_path = xsiam_dashboard_dir_path / f"{name}.json"
         self.name = name
 
-        super().__init__(xsiam_dashboard_dir_path, name, "")
+        super().__init__(xsiam_dashboard_dir_path, name, "", json_content)
 
-        if json_content:
-            self.write_json(json_content)
-        else:
-            self.create_default_xsiam_dashboard()
-
-    def create_default_xsiam_dashboard(self):
+    def create_default(self):
         self.write_json(
             {
                 "dashboards_data": [
                     {
-                        "name": self.name,
+                        "name": self.id,
                         "description": "mock dashboard desc",
                         "status": "ENABLED",
                         "layout": [

@@ -7,9 +7,13 @@
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 The Demisto SDK library can be used to manage your Cortex XSOAR content with ease and efficiency.
-The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
 
-In order to function properly, the Demisto SDK requires git to be installed. If git isn't installed, an appropriate message will be raised.
+Requirements:
+- Python 3.8, 3.9 or 3.10.
+- git installed.
+- A linux, mac or WSL2 machine.
+
+Windows machines are not supported - use WSL2 or run in a container instead.
 
 ## Usage
 

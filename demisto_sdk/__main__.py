@@ -1,4 +1,5 @@
 # Site packages
+import platform
 import sys
 
 import click
@@ -211,6 +212,12 @@ def main(ctx, config, version, release_notes, **kwargs):
     import dotenv
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
+
+    if platform.system() == "Windows":
+        logger.warning(
+            "Using Demisto-SDK on Windows is not supported. Use WSL2 or run in a container."
+        )
+
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
     ) and not is_sdk_defined_working_offline():  # If the key exists/called to version
@@ -2609,7 +2616,6 @@ def find_dependencies(ctx, **kwargs):
     output_path = kwargs.get("output_path", ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get("dependency", "")
     try:
-
         PackDependencies.find_dependencies_manager(
             id_set_path=str(id_set_path),
             update_pack_metadata=update_pack_metadata,

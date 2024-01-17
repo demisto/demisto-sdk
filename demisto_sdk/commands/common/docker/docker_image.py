@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 from packaging.version import Version
 
@@ -66,11 +66,18 @@ class DockerImage:
 
         return docker_image_object
 
-    def __eq__(self, other: "DockerImage") -> bool:
+    def __eq__(self, other: Union[str, "DockerImage"]) -> bool:
         return str(self) == str(other)
 
-    def __str__(self):
-        return f"{self.repository}/{self.image_name}:{self.tag}"
+    def __str__(self) -> str:
+        docker_image = ""
+        if self.repository:
+            docker_image += self.repository
+        if self.image_name:
+            docker_image += f"/{self.image_name}"
+        if self.tag:
+            docker_image += f":{self.tag}"
+        return docker_image
 
     @property
     def name(self):

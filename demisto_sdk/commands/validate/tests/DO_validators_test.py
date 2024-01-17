@@ -299,7 +299,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_fix(requests_mock):
         ],  # integration with demisto image that is not the latest tag
     )
 
-    assert str(integration.docker_image) == "demisto/python3:3.10.13.55555"
+    assert integration.docker_image == "demisto/python3:3.10.13.55555"
 
     requests_mock.get(
         "https://auth.docker.io/token",
@@ -311,7 +311,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_fix(requests_mock):
     )
 
     fix_result = DockerImageTagIsLatestNumericVersionValidator().fix(integration)
-    assert str(fix_result.content_object.docker_image) == "demisto/python3:3.10.13.99999"
+    assert fix_result.content_object.docker_image == "demisto/python3:3.10.13.99999"
 
 
 def test_DockerImageDoesNotExistInDockerhubValidator_is_valid(requests_mock):

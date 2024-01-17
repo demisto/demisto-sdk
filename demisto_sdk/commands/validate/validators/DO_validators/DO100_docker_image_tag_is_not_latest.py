@@ -36,6 +36,7 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if not content_item.is_javascript
+            and content_item.docker_image
             and content_item.docker_image.is_tag_latest
         ]
 

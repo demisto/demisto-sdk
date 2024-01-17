@@ -13,7 +13,6 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-from functools import cached_property
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
@@ -35,7 +34,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @cached_property
     def docker_image(self) -> Optional[DockerImage]:
-        docker_image = get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
+        docker_image = get_value(
+            self.yml_data, self.field_mapping.get("docker_image", ""), ""
+        )
         if not docker_image:
             return None
         return DockerImage.parse(docker_image)

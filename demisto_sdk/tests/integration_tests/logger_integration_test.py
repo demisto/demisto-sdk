@@ -52,7 +52,7 @@ def test_logs_dir_set_by_flag(mocker):
 
     mocker.patch("demisto_sdk.commands.common.logger.LOGS_DIR", new=default_logs_dir)
     runner = CliRunner(mix_stderr=False)
-    x = runner.invoke(main, ["validate", "-a", "--log-file-path", str(custom_logs_dir)])
+    runner.invoke(main, ["validate", "-a", "--log-file-path", str(custom_logs_dir)])
 
     assert list(custom_logs_dir.glob("*")) == [
         custom_logs_dir / "demisto_sdk_debug.log"

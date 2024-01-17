@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
@@ -11,7 +12,6 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-from dataclasses import dataclass
 
 EXECUTE_CMD_PATTERN = re.compile(
     r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE
@@ -51,7 +51,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
                 "type": "type",
                 "subtype": "subtype",
                 "alt_docker_images": "alt_dockerimages",
-                "arguments": "args"
+                "arguments": "args",
             }
         )
         return super().field_mapping

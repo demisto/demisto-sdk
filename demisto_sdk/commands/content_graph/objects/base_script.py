@@ -40,7 +40,7 @@ class Argument:
 class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # type: ignore[call-arg]
     tags: List[str]
     skip_prepare: List[str]
-    runas: str
+    runas: str = ""
 
     def metadata_fields(self) -> Set[str]:
         return (

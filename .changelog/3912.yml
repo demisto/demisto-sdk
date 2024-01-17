@@ -1,4 +1,4 @@
 changes:
 - description: Log files will now be saved by default to `$HOME/.demisto-sdk/logs`. This behavior can be overridden by the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable.
-  type: feature
+  type: internal
 pr_number: 3912

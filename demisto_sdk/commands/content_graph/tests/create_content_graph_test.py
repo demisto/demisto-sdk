@@ -878,6 +878,7 @@ class TestCreateContentGraph:
             Case B: the python version was taken from the dockerhub api
         """
         from packaging.version import Version
+
         from demisto_sdk.commands.common.files.file import File
 
         dockerhub_api_mocker = mocker.patch(

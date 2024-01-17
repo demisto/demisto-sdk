@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Script
 
 
-class IsScriptArgumentsContainIncidentWordValidator(BaseValidator[ContentTypes]):
+class ScriptRunAsIsNotDBotRoleValidator(BaseValidator[ContentTypes]):
     error_code = "SC106"
     description = "Checks that the script runas is not equal to DBotRole"
     error_message = "The script {0} runas field = DBotRole, it may cause access and exposure of sensitive data."

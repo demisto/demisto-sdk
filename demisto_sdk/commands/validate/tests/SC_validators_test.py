@@ -4,6 +4,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator import (
     IsScriptArgumentsContainIncidentWordValidator,
 )
+from demisto_sdk.commands.validate.validators.SC_validators.SC106_script_runas_dbot_role_validator import ScriptRunAsIsNotDBotRoleValidator
 
 
 def test_IsScriptArgumentsContainIncidentWordValidator_is_valid():
@@ -34,5 +35,30 @@ def test_IsScriptArgumentsContainIncidentWordValidator_is_valid():
     )
 
     results = IsScriptArgumentsContainIncidentWordValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert results[0].content_object.name == "InvalidScript"
+
+
+def test_ScriptRunAsIsNotDBotRoleValidator_is_valid():
+    """
+    Given:
+     - 1 script that has runas field = DBotRole
+     - 1 script that does not have runas field = DBotRole
+
+    When:
+     - Running the ScriptRunAsIsNotDBotRoleValidator validator
+
+    Then:
+     - make sure the script that has runas field = DBotRole fails the validation
+    """
+    content_items = (
+        create_script_object(
+            paths=["name", "runas"],
+            values=["InvalidScript", "DBotRole"],
+        ),
+        create_script_object(),
+    )
+
+    results = ScriptRunAsIsNotDBotRoleValidator().is_valid(content_items)
     assert len(results) == 1
     assert results[0].content_object.name == "InvalidScript"

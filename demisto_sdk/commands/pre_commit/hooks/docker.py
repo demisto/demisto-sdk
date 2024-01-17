@@ -13,7 +13,6 @@ from docker.errors import DockerException
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
-    TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
 )
@@ -155,25 +154,10 @@ def get_environment_flag(env: dict) -> str:
     return env_flag
 
 
-def should_enable_network(
-    split_by_network: bool, integration_script: IntegrationScript
-) -> bool:
-    if not split_by_network:
-        return False
-    pack = integration_script.in_pack
-    if pack and (config := pack.ignored_errors_dict):
-        if TESTS_REQUIRE_NETWORK_PACK_IGNORE in config:
-            ignored_integrations_scripts_ids = config[TESTS_REQUIRE_NETWORK_PACK_IGNORE]
-            if integration_script.object_id in ignored_integrations_scripts_ids:
-                return True
-    return False
-
-
 def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
-    split_by_obj: bool = False,
-    split_by_network: bool = False,
+    isolate_container: bool = False,
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
@@ -181,7 +165,7 @@ def _split_by_objects(
     Args:
         files: the files to split
         config_arg: a tuple, argument_name, file_name
-        split_by_obj: a boolean. If true it will split all the objects into separate hooks.
+        isolate_container: a boolean. If true it will split all the objects into separate hooks.
 
     Returns:
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
@@ -191,10 +175,8 @@ def _split_by_objects(
     ] = defaultdict(set)
 
     for file, obj in files_with_objects:
-        if (
-            split_by_obj
-            or (config_arg and (obj.path.parent / config_arg[1]).exists())
-            or should_enable_network(split_by_network, obj)
+        if isolate_container or (
+            config_arg and (obj.path.parent / config_arg[1]).exists()
         ):
             object_to_files[obj].add((file, obj))
         else:
@@ -250,8 +232,7 @@ class DockerHook(Hook):
                         shutil.copy(
                             CONTENT_PATH / file, obj.path.parent / Path(file).name
                         )
-        split_by_obj = self._get_property("split_by_object", False)
-        split_by_network = self._get_property("split_by_network", False)
+        isolate_container = self._get_property("isolate_container", False)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
@@ -262,8 +243,7 @@ class DockerHook(Hook):
             object_to_files = _split_by_objects(
                 files_with_objects,
                 config_arg,
-                split_by_obj,
-                split_by_network,
+                isolate_container,
             )
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
@@ -275,7 +255,6 @@ class DockerHook(Hook):
                 image,
                 object_to_files,
                 config_arg,
-                split_by_network,
             )
             self.hooks.extend(hooks)
         end_time = time.time()
@@ -291,7 +270,6 @@ class DockerHook(Hook):
             Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
         ],
         config_arg: Optional[Tuple],
-        split_by_network: bool = False,
     ):
         """
         Given the docker image and files to run on it, create new hooks to insert
@@ -318,7 +296,7 @@ class DockerHook(Hook):
             remove_container = False
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} --network none -u {os.getuid()}:4000 {"--rm=false" if not remove_container else ""} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u {os.getuid()}:4000 {"--rm=false" if not remove_container else ""} {dev_image}'
         ret_hooks = []
         for (
             integration_script,
@@ -340,8 +318,6 @@ class DockerHook(Hook):
                         ]
                     )
                     hook["args"] = args
-                if should_enable_network(split_by_network, integration_script):
-                    hook["entry"] = hook["entry"].replace("--network none", "")
                 hook[
                     "id"
                 ] = f"{hook['id']}-{integration_script.object_id}"  # for uniqueness
@@ -366,8 +342,7 @@ class DockerHook(Hook):
             hook.pop("docker_image", None)
             hook.pop("config_file_arg", None)
             hook.pop("copy_files", None)
-            hook.pop("split_by_object", None)
-            hook.pop("split_by_network", None)
+            hook.pop("isolate_container", None)
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

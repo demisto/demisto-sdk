@@ -194,3 +194,30 @@ def test__set_properties():
         {"prop1": nightly_val, "other_prop": "whatever"},
     )
     assert_get_prop_successful(None, {"prop1": value1, "other_prop": "whatever"})
+
+
+def test_isolate_container(mocker):
+    hook = create_hook({"isolate_container": True})
+    file_path = Path("SomeFile.py")
+    file = (file_path, Obj(object_id="id1"))
+
+    file_path2 = Path("SomeFile2.py")
+    file2 = (file_path2, Obj(object_id="id2"))
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.docker_tag_to_runfiles",
+        return_value={"sometag": [file, file2]},
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        [(file_path, None), (file_path2, None)],
+    )
+    mocker.patch.object(PreCommitContext, "dry_run", True)
+    DockerHook(**hook).prepare_hook()
+    assert len(hook["repo"]["hooks"]) == 2
+    assert hook["repo"]["hooks"][0]["id"] == "None-sometag-id1"
+    assert hook["repo"]["hooks"][1]["id"] == "None-sometag-id2"

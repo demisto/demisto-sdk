@@ -3568,7 +3568,7 @@ def pre_commit(
         dir_okay=True,
         resolve_path=True,
         show_default=False,
-        help=("The paths to run pre-commit on. May pass multiple paths."),
+        help="The paths to run pre-commit on. May pass multiple paths.",
     ),
     staged_only: bool = typer.Option(
         False, "--staged-only", help="Whether to run only on staged files"
@@ -3615,7 +3615,28 @@ def pre_commit(
         True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
     ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "--console-log-threshold",
+        help="Minimum logging threshold for the console logger.",
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "--file-log-threshold",
+        help="Minimum logging threshold for the file logger.",
+    ),
+    log_file_path: Optional[str] = typer.Option(
+        None,
+        "--log-file-path",
+        help="Path to save log files onto.",
+    ),
 ):
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
+
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
     return_code = pre_commit_manager(

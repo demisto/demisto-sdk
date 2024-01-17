@@ -143,7 +143,7 @@ def test_LatestDockerImageTagValidator_is_valid():
     for result in results:
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
-        assert str(content_item.docker_image) == "demisto/python3:latest"
+        assert content_item.docker_image == "demisto/python3:latest"
         assert content_item.name == "LatestDockerImageIntegrationScript"
 
 
@@ -194,7 +194,7 @@ def test_DockerImageIsNotDemistoValidator_is_valid():
     for result in results:
         content_item: IntegrationScript = result.content_object
         assert content_item.type == "python"
-        assert str(content_item.docker_image) == "repository/python3:latest"
+        assert content_item.docker_image == "repository/python3:latest"
         assert content_item.name == "NonDemistoImageIntegrationScript"
 
 

@@ -73,7 +73,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                         )
                         continue
                     try:
-                        docker_image_latest_tag = docker_image.latest_tag
+                        docker_image_latest_tag = str(docker_image.latest_tag)
                     except DockerHubRequestException as error:
                         logger.error(
                             f"DO106 - Error when fetching latest tag:\n{error}"

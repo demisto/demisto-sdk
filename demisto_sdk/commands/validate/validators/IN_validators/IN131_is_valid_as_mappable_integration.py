@@ -19,8 +19,10 @@ ContentTypes = Integration
 class IsValidAsMappableIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN131"
     description = "Validate that the integration is valid as a mappable integration."
-    error_message = "The integration is a mappable integration and is missing the 'get-mapping-fields' command. Please add the command."
-    fix_message = "Added the 'get-mapping-fields' command to the integration."
+    error_message = f"The integration is a mappable integration and is missing the {GET_MAPPING_FIELDS_COMMAND_NAME} command. Please add the command."
+    fix_message = (
+        f"Added the {GET_MAPPING_FIELDS_COMMAND_NAME} command to the integration."
+    )
     related_field = "ismappable, commands"
     is_auto_fixable = True
 

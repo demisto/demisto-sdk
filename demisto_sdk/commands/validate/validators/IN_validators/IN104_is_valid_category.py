@@ -25,7 +25,8 @@ class IsValidCategoryValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.category or "empty category section", ", ".join(approved_list)
+                    content_item.category or "empty category section",
+                    ", ".join(approved_list),
                 ),
                 content_object=content_item,
             )

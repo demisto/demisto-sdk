@@ -32,15 +32,14 @@ class IsContainingMultipleDefaultArgsValidator(BaseValidator[ContentTypes]):
                 multiple_args_command := [
                     command.name
                     for command in content_item.commands
-                    if [
-                        1
-                        < len(
-                            [
-                                arg.get("default", False) in [True, "true"]
-                                for arg in command.args
-                            ]
-                        )
-                    ]
+                    if len(
+                        [
+                            arg.get("name", "")
+                            for arg in command.args
+                            if arg.get("default", False) in [True, "true"]
+                        ]
+                    )
+                    >= 2
                 ]
             )
         ]

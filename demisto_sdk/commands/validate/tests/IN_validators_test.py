@@ -1,5 +1,13 @@
 import pytest
 
+from demisto_sdk.commands.common.constants import (
+    FIRST_FETCH,
+    FIRST_FETCH_PARAM,
+    GET_MAPPING_FIELDS_COMMAND,
+    GET_MAPPING_FIELDS_COMMAND_NAME,
+    MAX_FETCH,
+    MAX_FETCH_PARAM,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
@@ -13,12 +21,47 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN102_is_valid_check
 from demisto_sdk.commands.validate.validators.IN_validators.IN104_is_valid_category import (
     IsValidCategoryValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN106_is_containing_default_arg import IsValidRepCommandValidator
 from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subtype import (
     ValidSubtypeValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN109_is_id_contain_beta import (
+    IsIdContainBetaValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN110_is_name_contain_beta import (
+    IsNameContainBetaValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN112_is_display_contain_beta import (
+    IsDisplayContainBetaValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN113_is_command_args_contain_duplications import (
+    IsCommandArgsContainDuplicationsValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN114_is_params_contain_duplications import (
+    IsParamsContainDuplicationsValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN115_is_valid_context_path import (
+    IsValidContextPathValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN117_should_have_display_field import (
+    ShouldHaveDisplayFieldValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN118_is_missing_display_field import (
+    IsMissingDisplayFieldValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN125_is_valid_max_fetch_param import (
+    IsValidMaxFetchParamValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN126_is_valid_fetch_integration import (
+    IsValidFetchIntegrationValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration_runable import (
     IsIntegrationRunnableValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN131_is_valid_as_mappable_integration import (
+    IsValidAsMappableIntegrationValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN134_is_containing_multiple_default_args import (
+    IsContainingMultipleDefaultArgsValidator,
 )
 
 
@@ -629,135 +672,59 @@ def test_IsValidCategoryValidator_is_valid(
     )
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
             [
-                create_integration_object(),
-                create_integration_object(paths=["script.commands"], values=[[]],),
                 create_integration_object(
-                    paths=["script.commands"],
-                    values=[
-                        [
-                            {
-                                "name": "ip",
-                                "description": "ip command",
-                                "deprecated": False,
-                                "arguments": [{
-                                    "name": "ip",
-                                    "default": True,
-                                    "isArray": True,
-                                    "required": True,
-                                }],
-                                "outputs": []
-                            }
-                        ]
-                    ],
+                    paths=["commonfields.id", "script.beta"],
+                    values=["contain_beta", False],
                 ),
-            ], 0, [],
+                create_integration_object(
+                    paths=["commonfields.id", "script.beta"], values=["test", True]
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
             [
                 create_integration_object(
-                    paths=["script.commands"],
-                    values=[
-                        [
-                            {
-                                "name": "endpoint",
-                                "description": "endpoint command",
-                                "deprecated": False,
-                                "arguments": [{
-                                    "name": "ip",
-                                    "isArray": True,
-                                    "required": True,
-                                }],
-                            },
-                            {
-                                "name": "domain",
-                                "description": "domain command",
-                                "deprecated": False,
-                                "arguments": [{
-                                    "name": "domain",
-                                    "isArray": True,
-                                    "required": True,
-                                }],
-                                "outputs": []
-                            }
-                        ]
-                    ],
+                    paths=["commonfields.id", "script.beta"], values=["beta_test", True]
                 ),
                 create_integration_object(
-                    paths=["script.commands"],
-                    values=[
-                        [
-                            {
-                                "name": "ip",
-                                "description": "ip command",
-                                "deprecated": False,
-                                "arguments": [{
-                                    "name": "ip",
-                                    "default": True,
-                                    "isArray": True,
-                                    "required": True,
-                                }]
-                            },
-                            {
-                                "name": "url",
-                                "description": "url command",
-                                "deprecated": False,
-                                "arguments": [{
-                                    "name": "url",
-                                    "isArray": True,
-                                    "required": True,
-                                }],
-                                "outputs": []
-                            }
-                        ]
-                    ],
+                    paths=["commonfields.id", "script.beta"], values=["test beta", True]
                 ),
-            ], 0, [],
+            ],
+            2,
+            [
+                "The ID field (beta_test) contains the word 'beta', make sure to remove it.",
+                "The ID field (test beta) contains the word 'beta', make sure to remove it.",
+            ],
         ),
     ],
 )
-def test_IsValidRepCommandValidator_is_valid(
+def test_IsIdContainBetaValidator_is_valid(
     content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
     content_items iterables.
-        - Case 1: Four integrations:
-            - One integration with a param of type 8 but no required field.
-            - One integration with a param of type 0 and no required field.
-            - One integration with a param of type 8 but required field set to False.
-            - One integration with 3 param of type 8, one's required field is set to True and the other two are set to False.
+        - Case 1: Two integration:
+            - One non-beta integration with beta in id.
+            - One beta integration without beta in id.
+        - Case 2: Two integration:
+            - One beta integration with id starting with beta.
+            - One beta integration with beta in id.
     When
-    - Calling the IsValidRepCommandValidator is valid function.
+    - Calling the IsIdContainBetaValidator is valid function.
     Then
-        - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should fail all except test_param 2 & 4.
+        - Make sure the right amount of failures return.
+        - Case 1: Shouldn't fail any.
+        - Case 2: Should fail both.
     """
-    results = IsValidRepCommandValidator().is_valid(content_items)
+    results = IsIdContainBetaValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -767,86 +734,1181 @@ def test_IsValidRepCommandValidator_is_valid(
     )
 
 
-# def test_IsValidRepCommandValidator_fix():
-#     """
-#     Given
-#         An integration with invalid proxy & insecure params.
-#     When
-#     - Calling the IsValidRepCommandValidator fix function.
-#     Then
-#         - Make sure that all the relevant fields were added/fixed and that the right msg was returned.
-#     """
-#     content_item = create_integration_object(
-#         paths=["configuration"],
-#         values=[
-#             [
-#                 {
-#                     "name": "test_param_4",
-#                     "type": 8,
-#                     "display": "test param 4",
-#                     "required": True,
-#                 },
-#                 {
-#                     "name": "test_param_5",
-#                     "type": 8,
-#                     "display": "test param 5",
-#                     "required": False,
-#                 },
-#                 {
-#                     "name": "test_param_6",
-#                     "type": 8,
-#                     "display": "test param 6",
-#                     "required": False,
-#                 },
-#             ]
-#         ],
-#     )
-#     assert content_item.params == [
-#         {
-#             "name": "test_param_4",
-#             "type": 8,
-#             "display": "test param 4",
-#             "required": True,
-#         },
-#         {
-#             "name": "test_param_5",
-#             "type": 8,
-#             "display": "test param 5",
-#             "required": False,
-#         },
-#         {
-#             "name": "test_param_6",
-#             "type": 8,
-#             "display": "test param 6",
-#             "required": False,
-#         },
-#     ]
-#     validator = IsValidRepCommandValidator()
-#     validator.misconfigured_checkbox_params_by_integration[content_item.name] = [
-#         "test_param_5",
-#         "test_param_6",
-#     ]
-#     assert (
-#         validator.fix(content_item).message
-#         == "Set required field of the following params was set to True: test_param_5, test_param_6."
-#     )
-#     assert content_item.params == [
-#         {
-#             "name": "test_param_4",
-#             "type": 8,
-#             "display": "test param 4",
-#             "required": True,
-#         },
-#         {
-#             "name": "test_param_5",
-#             "type": 8,
-#             "display": "test param 5",
-#             "required": True,
-#         },
-#         {
-#             "name": "test_param_6",
-#             "type": 8,
-#             "display": "test param 6",
-#             "required": True,
-#         },
-#     ]
+def test_IsIdContainBetaValidator_fix():
+    """
+    Given
+        - Case 1: A beta integration with an ID containing the word beta in it.
+    When
+    - Calling the IsIdContainBetaValidator fix function.
+    Then
+        - Make sure the right ID was fixed correctly and that the right ID was returned.
+    """
+    content_item = create_integration_object(
+        paths=["commonfields.id", "script.beta"], values=["test beta", True]
+    )
+    assert content_item.object_id == "test beta"
+    assert (
+        IsIdContainBetaValidator().fix(content_item).message
+        == "Removed the word 'beta' from the ID, the new ID is: test."
+    )
+    assert content_item.object_id == "test"
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["name", "script.beta"], values=["contain_beta", False]
+                ),
+                create_integration_object(
+                    paths=["name", "script.beta"], values=["test", True]
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["name", "script.beta"], values=["beta_test", True]
+                ),
+                create_integration_object(
+                    paths=["name", "script.beta"], values=["test beta", True]
+                ),
+            ],
+            2,
+            [
+                "The name field (beta_test) contains the word 'beta', make sure to remove it.",
+                "The name field (test beta) contains the word 'beta', make sure to remove it.",
+            ],
+        ),
+    ],
+)
+def test_IsNameContainBetaValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two integration:
+            - One non-beta integration with beta in the name.
+            - One beta integration without beta in the name.
+        - Case 2: Two integration:
+            - One beta integration with name starting with beta.
+            - One beta integration with beta in the name.
+    When
+    - Calling the IsNameContainBetaValidator is valid function.
+    Then
+        - Make sure the right amount of failures return.
+        - Case 1: Shouldn't fail any.
+        - Case 2: Should fail both.
+    """
+    results = IsNameContainBetaValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsNameContainBetaValidator_fix():
+    """
+    Given
+        - Case 1: A beta integration with a name containing the word beta in it.
+    When
+    - Calling the IsNameContainBetaValidator fix function.
+    Then
+        - Make sure the right ID was fixed correctly and that the right name was returned.
+    """
+    content_item = create_integration_object(
+        paths=["name", "script.beta"], values=["test beta", True]
+    )
+    assert content_item.name == "test beta"
+    assert (
+        IsNameContainBetaValidator().fix(content_item).message
+        == "Removed the word 'beta' from the name field, the new name is: test."
+    )
+    assert content_item.name == "test"
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["display", "script.beta"], values=["contain beta", True]
+                ),
+                create_integration_object(
+                    paths=["display", "script.beta"], values=["test", False]
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["display", "script.beta"], values=["should fail", True]
+                ),
+            ],
+            1,
+            [
+                "The display name (should fail) doesn't contain the word 'beta', make sure to add it.",
+            ],
+        ),
+    ],
+)
+def test_IsDisplayContainBetaValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two integration:
+            - One beta integration with beta in the display name.
+            - One non-beta integration without beta in the display name.
+        - Case 2: Two integration:
+            - One beta integration without beta in the display name.
+    When
+    - Calling the IsDisplayContainBetaValidator is valid function.
+    Then
+        - Make sure the right amount of failures return.
+        - Case 1: Shouldn't fail any.
+        - Case 2: Should fail.
+    """
+    results = IsDisplayContainBetaValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip_1",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                    },
+                                    {
+                                        "name": "ip_2",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                    },
+                                ],
+                                "outputs": [],
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip_1",
+                                "description": "ip command 1",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip_1",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                    },
+                                    {
+                                        "name": "ip_2",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                    },
+                                    {
+                                        "name": "ip_1",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                    },
+                                ],
+                                "outputs": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            1,
+            [
+                "The following commands contain duplicated arguments:\nCommand ip_1, contains multiple appearances of the following arguments ip_1.\nPlease make sure to remove the duplications."
+            ],
+        ),
+    ],
+)
+def test_IsCommandArgsContainDuplicationsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations:
+            - One integration without commands.
+            - One integration with one command without duplicated args.
+        - Case 2: One invalid integration with a command with 3 arguments Two of the same name and one different..
+    When
+    - Calling the IsCommandArgsContainDuplicationsValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Shouldn't fail any.
+        - Case 2: Should fail.
+    """
+    results = IsCommandArgsContainDuplicationsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[[]],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {"name": "test_1", "display": "a"},
+                            {"name": "test_1", "display": "a"},
+                        ]
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The following params are duplicated: test_1.\nPlease make sure your file doesn't contain duplications.",
+            ],
+        ),
+    ],
+)
+def test_IsParamsContainDuplicationsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations:
+            - One integration with params but without duplications.
+            - One integration with empty params list.
+        - Case 2: One invalid integration with a param with a name that return multiple name.
+    When
+    - Calling the IsParamsContainDuplicationsValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
+    """
+    results = IsParamsContainDuplicationsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip_1",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                    },
+                                    {
+                                        "name": "ip_2",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                    },
+                                ],
+                                "outputs": [],
+                            },
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "path_1",
+                                        "description": "description_1",
+                                    },
+                                    {
+                                        "name": "output_2",
+                                        "contextPath": "path_2",
+                                        "description": "description_2",
+                                    },
+                                ],
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "path_1",
+                                        "description": "description_1",
+                                    },
+                                    {
+                                        "name": "output_2",
+                                        "contextpath": "path_2",
+                                        "description": "description_2",
+                                    },
+                                    {
+                                        "name": "output_3",
+                                        "description": "description_3",
+                                    },
+                                    {
+                                        "name": "output_4",
+                                        "contextPath": "path_4",
+                                        "description": "description_4",
+                                    },
+                                ],
+                            },
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip_1",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextpath": "path_1",
+                                        "description": "description_1",
+                                    }
+                                ],
+                            },
+                            {
+                                "name": "ip_2",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [],
+                                "outputs": [
+                                    {"name": "output_1", "description": "description_1"}
+                                ],
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            2,
+            [
+                "The following commands include outputs with context path different from missing contextPath, please make sure to add: ip.",
+                "The following commands include outputs with context path different from missing contextPath, please make sure to add: ip_1, ip_2.",
+            ],
+        ),
+    ],
+)
+def test_IsValidContextPathValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One integration without commands.
+            - One integration with a command with empty outputs.
+            - One integration with one command with valid outputs.
+        - Case 2: Two invalid integrations:
+            - One integration with one command with multiple malformed outputs.
+            - One integration with two commands with malformed outputs.
+    When
+    - Calling the IsValidContextPathValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Shouldn't fail any.
+        - Case 2: Should fail all.
+    """
+    results = IsValidContextPathValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 17,
+                                "required": False,
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 17,
+                                "required": False,
+                                "display": "test",
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                            },
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 17,
+                                "required": False,
+                                "display": "test",
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 17,
+                                "required": False,
+                                "display": "display",
+                            },
+                            {
+                                "name": "test_3",
+                                "type": 17,
+                                "required": False,
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            2,
+            [
+                "The following params are expiration fields and therefore can't have a 'display' field. Make sure to remove the field for the following: test_1.",
+                "The following params are expiration fields and therefore can't have a 'display' field. Make sure to remove the field for the following: test_1, test_2.",
+            ],
+        ),
+    ],
+)
+def test_ShouldHaveDisplayFieldValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One integration without type 17 param.
+            - One integration without params.
+            - One integration with two params: one type 17 without display name and one type 8.
+        - Case 2: Two invalid integrations:
+            - One integration with two params: one type 17 with display name and one type 8.
+            - One integration with three params: one type 17 without display name, and two type 17 with display name.
+    When
+    - Calling the ShouldHaveDisplayFieldValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all the type 17 with display names.
+    """
+    results = ShouldHaveDisplayFieldValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_ShouldHaveDisplayFieldValidator_fix():
+    """
+    Given
+        - An integration with three params: one type 17 without display name, and two type 17 with display name.
+    When
+    - Calling the ShouldHaveDisplayFieldValidator fix function.
+    Then
+        - Make sure the display name was removed for all params and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "test_1",
+                    "type": 17,
+                    "required": False,
+                    "display": "test",
+                },
+                {
+                    "name": "test_2",
+                    "type": 17,
+                    "required": False,
+                    "display": "display",
+                },
+                {
+                    "name": "test_3",
+                    "type": 17,
+                    "required": False,
+                },
+            ]
+        ],
+    )
+    validator = ShouldHaveDisplayFieldValidator()
+    validator.invalid_params[content_item.name] = ["test_1", "test_2"]
+    assert (
+        validator.fix(content_item).message
+        == "Removed display field for the following params: test_1, test_2."
+    )
+    assert not any(
+        [
+            (param.get("type") == 17 and param.get("display"))
+            for param in content_item.params
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 17,
+                                "required": False,
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                                "display": "test 2",
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 17,
+                                "required": False,
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                            },
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 10,
+                                "required": False,
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 10,
+                                "required": False,
+                                "display": "display",
+                            },
+                            {
+                                "name": "test_3",
+                                "type": 10,
+                                "required": False,
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            2,
+            [
+                "The following params doesn't have a display field, please make sure to add one: test_2.",
+                "The following params doesn't have a display field, please make sure to add one: test_1, test_3.",
+            ],
+        ),
+    ],
+)
+def test_IsMissingDisplayFieldValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One integration without type 17 param, all other params with display name.
+            - One integration without params.
+            - One integration with two params: one type 17 without display name and one type 8 with display name.
+        - Case 2: Two invalid integrations:
+            - One integration with two params: one type 17 and type params both without display name.
+            - One integration with three params: Two type 10 without display name, and one type 10 with display name.
+    When
+    - Calling the IsMissingDisplayFieldValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all the type 8 / 10 without display names.
+    """
+    results = IsMissingDisplayFieldValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["configuration", "script.isfetch"],
+                    values=[
+                        [
+                            {
+                                "name": "max_fetch",
+                                "type": 0,
+                                "required": False,
+                                "defaultvalue": 200,
+                                "display": "Maximum incidents to fetch.",
+                                "additionalinfo": "Maximum number of incidents per fetch. The default value is 200.",
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                                "display": "test 2",
+                            },
+                        ],
+                        True,
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration", "script.isfetch"],
+                    values=[
+                        [
+                            {
+                                "name": "max_fetch",
+                                "type": 0,
+                                "required": False,
+                                "display": "Maximum incidents to fetch.",
+                                "additionalinfo": "Maximum number of incidents per fetch. The default value is 200.",
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                            },
+                        ],
+                        True,
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The integration is a fetch integration with max_fetch param, please make sure the max_fetch param has a default value.",
+            ],
+        ),
+    ],
+)
+def test_IsValidMaxFetchParamValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One integration without max_fetch param.
+            - One integration without params.
+            - One fetch integration with max_fetch param with a default value.
+        - Case 2: One invalid integration with max_fetch param without default value and another param that isn't max_fetch.
+    When
+    - Calling the IsValidMaxFetchParamValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all the type 8 / 10 without display names.
+    """
+    results = IsValidMaxFetchParamValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidMaxFetchParamValidator_fix():
+    """
+    Given
+        - A fetching integration with two params: one is a max_fetch without default value and one isn't a max_fetch
+    When
+        - Calling the IsValidMaxFetchParamValidator fix function.
+    Then
+        - Make sure the defaultvalue was updated to the max_fetch param and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["configuration", "script.isfetch"],
+        values=[
+            [
+                {
+                    "name": "max_fetch",
+                    "type": 0,
+                    "required": False,
+                    "display": "Maximum incidents to fetch.",
+                    "additionalinfo": "Maximum number of incidents per fetch. The default value is 200.",
+                },
+                {
+                    "name": "test_2",
+                    "type": 8,
+                    "required": False,
+                },
+            ],
+            True,
+        ],
+    )
+    assert (
+        IsValidMaxFetchParamValidator().fix(content_item).message
+        == "Added a 'defaultvalue = 10' to the max_fetch param."
+    )
+    assert any(
+        [
+            (param.get("name") == "max_fetch" and param.get("defaultvalue") is not None)
+            for param in content_item.params
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["configuration", "script.isfetch"],
+                    values=[
+                        [MAX_FETCH_PARAM, FIRST_FETCH_PARAM],
+                        True,
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.isfetch"],
+                    values=[True],
+                ),
+                create_integration_object(
+                    paths=["configuration", "script.isfetch"],
+                    values=[
+                        [MAX_FETCH_PARAM],
+                        True,
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration", "script.isfetch"],
+                    values=[
+                        [FIRST_FETCH_PARAM],
+                        True,
+                    ],
+                ),
+            ],
+            3,
+            [
+                "The integration is a fetch integration and missing the following params: max_fetch, first_fetch.",
+                "The integration is a fetch integration and missing the following params: first_fetch.",
+                "The integration is a fetch integration and missing the following params: max_fetch.",
+            ],
+        ),
+    ],
+)
+def test_IsValidFetchIntegrationValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One none fetching integration without max_fetch or first_fetch params.
+            - One none fetching integration without params.
+            - One fetch integration with both first_fetch and max_fetch params.
+         - Case 2: Three invalid integrations:
+            - One integration without max_fetch & first_fetch params.
+            - One integration without first_fetch param.
+            - One integration without max_fetch param.
+
+    When
+    - Calling the IsValidFetchIntegrationValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all:
+            - First integration should fail due to both first_fetch & max_fetch missing.
+            - Second integration should fail due to missing first_fetch.
+            - Third integration should fail due to missing max_fetch.
+    """
+    results = IsValidFetchIntegrationValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidFetchIntegrationValidator_fix():
+    """
+    Given
+        - A fetching integration without max_fetch & first_fetch params.
+    When
+        - Calling the IsValidFetchIntegrationValidator fix function.
+    Then
+        - Make sure that the params were added to the params list and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["script.isfetch"],
+        values=[True],
+    )
+    validator = IsValidFetchIntegrationValidator()
+    validator.missing_fetch_params[content_item.name] = {
+        MAX_FETCH: MAX_FETCH_PARAM,
+        FIRST_FETCH: FIRST_FETCH_PARAM,
+    }
+    assert (
+        validator.fix(content_item).message
+        == f"Added the following params to the integration: {MAX_FETCH}, {FIRST_FETCH}."
+    )
+    assert all(
+        [param in content_item.params for param in [MAX_FETCH_PARAM, FIRST_FETCH_PARAM]]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["script.commands", "script.ismappable"],
+                    values=[
+                        [GET_MAPPING_FIELDS_COMMAND],
+                        True,
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismappable"],
+                    values=[
+                        True,
+                    ],
+                ),
+            ],
+            1,
+            [
+                f"The integration is a mappable integration and is missing the {GET_MAPPING_FIELDS_COMMAND_NAME} command. Please add the command."
+            ],
+        ),
+    ],
+)
+def test_IsValidAsMappableIntegrationValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One none mappable integration with commands but no get-mapping-fields command.
+            - One none mappable integration without commands.
+            - One mappable integration with get-mapping-fields command.
+         - Case 2: One invalid mappable integration without get-mapping-fields command.
+
+    When
+    - Calling the IsValidAsMappableIntegrationValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
+    """
+    results = IsValidAsMappableIntegrationValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidAsMappableIntegrationValidator_fix():
+    """
+    Given
+        - A mappable integration without get-mapping-fields command.
+    When
+        - Calling the IsValidAsMappableIntegrationValidator fix function.
+    Then
+        - Make sure that the command was added to the integration and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["script.ismappable"],
+        values=[
+            True,
+        ],
+    )
+    assert (
+        IsValidAsMappableIntegrationValidator().fix(content_item).message
+        == f"Added the {GET_MAPPING_FIELDS_COMMAND_NAME} command to the integration."
+    )
+    assert [
+        GET_MAPPING_FIELDS_COMMAND_NAME in command.name
+        for command in content_item.commands
+    ]
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[[]],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "arguments": [
+                                    {"name": "test_1_arg_1", "default": True},
+                                    {"name": "test_1_arg_2", "default": True},
+                                    {
+                                        "name": "test_1_arg_3",
+                                    },
+                                ],
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The following commands have more than 1 default arg, please make sure they have at most one: test_1."
+            ],
+        ),
+    ],
+)
+def test_IsContainingMultipleDefaultArgsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations:
+            - One integration with commands with multiple default args.
+            - One integration without commands.
+         - Case 2: One invalid integration with a command with multiple default args.
+
+    When
+    - Calling the IsContainingMultipleDefaultArgsValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
+    """
+    results = IsContainingMultipleDefaultArgsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

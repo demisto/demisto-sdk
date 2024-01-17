@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-class IsCommandArgsContainCuplicationsValidator(BaseValidator[ContentTypes]):
+class IsCommandArgsContainDuplicationsValidator(BaseValidator[ContentTypes]):
     error_code = "IN113"
     description = "Validate that there're no duplicated params for the integration."
     error_message = "The following commands contain duplicated arguments:\n{0}\nPlease make sure to remove the duplications."
@@ -23,12 +23,12 @@ class IsCommandArgsContainCuplicationsValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    [
-                        ".\n".join(
-                            f"command {key}, contains multiple appearances of the following arguments {', '.join(val)}"
-                        )
-                        for key, val in duplicated_args_by_command.items()
-                    ]
+                    ".\n".join(
+                        [
+                            f"Command {key}, contains multiple appearances of the following arguments {', '.join(val)}."
+                            for key, val in duplicated_args_by_command.items()
+                        ]
+                    )
                 ),
                 content_object=content_item,
             )

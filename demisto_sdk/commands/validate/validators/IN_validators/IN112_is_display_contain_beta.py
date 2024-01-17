@@ -24,7 +24,7 @@ class IsDisplayContainBetaValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.object_id),
+                message=self.error_message.format(content_item.display_name),
                 content_object=content_item,
             )
             for content_item in content_items

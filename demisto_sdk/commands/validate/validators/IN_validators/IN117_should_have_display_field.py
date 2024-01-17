@@ -60,7 +60,7 @@ class ShouldHaveDisplayFieldValidator(BaseValidator[ContentTypes]):
         return self.invalid_params.get(integration_name, [])
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        invalid_params = self.invalid_params[content_item]
+        invalid_params = self.invalid_params[content_item.name]
         for param in content_item.params:
             if param.get("name", "") in invalid_params:
                 param.pop("display")

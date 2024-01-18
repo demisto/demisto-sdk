@@ -1,3 +1,4 @@
+import logging
 import shutil
 import tempfile
 from contextlib import suppress
@@ -10,7 +11,6 @@ from pydantic import DirectoryPath
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     parse_marketplace_kwargs,
     parse_multiple_path_inputs,
@@ -27,6 +27,8 @@ from demisto_sdk.commands.upload.uploader import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.utils.utils import check_configuration_file
+
+logger = logging.getLogger("demisto-sdk")
 
 
 def upload_content_entity(**kwargs):

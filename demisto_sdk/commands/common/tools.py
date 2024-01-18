@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import glob
+import logging
 import os
 import re
 import shlex
@@ -107,7 +108,6 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
-    STRING_TO_BOOL_MAP,
     TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
@@ -138,10 +138,11 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
-from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+
+logger = logging.getLogger("demisto-sdk")
 
 yaml_safe_load = YAML_Handler(typ="safe")
 
@@ -3689,6 +3690,20 @@ def normalize_field_name(field: str) -> str:
         field (str): the incident/indicator field.
     """
     return field.replace("incident_", "").replace("indicator_", "")
+
+
+STRING_TO_BOOL_MAP = {
+    "y": True,
+    "1": True,
+    "yes": True,
+    "true": True,
+    "n": False,
+    "0": False,
+    "no": False,
+    "false": False,
+    "t": True,
+    "f": False,
+}
 
 
 def string_to_bool(

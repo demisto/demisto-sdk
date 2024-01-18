@@ -23,6 +23,8 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
 )
 from TestSuite.test_tools import flatten_call_args
 
+logger = logging.getLogger("demisto-sdk")
+
 REPORT_STR_FILE = os.path.join(TEST_DATA_DIR, "coverage.txt")
 
 

@@ -142,7 +142,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
-from demisto_sdk.commands.common.logger import LOG_FILE_PATH, logger
+from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     detect_file_level,
@@ -729,7 +729,7 @@ class OldValidateManager:
         return True
 
     def is_skipped_file(self, file_path: str) -> bool:
-        """check whether the file in the given file_path is in the 'SKIPPED_FILES' list.
+        """check wether the file in the given file_path is in the SKIPPED_FILES list.
 
         Args:
             file_path: the file on which to run.
@@ -738,7 +738,7 @@ class OldValidateManager:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
         path = Path(file_path)
-        if LOG_FILE_PATH and LOG_FILE_PATH == path:
+        if get_log_file() == path:
             return True
         return path.name in SKIPPED_FILES or (
             path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"

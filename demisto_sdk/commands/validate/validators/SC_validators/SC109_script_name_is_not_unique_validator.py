@@ -26,7 +26,6 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         "it will not be possible to create a script with the name `getAlert`)"
     )
     related_field = "name"
-    content_types = ContentTypes
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

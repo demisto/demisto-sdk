@@ -1,4 +1,3 @@
-import logging
 from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -7,8 +6,6 @@ from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (
     prepare_descriptions_and_names,
     prepare_playbook_access_fields,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class MarketplaceIncidentToAlertPlaybooksPreparer:

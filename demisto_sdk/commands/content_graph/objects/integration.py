@@ -58,7 +58,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     long_running: bool = False
     category: str
     commands: List[Command] = []
-    params: List = []
+    params: List[dict] = Field([], exclude=True)
 
     @property
     def imports(self) -> List["Script"]:

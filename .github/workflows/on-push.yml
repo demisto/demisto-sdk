@@ -42,7 +42,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Python Environment From Content Repository
+      - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'

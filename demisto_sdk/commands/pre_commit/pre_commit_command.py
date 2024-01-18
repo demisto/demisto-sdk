@@ -35,6 +35,7 @@ from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
+from demisto_sdk.commands.pre_commit.hooks.xsoar_linter import XsoarLinterHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_context import (
     PRECOMMIT_CONFIG_MAIN_PATH,
@@ -69,6 +70,8 @@ class PreCommitRunner:
             ValidateFormatHook(
                 **hooks.pop("format"), context=pre_commit_context
             ).prepare_hook()
+        if "xsoar-linter" in hooks:
+            XsoarLinterHook(**hooks.pop("xsoar-linter"), context=pre_commit_context).prepare_hook()
         [
             DockerHook(**hooks.pop(hook_id), context=pre_commit_context).prepare_hook()
             for hook_id in hooks.copy()

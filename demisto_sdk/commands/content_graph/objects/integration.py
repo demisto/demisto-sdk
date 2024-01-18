@@ -30,7 +30,7 @@ class Parameter(BaseModel):
     display: Optional[str] = None
     section: Optional[str] = None
     advanced: Optional[bool] = False
-    hidden: Optional[bool] = False
+    hidden: Optional[Any] = False
     options: Optional[List[str]] = None
     displaypassword: Optional[str] = None
     hiddenusername: Optional[bool] = False

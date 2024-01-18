@@ -51,5 +51,6 @@ runs:
 
     - name: Create Artifacts Dir
       run: |
-        mkdir ${{ artifacts-dir }}
+        mkdir -p ${{ inputs.artifacts-dir }}
+        echo "Created directory ${{ inputs.artifacts-dir }} successfully"
       shell: bash

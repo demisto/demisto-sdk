@@ -18,6 +18,7 @@ inputs:
     default: $GITHUB_JOB
     description: "The name of the artifacts dir"
 
+
 runs:
   using: 'composite'
   steps:
@@ -36,5 +37,5 @@ runs:
     - name: Install npm
       run: |
         npm install
-        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > ${{ artifacts-dir }}/node_versions_info.json
       shell: bash

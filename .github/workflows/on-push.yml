@@ -90,12 +90,13 @@ jobs:
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
+          exit $pytest_exit_code
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
         with:
-          python-version: ${{ matrix.python-version }}
-          artifacts-folder-name: unit-tests
+          artifact-name: unit-tests-python-${{ matrix.python-version }}-artifacts
+          artifacts-path-dir: unit-tests
           junit-path: unit-tests/junit.xml
 
   integration-tests:
@@ -132,8 +133,8 @@ jobs:
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
         with:
-          python-version: ${{ matrix.python-version }}
-          artifacts-folder-name: integration-tests
+          artifact-name: integration-tests-python-${{ matrix.python-version }}-artifacts
+          artifacts-path-dir: integration-tests
           junit-path: integration-tests/junit.xml
 
   graph-tests:
@@ -164,12 +165,14 @@ jobs:
           mkdir graph-tests
           poetry run pytest -v demisto_sdk/commands/content_graph --cov=demisto_sdk --cov-report=html:graph-tests/coverage --junitxml=graph-tests/junit.xml || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
+          
+          exit $pytest_exit_code
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
         with:
-          python-version: ${{ matrix.python-version }}
-          artifacts-folder-name: graph-tests
+          artifact-name: graph-tests-python-${{ matrix.python-version }}-artifacts
+          artifacts-path-dir: graph-tests
           junit-path: graph-tests/junit.xml
 
   coverage:
@@ -181,7 +184,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - name: Download all artifacts
+      - name: Download all artifacts  # TODO - download only the relevant artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
         run: |
@@ -297,6 +300,13 @@ jobs:
           cd content
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
 
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: test-pre-commit-command
+          artifact-name: test-demisto-sdk-pre-commit-command-artifacts
+
   test-update-graph:
     runs-on: ubuntu-latest
     name: Test Graph Commands
@@ -321,13 +331,19 @@ jobs:
           source $(poetry env info --path)/bin/activate
           export DEMISTO_SDK_LOG_FILE_PATH=test-graph-commands/demisto_sdk_debug.log
           cd content
-          mkdir ./tmp
           # create content graph from scratch
           demisto-sdk create-content-graph
           # clean import folder
           sudo rm -rf /var/lib/neo4j/import
           # Update content graph from the bucket
-          demisto-sdk update-content-graph -g -o ./tmp/content_graph
+          demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
 
           # Update content graph from the the previous content graph that was created/built
-          demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
+          demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
+
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: test-graph-commands
+          artifact-name: test-graph-commands-artifacts

@@ -35,6 +35,27 @@ jobs:
           echo "Validating changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
           poetry run python ./Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py -n "$PR_NUMBER" -t "$PR_TITLE"
 
+  pre-commit-checks:
+    runs-on: ubuntu-latest
+    name: Pre Commit Checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment From Content Repository
+        uses: ./.github/actions/setup_poetry_python_environment
+        with:
+          python-version: '3.10'
+
+      - name: Run Pre Commit
+        uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --all-files
+
+      - name: Run Pytest collection
+        run: |
+          poetry run pytest --collect-only .
+
   unit-tests:
     name: Unit Tests / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
@@ -271,27 +292,6 @@ jobs:
           source $(poetry env info --path)/bin/activate
           cd content
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
-
-  pre-commit-checks:
-    runs-on: ubuntu-latest
-    name: Pre Commit Checks
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Python Environment From Content Repository
-        uses: ./.github/actions/setup_poetry_python_environment
-        with:
-          python-version: '3.10'
-
-      - name: Run Pre Commit
-        uses: pre-commit/action@v3.0.0
-        with:
-          extra_args: --all-files
-
-      - name: Run Pytest collection
-        run: |
-          poetry run pytest --collect-only .
 
   test-update-graph:
     runs-on: ubuntu-latest

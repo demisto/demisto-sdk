@@ -27,7 +27,7 @@ runs:
       uses: ./.github/actions/setup_environment
       with:
         python-version: ${{ inputs.python-version }}
-        artifacts-dir: ${{ artifacts-dir }}
+        artifacts-dir: ${{ inputs.artifacts-dir }}
 
     - name: Set up Node.js
       uses: actions/setup-node@v3

@@ -67,7 +67,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
             self.add_command_or_script_dependency(cmd)
 
     @property
-    def arguments(self):
+    def arguments(self) -> List[Argument]:
         return [
             Argument(
                 name=argument.get("name", ""),

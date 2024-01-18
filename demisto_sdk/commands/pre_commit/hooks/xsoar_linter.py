@@ -1,9 +1,11 @@
 import sys
 from copy import deepcopy
+from packaging.version import Version
 from pathlib import Path
 from typing import Dict, Any
 
 from commands.content_graph.common import ContentType
+from commands.content_graph.objects import Integration, Script
 from commands.lint.resources.pylint_plugins.certified_partner_level_checker import cert_partner_msg
 from commands.lint.resources.pylint_plugins.community_level_checker import community_msg
 from commands.lint.resources.pylint_plugins.partner_level_checker import partner_msg
@@ -22,21 +24,38 @@ class XsoarLinterHook(Hook):
         Changes the hook's name, files and the "--target-version" argument according to the Python version.
         Args:
         """
-        for support_level, files_with_object in self.context.support_level_to_files_with_objects.items():
-            args = self.build_xsoar_linter_command(support_level)
-            hook: Dict[str, Any] = {
-                "name": f"xsoar-linter-{support_level}",
+        for integration_script_obj, files in self.context.object_to_files.items():
+            xsoar_linter_env = {}
+            if isinstance(integration_script_obj, Integration) and integration_script_obj.long_running:
+                xsoar_linter_env["LONGRUNNING"] = "True"
+
+            if (py_ver := integration_script_obj.python_version) and Version(py_ver).major < 3:
+                xsoar_linter_env["PY2"] = "True"
+
+
+            xsoar_linter_env["is_script"] = str(isinstance(integration_script_obj, Script))
+            # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
+            # as a result we can use the env vars as a getway.
+            if isinstance(integration_script_obj, Integration):
+                xsoar_linter_env["commands"] = ','.join([command.name for command in integration_script_obj.commands])
+
+            args = self.build_xsoar_linter_command(integration_script_obj.support_level)
+
+            xsoar_linter_env_str = " ".join(f'{k}={v}' for k,v in xsoar_linter_env.items())
+            hook = deepcopy(self.base_hook)
+
+            hook.update({
+                "name": f"xsoar-linter-{integration_script_obj.object_id}",
                 "args": args,
-                "entry": f'{Path(sys.executable).parent}/{self.base_hook["entry"]}'
-            }
+                "entry": f'env {xsoar_linter_env_str} {Path(sys.executable).parent}/{self.base_hook["entry"]}'
+            })
             hook["files"] = join_files(
                 {
                     file
-                    for file, obj in files_with_object
-                    if file.suffix == ".py" and obj.content_type == ContentType.INTEGRATION
+                    for file in files
+                    if file.suffix == ".py" and '_test' not in file.name
                 }
             )
-            hook.update(deepcopy(self.base_hook))
             self.hooks.append(hook)
 
 

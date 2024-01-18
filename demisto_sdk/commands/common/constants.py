@@ -1727,7 +1727,7 @@ BUILD_IN_COMMANDS = [
 
 
 class Auto(str, Enum):
-    PREDEFINED = "predefined"
+    PREDEFINED = "PREDEFINED"
 
 
 class ContentItems(Enum):

@@ -12,16 +12,21 @@ inputs:
     type: string
     default: "16"
     description: "The node version to install"
-
+  artifacts-dir:
+    required: false
+    type: string
+    default: $GITHUB_JOB
+    description: "The name of the artifacts dir"
 
 runs:
   using: 'composite'
   steps:
 
     - name: Python ${{ matrix.python-version }} - Setup Environment
-      uses: ./.github/actions/setup_poetry_python_environment
+      uses: ./.github/actions/setup_environment
       with:
         python-version: ${{ inputs.python-version }}
+        artifacts-dir: ${{ artifacts-dir }}
 
     - name: Set up Node.js
       uses: actions/setup-node@v3

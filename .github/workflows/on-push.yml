@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_poetry_python_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
 
@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Python Environment From Content Repository
-        uses: ./.github/actions/setup_poetry_python_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
 
@@ -75,6 +75,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
+          artifacts-dir: unit-tests
 
       - name: Run Unit Tests
         run: |
@@ -85,7 +86,6 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
 
-          mkdir unit-tests
           poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
@@ -117,6 +117,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
+          artifacts-dir: integration-tests
 
       - name: Run Integration Tests
         run: |
@@ -154,6 +155,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
+          artifacts-dir: graph-tests
 
       - name: Run Graph Tests
         run: |
@@ -216,7 +218,7 @@ jobs:
         run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
 
       - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_poetry_python_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
           working-dir: content
@@ -249,9 +251,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Python Environment
-        uses: ./.github/actions/setup_poetry_python_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
+          artifacts-dir: test-pre-commit-command
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -276,6 +279,7 @@ jobs:
       - name: run pre-commit on changed files
         run: |
           source $(poetry env info --path)/bin/activate
+          export DEMISTO_SDK_LOG_FILE_PATH=test-pre-commit-command/demisto_sdk_debug.log
           cd content
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
@@ -301,9 +305,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Python Environment
-        uses: ./.github/actions/setup_poetry_python_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
+          artifacts-dir: test-graph-commands
 
       - name: Checkout content
         uses: actions/checkout@v3
@@ -314,6 +319,7 @@ jobs:
       - name: Run Graph
         run: |
           source $(poetry env info --path)/bin/activate
+          export DEMISTO_SDK_LOG_FILE_PATH=test-graph-commands/demisto_sdk_debug.log
           cd content
           mkdir ./tmp
           # create content graph from scratch

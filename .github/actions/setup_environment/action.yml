@@ -1,5 +1,5 @@
-name: 'Setup python environment for demisto-sdk jobs'
-description: 'Setup python environment for demisto-sdk jobs'
+name: 'Setup testing environment for demisto-sdk jobs'
+description: 'Setup testing environment for demisto-sdk jobs - that includes adding python/create-artifacts/install dependencies'
 author: 'Demisto-SDK'
 
 inputs:
@@ -17,6 +17,11 @@ inputs:
     type: string
     default: "-E generate-unit-tests"
     description: "the arguments for the poetry install command"
+  artifacts-dir:
+    required: false
+    type: string
+    default: $GITHUB_JOB
+    description: "The name of the artifacts dir"
 
 runs:
   using: 'composite'
@@ -43,3 +48,8 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         # cache: poetry
+
+    - name: Create Artifacts Dir
+      run: |
+        mkdir ${{ artifacts-dir }}
+      shell: bash

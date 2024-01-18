@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import ClassVar, Iterable, List
+from typing import ClassVar, Iterable, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import COMMON_PARAMS_DISPLAY_NAME
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
+    Parameter,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -49,26 +52,30 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
             )
         ]
 
-    def is_valid_param(self, integration_name, params, expected_names):
-        current_param = {}
+    def is_valid_param(
+        self,
+        integration_name: str,
+        params: List[Parameter],
+        expected_names: Union[str, Tuple],
+    ) -> bool:
+        current_param = None
         for param in params:
-            if param["name"] in expected_names:
+            if param.name in expected_names:
                 current_param = param
                 break
         if current_param and any(
             [
-                current_param.get("display", "")
-                != COMMON_PARAMS_DISPLAY_NAME[current_param["name"]],
-                current_param.get("defaultvalue", "") not in (False, "false", ""),
-                current_param.get("required", False),
-                current_param.get("type", "") != 8,
+                current_param.display != COMMON_PARAMS_DISPLAY_NAME[current_param.name],
+                current_param.defaultvalue not in (False, "false", None),
+                current_param.required,
+                current_param.type != 8,
             ]
         ):
             self.fixed_params[integration_name] = self.fixed_params.get(
                 integration_name, {}
             )
-            self.fixed_params[integration_name][current_param["name"]] = {
-                "display": COMMON_PARAMS_DISPLAY_NAME[current_param["name"]],
+            self.fixed_params[integration_name][current_param.name] = {
+                "display": COMMON_PARAMS_DISPLAY_NAME[current_param.name],
                 "defaultvalue": False,
                 "required": False,
                 "type": 8,

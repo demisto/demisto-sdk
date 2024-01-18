@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Iterable, List, Set
 
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
+    Parameter,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -29,12 +32,12 @@ class IsParamsContainDuplicationsValidator(BaseValidator[ContentTypes]):
             if (duplicated_param_names := self.is_containing_dups(content_item.params))
         ]
 
-    def is_containing_dups(self, params) -> Set[str]:
+    def is_containing_dups(self, params: List[Parameter]) -> Set[str]:
         appeared_set = set()
         dups_set: Set[str] = set()
         for param in params:
-            if param.get("name") in appeared_set:
-                dups_set.add(param.get("name"))
+            if param.name in appeared_set:
+                dups_set.add(param.name)
             else:
-                appeared_set.add(param.get("name"))
+                appeared_set.add(param.name)
         return dups_set

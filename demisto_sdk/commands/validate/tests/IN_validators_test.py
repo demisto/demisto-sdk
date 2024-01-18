@@ -1,6 +1,7 @@
 import pytest
 
 from demisto_sdk.commands.common.constants import (
+    COMMON_PARAMS_DISPLAY_NAME,
     FIRST_FETCH,
     FIRST_FETCH_PARAM,
     GET_MAPPING_FIELDS_COMMAND,
@@ -292,12 +293,18 @@ def test_IsIntegrationRunnableValidator_is_valid(
             [
                 create_integration_object(
                     paths=["configuration"],
-                    values=[[{"name": "proxy", "display": "a"}]],
+                    values=[[{"name": "proxy", "display": "a", "type": 1}]],
                 ),
                 create_integration_object(
                     paths=["configuration"],
                     values=[
-                        [{"name": "proxy", "display": "Use system proxy settingss"}]
+                        [
+                            {
+                                "name": "proxy",
+                                "display": "Use system proxy settingss",
+                                "type": 1,
+                            }
+                        ]
                     ],
                 ),
                 create_integration_object(
@@ -350,7 +357,7 @@ def test_IsValidProxyAndInsecureValidator_is_valid(
             - One integration with valid proxy param.
         - Case 2: Four invalid integrations:
             - One integration with proxy param with a wrong display name.
-            - One integration with proxy param without required and type fields.
+            - One integration with proxy param without required field and a wrong type field.
             - One integration with proxy param with a wrong type.
             - One integration with proxy param with a required field set to true.
     When
@@ -383,7 +390,7 @@ def test_IsValidProxyAndInsecureValidator_fix():
         paths=["configuration"],
         values=[
             [
-                {"name": "proxy", "display": "a"},
+                {"name": "proxy", "display": "a", "type": 1},
                 {
                     "name": "insecure",
                     "type": 1,
@@ -393,15 +400,6 @@ def test_IsValidProxyAndInsecureValidator_fix():
             ]
         ],
     )
-    assert content_item.params == [
-        {"name": "proxy", "display": "a"},
-        {
-            "name": "insecure",
-            "type": 1,
-            "required": True,
-            "display": "Trust any certificate (not secure)",
-        },
-    ]
     validator = IsValidProxyAndInsecureValidator()
     validator.fixed_params[content_item.name] = {
         "insecure": {
@@ -421,20 +419,10 @@ def test_IsValidProxyAndInsecureValidator_fix():
         validator.fix(content_item).message
         == "Corrected the following params: insecure, proxy."
     )
-    assert content_item.params == [
-        {
-            "name": "proxy",
-            "type": 8,
-            "required": False,
-            "display": "Use system proxy settings",
-        },
-        {
-            "name": "insecure",
-            "type": 8,
-            "required": False,
-            "display": "Trust any certificate (not secure)",
-        },
-    ]
+    for param in content_item.params:
+        assert param.type == 8
+        assert not param.required
+        assert param.display == COMMON_PARAMS_DISPLAY_NAME[param.name]
 
 
 @pytest.mark.parametrize(
@@ -563,26 +551,6 @@ def test_IsValidCheckboxParamValidator_fix():
             ]
         ],
     )
-    assert content_item.params == [
-        {
-            "name": "test_param_4",
-            "type": 8,
-            "display": "test param 4",
-            "required": True,
-        },
-        {
-            "name": "test_param_5",
-            "type": 8,
-            "display": "test param 5",
-            "required": False,
-        },
-        {
-            "name": "test_param_6",
-            "type": 8,
-            "display": "test param 6",
-            "required": False,
-        },
-    ]
     validator = IsValidCheckboxParamValidator()
     validator.misconfigured_checkbox_params_by_integration[content_item.name] = [
         "test_param_5",
@@ -592,26 +560,7 @@ def test_IsValidCheckboxParamValidator_fix():
         validator.fix(content_item).message
         == "Set required field of the following params was set to True: test_param_5, test_param_6."
     )
-    assert content_item.params == [
-        {
-            "name": "test_param_4",
-            "type": 8,
-            "display": "test param 4",
-            "required": True,
-        },
-        {
-            "name": "test_param_5",
-            "type": 8,
-            "display": "test param 5",
-            "required": True,
-        },
-        {
-            "name": "test_param_6",
-            "type": 8,
-            "display": "test param 6",
-            "required": True,
-        },
-    ]
+    assert all([param.required for param in content_item.params])
 
 
 @pytest.mark.parametrize(
@@ -914,12 +863,14 @@ def test_IsDisplayContainBetaValidator_is_valid(
                                         "default": True,
                                         "isArray": True,
                                         "required": True,
+                                        "description": "ip_1_description",
                                     },
                                     {
                                         "name": "ip_2",
                                         "default": True,
                                         "isArray": True,
                                         "required": True,
+                                        "description": "ip_2_description",
                                     },
                                 ],
                                 "outputs": [],
@@ -947,18 +898,21 @@ def test_IsDisplayContainBetaValidator_is_valid(
                                         "default": True,
                                         "isArray": True,
                                         "required": True,
+                                        "description": "ip_1_description",
                                     },
                                     {
                                         "name": "ip_2",
                                         "default": True,
                                         "isArray": True,
                                         "required": True,
+                                        "description": "ip_2_description",
                                     },
                                     {
                                         "name": "ip_1",
                                         "default": True,
                                         "isArray": True,
                                         "required": True,
+                                        "description": "ip_1_description",
                                     },
                                 ],
                                 "outputs": [],
@@ -1021,8 +975,8 @@ def test_IsCommandArgsContainDuplicationsValidator_is_valid(
                     paths=["configuration"],
                     values=[
                         [
-                            {"name": "test_1", "display": "a"},
-                            {"name": "test_1", "display": "a"},
+                            {"name": "test_1", "display": "a", "type": 1},
+                            {"name": "test_1", "display": "a", "type": 1},
                         ]
                     ],
                 ),
@@ -1084,12 +1038,14 @@ def test_IsParamsContainDuplicationsValidator_is_valid(
                                         "default": True,
                                         "isArray": True,
                                         "required": True,
+                                        "description": "ip_1_description",
                                     },
                                     {
                                         "name": "ip_2",
                                         "default": True,
                                         "isArray": True,
                                         "required": True,
+                                        "description": "ip_2_description",
                                     },
                                 ],
                                 "outputs": [],
@@ -1865,10 +1821,19 @@ def test_IsValidAsMappableIntegrationValidator_fix():
                             {
                                 "name": "test_1",
                                 "arguments": [
-                                    {"name": "test_1_arg_1", "default": True},
-                                    {"name": "test_1_arg_2", "default": True},
+                                    {
+                                        "name": "test_1_arg_1",
+                                        "default": True,
+                                        "description": "test_1_arg_1_description",
+                                    },
+                                    {
+                                        "name": "test_1_arg_2",
+                                        "default": True,
+                                        "description": "test_1_arg_2_description",
+                                    },
                                     {
                                         "name": "test_1_arg_3",
+                                        "description": "test_1_arg_3_description",
                                     },
                                 ],
                             }

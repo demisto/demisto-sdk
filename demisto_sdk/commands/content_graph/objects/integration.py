@@ -23,8 +23,8 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 
 class Parameter(BaseModel):
     name: str
-    additionalinfo: Optional[str]
     type: int
+    additionalinfo: Optional[str] = None
     defaultvalue: Optional[Any] = None
     required: Optional[bool] = False
     display: Optional[str] = None

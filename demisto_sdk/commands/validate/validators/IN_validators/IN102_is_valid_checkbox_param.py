@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import ClassVar, Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
+    Parameter,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -38,14 +41,15 @@ class IsValidCheckboxParamValidator(BaseValidator[ContentTypes]):
             )
         ]
 
-    def get_misconfigured_checkbox_params(self, params, integration_name):
+    def get_misconfigured_checkbox_params(
+        self, params: List[Parameter], integration_name: str
+    ):
         self.misconfigured_checkbox_params_by_integration[integration_name] = [
-            param.get("name", "")
+            param.name
             for param in params
-            if param.get("type", 0) == 8
-            and param.get("name", "")
-            not in ("insecure", "unsecure", "proxy", "isFetch")
-            and param.get("required", False) not in ("true", True)
+            if param.type == 8
+            and param.name not in ("insecure", "unsecure", "proxy", "isFetch")
+            and not param.required
         ]
         return self.misconfigured_checkbox_params_by_integration[integration_name]
 

@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.handlers import (
     DEFAULT_YAML_HANDLER,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.scripts.changelog.changelog_obj import (
     INITIAL_LOG,
@@ -257,6 +257,7 @@ def commit_and_push(branch_name: str):
 
 
 main = typer.Typer(pretty_exceptions_enable=False)
+logging_setup(skip_log_file_creation=True)
 
 release = typer.Option(False, "--release", help="releasing", is_flag=True)
 init = typer.Option(

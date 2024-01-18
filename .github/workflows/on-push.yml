@@ -280,8 +280,9 @@ jobs:
       - name: run pre-commit on changed files
         run: |
           source $(poetry env info --path)/bin/activate
-          export DEMISTO_SDK_LOG_FILE_PATH=test-pre-commit-command/demisto_sdk_debug.log
+          mv test-pre-commit-command content
           cd content
+          export DEMISTO_SDK_LOG_FILE_PATH=test-pre-commit-command/demisto_sdk_debug.log
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
@@ -295,7 +296,9 @@ jobs:
         continue-on-error: true
         run: |
           source $(poetry env info --path)/bin/activate
+          mv test-pre-commit-command content
           cd content
+          export DEMISTO_SDK_LOG_FILE_PATH=test-pre-commit-command/demisto_sdk_debug.log
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
 
       - name: Upload artifacts
@@ -327,8 +330,9 @@ jobs:
       - name: Run Graph
         run: |
           source $(poetry env info --path)/bin/activate
-          export DEMISTO_SDK_LOG_FILE_PATH=test-graph-commands/demisto_sdk_debug.log
+          mv test-pre-commit-command content
           cd content
+          export DEMISTO_SDK_LOG_FILE_PATH=test-pre-commit-command/demisto_sdk_debug.log
           # create content graph from scratch
           demisto-sdk create-content-graph
           # clean import folder

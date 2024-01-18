@@ -1,0 +1,4 @@
+changes:
+- description: Added warning when running on Windows (not supported)
+  type: feature
+pr_number: 3950

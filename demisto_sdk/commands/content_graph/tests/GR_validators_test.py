@@ -1,168 +1,56 @@
-from pathlib import Path
-from typing import Callable, List
-
 import pytest
 
-import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.content_graph.commands.create import (
-    create_content_graph,
-)
-from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.interface import (
-    ContentGraphInterface,
-)
-from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.tests.graph_validator_test import mock_pack
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
+from demisto_sdk.commands.validate.validators.GR_validators import (
+    GR106_duplicated_script_name,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR106_duplicated_script_name import (
     DuplicatedScriptNameValidator,
 )
+from TestSuite.repo import Repo
 
-GIT_PATH = Path(git_path())
-
-
-# FIXTURES
-
-
-@pytest.fixture(autouse=True)
-def setup_method(mocker):
-    """Auto-used fixture for setup before every test run"""
-    import demisto_sdk.commands.content_graph.objects.base_content as bc
-
-    bc.CONTENT_PATH = GIT_PATH
-    mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
-    mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
-        return_value={
-            "docker_images": {
-                "python3": {
-                    "3.10.11.54799": {"python_version": "3.10.11"},
-                    "3.10.12.63474": {"python_version": "3.10.11"},
-                }
-            }
-        },
-    )
+MP_XSOAR = [MarketplaceVersions.XSOAR.value]
+MP_V2 = [MarketplaceVersions.MarketplaceV2.value]
+MP_XSOAR_AND_V2 = [
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.MarketplaceV2.value,
+]
 
 
 @pytest.fixture
-def repository(mocker) -> ContentDTO:
-    repository = ContentDTO(
-        path=GIT_PATH,
-        packs=[],
-    )
-    pack1 = mock_pack(
-        "SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "test_alert1",
-            pack_name="pack1",
-            marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-        )
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "test_incident1",
-            pack_name="pack1",
-            marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-        )
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "test_alert2", pack_name="pack1", marketplaces=[MarketplaceVersions.XSOAR]
-        )
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "test_incident2",
-            pack_name="pack1",
-            marketplaces=[MarketplaceVersions.XSOAR],
-        )
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "test_alert3",
-            pack_name="pack1",
-            marketplaces=[MarketplaceVersions.MarketplaceV2],
-            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
-        )
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "test_incident3",
-            pack_name="pack1",
-            marketplaces=[MarketplaceVersions.MarketplaceV2],
-            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
-        )
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "test_alert4", pack_name="pack1", marketplaces=[MarketplaceVersions.XSOAR]
-        )
-    )
-    pack1.content_items.script.append(
-        mock_script(
-            "test_incident4",
-            pack_name="pack1",
-            marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-        )
+def prepared_graph_repo(graph_repo, mocker):
+
+    mocker.patch.object(
+        GR106_duplicated_script_name, "CONTENT_PATH", new=graph_repo.path
     )
 
-    repository.packs.extend([pack1])
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
-        return_value=[repository],
+    pack = graph_repo.create_pack()
+
+    pack.create_script("test_incident_1").set_data(marketplaces=MP_XSOAR_AND_V2)
+    pack.create_script("test_alert_1").set_data(marketplaces=MP_XSOAR_AND_V2)
+
+    pack.create_script("test_incident_2").set_data(marketplaces=MP_XSOAR)
+    pack.create_script("test_alert_2").set_data(marketplaces=MP_XSOAR)
+
+    pack.create_script("test_incident_3").set_data(
+        skipprepare=[SKIP_PREPARE_SCRIPT_NAME], marketplaces=MP_V2
     )
-    return repository
-
-
-def update_repository(
-    repository: ContentDTO,
-    commit_func: Callable[[ContentDTO], List[Pack]],
-) -> List[str]:
-    updated_packs = commit_func(repository)
-    pack_ids_to_update = [pack.object_id for pack in updated_packs]
-    repository.packs = [
-        pack for pack in repository.packs if pack.object_id not in pack_ids_to_update
-    ]
-    repository.packs.extend(updated_packs)
-    return pack_ids_to_update
-
-
-def mock_script(
-    name,
-    marketplaces=[MarketplaceVersions.XSOAR],
-    skip_prepare=[],
-    pack_name="pack_name",
-):
-    return Script(
-        id=name,
-        content_type=ContentType.SCRIPT,
-        node_id=f"{ContentType.SCRIPT}:{name}",
-        path=Path(f"Packs/{pack_name}/Scripts/{name}.yml"),
-        fromversion="5.0.0",
-        display_name=name,
-        toversion="6.0.0",
-        name=name,
-        marketplaces=marketplaces,
-        deprecated=False,
-        type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
-        tags=[],
-        is_test=False,
-        skip_prepare=skip_prepare,
+    pack.create_script("test_alert_3").set_data(
+        skipprepare=[SKIP_PREPARE_SCRIPT_NAME], marketplaces=MP_V2
     )
 
+    pack.create_script("test_incident_4").set_data(marketplaces=MP_XSOAR_AND_V2)
+    pack.create_script("test_alert_4").set_data(marketplaces=MP_XSOAR)
 
-def test_DuplicatedScriptNameValidator_is_valid(repository: ContentDTO, mocker):
+    BaseValidator.graph_interface = graph_repo.create_graph()
+    return graph_repo
+
+
+def test_DuplicatedScriptNameValidator_is_valid(prepared_graph_repo: Repo):
     """
     Given
         - A content repo with 8 scripts:
@@ -175,13 +63,10 @@ def test_DuplicatedScriptNameValidator_is_valid(repository: ContentDTO, mocker):
     Then
         - Validate that only the first pair of scripts appear in the results, and teh rest of the scripts is valid.
     """
-    scripts = []
-    for pack in repository.packs:
-        scripts.extend(pack.content_items.script)
-    create_content_graph(ContentGraphInterface())
-    BaseValidator.graph_initialized = True
-    BaseValidator.graph_interface = ContentGraphInterface()
-    results = DuplicatedScriptNameValidator().is_valid(scripts)
+    pack = prepared_graph_repo.packs[0]
+
+    script_objects = [script.object for script in pack.scripts]
+    results = DuplicatedScriptNameValidator().is_valid(script_objects)
 
     assert len(results) == 1
-    assert str(results[0].content_object.path) == "Packs/pack1/Scripts/test_alert1.yml"
+    assert "test_alert_1.yml" == results[0].content_object.path.name

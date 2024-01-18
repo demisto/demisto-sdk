@@ -721,10 +721,10 @@ def test_validate_headers(mocker, repo):
         content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path
     )
 
-    pack.create_integration("integration-test")
-    pack.create_script("script-test")
-    pack.create_playbook("playbook-test")
-    pack.create_correlation_rule("correlation-rule-test")
+    pack.create_integration("test")
+    pack.create_script("test")
+    pack.create_playbook("test").create_default_playbook("test")
+    pack.create_correlation_rule("test")
     pack.create_dashboard("test")
     pack.create_incident_field("test1")
     pack.create_incident_field("test2")
@@ -735,8 +735,8 @@ def test_validate_headers(mocker, repo):
     pack.create_mapper("test")
     pack.create_classifier("test")
     pack.create_widget("test")
-    pack.create_xsiam_dashboard("xsiam-dashboard-test")
-    pack.create_trigger("trigger-test")
+    pack.create_xsiam_dashboard("test")
+    pack.create_trigger("test")
     assert validator.validate_release_notes_headers()
 
 

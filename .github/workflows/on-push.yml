@@ -328,7 +328,7 @@ jobs:
       - name: Run Graph
         run: |
           source $(poetry env info --path)/bin/activate
-          mv test-pre-commit-command content
+          mv test-graph-commands content
           cd content
           export DEMISTO_SDK_LOG_FILE_PATH=test-graph-commands/demisto_sdk_debug.log
           # create content graph from scratch

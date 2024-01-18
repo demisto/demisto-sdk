@@ -8,7 +8,10 @@ from demisto_sdk.commands.common.constants import (
     MAX_FETCH,
     MAX_FETCH_PARAM,
 )
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
+    Parameter,
+)
 from demisto_sdk.commands.validate.tools import find_param
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -49,7 +52,7 @@ class IsValidFetchIntegrationValidator(BaseValidator[ContentTypes]):
         ]
 
     def is_valid_fetch_integration(
-        self, integration_name: str, params: List[dict]
+        self, integration_name: str, params: List[Parameter]
     ) -> dict:
         """_summary_
 

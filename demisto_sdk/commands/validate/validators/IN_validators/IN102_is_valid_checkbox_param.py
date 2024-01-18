@@ -52,10 +52,10 @@ class IsValidCheckboxParamValidator(BaseValidator[ContentTypes]):
     def fix(self, content_item: ContentTypes) -> FixResult:
         for param in content_item.params:
             if (
-                param.get("name", "")
+                param.name
                 in self.misconfigured_checkbox_params_by_integration[content_item.name]
             ):
-                param.update({"required": True})
+                param.required = True
         return FixResult(
             validator=self,
             message=self.fix_message.format(

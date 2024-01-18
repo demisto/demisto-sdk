@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import demisto_client
 
@@ -11,9 +11,9 @@ if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import Auto, MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -21,12 +21,53 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 
 
+class Parameter(BaseModel):
+    name: str
+    additionalinfo: Optional[str]
+    type: int
+    defaultvalue: Optional[Any] = None
+    required: Optional[bool] = False
+    display: Optional[str] = None
+    section: Optional[str] = None
+    advanced: Optional[bool] = False
+    hidden: Optional[bool] = False
+    options: Optional[List[str]] = None
+    displaypassword: Optional[str] = None
+    hiddenusername: Optional[bool] = False
+    hiddenpassword: Optional[bool] = False
+    fromlicense: Optional[str] = None
+
+
+class Argument(BaseModel):
+    name: str
+    description: str
+    required: Optional[bool] = False
+    default: Optional[bool] = False
+    predefined: Optional[List[str]] = None
+    isArray: Optional[bool] = False
+    defaultvalue: Optional[Any] = None
+    secret: Optional[bool] = False
+    deprecated: Optional[bool] = False
+    type: Optional[str] = None
+    hidden: Optional[bool] = False
+    auto: Optional[Auto] = None
+
+
+class Output(BaseModel):
+    description: str
+    contentPath: Optional[str] = None
+    contextPath: Optional[str] = None
+    important: Optional[bool] = False
+    importantDescription: Optional[str] = None
+    type: Optional[str] = None
+
+
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
 
     # From HAS_COMMAND relationship
-    args: List[dict] = Field([], exclude=True)
-    outputs: List[dict] = Field([], exclude=True)
+    args: List[Argument] = Field([], exclude=True)
+    outputs: List[Output] = Field([], exclude=True)
 
     deprecated: bool = Field(False)
     description: Optional[str] = Field("")
@@ -58,7 +99,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     long_running: bool = False
     category: str
     commands: List[Command] = []
-    params: List[dict] = Field([], exclude=True)
+    params: List[Parameter] = Field([], exclude=True)
 
     @property
     def imports(self) -> List["Script"]:

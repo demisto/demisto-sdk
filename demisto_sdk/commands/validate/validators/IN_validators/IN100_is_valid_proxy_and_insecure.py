@@ -82,8 +82,11 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
     ) -> FixResult:
         for key, val in self.fixed_params[content_item.name].items():
             for param in content_item.params:
-                if param["name"] == key:
-                    param.update(val)
+                if param.name == key:
+                    param.display = val["display"]
+                    param.defaultvalue = False
+                    param.required = False
+                    param.type = 8
                     break
         return FixResult(
             validator=self,

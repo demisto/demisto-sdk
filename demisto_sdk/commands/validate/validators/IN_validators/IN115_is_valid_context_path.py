@@ -49,6 +49,6 @@ class IsValidContextPathValidator(BaseValidator[ContentTypes]):
             (bool): True if the an output entry is missing a contextPath. Otherwise, return False.
         """
         for output in command.outputs:
-            if "contextPath" not in output:
+            if not output.contextPath:
                 return True
         return False

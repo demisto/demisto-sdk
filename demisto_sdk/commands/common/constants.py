@@ -1726,6 +1726,10 @@ BUILD_IN_COMMANDS = [
 ]
 
 
+class Auto(str, Enum):
+    PREDEFINED = "predefined"
+
+
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future
     SCRIPTS = "automation"

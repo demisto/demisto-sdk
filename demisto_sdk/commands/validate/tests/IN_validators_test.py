@@ -1386,10 +1386,7 @@ def test_ShouldHaveDisplayFieldValidator_fix():
         == "Removed display field for the following params: test_1, test_2."
     )
     assert not any(
-        [
-            (param.get("type") == 17 and param.get("display"))
-            for param in content_item.params
-        ]
+        [(param.type == 17 and param.display) for param in content_item.params]
     )
 
 
@@ -1635,7 +1632,7 @@ def test_IsValidMaxFetchParamValidator_fix():
     )
     assert any(
         [
-            (param.get("name") == "max_fetch" and param.get("defaultvalue") is not None)
+            (param.name == "max_fetch" and param.defaultvalue is not None)
             for param in content_item.params
         ]
     )

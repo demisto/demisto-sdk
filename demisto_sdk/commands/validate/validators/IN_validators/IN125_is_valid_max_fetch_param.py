@@ -32,12 +32,13 @@ class IsValidMaxFetchParamValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if content_item.is_fetch
             and (max_fetch_param := find_param(content_item.params, MAX_FETCH))
-            and not max_fetch_param.get("defaultvalue")
+            and not max_fetch_param.defaultvalue
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         max_fetch_param = find_param(content_item.params, MAX_FETCH)
-        max_fetch_param.update({"defaultvalue": 10})
+        if max_fetch_param:
+            max_fetch_param.defaultvalue = 10
         return FixResult(
             validator=self,
             message=self.fix_message.format(),

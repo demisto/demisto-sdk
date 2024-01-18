@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ParameterType
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
+    Parameter,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -30,7 +33,7 @@ class IsMissingDisplayFieldValidator(BaseValidator[ContentTypes]):
             if (invalid_params := self.get_invalid_params(content_item.params))
         ]
 
-    def get_invalid_params(self, params: List[dict]) -> List[str]:
+    def get_invalid_params(self, params: List[Parameter]) -> List[str]:
         """Validate that all the relevant params have a display name.
 
         Args:
@@ -40,12 +43,11 @@ class IsMissingDisplayFieldValidator(BaseValidator[ContentTypes]):
             List[str]: The list of the names of the params that are not valid.
         """
         return [
-            param.get("name", "")
+            param.name
             for param in params
-            if param.get("type", 0) != ParameterType.EXPIRATION_FIELD.value
-            and param.get("hidden", False) not in [True, "true"]
-            and not param.get("display", "")
-            and not param.get("displaypassword", "")
-            and param.get("name", "")
-            not in ("feedExpirationPolicy", "feedExpirationInterval")
+            if param.type != ParameterType.EXPIRATION_FIELD.value
+            and not param.hidden
+            and not param.display
+            and not param.displaypassword
+            and param.name not in ("feedExpirationPolicy", "feedExpirationInterval")
         ]

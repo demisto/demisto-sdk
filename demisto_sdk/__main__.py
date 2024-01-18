@@ -37,11 +37,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import (
-    handle_deprecated_args,
-    logger,
-    logging_setup,
-)
+from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -73,6 +69,8 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "[red]An internet connection is required for this command. If connected to the "
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 # Third party packages
@@ -160,13 +158,16 @@ def logging_setup_decorator(func, *args, **kwargs):
         help="Minimum logging threshold for the file logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
-    @click.option("--log-file-path", help="Path to save log files onto.")
+    @click.option(
+        "--log-file-path",
+        help="Path to the log file. Default: Content root path.",
+    )
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
             console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
             file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log_file_path"),
+            log_file_path=kwargs.get("log_file_path") or None,
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -204,8 +205,9 @@ def main(ctx, config, version, release_notes, **kwargs):
         console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
         file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
         log_file_path=kwargs.get("log_file_path"),
-        skip_log_file_creation=True,  # Log file creation is handled in the logger setup of the sub-command
     )
+    global logger
+    logger = logging.getLogger("demisto-sdk")
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
@@ -1270,8 +1272,12 @@ def lint(ctx, **kwargs):
     type=str,
 )
 @click.pass_context
-@logging_setup_decorator
 def coverage_analyze(ctx, **kwargs):
+    logger = logging_setup(
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+        log_file_path=kwargs.get("log_file_path") or None,
+    )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
     try:
@@ -2678,7 +2684,6 @@ def find_dependencies(ctx, **kwargs):
 )
 @pass_config
 @click.pass_context
-@logging_setup_decorator
 def postman_codegen(
     ctx,
     config,
@@ -2692,6 +2697,11 @@ def postman_codegen(
     **kwargs,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
+    logger = logging_setup(
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+        log_file_path=kwargs.get("log_file_path") or None,
+    )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
     )
@@ -3574,7 +3584,7 @@ def pre_commit(
         dir_okay=True,
         resolve_path=True,
         show_default=False,
-        help="The paths to run pre-commit on. May pass multiple paths.",
+        help=("The paths to run pre-commit on. May pass multiple paths."),
     ),
     staged_only: bool = typer.Option(
         False, "--staged-only", help="Whether to run only on staged files"
@@ -3621,28 +3631,7 @@ def pre_commit(
         True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
     ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
-    console_log_threshold: str = typer.Option(
-        "INFO",
-        "--console-log-threshold",
-        help="Minimum logging threshold for the console logger.",
-    ),
-    file_log_threshold: str = typer.Option(
-        "DEBUG",
-        "--file-log-threshold",
-        help="Minimum logging threshold for the file logger.",
-    ),
-    log_file_path: Optional[str] = typer.Option(
-        None,
-        "--log-file-path",
-        help="Path to save log files onto.",
-    ),
 ):
-    logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
-    )
-
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
     return_code = pre_commit_manager(

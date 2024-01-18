@@ -1,3 +1,4 @@
+import logging
 import shutil
 import tempfile
 from typing import Callable
@@ -7,10 +8,11 @@ from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.lint import linter
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+
+logger = logging.getLogger("demisto-sdk")
 
 
 def initiate_linter(

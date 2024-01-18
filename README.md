@@ -120,19 +120,8 @@ Supported commands:
 20. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
 21. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
 22. [pre-commit (experimental)](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md)
+---
 23. [setup-env](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/setup_env/README.md)
-
----
-
-### Logs
-
-Log files are generated and stored automatically by default in the user's home directory:  
-**Linux / macOS**: `$HOME/.demisto-sdk/logs`  
-**Windows**: `%USERPROFILE%\.demisto-sdk\logs`  
-
-The default directory can be overriden using the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable.
-
----
 
 ### Customizable command configuration
 
@@ -178,7 +167,7 @@ MIT - See [LICENSE](LICENSE) for more information.
 
 ---
 
-## How to setup a development environment?
+## How to setup development environment?
 
 Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk` dev environment.
 The development environment is connected to the branch you are currently using in the SDK repository.

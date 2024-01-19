@@ -85,6 +85,8 @@ jobs:
           # For all the tests.
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
+          
+          export DEMISTO_SDK_LOG_FILE_PATH=./unit-tests/demisto_sdk_debug.log
 
           poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
@@ -125,7 +127,9 @@ jobs:
       - name: Run Integration Tests
         run: |
           source "$(poetry env info --path)/bin/activate"
-
+          
+          export DEMISTO_SDK_LOG_FILE_PATH=./integration-tests/demisto_sdk_debug.log
+          
           poetry run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html:integration-tests/coverage --junitxml=integration-tests/junit.xml || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           
@@ -164,7 +168,9 @@ jobs:
       - name: Run Graph Tests
         run: |
           source "$(poetry env info --path)/bin/activate"
-
+          
+          export DEMISTO_SDK_LOG_FILE_PATH=./graph-tests/demisto_sdk_debug.log
+          
           poetry run pytest -v demisto_sdk/commands/content_graph --cov=demisto_sdk --cov-report=html:graph-tests/coverage --junitxml=graph-tests/junit.xml || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
           
@@ -335,7 +341,7 @@ jobs:
           source $(poetry env info --path)/bin/activate
           cd content
           mkdir test-graph-commands
-          export DEMISTO_SDK_LOG_FILE_PATH=test-graph-commands/demisto_sdk_debug.log
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-graph-commands/demisto_sdk_debug.log
           # create content graph from scratch
           demisto-sdk create-content-graph
           # clean import folder

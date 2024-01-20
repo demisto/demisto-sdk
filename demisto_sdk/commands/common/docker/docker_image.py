@@ -22,23 +22,23 @@ class DockerImage(str):
     _dockerhub_client = DockerHubClient()
 
     def __new__(cls, docker_image: str, raise_if_not_valid: bool = False):
-        instance = super().__new__(cls, docker_image)
+        docker_image_instance = super().__new__(cls, docker_image)
         pattern = re.compile(cls.DOCKER_IMAGE_REGX)
         if matches := pattern.match(docker_image):
-            instance._repository = matches.group(1)  # type: ignore[attr-defined]
-            instance._image_name = matches.group(2)  # type: ignore[attr-defined]
-            instance._tag = matches.group(3)  # type: ignore[attr-defined]
+            docker_image_instance._repository = matches.group(1)  # type: ignore[attr-defined]
+            docker_image_instance._image_name = matches.group(2)  # type: ignore[attr-defined]
+            docker_image_instance._tag = matches.group(3)  # type: ignore[attr-defined]
         else:
-            instance._repository = ""  # type: ignore[attr-defined]
-            instance._image_name = ""  # type: ignore[attr-defined]
-            instance._tag = ""  # type: ignore[attr-defined]
+            docker_image_instance._repository = ""  # type: ignore[attr-defined]
+            docker_image_instance._image_name = ""  # type: ignore[attr-defined]
+            docker_image_instance._tag = ""  # type: ignore[attr-defined]
 
-        if raise_if_not_valid and not instance.is_valid:
+        if raise_if_not_valid and not docker_image_instance.is_valid:
             raise ValueError(
                 f"Docker image {docker_image} is not valid, should be in the form of repository/image-name:tag"
             )
 
-        return instance
+        return docker_image_instance
 
     @property
     def summary(self) -> str:

@@ -21,7 +21,9 @@ class DockerImage(str):
     )
     _dockerhub_client = DockerHubClient()
 
-    def __new__(cls, docker_image: str, raise_if_not_valid: bool = False):
+    def __new__(
+        cls, docker_image: str, raise_if_not_valid: bool = False
+    ) -> "DockerImage":
         docker_image_instance = super().__new__(cls, docker_image)
         pattern = re.compile(cls.DOCKER_IMAGE_REGX)
         if matches := pattern.match(docker_image):

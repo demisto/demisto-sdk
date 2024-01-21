@@ -75,7 +75,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts-dir: unit-tests
+          artifacts-dir: unit-tests/logs
 
       - name: Run Unit Tests
         run: |
@@ -135,7 +135,7 @@ jobs:
         if: always()
         with:
           artifact-name: integration-tests-python-${{ matrix.python-version }}-artifacts
-          artifacts-path-dir: integration-tests
+          artifacts-path-dir: integration-tests/logs
           junit-path: integration-tests/junit.xml
 
   graph-tests:
@@ -157,7 +157,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts-dir: graph-tests
+          artifacts-dir: graph-tests/logs
 
       - name: Run Graph Tests
         run: |
@@ -283,8 +283,8 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
-          mkdir test-pre-commit-command
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-pre-commit-command/demisto_sdk_debug.log
+          mkdir -p test-pre-commit-command/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-pre-commit-command/logs/demisto_sdk_debug.log
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
@@ -331,8 +331,8 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
-          mkdir test-graph-commands
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-graph-commands/demisto_sdk_debug.log
+          mkdir -p test-graph-commands/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-graph-commands/logs/demisto_sdk_debug.log
           # create content graph from scratch
           demisto-sdk create-content-graph
           # clean import folder

@@ -110,7 +110,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        docker_image: DockerImage = content_item.docker_image
+        docker_image = content_item.docker_image
         try:
             docker_image_latest_tag = docker_image.latest_docker_image
             message = self.fix_message.format(docker_image, docker_image_latest_tag)

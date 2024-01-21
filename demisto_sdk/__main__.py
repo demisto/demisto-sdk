@@ -236,9 +236,9 @@ def main(ctx, config, version, release_notes, **kwargs):
                 last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
-                logger.info(
-                    f"[yellow]however version {last_release} is available.\n"
-                    f"To update, run pip3 install --upgrade demisto-sdk[/yellow]"
+                logger.warning(
+                    f"A newer version ({last_release}) is available. "
+                    f"To update, run 'pip3 install --upgrade demisto-sdk'"
                 )
             if release_notes:
                 rn_entries = get_release_note_entries(__version__)

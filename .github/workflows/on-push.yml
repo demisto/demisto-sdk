@@ -119,7 +119,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts-dir: integration-tests
+          artifacts-dir: integration-tests/logs
 
       - name: Run Integration Tests
         run: |
@@ -135,7 +135,7 @@ jobs:
         if: always()
         with:
           artifact-name: integration-tests-python-${{ matrix.python-version }}-artifacts
-          artifacts-path-dir: integration-tests/logs
+          artifacts-path-dir: integration-tests
           junit-path: integration-tests/junit.xml
 
   graph-tests:

@@ -10,6 +10,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN108_is_valid_subty
 from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration_runable import (
     IsIntegrationRunnableValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN135_is_valid_param_display import (
+    IsValidParamDisplayValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -436,3 +439,296 @@ def test_IsIntegrationRunnableValidator_is_valid(
 #             "required": True,
 #         },
 #     ]
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 17,
+                                "required": False,
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 17,
+                                "required": False,
+                                "display": "test 1",
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                                "display": "Test 2",
+                            },
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "type": 17,
+                                "required": False,
+                                "display": "test_1",
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 17,
+                                "required": False,
+                                "display": "Test_2",
+                            },
+                            {
+                                "name": "test_3",
+                                "type": 17,
+                                "required": False,
+                                "display": "Test 3",
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            2,
+            [
+                "The following params are invalid. Integration parameters display field must start with capital letters and can't contain underscores ('_'): test 1.",
+                "The following params are invalid. Integration parameters display field must start with capital letters and can't contain underscores ('_'): test_1, Test_2.",
+            ],
+        ),
+    ],
+)
+def test_IsValidParamDisplayValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: The valid integrations:
+            - One integration with params, all with display name.
+            - One integration without params.
+            - One integration with one param without display name.
+        - Case 2: Two invalid integrations:
+            - One integration with two params: one invalid because it's starting with lowercase letter and one valid.
+            - One integration with three params: one invalid because it's starting with lowercase letter and has underscore in the display name, one invalid because it has underscore in the display name, and one valid.
+    When
+    - Calling the IsValidParamDisplayValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail and mention only the invalid params in the message.
+    """
+    results = IsValidParamDisplayValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidParamDisplayValidator_fix():
+    """
+    Given
+        An integration with 4 params:
+        - one param with invalid display because it's starting with lowercase letter and has underscore.
+        - one param with invalid display because it has underscore.
+        - One param with valid display.
+        - one param with invalid display because it's starting with lowercase letter.
+    When
+    - Calling the IsValidParamDisplayValidator fix function.
+    Then
+        - Make sure that the display field was modified correctly, and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "test_1",
+                    "type": 17,
+                    "required": False,
+                    "display": "test_1",
+                },
+                {
+                    "name": "test_2",
+                    "type": 17,
+                    "required": False,
+                    "display": "Test_2",
+                },
+                {
+                    "name": "test_3",
+                    "type": 17,
+                    "required": False,
+                    "display": "Test 3",
+                },
+                {
+                    "name": "test_4",
+                    "type": 17,
+                    "required": False,
+                    "display": "test 4",
+                },
+            ]
+        ],
+    )
+    validator = IsValidParamDisplayValidator()
+    validator.invalid_params[content_item.name] = ["test_1", "Test_2", "test 4"]
+    assert (
+        validator.fix(content_item).message
+        == "The following param displays has been modified: test_1 -> Test 1, Test_2 -> Test 2, test 4 -> Test 4."
+    )
+    assert not bool(
+        validator.get_invalid_params(
+            [param.display for param in content_item.params if param.display],
+            content_item.name,
+        )
+    )
+
+
+# @pytest.mark.parametrize(
+#     "content_items, expected_number_of_failures, expected_msgs, core_packs_ls",
+#     [
+#         (
+#             [
+#                 create_integration_object(),
+#                 create_integration_object(
+#                     paths=["script.commands"],
+#                     values=[[]],
+#                 ),
+#                 create_integration_object(
+#                     paths=["script.commands"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "ip",
+#                                 "description": "ip command",
+#                                 "deprecated": False,
+#                                 "arguments": [
+#                                     {
+#                                         "name": "ip_1",
+#                                         "default": True,
+#                                         "isArray": True,
+#                                         "required": True,
+#                                         "description": "ip_1_description",
+#                                     },
+#                                     {
+#                                         "name": "ip_2",
+#                                         "default": True,
+#                                         "isArray": True,
+#                                         "required": True,
+#                                         "description": "ip_2_description",
+#                                     },
+#                                 ],
+#                                 "outputs": [],
+#                             },
+#                         ]
+#                     ],
+#                 ),
+#             ],
+#             0,
+#             [],
+#             []
+#         ),
+#         (
+#             [
+#                 create_integration_object(
+#                     paths=["script.commands"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "ip_1",
+#                                 "description": "ip command 1",
+#                                 "deprecated": False,
+#                                 "arguments": [
+#                                     {
+#                                         "name": "ip_1",
+#                                         "default": True,
+#                                         "isArray": True,
+#                                         "required": True,
+#                                         "description": "ip_1_description",
+#                                     },
+#                                     {
+#                                         "name": "ip_2",
+#                                         "default": True,
+#                                         "isArray": True,
+#                                         "required": True,
+#                                         "description": "ip_2_description",
+#                                     },
+#                                     {
+#                                         "name": "ip_1",
+#                                         "default": True,
+#                                         "isArray": True,
+#                                         "required": True,
+#                                         "description": "ip_1_description",
+#                                     },
+#                                 ],
+#                                 "outputs": [],
+#                             }
+#                         ]
+#                     ],
+#                 )
+#             ],
+#             1,
+#             [
+#                 "The following commands contain duplicated arguments:\nCommand ip_1, contains multiple appearances of the following arguments ip_1.\nPlease make sure to remove the duplications."
+#             ],
+#             []
+#         ),
+#     ],
+# )
+# def test_IsNameContainIncidentInCorePackValidator_is_valid(
+#     mocker, content_items, expected_number_of_failures, expected_msgs, core_packs_ls
+# ):
+#     """
+#     Given
+#     content_items iterables.
+#         - Case 1: Two valid integrations:
+#             - One integration without commands.
+#             - One integration with one command without duplicated args.
+#         - Case 2: One invalid integration with a command with 3 arguments Two of the same name and one different..
+#     When
+#     - Calling the IsNameContainIncidentInCorePackValidator is valid function.
+#     Then
+#         - Make sure the validation fail when it needs to and the right error message is returned.
+#         - Case 1: Shouldn't fail any.
+#         - Case 2: Should fail.
+#     """
+#     mocker.patch(
+#         "demisto_sdk.commands.validate.validators.IN_validators.IN139_is_name_contain_incident_in_core_pack.get_core_pack_list",
+#         return_value = ["pack_1"]
+#     )
+#     mock = mocker.patch("demisto_sdk.commands.content_graph.objects.content_item.ContentItem.pack_name")
+#     mock.side_effect = iter(["pack_1", "pack_2", "pack_3"])
+#     results = IsNameContainIncidentInCorePackValidator().is_valid(content_items)
+#     assert len(results) == expected_number_of_failures
+#     assert all(
+#         [
+#             result.message == expected_msg
+#             for result, expected_msg in zip(results, expected_msgs)
+#         ]
+#     )

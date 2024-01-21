@@ -1355,12 +1355,31 @@ ACCEPTED_FILE_EXTENSIONS = [
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
 
+FEED_RELIABILITY = "feedReliability"
+RELIABILITY = "reliability"
+
 RELIABILITY_PARAMETER_NAMES = [
     "integration_reliability",  # First item in the list will be used in errors
     "integrationReliability",
-    "feedReliability",
-    "reliability",
+    FEED_RELIABILITY,
+    RELIABILITY,
 ]
+
+RELIABILITY_COMMAND = {
+    "name": RELIABILITY,
+    "display": "Source Reliability",
+    "type": 15,
+    "required": True,
+    "options": [
+        "A - Completely reliable",
+        "B - Usually reliable",
+        "C - Fairly reliable",
+        "D - Not usually reliable",
+        "E - Unreliable",
+        "F - Reliability cannot be judged",
+    ],
+    "additionalinfo": "Reliability of the source providing the intelligence data",
+}
 
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
@@ -1519,7 +1538,7 @@ FEED_REQUIRED_PARAMS = [
         "must_be_one_of": {},
     },
     {
-        "name": "feedReliability",
+        "name": FEED_RELIABILITY,
         "must_equal": {
             "display": "Source Reliability",
             "type": 15,
@@ -1713,6 +1732,10 @@ BUILD_IN_COMMANDS = [
     "deleteIndicators",
     "extractIndicators",
 ]
+
+
+class Auto(str, Enum):
+    PREDEFINED = "PREDEFINED"
 
 
 class ContentItems(Enum):

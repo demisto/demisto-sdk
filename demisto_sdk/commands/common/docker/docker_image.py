@@ -12,10 +12,8 @@ from demisto_sdk.commands.common.logger import logger
 
 
 class DockerImage(str):
-
-    DOCKER_IMAGE_REGX = (
-        r"^([^/]+)/(.*?)(?::(.*))?$"  # regex to extract parts of a docker-image
-    )
+    # regex to extract parts of any docker-image in the following structure (repo/image-name:tag)
+    DOCKER_IMAGE_REGX = r"^([^/]+)/(.*?)(?::(.*))?$"
     DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
@@ -24,6 +22,13 @@ class DockerImage(str):
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False
     ) -> "DockerImage":
+        """
+        Creates a new instance of DockerImage
+
+        Args:
+            docker_image: the full docker image
+            raise_if_not_valid: if True, will raise ValueError if the docker-image has an invalid structure.
+        """
         docker_image_instance = super().__new__(cls, docker_image)
         pattern = re.compile(cls.DOCKER_IMAGE_REGX)
         if matches := pattern.match(docker_image):
@@ -89,6 +94,10 @@ class DockerImage(str):
         return self.repository == "demisto"
 
     @property
+    def is_python3_image(self) -> bool:
+        return self.is_demisto_repository and self.image_name == "python3"
+
+    @property
     def is_native_image(self) -> bool:
         return self.name == NATIVE_IMAGE_DOCKER_NAME
 
@@ -107,7 +116,9 @@ class DockerImage(str):
                 )
                 return None
 
-            if match := self.DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(self):
+            if self.is_python3_image and (
+                match := self.DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(self)
+            ):
                 return Version(match.group("python_version"))
 
             logger.debug(f"Could not get python version for image {self} from regex")
@@ -124,11 +135,11 @@ class DockerImage(str):
                 return Version(python_version)
 
             logger.error(f"Could not find python-version of docker-image {self}")
-            return None
 
-        logger.debug(
-            f"docker-image {self} is not valid, could not get its python-version"
-        )
+        else:
+            logger.debug(
+                f"docker-image {self} is not valid, could not get its python-version"
+            )
         return None
 
     @property

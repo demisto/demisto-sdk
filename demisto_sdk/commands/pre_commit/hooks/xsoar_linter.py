@@ -2,9 +2,7 @@ import sys
 from copy import deepcopy
 from packaging.version import Version
 from pathlib import Path
-from typing import Dict, Any
 
-from commands.content_graph.common import ContentType
 from commands.content_graph.objects import Integration, Script
 from commands.lint.resources.pylint_plugins.certified_partner_level_checker import cert_partner_msg
 from commands.lint.resources.pylint_plugins.community_level_checker import community_msg
@@ -46,9 +44,9 @@ class XsoarLinterHook(Hook):
 
             hook.update({
                 "name": f"xsoar-linter-{integration_script_obj.object_id}",
-                "args": args,
                 "entry": f'env {xsoar_linter_env_str} {Path(sys.executable).parent}/{self.base_hook["entry"]}'
             })
+            hook['args'].extend(args)
             hook["files"] = join_files(
                 {
                     file
@@ -95,9 +93,6 @@ class XsoarLinterHook(Hook):
                     checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
                 for msg in checker_msgs_list:
                     message_enable += f"{msg},"
-        # Disable all errors
-        command.append("-E")
-        command.append("--disable=all")
         # Message format
         command.append("--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'")
         # Enable only Demisto Plugins errors.

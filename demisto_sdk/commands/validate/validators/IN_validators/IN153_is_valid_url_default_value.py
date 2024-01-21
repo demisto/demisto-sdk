@@ -58,7 +58,7 @@ class IsValidUrlDefaultValueValidator(BaseValidator[ContentTypes]):
     def fix(self, content_item: ContentTypes) -> FixResult:
         for param in content_item.params:
             if param.name in self.invalid_params[content_item.name]:
-                param.defaultvalue = f"https{param.defaultvalue[4:]}"
+                param.defaultvalue = f"https{param.defaultvalue[4:]}"  # type: ignore[index]
         return FixResult(
             validator=self,
             message=self.fix_message.format(

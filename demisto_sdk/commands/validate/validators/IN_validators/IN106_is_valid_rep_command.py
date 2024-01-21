@@ -99,7 +99,7 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                     else:
                         for arg in command.args:
                             if arg.name == val.get("name", ""):
-                                arg.update(val)
+                                arg.update(val)  # type: ignore[attr-defined]
                                 break
         return FixResult(
             validator=self,

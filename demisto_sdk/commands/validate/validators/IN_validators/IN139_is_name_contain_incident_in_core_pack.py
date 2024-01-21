@@ -62,7 +62,7 @@ class IsNameContainIncidentInCorePackValidator(BaseValidator[ContentTypes]):
         for command in commands:
             current_command = {}
             current_command["incident_in_name"] = "incident" in command.name
-            current_command["args"] = [
+            current_command["args"] = [  # type: ignore[assignment]
                 arg.name for arg in command.args if "incident" in arg.name
             ]
             if current_command["incident_in_name"] or current_command["args"]:

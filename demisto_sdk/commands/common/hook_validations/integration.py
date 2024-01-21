@@ -42,7 +42,6 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -69,6 +68,7 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
     strip_description,
 )
+from demisto_sdk.commands.validate.tools import get_default_output_description
 
 default_additional_info = load_default_additional_info_dict()
 
@@ -2182,12 +2182,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN149")
     def are_common_outputs_with_description(self):
-        defaults = json.loads(
-            (
-                Path(__file__).absolute().parents[2]
-                / "common/default_output_descriptions.json"
-            ).read_text()
-        )
+        defaults = get_default_output_description()
 
         missing = {}
         for command in self.current_file.get("script", {}).get("commands", []):

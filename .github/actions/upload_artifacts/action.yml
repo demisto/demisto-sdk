@@ -15,7 +15,6 @@ inputs:
     description: "The name of of the artifact to upload"
 
 
-
 runs:
   using: 'composite'
   steps:

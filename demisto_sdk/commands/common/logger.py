@@ -378,12 +378,10 @@ def logging_setup(
     Returns:
         logging.Logger: logger object
     """
+    global LOG_FILE_PATH
+
     if not hasattr(logging.getLoggerClass(), "success"):
         _add_logging_level("SUCCESS", SUCCESS_LEVEL)
-
-    global logger
-    global LOG_FILE_PATH
-    global LOG_FILE_PATH_PRINT
 
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
@@ -396,30 +394,47 @@ def logging_setup(
 
     log_handlers: List[logging.Handler] = [console_handler]
 
+    # We set up the console handler separately before the file logger is ready, so that we can use it to print errors.
+    root_logger: logging.Logger = logging.getLogger("")
+    set_demisto_handlers_to_logger(_logger=root_logger, handlers=log_handlers)
+    set_demisto_handlers_to_logger(_logger=logger, handlers=log_handlers)
+    logger.propagate = False
+
     if not skip_log_file_creation:
         if log_file_directory_path_str := (
             log_file_path or os.getenv(DEMISTO_SDK_LOG_FILE_PATH)
         ):
-            log_file_directory_path = Path(log_file_directory_path_str)
+            current_log_file_path = Path(log_file_directory_path_str).resolve()
 
-            if not log_file_directory_path.is_dir():
-                # Can't use 'logger.error' here, as the logger is not yet initialized.
-                exit(
-                    f"Error: Configured logs path '{log_file_directory_path}' does not exist."
+            if current_log_file_path.is_dir():
+                final_log_file_path = current_log_file_path / LOG_FILE_NAME
+
+            elif current_log_file_path.is_file():
+                logger.warning(
+                    f"Log file path '{current_log_file_path}' is a file and not a directory. "
+                    f"Log file will be created in parent directory '{current_log_file_path.parent}'."
                 )
+                final_log_file_path = current_log_file_path.parent / LOG_FILE_NAME
+
+            else:  # Path is neither a file nor a directory
+                logger.warning(
+                    f"Log file path '{current_log_file_path}' does not exist and will be created."
+                )
+                current_log_file_path.mkdir(parents=True, exist_ok=True)
+                final_log_file_path = current_log_file_path / LOG_FILE_NAME
 
         else:  # Use default log files path
             log_file_directory_path = LOGS_DIR
             log_file_directory_path.mkdir(
                 parents=True, exist_ok=True
             )  # Generate directory if it doesn't exist
+            final_log_file_path = log_file_directory_path / LOG_FILE_NAME
 
-        # Add log file handler
-        log_file_path = log_file_directory_path / LOG_FILE_NAME
-        LOG_FILE_PATH = log_file_path
+        # Update global variable
+        LOG_FILE_PATH = final_log_file_path
 
         file_handler = RotatingFileHandler(
-            filename=log_file_path,
+            filename=LOG_FILE_PATH,
             mode="a",
             maxBytes=LOG_FILE_SIZE,
             backupCount=LOG_FILE_COUNT,
@@ -439,18 +454,16 @@ def logging_setup(
         level=log_level,
     )
 
-    root_logger: logging.Logger = logging.getLogger("")
+    # Set up handlers again, this time with the file handler
     set_demisto_handlers_to_logger(_logger=root_logger, handlers=log_handlers)
     set_demisto_handlers_to_logger(_logger=logger, handlers=log_handlers)
-    logger.propagate = False
 
     logger.debug(f"Python version: {sys.version}")
     logger.debug(f"Working dir: {Path.cwd()}")
     logger.debug(f"Platform: {platform.system()}")
 
-    if LOG_FILE_PATH and LOG_FILE_PATH_PRINT:
+    if LOG_FILE_PATH_PRINT and not skip_log_file_creation:
         logger.info(f"[yellow]Log file location: {log_file_path}[/yellow]")
-        LOG_FILE_PATH_PRINT = False  # Avoid printing the log file path more than once.
 
     return logger
 

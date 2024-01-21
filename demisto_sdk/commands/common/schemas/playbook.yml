@@ -63,7 +63,7 @@ mapping:
     type: seq
     sequence:
     - include: input_schema
-  inputSections:
+  inputsSections:
     type: seq
     sequence:
     - include: inputsSection_schema

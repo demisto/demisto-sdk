@@ -67,6 +67,5 @@ def test_docker_image_parse_invalid_docker_images(docker_image: str):
     Then:
     - make sure ValueError is raised
     """
-    assert False
     with pytest.raises(ValueError):
         DockerImage.parse(docker_image, raise_if_not_valid=True)

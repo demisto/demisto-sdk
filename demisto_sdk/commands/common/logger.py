@@ -394,7 +394,7 @@ def logging_setup(
 
     log_handlers: List[logging.Handler] = [console_handler]
 
-    # We set up the console handler separately before the file logger is ready, so that we can use it to print errors.
+    # We set up the console handler separately before the file logger is ready, so that we display log messages
     root_logger: logging.Logger = logging.getLogger("")
     set_demisto_handlers_to_logger(_logger=root_logger, handlers=log_handlers)
     set_demisto_handlers_to_logger(_logger=logger, handlers=log_handlers)

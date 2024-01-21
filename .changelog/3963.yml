@@ -1,0 +1,4 @@
+changes:
+- description: Fixed a typo in the play book schema in the `inputsSections` key.
+  type: internal
+pr_number: 3963

@@ -173,7 +173,7 @@ jobs:
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           mv .coverage graph-tests/.coverage | true
-          # mv demisto_sdk_debug*.log graph-tests | true
+          mv demisto_sdk_debug*.log graph-tests | true
 
           exit $pytest_exit_code
 

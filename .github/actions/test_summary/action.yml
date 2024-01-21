@@ -32,8 +32,8 @@ runs:
       if: always()
       run: |
         # move logs files created and .coverage to artifacts folder
-        mv .coverage ${{ inputs.artifacts-path-dir }}/.coverage | true
-        mv demisto_sdk_debug*.log ${{ inputs.artifacts-path-dir }} | true
+        mv .coverage ${{ inputs.artifacts-path-dir }}/.coverage || true
+        mv demisto_sdk_debug*.log ${{ inputs.artifacts-path-dir }} || true
       shell: bash
     - name: Upload artifacts
       if: always()

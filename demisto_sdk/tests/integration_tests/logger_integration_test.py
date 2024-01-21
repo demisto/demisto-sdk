@@ -1,3 +1,4 @@
+import logging
 import shutil
 from pathlib import Path
 from tempfile import mkdtemp
@@ -5,14 +6,15 @@ from tempfile import mkdtemp
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
+from TestSuite.test_tools import str_in_call_args_list
 
 TEMP_DIRS_PREFIX = "demisto-sdk-test-"
 
 
-def test_logs_dir_default_value(mocker):
+def test_default_logs_dir(mocker):
     """
     Given:
-        demisto-sdk command with no log path set.
+        demisto-sdk command with no custom log path set.
 
     When:
         Running demisto-sdk command.
@@ -20,7 +22,7 @@ def test_logs_dir_default_value(mocker):
     Then:
         Ensure logs are created at the default location, and that the path is created if it doesn't exist.
     """
-    root_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX))
+    root_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve()
     logs_dir_replacement = root_dir / "logs"
     mocker.patch(
         "demisto_sdk.commands.common.logger.LOGS_DIR", new=logs_dir_replacement
@@ -36,7 +38,7 @@ def test_logs_dir_default_value(mocker):
     shutil.rmtree(root_dir)
 
 
-def test_logs_dir_set_by_flag(mocker):
+def test_custom_logs_dir_set_by_flag(mocker):
     """
     Given:
         demisto-sdk command with log path set by flag.
@@ -47,8 +49,8 @@ def test_logs_dir_set_by_flag(mocker):
     Then:
         Ensure logs are created at the specified location.
     """
-    default_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX))
-    custom_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX))
+    default_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve()
+    custom_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve()
 
     mocker.patch("demisto_sdk.commands.common.logger.LOGS_DIR", new=default_logs_dir)
     runner = CliRunner(mix_stderr=False)
@@ -64,7 +66,7 @@ def test_logs_dir_set_by_flag(mocker):
     shutil.rmtree(custom_logs_dir)
 
 
-def test_logs_dir_set_by_env_var(mocker, monkeypatch):
+def test_custom_logs_dir_set_by_env_var(mocker, monkeypatch):
     """
     Given:
         demisto-sdk command with log path set by an environment variable.
@@ -75,8 +77,8 @@ def test_logs_dir_set_by_env_var(mocker, monkeypatch):
     Then:
         Ensure logs are created at the specified location.
     """
-    default_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX))
-    custom_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX))
+    default_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve()
+    custom_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve()
 
     monkeypatch.setenv("DEMISTO_SDK_LOG_FILE_PATH", str(custom_logs_dir))
     mocker.patch("demisto_sdk.commands.common.logger.LOGS_DIR", new=default_logs_dir)
@@ -93,31 +95,77 @@ def test_logs_dir_set_by_env_var(mocker, monkeypatch):
     shutil.rmtree(custom_logs_dir)
 
 
-def test_invalid_logs_dir(mocker):
+def test_custom_logs_dir_does_not_exist(mocker):
     """
     Given:
-        demisto-sdk command with invalid log path set.
+        demisto-sdk command with a non-existent log path set by flag.
 
     When:
         Running demisto-sdk command.
 
     Then:
-        Ensure a proper error message is printed.
+        Ensure that the path is created, logs are created at the specified location, and a warning is printed.
     """
-    default_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX))
+    default_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve()
+    custom_logs_dir = (
+        Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve() / "non-existent-dir"
+    )
+
     mocker.patch("demisto_sdk.commands.common.logger.LOGS_DIR", new=default_logs_dir)
-    invalid_path = "this/path/doesnt/exist"
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(
-        main, ["validate", "-a", "--log-file-path", str(invalid_path)]
-    )
+    runner.invoke(main, ["validate", "-a", "--log-file-path", str(custom_logs_dir)])
 
-    assert result.exit_code == 1
-    assert (
-        f"Error: Configured logs path '{invalid_path}' does not exist." in result.stdout
+    assert str_in_call_args_list(
+        logger_warning.call_args_list,
+        f"Log file path '{custom_logs_dir}' does not exist and will be created.",
     )
+    assert list(custom_logs_dir.glob("*")) == [
+        custom_logs_dir / "demisto_sdk_debug.log"
+    ]
     assert (
         len(list(default_logs_dir.glob("*"))) == 0
     )  # Assure default logs dir is not used
     default_logs_dir.rmdir()
+    shutil.rmtree(custom_logs_dir)
+
+
+def test_logs_dir_not_a_dir(mocker):
+    """
+    Given:
+        demisto-sdk command with a log path set by flag that points to a file.
+
+    When:
+        Running demisto-sdk command.
+
+    Then:
+        Ensure that the path is created, logs are created at the parent directory, and a warning is printed.
+    """
+    default_logs_dir = Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve()
+    custom_logs_dir = (
+        Path(mkdtemp(prefix=TEMP_DIRS_PREFIX)).resolve() / "some_random_file"
+    )
+    custom_logs_dir_parent = custom_logs_dir.parent
+    custom_logs_dir.touch()
+
+    mocker.patch("demisto_sdk.commands.common.logger.LOGS_DIR", new=default_logs_dir)
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
+    runner = CliRunner(mix_stderr=False)
+    runner.invoke(main, ["validate", "-a", "--log-file-path", str(custom_logs_dir)])
+
+    assert str_in_call_args_list(
+        logger_warning.call_args_list,
+        f"Log file path '{custom_logs_dir}' is a file and not a directory. Log file will be created in "
+        f"parent directory '{custom_logs_dir_parent}'.",
+    )
+    assert list(custom_logs_dir_parent.glob("*")) == [
+        custom_logs_dir,  # The random file we created
+        custom_logs_dir_parent / "demisto_sdk_debug.log",
+    ]
+    assert (
+        len(list(default_logs_dir.glob("*"))) == 0
+    )  # Assure default logs dir is not used
+    default_logs_dir.rmdir()
+    shutil.rmtree(custom_logs_dir_parent)

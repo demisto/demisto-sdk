@@ -47,27 +47,6 @@ class DockerImage(str):
 
         return docker_image_instance
 
-    def __eq__(self, docker_image) -> bool:
-        """
-        Returns whether docker-images are identical in either string/DockerImage representation.
-
-        Args:
-            docker_image: Union[DockerImage, str]: the docker-image to compare
-        """
-        if not isinstance(docker_image, str):
-            raise ValueError(
-                f"docker-image {docker_image} must be object of str/DockerImage"
-            )
-
-        if not isinstance(docker_image, DockerImage):
-            docker_image = DockerImage(docker_image)
-
-        return (
-            self.repository == docker_image.repository
-            and self.image_name == docker_image.image_name
-            and self.tag == docker_image.tag
-        )
-
     @property
     def summary(self) -> str:
         return f"DockerImage(docker-image={self}, valid={self.is_valid}, creation-date={self.creation_date}, python-version:{self.python_version}, latest-tag={self.latest_tag})"

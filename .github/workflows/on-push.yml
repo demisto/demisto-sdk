@@ -97,6 +97,7 @@ jobs:
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
+        if: always()
         with:
           artifact-name: unit-tests-python-${{ matrix.python-version }}-artifacts
           artifacts-path-dir: unit-tests
@@ -137,6 +138,7 @@ jobs:
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
+        if: always()
         with:
           artifact-name: integration-tests-python-${{ matrix.python-version }}-artifacts
           artifacts-path-dir: integration-tests
@@ -177,6 +179,7 @@ jobs:
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
+        if: always()
         with:
           artifact-name: graph-tests-python-${{ matrix.python-version }}-artifacts
           artifacts-path-dir: graph-tests

@@ -1,6 +1,6 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import RELIABILITY_PARAM, MarketplaceVersions
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
@@ -14,7 +14,15 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration
 from demisto_sdk.commands.validate.validators.IN_validators.IN135_is_valid_param_display import (
     IsValidParamDisplayValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN160_is_valid_display_name_for_non_deprecated_integration import IsValidDisplayNameForNonDeprecatedIntegrationValidator
+from demisto_sdk.commands.validate.validators.IN_validators.IN154_is_missing_reliability_param import (
+    IsMissingReliabilityParamValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN158_is_valid_description_for_non_deprecated_integration import (
+    IsValidDescriptionForNonDeprecatedIntegrationValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN160_is_valid_display_name_for_non_deprecated_integration import (
+    IsValidDisplayNameForNonDeprecatedIntegrationValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN161_is_siem_integration_valid_marketplace import (
     IsSiemIntegrationValidMarketplaceValidator,
 )
@@ -194,258 +202,6 @@ def test_IsIntegrationRunnableValidator_is_valid(
     )
 
 
-# @pytest.mark.parametrize(
-#     "content_items, expected_number_of_failures, expected_msgs",
-#     [
-#         (
-#             [
-#                 create_integration_object(),
-#                 create_integration_object(
-#                     paths=["script.commands"],
-#                     values=[[]],
-#                 ),
-#                 create_integration_object(
-#                     paths=["script.commands"],
-#                     values=[
-#                         [
-#                             {
-#                                 "name": "ip",
-#                                 "description": "ip command",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "ip",
-#                                         "default": True,
-#                                         "isArray": True,
-#                                         "required": True,
-#                                     }
-#                                 ],
-#                                 "outputs": [],
-#                             }
-#                         ]
-#                     ],
-#                 ),
-#             ],
-#             0,
-#             [],
-#         ),
-#         (
-#             [
-#                 create_integration_object(
-#                     paths=["script.commands"],
-#                     values=[
-#                         [
-#                             {
-#                                 "name": "endpoint",
-#                                 "description": "endpoint command",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "ip",
-#                                         "isArray": True,
-#                                         "required": True,
-#                                     }
-#                                 ],
-#                             },
-#                             {
-#                                 "name": "domain",
-#                                 "description": "domain command",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "domain",
-#                                         "isArray": True,
-#                                         "required": True,
-#                                     }
-#                                 ],
-#                                 "outputs": [],
-#                             },
-#                         ]
-#                     ],
-#                 ),
-#                 create_integration_object(
-#                     paths=["script.commands"],
-#                     values=[
-#                         [
-#                             {
-#                                 "name": "ip",
-#                                 "description": "ip command",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "ip",
-#                                         "default": True,
-#                                         "isArray": True,
-#                                         "required": True,
-#                                     }
-#                                 ],
-#                             },
-#                             {
-#                                 "name": "url",
-#                                 "description": "url command",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "url",
-#                                         "isArray": True,
-#                                         "required": True,
-#                                     }
-#                                 ],
-#                                 "outputs": [],
-#                             },
-#                         ]
-#                     ],
-#                 ),
-#                 create_integration_object(
-#                     paths=["script.commands"],
-#                     values=[
-#                         [
-#                             {
-#                                 "name": "email",
-#                                 "description": "email command",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "email",
-#                                         "isArray": True,
-#                                         "required": True,
-#                                     }
-#                                 ],
-#                             },
-#                             {
-#                                 "name": "cve",
-#                                 "description": "cve command",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "cve",
-#                                         "isArray": True,
-#                                         "required": True,
-#                                     }
-#                                 ],
-#                                 "outputs": [],
-#                             },
-#                         ]
-#                     ],
-#                 ),
-#             ],
-#             3,
-#             [],
-#         ),
-#     ],
-# )
-# def test_IsValidRepCommandValidator_is_valid(
-#     content_items, expected_number_of_failures, expected_msgs
-# ):
-#     """
-#     Given
-#     content_items iterables.
-#         - Case 1: Four integrations:
-#             - One integration with a param of type 8 but no required field.
-#             - One integration with a param of type 0 and no required field.
-#             - One integration with a param of type 8 but required field set to False.
-#             - One integration with 3 param of type 8, one's required field is set to True and the other two are set to False.
-#     When
-#     - Calling the IsValidRepCommandValidator is valid function.
-#     Then
-#         - Make sure the validation fail when it needs to and the right error message is returned.
-#         - Case 1: Should fail all except test_param 2 & 4.
-#     """
-#     results = IsValidRepCommandValidator().is_valid(content_items)
-#     assert len(results) == expected_number_of_failures
-#     assert all(
-#         [
-#             result.message == expected_msg
-#             for result, expected_msg in zip(results, expected_msgs)
-#         ]
-#     )
-
-
-# def test_IsValidRepCommandValidator_fix():
-#     """
-#     Given
-#         An integration with invalid proxy & insecure params.
-#     When
-#     - Calling the IsValidRepCommandValidator fix function.
-#     Then
-#         - Make sure that all the relevant fields were added/fixed and that the right msg was returned.
-#     """
-#     content_item = create_integration_object(
-#         paths=["configuration"],
-#         values=[
-#             [
-#                 {
-#                     "name": "test_param_4",
-#                     "type": 8,
-#                     "display": "test param 4",
-#                     "required": True,
-#                 },
-#                 {
-#                     "name": "test_param_5",
-#                     "type": 8,
-#                     "display": "test param 5",
-#                     "required": False,
-#                 },
-#                 {
-#                     "name": "test_param_6",
-#                     "type": 8,
-#                     "display": "test param 6",
-#                     "required": False,
-#                 },
-#             ]
-#         ],
-#     )
-#     assert content_item.params == [
-#         {
-#             "name": "test_param_4",
-#             "type": 8,
-#             "display": "test param 4",
-#             "required": True,
-#         },
-#         {
-#             "name": "test_param_5",
-#             "type": 8,
-#             "display": "test param 5",
-#             "required": False,
-#         },
-#         {
-#             "name": "test_param_6",
-#             "type": 8,
-#             "display": "test param 6",
-#             "required": False,
-#         },
-#     ]
-#     validator = IsValidRepCommandValidator()
-#     validator.misconfigured_checkbox_params_by_integration[content_item.name] = [
-#         "test_param_5",
-#         "test_param_6",
-#     ]
-#     assert (
-#         validator.fix(content_item).message
-#         == "Set required field of the following params was set to True: test_param_5, test_param_6."
-#     )
-#     assert content_item.params == [
-#         {
-#             "name": "test_param_4",
-#             "type": 8,
-#             "display": "test param 4",
-#             "required": True,
-#         },
-#         {
-#             "name": "test_param_5",
-#             "type": 8,
-#             "display": "test param 5",
-#             "required": True,
-#         },
-#         {
-#             "name": "test_param_6",
-#             "type": 8,
-#             "display": "test param 6",
-#             "required": True,
-#         },
-#     ]
-
-
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
@@ -533,7 +289,7 @@ def test_IsValidParamDisplayValidator_is_valid(
     """
     Given
     content_items iterables.
-        - Case 1: The valid integrations:
+        - Case 1: Three valid integrations:
             - One integration with params, all with display name.
             - One integration without params.
             - One integration with one param without display name.
@@ -613,130 +369,6 @@ def test_IsValidParamDisplayValidator_fix():
             content_item.name,
         )
     )
-
-
-# @pytest.mark.parametrize(
-#     "content_items, expected_number_of_failures, expected_msgs, core_packs_ls",
-#     [
-#         (
-#             [
-#                 create_integration_object(),
-#                 create_integration_object(
-#                     paths=["script.commands"],
-#                     values=[[]],
-#                 ),
-#                 create_integration_object(
-#                     paths=["script.commands"],
-#                     values=[
-#                         [
-#                             {
-#                                 "name": "ip",
-#                                 "description": "ip command",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "ip_1",
-#                                         "default": True,
-#                                         "isArray": True,
-#                                         "required": True,
-#                                         "description": "ip_1_description",
-#                                     },
-#                                     {
-#                                         "name": "ip_2",
-#                                         "default": True,
-#                                         "isArray": True,
-#                                         "required": True,
-#                                         "description": "ip_2_description",
-#                                     },
-#                                 ],
-#                                 "outputs": [],
-#                             },
-#                         ]
-#                     ],
-#                 ),
-#             ],
-#             0,
-#             [],
-#             []
-#         ),
-#         (
-#             [
-#                 create_integration_object(
-#                     paths=["script.commands"],
-#                     values=[
-#                         [
-#                             {
-#                                 "name": "ip_1",
-#                                 "description": "ip command 1",
-#                                 "deprecated": False,
-#                                 "arguments": [
-#                                     {
-#                                         "name": "ip_1",
-#                                         "default": True,
-#                                         "isArray": True,
-#                                         "required": True,
-#                                         "description": "ip_1_description",
-#                                     },
-#                                     {
-#                                         "name": "ip_2",
-#                                         "default": True,
-#                                         "isArray": True,
-#                                         "required": True,
-#                                         "description": "ip_2_description",
-#                                     },
-#                                     {
-#                                         "name": "ip_1",
-#                                         "default": True,
-#                                         "isArray": True,
-#                                         "required": True,
-#                                         "description": "ip_1_description",
-#                                     },
-#                                 ],
-#                                 "outputs": [],
-#                             }
-#                         ]
-#                     ],
-#                 )
-#             ],
-#             1,
-#             [
-#                 "The following commands contain duplicated arguments:\nCommand ip_1, contains multiple appearances of the following arguments ip_1.\nPlease make sure to remove the duplications."
-#             ],
-#             []
-#         ),
-#     ],
-# )
-# def test_IsNameContainIncidentInCorePackValidator_is_valid(
-#     mocker, content_items, expected_number_of_failures, expected_msgs, core_packs_ls
-# ):
-#     """
-#     Given
-#     content_items iterables.
-#         - Case 1: Two valid integrations:
-#             - One integration without commands.
-#             - One integration with one command without duplicated args.
-#         - Case 2: One invalid integration with a command with 3 arguments Two of the same name and one different..
-#     When
-#     - Calling the IsNameContainIncidentInCorePackValidator is valid function.
-#     Then
-#         - Make sure the validation fail when it needs to and the right error message is returned.
-#         - Case 1: Shouldn't fail any.
-#         - Case 2: Should fail.
-#     """
-#     mocker.patch(
-#         "demisto_sdk.commands.validate.validators.IN_validators.IN139_is_name_contain_incident_in_core_pack.get_core_pack_list",
-#         return_value = ["pack_1"]
-#     )
-#     mock = mocker.patch("demisto_sdk.commands.content_graph.objects.content_item.ContentItem.pack_name")
-#     mock.side_effect = iter(["pack_1", "pack_2", "pack_3"])
-#     results = IsNameContainIncidentInCorePackValidator().is_valid(content_items)
-#     assert len(results) == expected_number_of_failures
-#     assert all(
-#         [
-#             result.message == expected_msg
-#             for result, expected_msg in zip(results, expected_msgs)
-#         ]
-#     )
 
 
 @pytest.mark.parametrize(
@@ -820,13 +452,8 @@ def test_IsSiemIntegrationValidMarketplaceValidator_fix():
     assert MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
 
 
-
-
-
-
-
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs, marketplaces",
+    "content_items, expected_number_of_failures, expected_msgs",
     [
         (
             [
@@ -834,10 +461,6 @@ def test_IsSiemIntegrationValidMarketplaceValidator_fix():
                 create_integration_object(
                     paths=["deprecated", "display"],
                     values=[True, "test (Deprecated)"],
-                ),
-                create_integration_object(
-                    paths=["deprecated", "display"],
-                    values=[True, "test"],
                 ),
             ],
             0,
@@ -852,22 +475,22 @@ def test_IsSiemIntegrationValidMarketplaceValidator_fix():
             ],
             1,
             [
-                "The marketplaces field of this XSIAM integration is incorrect.\nThis field should have only the 'marketplacev2' value."
+                "All integrations whose display_names end with `(Deprecated)` must have `deprecated:true`.\nPlease run demisto-sdk format --deprecate -i "
             ],
-            [MarketplaceVersions.XSOAR],
         ),
     ],
 )
 def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs, marketplaces
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
     content_items iterables.
-        - Case 1: Two valid integrations:
-            - One non siem integration.
-            - One siem integration with the marketplacev2 tag.
-        - Case 2: One invalid siem integration without marketplacev2 tag.
+        - Case 1: Three valid integrations:
+            - One non deprecated integration.
+            - One deprecated integration with deprecated display template.
+        - Case 2: Two invalid integrations
+            - One non deprecated integration with deprecated display template.
     When
     - Calling the IsValidDisplayNameForNonDeprecatedIntegrationValidator is valid function.
     Then
@@ -875,7 +498,180 @@ def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsValidDisplayNameForNonDeprecatedIntegrationValidator().is_valid(content_items)
+    results = IsValidDisplayNameForNonDeprecatedIntegrationValidator().is_valid(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            expected_msg in result.message
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["deprecated", "description"],
+                    values=[True, "Deprecated. No available replacement."],
+                ),
+                create_integration_object(
+                    paths=["deprecated", "description"],
+                    values=[True, "Deprecated. Use test_2 FTK instead."],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["deprecated", "description"],
+                    values=[False, "Deprecated. No available replacement."],
+                ),
+                create_integration_object(
+                    paths=["deprecated", "description"],
+                    values=[False, "Deprecated. Use test_2 FTK instead."],
+                ),
+            ],
+            2,
+            [
+                "All integrations whose description states are deprecated, must have `deprecated:true`.\nPlease run demisto-sdk format --deprecate -i",
+                "All integrations whose description states are deprecated, must have `deprecated:true`.\nPlease run demisto-sdk format --deprecate -i",
+            ],
+        ),
+    ],
+)
+def test_IsValidDescriptionForNonDeprecatedIntegrationValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One non deprecated integration.
+            - Two deprecated integrations with deprecated description templates.
+        - Case 2: Two invalid integrations
+            - Two non deprecated integrations with deprecated description templates.
+    When
+    - Calling the IsValidDescriptionForNonDeprecatedIntegrationValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
+    """
+    results = IsValidDescriptionForNonDeprecatedIntegrationValidator().is_valid(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            expected_msg in result.message
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration", "script.feed"],
+                    values=[[RELIABILITY_PARAM], True],
+                ),
+                create_integration_object(
+                    paths=["configuration", "script.commands"],
+                    values=[
+                        [RELIABILITY_PARAM],
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "ip arg description",
+                                    }
+                                ],
+                                "outputs": [],
+                            }
+                        ],
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.feed"],
+                    values=[True],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "ip arg description",
+                                    }
+                                ],
+                                "outputs": [],
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            2,
+            [
+                "Feed integrations and integrations with reputation commands must implement a reliability parameter, make sure to add one.",
+                "Feed integrations and integrations with reputation commands must implement a reliability parameter, make sure to add one.",
+            ],
+        ),
+    ],
+)
+def test_IsMissingReliabilityParamValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One integration without reliability param and with no need for it.
+            - One feed integration with reliability param.
+            - One integration with reliability param and reputation command.
+        - Case 2: Two invalid integrations:
+            - One feed integration without reliability param.
+            - One integration without reliability param and with reputation command.
+    When
+    - Calling the IsMissingReliabilityParamValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all.
+    """
+    results = IsMissingReliabilityParamValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -883,3 +679,43 @@ def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsMissingReliabilityParamValidator_fix():
+    """
+    Given
+        An integration with reputation command and no reliability param.
+    When
+    - Calling the IsMissingReliabilityParamValidator fix function.
+    Then
+        - Make sure that the reliability param was added to the integration, and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "ip",
+                    "description": "ip command",
+                    "deprecated": False,
+                    "arguments": [
+                        {
+                            "name": "ip",
+                            "default": True,
+                            "isArray": True,
+                            "required": True,
+                            "description": "ip arg description",
+                        }
+                    ],
+                    "outputs": [],
+                }
+            ]
+        ],
+    )
+    validator = IsMissingReliabilityParamValidator()
+    assert not validator.is_containing_reliability_param(content_item.params)
+    assert (
+        validator.fix(content_item).message
+        == "Added the reliability param to the integration."
+    )
+    assert validator.is_containing_reliability_param(content_item.params)

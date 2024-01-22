@@ -4,12 +4,11 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     FEED_RELIABILITY,
-    RELIABILITY_COMMAND,
+    RELIABILITY_PARAM,
     RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
 )
 from demisto_sdk.commands.content_graph.objects.integration import (
-    Command,
     Integration,
     Parameter,
 )
@@ -58,10 +57,10 @@ class IsMissingReliabilityParamValidator(BaseValidator[ContentTypes]):
         )
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        command: Command = Command(**RELIABILITY_COMMAND)
+        param: Parameter = Parameter(**RELIABILITY_PARAM)
         if content_item.is_feed:
-            command.name = FEED_RELIABILITY
-        content_item.commands.append(command)
+            param.name = FEED_RELIABILITY
+        content_item.params.append(param)
         return FixResult(
             validator=self,
             message=self.fix_message.format(),

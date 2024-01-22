@@ -1365,7 +1365,7 @@ RELIABILITY_PARAMETER_NAMES = [
     RELIABILITY,
 ]
 
-RELIABILITY_COMMAND = {
+RELIABILITY_PARAM = {
     "name": RELIABILITY,
     "display": "Source Reliability",
     "type": 15,

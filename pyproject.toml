@@ -12,6 +12,8 @@ classifiers=[
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: Implementation :: CPython'
 ]
 exclude = ["TestSuite/**", "*/tests/*", "tests"]
@@ -24,7 +26,7 @@ merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
 merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.8,<=3.12"
 autopep8 = "^1.6.0"
 bandit = "^1.7.4"
 mypy = "^0.982"

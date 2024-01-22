@@ -1360,12 +1360,31 @@ GET_MAPPING_FIELDS_COMMAND = {
     "name": GET_MAPPING_FIELDS_COMMAND_NAME,
 }
 
+FEED_RELIABILITY = "feedReliability"
+RELIABILITY = "reliability"
+
 RELIABILITY_PARAMETER_NAMES = [
     "integration_reliability",  # First item in the list will be used in errors
     "integrationReliability",
-    "feedReliability",
-    "reliability",
+    FEED_RELIABILITY,
+    RELIABILITY,
 ]
+
+RELIABILITY_PARAM = {
+    "name": RELIABILITY,
+    "display": "Source Reliability",
+    "type": 15,
+    "required": True,
+    "options": [
+        "A - Completely reliable",
+        "B - Usually reliable",
+        "C - Fairly reliable",
+        "D - Not usually reliable",
+        "E - Unreliable",
+        "F - Reliability cannot be judged",
+    ],
+    "additionalinfo": "Reliability of the source providing the intelligence data",
+}
 
 COMMON_PARAMS_DISPLAY_NAME = {
     "insecure": "Trust any certificate (not secure)",
@@ -1530,7 +1549,7 @@ FEED_REQUIRED_PARAMS = [
         "must_be_one_of": {},
     },
     {
-        "name": "feedReliability",
+        "name": FEED_RELIABILITY,
         "must_equal": {
             "display": "Source Reliability",
             "type": 15,

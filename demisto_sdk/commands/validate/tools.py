@@ -114,6 +114,7 @@ def get_default_output_description():
         ).read_text()
     )
 
+
 def find_param(params: List[Parameter], param_to_find: str) -> Optional[Parameter]:
     """_summary_
 

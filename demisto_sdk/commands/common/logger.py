@@ -394,7 +394,7 @@ def logging_setup(
 
     log_handlers: List[logging.Handler] = [console_handler]
 
-    # We set up the console handler separately before the file logger is ready, so that we display log messages
+    # We set up the console handler separately before the file logger is ready, so that we can display log messages
     root_logger: logging.Logger = logging.getLogger("")
     set_demisto_handlers_to_logger(_logger=root_logger, handlers=log_handlers)
     set_demisto_handlers_to_logger(_logger=logger, handlers=log_handlers)
@@ -463,7 +463,7 @@ def logging_setup(
     logger.debug(f"Platform: {platform.system()}")
 
     if LOG_FILE_PATH_PRINT and not skip_log_file_creation:
-        logger.info(f"[yellow]Log file location: {log_file_path}[/yellow]")
+        logger.info(f"[yellow]Log file location: {LOG_FILE_PATH}[/yellow]")
 
     return logger
 

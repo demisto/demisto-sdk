@@ -1354,6 +1354,11 @@ ACCEPTED_FILE_EXTENSIONS = [
     ".lock",
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
+GET_MAPPING_FIELDS_COMMAND_NAME = "get-mapping-fields"
+GET_MAPPING_FIELDS_COMMAND = {
+    "description": "Retrieves a User Profile schema which holds all of the user fields in the application. Used for outgoing mapping through the Get Schema option.",
+    "name": GET_MAPPING_FIELDS_COMMAND_NAME,
+}
 
 RELIABILITY_PARAMETER_NAMES = [
     "integration_reliability",  # First item in the list will be used in errors
@@ -1361,6 +1366,12 @@ RELIABILITY_PARAMETER_NAMES = [
     "feedReliability",
     "reliability",
 ]
+
+COMMON_PARAMS_DISPLAY_NAME = {
+    "insecure": "Trust any certificate (not secure)",
+    "unsecure": "Trust any certificate (not secure)",
+    "proxy": "Use system proxy settings",
+}
 
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
@@ -1658,6 +1669,7 @@ VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."', "\n}", "\n]"]
 FIRST_FETCH = "first_fetch"
 
 MAX_FETCH = "max_fetch"
+DEFAULT_MAX_FETCH = 10
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (
     FileType.RELEASE_NOTES,
@@ -1713,6 +1725,10 @@ BUILD_IN_COMMANDS = [
     "deleteIndicators",
     "extractIndicators",
 ]
+
+
+class Auto(str, Enum):
+    PREDEFINED = "PREDEFINED"
 
 
 class ContentItems(Enum):
@@ -1908,6 +1924,7 @@ class ParameterType(Enum):
     TEXT_AREA_ENCRYPTED = 14
     SINGLE_SELECT = 15
     MULTI_SELECT = 16
+    EXPIRATION_FIELD = 17
 
 
 NO_TESTS_DEPRECATED = "No tests (deprecated)"

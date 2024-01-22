@@ -16,7 +16,7 @@ concurrency:
 jobs:
   validate-changelog:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.base.ref == 'skip_changelog_execution_master'
+    if: github.event.pull_request.base.ref == 'master'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

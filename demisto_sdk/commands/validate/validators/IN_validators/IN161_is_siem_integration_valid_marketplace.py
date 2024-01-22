@@ -15,12 +15,12 @@ ContentTypes = Integration
 
 class IsSiemIntegrationValidMarketplaceValidator(BaseValidator[ContentTypes]):
     error_code = "IN161"
-    description = ""
+    description = "Validate that the marketplacev2 tag appear in the marketplaces list of a siem integration."
     error_message = "The marketplaces field of this XSIAM integration is incorrect.\nThis field should have only the 'marketplacev2' value."
     fix_message = (
         "Added the 'marketplacev2' entry to the integration's marketplaces list."
     )
-    related_field = ""
+    related_field = "isfetchevents, marketplaces"
     is_auto_fixable = True
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

@@ -1,5 +1,6 @@
 import pytest
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
@@ -12,6 +13,10 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN130_is_integration
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN135_is_valid_param_display import (
     IsValidParamDisplayValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN160_is_valid_display_name_for_non_deprecated_integration import IsValidDisplayNameForNonDeprecatedIntegrationValidator
+from demisto_sdk.commands.validate.validators.IN_validators.IN161_is_siem_integration_valid_marketplace import (
+    IsSiemIntegrationValidMarketplaceValidator,
 )
 
 
@@ -732,3 +737,149 @@ def test_IsValidParamDisplayValidator_fix():
 #             for result, expected_msg in zip(results, expected_msgs)
 #         ]
 #     )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs, marketplaces",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["script.marketplaces", "script.isfetchevents"],
+                    values=["marketplacev2", True],
+                ),
+            ],
+            0,
+            [],
+            [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.marketplaces", "script.isfetchevents"],
+                    values=["marketplace", True],
+                )
+            ],
+            1,
+            [
+                "The marketplaces field of this XSIAM integration is incorrect.\nThis field should have only the 'marketplacev2' value."
+            ],
+            [MarketplaceVersions.XSOAR],
+        ),
+    ],
+)
+def test_IsSiemIntegrationValidMarketplaceValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs, marketplaces
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations:
+            - One non siem integration.
+            - One siem integration with the marketplacev2 tag.
+        - Case 2: One invalid siem integration without marketplacev2 tag.
+    When
+    - Calling the IsSiemIntegrationValidMarketplaceValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
+    """
+    for content_item in content_items:
+        content_item.marketplaces = marketplaces
+    results = IsSiemIntegrationValidMarketplaceValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsSiemIntegrationValidMarketplaceValidator_fix():
+    """
+    Given
+        A siem integration without marketplacev2 tag.
+    When
+    - Calling the IsSiemIntegrationValidMarketplaceValidator fix function.
+    Then
+        - Make sure that the marketplacev2 tag was added to the list of available marketplaces, and that the right message was returned.
+    """
+    content_item = create_integration_object(
+        paths=["script.marketplaces", "script.isfetchevents"],
+        values=["marketplace", True],
+    )
+    content_item.marketplaces = [MarketplaceVersions.MarketplaceV2]
+    validator = IsSiemIntegrationValidMarketplaceValidator()
+    assert (
+        validator.fix(content_item).message
+        == "Added the 'marketplacev2' entry to the integration's marketplaces list."
+    )
+    assert MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
+
+
+
+
+
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs, marketplaces",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["deprecated", "display"],
+                    values=[True, "test (Deprecated)"],
+                ),
+                create_integration_object(
+                    paths=["deprecated", "display"],
+                    values=[True, "test"],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["deprecated", "display"],
+                    values=[False, "test (Deprecated)"],
+                )
+            ],
+            1,
+            [
+                "The marketplaces field of this XSIAM integration is incorrect.\nThis field should have only the 'marketplacev2' value."
+            ],
+            [MarketplaceVersions.XSOAR],
+        ),
+    ],
+)
+def test_IsValidDisplayNameForNonDeprecatedIntegrationValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs, marketplaces
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations:
+            - One non siem integration.
+            - One siem integration with the marketplacev2 tag.
+        - Case 2: One invalid siem integration without marketplacev2 tag.
+    When
+    - Calling the IsValidDisplayNameForNonDeprecatedIntegrationValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
+    """
+    results = IsValidDisplayNameForNonDeprecatedIntegrationValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

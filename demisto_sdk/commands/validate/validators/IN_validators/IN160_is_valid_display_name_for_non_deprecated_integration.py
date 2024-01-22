@@ -1,14 +1,12 @@
 
 from __future__ import annotations
-import re
 
 from typing import Iterable, List
-from demisto_sdk.commands.common.constants import DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Integration

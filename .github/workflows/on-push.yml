@@ -241,7 +241,7 @@ jobs:
 
       - name: Cache Pre commit
         id: cache-pre-commit
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit

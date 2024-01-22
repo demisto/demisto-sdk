@@ -33,6 +33,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONTEXT_STANDARD_URL,
     XSOAR_SUPPORT,
     MarketplaceVersions,
+    ParameterType,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -78,7 +79,6 @@ class IntegrationValidator(ContentEntityValidator):
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
-    EXPIRATION_FIELD_TYPE = 17
     ALLOWED_HIDDEN_PARAMS = {"longRunning", "feedIncremental", "feedReputation"}
 
     def __init__(
@@ -1194,7 +1194,7 @@ class IntegrationValidator(ContentEntityValidator):
             configuration_display = configuration_param.get("display")
 
             # This parameter type will not use the display value.
-            if field_type == self.EXPIRATION_FIELD_TYPE:
+            if field_type == ParameterType.EXPIRATION_FIELD.value:
                 if configuration_display:
                     error_message, error_code = Errors.not_used_display_name(
                         configuration_param["name"]

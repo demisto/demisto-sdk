@@ -1,10 +1,11 @@
 import re
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_approved_tags_from_branch
+from demisto_sdk.commands.content_graph.objects.integration import Parameter
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 
 
@@ -112,3 +113,18 @@ def get_default_output_description():
             / "common/default_output_descriptions.json"
         ).read_text()
     )
+
+def find_param(params: List[Parameter], param_to_find: str) -> Optional[Parameter]:
+    """_summary_
+
+    Args:
+        params (List[Parameter]): The integration's params list.
+        param_to_find (str): The name of the param we wish to find.
+
+    Returns:
+        dict: The param with the given name or an empty string.
+    """
+    for param in params:
+        if param.name == param_to_find:
+            return param
+    return None

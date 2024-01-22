@@ -114,9 +114,7 @@ def find_param(params: List[Parameter], param_to_find: str) -> Optional[Paramete
     Returns:
         dict: The param with the given name or an empty string.
     """
-    max_fetch_param = None
     for param in params:
         if param.name == param_to_find:
-            max_fetch_param = param
-            break
-    return max_fetch_param
+            return param
+    return None

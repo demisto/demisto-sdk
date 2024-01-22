@@ -1,7 +1,10 @@
+from typing import List
+
 import pytest
 
 from demisto_sdk.commands.common.constants import (
     COMMON_PARAMS_DISPLAY_NAME,
+    DEFAULT_MAX_FETCH,
     FIRST_FETCH,
     FIRST_FETCH_PARAM,
     GET_MAPPING_FIELDS_COMMAND,
@@ -9,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
     MAX_FETCH,
     MAX_FETCH_PARAM,
 )
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_script_object,
@@ -107,7 +111,7 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN134_is_containing_
     ],
 )
 def test_ValidSubtypeValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures: int, expected_msgs: List[str]
 ):
     """
     Given
@@ -211,7 +215,7 @@ def test_ValidSubtypeValidator_is_valid(
     ],
 )
 def test_IsIntegrationRunnableValidator_is_valid(
-    content_items, expected_number_of_failures
+    content_items: List[Integration], expected_number_of_failures: int
 ):
     """
     Given
@@ -345,7 +349,9 @@ def test_IsIntegrationRunnableValidator_is_valid(
     ],
 )
 def test_IsValidProxyAndInsecureValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -491,7 +497,9 @@ def test_IsValidProxyAndInsecureValidator_fix():
     ],
 )
 def test_IsValidCheckboxParamValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -588,7 +596,10 @@ def test_IsValidCheckboxParamValidator_fix():
     ],
 )
 def test_IsValidCategoryValidator_is_valid(
-    mocker, content_items, expected_number_of_failures, expected_msgs
+    mocker,
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -655,7 +666,9 @@ def test_IsValidCategoryValidator_is_valid(
     ],
 )
 def test_IsIdContainBetaValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -736,7 +749,9 @@ def test_IsIdContainBetaValidator_fix():
     ],
 )
 def test_IsNameContainBetaValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -813,7 +828,9 @@ def test_IsNameContainBetaValidator_fix():
     ],
 )
 def test_IsDisplayContainBetaValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -929,7 +946,9 @@ def test_IsDisplayContainBetaValidator_is_valid(
     ],
 )
 def test_IsCommandArgsContainDuplicationsValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -989,7 +1008,9 @@ def test_IsCommandArgsContainDuplicationsValidator_is_valid(
     ],
 )
 def test_IsParamsContainDuplicationsValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -1157,7 +1178,9 @@ def test_IsParamsContainDuplicationsValidator_is_valid(
     ],
 )
 def test_IsValidContextPathValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -1273,7 +1296,9 @@ def test_IsValidContextPathValidator_is_valid(
     ],
 )
 def test_ShouldHaveDisplayFieldValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -1430,7 +1455,9 @@ def test_ShouldHaveDisplayFieldValidator_fix():
     ],
 )
 def test_IsMissingDisplayFieldValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -1526,7 +1553,9 @@ def test_IsMissingDisplayFieldValidator_is_valid(
     ],
 )
 def test_IsValidMaxFetchParamValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -1584,7 +1613,7 @@ def test_IsValidMaxFetchParamValidator_fix():
     )
     assert (
         IsValidMaxFetchParamValidator().fix(content_item).message
-        == "Added a 'defaultvalue = 10' to the max_fetch param."
+        == f"Added a 'defaultvalue = {DEFAULT_MAX_FETCH}' to the max_fetch param."
     )
     assert any(
         [
@@ -1646,7 +1675,9 @@ def test_IsValidMaxFetchParamValidator_fix():
     ],
 )
 def test_IsValidFetchIntegrationValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -1745,7 +1776,9 @@ def test_IsValidFetchIntegrationValidator_fix():
     ],
 )
 def test_IsValidAsMappableIntegrationValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given
@@ -1849,7 +1882,9 @@ def test_IsValidAsMappableIntegrationValidator_fix():
     ],
 )
 def test_IsContainingMultipleDefaultArgsValidator_is_valid(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
 ):
     """
     Given

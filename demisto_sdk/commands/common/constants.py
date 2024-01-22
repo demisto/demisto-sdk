@@ -1669,6 +1669,7 @@ VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."', "\n}", "\n]"]
 FIRST_FETCH = "first_fetch"
 
 MAX_FETCH = "max_fetch"
+DEFAULT_MAX_FETCH = 10
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (
     FileType.RELEASE_NOTES,

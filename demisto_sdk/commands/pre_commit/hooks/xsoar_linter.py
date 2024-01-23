@@ -23,6 +23,15 @@ class XsoarLinterHook(Hook):
         Args:
         """
         for integration_script_obj, files in self.context.object_to_files.items():
+            files = join_files(
+                {
+                    file
+                    for file in files
+                    if file.name == f'{integration_script_obj.path.stem}.py'
+                }
+            )
+            if not files:
+                continue
             xsoar_linter_env = {}
             if isinstance(integration_script_obj, Integration) and integration_script_obj.long_running:
                 xsoar_linter_env["LONGRUNNING"] = "True"
@@ -47,13 +56,7 @@ class XsoarLinterHook(Hook):
                 "entry": f'env {xsoar_linter_env_str} {Path(sys.executable).parent}/{self.base_hook["entry"]}'
             })
             hook['args'].extend(args)
-            hook["files"] = join_files(
-                {
-                    file
-                    for file in files
-                    if file.name == f'{integration_script_obj.path.stem}.py' and '_test' not in file.name
-                }
-            )
+            hook['files'] = files
             self.hooks.append(hook)
 
 

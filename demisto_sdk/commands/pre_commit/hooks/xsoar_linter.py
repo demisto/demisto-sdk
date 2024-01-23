@@ -51,7 +51,7 @@ class XsoarLinterHook(Hook):
                 {
                     file
                     for file in files
-                    if file.suffix == ".py" and '_test' not in file.name
+                    if file.name == f'{integration_script_obj.path.stem}.py' and '_test' not in file.name
                 }
             )
             self.hooks.append(hook)

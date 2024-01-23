@@ -1,11 +1,11 @@
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import create_playbook_object
-from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
-    IsInputKeyNotInTasksValidator,
-)
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
+    IsInputKeyNotInTasksValidator,
 )
 
 
@@ -79,22 +79,22 @@ def test_is_valid_all_inputs_in_use(content_item, expected_result):
     "content_item, expected_result",
     [
         (
-                create_playbook_object(),
-                [],
+            create_playbook_object(),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["rolename"],
-                    values=[[]],
-                ),
-                [],
+            create_playbook_object(
+                paths=["rolename"],
+                values=[[]],
+            ),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["rolename"],
-                    values=[["Administrator"]],
-                ),
-                "The playbook 'Detonate File - JoeSecurity V2' can not have a rolename.",
+            create_playbook_object(
+                paths=["rolename"],
+                values=[["Administrator"]],
+            ),
+            "The playbook 'Detonate File - JoeSecurity V2' can not have a rolename.",
         ),
     ],
 )

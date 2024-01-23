@@ -2871,6 +2871,26 @@ class TestGenericFunctions:
 
         result = get_fields_by_script_argument(task)
         assert "field_name" in result
+    
+    
+    custom_fields_with_explicit_method ={
+        "id": "ID",
+        "scriptarguments": {
+            "customFields": {'simple': '${keys}'}
+        },
+    }
+    @staticmethod
+    def test(task = custom_fields_with_explicit_method):
+        """
+        Given
+            - A playbook task with custom fields that retrieves its values in an explicit way (using the ${} method instead of "get" method)
+        When
+            -  'get_fields_by_script_argument' is called
+        Then
+            -  The function should return an empty set with no errors
+        """
+        result = get_fields_by_script_argument(task)
+        assert result ==set()
 
 
 class TestFlow(unittest.TestCase):

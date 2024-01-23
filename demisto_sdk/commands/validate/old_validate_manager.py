@@ -2900,6 +2900,15 @@ class OldValidateManager:
     def get_changed_meta_files_that_should_have_version_raised(
         self, changed_meta_files
     ):
+        """
+        Check if specified fields have changed in each meta_file to determine if it should have its version raised.
+
+        Args:
+            changed_meta_files (set): set of file paths of the changed meta files.
+
+        Returns:
+            set: A set containing file paths of meta_files that should have their version raised.
+        """
         fields_to_check = [
             "support",
             "serverMinVersion",

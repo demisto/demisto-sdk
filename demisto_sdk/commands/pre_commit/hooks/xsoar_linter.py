@@ -3,11 +3,11 @@ from copy import deepcopy
 from packaging.version import Version
 from pathlib import Path
 
-from commands.content_graph.objects import Integration, Script
-from commands.lint.resources.pylint_plugins.certified_partner_level_checker import cert_partner_msg
-from commands.lint.resources.pylint_plugins.community_level_checker import community_msg
-from commands.lint.resources.pylint_plugins.partner_level_checker import partner_msg
-from commands.lint.resources.pylint_plugins.xsoar_level_checker import xsoar_msg
+from demisto_sdk.commands.content_graph.objects import Integration, Script
+from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import cert_partner_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import community_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import partner_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import xsoar_msg
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
 

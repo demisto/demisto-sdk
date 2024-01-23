@@ -11,6 +11,13 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker impo
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
 
+excluded_files = [
+    "CommonServerPython.py",
+    "demistomock.py",
+    "CommonServerUserPython.py",
+    "conftest.py",
+    ".venv",
+]
 
 class XsoarLinterHook(Hook):
 
@@ -96,6 +103,8 @@ class XsoarLinterHook(Hook):
                     checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
                 for msg in checker_msgs_list:
                     message_enable += f"{msg},"
+        # Excluded files
+        command.append(f"--ignore={','.join(excluded_files)}")
         # Message format
         command.append("--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'")
         # Enable only Demisto Plugins errors.

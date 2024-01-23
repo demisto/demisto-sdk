@@ -2244,7 +2244,7 @@ def test_mapping_fields_command_dont_exist(integration):
         assert not validator.is_mapping_fields_command_exist()
 
 
-def test_get_packs_that_should_have_version_raised(repo):
+def test_get_packs_that_should_have_version_raised(mocker, repo):
     """
     Given
     - Different files from different packs in several statuses:
@@ -2253,12 +2253,14 @@ def test_get_packs_that_should_have_version_raised(repo):
       3. Added script to new pack
       4. Added script to existing pack
       5. Modified old format script
+      6. Modified dependencies field in pack_metadata.json file
+      7. Modified tags field in pack_metadata.json file
 
     When
     - Running get_packs_that_should_have_version_raised.
 
     Then
-    -  The returning set includes the packs for 1, 4 & 5 and does not include the packs for 2 & 3.
+    -  The returning set includes the packs for 1, 4, 5 & 6 and does not include the packs for 2, 3 & 7.
     """
     existing_pack1 = repo.create_pack("PackWithModifiedIntegration")
     moodified_integration = existing_pack1.create_integration("MyIn")
@@ -2280,6 +2282,18 @@ def test_get_packs_that_should_have_version_raised(repo):
     moodified_test_playbook = existing_pack4.create_test_playbook("TestBook")
     moodified_test_playbook.create_default_test_playbook()
 
+    existing_pack6 = repo.create_pack("PackWithModifiedMetadataDependencies")
+    new_pack_metadata6 = pack_metadata.copy()
+    new_pack_metadata6["dependencies"] = {"Base": {"mandatory": True, "name": "Base"}}
+    existing_pack6.pack_metadata.write_json(new_pack_metadata6)
+
+
+    existing_pack7 = repo.create_pack("PackWithModifiedMetadataTags")
+    new_pack_metadata7 = pack_metadata.copy()
+    new_pack_metadata7["tags"] = ["tag"]
+    existing_pack7.pack_metadata.write_json(new_pack_metadata7)
+
+
     validate_manager = OldValidateManager(check_is_unskipped=False)
     validate_manager.new_packs = {"NewPack"}
 
@@ -2293,13 +2307,18 @@ def test_get_packs_that_should_have_version_raised(repo):
     }
     old_files = {modified_old_format_script.yml.rel_path}
 
+    changed_meta_files = {
+        tools.get_relative_path_from_packs_dir(existing_pack6.pack_metadata.path),
+        tools.get_relative_path_from_packs_dir(existing_pack7.pack_metadata.path)
+    }
+    mocker.patch("demisto_sdk.commands.validate.old_validate_manager.get_remote_file", return_value=pack_metadata)
     with ChangeCWD(repo.path):
         packs_that_should_have_version_raised = (
             validate_manager.get_packs_that_should_have_version_raised(
                 modified_files=modified_files,
                 added_files=added_files,
                 old_format_files=old_files,
-                changed_meta_files=set(),
+                changed_meta_files=changed_meta_files,
             )
         )
 
@@ -2310,6 +2329,8 @@ def test_get_packs_that_should_have_version_raised(repo):
             "PackWithModifiedTestPlaybook" not in packs_that_should_have_version_raised
         )
         assert "NewPack" not in packs_that_should_have_version_raised
+        assert "PackWithModifiedMetadataDependencies" in packs_that_should_have_version_raised
+        assert "PackWithModifiedMetadataTags" not in packs_that_should_have_version_raised
 
 
 def test_quiet_bc_flag(repo):

@@ -45,6 +45,7 @@ from demisto_sdk.commands.common.errors import (
     get_all_error_codes,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.author_image import (
     AuthorImageValidator,
 )
@@ -163,7 +164,6 @@ from demisto_sdk.commands.common.tools import (
     specify_files_from_directory,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 SKIPPED_FILES = [
     "CommonServerUserPython.py",
@@ -2775,9 +2775,11 @@ class OldValidateManager:
         )
 
         modified_packs_that_should_have_version_raised = (
-                modified_packs_that_should_have_version_raised.union(
+            modified_packs_that_should_have_version_raised.union(
                 get_pack_names_from_files(
-                    self.get_changed_meta_files_that_should_have_version_raised(changed_meta_files)
+                    self.get_changed_meta_files_that_should_have_version_raised(
+                        changed_meta_files
+                    )
                 )
             )
         )
@@ -2895,14 +2897,25 @@ class OldValidateManager:
             return is_valid_as_deprecated
         return None
 
-
-    def get_changed_meta_files_that_should_have_version_raised(self, changed_meta_files):
-        fields_to_check = ["support", "serverMinVersion", "dependencies", "marketplaces", "name", "price"]
+    def get_changed_meta_files_that_should_have_version_raised(
+        self, changed_meta_files
+    ):
+        fields_to_check = [
+            "support",
+            "serverMinVersion",
+            "dependencies",
+            "marketplaces",
+            "name",
+            "price",
+        ]
         changed_meta_files_that_should_have_version_raised = set()
         for file_path in changed_meta_files:
             old_meta_file_content = get_remote_file(file_path, tag=self.prev_ver)
             with open(file_path) as f:
                 current_meta_file_content = json.load(f)
-            if any(current_meta_file_content.get(field) != old_meta_file_content.get(field) for field in fields_to_check):
+            if any(
+                current_meta_file_content.get(field) != old_meta_file_content.get(field)
+                for field in fields_to_check
+            ):
                 changed_meta_files_that_should_have_version_raised.add(file_path)
         return changed_meta_files_that_should_have_version_raised

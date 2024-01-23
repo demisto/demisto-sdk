@@ -4,7 +4,10 @@ from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_approved_tags_from_branch
+from demisto_sdk.commands.common.tools import (
+    get_approved_tags_from_branch,
+    string_to_bool,
+)
 from demisto_sdk.commands.content_graph.objects.integration import Parameter
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 
@@ -129,3 +132,11 @@ def find_param(params: List[Parameter], param_to_find: str) -> Optional[Paramete
         if param.name == param_to_find:
             return param
     return None
+
+
+def is_str_bool(input_: str):
+    try:
+        string_to_bool(input_)
+        return True
+    except ValueError:
+        return False

@@ -19,7 +19,7 @@ class IsValidDefaultValueForCheckboxParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN152"
     description = "Validate that the default value of a checkbox param is valid."
     error_message = "The following checkbox params have invalid defaultvalue: {0}.\nUse a boolean represented as a lowercase string, e.g defaultvalue: 'true'"
-    fix_message = ""
+    fix_message = "Changed the default values of the following checkbox params: {0}"
     related_field = "configuration"
     is_auto_fixable = True
     invalid_params: ClassVar[Dict[str, List[str]]] = {}
@@ -46,7 +46,7 @@ class IsValidDefaultValueForCheckboxParamValidator(BaseValidator[ContentTypes]):
             param.name
             for param in params
             if param.type == 8
-            and param.defaultvalue
+            and param.defaultvalue is not None
             and not (
                 isinstance(param.defaultvalue, str)
                 and param.defaultvalue in ["true", "false"]

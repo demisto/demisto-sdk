@@ -6,6 +6,7 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
+    ALLOWED_HIDDEN_PARAMS,
     BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES,
     DBOT_SCORES_DICT,
@@ -69,7 +70,10 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
     strip_description,
 )
-from demisto_sdk.commands.validate.tools import get_default_output_description
+from demisto_sdk.commands.validate.tools import (
+    get_default_output_description,
+    is_str_bool,
+)
 
 default_additional_info = load_default_additional_info_dict()
 
@@ -78,8 +82,6 @@ class IntegrationValidator(ContentEntityValidator):
     """IntegrationValidator is designed to validate the correctness of the file structure we enter to content repo. And
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
-
-    ALLOWED_HIDDEN_PARAMS = {"longRunning", "feedIncremental", "feedReputation"}
 
     def __init__(
         self,
@@ -1544,14 +1546,6 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
-
-        def is_str_bool(input_: str):
-            try:
-                string_to_bool(input_)
-                return True
-            except ValueError:
-                return False
-
         valid = True
 
         for param in self.current_file.get("configuration", ()):
@@ -1571,7 +1565,7 @@ class IntegrationValidator(ContentEntityValidator):
             is_true = (hidden is True) or (
                 is_str_bool(hidden) and string_to_bool(hidden)
             )
-            invalid_bool = is_true and name not in self.ALLOWED_HIDDEN_PARAMS
+            invalid_bool = is_true and name not in ALLOWED_HIDDEN_PARAMS
             hidden_in_all_marketplaces = isinstance(hidden, list) and set(
                 hidden
             ) == set(MarketplaceVersions)

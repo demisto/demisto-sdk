@@ -12,8 +12,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
-DEFAULT = get_default_output_description()
-
 
 class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "IN149"
@@ -23,21 +21,23 @@ class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = True
     invalid_commands: ClassVar[Dict[str, Dict[str, List[str]]]] = {}
+    default: ClassVar[dict] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        self.default.update(get_default_output_description())
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
                     "\n".join(  # type: ignore[misc]
                         f"The command {key} is missing a description for the following contextPath: {', '.join(val)}"  # type: ignore[has-type]
-                        for key, val in invalid_commands
+                        for key, val in invalid_commands.items()
                     )
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if DEFAULT
+            if self.default
             and bool(
                 invalid_commands := self.get_invalid_commands(
                     content_item.commands, content_item.name
@@ -54,7 +54,7 @@ class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
                 output.contextPath
                 for output in command.outputs
                 if output.contextPath
-                and output.contextPath in DEFAULT
+                and output.contextPath in self.default
                 and not output.description
             ]
             if command_missing:
@@ -64,11 +64,11 @@ class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
 
     def format_fix_message(self, integration_name) -> str:
         msg_str = ""
-        for key, values in self.invalid_commands[integration_name]:  # type: ignore[misc]
+        for key, values in self.invalid_commands[integration_name].items():  # type: ignore[misc]
             temp_msg = ""
             for val in values:  # type: ignore[has-type]
-                temp_msg = f"{temp_msg}\n\t\tThe contextPath {val} description is now: {DEFAULT[val]}."
-            msg_str = f"\n\tThe command {key}: {temp_msg}"  # type: ignore[has-type]
+                temp_msg = f"{temp_msg}\n\t\tThe contextPath {val} description is now: {self.default[val]}"
+            msg_str = f"{msg_str}\n\tThe command {key}: {temp_msg}"  # type: ignore[has-type]
         return msg_str
 
     def fix(self, content_item: ContentTypes) -> FixResult:
@@ -79,7 +79,7 @@ class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
                         output.contextPath
                         in self.invalid_commands[content_item.name][command.name]
                     ):
-                        output.description = DEFAULT[output.contextPath]
+                        output.description = self.default[output.contextPath]
         return FixResult(
             validator=self,
             message=self.fix_message.format(self.format_fix_message(content_item.name)),

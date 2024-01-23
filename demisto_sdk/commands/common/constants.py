@@ -1628,6 +1628,8 @@ FEED_REQUIRED_PARAMS = [
     },
 ]
 
+ALLOWED_HIDDEN_PARAMS = {"longRunning", "feedIncremental", "feedReputation"}
+
 INCIDENT_FETCH_REQUIRED_PARAMS = [
     {"display": "Incident type", "name": "incidentType", "type": 13},
     {"display": "Fetch incidents", "name": "isFetch", "type": 8},

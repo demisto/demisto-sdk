@@ -73,6 +73,21 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN134_is_containing_
 from demisto_sdk.commands.validate.validators.IN_validators.IN135_is_valid_param_display import (
     IsValidParamDisplayValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN149_does_common_outputs_have_description import (
+    DoesCommonOutputsHaveDescriptionValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN150_is_valid_display_for_siem_integration import (
+    IsValidDisplayForSiemIntegrationValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_empty_command_args import (
+    IsEmptyCommandArgsValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN152_is_valid_default_value_for_checkbox_param import (
+    IsValidDefaultValueForCheckboxParamValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN153_is_valid_url_default_value import (
+    IsValidUrlDefaultValueValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN154_is_missing_reliability_param import (
     IsMissingReliabilityParamValidator,
 )
@@ -2445,3 +2460,984 @@ def test_IsMissingReliabilityParamValidator_fix():
         == "Added the reliability param to the integration."
     )
     assert validator.is_containing_reliability_param(content_item.params)
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "url",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                                "defaultvalue": "https://test.com",
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "url",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                                "defaultvalue": "www.test.com",
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "url",
+                                "type": 8,
+                                "required": False,
+                                "display": "Trust any certificate (not secure)",
+                                "defaultvalue": "http://test.com",
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The following params have an invalid default value. If possible, replace the http prefix with https: url.",
+            ],
+        ),
+    ],
+)
+def test_IsValidUrlDefaultValueValidator_is_valid(
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Four valid integrations:
+            - One integration without any URL param.
+            - One integration without params.
+            - One integration with URL param with default value starting with https.
+            - One integration with URL param with default value not starting with https nor http.
+        - Case 2: One invalid integration with URL starting with http.
+    When
+    - Calling the IsValidUrlDefaultValueValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all.
+    """
+    results = IsValidUrlDefaultValueValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidUrlDefaultValueValidator_fix():
+    """
+    Given
+        An integration with url param with a default value starting with http.
+    When
+    - Calling the IsValidUrlDefaultValueValidator fix function.
+    Then
+        - Make sure that the default value is now starting with https, and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "url",
+                    "type": 8,
+                    "required": False,
+                    "display": "Trust any certificate (not secure)",
+                    "defaultvalue": "http://test.com",
+                }
+            ]
+        ],
+    )
+    validator = IsValidUrlDefaultValueValidator()
+    validator.invalid_params[content_item.name] = ["url"]
+    assert content_item.params[0].defaultvalue.startswith("http:")
+    assert (
+        validator.fix(content_item).message
+        == "Changed the following params default value to include the https prefix: url."
+    )
+    assert not content_item.params[0].defaultvalue.startswith("http:")
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "type": 8,
+                                "required": False,
+                                "display": "test display",
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "type": 8,
+                                "required": False,
+                                "display": "test display",
+                                "defaultvalue": "false",
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "type": 8,
+                                "required": False,
+                                "display": "test display",
+                                "defaultvalue": "true",
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "type": 8,
+                                "required": False,
+                                "display": "test display",
+                                "defaultvalue": False,
+                            },
+                            {
+                                "name": "test_2",
+                                "type": 8,
+                                "required": False,
+                                "display": "test display",
+                                "defaultvalue": "something wrong",
+                            },
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "type": 8,
+                                "required": False,
+                                "display": "test display",
+                                "defaultvalue": True,
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            2,
+            [
+                "The following checkbox params have invalid defaultvalue: test, test_2.\nUse a boolean represented as a lowercase string, e.g defaultvalue: 'true'",
+                "The following checkbox params have invalid defaultvalue: test.\nUse a boolean represented as a lowercase string, e.g defaultvalue: 'true'",
+            ],
+        ),
+    ],
+)
+def test_IsValidDefaultValueForCheckboxParamValidator_is_valid(
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Four valid integrations:
+            - One integration without any type 8 param.
+            - One integration with type 8 param without default value.
+            - One integration with type 8 param with default value set to 'false'.
+            - One integration with type 8 param with default value set to 'true'.
+        - Case 2: Two invalid integrations:
+            - One integration with two type 8 params: one with default value set to False, and one to something that isn't true/false .
+            - One integration with two type 8 params: one with default value set to True.
+    When
+    - Calling the IsValidDefaultValueForCheckboxParamValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all.
+    """
+    results = IsValidDefaultValueForCheckboxParamValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidDefaultValueForCheckboxParamValidator_fix():
+    """
+    Given
+        An integration with 3 invalid checkbox params default values.
+    When
+    - Calling the IsValidDefaultValueForCheckboxParamValidator fix function.
+    Then
+        - Make sure that the default values are now correct, and that the right msg was returned.
+    """
+    content_item = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "test_1",
+                    "type": 8,
+                    "required": False,
+                    "display": "test display",
+                    "defaultvalue": False,
+                },
+                {
+                    "name": "test_2",
+                    "type": 8,
+                    "required": False,
+                    "display": "test display",
+                    "defaultvalue": "something wrong",
+                },
+                {
+                    "name": "test_3",
+                    "type": 8,
+                    "required": False,
+                    "display": "test display",
+                    "defaultvalue": True,
+                },
+            ]
+        ],
+    )
+    validator = IsValidDefaultValueForCheckboxParamValidator()
+    validator.invalid_params[content_item.name] = ["test_1", "test_2", "test_3"]
+    assert all(
+        [
+            param.defaultvalue not in (None, "true", "false")
+            for param in content_item.params
+        ]
+    )
+    assert (
+        validator.fix(content_item).message
+        == "Changed the default values of the following checkbox params: param test_1 default value was changed to false.\nparam test_2 default value was changed to None.\nparam test_3 default value was changed to true."
+    )
+    assert all(
+        [param.defaultvalue in (None, "true", "false") for param in content_item.params]
+    )
+
+
+def test_IsEmptyCommandArgsValidator_is_valid_success():
+    """
+    Given
+    Two valid integrations:
+        - One integration with commands with arguments.
+        - One integration without commands.
+    When
+    - Calling the IsEmptyCommandArgsValidator is valid function.
+    Then
+        - Make sure all validations passed.
+    """
+    content_items = [
+        create_integration_object(),
+        create_integration_object(
+            paths=["script.commands"],
+            values=[[]],
+        ),
+    ]
+    results = IsEmptyCommandArgsValidator().is_valid(content_items)
+    assert len(results) == 0
+
+
+def test_IsEmptyCommandArgsValidator_is_valid_failure():
+    """
+    Given
+    One invalid integration with command without arguments.
+    When
+    - Calling the IsEmptyCommandArgsValidator is valid function.
+    Then
+        - Make sure the validation fail and the right error message is returned.
+    """
+    content_item = create_integration_object()
+    content_item.commands[0].args = []
+    results = IsEmptyCommandArgsValidator().is_valid([content_item])
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following commands doesn't include any arguments: test-command.\nPlease make sure to include at least one argument."
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["display", "script.isfetchevents"],
+                    values=["test Event Collector", True],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["display", "script.isfetchevents"],
+                    values=["test", True],
+                ),
+                create_integration_object(
+                    paths=["display", "script.isfetchevents"],
+                    values=["Event Collector test", True],
+                ),
+            ],
+            2,
+            [
+                "The integration is a siem integration with invalid display name (test). Please make sure the display name ends with 'Event collector'",
+                "The integration is a siem integration with invalid display name (Event Collector test). Please make sure the display name ends with 'Event collector'",
+            ],
+        ),
+    ],
+)
+def test_IsValidDisplayForSiemIntegrationValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations:
+            - One non siem integration with display name not ending with 'Event Collector'.
+            - One siem integration with display name ending with 'Event Collector'.
+        - Case 2: Two invalid integrations:
+            - One siem integration with display name without 'Event Collector'.
+            - One siem integration with display name starting with 'Event Collector'.
+    When
+    - Calling the IsValidDisplayForSiemIntegrationValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
+    """
+    results = IsValidDisplayForSiemIntegrationValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidDisplayForSiemIntegrationValidator_fix():
+    """
+    Given
+        A siem integration without Event Collector suffix in the display name.
+    When
+    - Calling the IsValidDisplayForSiemIntegrationValidator fix function.
+    Then
+        - Make sure that the Event Collector was added to the display name, and that the right message was returned.
+    """
+    content_item = create_integration_object(
+        paths=["display", "script.isfetchevents"],
+        values=["test", True],
+    )
+    assert content_item.display_name == "test"
+    validator = IsValidDisplayForSiemIntegrationValidator()
+    assert (
+        validator.fix(content_item).message
+        == "Added the 'Event Collector' suffix to the display name, the new display name is test Event Collector."
+    )
+    assert content_item.display_name == "test Event Collector"
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip_1",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "ip_1_description",
+                                    },
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "Test.Test_1",
+                                        "description": "test 1",
+                                    },
+                                    {
+                                        "name": "output_2",
+                                        "contextPath": "Test.Test_2",
+                                        "description": "This is test 2 output.",
+                                    },
+                                ],
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip_1",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "ip_1_description",
+                                    },
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "Test.Test_1",
+                                        "description": "",
+                                    },
+                                    {
+                                        "name": "output_2",
+                                        "contextPath": "Test.Test_2",
+                                        "description": "description_2",
+                                    },
+                                    {
+                                        "name": "output_3",
+                                        "contextPath": "Test.Test_3",
+                                        "description": "",
+                                    },
+                                ],
+                            },
+                            {
+                                "name": "url",
+                                "description": "url command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "url",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "url_description",
+                                    },
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "output_1",
+                                        "contextPath": "Test.Test_1",
+                                        "description": "",
+                                    },
+                                ],
+                            },
+                        ]
+                    ],
+                )
+            ],
+            1,
+            [
+                "The following commands are missing description for the following contextPath: The command ip is missing a description for the following contextPath: Test.Test_1, Test.Test_3\nThe command url is missing a description for the following contextPath: Test.Test_1"
+            ],
+        ),
+    ],
+)
+def test_DoesCommonOutputsHaveDescriptionValidator_is_valid(
+    mocker, content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One integration without default outputs in any of the command outputs.
+            - One integration without commands.
+            - One integration with default outputs with/without the same template as in the json file.
+        - Case 2: One invalid integration with several commands with several empty outputs for default contextpaths.
+    When
+    - Calling the DoesCommonOutputsHaveDescriptionValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
+    """
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.IN_validators.IN149_does_common_outputs_have_description.get_default_output_description",
+        return_value={
+            "Test.Test_1": "This is test 1 output.",
+            "Test.Test_2": "This is test 2 output.",
+            "Test.Test_3": "This is test 3 output.",
+        },
+    )
+    results = DoesCommonOutputsHaveDescriptionValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_DoesCommonOutputsHaveDescriptionValidator_fix():
+    """
+    Given
+        An invalid integration with several commands with several empty outputs for default contextpaths.
+    When
+    - Calling the DoesCommonOutputsHaveDescriptionValidator fix function.
+    Then
+        - Make sure that there're no empty descriptions for default contextpaths, and that the right message was returned.
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "ip",
+                    "description": "ip command",
+                    "deprecated": False,
+                    "arguments": [
+                        {
+                            "name": "ip_1",
+                            "default": True,
+                            "isArray": True,
+                            "required": True,
+                            "description": "ip_1_description",
+                        },
+                    ],
+                    "outputs": [
+                        {
+                            "name": "output_1",
+                            "contextPath": "Test.Test_1",
+                            "description": "",
+                        },
+                        {
+                            "name": "output_2",
+                            "contextPath": "Test.Test_2",
+                            "description": "description_2",
+                        },
+                        {
+                            "name": "output_3",
+                            "contextPath": "Test.Test_3",
+                            "description": "",
+                        },
+                    ],
+                },
+                {
+                    "name": "url",
+                    "description": "url command",
+                    "deprecated": False,
+                    "arguments": [
+                        {
+                            "name": "url",
+                            "default": True,
+                            "isArray": True,
+                            "required": True,
+                            "description": "url_description",
+                        },
+                    ],
+                    "outputs": [
+                        {
+                            "name": "output_1",
+                            "contextPath": "Test.Test_1",
+                            "description": "",
+                        },
+                    ],
+                },
+            ]
+        ],
+    )
+    validator = DoesCommonOutputsHaveDescriptionValidator()
+    validator.invalid_commands[content_item.name] = {
+        "ip": ["Test.Test_1", "Test.Test_3"],
+        "url": ["Test.Test_1"],
+    }
+    validator.default.update(
+        {
+            "Test.Test_1": "This is test 1 output.",
+            "Test.Test_2": "This is test 2 output.",
+            "Test.Test_3": "This is test 3 output.",
+        }
+    )
+    assert (
+        validator.fix(content_item).message
+        == "Added description for the following outputs: \n\tThe command ip: \n\t\tThe contextPath Test.Test_1 description is now: This is test 1 output.\n\t\tThe contextPath Test.Test_3 description is now: This is test 3 output.\n\tThe command url: \n\t\tThe contextPath Test.Test_1 description is now: This is test 1 output."
+    )
+    assert all(
+        [
+            all(
+                [
+                    (output.contextPath in validator.default and output.description)
+                    for output in command.outputs
+                ]
+            )
+            for command in content_item.commands
+        ]
+    )
+
+
+# @pytest.mark.parametrize(
+#     "content_items, expected_number_of_failures, expected_msgs, support_levels",
+#     [
+#         (
+#             [
+#                 create_integration_object(),
+#                 create_integration_object(),
+#                 create_integration_object(),
+#                 create_integration_object(),
+#                 create_integration_object(paths=["configuration"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "insecure",
+#                                 "type": 8,
+#                                 "required": False,
+#                                 "display": "Trust any certificate (not secure)",
+#                                 "fromlicense": "encrypted",
+#                             }
+#                         ]
+#                     ]),
+#             ],
+#             0,
+#             [],
+#             [XSOAR_SUPPORT, PARTNER_SUPPORT, DEVELOPER_SUPPORT, COMMUNITY_SUPPORT, XSOAR_SUPPORT],
+#         ),
+#         (
+#             [
+#                 create_integration_object(paths=["configuration"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "test_1",
+#                                 "type": 8,
+#                                 "required": False,
+#                                 "display": "Trust any certificate (not secure)",
+#                                 "fromlicense": "encrypted",
+#                             }
+#                         ]
+#                     ]),
+#                 create_integration_object(paths=["configuration"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "test_2",
+#                                 "type": 8,
+#                                 "required": False,
+#                                 "display": "Trust any certificate (not secure)",
+#                                 "fromlicense": "encrypted",
+#                             }
+#                         ]
+#                     ]),
+#                 create_integration_object(paths=["configuration"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "test_3",
+#                                 "type": 8,
+#                                 "required": False,
+#                                 "display": "Trust any certificate (not secure)",
+#                                 "fromlicense": "encrypted",
+#                             }
+#                         ]
+#                     ]),
+#             ],
+#             3,
+#             [
+#                 'The following parameters contain the "fromlicense" field: test_1. The field is not allowed for contributors, please remove it.',
+#                 'The following parameters contain the "fromlicense" field: test_2. The field is not allowed for contributors, please remove it.',
+#                 'The following parameters contain the "fromlicense" field: test_3. The field is not allowed for contributors, please remove it.'
+#             ],
+#             [PARTNER_SUPPORT, DEVELOPER_SUPPORT, COMMUNITY_SUPPORT]
+#         ),
+#     ],
+# )
+# def test_IsContainingFromLicenseInParamsValidator_is_valid(
+#     content_items: List[Integration],
+#     expected_number_of_failures: int,
+#     expected_msgs: List[str],
+#     support_levels: List[str]
+# ):
+#     """
+#     Given
+#     content_items iterables.
+#         - Case 1: Three valid integrations:
+#             - One integration without default outputs in any of the command outputs.
+#             - One integration without commands.
+#             - One integration with default outputs with/without the same template as in the json file.
+#         - Case 2: One invalid integration with several commands with several empty outputs for default contextpaths.
+#     When
+#     - Calling the IsContainingFromLicenseInParamsValidator is valid function.
+#     Then
+#         - Make sure the validation fail when it needs to and the right error message is returned.
+#         - Case 1: Should pass all.
+#         - Case 2: Should fail.
+#     """
+#     for content_item, support_level in zip(content_items, support_levels):
+#         content_item.support_level = support_level
+#     results = IsContainingFromLicenseInParamsValidator().is_valid(content_items)
+#     assert len(results) == expected_number_of_failures
+#     assert all(
+#         [
+#             result.message == expected_msg
+#             for result, expected_msg in zip(results, expected_msgs)
+#         ]
+#     )
+
+
+# def test_IsContainingFromLicenseInParamsValidator_fix():
+#     """
+#     Given
+#         An invalid integration with several commands with several empty outputs for default contextpaths.
+#     When
+#     - Calling the IsContainingFromLicenseInParamsValidator fix function.
+#     Then
+#         - Make sure that there're no empty descriptions for default contextpaths, and that the right message was returned.
+#     """
+#     content_item = create_integration_object(
+#         paths=["script.commands"],
+#         values=[
+#             [
+#                 {
+#                     "name": "ip",
+#                     "description": "ip command",
+#                     "deprecated": False,
+#                     "arguments": [
+#                         {
+#                             "name": "ip_1",
+#                             "default": True,
+#                             "isArray": True,
+#                             "required": True,
+#                             "description": "ip_1_description",
+#                         },
+#                     ],
+#                     "outputs": [
+#                         {
+#                             "name": "output_1",
+#                             "contextPath": "Test.Test_1",
+#                             "description": "",
+#                         },
+#                         {
+#                             "name": "output_2",
+#                             "contextPath": "Test.Test_2",
+#                             "description": "description_2",
+#                         },
+#                         {
+#                             "name": "output_3",
+#                             "contextPath": "Test.Test_3",
+#                             "description": "",
+#                         },
+#                     ],
+#                 },
+#                 {
+#                     "name": "url",
+#                     "description": "url command",
+#                     "deprecated": False,
+#                     "arguments": [
+#                         {
+#                             "name": "url",
+#                             "default": True,
+#                             "isArray": True,
+#                             "required": True,
+#                             "description": "url_description",
+#                         },
+#                     ],
+#                     "outputs": [
+#                         {
+#                             "name": "output_1",
+#                             "contextPath": "Test.Test_1",
+#                             "description": "",
+#                         },
+#                     ],
+#                 },
+#             ]
+#         ],
+#     )
+#     validator = IsContainingFromLicenseInParamsValidator()
+#     validator.invalid_commands[content_item.name] = {
+#         "ip": ["Test.Test_1", "Test.Test_3"],
+#         "url": ["Test.Test_1"],
+#     }
+#     validator.default.update(
+#         {
+#             "Test.Test_1": "This is test 1 output.",
+#             "Test.Test_2": "This is test 2 output.",
+#             "Test.Test_3": "This is test 3 output.",
+#         }
+#     )
+#     assert (
+#         validator.fix(content_item).message
+#         == "Added description for the following outputs: \n\tThe command ip: \n\t\tThe contextPath Test.Test_1 description is now: This is test 1 output.\n\t\tThe contextPath Test.Test_3 description is now: This is test 3 output.\n\tThe command url: \n\t\tThe contextPath Test.Test_1 description is now: This is test 1 output."
+#     )
+#     assert all(
+#         [
+#             all(
+#                 [
+#                     (output.contextPath in validator.default and output.description)
+#                     for output in command.outputs
+#                 ]
+#             )
+#             for command in content_item.commands
+#         ]
+#     )
+
+
+# @pytest.mark.parametrize(
+#     "content_items, expected_number_of_failures, expected_msgs",
+#     [
+#         (
+#             [
+#                 create_integration_object(
+#                     paths=["configuration"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "insecure",
+#                                 "type": 8,
+#                                 "required": False,
+#                                 "display": "Trust any certificate (not secure)",
+#                             }
+#                         ]
+#                     ]),
+#                 create_integration_object(
+#                     paths=["configuration"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "insecure",
+#                                 "type": 4,
+#                                 "required": False,
+#                                 "display": "Trust any certificate (not secure)",
+#                                 "hidden": True
+#                             }
+#                         ]
+#                     ]
+#                 ),
+#             ],
+#             0,
+#             [],
+#         ),
+#         (
+#             [
+#                 create_integration_object(
+#                     paths=["configuration"],
+#                     values=[
+#                         [
+#                             {
+#                                 "name": "insecure",
+#                                 "type": 4,
+#                                 "required": False,
+#                                 "display": "Trust any certificate (not secure)",
+#                                 "hidden": False
+#                             }
+#                         ]
+#                     ]
+#                 )
+#             ],
+#             1,
+#             [
+#                 "In order to allow fetching the following params: insecure from an external vault, the type of the parameters should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'.\nFor more details, check the convention for credentials - https://xsoar.pan.dev/docs/integrations/code-conventions#credentials",
+#             ],
+#         ),
+#     ],
+# )
+# def test_IsAPITokenInCredentialTypeValidator_is_valid(
+#     content_items, expected_number_of_failures, expected_msgs
+# ):
+#     """
+#     Given
+#     content_items iterables.
+#         - Case 1: Two valid integrations:
+#             - One non siem integration with display name not ending with 'Event Collector'.
+#             - One siem integration with display name ending with 'Event Collector'.
+#         - Case 2: Two invalid integrations:
+#             - One siem integration with display name without 'Event Collector'.
+#             - One siem integration with display name starting with 'Event Collector'.
+#     When
+#     - Calling the IsAPITokenInCredentialTypeValidator is valid function.
+#     Then
+#         - Make sure the validation fail when it needs to and the right error message is returned.
+#         - Case 1: Should pass all.
+#         - Case 2: Should fail.
+#     """
+#     results = IsAPITokenInCredentialTypeValidator().is_valid(content_items)
+#     assert len(results) == expected_number_of_failures
+#     assert all(
+#         [
+#             result.message == expected_msg
+#             for result, expected_msg in zip(results, expected_msgs)
+#         ]
+#     )

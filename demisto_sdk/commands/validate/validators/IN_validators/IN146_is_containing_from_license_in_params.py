@@ -18,7 +18,7 @@ ContentTypes = Integration
 
 class IsContainingFromLicenseInParamsValidator(BaseValidator[ContentTypes]):
     error_code = "IN146"
-    description = ""
+    description = "Validate that there's no fromlicense param field in non Xsoar supported integration"
     error_message = 'The following parameters contain the "fromlicense" field: {0}. The field is not allowed for contributors, please remove it.'
     fix_message = "Removed the fromlicense field from the following parameters: {0}."
     related_field = "configuration"

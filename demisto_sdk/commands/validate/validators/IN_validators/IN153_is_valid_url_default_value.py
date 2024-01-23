@@ -20,7 +20,7 @@ class IsValidUrlDefaultValueValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that that the url default param starts with https rather than http."
     )
-    error_message = "The following params have an invalid default value. If possible, replace the http prefix with https: {0}"
+    error_message = "The following params have an invalid default value. If possible, replace the http prefix with https: {0}."
     fix_message = (
         "Changed the following params default value to include the https prefix: {0}."
     )

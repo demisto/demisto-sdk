@@ -2299,6 +2299,7 @@ def test_get_packs_that_should_have_version_raised(repo):
                 modified_files=modified_files,
                 added_files=added_files,
                 old_format_files=old_files,
+                changed_meta_files=set()
             )
         )
 
@@ -3107,6 +3108,7 @@ def test_run_validation_using_git_validation_calls(
     validate_manager = OldValidateManager()
 
     mocker.patch.object(validate_manager, "setup_git_params", return_value=True)
+    mocker.patch.object(validate_manager, "get_changed_meta_files_that_should_have_version_raised", return_value={})
     mocker.patch.object(
         validate_manager,
         "get_changed_files_from_git",

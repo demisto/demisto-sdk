@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -67,16 +67,8 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
             self.add_command_or_script_dependency(cmd)
 
     @property
-    def arguments(self) -> List[Argument]:
-        return [
-            Argument(
-                name=argument.get("name", ""),
-                deprecated=argument.get("deprecated", False),
-                description=argument.get("description", ""),
-                default_value=argument.get("defaultValue"),
-            )
-            for argument in self.yml_data.get("args", [])
-        ]
+    def arguments(self) -> List[Dict]:
+        return self.yml_data.get("args", [])
 
     @property
     def runas(self) -> str:

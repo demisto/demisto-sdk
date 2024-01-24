@@ -19,9 +19,9 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
 from demisto_sdk.commands.content_graph.objects.integration_script import (
+    Argument,
     IntegrationScript,
 )
-from demisto_sdk.commands.content_graph.parsers.base_script import Argument
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_scripts_prepare import (
     MarketplaceIncidentToAlertScriptsPreparer,
 )

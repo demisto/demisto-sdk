@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where ***validate*** command did not work with pre-processing rules.
+  type: fix
+pr_number: 3977

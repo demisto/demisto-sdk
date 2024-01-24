@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
+    DOCKER_IO,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
@@ -45,8 +46,6 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 )
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
-DOCKER_IO = os.getenv("DOCKER_IO", "docker-io.art.code.pan.run")
-
 
 class DockerException(Exception):
     pass

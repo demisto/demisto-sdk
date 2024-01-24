@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
+    DOCKER_IO,
 )
 from demisto_sdk.commands.common.docker_helper import (
     docker_login,
@@ -78,7 +79,6 @@ from demisto_sdk.commands.lint.helpers import (
     split_warnings_errors,
     stream_docker_container_output,
 )
-DOCKER_IO = os.getenv("DOCKER_IO", "docker-io.art.code.pan.run")
 
 # 3-rd party packages
 

@@ -22,10 +22,11 @@ class IsScriptArgumentsContainIncidentWordValidator(BaseValidator[ContentTypes])
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []
         for content_item in content_items:
-            wrong_arg_names = []
-            for argument in content_item.arguments:
-                if "incident" in argument.name and not argument.deprecated:
-                    wrong_arg_names.append(argument.name)
+            wrong_arg_names = [
+                argument.name
+                for argument in content_item.arguments
+                if "incident" in argument.name and not argument.deprecated
+            ]
             if wrong_arg_names:
                 invalid_content_items.append(
                     ValidationResult(

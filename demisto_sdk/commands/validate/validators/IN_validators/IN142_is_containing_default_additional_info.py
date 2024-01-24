@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
 )
+from demisto_sdk.commands.validate.tools import find_param
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -23,8 +24,8 @@ ContentTypes = Integration
 class IsContainingDefaultAdditionalInfoValidator(BaseValidator[ContentTypes]):
     error_code = "IN142"
     description = "Validate that the integration contain the right additionalinfo fields for the list of params with predefined additionalinfo."
-    error_message = "The integration contain params with missing/different from the standards additionalinfo fields: {0}"
-    fix_message = "Fixed the following params additionalinfo fields: {0}"
+    error_message = "The integration contains params with missing/malformed additionalinfo fields:\n{0}"
+    fix_message = "Fixed the following params additionalinfo fields:ֿ\n{0}"
     related_field = "configuration"
     is_auto_fixable = True
     invalid_params: ClassVar[dict] = {}
@@ -39,7 +40,7 @@ class IsContainingDefaultAdditionalInfoValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n".join(
                         [
-                            f"The aditionalinfo field of {key} should be: {val}."
+                            f"The aditionalinfo field of {key} should be: {val}"
                             for key, val in invalid_params.items()
                         ]
                     )
@@ -69,16 +70,19 @@ class IsContainingDefaultAdditionalInfoValidator(BaseValidator[ContentTypes]):
         return self.invalid_params[integration_name]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        for param in content_item.params:
-            if param.name in self.invalid_params[content_item]:
-                param.additionalinfo = self.invalid_params[content_item][param.name]
+        for (
+            invalid_param_name,
+            invalid_param_valid_additionalinfo,
+        ) in self.invalid_params[content_item.name].items():
+            if current_param := find_param(content_item.params, invalid_param_name):
+                current_param.additionalinfo = invalid_param_valid_additionalinfo
         return FixResult(
             validator=self,
             message=self.fix_message.format(
                 "\n".join(
                     [
-                        f"The aditionalinfo field of {key} is now: {val}."
-                        for key, val in self.invalid_params[content_item].items()
+                        f"The aditionalinfo field of {key} is now: {val}"
+                        for key, val in self.invalid_params[content_item.name].items()
                     ]
                 )
             ),

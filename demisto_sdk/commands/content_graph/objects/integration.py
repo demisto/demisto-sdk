@@ -93,6 +93,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = False
+    is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     is_beta: bool = False
     is_mappable: bool = False

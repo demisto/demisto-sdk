@@ -27,7 +27,15 @@ class IsValidHiddenValueValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format("\n".join([f"The param {key} contains the following invalid hidden value: {val}" for key, val in invalid_params.items()]), ", ".join(MarketplaceVersions)),
+                message=self.error_message.format(
+                    "\n".join(
+                        [
+                            f"The param {key} contains the following invalid hidden value: {val}"
+                            for key, val in invalid_params.items()
+                        ]
+                    ),
+                    ", ".join(MarketplaceVersions),
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
@@ -35,7 +43,8 @@ class IsValidHiddenValueValidator(BaseValidator[ContentTypes]):
         ]
 
     def get_invalid_params(self, params: List[Parameter]) -> dict:
-        return {param.name: param.hidden
+        return {
+            param.name: param.hidden
             for param in params
             if param.hidden
             and any(

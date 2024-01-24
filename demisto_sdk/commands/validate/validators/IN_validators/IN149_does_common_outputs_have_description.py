@@ -15,10 +15,10 @@ ContentTypes = Integration
 
 class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "IN149"
-    description = ""
+    description = "Validate that a contextPath has a description if it belongs to a predefined list of contextPaths that should have a description."
     error_message = "The following commands are missing description for the following contextPath: {0}"
     fix_message = "Added description for the following outputs: {0}"
-    related_field = ""
+    related_field = "output.description, output.contextPath"
     is_auto_fixable = True
     invalid_commands: ClassVar[Dict[str, Dict[str, List[str]]]] = {}
     default: ClassVar[dict] = {}

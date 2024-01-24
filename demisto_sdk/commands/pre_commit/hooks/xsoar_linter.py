@@ -55,7 +55,7 @@ class XsoarLinterHook(Hook):
                 "entry": f'env {xsoar_linter_env_str} {Path(sys.executable).parent}/{self.base_hook["entry"]}'
             })
             args += [file]
-            hook['path_filenames'] = False
+            hook['pass_filenames'] = False
             hook['args'].extend(args)
             # hook['files'] = files
             self.hooks.append(hook)

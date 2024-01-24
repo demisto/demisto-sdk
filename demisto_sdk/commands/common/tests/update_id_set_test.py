@@ -2871,8 +2871,7 @@ class TestGenericFunctions:
 
         result = get_fields_by_script_argument(task)
         assert "field_name" in result
-    
-    
+
     @staticmethod
     def test_get_fields_by_script_argument__explicit_method():
         """
@@ -2883,15 +2882,9 @@ class TestGenericFunctions:
         Then
             -  The function should return an empty set with no errors, since a the custom field - ${} sould be ignored
         """
-        task ={
-        "id": "ID",
-        "scriptarguments": {
-            "customFields": {'simple': '${keys}'}
-        }}
+        task = {"id": "ID", "scriptarguments": {"customFields": {"simple": "${keys}"}}}
         result = get_fields_by_script_argument(task)
-        assert result ==set()
-        
-
+        assert result == set()
 
     @staticmethod
     def test_get_fields_by_script_argument__json():
@@ -2903,13 +2896,16 @@ class TestGenericFunctions:
         Then
             -  The function should return all dependent incident custom fields in the task
         """
-        task ={
-        "id": "ID",
-        "scriptarguments": {
-            "customFields": {'complex': {'root': 'keys', 'test_key': 'tets_value','id': 'ID'}}
-        }}
+        task = {
+            "id": "ID",
+            "scriptarguments": {
+                "customFields": {
+                    "complex": {"root": "keys", "test_key": "tets_value", "id": "ID"}
+                }
+            },
+        }
         result = get_fields_by_script_argument(task)
-        assert result =={'root', 'test_key'}
+        assert result == {"root", "test_key"}
 
 
 class TestFlow(unittest.TestCase):

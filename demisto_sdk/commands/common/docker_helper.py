@@ -19,12 +19,12 @@ from requests.exceptions import RequestException
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
+    DOCKER_IO,
     DOCKERFILES_INFO_REPO,
     TYPE_PWSH,
     TYPE_PYTHON,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
-    DOCKER_IO,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
@@ -46,6 +46,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 )
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+
 
 class DockerException(Exception):
     pass
@@ -253,9 +254,7 @@ class DockerBase:
         for _ in range(2):
             try:
 
-                test_image_name_to_push = image.replace(
-                    f"{DOCKER_IO}/", ""
-                )
+                test_image_name_to_push = image.replace(f"{DOCKER_IO}/", "")
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
@@ -329,7 +328,7 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in image: # todo
+        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in image:  # todo
             return f"{DOCKER_IO}/{image}"
         return image
 

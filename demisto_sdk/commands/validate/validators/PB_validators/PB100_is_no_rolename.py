@@ -13,8 +13,8 @@ ContentTypes = Playbook
 
 class IsNoRolenameValidator(BaseValidator[ContentTypes]):
     error_code = "PB100"
-    description = "Validate whether the playbook has a rolename"
-    error_message = "The playbook '{playbook_name}' can not have a rolename."
+    description = "Validate whether the playbook has a rolename."
+    error_message = "The playbook '{playbook_name}' can not have a rolename, please remove the field."
     related_field = "rolename"
     is_auto_fixable = False
 

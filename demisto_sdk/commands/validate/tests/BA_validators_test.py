@@ -49,10 +49,10 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_shoul
 from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_version_synched import (
     FromToVersionSyncedValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA_error_code1_name_has_invalid_version import (
+from demisto_sdk.commands.validate.validators.BA_validators.BA_126_has_invalid_version import (
     IsContentItemNameVersionCorrectlyValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA_error_code2_content_item_is_deprecated_correctly import (
+from demisto_sdk.commands.validate.validators.BA_validators.BA_127_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
 )
 

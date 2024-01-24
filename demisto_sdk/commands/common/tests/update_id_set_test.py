@@ -2880,7 +2880,7 @@ class TestGenericFunctions:
         },
     }
     @staticmethod
-    def test(task = custom_fields_with_explicit_method):
+    def test_get_fields_by_script_argument__explicit_method(task = custom_fields_with_explicit_method):
         """
         Given
             - A playbook task with custom fields that retrieves its values in an explicit way (using the ${} method instead of "get" method)
@@ -2891,6 +2891,26 @@ class TestGenericFunctions:
         """
         result = get_fields_by_script_argument(task)
         assert result ==set()
+        
+
+    custom_fields_as_a_json ={
+        "id": "ID",
+        "scriptarguments": {
+            "customFields": {'complex': {'root': 'keys', 'test_key': 'tets_value','id': 'ID'}}
+        },
+    }
+    @staticmethod
+    def test_get_fields_by_script_argument__json(task = custom_fields_as_a_json):
+        """
+        Given
+            - A playbook task with custom fields value is a json
+        When
+            -  'get_fields_by_script_argument' is called
+        Then
+            -  The function should return a set with the json keys that are not in BUILT_IN_FIELDS
+        """
+        result = get_fields_by_script_argument(task)
+        assert result =={'root', 'test_key'}
 
 
 class TestFlow(unittest.TestCase):

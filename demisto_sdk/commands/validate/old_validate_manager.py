@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
+    LISTS_DIR,
     OLDEST_SUPPORTED_VERSION,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
@@ -740,8 +741,13 @@ class OldValidateManager:
         path = Path(file_path)
         if get_log_file() == path:
             return True
-        return path.name in SKIPPED_FILES or (
-            path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"
+        return (
+            path.name in SKIPPED_FILES
+            or (
+                path.name == "CommonServerPython.py"
+                and path.parent.parent.name != "Base"
+            )
+            or (path.parent.name == LISTS_DIR and path.name.endswith("_data.json"))
         )
 
     # flake8: noqa: C901

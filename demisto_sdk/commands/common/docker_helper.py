@@ -45,6 +45,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 )
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+DOCKER_IO = os.getenv("DOCKER_IO", "docker-io.art.code.pan.run")
 
 
 class DockerException(Exception):
@@ -254,7 +255,7 @@ class DockerBase:
             try:
 
                 test_image_name_to_push = image.replace(
-                    "docker-io.art.code.pan.run/", ""
+                    f"{DOCKER_IO}/", ""
                 )
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
@@ -319,7 +320,7 @@ class DockerBase:
         )
         if os.getenv("CONTENT_GITLAB_CI"):
             container.commit(
-                repository=repository.replace("docker-io.art.code.pan.run/", ""),
+                repository=repository.replace(f"{DOCKER_IO}/", ""),
                 tag=tag,
                 changes=self.changes[container_type],
             )
@@ -329,8 +330,8 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in image:
-            return f"docker-io.art.code.pan.run/{image}"
+        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in image: # todo
+            return f"{DOCKER_IO}/{image}"
         return image
 
     def get_or_create_test_image(
@@ -634,7 +635,7 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
         repo, tag = image.split(":")
     if os.getenv("CONTENT_GITLAB_CI"):
         # we need to remove the gitlab prefix, as we query the API
-        repo = repo.replace("docker-io.art.code.pan.run/", "")
+        repo = repo.replace(f"{DOCKER_IO}/", "")
     try:
         token = _get_docker_hub_token(repo)
         digest = _get_image_digest(repo, tag, token)

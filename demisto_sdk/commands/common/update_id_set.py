@@ -683,12 +683,14 @@ def get_fields_by_script_argument(task):
                         logger.info("You're using an unrecommended method - ${} - to retrieve values from the context data.")
                     else:
                         custom_fields_list = json.loads(custom_field_value)
-                        if not isinstance(custom_fields_list, list):
-                            custom_fields_list = [custom_fields_list]
-                        for custom_field in custom_fields_list:
-                            for field_name in custom_field.keys():
-                                if field_name not in BUILT_IN_FIELDS:
-                                    dependent_incident_fields.add(field_name)
+                else:
+                    custom_fields_list = custom_field_value
+                if not isinstance(custom_fields_list, list):
+                    custom_fields_list = [custom_fields_list]
+                for custom_field in custom_fields_list:
+                    for field_name in custom_field.keys():
+                        if field_name not in BUILT_IN_FIELDS:
+                            dependent_incident_fields.add(field_name)
     return dependent_incident_fields
 
 

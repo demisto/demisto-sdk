@@ -2287,12 +2287,10 @@ def test_get_packs_that_should_have_version_raised(mocker, repo):
     new_pack_metadata6["dependencies"] = {"Base": {"mandatory": True, "name": "Base"}}
     existing_pack6.pack_metadata.write_json(new_pack_metadata6)
 
-
     existing_pack7 = repo.create_pack("PackWithModifiedMetadataTags")
     new_pack_metadata7 = pack_metadata.copy()
     new_pack_metadata7["tags"] = ["tag"]
     existing_pack7.pack_metadata.write_json(new_pack_metadata7)
-
 
     validate_manager = OldValidateManager(check_is_unskipped=False)
     validate_manager.new_packs = {"NewPack"}
@@ -2309,9 +2307,12 @@ def test_get_packs_that_should_have_version_raised(mocker, repo):
 
     changed_meta_files = {
         tools.get_relative_path_from_packs_dir(existing_pack6.pack_metadata.path),
-        tools.get_relative_path_from_packs_dir(existing_pack7.pack_metadata.path)
+        tools.get_relative_path_from_packs_dir(existing_pack7.pack_metadata.path),
     }
-    mocker.patch("demisto_sdk.commands.validate.old_validate_manager.get_remote_file", return_value=pack_metadata)
+    mocker.patch(
+        "demisto_sdk.commands.validate.old_validate_manager.get_remote_file",
+        return_value=pack_metadata,
+    )
     with ChangeCWD(repo.path):
         packs_that_should_have_version_raised = (
             validate_manager.get_packs_that_should_have_version_raised(
@@ -2329,8 +2330,13 @@ def test_get_packs_that_should_have_version_raised(mocker, repo):
             "PackWithModifiedTestPlaybook" not in packs_that_should_have_version_raised
         )
         assert "NewPack" not in packs_that_should_have_version_raised
-        assert "PackWithModifiedMetadataDependencies" in packs_that_should_have_version_raised
-        assert "PackWithModifiedMetadataTags" not in packs_that_should_have_version_raised
+        assert (
+            "PackWithModifiedMetadataDependencies"
+            in packs_that_should_have_version_raised
+        )
+        assert (
+            "PackWithModifiedMetadataTags" not in packs_that_should_have_version_raised
+        )
 
 
 def test_quiet_bc_flag(repo):

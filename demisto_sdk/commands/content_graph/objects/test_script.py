@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from pydantic import Field
 
@@ -9,7 +9,9 @@ from demisto_sdk.commands.content_graph.objects.base_script import Argument, Bas
 
 
 class TestScriptArgument(Argument):
-    description: str = ""  # TestScripts can have missing descriptions in their arguments
+    description: str = (
+        ""  # TestScripts can have missing descriptions in their arguments
+    )
 
 
 class TestScript(BaseScript, content_type=ContentType.TEST_SCRIPT):  # type: ignore[call-arg]

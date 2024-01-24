@@ -1,7 +1,7 @@
 import traceback
 from io import StringIO
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import typer
 
@@ -47,19 +47,19 @@ def init_test_data(
         "INFO",
         "-clt",
         "--console-log-threshold",
-        help="Minimum logging threshold for the console logger.",
+        help=("Minimum logging threshold for the console logger."),
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
         "--file-log-threshold",
-        help="Minimum logging threshold for the file logger.",
+        help=("Minimum logging threshold for the file logger."),
     ),
-    log_file_path: Optional[str] = typer.Option(
-        None,
+    log_file_path: str = typer.Option(
+        "demisto_sdk_debug.log",
         "-lp",
         "--log-file-path",
-        help="Path to save log files onto.",
+        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
 ):
     """

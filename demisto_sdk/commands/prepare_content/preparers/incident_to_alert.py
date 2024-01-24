@@ -1,4 +1,5 @@
 import copy
+import logging
 import re
 from typing import Any, List
 
@@ -6,8 +7,9 @@ from demisto_sdk.commands.common.constants import (
     TABLE_INCIDENT_TO_ALERT,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
+logger = logging.getLogger("demisto-sdk")
 
 NOT_WRAPPED_RE_MAPPING = {
     rf"(?<!<-){key}(?!->)": value for key, value in TABLE_INCIDENT_TO_ALERT.items()

@@ -1,13 +1,15 @@
+import logging
 import tempfile
 from pathlib import Path
 
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import (
     MEASURE_TYPE_TO_HEADERS,
     MeasureType,
     report_time_measurements,
     timer,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 def test_timers__happy_path(mocker):

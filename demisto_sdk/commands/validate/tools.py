@@ -1,8 +1,9 @@
 import re
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_approved_tags_from_branch
+from demisto_sdk.commands.content_graph.objects.integration import Parameter
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 
 
@@ -101,3 +102,19 @@ def validate_categories_approved(categories: list, approved_list: list):
         if category not in approved_list:
             return False
     return True
+
+
+def find_param(params: List[Parameter], param_to_find: str) -> Optional[Parameter]:
+    """_summary_
+
+    Args:
+        params (List[Parameter]): The integration's params list.
+        param_to_find (str): The name of the param we wish to find.
+
+    Returns:
+        dict: The param with the given name or an empty string.
+    """
+    for param in params:
+        if param.name == param_to_find:
+            return param
+    return None

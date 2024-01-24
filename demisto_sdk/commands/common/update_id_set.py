@@ -680,7 +680,7 @@ def get_fields_by_script_argument(task):
                 custom_field_value = list(field_value.values())[0]
                 if isinstance(custom_field_value, str):
                     if custom_field_value.startswith("$"):
-                        logger.info("You're using an unrecommended method - ${} - to retrieve values from the context data.")
+                        logger.warning("You're using an unrecommended method - ${} - to retrieve values from the context data.")
                         continue
                     else:
                         custom_fields_list = json.loads(custom_field_value)

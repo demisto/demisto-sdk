@@ -2880,16 +2880,16 @@ class TestGenericFunctions:
         },
     }
     @staticmethod
-    def test_get_fields_by_script_argument__explicit_method(task = custom_fields_with_explicit_method):
+    def test_get_fields_by_script_argument__explicit_method(custom_fields_with_explicit_method):
         """
         Given
             - A playbook task with custom fields that retrieves its values in an explicit way (using the ${} method instead of "get" method)
         When
-            -  'get_fields_by_script_argument' is called
+            -  Searching for dependent incident fields in the task script arguments
         Then
-            -  The function should return an empty set with no errors
+            -  The function should return an empty set with no errors, since a the custom field - ${} sould be ignored
         """
-        result = get_fields_by_script_argument(task)
+        result = get_fields_by_script_argument(custom_fields_with_explicit_method)
         assert result ==set()
         
 
@@ -2900,16 +2900,16 @@ class TestGenericFunctions:
         },
     }
     @staticmethod
-    def test_get_fields_by_script_argument__json(task = custom_fields_as_a_json):
+    def test_get_fields_by_script_argument__json(custom_fields_as_a_json):
         """
         Given
             - A playbook task with custom fields value is a json
         When
-            -  'get_fields_by_script_argument' is called
+            -  Searching for dependent incident fields in the task script arguments
         Then
-            -  The function should return a set with the json keys that are not in BUILT_IN_FIELDS
+            -  The function should return all dependent incident custom fields in the task
         """
-        result = get_fields_by_script_argument(task)
+        result = get_fields_by_script_argument(custom_fields_as_a_json)
         assert result =={'root', 'test_key'}
 
 

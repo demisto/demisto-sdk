@@ -1,14 +1,23 @@
 from pathlib import Path
+from typing import List, Optional
+
+from pydantic import Field
 
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.base_script import (
-    BaseScript,
-)
+from demisto_sdk.commands.content_graph.objects.base_script import Argument, BaseScript
+
+
+class TestScriptArgument(Argument):
+    description = Optional[
+        str
+    ]  # TestScripts can have missing descriptions in their arguments
 
 
 class TestScript(BaseScript, content_type=ContentType.TEST_SCRIPT):  # type: ignore[call-arg]
     """Class to differ from script"""
+
+    arguments: List[TestScriptArgument] = Field([], exclude=True)
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

@@ -42,7 +42,7 @@ mapping:
     type: str
     required: true
   period:
-    type: seq
+    type: any
     sequence:
     - include: period_schema
   readyExistingEventsFilters:

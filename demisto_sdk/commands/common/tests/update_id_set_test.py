@@ -2873,14 +2873,8 @@ class TestGenericFunctions:
         assert "field_name" in result
     
     
-    custom_fields_with_explicit_method ={
-        "id": "ID",
-        "scriptarguments": {
-            "customFields": {'simple': '${keys}'}
-        },
-    }
     @staticmethod
-    def test_get_fields_by_script_argument__explicit_method(custom_fields_with_explicit_method):
+    def test_get_fields_by_script_argument__explicit_method():
         """
         Given
             - A playbook task with custom fields that retrieves its values in an explicit way (using the ${} method instead of "get" method)
@@ -2889,18 +2883,18 @@ class TestGenericFunctions:
         Then
             -  The function should return an empty set with no errors, since a the custom field - ${} sould be ignored
         """
-        result = get_fields_by_script_argument(custom_fields_with_explicit_method)
+        task ={
+        "id": "ID",
+        "scriptarguments": {
+            "customFields": {'simple': '${keys}'}
+        }}
+        result = get_fields_by_script_argument(task)
         assert result ==set()
         
 
-    custom_fields_as_a_json ={
-        "id": "ID",
-        "scriptarguments": {
-            "customFields": {'complex': {'root': 'keys', 'test_key': 'tets_value','id': 'ID'}}
-        },
-    }
+
     @staticmethod
-    def test_get_fields_by_script_argument__json(custom_fields_as_a_json):
+    def test_get_fields_by_script_argument__json():
         """
         Given
             - A playbook task with custom fields value is a json
@@ -2909,7 +2903,12 @@ class TestGenericFunctions:
         Then
             -  The function should return all dependent incident custom fields in the task
         """
-        result = get_fields_by_script_argument(custom_fields_as_a_json)
+        task ={
+        "id": "ID",
+        "scriptarguments": {
+            "customFields": {'complex': {'root': 'keys', 'test_key': 'tets_value','id': 'ID'}}
+        }}
+        result = get_fields_by_script_argument(task)
         assert result =={'root', 'test_key'}
 
 

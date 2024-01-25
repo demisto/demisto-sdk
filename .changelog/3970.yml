@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue in **upload**  where customFields with explicitly defined values (e.g., ${}) were failing.
+- description: Fixed an issue in **upload** where customFields with explicitly defined values (e.g., ${}) caused the command to fail.
   type: fix
 pr_number: 3970

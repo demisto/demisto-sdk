@@ -8,6 +8,7 @@ from typing import Optional, List
 
 import typer as typer
 
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
@@ -20,7 +21,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 xsoar_linter_app = typer.Typer(name="Pre-Commit")
-
+ENV = os.environ
 
 
 def build_xsoar_linter_command(support_level: str = "base", formatting_script: bool = False):
@@ -74,6 +75,39 @@ def build_xsoar_linter_command(support_level: str = "base", formatting_script: b
     return command
 
 
+def process_file(file_path):
+    env = ENV.copy()
+    integration_script = BaseContent.from_path(file_path)
+    if not isinstance(integration_script, IntegrationScript):
+        return 0
+    file = integration_script.path.parent / f'{integration_script.path.stem}.py'
+    if not file.exists():
+        return 0
+
+    xsoar_linter_env = {}
+    if isinstance(integration_script, Integration) and integration_script.long_running:
+        xsoar_linter_env["LONGRUNNING"] = "True"
+
+    if (py_ver := integration_script.python_version) and Version(py_ver).major < 3:
+        xsoar_linter_env["PY2"] = "True"
+
+    xsoar_linter_env["is_script"] = str(isinstance(integration_script, Script))
+    # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
+    # as a result we can use the env vars as a getway.
+    if isinstance(integration_script, Integration):
+        xsoar_linter_env["commands"] = ','.join([command.name for command in integration_script.commands])
+    command = build_xsoar_linter_command(integration_script.support_level)
+    command.append(str(file))
+
+    env.update(xsoar_linter_env)
+    env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
+    try:
+        return_code = subprocess.run(command, env=env, timeout=60).returncode
+    except subprocess.TimeoutExpired:
+        logger.error("Timeout")
+        return_code = 1
+    return return_code
+
 def xsoar_linter_manager(
     file_paths: Optional[List[Path]]):
 
@@ -82,37 +116,9 @@ def xsoar_linter_manager(
 
     return_codes = []
     env = os.environ
-    for file_path in file_paths:
-        integration_script = BaseContent.from_path(file_path)
-        if not isinstance(integration_script, IntegrationScript):
-            continue
-        file = integration_script.path.parent / f'{integration_script.path.stem}.py'
-        if not file.exists():
-            continue
 
-        xsoar_linter_env = {}
-        if isinstance(integration_script, Integration) and integration_script.long_running:
-            xsoar_linter_env["LONGRUNNING"] = "True"
-
-        if (py_ver := integration_script.python_version) and Version(py_ver).major < 3:
-            xsoar_linter_env["PY2"] = "True"
-
-        xsoar_linter_env["is_script"] = str(isinstance(integration_script, Script))
-        # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
-        # as a result we can use the env vars as a getway.
-        if isinstance(integration_script, Integration):
-            xsoar_linter_env["commands"] = ','.join([command.name for command in integration_script.commands])
-        command = build_xsoar_linter_command(integration_script.support_level)
-        command.append(str(file))
-
-        new_env = env.copy()
-        new_env.update(xsoar_linter_env)
-        new_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
-        try:
-            return_code = subprocess.run(command, env=new_env, timeout=60).returncode
-        except subprocess.TimeoutExpired:
-            logger.error("Timeout")
-            return_code = 1
-        return_codes.append(return_code)
+    with multiprocessing.Pool(processes=cpu_count()) as pool:
+        # Map the file_paths to the process_file function using the pool
+        return_codes = pool.map(process_file, file_paths)
 
     return int(any(return_codes))

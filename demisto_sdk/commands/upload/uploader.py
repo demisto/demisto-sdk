@@ -287,6 +287,7 @@ class Uploader:
                 target_demisto_version=Version(str(self.demisto_version)),
                 zip=self.zip,  # only used for Packs
                 destination_zip_dir=self.destination_zip_dir,  # only used for Packs
+                use_custom_upload_endpoint_pack=self._use_custom_upload_endpoint_pack
             )
 
             # upon reaching this line, the upload is surely successful

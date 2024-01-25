@@ -91,6 +91,8 @@ def upload_zip(
             "Use older versions of the Demisto-SDK for that (<=1.13.0)"
         )
     server_kwargs = {"skip_verify": "true"}
+    if use_custom_upload_endpoint_pack:
+        server_kwargs["use_custom_upload_endpoint_pack"] = True
 
     if (
         skip_validations
@@ -100,7 +102,6 @@ def upload_zip(
 
     response = client.upload_content_packs(
         file=str(path),
-        use_custom_upload_endpoint_pack=use_custom_upload_endpoint_pack
         **server_kwargs,
     )
     if response is None:  # uploaded successfully
@@ -377,6 +378,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 target_demisto_version=target_demisto_version,
                 skip_validations=kwargs.get("skip_validations", False),
                 destination_dir=destination_zip_dir,
+                **kwargs
             )
         else:
             self._upload_item_by_item(
@@ -392,6 +394,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         skip_validations: bool,
         marketplace: MarketplaceVersions,
         destination_dir: DirectoryPath,
+        **kwargs
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
@@ -429,6 +432,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     target_demisto_version=target_demisto_version,
                     skip_validations=skip_validations,
                     marketplace=marketplace,
+                    use_custom_upload_endpoint_pack=kwargs.get("use_custom_upload_endpoint_pack")
                 )
 
     def _upload_item_by_item(

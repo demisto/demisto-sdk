@@ -1519,6 +1519,12 @@ def format(
     "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
     "command to be used within non-interactive shells.",
 )
+@click.option(
+    "--custom-upload-endpoint",
+    is_flag=True,
+    help="Whether to use the custom upload endpoint to upload packs",
+    default=False
+)
 @click.pass_context
 @logging_setup_decorator
 def upload(ctx, **kwargs):

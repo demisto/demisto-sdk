@@ -75,6 +75,7 @@ def upload_zip(
     skip_validations: bool,
     target_demisto_version: Version,
     marketplace: MarketplaceVersions,
+    use_custom_upload_endpoint_pack: bool
 ) -> bool:
     """
     Used to upload an existing zip file
@@ -99,6 +100,7 @@ def upload_zip(
 
     response = client.upload_content_packs(
         file=str(path),
+        use_custom_upload_endpoint_pack=use_custom_upload_endpoint_pack
         **server_kwargs,
     )
     if response is None:  # uploaded successfully

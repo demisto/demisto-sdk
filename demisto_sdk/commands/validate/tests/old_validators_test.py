@@ -3138,7 +3138,7 @@ def test_run_validation_using_git_validation_calls(
     mocker.patch.object(
         validate_manager,
         "get_changed_meta_files_that_should_have_version_raised",
-        return_value={},
+        return_value=set(),
     )
     mocker.patch.object(
         validate_manager,

@@ -107,7 +107,7 @@ class UpdateReleaseNotesManager:
             filtered_set.add(file)
 
         changed_meta_files = validate_manager.pack_metadata_extraction(
-            filtered_set, {}, {}
+            filtered_set, set(), set()
         )
         changed_meta_that_should_have_version_raised = (
             validate_manager.get_changed_meta_files_that_should_have_version_raised(

@@ -580,6 +580,11 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
         "demisto_sdk.commands.common.tools.get_pack_names_from_files",
         return_value={"FeedAzureValid"},
     )
+    mocker.patch.object(
+        validate_manager,
+        "get_changed_meta_files_that_should_have_version_raised",
+        return_value=set(),
+    )
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)

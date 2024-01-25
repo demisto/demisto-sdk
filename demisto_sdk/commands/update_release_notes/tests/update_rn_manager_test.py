@@ -224,7 +224,9 @@ class TestUpdateRNManager:
         )
 
         mocker.patch.object(OldValidateManager, "setup_git_params")
-        mocker.patch.object(OldValidateManager, "pack_metadata_extraction",  return_value=set())
+        mocker.patch.object(
+            OldValidateManager, "pack_metadata_extraction", return_value=set()
+        )
         mocker.patch.object(
             OldValidateManager,
             "filter_to_relevant_files",

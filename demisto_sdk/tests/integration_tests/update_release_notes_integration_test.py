@@ -921,7 +921,7 @@ def test_update_release_on_matadata_change_that_require_rn(demisto_client, mocke
     - Ensure release notes file created with no errors
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    pack_metadata_path = "/Users/mdagan/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/1.pack_metadata.json"
+    pack_metadata_path = "demisto_sdk/tests/test_files/1.pack_metadata.json"
     pack = repo.create_pack("FeedAzureValid")
     with open(pack_metadata_path) as metadata_file:
         metadata_file = json.load(metadata_file)
@@ -935,8 +935,6 @@ def test_update_release_on_matadata_change_that_require_rn(demisto_client, mocke
         skip_conf_json=True,
         check_is_unskipped=False,
     )
-    validate_manager.git_util = "Not None"
-
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
     mocker.patch.object(
         OldValidateManager,

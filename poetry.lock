@@ -997,22 +997,25 @@ files = [
 
 [[package]]
 name = "demisto-py"
-version = "3.2.10"
-description = "A Python library for the Demisto API"
+version = "3.2.13"
+description = "\"A Python library for the Demisto API\""
 optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "demisto-py-3.2.10.tar.gz", hash = "sha256:ae3ee25afe2fabee1e6120aafbb84615aa583ebe407b54ff10f2747bbdcc6514"},
-    {file = "demisto_py-3.2.10-py3-none-any.whl", hash = "sha256:70bd630374fc2c238e5aed1bedebdd8e8105161a62b696fd327ff2ed8893dca3"},
-]
+python-versions = ">=3.8,<3.11"
+files = []
+develop = false
 
 [package.dependencies]
 certifi = ">=2017.4.17"
 python-dateutil = ">=2.5.3"
-setuptools = ">=21.0.0"
 six = ">=1.10"
-tzlocal = "==4.*"
+tzlocal = ">=4.0.0,<5.0.0"
 urllib3 = ">=1.26.7"
+
+[package.source]
+type = "git"
+url = "https://github.com/demisto/demisto-py.git"
+reference = "update_upload_endpoint"
+resolved_reference = "c544102360853245040f5b272af1f0828b04c3c6"
 
 [[package]]
 name = "dictdiffer"
@@ -5182,4 +5185,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "a1553f71f01e29bf5d51a8f2aa8c14b4a88a9f5a0698f391e5863d4be7e6f07c"
+content-hash = "0c06fee50e5e29cdb472ae5871f03030c806db639b5d844b1ce1105be9a390ed"

@@ -80,12 +80,11 @@ def xsoar_linter_manager(
     if not file_paths:
         return 0
 
-    with multiprocessing.Pool() as pool:
-        integrations_scripts = pool.map(
-            BaseContent.from_path, file_paths
-        )
-        integrations_scripts = [integration_script for integration_script in integrations_scripts if
-                                isinstance(integration_script, IntegrationScript)]
+    integrations_scripts = []
+    for file_path in file_paths:
+        integration_script = BaseContent.from_path(file_path)
+        if isinstance(integration_script, IntegrationScript):
+            integrations_scripts.append(integration_script)
 
     pylint_runs = []
     for integrations_script in integrations_scripts:

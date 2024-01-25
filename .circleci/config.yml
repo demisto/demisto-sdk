@@ -20,10 +20,10 @@ parameters:
     default: v5  # Change this parameter to clear cache.
   global-docker-image:
     type: string
-    default: cimg/python:3.10-node
+    default: cimg/python:3.12-node
   pythonversion_latest:
     type: string
-    default: "3.10"
+    default: "3.12"
 
 
 references:
@@ -528,13 +528,13 @@ workflows:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: ["3.8", "3.9", "3.10"]   
+              pythonversion: ["3.8", "3.9", "3.10", "3.11", "3.12"]
           name: run-unit-tests-<< matrix.pythonversion >>
       - run-integration-tests:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: ["3.8", "3.9", "3.10"]   
+              pythonversion: ["3.8", "3.9", "3.10", "3.11", "3.12"]
           name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter

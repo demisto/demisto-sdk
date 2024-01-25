@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -34,7 +35,11 @@ class IsContentItemNameVersionCorrectlyValidator(BaseValidator[ContentTypes]):
             matches = re.findall(VERSION_NAME_REGEX, name)
             if matches:
                 version_number = matches[0]
-                correct_name = f"V{matches[0]}"
+                correct_name = (
+                    f"V{matches[0]}"
+                    if content_item.content_type == ContentType.SCRIPT
+                    else f"v{matches[0]}"
+                )
                 if not name.endswith(correct_name):
                     invalid_content_items.append(
                         ValidationResult(

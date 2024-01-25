@@ -80,37 +80,31 @@ def xsoar_linter_manager(
     if not file_paths:
         return 0
 
-    integrations_scripts = []
+    return_codes = []
+    env = os.environ
     for file_path in file_paths:
         integration_script = BaseContent.from_path(file_path)
-        if isinstance(integration_script, IntegrationScript):
-            integrations_scripts.append(integration_script)
-
-    pylint_runs = []
-    for integrations_script in integrations_scripts:
-        file = integrations_script.path.parent / f'{integrations_script.path.stem}.py'
+        if not isinstance(integration_script, IntegrationScript):
+            continue
+        file = integration_script.path.parent / f'{integration_script.path.stem}.py'
         if not file.exists():
             continue
 
         xsoar_linter_env = {}
-        if isinstance(integrations_script, Integration) and integrations_script.long_running:
+        if isinstance(integration_script, Integration) and integration_script.long_running:
             xsoar_linter_env["LONGRUNNING"] = "True"
 
-        if (py_ver := integrations_script.python_version) and Version(py_ver).major < 3:
+        if (py_ver := integration_script.python_version) and Version(py_ver).major < 3:
             xsoar_linter_env["PY2"] = "True"
 
-        xsoar_linter_env["is_script"] = str(isinstance(integrations_script, Script))
+        xsoar_linter_env["is_script"] = str(isinstance(integration_script, Script))
         # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
         # as a result we can use the env vars as a getway.
-        if isinstance(integrations_script, Integration):
-            xsoar_linter_env["commands"] = ','.join([command.name for command in integrations_script.commands])
-        command = build_xsoar_linter_command(integrations_script.support_level)
-        command.append(file)
-        pylint_runs.append((command, xsoar_linter_env))
+        if isinstance(integration_script, Integration):
+            xsoar_linter_env["commands"] = ','.join([command.name for command in integration_script.commands])
+        command = build_xsoar_linter_command(integration_script.support_level)
+        command.append(str(file))
 
-    env = os.environ
-    return_codes = []
-    for command, xsoar_linter_env in pylint_runs:
         new_env = env.copy()
         new_env.update(xsoar_linter_env)
         new_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)

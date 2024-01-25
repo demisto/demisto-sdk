@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -11,7 +10,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.list_unifier import ListUnifier
 
 json = JSON_Handler()
-logger = logging.getLogger("demisto-sdk")
 
 
 class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg]

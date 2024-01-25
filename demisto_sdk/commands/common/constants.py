@@ -2,9 +2,48 @@ import os
 import re
 from enum import Enum
 from functools import reduce
+from pathlib import Path
 from typing import Dict, List
 
 from packaging.version import Version
+
+# Note: Do NOT add imports of internal modules here, as it may cause circular imports.
+
+
+PROJECT_DATA_DIR = Path.home() / ".demisto-sdk"
+LOGS_DIR = PROJECT_DATA_DIR / "logs"
+LOG_FILE_NAME = "demisto_sdk_debug.log"
+
+# --- Environment Variables ---
+# General
+ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
+DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
+DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
+DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "gitlab.xdr.pan.local")
+DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
+    "CI_PROJECT_ID", "1061"
+)  # Default value is the ID of the content repo on GitLab
+ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+
+
+# Authentication
+DEMISTO_BASE_URL = "DEMISTO_BASE_URL"
+DEMISTO_USERNAME = "DEMISTO_USERNAME"
+DEMISTO_PASSWORD = "DEMISTO_PASSWORD"  # guardrails-disable-line
+DEMISTO_KEY = "DEMISTO_API_KEY"
+AUTH_ID = "XSIAM_AUTH_ID"
+XSIAM_TOKEN = "XSIAM_TOKEN"
+XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
+DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
+
+# Logging
+DEMISTO_SDK_LOG_FILE_PATH = "DEMISTO_SDK_LOG_FILE_PATH"
+DEMISTO_SDK_LOG_NOTIFY_PATH = "DEMISTO_SDK_LOG_NOTIFY_PATH"
+DEMISTO_SDK_LOG_FILE_SIZE = "DEMISTO_SDK_LOG_FILE_SIZE"
+DEMISTO_SDK_LOG_FILE_COUNT = "DEMISTO_SDK_LOG_FILE_COUNT"
+DEMISTO_SDK_LOG_NO_COLORS = "DEMISTO_SDK_LOG_NO_COLORS"
+# --- Environment Variables ---
+
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"
@@ -98,26 +137,6 @@ LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 EVENT_COLLECTOR = "EventCollector"
 ASSETS_MODELING_RULE = "assetsmodelingrule"
-# ENV VARIABLES
-
-ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
-DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
-DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
-DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "gitlab.xdr.pan.local")
-DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
-    "CI_PROJECT_ID", "1061"
-)  # the default is the id of the content repo in gitlab.xdr.pan.local
-
-# authentication ENV VARIABLES
-DEMISTO_BASE_URL = "DEMISTO_BASE_URL"
-DEMISTO_USERNAME = "DEMISTO_USERNAME"
-DEMISTO_PASSWORD = "DEMISTO_PASSWORD"  # guardrails-disable-line
-DEMISTO_KEY = "DEMISTO_API_KEY"
-AUTH_ID = "XSIAM_AUTH_ID"
-XSIAM_TOKEN = "XSIAM_TOKEN"
-XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
-DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
-
 
 # Marketplaces
 
@@ -1949,7 +1968,6 @@ TABLE_INCIDENT_TO_ALERT = {
 
 FORMATTING_SCRIPT = "indicator-format"
 
-ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
 TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
@@ -1985,6 +2003,19 @@ XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
+
+STRING_TO_BOOL_MAP = {
+    "y": True,
+    "1": True,
+    "yes": True,
+    "true": True,
+    "n": False,
+    "0": False,
+    "no": False,
+    "false": False,
+    "t": True,
+    "f": False,
+}
 
 
 #  date formats:

@@ -42,9 +42,12 @@ mapping:
     type: str
     required: true
   period:
-    type: any
-    sequence:
-    - include: period_schema
+    type: map
+    mapping:
+      by:
+        type: str
+      fromValue:
+        type: number
   readyExistingEventsFilters:
     type: seq
     sequence:
@@ -54,7 +57,7 @@ mapping:
     sequence:
     - include: readyNewEventFilters_schema
   scriptName:
-    type: number
+    type: str
     required: true
   searchClosed:
     type: bool
@@ -93,9 +96,6 @@ schema;existingEventsFilters_schema:
   type: any
 
 schema;newEventFilters_schema:
-  type: any
-
-schema;period_schema:
   type: any
 
 schema;readyExistingEventsFilters_schema:

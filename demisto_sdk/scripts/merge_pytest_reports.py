@@ -67,8 +67,11 @@ def merge_coverage_report():
     coverage_path = CONTENT_PATH / ".coverage"
     coverage_path.unlink(missing_ok=True)
     cov = coverage.Coverage(data_file=coverage_path)
-    coverage_paths = CONTENT_PATH / ".pre-commit" / "coverage"
-    if not coverage_path.exists() or not (files := list(coverage_paths.iterdir())):
+    # this is the path where the pre-commit created the coverage files
+    created_coverage_path = CONTENT_PATH / ".pre-commit" / "coverage"
+    if not created_coverage_path.exists() or not (
+        files := list(created_coverage_path.iterdir())
+    ):
         logger.warning("No coverage files found, skipping coverage report.")
         return
     fixed_files = [str(file) for file in files if fix_coverage_report_path(Path(file))]

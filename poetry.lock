@@ -1015,7 +1015,7 @@ urllib3 = ">=1.26.7"
 type = "git"
 url = "https://github.com/demisto/demisto-py.git"
 reference = "update_upload_endpoint"
-resolved_reference = "50aef86c522181c59dc039b48416c2ae50d852ce"
+resolved_reference = "4a629ca6a89fec3df7783fa535148be2b46fe7f3"
 
 [[package]]
 name = "dictdiffer"

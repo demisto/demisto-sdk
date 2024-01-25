@@ -2,14 +2,16 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
     create_script_object,
 )
-from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator import (
-    IsScriptArgumentsContainIncidentWordValidator,
+from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs import (
+    IsScriptArgumentsContainIncidentWordValidatorCorePacks,
 )
 from demisto_sdk.commands.validate.validators.SC_validators.SC106_script_runas_dbot_role_validator import (
     ScriptRunAsIsNotDBotRoleValidator,
 )
+from TestSuite.repo import ChangeCWD
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
 MP_V2 = [MarketplaceVersions.MarketplaceV2.value]
@@ -19,10 +21,10 @@ MP_XSOAR_AND_V2 = [
 ]
 
 
-def test_IsScriptArgumentsContainIncidentWordValidator_is_valid():
+def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_is_valid(mocker):
     """
     Given:
-     - 1 script that has the word incident in its arguments and is not deprecated
+     - 1 script that has the word incident in its arguments and is not deprecated and is in the core-packs list
      - 1 script that has the word incident in its arguments and is deprecated
      - 1 script that does not have the word incident in its arguments
 
@@ -32,21 +34,31 @@ def test_IsScriptArgumentsContainIncidentWordValidator_is_valid():
     Then:
      - make sure the script with the argument that has "incident" fails the validation
     """
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs.get_core_pack_list",
+        return_value=["PackWithInvalidScript"],
+    )
+
     content_items = (
         create_script_object(
             paths=["name", "args"],
             values=["InvalidScript", [{"name": "incident-id", "description": "test"}]],
+            pack_name="PackWithInvalidScript",
         ),
         create_script_object(
             paths=["args"],
             values=[
-                [{"name": "incident-id", "description": "test", "deprecated": True}]
+                [{"name": "incident-id", "description": "test", "deprecated": True}],
             ],
+            pack_name="PackWithValidScript",
         ),
         create_script_object(),
     )
 
-    results = IsScriptArgumentsContainIncidentWordValidator().is_valid(content_items)
+    with ChangeCWD(REPO.path):
+        results = IsScriptArgumentsContainIncidentWordValidatorCorePacks().is_valid(
+            content_items
+        )
     assert len(results) == 1
     assert results[0].content_object.name == "InvalidScript"
 

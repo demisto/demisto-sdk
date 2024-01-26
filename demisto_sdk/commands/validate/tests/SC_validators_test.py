@@ -5,6 +5,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_script_object,
 )
+from demisto_sdk.commands.validate.validators.SC_validators.SC100_script_has_invalid_version import (
+    ScriptNameIsVersionCorrectlyValidator,
+)
 from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs import (
     IsScriptArgumentsContainIncidentWordValidatorCorePacks,
 )
@@ -19,6 +22,44 @@ MP_XSOAR_AND_V2 = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
+
+
+def test_ScriptNameIsVersionCorrectlyValidator_is_valid():
+    """
+    Given:
+     - 1 script with valid versioned name
+     - 1 script with invalid versioned name
+
+    When:
+     - Running the ScriptNameIsVersionCorrectlyValidator validator
+
+    Then:
+     - make sure the script with the invalid version fails on the validation
+    """
+    content_items = [
+        create_script_object(paths=["name"], values=["Testv2"]),
+        create_script_object(paths=["name"], values=["TestV3"]),
+    ]
+
+    results = ScriptNameIsVersionCorrectlyValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert results[0].content_object.name == "Testv2"
+
+
+def test_ScriptNameIsVersionCorrectlyValidator_fix():
+    """
+    Given:
+     - script with invalid versioned name
+
+    When:
+     - Running the ScriptNameIsVersionCorrectlyValidator fix
+
+    Then:
+     - make sure the script the name of the script is updated to the correct version
+    """
+    script = create_script_object(paths=["name"], values=["Testv2"])
+    fix_result = ScriptNameIsVersionCorrectlyValidator().fix(script)
+    assert fix_result.content_object.name == "TestV2"
 
 
 def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_is_valid(mocker):

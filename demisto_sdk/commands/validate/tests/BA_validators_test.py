@@ -49,10 +49,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_shoul
 from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_version_synched import (
     FromToVersionSyncedValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA126_has_invalid_version import (
-    IsContentItemNameVersionCorrectlyValidator,
-)
-from demisto_sdk.commands.validate.validators.BA_validators.BA127_content_item_is_deprecated_correctly import (
+from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
 )
 
@@ -908,46 +905,6 @@ def test_IDContainSlashesValidator_fix(
     assert content_item.object_id == current_id
     assert IDContainSlashesValidator().fix(content_item).message == expected_fix_msg
     assert content_item.object_id == expected_id
-
-
-def test_IsContentItemNameVersionCorrectlyValidator_is_valid():
-    """
-    Given:
-     - 1 integration with valid non-versioned name
-     - 1 script with valid versioned name
-     - 1 script with invalid versioned name
-
-    When:
-     - Running the IsContentItemNameVersionCorrectlyValidator validator
-
-    Then:
-     - make sure the script with the invalid version fails on the validation
-    """
-    content_items = [
-        create_integration_object(paths=["name"], values=["Test"]),
-        create_script_object(paths=["name"], values=["Testv2"]),
-        create_script_object(paths=["name"], values=["TestV3"]),
-    ]
-
-    results = IsContentItemNameVersionCorrectlyValidator().is_valid(content_items)
-    assert len(results) == 1
-    assert results[0].content_object.name == "Testv2"
-
-
-def test_IsContentItemNameVersionCorrectlyValidator_fix():
-    """
-    Given:
-     - script with invalid versioned name
-
-    When:
-     - Running the IsContentItemNameVersionCorrectlyValidator fix
-
-    Then:
-     - make sure the script the name of the script is updated to the correct version
-    """
-    script = create_script_object(paths=["name"], values=["Testv2"])
-    fix_result = IsContentItemNameVersionCorrectlyValidator().fix(script)
-    assert fix_result.content_object.name == "TestV2"
 
 
 def test_IsDeprecatedCorrectlyValidator_is_valid():

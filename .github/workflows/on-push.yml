@@ -374,6 +374,8 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
+          git config diff.renameLimit 5000
+          git --no-pager log -1
           mkdir -p test-validate-command/logs
           export DEMISTO_SDK_LOG_FILE_PATH=./test-validate-command/logs/demisto_sdk_debug.log
           ./Tests/scripts/validate.sh

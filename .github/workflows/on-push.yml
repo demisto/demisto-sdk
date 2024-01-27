@@ -16,7 +16,7 @@ concurrency:
 jobs:
   validate-changelog:
     runs-on: ubuntu-latest
-    if: github.head_ref != 'master'
+    if: github.ref != 'refs/heads/default_cancel_timeout'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,6 +79,7 @@ jobs:
           artifacts-dir: unit-tests/logs
 
       - name: Run Unit Tests
+        timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
 
@@ -123,6 +124,7 @@ jobs:
           artifacts-dir: integration-tests/logs
 
       - name: Run Integration Tests
+        timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
 
@@ -161,6 +163,7 @@ jobs:
           artifacts-dir: graph-tests/logs
 
       - name: Run Graph Tests
+        timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
 
@@ -238,6 +241,7 @@ jobs:
           cd content
           poetry run pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
       - name: Run content unit tests
+        timeout-minutes: 60
         env:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |
@@ -281,6 +285,7 @@ jobs:
           echo -e "[validate]\nrun_specific_validations=BA101" > .demisto-sdk-conf
 
       - name: run pre-commit on changed files
+        timeout-minutes: 60
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
@@ -296,6 +301,7 @@ jobs:
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
 
       - name: run pre-commit on input files
+        timeout-minutes: 60
         continue-on-error: true
         run: |
           source $(poetry env info --path)/bin/activate
@@ -329,6 +335,7 @@ jobs:
           path: content
 
       - name: Run Graph
+        timeout-minutes: 60
         run: |
           source $(poetry env info --path)/bin/activate
           cd content

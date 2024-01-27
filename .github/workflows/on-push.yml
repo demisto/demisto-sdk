@@ -367,7 +367,7 @@ jobs:
       - name: Checkout content
         uses: actions/checkout@v3
         with:
-          fetch-depth: '0'
+          fetch-depth: 0
           repository: demisto/content
           path: content
 
@@ -404,7 +404,7 @@ jobs:
       - name: Checkout content
         uses: actions/checkout@v3
         with:
-          fetch-depth: '0'
+          fetch-depth: 0
           repository: demisto/content
           path: content
 

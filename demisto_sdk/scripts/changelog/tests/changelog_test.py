@@ -97,8 +97,8 @@ def test_get_all_logs(changelog_folder_mock: Path):
         - run `get_all_logs` function
     Then:
         - Ensure all log files are return
-        - Ensure that if there are two entries in the log file
-          it is returned as two entries within an `LogFileObject` object
+        - Ensure that each `LogFileObject` has the same number of release comments
+          as the corresponding file
     """
     with (changelog_folder_mock / "12345.yml").open("w") as f:
         yaml.dump(LOG_FILE_1, f)
@@ -106,8 +106,12 @@ def test_get_all_logs(changelog_folder_mock: Path):
         yaml.dump(LOG_FILE_2, f)
     log_files = read_log_files()
     assert len(log_files) == 2
-    assert len(log_files[0].changes) == 2
 
+    for log_file in log_files:
+        if log_file.pr_number == 12345:
+            assert len(log_file.changes) == 1
+        else:
+            assert len(log_file.changes) == 2
 
 @pytest.mark.parametrize("pr_name", [DUMMY_PR_NAME, ""])
 def test_validate(mocker, changelog_mock: Changelog, pr_name: str):

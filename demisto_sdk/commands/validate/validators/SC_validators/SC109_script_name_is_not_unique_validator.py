@@ -14,7 +14,7 @@ ContentTypes = Script
 
 
 class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
-    error_code = "SC109"  # TODO - update the code
+    error_code = "SC109"
     description = (
         "Validate that there are no scripts with the same type and the same name."
     )

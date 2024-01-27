@@ -320,7 +320,6 @@ jobs:
         uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
-          artifacts-dir: test-graph-commands
 
       - name: Checkout content
         uses: actions/checkout@v3
@@ -350,3 +349,48 @@ jobs:
         with:
           artifacts-path-dir: content/test-graph-commands
           artifact-name: test-graph-commands-artifacts
+
+  validate-files:
+    runs-on: ubuntu-latest
+    name: Test Validate Command
+    env:
+      CI_COMMIT_BRANCH: "master"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: '3.10'
+
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          repository: demisto/content
+          path: content
+
+      - name: Run Validate All - Old Validate
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cd content
+          mkdir -p test-validate-command/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-validate-command/logs/demisto_sdk_debug.log
+          echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
+          ./Tests/scripts/validate.sh
+
+#      - name: Run Validate All - New Validate
+#        run: |
+#          source $(poetry env info --path)/bin/activate
+#          cd content
+#          mkdir -p test-validate-command/logs
+#          export DEMISTO_SDK_LOG_FILE_PATH=./test-validate-command/logs/demisto_sdk_debug.log
+#          echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
+#          ./Tests/scripts/validate.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: content/test-validate-command
+          artifact-name: test-validate-command-artifacts

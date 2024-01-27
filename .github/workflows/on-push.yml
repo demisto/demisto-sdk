@@ -385,6 +385,7 @@ jobs:
         with:
           artifacts-path-dir: content/test-old-validate-command
           artifact-name: test-old-validate-command-artifacts
+
   validate-files-new-validate:
     runs-on: ubuntu-latest
     name: Test New Validate Command

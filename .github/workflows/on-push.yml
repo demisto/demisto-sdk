@@ -260,7 +260,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Checkout
+      - name: Checkout Content
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -364,16 +364,16 @@ jobs:
         with:
           python-version: '3.10'
 
-#      - name: Checkout content
-#        uses: actions/checkout@v3
-#        with:
-#          repository: demisto/content
-#          path: content
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+          repository: demisto/content
+          path: content
 
       - name: Run Validate All - Old Validate
         run: |
           source $(poetry env info --path)/bin/activate
-          git clone https://github.com/demisto/content.git
           cd content
           git config diff.renameLimit 5000
           git --no-pager log -1
@@ -401,16 +401,16 @@ jobs:
         with:
           python-version: '3.10'
 
-#      - name: Checkout content
-#        uses: actions/checkout@v3
-#        with:
-#          repository: demisto/content
-#          path: content
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+          repository: demisto/content
+          path: content
 
       - name: Run Validate All - Old Validate
         run: |
           source $(poetry env info --path)/bin/activate
-          git clone https://github.com/demisto/content.git
           cd content
           git config diff.renameLimit 5000
           git --no-pager log -1

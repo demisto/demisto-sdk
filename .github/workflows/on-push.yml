@@ -360,7 +360,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Python Environment
-        uses: ./.github/actions/setup_environment
+        uses: ./.github/actions/setup_test_environment
         with:
           python-version: '3.10'
 
@@ -376,7 +376,6 @@ jobs:
           cd content
           mkdir -p test-validate-command/logs
           export DEMISTO_SDK_LOG_FILE_PATH=./test-validate-command/logs/demisto_sdk_debug.log
-          echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
           ./Tests/scripts/validate.sh
 
 #      - name: Run Validate All - New Validate

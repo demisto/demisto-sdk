@@ -113,6 +113,7 @@ def test_get_all_logs(changelog_folder_mock: Path):
         else:
             assert len(log_file.changes) == 2
 
+
 @pytest.mark.parametrize("pr_name", [DUMMY_PR_NAME, ""])
 def test_validate(mocker, changelog_mock: Changelog, pr_name: str):
     """

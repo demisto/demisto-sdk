@@ -350,9 +350,9 @@ jobs:
           artifacts-path-dir: content/test-graph-commands
           artifact-name: test-graph-commands-artifacts
 
-  validate-files:
+  validate-files-old-validate:
     runs-on: ubuntu-latest
-    name: Test Validate Command
+    name: Test Old Validate Command
     env:
       CI_COMMIT_BRANCH: "master"
     steps:
@@ -364,34 +364,63 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Checkout content
-        uses: actions/checkout@v3
-        with:
-          repository: demisto/content
-          path: content
+#      - name: Checkout content
+#        uses: actions/checkout@v3
+#        with:
+#          repository: demisto/content
+#          path: content
 
       - name: Run Validate All - Old Validate
         run: |
           source $(poetry env info --path)/bin/activate
+          git clone https://github.com/demisto/content.git
           cd content
           git config diff.renameLimit 5000
           git --no-pager log -1
-          mkdir -p test-validate-command/logs
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-validate-command/logs/demisto_sdk_debug.log
+          mkdir -p test-old-validate-command/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-old-validate-command/logs/logs/demisto_sdk_debug.log
           ./Tests/scripts/validate.sh
-
-#      - name: Run Validate All - New Validate
-#        run: |
-#          source $(poetry env info --path)/bin/activate
-#          cd content
-#          mkdir -p test-validate-command/logs
-#          export DEMISTO_SDK_LOG_FILE_PATH=./test-validate-command/logs/demisto_sdk_debug.log
-#          echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
-#          ./Tests/scripts/validate.sh
 
       - name: Upload artifacts
         if: always()
         uses: ./.github/actions/upload_artifacts
         with:
-          artifacts-path-dir: content/test-validate-command
+          artifacts-path-dir: content/test-old-validate-command
+          artifact-name: test-validate-command-artifacts
+  validate-files-new-validate:
+    runs-on: ubuntu-latest
+    name: Test New Validate Command
+    env:
+      CI_COMMIT_BRANCH: "master"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_test_environment
+        with:
+          python-version: '3.10'
+
+#      - name: Checkout content
+#        uses: actions/checkout@v3
+#        with:
+#          repository: demisto/content
+#          path: content
+
+      - name: Run Validate All - Old Validate
+        run: |
+          source $(poetry env info --path)/bin/activate
+          git clone https://github.com/demisto/content.git
+          cd content
+          git config diff.renameLimit 5000
+          git --no-pager log -1
+          mkdir -p test-new-validate-command/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-new-validate-command/logs/demisto_sdk_debug.log
+          ./Tests/scripts/new_validate.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: content/test-new-validate-command
           artifact-name: test-validate-command-artifacts

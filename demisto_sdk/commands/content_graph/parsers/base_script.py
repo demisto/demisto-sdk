@@ -57,7 +57,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
             self.add_command_or_script_dependency(cmd)
 
     @property
-    def arguments(self) -> List[Dict]:
+    def args(self) -> List[Dict]:
         return self.yml_data.get("args", [])
 
     @property

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ClassVar, Iterable, List
+from typing import Iterable, List
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -22,17 +22,11 @@ class IsScriptArgumentsContainIncidentWordValidatorCorePacks(
     description = (
         "Checks that script arguments do not container the word incident in core packs"
     )
-    error_message = (
-        "The script {0} arguments '{1}' contain the word incident, remove it"
-    )
+    error_message = "The following arguments {} contain the word incident, remove it"
     related_field = "args"
-    core_packs: ClassVar[List[str]] = []
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        if not self.core_packs:
-            IsScriptArgumentsContainIncidentWordValidatorCorePacks.core_packs = (
-                get_core_pack_list()
-            )
+        core_packs = get_core_pack_list()
 
         invalid_content_items = []
         for content_item in content_items:
@@ -44,14 +38,14 @@ class IsScriptArgumentsContainIncidentWordValidatorCorePacks(
                     for argument in content_item.args
                     if "incident" in argument.name
                     and not argument.deprecated
-                    and pack_name in self.core_packs
+                    and pack_name in core_packs
                 ]
                 if wrong_arg_names:
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
-                                content_item.name, ", ".join(wrong_arg_names)
+                                ", ".join(wrong_arg_names)
                             ),
                             content_object=content_item,
                         )

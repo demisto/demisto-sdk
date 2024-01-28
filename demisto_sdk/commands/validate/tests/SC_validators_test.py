@@ -24,17 +24,18 @@ MP_XSOAR_AND_V2 = [
 ]
 
 
-def test_ScriptNameIsVersionCorrectlyValidator_is_valid():
+def test_ScriptNameIsVersionCorrectlyValidator():
     """
     Given:
      - 1 script with valid versioned name
      - 1 script with invalid versioned name
 
     When:
-     - Running the ScriptNameIsVersionCorrectlyValidator validator
+     - Running the ScriptNameIsVersionCorrectlyValidator validator & fix
 
     Then:
      - make sure the script with the invalid version fails on the validation
+     - make sure the fix updates the name of the script to upper-case versioned name.
     """
     content_items = [
         create_script_object(paths=["name"], values=["Testv2"]),
@@ -45,20 +46,9 @@ def test_ScriptNameIsVersionCorrectlyValidator_is_valid():
     assert len(results) == 1
     assert results[0].content_object.name == "Testv2"
 
-
-def test_ScriptNameIsVersionCorrectlyValidator_fix():
-    """
-    Given:
-     - script with invalid versioned name
-
-    When:
-     - Running the ScriptNameIsVersionCorrectlyValidator fix
-
-    Then:
-     - make sure the script the name of the script is updated to the correct version
-    """
-    script = create_script_object(paths=["name"], values=["Testv2"])
-    fix_result = ScriptNameIsVersionedCorrectlyValidator().fix(script)
+    fix_result = ScriptNameIsVersionedCorrectlyValidator().fix(
+        results[0].content_object
+    )
     assert fix_result.content_object.name == "TestV2"
 
 

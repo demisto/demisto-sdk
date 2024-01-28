@@ -800,7 +800,7 @@ def test_get_latest_release_notes_text_invalid():
     """
     PATH_TO_HERE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/"
     file_path = os.path.join(PATH_TO_HERE, "empty-RN.md")
-    assert get_latest_release_notes_text(file_path) is None
+    assert get_latest_release_notes_text(file_path) == ""
 
 
 def test_get_release_notes_file_path_valid():

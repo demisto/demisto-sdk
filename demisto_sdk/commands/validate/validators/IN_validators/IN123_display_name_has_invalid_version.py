@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -18,31 +18,38 @@ VERSION_NAME_REGEX = re.compile(r"V([0-9]+)$", re.IGNORECASE)
 class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     error_code = "IN123"
     description = "Checks if integration display name is versioned correctly, e.g.: ends with v<number>."
-    error_message = "The display {0} for integration is incorrect, it should be {1}."
+    error_message = (
+        "The display {0} for the integration is incorrect, it should be {1}."
+    )
     is_auto_fixable = True
     fix_message = "Updated display from {0} to {1}"
     related_field = "display"
+    integration_name_to_correct_version: ClassVar[dict[str, str]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []
-        for content_item in content_items:
-            display_name = content_item.display_name
+        for integration in content_items:
+            display_name = integration.display_name
             matches = VERSION_NAME_REGEX.findall(display_name)
             if matches:
                 version_number = matches[0]
-                incorrect_version_name = f"V{version_number}"
-                correct_version_name = f"v{version_number}"
-                if not display_name.endswith(correct_version_name):
+                incorrect_version_display_name = f"V{version_number}"
+                correct_display_name = f"v{version_number}"
+                if not display_name.endswith(correct_display_name):
+                    correct_display_name = display_name.replace(
+                        incorrect_version_display_name, correct_display_name
+                    )
+                    IntegrationDisplayNameVersionedCorrectlyValidator.integration_name_to_correct_version[
+                        display_name
+                    ] = correct_display_name
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
                                 display_name,
-                                display_name.replace(
-                                    incorrect_version_name, correct_version_name
-                                ),
+                                correct_display_name,
                             ),
-                            content_object=content_item,
+                            content_object=integration,
                         )
                     )
 
@@ -52,17 +59,14 @@ class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTyp
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        old_name = content_item.display_name
-        matches = re.findall(VERSION_NAME_REGEX, old_name)
-        if matches:
-            version_number = matches[0]
-            incorrect_version_name = f"V{version_number}"
-            correct_version_name = f"v{version_number}"
-            content_item.display_name = content_item.display_name.replace(
-                incorrect_version_name, correct_version_name
-            )
+        old_display_name = content_item.display_name
+        content_item.display_name = IntegrationDisplayNameVersionedCorrectlyValidator.integration_name_to_correct_version[
+            old_display_name
+        ]
         return FixResult(
             validator=self,
-            message=self.fix_message.format(old_name, content_item.name),
+            message=self.fix_message.format(
+                old_display_name, content_item.display_name
+            ),
             content_object=content_item,
         )

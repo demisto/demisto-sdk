@@ -24,7 +24,7 @@ class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     fix_message = "Updated name from {0} to {1}"
     related_field = "name"
-    script_id_to_correct_version: ClassVar[dict[str, str]] = {}
+    script_name_to_correct_version: ClassVar[dict[str, str]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []
@@ -39,7 +39,7 @@ class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
                     correct_version_name = name.replace(
                         incorrect_version_name, correct_version_name
                     )
-                    ScriptNameIsVersionedCorrectlyValidator.script_id_to_correct_version[
+                    ScriptNameIsVersionedCorrectlyValidator.script_name_to_correct_version[
                         name
                     ] = correct_version_name
                     invalid_content_items.append(
@@ -61,7 +61,7 @@ class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     ) -> FixResult:
         old_name = content_item.name
         content_item.name = (
-            ScriptNameIsVersionedCorrectlyValidator.script_id_to_correct_version[
+            ScriptNameIsVersionedCorrectlyValidator.script_name_to_correct_version[
                 old_name
             ]
         )

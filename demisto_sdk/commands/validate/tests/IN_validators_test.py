@@ -1921,10 +1921,11 @@ def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
      - 1 integration with invalid versioned display-name
 
     When:
-     - Running the IntegrationDisplayNameVersionedCorrectlyValidator validator
+     - Running the IntegrationDisplayNameVersionedCorrectlyValidator validator & fix
 
     Then:
      - make sure the integration with the invalid version fails on the validation
+     - make sure the fix updates the display-name of the integration to lower-case versioned name.
     """
     content_items = [
         create_integration_object(paths=["display"], values=["test v2"]),
@@ -1937,18 +1938,7 @@ def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
     assert len(results) == 1
     assert results[0].content_object.display_name == "test V3"
 
-
-def test_IntegrationDisplayNameVersionedCorrectlyValidator_fix():
-    """
-    Given:
-     - integration with invalid versioned display-name
-
-    When:
-     - Running the IntegrationDisplayNameVersionedCorrectlyValidator fix
-
-    Then:
-     - make sure the integration the display-name of the integration is updated to the correct version
-    """
-    integration = create_integration_object(paths=["display"], values=["test V3"])
-    fix_result = IntegrationDisplayNameVersionedCorrectlyValidator().fix(integration)
+    fix_result = IntegrationDisplayNameVersionedCorrectlyValidator().fix(
+        results[0].content_object
+    )
     assert fix_result.content_object.display_name == "test v3"

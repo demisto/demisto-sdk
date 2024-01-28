@@ -45,7 +45,7 @@ class XsoarSaasClient(XsoarClient):
         cls, session: Session, server_config: XsoarSaasClientConfig
     ) -> bool:
         """
-        Validates that the XDR part is healthy.
+        Validates that XDR is healthy.
 
         Returns:
             bool: True if SaaS server is healthy, False if not.

@@ -49,7 +49,7 @@ class XsoarClient(BaseModel):
     @classmethod
     def is_xsoar_healthy(cls, client: DefaultApi) -> bool:
         """
-        Validates that the xsoar server part is healthy
+        Validates that xsoar server is healthy
 
         Args:
             client: XSOAR client.
@@ -105,17 +105,14 @@ class XsoarClient(BaseModel):
         Returns the client for xsoar endpoints, checks that the server is healthy
         """
         config: XsoarClientConfig = values["config"]
-        if v:
-            _client = v
-        else:
-            _client = demisto_client.configure(
-                config.base_api_url,
-                api_key=config.api_key.get_secret_value(),
-                auth_id=config.auth_id,
-                username=config.user,
-                password=config.password.get_secret_value(),
-                verify_ssl=config.verify_ssl,
-            )
+        _client = v or demisto_client.configure(
+            config.base_api_url,
+            api_key=config.api_key.get_secret_value(),
+            auth_id=config.auth_id,
+            username=config.user,
+            password=config.password.get_secret_value(),
+            verify_ssl=config.verify_ssl,
+        )
         if cls.is_xsoar_healthy(_client):
             return _client
         raise UnHealthyServer(str(config), server_part="xsoar")

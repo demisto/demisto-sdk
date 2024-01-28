@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
+    CREATE_CONTAINER_ATTEMPTS,
 )
 from demisto_sdk.commands.common.docker_helper import (
     docker_login,
@@ -985,7 +986,7 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         command = [self._facts["lint_to_commands"][linter]]
-        for trial in range(3):
+        for attempt in range(CREATE_CONTAINER_ATTEMPTS-1):
             try:
                 container: docker.models.containers.Container = (
                     get_docker().create_container(
@@ -999,7 +1000,7 @@ class Linter:
                 )
                 break
             except Exception:
-                if trial == 2:
+                if attempt == CREATE_CONTAINER_ATTEMPTS - 1:
                     logger.exception(
                         f"{log_prompt} - Third attempt failed, could not create container: {container_name=}, {test_image=}, {command=}"
                     )

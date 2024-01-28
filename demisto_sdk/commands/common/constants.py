@@ -2046,3 +2046,5 @@ class IncidentState(str, Enum):
 # Used to format the writing of the yml/json file
 DEFAULT_JSON_INDENT = 4
 DEFAULT_YAML_INDENT = 0
+
+CREATE_CONTAINER_ATTEMPTS = 3

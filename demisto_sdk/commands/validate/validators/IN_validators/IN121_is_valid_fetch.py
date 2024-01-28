@@ -14,7 +14,6 @@ from demisto_sdk.commands.content_graph.objects.integration import (
 from demisto_sdk.commands.validate.tools import find_param
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixResult,
     ValidationResult,
 )
 
@@ -26,10 +25,8 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that fetch integration has the required params in the right format."
     )
-    error_message = "The integration is a fetch integration and is missing/containing malformed required params: {0}"
-    fix_message = "The following params were fixed/added to the integration: {0}"
+    error_message = "The integration is a fetch integration and is missing/containing malformed required params:\n{0}"
     related_field = "configuration"
-    is_auto_fixable = True
     missing_or_malformed_integration: ClassVar[dict] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -39,7 +36,7 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n".join(
                         [
-                            f"The param {key} is missing, it should be in the following format: {val}"
+                            f"The param {key} is missing/malformed, it should be in the following format: {val}"
                             for key, val in missing_or_malformed_integration.items()
                         ]
                     )
@@ -91,26 +88,3 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
                 ] = fetch_required_param
         self.missing_or_malformed_integration[integration_name] = current_integration
         return current_integration
-
-    def fix(self, content_item: ContentTypes) -> FixResult:
-        for missing_or_malformed_param in self.missing_or_malformed_integration[
-            content_item.name
-        ]:
-            if param := find_param(
-                content_item.params, missing_or_malformed_param.get("name", "")
-            ):
-                param.display = missing_or_malformed_param.get("display")
-                param.type = missing_or_malformed_param.get("type")
-            else:
-                content_item.params.append(Parameter(**missing_or_malformed_param))
-        return FixResult(
-            validator=self,
-            message=self.fix_message.format(
-                ", ".join(
-                    list(
-                        self.missing_or_malformed_integration[content_item.name].keys()
-                    )
-                )
-            ),
-            content_object=content_item,
-        )

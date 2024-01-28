@@ -20,7 +20,7 @@ ContentTypes = Integration
 class IsPartnerCollectorHasXsoarSupportLevelValidator(BaseValidator[ContentTypes]):
     error_code = "IN162"
     description = "Validate that the support level header for a collector integration in a Partner pack is set to Xsoar."
-    error_message = f"The integration should have the key {SUPPORT_LEVEL_HEADER} = {XSOAR_SUPPORT} in its yml."
+    error_message = f"The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key {SUPPORT_LEVEL_HEADER} = {XSOAR_SUPPORT} in its yml."
     related_field = (
         "supportlevelheader, script.isfetchevents, script.isfetcheventsandassets"
     )
@@ -37,9 +37,8 @@ class IsPartnerCollectorHasXsoarSupportLevelValidator(BaseValidator[ContentTypes
             for content_item in content_items
             if any(
                 [
-                    content_item.is_fetch_events
-                    or content_item.is_fetch_events_and_assets,
-                    content_item.is_fetch_assets,
+                    content_item.is_fetch_events,
+                    content_item.is_fetch_events_and_assets,
                 ]
             )
             and (

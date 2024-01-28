@@ -7,7 +7,6 @@ from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
 )
-from demisto_sdk.commands.validate.tools import is_str_bool
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -47,13 +46,16 @@ class IsValidHiddenValueValidator(BaseValidator[ContentTypes]):
             param.name: param.hidden
             for param in params
             if param.hidden
-            and any(
+            and all(
                 [
-                    isinstance(param.hidden, (type(None), bool)),
-                    (isinstance(param.hidden, str) and not is_str_bool(param.hidden)),
-                    (
+                    not isinstance(param.hidden, (type(None), bool)),
+                    not (
+                        isinstance(param.hidden, str)
+                        and param.hidden in ["true", "false"]
+                    ),
+                    not (
                         isinstance(param.hidden, list)
-                        and set(param.hidden).difference(MarketplaceVersions)
+                        and not set(param.hidden).difference(MarketplaceVersions)
                     ),
                 ]
             )

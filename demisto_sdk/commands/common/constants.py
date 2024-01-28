@@ -1397,14 +1397,12 @@ REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
 
 BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
-    "file": {
-        "default": ["file"],
-    },
-    "email": {"default": ["email"]},
-    "domain": {"default": ["domain"]},
-    "url": {"default": ["url"]},
-    "ip": {"default": ["ip"]},
-    "cve": {"default": ["cve"]},
+    "file": {"default": ["file"], "required": True},
+    "email": {"default": ["email"], "required": True},
+    "domain": {"default": ["domain"], "required": True},
+    "url": {"default": ["url"], "required": True},
+    "ip": {"default": ["ip"], "required": True},
+    "cve": {"default": ["cve"], "required": True},
     "endpoint": {"default": ["ip"], "required": False},
 }
 
@@ -2036,3 +2034,9 @@ class IncidentState(str, Enum):
 # Used to format the writing of the yml/json file
 DEFAULT_JSON_INDENT = 4
 DEFAULT_YAML_INDENT = 0
+
+
+PACK_DEFAULT_MARKETPLACES: List = [
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.MarketplaceV2.value,
+]

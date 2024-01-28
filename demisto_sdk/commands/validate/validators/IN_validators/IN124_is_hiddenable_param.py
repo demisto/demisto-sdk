@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import ClassVar, Dict, Iterable, List
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    ALLOWED_HIDDEN_PARAMS,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
@@ -66,8 +69,11 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
                 )
             )
             and not (
-                param.type in (0, 4, 12, 14)
-                and self._is_replaced_by_type9(param.display or "", params)
+                param.name in ALLOWED_HIDDEN_PARAMS
+                or (
+                    param.type in (0, 4, 12, 14)
+                    and self._is_replaced_by_type9(param.display or "", params)
+                )
             )
         ]
         self.invalid_params[integration_name] = invalid_params

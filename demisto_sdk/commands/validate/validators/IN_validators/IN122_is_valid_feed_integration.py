@@ -10,7 +10,6 @@ from demisto_sdk.commands.content_graph.objects.integration import (
 from demisto_sdk.commands.validate.tools import find_param
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixResult,
     ValidationResult,
 )
 
@@ -24,8 +23,6 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
     )
     error_message = "The integration is a feed integration with malformed params: {0}"
     related_field = "configuration"
-    is_auto_fixable = True
-    fix_message = "The following params was fixed: {0}"
     invalid_params: ClassVar[Dict[str, Dict[str, Dict]]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -35,7 +32,7 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n".join(
                         [
-                            f"The param {key} should be in the following structure: {self.create_param_structure(value)}"
+                            f"The param '{key}' should be in the following structure: {self.create_param_structure(value)}"
                             for key, value in invalid_params.items()
                         ]
                     )
@@ -63,13 +60,13 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
         msg = ""
         if must_equal := value.get("must_equal"):
             for key, val in must_equal.items():
-                msg = f"{msg}\n\tThe field {key} must be equal {val}."
+                msg = f"{msg}\n\tThe field '{key}' must be equal '{val}'."
         if must_contain := value.get("must_contain"):
             for key, val in must_contain.items():
-                msg = f"{msg}\n\tThe field {key} must appear in the param and can be equal {val}."
+                msg = f"{msg}\n\tThe field '{key}' must appear and contain '{val}'."
         if must_be_one_of := value.get("must_be_one_of"):
             for key, val in must_be_one_of.items():
-                msg = f"{msg}\n\tThe field {key} must be one of the following {', '.join(val['options'])}."
+                msg = f"{msg}\n\tThe field '{key}' must be one of the following {', '.join(val['options'])}."
         return msg
 
     def get_invalid_feed_params(
@@ -117,36 +114,3 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
                     }
         self.invalid_params[integration_name] = invalid_params
         return invalid_params
-
-    def fix(self, content_item: ContentTypes) -> FixResult:
-        fixed_params = []
-        for invalid_param, param_template in self.invalid_params[
-            content_item.name
-        ].items():
-            if current_param := find_param(content_item.params, invalid_param):
-                param = current_param.dict()
-                if must_equal := param_template.get("must_equal"):
-                    for key, val in must_equal.items():
-                        param[key] = val
-                if must_contain := param_template.get("must_contain"):
-                    for key, val in must_contain.items():
-                        if key not in param:
-                            param[key] = val
-                if must_be_one_of := param_template.get("must_be_one_of"):
-                    for key, val in must_be_one_of.items():
-                        if key not in param or param[key] not in val.get("options", []):
-                            param[key] = val.get("options", [])[0]
-                current_param = Parameter(**param)
-                fixed_params.append(param)
-        return FixResult(
-            validator=self,
-            message=self.fix_message.format(
-                "\n".join(
-                    [
-                        f"The param {fixed_param.get('name', '')} was fixed and now in the following structure: {fixed_param}"
-                        for fixed_param in fixed_params
-                    ]
-                )
-            ),
-            content_object=content_item,
-        )

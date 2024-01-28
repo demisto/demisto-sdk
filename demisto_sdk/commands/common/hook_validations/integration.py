@@ -264,9 +264,10 @@ class IntegrationValidator(ContentEntityValidator):
         skipped_integrations = conf_json_data.get("skipped_integrations", {})
         integration_id = _get_file_id("integration", self.current_file)
         if skipped_integrations and integration_id in skipped_integrations:
-            if "no instance" in skipped_integrations[
-                integration_id
-            ].lower() and not self.has_unittest(self.file_path):
+            if (
+                "no instance" in skipped_integrations[integration_id].lower()
+                and not self.has_unittest(self.file_path)
+            ) or "no instance" not in skipped_integrations[integration_id].lower():
                 skip_comment = skipped_integrations[integration_id]
                 error_message, error_code = Errors.integration_is_skipped(
                     integration_id, skip_comment
@@ -652,10 +653,7 @@ class IntegrationValidator(ContentEntityValidator):
         for command in commands:
             command_name = command.get("name")
             # look for reputations commands
-            if (
-                command_name in BANG_COMMAND_NAMES
-                or command_name in MANDATORY_REPUTATION_CONTEXT_NAMES
-            ):
+            if command_name in BANG_COMMAND_NAMES:
                 context_outputs_paths = set()
                 context_outputs_descriptions = set()
                 for output in command.get("outputs", []):

@@ -20,7 +20,7 @@ from requests.exceptions import RequestException
 from urllib3 import HTTPResponse
 
 from demisto_sdk.commands.common.clients.configs import ServerType, XsoarClientConfig
-from demisto_sdk.commands.common.clients.errors import UnAuthorized
+from demisto_sdk.commands.common.clients.errors import UnAuthorized, UnHealthyServer
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
     IncidentState,
@@ -47,6 +47,26 @@ class XsoarClient(BaseModel):
         arbitrary_types_allowed = True
 
     @classmethod
+    def is_xsoar_healthy(cls, client: DefaultApi) -> bool:
+        """
+        Validates that the xsoar server part is healthy
+
+        Args:
+            client: XSOAR client.
+
+        """
+        try:
+            status_code = client.generic_request(path="/health/server")[1]
+            return status_code == requests.codes.ok
+        except ApiException as err:
+            if err.status == requests.codes.unauthorized:
+                raise UnAuthorized(
+                    message=f"Could not connect to {client.api_client.configuration.host}, credentials are invalid",
+                    status_code=err.status,
+                )
+            raise
+
+    @classmethod
     def is_xsoar_on_prem(
         cls,
         server_version: str,
@@ -67,42 +87,38 @@ class XsoarClient(BaseModel):
         """
         Get basic information about XSOAR server.
         """
-        try:
-            raw_response, _, response_headers = client.generic_request(
-                "/about", "GET", response_type="object"
+        raw_response, _, response_headers = client.generic_request(
+            "/about", "GET", response_type="object"
+        )
+        if "text/html" in response_headers.get("Content-Type"):
+            raise ValueError(
+                f"the {client.api_client.configuration.host} URL is not the api-url",
             )
-            if "text/html" in response_headers.get("Content-Type"):
-                raise ValueError(
-                    f"the {client.api_client.configuration.host} URL is not the api-url",
-                )
-            logger.debug(f"about={raw_response}")
-            return raw_response
-        except ApiException as err:
-            if err.status == requests.codes.unauthorized:
-                raise UnAuthorized(
-                    message=f"Could not connect to {client.api_client.configuration.host}, credentials are invalid",
-                    status_code=err.status,
-                )
-            raise
+        logger.debug(f"about={raw_response}")
+        return raw_response
 
     @validator("client", always=True, pre=True)
     def get_xsoar_client(
         cls, v: Optional[DefaultApi], values: Dict[str, Any]
     ) -> DefaultApi:
         """
-        Returns the client for xsoar endpoints.
+        Returns the client for xsoar endpoints, checks that the server is healthy
         """
-        if v:
-            return v
         config: XsoarClientConfig = values["config"]
-        return demisto_client.configure(
-            config.base_api_url,
-            api_key=config.api_key.get_secret_value(),
-            auth_id=config.auth_id,
-            username=config.user,
-            password=config.password.get_secret_value(),
-            verify_ssl=config.verify_ssl,
-        )
+        if v:
+            _client = v
+        else:
+            _client = demisto_client.configure(
+                config.base_api_url,
+                api_key=config.api_key.get_secret_value(),
+                auth_id=config.auth_id,
+                username=config.user,
+                password=config.password.get_secret_value(),
+                verify_ssl=config.verify_ssl,
+            )
+        if cls.is_xsoar_healthy(_client):
+            return _client
+        raise UnHealthyServer(str(config), server_part="xsoar")
 
     @validator("about", always=True)
     def get_server_about(cls, v: Optional[Dict], values: Dict[str, Any]) -> Dict:

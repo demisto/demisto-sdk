@@ -40,9 +40,11 @@ class XsoarSaasClient(XsoarClient):
 
     @classmethod
     @retry(exceptions=RequestException)
-    def is_healthy(cls, session: Session, server_config: XsoarSaasClientConfig) -> bool:
+    def is_xdr_healthy(
+        cls, session: Session, server_config: XsoarSaasClientConfig
+    ) -> bool:
         """
-        Validates that SaaS instance is healthy.
+        Validates that the XDR part is healthy.
 
         Returns:
             bool: True if SaaS server is healthy, False if not.
@@ -79,7 +81,7 @@ class XsoarSaasClient(XsoarClient):
                 "Content-Type": "application/json",
             }
         )
-        if cls.is_healthy(session, server_config=config):
+        if cls.is_xdr_healthy(session, server_config=config):
             return session
 
         raise RuntimeError(

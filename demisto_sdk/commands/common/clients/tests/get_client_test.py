@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 @pytest.fixture()
 def api_requests_mocker(mocker):
     mocker.patch.object(XsoarClient, "get_xsoar_about", return_value={})
-    mocker.patch.object(XsiamClient, "is_xsiam_server_healthy", return_value=True)
+    mocker.patch.object(XsoarSaasClient, "is_healthy", return_value=True)
     return mocker
 
 

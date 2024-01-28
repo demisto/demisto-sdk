@@ -10,7 +10,7 @@ inputs:
   node-version:
     required: false
     type: string
-    default: "16"
+    default: "20"
     description: "The node version to install"
   artifacts-dir:
     required: false

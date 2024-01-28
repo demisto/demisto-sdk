@@ -999,10 +999,10 @@ class Linter:
                 )
                 break
             except Exception:
-                logger.exception(
-                    f"{log_prompt} - attempt #{trial} could not create container: {container_name=}, {test_image=}, {command=}"
-                )
                 if trial == 2:
+                    logger.exception(
+                        f"{log_prompt} - Third attempt failed, could not create container: {container_name=}, {test_image=}, {command=}"
+                    )
                     raise
         try:
             container.start()

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import ClassVar, Iterable, List
+from typing import ClassVar, Dict, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -24,7 +24,7 @@ class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     fix_message = "Updated name from {0} to {1}"
     related_field = "name"
-    script_name_to_correct_version: ClassVar[dict[str, str]] = {}
+    script_name_to_correct_version: ClassVar[Dict[str, str]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []

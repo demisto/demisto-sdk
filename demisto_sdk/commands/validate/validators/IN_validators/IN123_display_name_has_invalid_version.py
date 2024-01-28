@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import ClassVar, Iterable, List
+from typing import ClassVar, Dict, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -24,7 +24,7 @@ class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTyp
     is_auto_fixable = True
     fix_message = "Updated display from {0} to {1}"
     related_field = "display"
-    integration_name_to_correct_version: ClassVar[dict[str, str]] = {}
+    integration_display_name_to_correct_version: ClassVar[Dict[str, str]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []
@@ -39,7 +39,7 @@ class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTyp
                     correct_display_name = display_name.replace(
                         incorrect_version_display_name, correct_display_name
                     )
-                    IntegrationDisplayNameVersionedCorrectlyValidator.integration_name_to_correct_version[
+                    IntegrationDisplayNameVersionedCorrectlyValidator.integration_display_name_to_correct_version[
                         display_name
                     ] = correct_display_name
                     invalid_content_items.append(
@@ -60,7 +60,7 @@ class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTyp
         content_item: ContentTypes,
     ) -> FixResult:
         old_display_name = content_item.display_name
-        content_item.display_name = IntegrationDisplayNameVersionedCorrectlyValidator.integration_name_to_correct_version[
+        content_item.display_name = IntegrationDisplayNameVersionedCorrectlyValidator.integration_display_name_to_correct_version[
             old_display_name
         ]
         return FixResult(

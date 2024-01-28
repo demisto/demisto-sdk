@@ -985,22 +985,25 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         command = [self._facts["lint_to_commands"][linter]]
-        try:
-            container: docker.models.containers.Container = (
-                get_docker().create_container(
-                    name=container_name,
-                    image=test_image,
-                    command=command,
-                    user=f"{os.getuid()}:4000",
-                    files_to_push=[(self._pack_abs_dir, "/devwork")],
-                    environment=self._facts["env_vars"],
+        for trial in range(3):
+            try:
+                container: docker.models.containers.Container = (
+                    get_docker().create_container(
+                        name=container_name,
+                        image=test_image,
+                        command=command,
+                        user=f"{os.getuid()}:4000",
+                        files_to_push=[(self._pack_abs_dir, "/devwork")],
+                        environment=self._facts["env_vars"],
+                    )
                 )
-            )
-        except Exception:
-            logger.exception(
-                f"{log_prompt} - could not create container: {container_name=}, {test_image=}, {command=}"
-            )
-            raise
+                break
+            except Exception:
+                logger.exception(
+                    f"{log_prompt} - attempt #{trial} could not create container: {container_name=}, {test_image=}, {command=}"
+                )
+                if trial == 2:
+                    raise
         try:
             container.start()
             stream_docker_container_output(container.logs(stream=True))

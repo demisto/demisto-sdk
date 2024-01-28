@@ -6,21 +6,13 @@ from urllib.parse import urljoin
 import requests
 from demisto_client.demisto_api.api.default_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
-from pydantic import validator
-from requests import Session
-from requests.exceptions import RequestException
 
-from demisto_sdk.commands.common.clients.configs import (
-    XsiamClientConfig,
-)
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
     XsoarSaasClient,
 )
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
-from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import retry
 
 json = DEFAULT_JSON_HANDLER
 
@@ -56,43 +48,6 @@ class XsiamClient(XsoarSaasClient):
             return False
 
         return True
-
-    @classmethod
-    @retry(exceptions=RequestException)
-    def is_xsiam_server_healthy(
-        cls, session: Session, config: XsiamClientConfig
-    ) -> bool:
-        """
-        Validates that XSIAM instance is healthy.
-
-        Returns:
-            bool: True if XSIAM server is healthy, False if not.
-        """
-        url = urljoin(config.base_api_url, "public_api/v1/healthcheck")
-        response = session.get(url)
-        response.raise_for_status()
-        try:
-            xsiam_health_status = (response.json().get("status") or "").lower()
-            logger.debug(f"The status of XSIAM health is {xsiam_health_status}")
-            return (
-                response.status_code == requests.codes.ok
-                and xsiam_health_status == "available"
-            )
-        except JSONDecodeError as e:
-            logger.debug(
-                f"Could not validate if XSIAM {config.base_api_url} is healthy, error:\n{e}"
-            )
-            return False
-
-    @validator("session", always=True)
-    def get_xdr_session(cls, v: Optional[Session], values: Dict[str, Any]) -> Session:
-        session = v or super().get_xdr_session(v, values)
-        config = values["config"]
-        if cls.is_xsiam_server_healthy(session, config):
-            return session
-        raise RuntimeError(
-            f"Could not connect to XSIAM server {config.base_api_url}, check your configurations are valid"
-        )
 
     """
     #############################

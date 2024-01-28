@@ -19,9 +19,7 @@ from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 from urllib3 import HTTPResponse
 
-from demisto_sdk.commands.common.clients.configs import (
-    XsoarClientConfig,
-)
+from demisto_sdk.commands.common.clients.configs import ServerType, XsoarClientConfig
 from demisto_sdk.commands.common.clients.errors import UnAuthorized
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
@@ -967,7 +965,7 @@ class XsoarClient(BaseModel):
             the context after running the command
         """
         if not investigation_id:
-            if self.marketplace == MarketplaceVersions.XSOAR:
+            if self.config.server_type == ServerType.XSOAR:
                 investigation_id = self.get_playground_id()
             else:
                 # it is not possible to auto-detect playground-id in xsoar-8, see CIAC-8766,

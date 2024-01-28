@@ -1,4 +1,3 @@
-import json
 import logging
 from os.path import join
 from pathlib import Path
@@ -8,6 +7,7 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
@@ -28,6 +28,8 @@ VMWARE_PACK_PATH = join(
 )
 VMWARE_RN_PACK_PATH = join(git_path(), "Packs", "VMware", "ReleaseNotes")
 THINKCANARY_RN_FOLDER = join(git_path(), "Packs", "ThinkCanary", "ReleaseNotes")
+
+json = JSON_Handler()
 
 
 @pytest.fixture
@@ -909,7 +911,10 @@ def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
         "No changes that require release notes were detected. If such changes were made, please commit the changes and rerun the command",
     )
 
-def test_update_release_on_matadata_change_that_require_rn(demisto_client, mocker, repo):
+
+def test_update_release_on_matadata_change_that_require_rn(
+    demisto_client, mocker, repo
+):
     """
     Given
     - change only in metadata (in fields that require RN)
@@ -921,7 +926,7 @@ def test_update_release_on_matadata_change_that_require_rn(demisto_client, mocke
     - Ensure release notes file created with no errors
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    pack_metadata_path = "/Users/mdagan/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/1.pack_metadata.json"
+    pack_metadata_path = "demisto_sdk/tests/test_files/1.pack_metadata.json"
     pack = repo.create_pack("FeedAzureValid")
     with open(pack_metadata_path) as metadata_file:
         metadata_file = json.load(metadata_file)
@@ -953,7 +958,8 @@ def test_update_release_on_matadata_change_that_require_rn(demisto_client, mocke
         GitUtil, "get_current_working_branch", return_value="branch_name"
     )
     mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_name", return_value="FeedAzureValid"
+        "demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_name",
+        return_value="FeedAzureValid",
     )
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_names_from_files",
@@ -990,4 +996,3 @@ def test_update_release_on_matadata_change_that_require_rn(demisto_client, mocke
             ]
         ]
     )
-

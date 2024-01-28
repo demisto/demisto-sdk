@@ -8,6 +8,7 @@ on:
     branches:
       - "**"
 
+
 concurrency:
   group: tests-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -16,6 +17,7 @@ concurrency:
 jobs:
   validate-changelog:
     runs-on: ubuntu-latest
+    if: github.ref_name != 'master'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_poetry_python_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
 
@@ -34,6 +36,27 @@ jobs:
         run: |
           echo "Validating changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
           poetry run python ./Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py -n "$PR_NUMBER" -t "$PR_TITLE"
+
+  pre-commit-checks:
+    runs-on: ubuntu-latest
+    name: Pre Commit Checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: '3.10'
+
+      - name: Run Pre Commit
+        uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --all-files
+
+      - name: Run Pytest collection
+        run: |
+          poetry run pytest --collect-only .
 
   unit-tests:
     name: Unit Tests / Python ${{ matrix.python-version }}
@@ -54,8 +77,10 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
+          artifacts-dir: unit-tests/logs
 
       - name: Run Unit Tests
+        timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
 
@@ -64,17 +89,18 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
 
-          mkdir unit-tests
           poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
+          exit $pytest_exit_code
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
+        if: always()
         with:
-          python-version: ${{ matrix.python-version }}
-          artifacts-folder-name: unit-tests
+          artifact-name: unit-tests-python-${{ matrix.python-version }}-artifacts
+          artifacts-path-dir: unit-tests
           junit-path: unit-tests/junit.xml
 
   integration-tests:
@@ -96,12 +122,13 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
+          artifacts-dir: integration-tests/logs
 
       - name: Run Integration Tests
+        timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
 
-          mkdir integration-tests
           poetry run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html:integration-tests/coverage --junitxml=integration-tests/junit.xml || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
@@ -109,9 +136,10 @@ jobs:
 
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
+        if: always()
         with:
-          python-version: ${{ matrix.python-version }}
-          artifacts-folder-name: integration-tests
+          artifact-name: integration-tests-python-${{ matrix.python-version }}-artifacts
+          artifacts-path-dir: integration-tests
           junit-path: integration-tests/junit.xml
 
   graph-tests:
@@ -133,20 +161,24 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
+          artifacts-dir: graph-tests/logs
 
       - name: Run Graph Tests
+        timeout-minutes: 60
         run: |
           source "$(poetry env info --path)/bin/activate"
 
-          mkdir graph-tests
           poetry run pytest -v demisto_sdk/commands/content_graph --cov=demisto_sdk --cov-report=html:graph-tests/coverage --junitxml=graph-tests/junit.xml || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
+          exit $pytest_exit_code
+
       - name: Python ${{ matrix.python-version }} - Test Summary Upload
         uses: ./.github/actions/test_summary
+        if: always()
         with:
-          python-version: ${{ matrix.python-version }}
-          artifacts-folder-name: graph-tests
+          artifact-name: graph-tests-python-${{ matrix.python-version }}-artifacts
+          artifacts-path-dir: graph-tests
           junit-path: graph-tests/junit.xml
 
   coverage:
@@ -158,7 +190,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - name: Download all artifacts
+      - name: Download all artifacts  # TODO - download only the relevant artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
         run: |
@@ -195,7 +227,7 @@ jobs:
         run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
 
       - name: Python ${{ matrix.python-version }} - Setup Environment
-        uses: ./.github/actions/setup_poetry_python_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
           working-dir: content
@@ -210,6 +242,7 @@ jobs:
           cd content
           poetry run pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
       - name: Run content unit tests
+        timeout-minutes: 60
         env:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |
@@ -220,7 +253,7 @@ jobs:
           poetry run pytest ./Tests/private_build/tests -v
           poetry run pytest Utils -v
 
-  test-demisto-sdk-pre-commit-command:
+  test-pre-commit-command:
     runs-on: ubuntu-latest
     name: Test Demisto-SDK Pre-Commit Command
     steps:
@@ -228,7 +261,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Python Environment
-        uses: ./.github/actions/setup_poetry_python_environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
 
@@ -241,21 +274,24 @@ jobs:
 
       - name: Cache Pre commit
         id: cache-pre-commit
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit
 
-      - name: Create SDK Config File - Ignore Docker and Release-Notes Validations
+      - name: Create SDK Config File - Ignore BA101
         run: |
           # Run only a specific validation to make sure validate is triggered successfully in demisto-sdk pre-commit
           cd content
           echo -e "[validate]\nrun_specific_validations=BA101" > .demisto-sdk-conf
 
       - name: run pre-commit on changed files
+        timeout-minutes: 60
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
+          mkdir -p test-pre-commit-command/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-pre-commit-command/logs
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
@@ -266,29 +302,59 @@ jobs:
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
 
       - name: run pre-commit on input files
+        timeout-minutes: 60
         continue-on-error: true
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
 
-  pre-commit-checks:
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: content/test-pre-commit-command
+          artifact-name: test-demisto-sdk-pre-commit-command-artifacts
+
+  test-graph-commands:
     runs-on: ubuntu-latest
-    name: Pre Commit Checks
+    name: Test Graph Commands
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Python Environment From Content Repository
-        uses: ./.github/actions/setup_poetry_python_environment
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
+          artifacts-dir: test-graph-commands
 
-      - name: Run Pre Commit
-        uses: pre-commit/action@v3.0.0
+      - name: Checkout content
+        uses: actions/checkout@v3
         with:
-          extra_args: --all-files
+          repository: demisto/content
+          path: content
 
-      - name: Run Pytest collection
+      - name: Run Graph
+        timeout-minutes: 60
         run: |
-          poetry run pytest --collect-only .
+          source $(poetry env info --path)/bin/activate
+          cd content
+          mkdir -p test-graph-commands/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-graph-commands/logs
+          # create content graph from scratch
+          demisto-sdk create-content-graph
+          # clean import folder
+          sudo rm -rf /var/lib/neo4j/import
+          # Update content graph from the bucket
+          demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
+
+          # Update content graph from the the previous content graph that was created/built
+          demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
+
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: content/test-graph-commands
+          artifact-name: test-graph-commands-artifacts

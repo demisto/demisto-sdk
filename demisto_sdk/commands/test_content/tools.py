@@ -1,5 +1,4 @@
 import ast
-import logging
 from copy import deepcopy
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output
@@ -7,9 +6,8 @@ from typing import Dict, Optional, Set
 
 import demisto_client
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.test_content.constants import SSH_USER
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def update_server_configuration(

@@ -679,13 +679,21 @@ def get_fields_by_script_argument(task):
                 # the value should be a list of dicts in str format
                 custom_field_value = list(field_value.values())[0]
                 if isinstance(custom_field_value, str):
-                    custom_fields_list = json.loads(custom_field_value)
-                    if not isinstance(custom_fields_list, list):
-                        custom_fields_list = [custom_fields_list]
-                    for custom_field in custom_fields_list:
-                        for field_name in custom_field.keys():
-                            if field_name not in BUILT_IN_FIELDS:
-                                dependent_incident_fields.add(field_name)
+                    if custom_field_value.startswith("$"):
+                        logger.warning(
+                            "You're using an unrecommended method - ${} - to retrieve values from the context data."
+                        )
+                        continue
+                    else:
+                        custom_fields_list = json.loads(custom_field_value)
+                else:
+                    custom_fields_list = custom_field_value
+                if not isinstance(custom_fields_list, list):
+                    custom_fields_list = [custom_fields_list]
+                for custom_field in custom_fields_list:
+                    for field_name in custom_field.keys():
+                        if field_name not in BUILT_IN_FIELDS:
+                            dependent_incident_fields.add(field_name)
     return dependent_incident_fields
 
 

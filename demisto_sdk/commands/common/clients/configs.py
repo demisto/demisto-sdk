@@ -41,7 +41,7 @@ class XsoarClientConfig(BaseModel):
         default=SecretStr(os.getenv(DEMISTO_PASSWORD, "")), description="XSOAR Password"
     )
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))
-    server_type = ServerType.XSOAR
+    server_type: ServerType = ServerType.XSOAR
 
     @root_validator()
     def validate_auth_params(cls, values: Dict[str, Any]):
@@ -83,7 +83,7 @@ class XsoarClientConfig(BaseModel):
 
 class XsoarSaasClientConfig(XsoarClientConfig):
     auth_id: str = Field(default=os.getenv(AUTH_ID), description="XSOAR/XSIAM Auth ID")
-    server_type = ServerType.XSOAR_SAAS
+    server_type: ServerType = ServerType.XSOAR_SAAS
 
     @root_validator()
     def validate_auth_params(cls, values: Dict[str, Any]):
@@ -102,4 +102,4 @@ class XsiamClientConfig(XsoarSaasClientConfig):
         default=SecretStr(os.getenv(XSIAM_COLLECTOR_TOKEN, "")),
         description="XSIAM HTTP Collector Token",
     )
-    server_type = ServerType.XSIAM
+    server_type: ServerType = ServerType.XSIAM

@@ -8,6 +8,7 @@ from requests import Response, Session
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.clients.configs import XsoarSaasClientConfig
+from demisto_sdk.commands.common.clients.errors import UnHealthyServer
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
@@ -83,10 +84,7 @@ class XsoarSaasClient(XsoarClient):
         )
         if cls.is_xdr_healthy(session, server_config=config):
             return session
-
-        raise RuntimeError(
-            f"Could not connect to server {config.base_api_url}, check your configurations are valid"
-        )
+        raise UnHealthyServer(str(config), server_part="xdr")
 
     @property
     def external_base_url(self) -> str:

@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.clients.configs import (
     XsoarClientConfig,
     XsoarSaasClientConfig,
 )
+from demisto_sdk.commands.common.clients.errors import UnHealthyServer
 from demisto_sdk.commands.common.clients.xsiam.xsiam_api_client import XsiamClient
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
@@ -90,12 +91,12 @@ def get_client_from_marketplace(
 
 @lru_cache
 def get_client_from_server_type(
-    base_url: Optional[str] = os.getenv(DEMISTO_BASE_URL, ""),
-    api_key: Optional[str] = os.getenv(DEMISTO_KEY, ""),
-    auth_id: Optional[str] = os.getenv(AUTH_ID, ""),
-    username: Optional[str] = os.getenv(DEMISTO_USERNAME, ""),
-    password: Optional[str] = os.getenv(DEMISTO_PASSWORD, ""),
-    verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False)),
+    base_url: Optional[str] = None,
+    api_key: Optional[str] = None,
+    auth_id: Optional[str] = None,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    verify_ssl: Optional[bool] = None,
 ) -> XsoarClient:
     """
     Returns the client based on the server type by doing api requests to determine which server it is
@@ -112,13 +113,30 @@ def get_client_from_server_type(
     Returns:
         the correct client based on querying the type of the server
     """
-    _client = demisto_client.configure(
-        base_url=base_url,
-        api_key=api_key,
-        verify_ssl=verify_ssl,
-        username=username,
-        password=password,
+    _base_url = base_url or os.getenv(DEMISTO_BASE_URL, "")
+    _api_key = api_key or os.getenv(DEMISTO_KEY, "")
+    _auth_id = auth_id or os.getenv(AUTH_ID)
+    _username = username or os.getenv(DEMISTO_USERNAME, "")
+    _password = password or os.getenv(DEMISTO_PASSWORD, "")
+    _verify_ssl = (
+        verify_ssl
+        if verify_ssl is not None
+        else string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))
     )
+
+    _client = demisto_client.configure(
+        base_url=_base_url,
+        api_key=_api_key,
+        auth_id=_auth_id,
+        verify_ssl=_verify_ssl,
+        username=_username,
+        password=_password,
+    )
+
+    if not XsoarClient.is_xsoar_healthy(_client):
+        raise UnHealthyServer(
+            _client.api_client.configuration.host, server_part="xsoar"
+        )
 
     about = XsoarClient.get_xsoar_about(_client)
     product_mode = about.get("productMode")
@@ -128,10 +146,10 @@ def get_client_from_server_type(
     if XsiamClient.is_xsiam(_client, product_mode=product_mode):
         return XsiamClient(
             config=XsiamClientConfig(
-                base_api_url=base_url,
-                api_key=api_key,
-                auth_id=auth_id,
-                verify_ssl=verify_ssl,
+                base_api_url=_base_url,
+                api_key=_api_key,
+                auth_id=_auth_id,
+                verify_ssl=_verify_ssl,
                 about=about,
             ),
             client=_client,
@@ -144,10 +162,10 @@ def get_client_from_server_type(
         try:
             return XsoarSaasClient(
                 config=XsoarSaasClientConfig(
-                    base_api_url=base_url,
-                    api_key=api_key,
-                    auth_id=auth_id,
-                    verify_ssl=verify_ssl,
+                    base_api_url=_base_url,
+                    api_key=_api_key,
+                    auth_id=_auth_id,
+                    verify_ssl=_verify_ssl,
                 ),
                 client=_client,
                 about=about,
@@ -156,12 +174,11 @@ def get_client_from_server_type(
             # xsoar-on-prem that can have server version > 8.0.0
             return XsoarClient(
                 config=XsoarClientConfig(
-                    base_api_url=base_url,
-                    api_key=api_key,
-                    auth_id=auth_id,
-                    user=username,
-                    password=password,
-                    verify_ssl=verify_ssl,
+                    base_api_url=_base_url,
+                    api_key=_api_key,
+                    user=_username,
+                    password=_password,
+                    verify_ssl=_verify_ssl,
                 ),
                 client=_client,
                 about=about,
@@ -172,12 +189,11 @@ def get_client_from_server_type(
     ):
         return XsoarClient(
             config=XsoarClientConfig(
-                base_api_url=base_url,
-                api_key=api_key,
-                auth_id=auth_id,
-                user=username,
-                password=password,
-                verify_ssl=verify_ssl,
+                base_api_url=_base_url,
+                api_key=_api_key,
+                user=_username,
+                password=_password,
+                verify_ssl=_verify_ssl,
             ),
             client=_client,
             about=about,

@@ -56,7 +56,7 @@ class XsoarClient(BaseModel):
 
         """
         try:
-            status_code = client.generic_request(path="/health/server")[1]
+            status_code = client.generic_request(method="GET", path="/health/server")[1]
             return status_code == requests.codes.ok
         except ApiException as err:
             if err.status == requests.codes.unauthorized:

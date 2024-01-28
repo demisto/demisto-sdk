@@ -3,44 +3,42 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
     ValidationResult,
 )
 
-ContentTypes = Script
+ContentTypes = Integration
 
 VERSION_NAME_REGEX = re.compile(r"V([0-9]+)$", re.IGNORECASE)
 
 
-class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
-    error_code = "SC100"
-    description = (
-        "Checks if script name is versioned correctly, e.g.: ends with V<number>."
-    )
-    error_message = "The name {0} for script is incorrect, it should be {1}."
+class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
+    error_code = "IN123"
+    description = "Checks if integration display name is versioned correctly, e.g.: ends with v<number>."
+    error_message = "The name {0} for integration is incorrect, it should be {1}."
     is_auto_fixable = True
     fix_message = "Updated name from {0} to {1}"
-    related_field = "name"
+    related_field = "display"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []
         for content_item in content_items:
-            name = content_item.name
-            matches = VERSION_NAME_REGEX.findall(name)
+            display_name = content_item.display_name
+            matches = VERSION_NAME_REGEX.findall(display_name)
             if matches:
                 version_number = matches[0]
-                incorrect_version_name = f"v{version_number}"
-                correct_version_name = f"V{version_number}"
-                if not name.endswith(correct_version_name):
+                incorrect_version_name = f"V{version_number}"
+                correct_version_name = f"v{version_number}"
+                if not display_name.endswith(correct_version_name):
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
-                                name,
-                                name.replace(
+                                display_name,
+                                display_name.replace(
                                     incorrect_version_name, correct_version_name
                                 ),
                             ),
@@ -54,13 +52,13 @@ class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-        old_name = content_item.name
+        old_name = content_item.display_name
         matches = re.findall(VERSION_NAME_REGEX, old_name)
         if matches:
             version_number = matches[0]
-            incorrect_version_name = f"v{version_number}"
-            correct_version_name = f"V{version_number}"
-            content_item.name = content_item.name.replace(
+            incorrect_version_name = f"V{version_number}"
+            correct_version_name = f"v{version_number}"
+            content_item.display_name = content_item.display_name.replace(
                 incorrect_version_name, correct_version_name
             )
         return FixResult(

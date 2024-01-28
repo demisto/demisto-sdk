@@ -6,7 +6,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.SC_validators.SC100_script_has_invalid_version import (
-    ScriptNameIsVersionCorrectlyValidator,
+    ScriptNameIsVersionedCorrectlyValidator,
 )
 from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs import (
     IsScriptArgumentsContainIncidentWordValidatorCorePacks,
@@ -41,7 +41,7 @@ def test_ScriptNameIsVersionCorrectlyValidator_is_valid():
         create_script_object(paths=["name"], values=["TestV3"]),
     ]
 
-    results = ScriptNameIsVersionCorrectlyValidator().is_valid(content_items)
+    results = ScriptNameIsVersionedCorrectlyValidator().is_valid(content_items)
     assert len(results) == 1
     assert results[0].content_object.name == "Testv2"
 
@@ -58,7 +58,7 @@ def test_ScriptNameIsVersionCorrectlyValidator_fix():
      - make sure the script the name of the script is updated to the correct version
     """
     script = create_script_object(paths=["name"], values=["Testv2"])
-    fix_result = ScriptNameIsVersionCorrectlyValidator().fix(script)
+    fix_result = ScriptNameIsVersionedCorrectlyValidator().fix(script)
     assert fix_result.content_object.name == "TestV2"
 
 

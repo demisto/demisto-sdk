@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+import demisto_sdk.commands.content_graph.objects.base_content as base_content
 import demisto_sdk.commands.content_graph.objects.content_item as content_item
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -94,6 +95,7 @@ class Repo:
 
         # so that calling in_pack from inside the content_item will work.
         content_item.CONTENT_PATH = Path(self.path)
+        base_content.CONTENT_PATH = Path(self.path)
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)

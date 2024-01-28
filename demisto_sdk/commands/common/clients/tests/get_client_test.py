@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 @pytest.fixture()
 def api_requests_mocker(mocker):
     mocker.patch.object(XsoarClient, "get_xsoar_about", return_value={})
-    mocker.patch.object(XsoarSaasClient, "is_healthy", return_value=True)
+    mocker.patch.object(XsoarClient, "is_xsoar_healthy", return_value=True)
+    mocker.patch.object(XsoarSaasClient, "is_xdr_healthy", return_value=True)
     return mocker
 
 
@@ -237,6 +238,8 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
     def _generic_request_side_effect(
         path: str, method: str, response_type: str = "object"
     ):
+        if path == "/health/server":
+            return "", 200, ""
         if path == "/ioc-rules" and method == "GET":
             raise ApiException(status=500, reason="error")
         if path == "/about" and method == "GET" and response_type == "object":
@@ -332,6 +335,8 @@ def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_wi
     def _generic_request_side_effect(
         path: str, method: str, response_type: str = "object"
     ):
+        if path == "/health/server":
+            return "", 200, ""
         if path == "/ioc-rules" and method == "GET":
             raise ApiException(status=500, reason="error")
         if path == "/about" and method == "GET" and response_type == "object":

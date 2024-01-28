@@ -1670,6 +1670,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.MODELING_RULE_SCHEMA
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
+        elif PRE_PROCESS_RULES_DIR in path.parts:
+            return FileType.PRE_PROCESS_RULES
 
     elif (path.stem.endswith("_image") and path.suffix == ".png") or (
         (path.stem.endswith("_dark") or path.stem.endswith("_light"))

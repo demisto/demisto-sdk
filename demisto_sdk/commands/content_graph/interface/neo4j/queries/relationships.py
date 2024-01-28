@@ -325,7 +325,8 @@ WITH
             }}
         ),
         mandatorily: mandatorily,
-        depth: depth
+        depth: depth,
+        is_test: is_test
     }}) AS paths
 RETURN
     source.object_id AS object_id,
@@ -405,7 +406,8 @@ WITH
             }}
         ),
         mandatorily: mandatorily,
-        depth: depth
+        depth: depth,
+        is_test: is_test
     }}) AS paths
 RETURN
     target.object_id AS object_id,

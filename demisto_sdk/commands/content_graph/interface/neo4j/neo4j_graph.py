@@ -650,11 +650,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         output_path: Optional[Path] = None,
         override_commit: bool = True,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        clean_import_dir: bool = True
     ) -> None:
-        self.clean_import_dir()
+        if clean_import_dir:
+            self.clean_import_dir()
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata(override_commit)
+        self.dump_depends_on()
         if output_path:
             output_path = output_path / marketplace.value
             logger.info(f"Saving content graph in {output_path}.zip")
@@ -704,7 +707,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_pack_dependencies(self):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
-            session.execute_write(create_pack_dependencies)
+            self._depends_on = session.execute_write(create_pack_dependencies)
 
     def is_alive(self):
         return neo4j_service.is_alive()

@@ -68,11 +68,12 @@ def get_all_level_packs_relationships(
     }
 
 
-def create_pack_dependencies(tx: Transaction) -> None:
+def create_pack_dependencies(tx: Transaction) -> dict:
     remove_existing_depends_on_relationships(tx)
     update_uses_for_integration_commands(tx)
     delete_deprecatedcontent_relationship(tx)  # TODO decide what to do with this
-    create_depends_on_relationships(tx)
+    depends_on_data = create_depends_on_relationships(tx)
+    return depends_on_data
 
 
 def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
@@ -138,7 +139,7 @@ RETURN
     run_query(tx, query)
 
 
-def create_depends_on_relationships(tx: Transaction) -> None:
+def create_depends_on_relationships(tx: Transaction) -> dict:
     query = f"""// Creates DEPENDS_ON relationships
 MATCH (pack_a:{ContentType.BASE_NODE})<-[:{RelationshipType.IN_PACK}]-(a)
     -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_NODE})
@@ -163,7 +164,8 @@ WITH
     collect({{
         source: a.node_id,
         target: b.node_id,
-        mandatorily: r.mandatorily
+        mandatorily: r.mandatorily,
+        is_test: a.is_test
     }}) AS reasons
 RETURN
     pack_a, pack_b, reasons"""
@@ -179,3 +181,4 @@ RETURN
     ).exists():
         with open(f"{artifacts_folder}/depends_on.json", "w") as fp:
             json.dump(outputs, fp, indent=4)
+    return outputs

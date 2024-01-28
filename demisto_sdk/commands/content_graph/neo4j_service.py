@@ -112,7 +112,7 @@ def _docker_start():
             "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             "NEO4J_dbms_connector_http_advertised__address": "127.0.0.1:7474",
             "NEO4J_dbms_connector_bolt_advertised__address": "127.0.0.1:7687",
-            "NEO4J_dbms_memory_transaction_total_max": "600m",
+            "NEO4J_dbms_memory_transaction_total_max": "1700m",
         },
         healthcheck={
             "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",

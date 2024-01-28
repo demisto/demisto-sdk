@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
     OLDEST_SUPPORTED_VERSION,
+    PACK_METADATA_REQUIRE_RN_FIELDS,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
     SKIP_RELEASE_NOTES_FOR_TYPES,
@@ -2909,14 +2910,6 @@ class OldValidateManager:
         Returns:
             set: A set containing file paths of meta_files that should have their version raised.
         """
-        fields_to_check = [
-            "support",
-            "serverMinVersion",
-            "dependencies",
-            "marketplaces",
-            "name",
-            "price",
-        ]
         changed_meta_files_that_should_have_version_raised = set()
         for file_path in changed_meta_files:
             old_meta_file_content = get_remote_file(file_path, tag=self.prev_ver)
@@ -2924,7 +2917,7 @@ class OldValidateManager:
                 current_meta_file_content = json.load(f)
             if any(
                 current_meta_file_content.get(field) != old_meta_file_content.get(field)
-                for field in fields_to_check
+                for field in PACK_METADATA_REQUIRE_RN_FIELDS
             ):
                 changed_meta_files_that_should_have_version_raised.add(file_path)
         return changed_meta_files_that_should_have_version_raised

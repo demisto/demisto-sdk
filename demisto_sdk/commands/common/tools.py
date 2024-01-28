@@ -1173,7 +1173,7 @@ def get_latest_release_notes_text(rn_path):
                 logger.info(
                     f"[red]Release Notes may not be empty. Please fill out correctly. - {rn_path}[/red]"
                 )
-                return None
+                return ""
         except OSError:
             return ""
 

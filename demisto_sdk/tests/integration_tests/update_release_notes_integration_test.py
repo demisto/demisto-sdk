@@ -917,7 +917,7 @@ def test_update_release_on_matadata_change_that_require_rn(
 ):
     """
     Given
-    - change only in metadata (in fields that require RN)
+    - change only in metadata (in fields that require RN - dependencies)
 
     When
     - Running demisto-sdk update-release-notes command.
@@ -926,7 +926,6 @@ def test_update_release_on_matadata_change_that_require_rn(
     - Ensure release notes file created with no errors
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    runner = CliRunner(mix_stderr=True)
 
     pack_metadata_path = "demisto_sdk/tests/test_files/1.pack_metadata.json"
     pack = repo.create_pack("FeedAzureValid")
@@ -975,13 +974,17 @@ def test_update_release_on_matadata_change_that_require_rn(
         UpdateRN, "get_pack_metadata", return_value={"currentVersion": "1.0.0"}
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
-    rn_path = "./Packs/FeedAzureValid/ReleaseNotes/1_0_1.md"
+    rn_path = "Packs/FeedAzureValid/ReleaseNotes/1_0_1.md"
 
     Path(rn_path).unlink(missing_ok=True)
+    path_cwd = Path.cwd()
+    mocker.patch.object(Path, "cwd", return_value=path_cwd)
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
+    with ChangeCWD(repo.path):
+        runner = CliRunner(mix_stderr=True)
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
+
     assert result.exit_code == 0
-    assert Path(rn_path).is_file()
     assert not result.exception
     assert all(
         [
@@ -992,3 +995,5 @@ def test_update_release_on_matadata_change_that_require_rn(
             ]
         ]
     )
+
+    assert Path(rn_path).is_file()

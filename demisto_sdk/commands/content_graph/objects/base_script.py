@@ -31,7 +31,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
     tags: List[str]
     skip_prepare: List[str]
     runas: str = ""
-    arguments: List[Argument] = Field([], exclude=True)
+    args: List[Argument] = Field([], exclude=True)
 
     def metadata_fields(self) -> Set[str]:
         return (

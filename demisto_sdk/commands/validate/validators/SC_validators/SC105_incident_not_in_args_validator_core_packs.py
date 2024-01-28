@@ -41,7 +41,7 @@ class IsScriptArgumentsContainIncidentWordValidatorCorePacks(
                 pack_name = pack.name
                 wrong_arg_names = [
                     argument.name
-                    for argument in content_item.arguments
+                    for argument in content_item.args
                     if "incident" in argument.name
                     and not argument.deprecated
                     and pack_name in self.core_packs

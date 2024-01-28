@@ -17,7 +17,7 @@ class TestScriptArgument(Argument):
 class TestScript(BaseScript, content_type=ContentType.TEST_SCRIPT):  # type: ignore[call-arg]
     """Class to differ from script"""
 
-    arguments: List[TestScriptArgument] = Field([], exclude=True)  # type: ignore[assignment]
+    args: List[TestScriptArgument] = Field([], exclude=True)  # type: ignore[assignment]
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

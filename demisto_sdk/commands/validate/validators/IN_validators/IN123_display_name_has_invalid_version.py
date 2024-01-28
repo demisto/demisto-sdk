@@ -18,9 +18,9 @@ VERSION_NAME_REGEX = re.compile(r"V([0-9]+)$", re.IGNORECASE)
 class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     error_code = "IN123"
     description = "Checks if integration display name is versioned correctly, e.g.: ends with v<number>."
-    error_message = "The name {0} for integration is incorrect, it should be {1}."
+    error_message = "The display {0} for integration is incorrect, it should be {1}."
     is_auto_fixable = True
-    fix_message = "Updated name from {0} to {1}"
+    fix_message = "Updated display from {0} to {1}"
     related_field = "display"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

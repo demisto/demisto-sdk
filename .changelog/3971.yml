@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where validate command failed with Lists folder containing a data json file.
-  type: fix
-pr_number: 3971

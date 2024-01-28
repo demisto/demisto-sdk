@@ -564,7 +564,7 @@ class IntegrationGeneratorConfig:
         commands = []
         for command in self.commands:
             args = []
-            for arg in command.args:
+            for arg in command.arguments:
                 options = None
                 auto = None
 

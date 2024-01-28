@@ -1,0 +1,4 @@
+changes:
+- description: Added support to check xsoar-saas-client health when initialing its client.
+  type: feature
+pr_number: 3985

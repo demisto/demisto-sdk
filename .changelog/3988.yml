@@ -1,0 +1,4 @@
+changes:
+- description: Added retry mechanism for create docker container in lint command.
+  type: internal
+pr_number: 3988

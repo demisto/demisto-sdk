@@ -77,14 +77,16 @@ def build_xsoar_linter_command(support_level: str = "base", formatting_script: b
 
 
 def process_file(file_path):
+    return_code = 0
     errors = []
+    errors_str = ""
     env = ENV.copy()
     integration_script = BaseContent.from_path(file_path)
     if not isinstance(integration_script, IntegrationScript):
-        return 0
+        return return_code, errors_str
     file = integration_script.path.parent / f'{integration_script.path.stem}.py'
     if not file.exists():
-        return 0
+        return return_code, errors_str
 
     xsoar_linter_env = {}
     if isinstance(integration_script, Integration) and integration_script.long_running:
@@ -110,10 +112,14 @@ def process_file(file_path):
         log_str = log_data.decode('utf-8')
         pattern = re.compile(r'^/[^:\n]+:\d+:\d+: E\d+ .*$', re.MULTILINE)
         errors += pattern.findall(log_str)
-        errors_str = '\n'.join(errors) if errors else ''
     except subprocess.TimeoutExpired:
-        logger.error("Timeout")
+        errors.append((f"Got a timeout while processing the following file: {str(file_path)}"))
         return_code = 1
+    except Exception as e:
+        errors.append(f"Failed processing the following file: {str(file_path)}")
+        return_code = 1
+
+    errors_str = '\n'.join(errors) if errors else ''
     return return_code, errors_str
 
 def xsoar_linter_manager(
@@ -127,7 +133,8 @@ def xsoar_linter_manager(
         results = pool.map(process_file, file_paths)
 
     return_codes, errors = zip(*results)
-    if errors:
-        errors_str = '\n'.join(errors)
+    if any(return_codes):
+        errors_str = '\n'.join(error for error in errors if error)
+
         logger.error(f'Found the following errors: \n{errors_str}')
     return int(any(return_codes))

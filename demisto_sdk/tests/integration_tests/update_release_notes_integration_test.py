@@ -926,7 +926,7 @@ def test_update_release_on_matadata_change_that_require_rn(
     - Ensure release notes file created with no errors
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    pack_metadata_path = "/Users/mdagan/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzureValid/pack_metadata.json"
+    pack_metadata_path = "demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzureValid/pack_metadata.json"
     with open(pack_metadata_path) as metadata_file:
         old_pack_metadata = json.load(metadata_file)
         old_pack_metadata["support"] = "partner"

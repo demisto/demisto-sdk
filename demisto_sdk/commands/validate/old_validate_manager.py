@@ -2773,16 +2773,16 @@ class OldValidateManager:
                 FileType.PACK_IGNORE,
             },
         )
-
-        modified_packs_that_should_have_version_raised = (
-            modified_packs_that_should_have_version_raised.union(
-                get_pack_names_from_files(
-                    self.get_changed_meta_files_that_should_have_version_raised(
-                        changed_meta_files
+        if changed_meta_files:
+            modified_packs_that_should_have_version_raised = (
+                modified_packs_that_should_have_version_raised.union(
+                    get_pack_names_from_files(
+                        self.get_changed_meta_files_that_should_have_version_raised(
+                            changed_meta_files
+                        )
                     )
                 )
             )
-        )
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
         # should have their version raised

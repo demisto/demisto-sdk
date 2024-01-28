@@ -1,4 +1,6 @@
 changes:
-- description: enter description about this PR
+- description: Updated the **validate** command (`PA114`) to verify the "currentVersion" field was raised in the pack_metadata when changing specific fields in the pack_metadata file.
+  type: feature
+- description: Added support for **update-release-notes** command to update release notes when changing specific fields in the pack_metadata file.
   type: feature
 pr_number: 3972

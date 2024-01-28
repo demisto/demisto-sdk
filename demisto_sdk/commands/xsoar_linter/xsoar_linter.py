@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import re
 import subprocess
 import sys
 from packaging.version import Version
@@ -76,6 +77,7 @@ def build_xsoar_linter_command(support_level: str = "base", formatting_script: b
 
 
 def process_file(file_path):
+    errors = []
     env = ENV.copy()
     integration_script = BaseContent.from_path(file_path)
     if not isinstance(integration_script, IntegrationScript):
@@ -102,11 +104,17 @@ def process_file(file_path):
     env.update(xsoar_linter_env)
     env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
     try:
-        return_code = subprocess.run(command, env=env, timeout=60).returncode
+        process = subprocess.run(command, capture_output=True, env=env, timeout=60)
+        return_code = process.returncode
+        log_data = process.stdout
+        log_str = log_data.decode('utf-8')
+        pattern = re.compile(r'^/[^:\n]+:\d+:\d+: E\d+ .*$', re.MULTILINE)
+        errors += pattern.findall(log_str)
+        errors_str = '\n'.join(errors) if errors else ''
     except subprocess.TimeoutExpired:
         logger.error("Timeout")
         return_code = 1
-    return return_code
+    return return_code, errors_str
 
 def xsoar_linter_manager(
     file_paths: Optional[List[Path]]):
@@ -114,11 +122,12 @@ def xsoar_linter_manager(
     if not file_paths:
         return 0
 
-    return_codes = []
-    env = os.environ
-
     with multiprocessing.Pool(processes=cpu_count()) as pool:
         # Map the file_paths to the process_file function using the pool
-        return_codes = pool.map(process_file, file_paths)
+        results = pool.map(process_file, file_paths)
 
+    return_codes, errors = zip(*results)
+    if errors:
+        errors_str = '\n'.join(errors)
+        logger.error(f'Found the following errors: \n{errors_str}')
     return int(any(return_codes))

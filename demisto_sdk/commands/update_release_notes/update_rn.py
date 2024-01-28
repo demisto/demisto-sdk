@@ -272,7 +272,9 @@ class UpdateRN:
             changed_files[(file_name, file_type)] = {
                 "description": get_file_description(packfile, file_type),
                 "is_new_file": packfile in self.added_files,
-                "fromversion": get_from_version_at_update_rn(packfile) if file_type != FileType.METADATA else None,
+                "fromversion": get_from_version_at_update_rn(packfile)
+                if file_type != FileType.METADATA
+                else None,
                 "dockerimage": docker_image_name,
                 "path": packfile,
             }

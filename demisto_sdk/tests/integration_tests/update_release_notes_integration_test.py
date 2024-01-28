@@ -199,7 +199,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info") #test
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     expected_rn = "\n" + "#### Incident Fields\n\n" + "- **City**\n"
 
@@ -926,6 +926,8 @@ def test_update_release_on_matadata_change_that_require_rn(
     - Ensure release notes file created with no errors
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    runner = CliRunner(mix_stderr=False)
+
     pack_metadata_path = "demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzureValid/pack_metadata.json"
     with open(pack_metadata_path) as metadata_file:
         old_pack_metadata = json.load(metadata_file)
@@ -942,11 +944,7 @@ def test_update_release_on_matadata_change_that_require_rn(
     mocker.patch(
         "demisto_sdk.commands.common.tools.get_pack_name", return_value="FeedAzureValid"
     )
-    modified_files = {
-        join(
-            AZURE_FEED_PACK_PATH, "pack_metadata.json"
-        )
-    }
+    modified_files = {join(AZURE_FEED_PACK_PATH, "pack_metadata.json")}
 
     mocker.patch.object(
         OldValidateManager,
@@ -980,15 +978,16 @@ def test_update_release_on_matadata_change_that_require_rn(
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
     rn_path = join(RN_FOLDER, "1_0_1.md")
-
+    print(f"Current working directory: {Path.cwd()}")
+    print(f"Resolved path of rn_path: {Path(rn_path).resolve()}")
     Path(rn_path).unlink(missing_ok=True)
 
-    path_cwd = Path.cwd()
-    mocker.patch.object(Path, "cwd", return_value=path_cwd)
+    # path_cwd = Path.cwd()
+    # mocker.patch.object(Path, "cwd", return_value=path_cwd)
 
-    with ChangeCWD(repo.path):
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
+    # with ChangeCWD(repo.path):
+    # runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
     assert result.exit_code == 0
     assert Path(rn_path).is_file()
     assert not result.exception

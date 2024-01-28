@@ -376,7 +376,7 @@ jobs:
           source $(poetry env info --path)/bin/activate
           cd content
           mkdir -p test-old-validate-command/logs
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-old-validate-command/logs/logs/demisto_sdk_debug.log
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-old-validate-command/logs
           ./Tests/scripts/validate.sh
 
       - name: Upload artifacts
@@ -412,7 +412,7 @@ jobs:
           source $(poetry env info --path)/bin/activate
           cd content
           mkdir -p test-new-validate-command/logs
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-new-validate-command/logs/demisto_sdk_debug.log
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-new-validate-command/logs
           ./Tests/scripts/new_validate.sh
 
       - name: Upload artifacts

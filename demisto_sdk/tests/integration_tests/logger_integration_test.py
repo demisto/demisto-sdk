@@ -148,6 +148,7 @@ def test_logs_dir_not_a_dir(mocker):
     )
     custom_logs_dir_parent = custom_logs_dir.parent
     custom_logs_dir.touch()
+    assert custom_logs_dir.is_file()  # Ensure file was created successfully
 
     mocker.patch("demisto_sdk.commands.common.logger.LOGS_DIR", new=default_logs_dir)
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")

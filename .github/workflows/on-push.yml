@@ -384,7 +384,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        
+
       - name: Run Validate All - New Validate
         uses: ./.github/actions/validate
         with:

@@ -29,17 +29,17 @@ class XsoarSaasClient(XsoarClient):
         client: Optional[DefaultApi] = None,
         raise_if_not_healthy: bool = True,
     ):
-        super().__init__(
-            config, client=client, raise_if_not_healthy=raise_if_not_healthy
-        )
         self.session = Session()
-        self.session.verify = self.server_config.verify_ssl
+        self.session.verify = config.verify_ssl
         self.session.headers.update(
             {
-                "x-xdr-auth-id": self.server_config.auth_id,
-                "Authorization": self.server_config.api_key.get_secret_value(),
+                "x-xdr-auth-id": config.auth_id,
+                "Authorization": config.api_key.get_secret_value(),
                 "Content-Type": "application/json",
             }
+        )
+        super().__init__(
+            config, client=client, raise_if_not_healthy=raise_if_not_healthy
         )
 
     @classmethod

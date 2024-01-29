@@ -60,7 +60,7 @@ class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTyp
         content_item: ContentTypes,
     ) -> FixResult:
         old_display_name = content_item.display_name
-        content_item.display_name = IntegrationDisplayNameVersionedCorrectlyValidator.integration_display_name_to_correct_version[
+        content_item.display_name = self.integration_display_name_to_correct_version[
             old_display_name
         ]
         return FixResult(

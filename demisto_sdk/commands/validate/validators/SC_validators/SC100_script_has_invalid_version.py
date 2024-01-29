@@ -60,11 +60,7 @@ class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         old_name = content_item.name
-        content_item.name = (
-            ScriptNameIsVersionedCorrectlyValidator.script_name_to_correct_version[
-                old_name
-            ]
-        )
+        content_item.name = self.script_name_to_correct_version[old_name]
         return FixResult(
             validator=self,
             message=self.fix_message.format(old_name, content_item.name),

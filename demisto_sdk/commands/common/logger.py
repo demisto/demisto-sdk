@@ -2,16 +2,86 @@ import itertools
 import logging
 import logging.config
 import os.path
+import platform
 import re
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools import parse_int_or_default, string_to_bool
+# NOTE: Do not add internal imports here, as it may cause circular imports.
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_LOG_FILE_COUNT,
+    DEMISTO_SDK_LOG_FILE_PATH,
+    DEMISTO_SDK_LOG_FILE_SIZE,
+    DEMISTO_SDK_LOG_NO_COLORS,
+    DEMISTO_SDK_LOG_NOTIFY_PATH,
+    LOG_FILE_NAME,
+    LOGS_DIR,
+    STRING_TO_BOOL_MAP,
+)
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
+
+
+def environment_variable_to_bool(
+    variable_name: str, default_value: bool = False
+) -> bool:
+    """
+    Check if the environment variable is set and is a valid boolean value.
+    If it is not set or is not a valid boolean value, return the default value.
+
+    Args:
+        variable_name (str): The name of the environment variable.
+        default_value (bool): A default value to return if the environment variable is not set or is invalid.
+
+    Returns:
+        bool: The environment variable value if it is set and is a valid boolean value, otherwise the default value.
+    """
+    env_var = os.getenv(variable_name)
+
+    if not env_var:
+        return default_value
+
+    if isinstance(env_var, str) and env_var.casefold() in STRING_TO_BOOL_MAP:
+        return STRING_TO_BOOL_MAP[env_var.casefold()]
+
+    else:
+        logger.warning(
+            f"'{variable_name}' environment variable is set to '{env_var}', "
+            f"which is not a valid value. Default value '{default_value}' will be used."
+        )
+        return default_value
+
+
+def environment_variable_to_int(variable_name: str, default_value: int) -> int:
+    """
+    Check if the environment variable is set and is a valid integer value.
+    If it is not set or is not a valid integer value, return the default value.
+
+    Args:
+        variable_name (str): The name of the environment variable.
+        default_value (int): A default value to return if the environment variable is not set or is invalid.
+
+    Returns:
+        int: The environment variable value if it is set and is a valid integer value, otherwise the default value.
+    """
+    env_var = os.getenv(variable_name)
+
+    if not env_var:
+        return default_value
+
+    try:
+        return int(env_var)
+
+    except ValueError:
+        logger.warning(
+            f"'{variable_name}' environment variable is set to '{env_var}', "
+            f"which is not a valid integer value. Default value '{default_value}' will be used."
+        )
+
+        return default_value
+
 
 neo4j_log = logging.getLogger("neo4j")
 neo4j_log.setLevel(logging.CRITICAL)
@@ -19,11 +89,10 @@ neo4j_log.setLevel(logging.CRITICAL)
 CONSOLE_HANDLER = "console-handler"
 FILE_HANDLER = "file-handler"
 
-LOG_FILE_NAME: str = "demisto_sdk_debug.log"
-log_file_name_notified = False
-
-LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
-current_log_file_path: Path = LOG_FILE_PATH
+LOG_FILE_PATH: Optional[Path] = None
+LOG_FILE_PATH_PRINT = environment_variable_to_bool(
+    DEMISTO_SDK_LOG_NOTIFY_PATH, default_value=True
+)
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
@@ -43,16 +112,12 @@ DEPRECATED_PARAMETERS = {
 }
 
 SUCCESS_LEVEL: int = 25
-DEMISTO_SDK_LOG_FILE_SIZE = parse_int_or_default(
-    os.getenv("DEMISTO_SDK_LOG_FILE_SIZE"), 1_048_576  # 1MB
-)
-DEMISTO_SDK_LOG_FILE_COUNT = parse_int_or_default(
-    os.getenv("DEMISTO_SDK_LOG_FILE_COUNT"), 10
-)
+LOG_FILE_SIZE = environment_variable_to_int(DEMISTO_SDK_LOG_FILE_SIZE, 1_048_576)  # 1MB
+LOG_FILE_COUNT = environment_variable_to_int(DEMISTO_SDK_LOG_FILE_COUNT, 10)
 
 FILE_LOG_RECORD_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s"
 
-if os.getenv("CI"):
+if environment_variable_to_bool("CI"):
     CONSOLE_LOG_RECORD_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
     CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(asctime)s] [%(levelname)s] "
 else:
@@ -144,20 +209,15 @@ def handle_deprecated_args(input_args):
             )
 
 
-def get_handler_by_name(logger: logging.Logger, handler_name: str):
+def get_handler_by_name(_logger: logging.Logger, handler_name: str):
     return next(
         (
             current_handler
-            for current_handler in logger.handlers
+            for current_handler in _logger.handlers
             if current_handler.get_name == handler_name
         ),
         None,
     )
-
-
-def set_demisto_logger(demisto_logger: logging.Logger):
-    global logger
-    logger = demisto_logger
 
 
 def _add_logging_level(
@@ -302,95 +362,127 @@ class NoColorFileFormatter(logging.Formatter):
 def logging_setup(
     console_log_threshold: Union[int, str] = logging.INFO,
     file_log_threshold: Union[int, str] = logging.DEBUG,
-    log_file_path: Optional[Union[str, Path]] = LOG_FILE_PATH,
+    log_file_path: Optional[Union[str, Path]] = None,
+    skip_log_file_creation: bool = False,
 ) -> logging.Logger:
-    """Init logger object for logging in demisto-sdk
-        For more info - https://docs.python.org/3/library/logging.html
+    """
+    Initialize and configure the logger object for logging in demisto-sdk
+    For more info - https://docs.python.org/3/library/logging.html
 
     Args:
-        console_log_threshold: Minimum console log threshold. Defaults to logging.INFO
-        file_log_threshold: Minimum console log threshold. Defaults to logging.INFO
-        log_file_path: Path to log file. Defaults to LOG_FILE_PATH
+        console_log_threshold (int | str, optional): Minimum console log threshold. Defaults to logging.INFO.
+        file_log_threshold(int | str, optional): Minimum console log threshold. Defaults to logging.DEBUG.
+        log_file_path (str | Path | None, optional): Path to log file. Defaults to None.
+        skip_log_file_creation (bool, optional): Whether to skip log file creation. Defaults to False.
 
     Returns:
         logging.Logger: logger object
     """
+    global LOG_FILE_PATH
 
     if not hasattr(logging.getLoggerClass(), "success"):
         _add_logging_level("SUCCESS", SUCCESS_LEVEL)
-
-    global logger
-    global current_log_file_path
-    global log_file_name_notified
 
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(console_log_threshold or logging.INFO)
 
-    if custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH"):
-        current_log_file_path = Path(custom_log_path)
-    else:
-        current_log_file_path = Path(log_file_path or LOG_FILE_PATH)
-        if current_log_file_path.is_dir():
-            current_log_file_path = current_log_file_path / LOG_FILE_NAME
-    file_handler = RotatingFileHandler(
-        filename=current_log_file_path,
-        mode="a",
-        maxBytes=DEMISTO_SDK_LOG_FILE_SIZE,
-        backupCount=DEMISTO_SDK_LOG_FILE_COUNT,
-    )
-    file_handler.set_name(FILE_HANDLER)
-    file_handler.setLevel(file_log_threshold or logging.DEBUG)
-
-    if string_to_bool(os.getenv("DEMISTO_SDK_LOG_NO_COLORS", "False")):
+    if environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS):
         console_handler.setFormatter(fmt=NoColorFileFormatter())
     else:
         console_handler.setFormatter(fmt=ColorConsoleFormatter())
 
-    file_formatter = NoColorFileFormatter()
-    file_handler.setFormatter(fmt=file_formatter)
+    log_handlers: List[logging.Handler] = [console_handler]
 
+    # We set up the console handler separately before the file logger is ready, so that we can display log messages
+    root_logger: logging.Logger = logging.getLogger("")
+    set_demisto_handlers_to_logger(_logger=root_logger, handlers=log_handlers)
+    set_demisto_handlers_to_logger(_logger=logger, handlers=log_handlers)
+    logger.propagate = False
+
+    if not skip_log_file_creation:
+        if log_file_directory_path_str := (
+            log_file_path or os.getenv(DEMISTO_SDK_LOG_FILE_PATH)
+        ):
+            current_log_file_path = Path(log_file_directory_path_str).resolve()
+
+            if current_log_file_path.is_dir():
+                final_log_file_path = current_log_file_path / LOG_FILE_NAME
+
+            elif current_log_file_path.is_file():
+                logger.warning(
+                    f"Log file path '{current_log_file_path}' is a file and not a directory. "
+                    f"Log file will be created in parent directory '{current_log_file_path.parent}'."
+                )
+                final_log_file_path = current_log_file_path.parent / LOG_FILE_NAME
+
+            else:  # Path is neither a file nor a directory
+                logger.warning(
+                    f"Log file path '{current_log_file_path}' does not exist and will be created."
+                )
+                current_log_file_path.mkdir(parents=True, exist_ok=True)
+                final_log_file_path = current_log_file_path / LOG_FILE_NAME
+
+        else:  # Use default log files path
+            log_file_directory_path = LOGS_DIR
+            log_file_directory_path.mkdir(
+                parents=True, exist_ok=True
+            )  # Generate directory if it doesn't exist
+            final_log_file_path = log_file_directory_path / LOG_FILE_NAME
+
+        # Update global variable
+        LOG_FILE_PATH = final_log_file_path
+
+        file_handler = RotatingFileHandler(
+            filename=LOG_FILE_PATH,
+            mode="a",
+            maxBytes=LOG_FILE_SIZE,
+            backupCount=LOG_FILE_COUNT,
+        )
+        file_handler.set_name(FILE_HANDLER)
+        file_handler.setLevel(file_log_threshold or logging.DEBUG)
+        file_handler.setFormatter(fmt=NoColorFileFormatter())
+        log_handlers.append(file_handler)
+
+    log_level = (
+        min(*[handler.level for handler in log_handlers])
+        if len(log_handlers) > 1
+        else log_handlers[0].level
+    )
     logging.basicConfig(
-        handlers=[console_handler, file_handler],
-        level=min(console_handler.level, file_handler.level),
+        handlers=log_handlers,
+        level=log_level,
     )
 
-    root_logger: logging.Logger = logging.getLogger("")
-    set_demisto_handlers_to_logger(root_logger, console_handler, file_handler)
+    # Set up handlers again, this time with the file handler
+    set_demisto_handlers_to_logger(_logger=root_logger, handlers=log_handlers)
+    set_demisto_handlers_to_logger(_logger=logger, handlers=log_handlers)
 
-    demisto_logger: logging.Logger = logging.getLogger("demisto-sdk")
-    set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
-    demisto_logger.propagate = False
+    logger.debug(f"Python version: {sys.version}")
+    logger.debug(f"Working dir: {Path.cwd()}")
+    logger.debug(f"Platform: {platform.system()}")
 
-    set_demisto_logger(demisto_logger)
+    if LOG_FILE_PATH_PRINT and not skip_log_file_creation:
+        logger.info(f"[yellow]Log file location: {LOG_FILE_PATH}[/yellow]")
 
-    demisto_logger.debug(f"Python version: {sys.version}")
-    demisto_logger.debug(f"Working dir: {os.getcwd()}")
-    import platform
-
-    demisto_logger.debug(f"Platform: {platform.system()}")
-
-    if not log_file_name_notified:
-        if string_to_bool(os.getenv("DEMISTO_SDK_LOG_NOTIFY_PATH", "True")):
-            demisto_logger.info(
-                f"[yellow]Log file location: {current_log_file_path}[/yellow]"
-            )
-        log_file_name_notified = True
-
-    logger = demisto_logger
-
-    return demisto_logger
+    return logger
 
 
 def set_demisto_handlers_to_logger(
-    logger: logging.Logger, console_handler, file_handler
+    _logger: logging.Logger, handlers: List[logging.Handler]
 ):
-    while logger.handlers:
-        logger.removeHandler(logger.handlers[0])
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
-    logger.level = min(console_handler.level, file_handler.level)
+    if not handlers:
+        return
 
+    while _logger.handlers:
+        _logger.removeHandler(_logger.handlers[0])
 
-def get_log_file() -> Path:
-    return current_log_file_path
+    for handler in handlers:
+        _logger.addHandler(handler)
+
+    log_level = (
+        min(*[handler.level for handler in handlers])
+        if len(handlers) > 1
+        else handlers[0].level
+    )
+    _logger.level = log_level

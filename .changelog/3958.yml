@@ -1,0 +1,4 @@
+changes:
+- description: Updated the `docker_image` field from `str` to `DockerImage`
+  type: feature
+pr_number: 3958

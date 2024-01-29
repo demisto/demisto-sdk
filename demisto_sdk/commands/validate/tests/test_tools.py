@@ -46,7 +46,7 @@ def create_integration_object(
         pack.set_data(**pack_info)
     integration = pack.create_integration(yml=yml_content)
     integration.code.write("from MicrosoftApiModule import *")
-    return integration.object  # type:ignore
+    return BaseContent.from_path(Path(integration.path))  # type:ignore
 
 
 def create_parsing_rule_object(

@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
     create_integration_object,
     create_script_object,
 )
@@ -150,6 +151,7 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN161_is_siem_integr
 from demisto_sdk.commands.validate.validators.IN_validators.IN162_is_partner_collector_has_xsoar_support_level import (
     IsPartnerCollectorHasXsoarSupportLevelValidator,
 )
+from TestSuite.repo import ChangeCWD
 
 
 @pytest.mark.parametrize(
@@ -4961,7 +4963,8 @@ def test_IsContainingFromLicenseInParamsValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsContainingFromLicenseInParamsValidator().is_valid(content_items)
+    with ChangeCWD(REPO.path):
+        results = IsContainingFromLicenseInParamsValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5151,7 +5154,8 @@ def test_IsAPITokenInCredentialTypeValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail.
     """
-    results = IsAPITokenInCredentialTypeValidator().is_valid(content_items)
+    with ChangeCWD(REPO.path):
+        results = IsAPITokenInCredentialTypeValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5297,7 +5301,8 @@ def test_IsNameContainIncidentInCorePackValidator_is_valid(
         "demisto_sdk.commands.validate.validators.IN_validators.IN139_is_name_contain_incident_in_core_pack.get_core_pack_list",
         return_value=["pack_no_1", "pack_no_2", "pack_no_4"],
     )
-    results = IsNameContainIncidentInCorePackValidator().is_valid(content_items)
+    with ChangeCWD(REPO.path):
+        results = IsNameContainIncidentInCorePackValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -5382,7 +5387,11 @@ def test_IsPartnerCollectorHasXsoarSupportLevelValidator_is_valid(
         - Case 1: Should pass all.
         - Case 2: Should fail all.
     """
-    results = IsPartnerCollectorHasXsoarSupportLevelValidator().is_valid(content_items)
+
+    with ChangeCWD(REPO.path):
+        results = IsPartnerCollectorHasXsoarSupportLevelValidator().is_valid(
+            content_items
+        )
     assert len(results) == expected_number_of_failures
     assert all(
         [

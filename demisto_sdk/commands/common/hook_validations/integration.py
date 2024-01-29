@@ -264,10 +264,9 @@ class IntegrationValidator(ContentEntityValidator):
         skipped_integrations = conf_json_data.get("skipped_integrations", {})
         integration_id = _get_file_id("integration", self.current_file)
         if skipped_integrations and integration_id in skipped_integrations:
-            if (
-                "no instance" in skipped_integrations[integration_id].lower()
-                and not self.has_unittest(self.file_path)
-            ) or "no instance" not in skipped_integrations[integration_id].lower():
+            if "no instance" in skipped_integrations[
+                integration_id
+            ].lower() and not self.has_unittest(self.file_path):
                 skip_comment = skipped_integrations[integration_id]
                 error_message, error_code = Errors.integration_is_skipped(
                     integration_id, skip_comment

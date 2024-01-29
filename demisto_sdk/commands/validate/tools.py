@@ -110,7 +110,7 @@ def validate_categories_approved(categories: list, approved_list: list):
 
 
 def get_default_output_description():
-    json.loads(
+    return json.loads(
         (
             Path(__file__).absolute().parents[1]
             / "common/default_output_descriptions.json"

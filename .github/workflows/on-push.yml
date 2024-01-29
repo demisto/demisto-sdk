@@ -365,6 +365,9 @@ jobs:
     env:
       CI_COMMIT_BRANCH: "master"
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Run Validate All - New Validate
         uses: ./.github/actions/validate
         with:
@@ -379,6 +382,9 @@ jobs:
     env:
       CI_COMMIT_BRANCH: "master"
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
       - name: Run Validate All - New Validate
         uses: ./.github/actions/validate
         with:

@@ -264,11 +264,25 @@ class Downloader:
                     )
 
                     changed_uuids_count = 0
-                    for file_object in downloaded_content_objects.values():
-                        if self.replace_uuid_ids(
-                            custom_content_object=file_object, uuid_mapping=uuid_mapping
-                        ):
-                            changed_uuids_count += 1
+                    failed_content_items = set()
+
+                    for original_file_name, file_object in downloaded_content_objects.items():
+                        try:
+                            if self.replace_uuid_ids(
+                                custom_content_object=file_object, uuid_mapping=uuid_mapping
+                            ):
+                                changed_uuids_count += 1
+
+                        except Exception as e:
+                            # If UUID replacement failed, we skip the file
+                            logger.error(
+                                f"Could not replace UUID IDs in '{file_object['name']}'. "
+                                f"Content item will be skipped.\nError: {e}"
+                            )
+                            failed_content_items.add(original_file_name)
+
+                    for failed_content_item in failed_content_items:
+                        downloaded_content_objects.pop(failed_content_item)
 
                     if changed_uuids_count > 0:
                         logger.info(

@@ -1093,7 +1093,7 @@ def secrets(ctx, config, file_paths: str, **kwargs):
     "--parallel",
     default=1,
     help="Run tests in parallel",
-    type=click.IntRange(0, 15, clamp=True),
+    type=click.IntRange(0, 100, clamp=True),
     show_default=True,
 )
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")

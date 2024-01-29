@@ -328,7 +328,7 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in image:  # todo
+        if os.getenv("CONTENT_GITLAB_CI") and DOCKER_IO not in image:
             return f"{DOCKER_IO}/{image}"
         return image
 

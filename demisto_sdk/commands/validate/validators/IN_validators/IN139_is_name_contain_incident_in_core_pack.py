@@ -27,20 +27,20 @@ class IsNameContainIncidentInCorePackValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    "\n".join(self.create_results_list(invalid_commands))
+                    "\n".join(self.create_invalid_commands_errors(invalid_commands))
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
             if content_item.pack_name in core_packs_list
-            and bool(
+            and (
                 invalid_commands := self.is_containing_invalid_commands(
                     content_item.commands, content_item.name
                 )
             )
         ]
 
-    def create_results_list(
+    def create_invalid_commands_errors(
         self, invalid_commands: Dict[str, Dict[str, Any]]
     ) -> List[str]:
         results = []

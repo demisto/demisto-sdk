@@ -38,7 +38,7 @@ class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if self.default
-            and bool(
+            and (
                 invalid_commands := self.get_invalid_commands(
                     content_item.commands, content_item.name
                 )
@@ -63,13 +63,13 @@ class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
         return self.invalid_commands[integration_name]
 
     def format_fix_message(self, integration_name) -> str:
-        msg_str = ""
+        error_msg = ""
         for key, values in self.invalid_commands[integration_name].items():  # type: ignore[misc]
             temp_msg = ""
             for val in values:  # type: ignore[has-type]
                 temp_msg = f"{temp_msg}\n\t\tThe contextPath {val} description is now: {self.default[val]}"
-            msg_str = f"{msg_str}\n\tThe command {key}: {temp_msg}"  # type: ignore[has-type]
-        return msg_str
+            error_msg = f"{error_msg}\n\tThe command {key}: {temp_msg}"  # type: ignore[has-type]
+        return error_msg
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         for command in content_item.commands:

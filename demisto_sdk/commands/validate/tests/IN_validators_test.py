@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     SUPPORT_LEVEL_HEADER,
     XSOAR_SUPPORT,
     MarketplaceVersions,
+    ParameterType,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -424,10 +425,10 @@ def test_IsIntegrationRunnableValidator_is_valid(
             ],
             4,
             [
-                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8.",
-                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8.",
-                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8.",
-                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8.",
             ],
         ),
     ],
@@ -510,7 +511,7 @@ def test_IsValidProxyAndInsecureValidator_fix():
         == "Corrected the following params: insecure, proxy."
     )
     for param in content_item.params:
-        assert param.type == 8
+        assert param.type == ParameterType.BOOLEAN.value
         assert not param.required
         assert param.display == COMMON_PARAMS_DISPLAY_NAME[param.name]
 
@@ -1451,7 +1452,10 @@ def test_ShouldHaveDisplayFieldValidator_fix():
         == "Removed display field for the following params: test_1, test_2."
     )
     assert not any(
-        [(param.type == 17 and param.display) for param in content_item.params]
+        [
+            (param.type == ParameterType.EXPIRATION_FIELD and param.display)
+            for param in content_item.params
+        ]
     )
 
 
@@ -2804,8 +2808,8 @@ def test_IsEmptyCommandArgsValidator_is_valid_failure():
             ],
             2,
             [
-                "The integration is a siem integration with invalid display name (test). Please make sure the display name ends with 'Event collector'",
-                "The integration is a siem integration with invalid display name (Event Collector test). Please make sure the display name ends with 'Event collector'",
+                "The integration is a siem integration with invalid display name (test). Please make sure the display name ends with 'Event Collector'",
+                "The integration is a siem integration with invalid display name (Event Collector test). Please make sure the display name ends with 'Event Collector'",
             ],
         ),
     ],

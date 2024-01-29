@@ -1951,11 +1951,11 @@ FileType_ALLOWED_TO_DELETE = {
 
 
 class ParameterType(Enum):
-    STRING = 0
-    NUMBER = 1
-    ENCRYPTED = 4
-    BOOLEAN = 8
-    AUTH = 9
+    STRING = 0  # holds a string argument.
+    NUMBER = 1  # holds an int argument.
+    ENCRYPTED = 4  # holds a password argument.
+    BOOLEAN = 8  # holds a boolean argument (checkbox).
+    AUTH = 9  # holds an auth struct (credentials type).
     DOWNLOAD_LINK = 11
     TEXT_AREA = 12
     INCIDENT_TYPE = 13
@@ -1963,6 +1963,10 @@ class ParameterType(Enum):
     SINGLE_SELECT = 15
     MULTI_SELECT = 16
     EXPIRATION_FIELD = 17
+    FEED_REPUDATION = 18
+    INTERVAL = 19
+    BOLD_TITLE = 20
+    DAY_DROPDOWN = 21
 
 
 NO_TESTS_DEPRECATED = "No tests (deprecated)"

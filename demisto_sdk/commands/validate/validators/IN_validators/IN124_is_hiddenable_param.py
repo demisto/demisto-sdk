@@ -5,6 +5,7 @@ from typing import ClassVar, Dict, Iterable, List
 from demisto_sdk.commands.common.constants import (
     ALLOWED_HIDDEN_PARAMS,
     MarketplaceVersions,
+    ParameterType,
 )
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
@@ -71,7 +72,13 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
             and not (
                 param.name in ALLOWED_HIDDEN_PARAMS
                 or (
-                    param.type in (0, 4, 12, 14)
+                    param.type
+                    in (
+                        ParameterType.STRING.value,
+                        ParameterType.ENCRYPTED.value,
+                        ParameterType.TEXT_AREA.value,
+                        ParameterType.TEXT_AREA_ENCRYPTED.value,
+                    )
                     and self._is_replaced_by_type9(param.display or "", params)
                 )
             )
@@ -90,7 +97,7 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
             bool: True if there's an existing replacement with type 9, otherwise return False.
         """
         for param in params:
-            if param.type == 9 and display_name.lower() in (
+            if param.type == ParameterType.AUTH.value and display_name.lower() in (
                 (param.display or "").lower(),
                 (param.displaypassword or "").lower(),
             ):

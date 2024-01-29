@@ -29,9 +29,7 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if bool(
-                invalid_commands := self.validate_rep_commands(content_item.commands)
-            )
+            if (invalid_commands := self.validate_rep_commands(content_item.commands))
         ]
 
     def validate_rep_commands(self, commands: List[Command]) -> List[str]:
@@ -45,7 +43,6 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                     ).get("default", []):
                         flag_found_arg = True
                         if not arg.default or not arg.isArray:
-                            mandatory_fields_suffix = ""
                             if command.name == "endpoint":
                                 mandatory_fields_suffix = ", the 'isArray', and 'required' fields should be True."
                             else:

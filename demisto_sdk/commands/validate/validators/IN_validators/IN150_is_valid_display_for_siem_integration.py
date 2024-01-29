@@ -15,9 +15,9 @@ ContentTypes = Integration
 class IsValidDisplayForSiemIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN150"
     description = (
-        "Validate that a siem integration display name ends wtih 'Event Collector'"
+        "Validate that a siem integration display name ends with 'Event Collector'"
     )
-    error_message = "The integration is a siem integration with invalid display name ({0}). Please make sure the display name ends with 'Event collector'"
+    error_message = "The integration is a siem integration with invalid display name ({0}). Please make sure the display name ends with 'Event Collector'"
     fix_message = "Added the 'Event Collector' suffix to the display name, the new display name is {0}."
     related_field = "display, script.isfetchevents"
     is_auto_fixable = True

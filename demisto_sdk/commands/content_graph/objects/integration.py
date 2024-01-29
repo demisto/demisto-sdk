@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import demisto_client
 
+from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
@@ -178,3 +179,4 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             )
 
         data["script"]["commands"] = yml_commands
+        write_dict(self.path, data, indent=4)

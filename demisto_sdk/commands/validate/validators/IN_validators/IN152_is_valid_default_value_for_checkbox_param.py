@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Dict, Iterable, List
 
+from demisto_sdk.commands.common.constants import ParameterType
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
@@ -45,7 +46,7 @@ class IsValidDefaultValueForCheckboxParamValidator(BaseValidator[ContentTypes]):
         self.invalid_params[integration_name] = [
             param.name
             for param in params
-            if param.type == 8
+            if param.type == ParameterType.BOOLEAN.value
             and param.defaultvalue is not None
             and not (
                 isinstance(param.defaultvalue, str)

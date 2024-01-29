@@ -66,13 +66,13 @@ from demisto_sdk.commands.common.tools import (
     get_item_marketplaces,
     get_pack_name,
     is_iron_bank_pack,
+    is_str_bool,
     server_version_compare,
     string_to_bool,
     strip_description,
 )
 from demisto_sdk.commands.validate.tools import (
     get_default_output_description,
-    is_str_bool,
 )
 
 default_additional_info = load_default_additional_info_dict()

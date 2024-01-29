@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import XSOAR_SUPPORT
+from demisto_sdk.commands.common.constants import XSOAR_SUPPORT, ParameterType
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
@@ -18,7 +18,7 @@ ContentTypes = Integration
 class IsAPITokenInCredentialTypeValidator(BaseValidator[ContentTypes]):
     error_code = "IN145"
     description = (
-        "Validate that xsoar validations doesn't have a non-hidden type 4 params."
+        "Validate that xsoar validations don't have a non-hidden type 4 params."
     )
     error_message = "In order to allow fetching the following params: {0} from an external vault, the type of the parameters should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'.\nFor more details, check the convention for credentials - https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
     related_field = "configuration"
@@ -33,8 +33,12 @@ class IsAPITokenInCredentialTypeValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if content_item.support_level == XSOAR_SUPPORT
-            and bool(invalid_params := self.get_invalid_params(content_item.params))
+            and (invalid_params := self.get_invalid_params(content_item.params))
         ]
 
     def get_invalid_params(self, params: List[Parameter]) -> List[str]:
-        return [param.name for param in params if param.type == 4 and not param.hidden]
+        return [
+            param.name
+            for param in params
+            if param.type == ParameterType.ENCRYPTED.value and not param.hidden
+        ]

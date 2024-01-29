@@ -38,7 +38,7 @@ class IsValidHiddenValueValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if bool(invalid_params := self.get_invalid_params(content_item.params))
+            if (invalid_params := self.get_invalid_params(content_item.params))
         ]
 
     def get_invalid_params(self, params: List[Parameter]) -> dict:

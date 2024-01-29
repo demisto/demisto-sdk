@@ -33,7 +33,7 @@ class IsValidReputationCommandContextPathCapitalizationValidator(
                 content_object=content_item,
             )
             for content_item in content_items
-            if bool(
+            if (
                 invalid_commands := self.validate_rep_commands_outputs_capitalization(
                     content_item.commands
                 )

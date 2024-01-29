@@ -29,7 +29,7 @@ class IsValidParamDisplayValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if bool(
+            if (
                 invalid_params := (
                     self.get_invalid_params(
                         [

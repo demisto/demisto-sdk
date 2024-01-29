@@ -34,7 +34,7 @@ class IsContainingFromLicenseInParamsValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if content_item.support_level != XSOAR_SUPPORT
-            and bool(
+            and (
                 invalid_params := self.get_invalid_params(
                     content_item.params, content_item.name
                 )

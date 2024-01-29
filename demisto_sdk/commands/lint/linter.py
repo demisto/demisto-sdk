@@ -369,7 +369,8 @@ class Linter:
             # we want to use DOCKER_REGISTRY_URL only if we run in content build (and not CI/CD for example)
             if os.getenv("CONTENT_GITLAB_CI", False):
                 self._facts["images"] = [
-                    [f"{DOCKER_REGISTRY_URL}/{image[0]}", -1] for image in self._facts["images"]
+                    [f"{DOCKER_REGISTRY_URL}/{image[0]}", -1]
+                    for image in self._facts["images"]
                 ]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {

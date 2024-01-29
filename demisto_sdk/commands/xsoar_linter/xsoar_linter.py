@@ -25,7 +25,8 @@ xsoar_linter_app = typer.Typer(name="Pre-Commit")
 ENV = os.environ
 
 
-def build_xsoar_linter_command(support_level: str = "base", formatting_script: bool = False):
+
+def build_xsoar_linter_command(support_level: str = "base", formatting_script: bool = False) -> List[str]:
     if not support_level:
         support_level = "base"
     # linters by support level
@@ -46,12 +47,14 @@ def build_xsoar_linter_command(support_level: str = "base", formatting_script: b
         "xsoar_level_checker": xsoar_msg,
     }
 
-    command = [f'{Path(sys.executable).parent}/pylint']
-    command.append(f"-E")
-    command.append(f"--disable=all")
-    command.append(
-        f"--fail-under=-100")  # With this flag, the linter will fail only if the score is less than -100, which isn't possible with warnings.
-    command.append(f"--fail-on=E")  # we want the pylint to fail on Errors and fatals
+    command = [
+        f'{Path(sys.executable).parent}/pylint',
+        "-E",
+        "--disable=all",
+        "--fail-under=-100",
+        "--fail-on=E",
+        "--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'",  # Message format
+    ]
 
     checker_path = ""
     message_enable = ""
@@ -65,8 +68,7 @@ def build_xsoar_linter_command(support_level: str = "base", formatting_script: b
                 checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
-    # Message format
-    command.append("--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'")
+
     # Enable only Demisto Plugins errors.
     command.append(f"--enable={message_enable}")
     # Load plugins
@@ -76,12 +78,14 @@ def build_xsoar_linter_command(support_level: str = "base", formatting_script: b
     return command
 
 
-def process_file(file_path):
+def process_file(file_path: Path):
     return_code = 0
     errors = []
     errors_str = ""
+    errors_and_warnings_str = ""
     env = ENV.copy()
     integration_script = BaseContent.from_path(file_path)
+
     if not isinstance(integration_script, IntegrationScript):
         return return_code, errors_str
     file = integration_script.path.parent / f'{integration_script.path.stem}.py'
@@ -109,9 +113,9 @@ def process_file(file_path):
         process = subprocess.run(command, capture_output=True, env=env, timeout=60)
         return_code = process.returncode
         log_data = process.stdout
-        log_str = log_data.decode('utf-8')
+        errors_and_warnings_str = log_data.decode('utf-8')
         pattern = re.compile(r'^/[^:\n]+:\d+:\d+: E\d+ .*$', re.MULTILINE)
-        errors += pattern.findall(log_str)
+        errors += pattern.findall(errors_and_warnings_str)
     except subprocess.TimeoutExpired:
         errors.append((f"Got a timeout while processing the following file: {str(file_path)}"))
         return_code = 1
@@ -120,7 +124,7 @@ def process_file(file_path):
         return_code = 1
 
     errors_str = '\n'.join(errors) if errors else ''
-    return return_code, errors_str
+    return return_code, errors_str, errors_and_warnings_str
 
 def xsoar_linter_manager(
     file_paths: Optional[List[Path]]):
@@ -132,9 +136,10 @@ def xsoar_linter_manager(
         # Map the file_paths to the process_file function using the pool
         results = pool.map(process_file, file_paths)
 
-    return_codes, errors = zip(*results)
+    return_codes, errors, errors_and_warnings = zip(*results)
+    errors_and_warnings_str = '\n'.join(elem for elem in errors_and_warnings if elem)
+    logger.info(errors_and_warnings_str)
     if any(return_codes):
         errors_str = '\n'.join(error for error in errors if error)
-
         logger.error(f'Found the following errors: \n{errors_str}')
     return int(any(return_codes))

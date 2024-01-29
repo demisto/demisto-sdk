@@ -53,6 +53,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN117_should_have_di
 from demisto_sdk.commands.validate.validators.IN_validators.IN118_is_missing_display_field import (
     IsMissingDisplayFieldValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN123_display_name_has_invalid_version import (
+    IntegrationDisplayNameVersionedCorrectlyValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN125_is_valid_max_fetch_param import (
     IsValidMaxFetchParamValidator,
 )
@@ -1909,3 +1912,33 @@ def test_IsContainingMultipleDefaultArgsValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
+    """
+    Given:
+     - 1 integration with valid versioned display-name
+     - 1 integration with invalid versioned display-name
+
+    When:
+     - Running the IntegrationDisplayNameVersionedCorrectlyValidator validator & fix
+
+    Then:
+     - make sure the integration with the invalid version fails on the validation
+     - make sure the fix updates the display-name of the integration to lower-case versioned name.
+    """
+    content_items = [
+        create_integration_object(paths=["display"], values=["test v2"]),
+        create_integration_object(paths=["display"], values=["test V3"]),
+    ]
+
+    results = IntegrationDisplayNameVersionedCorrectlyValidator().is_valid(
+        content_items
+    )
+    assert len(results) == 1
+    assert results[0].content_object.display_name == "test V3"
+
+    fix_result = IntegrationDisplayNameVersionedCorrectlyValidator().fix(
+        results[0].content_object
+    )
+    assert fix_result.content_object.display_name == "test v3"

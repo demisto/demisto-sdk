@@ -440,6 +440,10 @@ class MountableDocker(DockerBase):
                 logger.debug(f"Failed to mount {src} to {target}")
         return mounts
 
+    @retry(
+        times=3,
+        exceptions=(requests.exceptions.ConnectionError, requests.exceptions.Timeout),
+    )
     def create_container(
         self,
         image: str,

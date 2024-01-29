@@ -74,6 +74,8 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN122_is_valid_feed_
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN124_is_hiddenable_param import (
     IsHiddenableParamValidator,
+from demisto_sdk.commands.validate.validators.IN_validators.IN123_display_name_has_invalid_version import (
+    IntegrationDisplayNameVersionedCorrectlyValidator,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN125_is_valid_max_fetch_param import (
     IsValidMaxFetchParamValidator,
@@ -5412,74 +5414,31 @@ def test_IsPartnerCollectorHasXsoarSupportLevelValidator_fix():
     assert content_item.data.get(SUPPORT_LEVEL_HEADER) == XSOAR_SUPPORT
 
 
-# @pytest.mark.parametrize(
-#     "content_items, expected_number_of_failures, has_unittests, expected_msgs",
-#     [
-#         (
-#             [
-#                 create_integration_object(paths=["commonfields.id"], values=["test_1"]),
-#                 create_integration_object(paths=["commonfields.id"], values=["test_2"]),
-#                 create_integration_object(paths=["commonfields.id"], values=["test_3"]),
-#             ],
-#             0,
-#             [False, False, True],
-#             [],
-#         ),
-#         (
-#             [
-#                 create_integration_object(paths=["commonfields.id"], values=["test_3"]),
-#             ],
-#             0,
-#             [False],
-#             [
-#                 f"The integration {0} is currently in skipped. Please add working tests and unskip.{1}"
-#             ],
-#         ),
-#     ],
-# )
-# def test_IsTestplaybooksSkippedValidator_is_valid(
-#     mocker,
-#     content_items: List[Integration],
-#     expected_number_of_failures: int,
-#     has_unittests: List[bool],
-#     expected_msgs: List[str],
-# ):
-#     """
-#     Given
-#     content_items iterables.
-#         - Case 1: Three valid integrations:
-#             - One non-skipped integration.
-#             - One skipped integration with reason diffrent from no instance.
-#             - One skipped integration with unit tests and reason = no instance.
-#         - Case 2: One invalid skipped integration without unit tests and reason = no instance.
-#     When
-#     - Calling the IsTestplaybooksSkippedValidator is valid function.
-#     Then
-#         - Make sure the validation fail when it needs to and the right error message is returned.
-#         - Case 1: Should pass all.
-#         - Case 2: Should fail all.
-#     """
-#     mocker.patch(
-#         "demisto_sdk.commands.validate.validators.IN_validators.IN140_is_testplaybooks_skipped.json.load",
-#         return_value=dict(
-#             {
-#                 "skipped_integrations": {
-#                     "test_2": "some good reason for skip.",
-#                     "test_3": "no instance",
-#                 }
-#             }
-#         ),
-#     )
-#     mocker.patch(
-#         "demisto_sdk.commands.validate.validators.IN_validators.IN140_is_testplaybooks_skipped.open"
-#     )
-#     for content_item, test in zip(content_items, has_unittests):
-#         content_item.has_unittests = test
-#     results = IsTestplaybooksSkippedValidator().is_valid(content_items)
-#     assert len(results) == expected_number_of_failures
-#     assert all(
-#         [
-#             result.message == expected_msg
-#             for result, expected_msg in zip(results, expected_msgs)
-#         ]
-#     )
+def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
+    """
+    Given:
+     - 1 integration with valid versioned display-name
+     - 1 integration with invalid versioned display-name
+
+    When:
+     - Running the IntegrationDisplayNameVersionedCorrectlyValidator validator & fix
+
+    Then:
+     - make sure the integration with the invalid version fails on the validation
+     - make sure the fix updates the display-name of the integration to lower-case versioned name.
+    """
+    content_items = [
+        create_integration_object(paths=["display"], values=["test v2"]),
+        create_integration_object(paths=["display"], values=["test V3"]),
+    ]
+
+    results = IntegrationDisplayNameVersionedCorrectlyValidator().is_valid(
+        content_items
+    )
+    assert len(results) == 1
+    assert results[0].content_object.display_name == "test V3"
+
+    fix_result = IntegrationDisplayNameVersionedCorrectlyValidator().fix(
+        results[0].content_object
+    )
+    assert fix_result.content_object.display_name == "test v3"

@@ -265,7 +265,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Checkout
+      - name: Checkout Content
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -303,7 +303,7 @@ jobs:
 
       - name: run pre-commit on input files
         timeout-minutes: 60
-        continue-on-error: true
+        continue-on-error: true  # TODO - fail if there is an error here
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
@@ -327,7 +327,6 @@ jobs:
         uses: ./.github/actions/setup_environment
         with:
           python-version: '3.10'
-          artifacts-dir: test-graph-commands
 
       - name: Checkout content
         uses: actions/checkout@v3
@@ -358,3 +357,37 @@ jobs:
         with:
           artifacts-path-dir: content/test-graph-commands
           artifact-name: test-graph-commands-artifacts
+
+  validate-files-old-validate:
+    runs-on: ubuntu-latest
+    name: Test Old Validate Command
+    timeout-minutes: 60
+    env:
+      CI_COMMIT_BRANCH: "master"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Run Validate All - New Validate
+        uses: ./.github/actions/validate
+        with:
+          artifacts-path-dir: test-old-validate-command
+          artifact-name: test-old-validate-command-artifacts
+          validate-script-path: Tests/scripts/validate.sh
+
+  validate-files-new-validate:
+    runs-on: ubuntu-latest
+    name: Test New Validate Command
+    timeout-minutes: 60
+    env:
+      CI_COMMIT_BRANCH: "master"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Run Validate All - New Validate
+        uses: ./.github/actions/validate
+        with:
+          artifacts-path-dir: test-new-validate-command
+          artifact-name: test-new-validate-command-artifacts
+          validate-script-path: Tests/scripts/new_validate.sh

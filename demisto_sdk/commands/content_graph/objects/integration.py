@@ -13,10 +13,11 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import Auto, MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
+    Argument,
     IntegrationScript,
 )
 
@@ -36,21 +37,6 @@ class Parameter(BaseModel):
     hiddenusername: Optional[bool] = False
     hiddenpassword: Optional[bool] = False
     fromlicense: Optional[str] = None
-
-
-class Argument(BaseModel):
-    name: str
-    description: str
-    required: Optional[bool] = False
-    default: Optional[bool] = False
-    predefined: Optional[List[str]] = None
-    isArray: Optional[bool] = False
-    defaultvalue: Optional[Any] = None
-    secret: Optional[bool] = False
-    deprecated: Optional[bool] = False
-    type: Optional[str] = None
-    hidden: Optional[bool] = False
-    auto: Optional[Auto] = None
 
 
 class Output(BaseModel):

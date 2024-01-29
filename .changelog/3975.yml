@@ -1,4 +1,4 @@
 changes:
-- description: Added support for DOCKER_IO environment variable.
+- description: Added support for DOCKER_REGISTRY_URL environment variable.
   type: internal
 pr_number: 3975

@@ -187,14 +187,15 @@ def get_dependencies_by_pack_path(
         source_dependents = [dependency_obj for dependency_obj in source_dependents if dependency_obj.get("object_id") == dependency_pack]
         target_dependencies = [dependency_obj for dependency_obj in target_dependencies if dependency_obj.get("object_id") == dependency_pack]
 
-    add_reasons_to_dependencies(
-        pack_id,
-        source_dependents,
-        target_dependencies,
-        get_file(graph.import_path / graph.DEPENDS_ON_FILE_NAME),  # type: ignore
-        mandatory_only,
-        include_tests
-    )
+    if show_reasons:
+        add_reasons_to_dependencies(
+            pack_id,
+            source_dependents,
+            target_dependencies,
+            get_file(graph.import_path / graph.DEPENDS_ON_FILE_NAME),  # type: ignore
+            mandatory_only,
+            include_tests
+        )
 
     logger.info("[cyan]====== SUMMARY ======[/cyan]")
     if retrieve_sources:
@@ -231,6 +232,9 @@ def to_tabulate(
 def add_reasons_to_dependencies(pack_id: str, source_dependents: list, target_dependencies: list, depends_on_obj: dict, mandatory_only: bool, include_tests: bool):
     """
     Iterates over the resulted sources or/and targets dependencies and adds the dependency reasons.
+
+    For first level dependencies, the reason will be the content items USES relationships path between the packs.
+    For all level dependencies, the reason will be the DEPENDS_ON relationships path between the packs.
 
     Args:
         pack_id (str): The given pack ID.

@@ -43,7 +43,7 @@ runs:
           cd content
           mkdir -p ${{ inputs.artifacts-path-dir }}/logs
           export DEMISTO_SDK_LOG_FILE_PATH=./${{ inputs.artifacts-path-dir }}/logs
-          ./${{ validate-script-path }}
+          ./${{ inputs.validate-script-path }}
         shell: bash
 
       - name: Upload artifacts

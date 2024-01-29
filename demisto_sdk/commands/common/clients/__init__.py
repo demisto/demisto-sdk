@@ -149,9 +149,7 @@ def get_client_from_server_type(
     )
 
     if not XsoarClient.is_xsoar_healthy(_client):
-        raise UnHealthyServer(
-            _client.api_client.configuration.host, server_part="xsoar"
-        )
+        raise UnHealthyServer(_client.api_client.configuration.host)
 
     about = XsoarClient.get_xsoar_about(_client)
     product_mode = about.get("productMode")

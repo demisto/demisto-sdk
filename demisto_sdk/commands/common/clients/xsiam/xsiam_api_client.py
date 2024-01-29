@@ -22,8 +22,6 @@ class XsiamClient(XsoarSaasClient):
     api client for xsiam
     """
 
-    marketplace = MarketplaceVersions.MarketplaceV2
-
     @classmethod
     def is_xsiam(cls, _client: DefaultApi, product_mode: Optional[str] = None):
         """
@@ -48,6 +46,10 @@ class XsiamClient(XsoarSaasClient):
             return False
 
         return True
+
+    @property
+    def marketplace(self) -> MarketplaceVersions:
+        return MarketplaceVersions.MarketplaceV2
 
     """
     #############################

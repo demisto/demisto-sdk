@@ -3,6 +3,7 @@ import re
 import socket
 import time
 import urllib.parse
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
@@ -14,7 +15,6 @@ from demisto_client.demisto_api.api.default_api import DefaultApi
 from demisto_client.demisto_api.models.entry import Entry
 from demisto_client.demisto_api.rest import ApiException, RESTResponse
 from packaging.version import Version
-from pydantic import BaseModel, Field, validator
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 from urllib3 import HTTPResponse
@@ -32,39 +32,30 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 
-class XsoarClient(BaseModel):
+class XsoarClient:
     """
     api client for xsoar-on-prem
     """
 
     _ENTRY_TYPE_ERROR: int = 4
-    config: XsoarClientConfig
-    client: DefaultApi = Field(None, exclude=True)
-    about: Dict = Field(None, exclude=True)
-    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
 
-    class Config:
-        arbitrary_types_allowed = True
-
-    @classmethod
-    def is_xsoar_healthy(cls, client: DefaultApi) -> bool:
-        """
-        Validates that xsoar server is healthy
-
-        Args:
-            client: XSOAR client.
-
-        """
-        try:
-            status_code = client.generic_request(method="GET", path="/health/server")[1]
-            return status_code == requests.codes.ok
-        except ApiException as err:
-            if err.status == requests.codes.unauthorized:
-                raise UnAuthorized(
-                    message=f"Could not connect to {client.api_client.configuration.host}, credentials are invalid",
-                    status_code=err.status,
-                )
-            raise
+    def __init__(
+        self,
+        config: XsoarClientConfig,
+        client: Optional[DefaultApi] = None,
+        raise_if_not_healthy: bool = True,
+    ):
+        self.server_config = config
+        self.client = client or demisto_client.configure(
+            config.base_api_url,
+            api_key=self.server_config.api_key.get_secret_value(),
+            auth_id=self.server_config.auth_id,
+            username=self.server_config.user,
+            password=self.server_config.password.get_secret_value(),
+            verify_ssl=self.server_config.verify_ssl,
+        )
+        if raise_if_not_healthy and not self.is_healthy:
+            raise UnHealthyServer(str(self.server_config))
 
     @classmethod
     def is_xsoar_on_prem(
@@ -81,45 +72,49 @@ class XsoarClient(BaseModel):
             and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
         )
 
-    @classmethod
+    @property
+    def marketplace(self) -> MarketplaceVersions:
+        return MarketplaceVersions.XSOAR
+
+    @property
     @retry(exceptions=ApiException)
-    def get_xsoar_about(cls, client: DefaultApi) -> Dict[str, Any]:
+    def is_healthy(self) -> bool:
         """
-        Get basic information about XSOAR server.
+        Validates that xsoar server is healthy
+
+        Returns:
+            bool: True if xsoar server is healthy, False if not.
         """
-        raw_response, _, response_headers = client.generic_request(
+        try:
+            status_code = self.client.generic_request(
+                method="GET", path="/health/server"
+            )[1]
+            if not status_code == requests.codes.ok:
+                logger.error(
+                    f"The XSOAR server part of {self.server_config} is not healthy"
+                )
+                return False
+            return True
+        except ApiException as err:
+            if err.status == requests.codes.unauthorized:
+                raise UnAuthorized(
+                    message=f"Could not connect to {self.server_config}, credentials are invalid",
+                    status_code=err.status,
+                )
+            raise
+
+    @cached_property
+    @retry(exceptions=ApiException)
+    def about(self) -> Dict[str, Any]:
+        raw_response, _, response_headers = self.client.generic_request(
             "/about", "GET", response_type="object"
         )
         if "text/html" in response_headers.get("Content-Type"):
             raise ValueError(
-                f"the {client.api_client.configuration.host} URL is not the api-url",
+                f"the {self.client.api_client.configuration.host} URL is not the api-url",
             )
         logger.debug(f"about={raw_response}")
         return raw_response
-
-    @validator("client", always=True, pre=True)
-    def get_xsoar_client(
-        cls, v: Optional[DefaultApi], values: Dict[str, Any]
-    ) -> DefaultApi:
-        """
-        Returns the client for xsoar endpoints, checks that the server is healthy
-        """
-        config: XsoarClientConfig = values["config"]
-        _client = v or demisto_client.configure(
-            config.base_api_url,
-            api_key=config.api_key.get_secret_value(),
-            auth_id=config.auth_id,
-            username=config.user,
-            password=config.password.get_secret_value(),
-            verify_ssl=config.verify_ssl,
-        )
-        if cls.is_xsoar_healthy(_client):
-            return _client
-        raise UnHealthyServer(str(config), server_part="xsoar")
-
-    @validator("about", always=True)
-    def get_server_about(cls, v: Optional[Dict], values: Dict[str, Any]) -> Dict:
-        return v or cls.get_xsoar_about(values["client"])
 
     @property
     def containers_health(self) -> Dict[str, int]:
@@ -171,7 +166,7 @@ class XsoarClient(BaseModel):
     @property
     def external_base_url(self) -> str:
         # url that its purpose is to expose apis of integrations outside from xsoar/xsiam
-        return self.config.base_api_url
+        return self.server_config.config.base_api_url
 
     """
     #############################
@@ -978,7 +973,7 @@ class XsoarClient(BaseModel):
             the context after running the command
         """
         if not investigation_id:
-            if self.config.server_type == ServerType.XSOAR:
+            if self.server_config.server_type == ServerType.XSOAR:
                 investigation_id = self.get_playground_id()
             else:
                 # it is not possible to auto-detect playground-id in xsoar-8, see CIAC-8766,

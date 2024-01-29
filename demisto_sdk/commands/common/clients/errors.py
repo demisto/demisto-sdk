@@ -9,3 +9,8 @@ class UnAuthorized(RuntimeError):
 class UnHealthyServer(RuntimeError):
     def __init__(self, server: str):
         super().__init__(f"The {server} is unhealthy")
+
+
+class InvalidServerType(ValueError):
+    def __init__(self, server: str, server_type: str):
+        super().__init__(f"The server {server} is not type of {server_type}")

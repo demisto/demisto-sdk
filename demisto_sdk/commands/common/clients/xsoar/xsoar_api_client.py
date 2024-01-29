@@ -3,6 +3,7 @@ import re
 import socket
 import time
 import urllib.parse
+from dataclasses import dataclass, field
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
@@ -21,7 +22,11 @@ from requests.exceptions import RequestException
 from urllib3 import HTTPResponse
 
 from demisto_sdk.commands.common.clients.configs import XsoarClientConfig
-from demisto_sdk.commands.common.clients.errors import UnAuthorized, UnHealthyServer
+from demisto_sdk.commands.common.clients.errors import (
+    InvalidServerType,
+    UnAuthorized,
+    UnHealthyServer,
+)
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
     IncidentState,
@@ -39,6 +44,11 @@ class ServerType(str, Enum):
     XSIAM = "xsiam"
 
 
+@dataclass
+class ServerAbout:
+    a: str = field()
+
+
 class XsoarClient:
     """
     api client for xsoar-on-prem
@@ -53,7 +63,7 @@ class XsoarClient:
         raise_if_server_not_healthy: bool = True,
     ):
         self.server_config = config
-        self.client = client or demisto_client.configure(
+        self._xsoar_client = client or demisto_client.configure(
             config.base_api_url,
             api_key=self.server_config.api_key.get_secret_value(),
             auth_id=self.server_config.auth_id,
@@ -63,24 +73,21 @@ class XsoarClient:
         )
         if raise_if_server_not_healthy and not self.is_healthy:
             raise UnHealthyServer(str(self))
+        if not self.is_server_type:
+            raise InvalidServerType(str(self), server_type=self.server_type)
 
     def __str__(self) -> str:
-        return f"server-type={self.server_type}, api-url={self.server_config.base_api_url}, xsoar-version={self.version}"
-
-    @classmethod
-    def is_xsoar_on_prem(
-        cls,
-        server_version: str,
-        product_mode: Optional[str] = None,
-        deployment_mode: Optional[str] = None,
-    ):
-        """
-        Returns whether the configured client is xsoar-on-prem.
-        """
-        return (product_mode == "xsoar" and deployment_mode == "opp") or (
-            server_version
-            and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
+        # TODO - consider adding the server-type
+        return (
+            f"api-url={self.server_config.base_api_url}, xsoar-version={self.version}"
         )
+
+    @property
+    def is_server_type(self) -> bool:
+        about = self.about
+        return (
+            about.get("productMode") == "xsoar" and about.get("deploymentMode") == "opp"
+        ) or (self.version and self.version < Version(MINIMUM_XSOAR_SAAS_VERSION))
 
     @property
     def server_type(self) -> ServerType:
@@ -100,7 +107,7 @@ class XsoarClient:
             bool: True if xsoar server is healthy, False if not.
         """
         try:
-            status_code = self.client.generic_request(
+            status_code = self._xsoar_client.generic_request(
                 method="GET", path="/health/server"
             )[1]
             if not status_code == requests.codes.ok:
@@ -120,19 +127,19 @@ class XsoarClient:
     @cached_property
     @retry(exceptions=ApiException)
     def about(self) -> Dict[str, Any]:
-        raw_response, _, response_headers = self.client.generic_request(
+        raw_response, _, response_headers = self._xsoar_client.generic_request(
             "/about", "GET", response_type="object"
         )
         if "text/html" in response_headers.get("Content-Type"):
             raise ValueError(
-                f"the {self.client.api_client.configuration.host} URL is not the api-url",
+                f"the {self._xsoar_client.api_client.configuration.host} URL is not the api-url",
             )
         logger.debug(f"about={raw_response}")
         return raw_response
 
     @property
     def containers_health(self) -> Dict[str, int]:
-        raw_response, _, _ = self.client.generic_request(
+        raw_response, _, _ = self._xsoar_client.generic_request(
             "/health/containers", "GET", response_type="object"
         )
         return raw_response
@@ -160,7 +167,7 @@ class XsoarClient:
         """
         Returns the base api url used for api requests to xsoar endpoints
         """
-        return self.client.api_client.configuration.host
+        return self._xsoar_client.api_client.configuration.host
 
     @property
     def base_url(self) -> str:
@@ -195,7 +202,7 @@ class XsoarClient:
         Returns all the installed packs in xsoar/xsiam
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="GET",
             path="/contentpacks/metadata/installed",
             response_type="object",
@@ -208,7 +215,7 @@ class XsoarClient:
         Returns the installed pack by pack_id
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="GET",
             path="/contentpacks/metadata/installed",
             response_type="object",
@@ -231,7 +238,7 @@ class XsoarClient:
             raw response of the found packs
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/contentpacks/marketplace/search",
             response_type="object",
@@ -251,7 +258,7 @@ class XsoarClient:
             raw response of the found pack request
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="GET",
             path=f"/contentpacks/marketplace/{pack_id}",
             response_type="object",
@@ -270,7 +277,7 @@ class XsoarClient:
             raw response of the deleted packs request
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/contentpacks/installed/delete",
             response_type="object",
@@ -297,7 +304,7 @@ class XsoarClient:
         if skip_validation:
             params["skip_validation"] = "true"
 
-        return self.client.upload_content_packs(str(zipped_packs_path), **params)
+        return self._xsoar_client.upload_content_packs(str(zipped_packs_path), **params)
 
     @retry(exceptions=ApiException)
     def install_marketplace_packs(
@@ -312,7 +319,7 @@ class XsoarClient:
 
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/contentpacks/marketplace/install",
             response_type="object",
@@ -326,7 +333,7 @@ class XsoarClient:
         Syncs up the marketplace.
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/contentpacks/marketplace/sync",
             response_type="object",
@@ -442,7 +449,7 @@ class XsoarClient:
             integration_instance_body_request["data"].append(param_conf)
 
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="PUT",
             path="/settings/integration",
             body=integration_instance_body_request,
@@ -464,7 +471,7 @@ class XsoarClient:
             response_type: the response type to return
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/settings/integration/search",
             response_type=response_type,
@@ -486,7 +493,7 @@ class XsoarClient:
         logger.info(f"Running test-module on integration {_id} and {instance_name=}")
         instance = self.get_integration_instance(instance_name)
         raw_response, status_code, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/settings/integration/test",
             body=instance,
@@ -514,7 +521,7 @@ class XsoarClient:
 
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="DELETE",
             path=f"/settings/integration/{urllib.parse.quote(instance_id)}",
             response_type=response_type,
@@ -602,7 +609,7 @@ class XsoarClient:
         create_incident_request.name = name
 
         try:
-            return self.client.create_incident(
+            return self._xsoar_client.create_incident(
                 create_incident_request=create_incident_request
             )
         except ApiException as err:
@@ -660,7 +667,7 @@ class XsoarClient:
             filters["sourceInstance"] = source_instance_name
 
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/incidents/search",
             body={"filter": filters},
@@ -737,7 +744,7 @@ class XsoarClient:
         body = {"ids": incident_ids, "filter": filters or {}, "all": _all}
 
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/incident/batchDelete",
             body=body,
@@ -790,7 +797,7 @@ class XsoarClient:
 
         # if raw_response = None and status_code = 200, it means the indicator is in the exclusion list
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/indicator/create",
             body={
@@ -836,7 +843,7 @@ class XsoarClient:
             "DoNotWhitelist": not should_exclude,
         }
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/indicators/batchDelete",
             body=body,
@@ -874,7 +881,7 @@ class XsoarClient:
             the raw response of existing indicators
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/indicators/search",
             body={"page": page, "size": size, "query": query},
@@ -892,7 +899,7 @@ class XsoarClient:
             the indicators that are in the exclusion list
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="GET",
             path="/indicators/whitelisted",
             response_type=response_type,
@@ -912,7 +919,7 @@ class XsoarClient:
             the raw response of deleting indicators from exclusion list
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/indicators/whitelist/remove",
             response_type=response_type,
@@ -1004,12 +1011,12 @@ class XsoarClient:
                 "data": "!DeleteContext all=yes",
             }
 
-            self.client.investigation_add_entries_sync(update_entry=update_entry)
+            self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
 
         update_entry = {"investigationId": investigation_id, "data": command}
-        war_room_entries: List[Entry] = self.client.investigation_add_entries_sync(
-            update_entry=update_entry
-        )
+        war_room_entries: List[
+            Entry
+        ] = self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
         logger.debug(
             f"Successfully run the command {command} in investigation {investigation_id}"
         )
@@ -1053,7 +1060,7 @@ class XsoarClient:
         """
         Returns a playground ID based on the user.
         """
-        answer = self.client.search_investigations(
+        answer = self._xsoar_client.search_investigations(
             filter={"filter": {"type": [9], "page": 0}}
         )
         if answer.total == 0:
@@ -1062,7 +1069,7 @@ class XsoarClient:
             playground_id = answer.data[0].id
         else:
             # if found more than one playground, try to filter to results against the current user
-            user_data, status_code, _ = self.client.generic_request(
+            user_data, status_code, _ = self._xsoar_client.generic_request(
                 path="/user",
                 method="GET",
                 content_type="application/json",
@@ -1084,7 +1091,7 @@ class XsoarClient:
                     playgrounds.extend(
                         filter(
                             filter_by_creating_user_id,
-                            self.client.search_investigations(
+                            self._xsoar_client.search_investigations(
                                 filter={"filter": {"type": [9], "page": page + 1}}
                             ).data,
                         )
@@ -1109,7 +1116,7 @@ class XsoarClient:
             the context of the investigation / incident
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path=f"/investigation/{investigation_id}/context",
             response_type=response_type,
@@ -1127,7 +1134,7 @@ class XsoarClient:
             the raw response of the status of the investigation
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path=f"/investigation/{urllib.parse.quote(incident_id)}",
             body={"pageSize": 1000},
@@ -1148,7 +1155,7 @@ class XsoarClient:
             the raw response of investigation of the incident
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/incident/investigate",
             body={"id": incident_id},
@@ -1174,7 +1181,7 @@ class XsoarClient:
             the raw response of deleting the playbook
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="POST",
             path="/playbook/delete",
             response_type=response_type,
@@ -1196,7 +1203,7 @@ class XsoarClient:
         investigation_status = self.get_investigation_status(incident_id)
 
         # parses the playbook entries into the Entry model from demisto-py
-        playbook_entries = self.client.api_client.deserialize(
+        playbook_entries = self._xsoar_client.api_client.deserialize(
             RESTResponse(
                 HTTPResponse(body=json.dumps(investigation_status.get("entries") or []))
             ),
@@ -1217,7 +1224,7 @@ class XsoarClient:
             the raw response of the state of the playbook
         """
         raw_response, _, _ = demisto_client.generic_request_func(
-            self=self.client,
+            self=self._xsoar_client,
             method="GET",
             path=f"/inv-playbook/{incident_id}",
             response_type=response_type,

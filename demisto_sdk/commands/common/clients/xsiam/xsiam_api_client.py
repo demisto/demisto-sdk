@@ -9,6 +9,7 @@ from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import ServerType
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
+    XsoarClientConfig,
     XsoarSaasClient,
 )
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -23,30 +24,30 @@ class XsiamClient(XsoarSaasClient):
     api client for xsiam
     """
 
-    @classmethod
-    def is_xsiam(cls, _client: DefaultApi, product_mode: Optional[str] = None):
-        """
-        Returns whether the configured client is xsiam.
-        """
-        if product_mode == "xsiam":
+    def __init__(
+        self,
+        config: XsoarClientConfig,
+        client: Optional[DefaultApi] = None,
+        raise_if_server_not_healthy: bool = True,
+    ):
+        super().__init__(
+            config,
+            client=client,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
+        )
+
+    @property
+    def is_server_type(self) -> bool:
+        about = self.about
+        if about.get("productMode") == "xsiam":
             return True
 
-        # for old environments that do not have product-mode / deployment-mode
         try:
-            # /ioc-rules is only an endpoint in XSIAM.
-            response, status_code, response_headers = _client.generic_request(
-                "/ioc-rules", "GET"
-            )
-        except ApiException:
+            self.get_ioc_rules()
+            return True
+        except ApiException as error:
+            logger.debug(f"{self} is not {self.server_type}, error: {error}")
             return False
-
-        if (
-            "text/html" in response_headers.get("Content-Type")
-            or status_code != requests.codes.ok
-        ):
-            return False
-
-        return True
 
     @property
     def server_type(self) -> ServerType:
@@ -85,20 +86,20 @@ class XsiamClient(XsoarSaasClient):
         product: str,
         data_format: str = "json",
     ):
-        if self.config.token:
-            endpoint = urljoin(self.config.base_api_url, "logs/v1/xsiam")
+        if self.server_config.token:
+            endpoint = urljoin(self.server_config.base_api_url, "logs/v1/xsiam")
             additional_headers = {
-                "authorization": self.config.token,
+                "authorization": self.server_config.token,
                 "format": data_format,
                 "product": product,
                 "vendor": vendor,
                 "content-encoding": "gzip",
             }
             token_type = "xsiam_token"
-        elif self.config.collector_token:
-            endpoint = urljoin(self.config.base_api_url, "logs/v1/event")
+        elif self.server_config.collector_token:
+            endpoint = urljoin(self.server_config.base_api_url, "logs/v1/event")
             additional_headers = {
-                "authorization": self.config.collector_token,
+                "authorization": self.server_config.collector_token,
                 "content-type": "application/json"
                 if data_format.casefold == "json"
                 else "text/plain",
@@ -112,7 +113,7 @@ class XsiamClient(XsoarSaasClient):
 
         formatted_data = "\n".join([json.dumps(d) for d in data])
         compressed_data = gzip.compress(formatted_data.encode("utf-8"))
-        response = self.session.post(
+        response = self._xdr_client.post(
             endpoint, data=compressed_data, headers=additional_headers
         )
         try:
@@ -132,9 +133,11 @@ class XsiamClient(XsoarSaasClient):
             response.raise_for_status()
 
     def delete_dataset(self, dataset_id: str):
-        endpoint = urljoin(self.config.base_api_url, "public_api/v1/xql/delete_dataset")
+        endpoint = urljoin(
+            self.server_config.base_api_url, "public_api/v1/xql/delete_dataset"
+        )
         body = {"dataset_name": dataset_id}
-        response = self.session.post(endpoint, json=body)
+        response = self._xdr_client.post(endpoint, json=body)
         response.raise_for_status()
 
     """
@@ -146,10 +149,10 @@ class XsiamClient(XsoarSaasClient):
     def start_xql_query(self, query: str):
         body = {"request_data": {"query": query}}
         endpoint = urljoin(
-            self.config.base_api_url, "public_api/v1/xql/start_xql_query/"
+            self.server_config.base_api_url, "public_api/v1/xql/start_xql_query/"
         )
         logger.info(f"Starting xql query:\nendpoint={endpoint}\n{query=}")
-        response = self.session.post(endpoint, json=body)
+        response = self._xdr_client.post(endpoint, json=body)
         logger.debug("Request completed to start xql query")
         data = response.json()
 
@@ -170,10 +173,10 @@ class XsiamClient(XsoarSaasClient):
             }
         )
         endpoint = urljoin(
-            self.config.base_api_url, "public_api/v1/xql/get_query_results/"
+            self.server_config.base_api_url, "public_api/v1/xql/get_query_results/"
         )
         logger.info(f"Getting xql query results: endpoint={endpoint}")
-        response = self.session.post(endpoint, data=payload, timeout=timeout)
+        response = self._xdr_client.post(endpoint, data=payload, timeout=timeout)
         logger.debug("Request completed to get xql query results")
         data = response.json()
         logger.debug(pformat(data))
@@ -184,3 +187,24 @@ class XsiamClient(XsoarSaasClient):
         ):
             return data.get("reply", {}).get("results", {}).get("data", [])
         response.raise_for_status()
+
+    """
+    #############################
+    IOC related methods
+    #############################
+    """
+
+    def get_ioc_rules(self):
+        # /ioc-rules is only an endpoint in XSIAM.
+        response, status_code, response_headers = self._xsoar_client.generic_request(
+            "/ioc-rules", "GET", response_type="object"
+        )
+        if (
+            "text/html" in response_headers.get("Content-Type")
+            or status_code != requests.codes.ok
+        ):
+            raise ApiException(
+                status=404, reason=f'{self} does not have "/ioc-rules" endpoint'
+            )
+
+        return response

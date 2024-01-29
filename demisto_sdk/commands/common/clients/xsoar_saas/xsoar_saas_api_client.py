@@ -32,9 +32,9 @@ class XsoarSaasClient(XsoarClient):
         client: Optional[DefaultApi] = None,
         raise_if_server_not_healthy: bool = True,
     ):
-        self.session = Session()
-        self.session.verify = config.verify_ssl
-        self.session.headers.update(
+        self._xdr_client = Session()
+        self._xdr_client.verify = config.verify_ssl
+        self._xdr_client.headers.update(
             {
                 "x-xdr-auth-id": config.auth_id,
                 "Authorization": config.api_key.get_secret_value(),
@@ -47,17 +47,13 @@ class XsoarSaasClient(XsoarClient):
             raise_if_server_not_healthy=raise_if_server_not_healthy,
         )
 
-    @classmethod
-    def is_xsoar_saas(
-        cls,
-        server_version: str,
-        product_mode: Optional[str] = None,
-        deployment_mode: Optional[str] = None,
-    ):
-        return (product_mode == "xsoar" and deployment_mode == "saas") or (
-            server_version
-            and Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION)
-        )
+    @property
+    def is_server_type(self) -> bool:
+        about = self.about
+        return (
+            about.get("productMode") == "xsoar"
+            and about.get("deploymentMode") == "saas"
+        ) or (self.version and self.version >= Version(MINIMUM_XSOAR_SAAS_VERSION))
 
     @property
     def server_type(self) -> ServerType:
@@ -68,7 +64,7 @@ class XsoarSaasClient(XsoarClient):
         if not super().is_healthy:
             return False
         url = urljoin(self.server_config.base_api_url, "public_api/v1/healthcheck")
-        response = self.session.get(url)
+        response = self._xdr_client.get(url)
         response.raise_for_status()
         try:
             server_health_status = (response.json().get("status") or "").lower()
@@ -105,8 +101,10 @@ class XsoarSaasClient(XsoarClient):
         """
         Returns tenant info on SaaS based xsoar/xsiam.
         """
-        url = urljoin(self.config.base_api_url, "public_api/v1/system/get_tenant_info")
-        response = self.session.post(url)
+        url = urljoin(
+            self.server_config.base_api_url, "public_api/v1/system/get_tenant_info"
+        )
+        response = self._xdr_client.post(url)
         response.raise_for_status()
         return response
 

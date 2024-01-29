@@ -181,7 +181,6 @@ def get_client_from_server_type(
                     verify_ssl=_verify_ssl,
                 ),
                 client=_client,
-                about=about,
             )
         except pydantic.ValidationError:
             # xsoar-on-prem that can have server version > 8.0.0
@@ -194,7 +193,6 @@ def get_client_from_server_type(
                     verify_ssl=_verify_ssl,
                 ),
                 client=_client,
-                about=about,
             )
 
     if XsoarClient.is_xsoar_on_prem(

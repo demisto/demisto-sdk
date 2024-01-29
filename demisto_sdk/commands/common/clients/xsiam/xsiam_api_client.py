@@ -7,6 +7,7 @@ import requests
 from demisto_client.demisto_api.api.default_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 
+from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import ServerType
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
     XsoarSaasClient,
 )
@@ -46,6 +47,10 @@ class XsiamClient(XsoarSaasClient):
             return False
 
         return True
+
+    @property
+    def server_type(self) -> ServerType:
+        return ServerType.XSIAM
 
     @property
     def marketplace(self) -> MarketplaceVersions:

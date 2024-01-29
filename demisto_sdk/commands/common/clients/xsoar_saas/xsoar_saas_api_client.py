@@ -8,7 +8,10 @@ from requests import Response, Session
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.clients.configs import XsoarClientConfig
-from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
+from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import (
+    ServerType,
+    XsoarClient,
+)
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
@@ -27,7 +30,7 @@ class XsoarSaasClient(XsoarClient):
         self,
         config: XsoarClientConfig,
         client: Optional[DefaultApi] = None,
-        raise_if_not_healthy: bool = True,
+        raise_if_server_not_healthy: bool = True,
     ):
         self.session = Session()
         self.session.verify = config.verify_ssl
@@ -39,7 +42,9 @@ class XsoarSaasClient(XsoarClient):
             }
         )
         super().__init__(
-            config, client=client, raise_if_not_healthy=raise_if_not_healthy
+            config,
+            client=client,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
         )
 
     @classmethod
@@ -53,6 +58,10 @@ class XsoarSaasClient(XsoarClient):
             server_version
             and Version(server_version) >= Version(MINIMUM_XSOAR_SAAS_VERSION)
         )
+
+    @property
+    def server_type(self) -> ServerType:
+        return ServerType.XSOAR_SAAS
 
     @property
     def is_healthy(self) -> bool:

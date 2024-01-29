@@ -3,6 +3,7 @@ import re
 import socket
 import time
 import urllib.parse
+from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -19,7 +20,7 @@ from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 from urllib3 import HTTPResponse
 
-from demisto_sdk.commands.common.clients.configs import ServerType, XsoarClientConfig
+from demisto_sdk.commands.common.clients.configs import XsoarClientConfig
 from demisto_sdk.commands.common.clients.errors import UnAuthorized, UnHealthyServer
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
@@ -30,6 +31,12 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
+
+
+class ServerType(str, Enum):
+    XSOAR = "xsoar-on-prem"
+    XSOAR_SAAS = "xsoar-saas"
+    XSIAM = "xsiam"
 
 
 class XsoarClient:
@@ -43,7 +50,7 @@ class XsoarClient:
         self,
         config: XsoarClientConfig,
         client: Optional[DefaultApi] = None,
-        raise_if_not_healthy: bool = True,
+        raise_if_server_not_healthy: bool = True,
     ):
         self.server_config = config
         self.client = client or demisto_client.configure(
@@ -54,8 +61,11 @@ class XsoarClient:
             password=self.server_config.password.get_secret_value(),
             verify_ssl=self.server_config.verify_ssl,
         )
-        if raise_if_not_healthy and not self.is_healthy:
-            raise UnHealthyServer(str(self.server_config))
+        if raise_if_server_not_healthy and not self.is_healthy:
+            raise UnHealthyServer(str(self))
+
+    def __str__(self) -> str:
+        return f"server-type={self.server_type}, api-url={self.server_config.base_api_url}, xsoar-version={self.version}"
 
     @classmethod
     def is_xsoar_on_prem(
@@ -71,6 +81,10 @@ class XsoarClient:
             server_version
             and Version(server_version) < Version(MINIMUM_XSOAR_SAAS_VERSION)
         )
+
+    @property
+    def server_type(self) -> ServerType:
+        return ServerType.XSOAR
 
     @property
     def marketplace(self) -> MarketplaceVersions:

@@ -26,7 +26,6 @@ from demisto_sdk.commands.common.constants import (
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
-    CREATE_CONTAINER_ATTEMPTS,
 )
 from demisto_sdk.commands.common.docker_helper import (
     docker_login,
@@ -986,25 +985,22 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         command = [self._facts["lint_to_commands"][linter]]
-        for attempt in range(CREATE_CONTAINER_ATTEMPTS-1):
-            try:
-                container: docker.models.containers.Container = (
-                    get_docker().create_container(
-                        name=container_name,
-                        image=test_image,
-                        command=command,
-                        user=f"{os.getuid()}:4000",
-                        files_to_push=[(self._pack_abs_dir, "/devwork")],
-                        environment=self._facts["env_vars"],
-                    )
+        try:
+            container: docker.models.containers.Container = (
+                get_docker().create_container(
+                    name=container_name,
+                    image=test_image,
+                    command=command,
+                    user=f"{os.getuid()}:4000",
+                    files_to_push=[(self._pack_abs_dir, "/devwork")],
+                    environment=self._facts["env_vars"],
                 )
-                break
-            except Exception:
-                if attempt == CREATE_CONTAINER_ATTEMPTS - 1:
-                    logger.exception(
-                        f"{log_prompt} - Third attempt failed, could not create container: {container_name=}, {test_image=}, {command=}"
-                    )
-                    raise
+            )
+        except Exception:
+            logger.exception(
+                f"{log_prompt} - could not create container: {container_name=}, {test_image=}, {command=}"
+            )
+            raise
         try:
             container.start()
             stream_docker_container_output(container.logs(stream=True))

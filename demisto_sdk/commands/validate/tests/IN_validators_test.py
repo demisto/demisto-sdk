@@ -72,10 +72,11 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN121_is_valid_fetch
 from demisto_sdk.commands.validate.validators.IN_validators.IN122_is_valid_feed_integration import (
     IsValidFeedIntegrationValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN124_is_hiddenable_param import (
-    IsHiddenableParamValidator,
 from demisto_sdk.commands.validate.validators.IN_validators.IN123_display_name_has_invalid_version import (
     IntegrationDisplayNameVersionedCorrectlyValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN124_is_hiddenable_param import (
+    IsHiddenableParamValidator,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN125_is_valid_max_fetch_param import (
     IsValidMaxFetchParamValidator,

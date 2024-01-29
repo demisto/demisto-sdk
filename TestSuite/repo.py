@@ -3,8 +3,6 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-import demisto_sdk.commands.content_graph.objects.base_content as base_content
-import demisto_sdk.commands.content_graph.objects.content_item as content_item
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.content_graph.commands.create import create_content_graph
@@ -36,7 +34,7 @@ class Repo:
         packs: A list of created packs
     """
 
-    def __init__(self, tmpdir: Path, init_git: bool = True):
+    def __init__(self, tmpdir: Path, init_git: bool = False):
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
         self._packs_path = tmpdir / "Packs"
@@ -92,10 +90,6 @@ class Repo:
         self.git_util: Optional[GitUtil] = None
         if init_git:
             self.init_git()
-
-        # so that calling in_pack from inside the content_item will work.
-        content_item.CONTENT_PATH = Path(self.path)
-        base_content.CONTENT_PATH = Path(self.path)
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)

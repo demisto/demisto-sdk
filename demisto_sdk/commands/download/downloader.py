@@ -478,11 +478,20 @@ class Downloader:
                     f"Replacing UUID '{uuid}' with '{uuid_mapping[uuid]}' in "
                     f"'{custom_content_object['name']}'"
                 )
-                content_item_file_content = content_item_file_content.replace(
-                    uuid, uuid_mapping[uuid]
-                )
 
-            # Update ID, if it's a UUID
+                if custom_content_object["file_extension"] in ("yml", "yaml"):
+                    # Wrap the new ID with quotes for cases where the name contains special characters like ':'.
+                    for replace_str in (f"'{uuid}'", f'"{uuid}"', uuid):
+                        content_item_file_content = content_item_file_content.replace(
+                            replace_str, f"'{uuid_mapping[uuid]}'"
+                        )
+
+                else:
+                    content_item_file_content = content_item_file_content.replace(
+                        uuid, uuid_mapping[uuid]
+                    )
+
+            # Update ID if it's a UUID
             if custom_content_object["id"] in uuid_mapping:
                 custom_content_object["id"] = uuid_mapping[custom_content_object["id"]]
 

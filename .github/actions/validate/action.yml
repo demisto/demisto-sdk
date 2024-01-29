@@ -1,0 +1,54 @@
+name: 'Run The Validate Command'
+description: 'Run the validate -a command on content master'
+author: 'Demisto-SDK'
+
+inputs:
+  artifacts-path-dir:
+    required: true
+    type: string
+    description: "The path to the artifacts dir"
+
+  artifact-name:
+    required: false
+    type: string
+    description: "The name of of the artifact to upload"
+
+  validate-script-path:
+    required: false
+    type: string
+    description: "The path to the validate script to run"
+
+
+runs:
+  using: 'composite'
+  steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_test_environment
+        with:
+          python-version: '3.10'
+
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          repository: demisto/content
+          path: content
+
+      - name: Run Validate All - Old Validate
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cd content
+          mkdir -p ${{ inputs.artifacts-path-dir }}/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./${{ inputs.artifacts-path-dir }}/logs
+          ./${{ validate-script-path }}
+        shell: bash
+
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: content/${{ inputs.artifacts-path-dir }}
+          artifact-name: ${{ inputs.artifact-name }}

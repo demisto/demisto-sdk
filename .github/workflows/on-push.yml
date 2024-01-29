@@ -303,7 +303,7 @@ jobs:
 
       - name: run pre-commit on input files
         timeout-minutes: 60
-        continue-on-error: true
+        continue-on-error: true  # TODO - fail if there is an error here
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
@@ -361,71 +361,27 @@ jobs:
   validate-files-old-validate:
     runs-on: ubuntu-latest
     name: Test Old Validate Command
+    timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Python Environment
-        uses: ./.github/actions/setup_test_environment
+      - name: Run Validate All - New Validate
+        uses: ./.github/actions/validate
         with:
-          python-version: '3.10'
-
-      - name: Checkout content
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          repository: demisto/content
-          path: content
-
-      - name: Run Validate All - Old Validate
-        run: |
-          source $(poetry env info --path)/bin/activate
-          cd content
-          mkdir -p test-old-validate-command/logs
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-old-validate-command/logs
-          ./Tests/scripts/validate.sh
-
-      - name: Upload artifacts
-        if: always()
-        uses: ./.github/actions/upload_artifacts
-        with:
-          artifacts-path-dir: content/test-old-validate-command
+          artifacts-path-dir: test-old-validate-command
           artifact-name: test-old-validate-command-artifacts
+          validate-script-path: Tests/scripts/validate.sh
 
   validate-files-new-validate:
     runs-on: ubuntu-latest
     name: Test New Validate Command
+    timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Python Environment
-        uses: ./.github/actions/setup_test_environment
-        with:
-          python-version: '3.10'
-
-      - name: Checkout content
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          repository: demisto/content
-          path: content
-
       - name: Run Validate All - New Validate
-        run: |
-          source $(poetry env info --path)/bin/activate
-          cd content
-          mkdir -p test-new-validate-command/logs
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-new-validate-command/logs
-          ./Tests/scripts/new_validate.sh
-
-      - name: Upload artifacts
-        if: always()
-        uses: ./.github/actions/upload_artifacts
+        uses: ./.github/actions/validate
         with:
-          artifacts-path-dir: content/test-new-validate-command
+          artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
+          validate-script-path: Tests/scripts/new_validate.sh

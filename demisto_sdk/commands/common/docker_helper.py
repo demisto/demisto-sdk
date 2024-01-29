@@ -444,7 +444,7 @@ class MountableDocker(DockerBase):
         times=3,
         exceptions=(
             requests.exceptions.ConnectionError,
-            requests.exceptions.ReadTimeout
+            requests.exceptions.Timeout
         )
     )
     def create_container(

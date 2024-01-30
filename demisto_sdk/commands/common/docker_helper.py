@@ -98,7 +98,6 @@ def docker_login(docker_client) -> bool:
     Returns:
         bool: True if logged in successfully.
     """
-    registry = os.getenv("DOCKER_IO_DOMAIN", "https://index.docker.io/v1")
 
     docker_user = os.getenv("DOCKERHUB_USER")
     docker_pass = os.getenv("DOCKERHUB_PASSWORD")

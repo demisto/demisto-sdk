@@ -271,7 +271,7 @@ def add_reasons_to_dependencies(
     def get_content_items_relationship_reasons(
         pack_depends_on_reasons: list, mandatory_only: bool, include_tests: bool
     ):
-        reasons_result_obj: dict[str, list] = {}
+        reasons_result_obj: Dict[str, list] = {}
         for reason in pack_depends_on_reasons:
             if (reason.get("mandatorily") or not mandatory_only) and (
                 not reason.get("is_test") or include_tests

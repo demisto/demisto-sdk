@@ -57,9 +57,7 @@ def create_mini_content(graph_repo: Repo):
     pack2.create_script("SampleScript2")
     pack2.create_integration("SampleIntegration2").set_commands(["pack2-test-command"])
     pack1.create_script("SampleScript").yml.update(
-        {
-            "dependson": {"must": ["SampleScript2", "pack2-test-command"]}
-        }
+        {"dependson": {"must": ["SampleScript2", "pack2-test-command"]}}
     )
 
     pack4_test_playbook = pack4.create_test_playbook("SampleTestPlaybook")
@@ -375,7 +373,7 @@ class TestGetRelationships:
                         "minDepth": 2,
                         "is_test": False,
                         "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
-                    }
+                    },
                 ],
                 id="Verify both dirs, all level dependencies, show reasons",
             ),

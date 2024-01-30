@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where the **pre-commit** command would fail if there are connection issues with the git repository.
+- description: Fixed an issue where fetching from a git remote would cause a failure in cases where fetching is not necessary.
   type: fix
 pr_number: 3878

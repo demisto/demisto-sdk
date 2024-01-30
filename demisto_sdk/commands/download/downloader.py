@@ -263,31 +263,10 @@ class Downloader:
                         custom_content_objects=all_custom_content_objects
                     )
 
-                    changed_uuids_count = 0
-                    failed_content_items = set()
-
-                    for original_file_name, file_object in downloaded_content_objects.items():
-                        try:
-                            if self.replace_uuid_ids(
-                                custom_content_object=file_object, uuid_mapping=uuid_mapping
-                            ):
-                                changed_uuids_count += 1
-
-                        except Exception as e:
-                            # If UUID replacement failed, we skip the file
-                            logger.error(
-                                f"Could not replace UUID IDs in '{file_object['name']}'. "
-                                f"Content item will be skipped.\nError: {e}"
-                            )
-                            failed_content_items.add(original_file_name)
-
-                    for failed_content_item in failed_content_items:
-                        downloaded_content_objects.pop(failed_content_item)
-
-                    if changed_uuids_count > 0:
-                        logger.info(
-                            f"Replaced UUID IDs with names in {changed_uuids_count} custom content items."
-                        )
+                    self.replace_uuid_ids(
+                        custom_content_objects=downloaded_content_objects,
+                        uuid_mapping=uuid_mapping,
+                    )
 
             existing_pack_data = self.build_existing_pack_structure(
                 existing_pack_path=output_path
@@ -469,7 +448,45 @@ class Downloader:
         logger.debug("Custom content items loaded to memory successfully.")
         return loaded_files
 
-    def replace_uuid_ids(
+    def replace_uuid_ids(self, custom_content_objects: dict[str, dict], uuid_mapping: dict[str, str]):
+        """
+        Find and replace UUID IDs of custom content items with their names (using the provided mapping).
+
+        Note:
+            This method modifies the provided 'custom_content_objects' dictionary.
+
+        Args:
+            custom_content_objects (dict[str, dict]): A dictionary mapping custom content names
+                to their corresponding objects.
+            uuid_mapping (dict[str, str]): A dictionary mapping UUID IDs to corresponding names of custom content.
+        """
+        changed_uuids_count = 0
+        failed_content_items = set()
+
+        for original_file_name, file_object in custom_content_objects.items():
+            try:
+                if self.replace_uuid_ids_for_item(
+                        custom_content_object=file_object, uuid_mapping=uuid_mapping
+                ):
+                    changed_uuids_count += 1
+
+            except Exception as e:
+                # If UUID replacement failed, we skip the file
+                logger.error(
+                    f"Could not replace UUID IDs in '{file_object['name']}'. "
+                    f"Content item will be skipped.\nError: {e}"
+                )
+                failed_content_items.add(original_file_name)
+
+        for failed_content_item in failed_content_items:
+            custom_content_objects.pop(failed_content_item)
+
+        if changed_uuids_count > 0:
+            logger.info(
+                f"Replaced UUID IDs with names in {changed_uuids_count} custom content items."
+            )
+
+    def replace_uuid_ids_for_item(
         self, custom_content_object: dict, uuid_mapping: dict[str, str]
     ) -> bool:
         """

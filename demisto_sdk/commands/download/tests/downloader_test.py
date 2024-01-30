@@ -1163,7 +1163,7 @@ def test_uuids_replacement_in_content_items(mocker):
 
     changed_uuids_count = 0
     for file_object in all_custom_content_objects.values():
-        if downloader.replace_uuid_ids(
+        if downloader.replace_uuid_ids_for_item(
             custom_content_object=file_object, uuid_mapping=uuid_mapping
         ):
             changed_uuids_count += 1

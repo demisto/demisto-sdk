@@ -54,7 +54,6 @@ class DockerException(Exception):
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     global DOCKER_CLIENT
-    registry = os.getenv("DOCKER_IO_DOMAIN", "https://index.docker.io/v1")
 
     if DOCKER_CLIENT is None:
         if log_prompt:

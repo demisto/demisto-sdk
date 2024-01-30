@@ -1,4 +1,3 @@
-
 import pytest
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -25,7 +24,7 @@ def create_mini_content(graph_repo: Repo):
         |                                     DEPENDS_ON                   | (mandatorily, is_test)
         |                                    (mandatorily)                 |
          ------------------------------------------------------------------
-    
+
     Args:
         graph_repo (Repo): the content repo to work with.
     """
@@ -33,7 +32,7 @@ def create_mini_content(graph_repo: Repo):
     pack1.set_data(
         dependencies={
             "SamplePack2": {"mandatory": True, "display_name": "SamplePack2"},
-            "SamplePack3": {"mandatory": False, "display_name": "SamplePack3"}
+            "SamplePack3": {"mandatory": False, "display_name": "SamplePack3"},
         }
     )
     graph_repo.create_pack("SamplePack2").set_data(
@@ -50,12 +49,10 @@ def create_mini_content(graph_repo: Repo):
     pack4.set_data(
         dependencies={
             "SamplePack2": {"mandatory": True, "display_name": "SamplePack2"},
-            "SamplePack5": {"mandatory": True, "display_name": "SamplePack5"}
+            "SamplePack5": {"mandatory": True, "display_name": "SamplePack5"},
         }
     )
-    graph_repo.create_pack("SamplePack5").set_data(
-        hidden=True
-    )
+    graph_repo.create_pack("SamplePack5").set_data(hidden=True)
 
     pack1.create_script("SampleScript")
 
@@ -69,7 +66,7 @@ def compare(
     dependency_pack: str,
     mandatory_only: bool,
     include_tests: bool,
-    show_reasons: bool
+    show_reasons: bool,
 ) -> None:
     assert len(result) == len(expected_list)
     result.sort(key=lambda r: r["object_id"])
@@ -92,7 +89,6 @@ def compare(
             assert actual.get("reasons") == expected.get("reasons")
         else:
             assert "reasons" not in actual
-        
 
 
 class TestGetRelationships:
@@ -115,15 +111,15 @@ class TestGetRelationships:
                         # "paths_count": 1,
                         "mandatorily": True,
                         "minDepth": 1,
-                        "is_test": False
+                        "is_test": False,
                     },
                     {
                         "object_id": "SamplePack4",
                         # "paths_count": 1,
                         "mandatorily": True,
                         "minDepth": 1,
-                        "is_test": False
-                    }
+                        "is_test": False,
+                    },
                 ],
                 [],
                 id="Verify source first level dependency",
@@ -144,7 +140,7 @@ class TestGetRelationships:
                         "object_id": "SamplePack3",
                         "mandatorily": False,
                         "minDepth": 1,
-                        "is_test": False
+                        "is_test": False,
                     }
                 ],
                 id="Verify target first level dependency",
@@ -165,7 +161,7 @@ class TestGetRelationships:
                         "paths_count": 1,
                         "mandatorily": False,
                         "minDepth": 1,
-                        "is_test": False
+                        "is_test": False,
                     }
                 ],
                 [
@@ -174,7 +170,7 @@ class TestGetRelationships:
                         # "paths_count": 1,
                         "mandatorily": True,
                         "minDepth": 1,
-                        "is_test": False
+                        "is_test": False,
                     }
                 ],
                 id="Verify both directions first level dependencies",
@@ -194,34 +190,34 @@ class TestGetRelationships:
                         "object_id": "SamplePack1",
                         "mandatorily": False,
                         "minDepth": 2,
-                        "is_test": False
+                        "is_test": False,
                     },
                     {
                         "object_id": "SamplePack2",
                         "mandatorily": False,
                         "minDepth": 2,
-                        "is_test": False
+                        "is_test": False,
                     },
                     {
                         "object_id": "SamplePack3",
                         "mandatorily": False,
                         "minDepth": 1,
-                        "is_test": False
-                    }
+                        "is_test": False,
+                    },
                 ],
                 [
                     {
                         "object_id": "SamplePack2",
                         "mandatorily": True,
                         "minDepth": 1,
-                        "is_test": False
+                        "is_test": False,
                     },
                     {
                         "object_id": "SamplePack3",
                         "mandatorily": False,
                         "minDepth": 2,
-                        "is_test": False
-                    }
+                        "is_test": False,
+                    },
                 ],
                 id="Verify both directions all level dependencies",
             ),
@@ -241,7 +237,7 @@ class TestGetRelationships:
                         "object_id": "SamplePack2",
                         "mandatorily": True,
                         "minDepth": 1,
-                        "is_test": False
+                        "is_test": False,
                     }
                 ],
                 id="Verify both directions all level dependencies, mandatory only",
@@ -261,7 +257,7 @@ class TestGetRelationships:
                         "object_id": "SamplePack3",
                         "mandatorily": False,
                         "minDepth": 1,
-                        "is_test": False
+                        "is_test": False,
                     }
                 ],
                 [
@@ -269,14 +265,14 @@ class TestGetRelationships:
                         "object_id": "SamplePack2",
                         "mandatorily": True,
                         "minDepth": 1,
-                        "is_test": False
+                        "is_test": False,
                     },
                     {
                         "object_id": "SamplePack1",
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": True,
-                    }
+                    },
                 ],
                 id="Verify both directions first level dependencies, mandatory only, including tests dependencies",
             ),
@@ -296,7 +292,7 @@ class TestGetRelationships:
                         "mandatorily": False,
                         "minDepth": 1,
                         "is_test": False,
-                        "reasons": ""
+                        "reasons": "",
                     }
                 ],
                 [
@@ -305,15 +301,15 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
-                        "reasons": ""
+                        "reasons": "",
                     },
                     {
                         "object_id": "SamplePack1",
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": True,
-                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n"
-                    }
+                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
                 ],
                 id="Verify both directions first level dependencies, show reasons, including tests dependencies",
             ),
@@ -346,10 +342,10 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
-                    }
+                    },
                 ],
                 id="Verify target directions, first level, including tests, including hidden",
-            )
+            ),
         ],
     )
     def test_get_dependencies(
@@ -391,5 +387,19 @@ class TestGetRelationships:
             include_hidden,
         )
         sources, targets = result["source_dependents"], result["target_dependencies"]
-        compare(sources, expected_sources, dependency_pack, mandatory_only, include_tests, show_reasons)
-        compare(targets, expected_targets, dependency_pack, mandatory_only, include_tests, show_reasons)
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )

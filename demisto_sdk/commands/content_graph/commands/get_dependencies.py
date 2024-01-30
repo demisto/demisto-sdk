@@ -184,8 +184,16 @@ def get_dependencies_by_pack_path(
     )
 
     if dependency_pack:
-        source_dependents = [dependency_obj for dependency_obj in source_dependents if dependency_obj.get("object_id") == dependency_pack]
-        target_dependencies = [dependency_obj for dependency_obj in target_dependencies if dependency_obj.get("object_id") == dependency_pack]
+        source_dependents = [
+            dependency_obj
+            for dependency_obj in source_dependents
+            if dependency_obj.get("object_id") == dependency_pack
+        ]
+        target_dependencies = [
+            dependency_obj
+            for dependency_obj in target_dependencies
+            if dependency_obj.get("object_id") == dependency_pack
+        ]
 
     if show_reasons:
         add_reasons_to_dependencies(
@@ -194,15 +202,22 @@ def get_dependencies_by_pack_path(
             target_dependencies,
             get_file(graph.import_path / graph.DEPENDS_ON_FILE_NAME),  # type: ignore
             mandatory_only,
-            include_tests
+            include_tests,
         )
 
     logger.info("[cyan]====== SUMMARY ======[/cyan]")
     if retrieve_sources:
-        logger.info(f"Sources Dependents:\n{to_tabulate(source_dependents, show_reasons)}\n")
+        logger.info(
+            f"Sources Dependents:\n{to_tabulate(source_dependents, show_reasons)}\n"
+        )
     if retrieve_targets:
-        logger.info(f"Target Dependencies:\n{to_tabulate(target_dependencies, show_reasons)}\n")
-    return {"source_dependents": source_dependents, "target_dependencies": target_dependencies}
+        logger.info(
+            f"Target Dependencies:\n{to_tabulate(target_dependencies, show_reasons)}\n"
+        )
+    return {
+        "source_dependents": source_dependents,
+        "target_dependencies": target_dependencies,
+    }
 
 
 def to_tabulate(
@@ -214,7 +229,7 @@ def to_tabulate(
 
     headers = ["Pack", "Mandatory", "Depth"]
     fieldnames_to_collect = ["name", "mandatorily", "minDepth"]
-    
+
     if show_reasons:
         headers.append("Reasons")
         fieldnames_to_collect.append("reasons")
@@ -229,7 +244,15 @@ def to_tabulate(
         tablefmt="fancy_grid",
     )
 
-def add_reasons_to_dependencies(pack_id: str, source_dependents: list, target_dependencies: list, depends_on_obj: dict, mandatory_only: bool, include_tests: bool):
+
+def add_reasons_to_dependencies(
+    pack_id: str,
+    source_dependents: list,
+    target_dependencies: list,
+    depends_on_obj: dict,
+    mandatory_only: bool,
+    include_tests: bool,
+):
     """
     Iterates over the resulted sources or/and targets dependencies and adds the dependency reasons.
 
@@ -244,41 +267,77 @@ def add_reasons_to_dependencies(pack_id: str, source_dependents: list, target_de
         mandatory_only (bool): Whether to return only mandatory dependencies.
         include_tests (bool): Whether to include test dependencies in the result.
     """
-    def get_content_items_relationship_reasons(pack_depends_on_reasons: list, mandatory_only: bool, include_tests: bool):
-        reasons_result_obj = {}
+
+    def get_content_items_relationship_reasons(
+        pack_depends_on_reasons: list, mandatory_only: bool, include_tests: bool
+    ):
+        reasons_result_obj: dict = {}
         for reason in pack_depends_on_reasons:
-            if (reason.get("mandatorily") or not mandatory_only) and (not reason.get("is_test") or include_tests):
-                reasons_result_obj.setdefault(reason.get("source"), []).append(reason.get("target"))
+            if (reason.get("mandatorily") or not mandatory_only) and (
+                not reason.get("is_test") or include_tests
+            ):
+                reasons_result_obj.setdefault(reason.get("source"), []).append(
+                    reason.get("target")
+                )
 
         reasons = ""
         for source, targets in reasons_result_obj.items():
             if len(targets) == 1:
-                reasons += f'* {source} -> [USES] -> {targets[0]}\n'
+                reasons += f"* {source} -> [USES] -> {targets[0]}\n"
             else:
                 formatted_targets = "\n  - ".join(targets)
-                reasons += f'* {source} -> [USES]:\n  - {formatted_targets}\n'
+                reasons += f"* {source} -> [USES]:\n  - {formatted_targets}\n"
         return reasons
 
-    def get_packs_relationship_reasons(record: dict, mandatory_only: bool, include_tests: bool):
+    def get_packs_relationship_reasons(
+        record: dict, mandatory_only: bool, include_tests: bool
+    ):
         reasons_result = []
         for path in record["paths"]:
-            if (path.get("mandatorily") or not mandatory_only) and (not path.get("is_test") or include_tests):
-                reasons_result.append(' -> [DEPENDS_ON] -> '.join(
-                    [f'Pack:{path_element["name"]}' for idx, path_element in enumerate(path["path"]) if idx % 2 == 0]
-                ))
+            if (path.get("mandatorily") or not mandatory_only) and (
+                not path.get("is_test") or include_tests
+            ):
+                reasons_result.append(
+                    " -> [DEPENDS_ON] -> ".join(
+                        [
+                            f'Pack:{path_element["name"]}'
+                            for idx, path_element in enumerate(path["path"])
+                            if idx % 2 == 0
+                        ]
+                    )
+                )
         reasons = "* "
         return reasons + "\n* ".join(reasons_result)
 
-    def add_reasons_to_dependency(dependency_record: dict, pack_depends_on_obj: list, mandatory_only: bool, include_tests: bool):
+    def add_reasons_to_dependency(
+        dependency_record: dict,
+        pack_depends_on_obj: list,
+        mandatory_only: bool,
+        include_tests: bool,
+    ):
         if dependency_record.get("minDepth") == 1:
-            dependency_record["reasons"] = get_content_items_relationship_reasons(pack_depends_on_obj, mandatory_only, include_tests)
+            dependency_record["reasons"] = get_content_items_relationship_reasons(
+                pack_depends_on_obj, mandatory_only, include_tests
+            )
         else:
-            dependency_record["reasons"] = get_packs_relationship_reasons(dependency_record, mandatory_only, include_tests)
+            dependency_record["reasons"] = get_packs_relationship_reasons(
+                dependency_record, mandatory_only, include_tests
+            )
 
     for dependency_record in source_dependents:
-        pack_depends_on_obj = depends_on_obj.get(dependency_record.get("object_id"), {}).get(pack_id) or []
-        add_reasons_to_dependency(dependency_record, pack_depends_on_obj, mandatory_only, include_tests)
+        pack_depends_on_obj = (
+            depends_on_obj.get(dependency_record.get("object_id"), {}).get(pack_id)
+            or []
+        )
+        add_reasons_to_dependency(
+            dependency_record, pack_depends_on_obj, mandatory_only, include_tests
+        )
 
     for dependency_record in target_dependencies:
-        pack_depends_on_obj = depends_on_obj.get(pack_id, {}).get(dependency_record.get("object_id")) or []
-        add_reasons_to_dependency(dependency_record, pack_depends_on_obj, mandatory_only, include_tests)
+        pack_depends_on_obj = (
+            depends_on_obj.get(pack_id, {}).get(dependency_record.get("object_id"))
+            or []
+        )
+        add_reasons_to_dependency(
+            dependency_record, pack_depends_on_obj, mandatory_only, include_tests
+        )

@@ -94,7 +94,10 @@ def update_content_graph(
             f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
         )
         content_graph_interface.export_graph(
-            output_path, override_commit=use_git, marketplace=marketplace, clean_import_dir=False
+            output_path,
+            override_commit=use_git,
+            marketplace=marketplace,
+            clean_import_dir=False,
         )
 
         return

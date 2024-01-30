@@ -650,7 +650,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         output_path: Optional[Path] = None,
         override_commit: bool = True,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        clean_import_dir: bool = True
+        clean_import_dir: bool = True,
     ) -> None:
         if clean_import_dir:
             self.clean_import_dir()

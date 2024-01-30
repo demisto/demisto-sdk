@@ -83,7 +83,12 @@ class ContentGraphInterface(ABC):
     def dump_depends_on(self) -> None:
         """Adds depends_on.json to the graph import dir."""
         if self._depends_on:
-            write_dict(self.import_path / self.DEPENDS_ON_FILE_NAME, data=self._depends_on, indent=4, sort_keys=True)
+            write_dict(
+                self.import_path / self.DEPENDS_ON_FILE_NAME,
+                data=self._depends_on,
+                indent=4,
+                sort_keys=True,
+            )
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"

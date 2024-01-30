@@ -31,11 +31,11 @@ def create_mini_content(graph_repo: Repo):
     pack1 = graph_repo.create_pack("SamplePack1")
     pack1.set_data(
         dependencies={
-            "SamplePack2": {"mandatory": True, "display_name": "SamplePack2"},
             "SamplePack3": {"mandatory": False, "display_name": "SamplePack3"},
         }
     )
-    graph_repo.create_pack("SamplePack2").set_data(
+    pack2 = graph_repo.create_pack("SamplePack2")
+    pack2.set_data(
         dependencies={
             "SamplePack3": {"mandatory": False, "display_name": "SamplePack3"}
         }
@@ -54,7 +54,13 @@ def create_mini_content(graph_repo: Repo):
     )
     graph_repo.create_pack("SamplePack5").set_data(hidden=True)
 
-    pack1.create_script("SampleScript")
+    pack2.create_script("SampleScript2")
+    pack2.create_integration("SampleIntegration2").set_commands(["pack2-test-command"])
+    pack1.create_script("SampleScript").yml.update(
+        {
+            "dependson": {"must": ["SampleScript2", "pack2-test-command"]}
+        }
+    )
 
     pack4_test_playbook = pack4.create_test_playbook("SampleTestPlaybook")
     pack4_test_playbook.add_default_task("SampleScript")
@@ -97,7 +103,7 @@ class TestGetRelationships:
         [
             pytest.param(
                 "SamplePack2",
-                False,
+                True,
                 None,
                 False,
                 MarketplaceVersions.XSOAR,
@@ -108,17 +114,17 @@ class TestGetRelationships:
                 [
                     {
                         "object_id": "SamplePack1",
-                        # "paths_count": 1,
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
+                        "reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
                     },
                     {
                         "object_id": "SamplePack4",
-                        # "paths_count": 1,
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
+                        "reasons": "",
                     },
                 ],
                 [],
@@ -167,7 +173,6 @@ class TestGetRelationships:
                 [
                     {
                         "object_id": "SamplePack1",
-                        # "paths_count": 1,
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
@@ -274,44 +279,7 @@ class TestGetRelationships:
                         "is_test": True,
                     },
                 ],
-                id="Verify both directions first level dependencies, mandatory only, including tests dependencies",
-            ),
-            pytest.param(
-                "SamplePack4",
-                True,
-                None,
-                False,
-                MarketplaceVersions.XSOAR,
-                Direction.BOTH,
-                False,
-                True,
-                False,
-                [
-                    {
-                        "object_id": "SamplePack3",
-                        "mandatorily": False,
-                        "minDepth": 1,
-                        "is_test": False,
-                        "reasons": "",
-                    }
-                ],
-                [
-                    {
-                        "object_id": "SamplePack2",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": False,
-                        "reasons": "",
-                    },
-                    {
-                        "object_id": "SamplePack1",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": True,
-                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
-                    },
-                ],
-                id="Verify both directions first level dependencies, show reasons, including tests dependencies",
+                id="Verify both directions, first level dependencies, including tests",
             ),
             pytest.param(
                 "SamplePack4",
@@ -344,7 +312,219 @@ class TestGetRelationships:
                         "is_test": False,
                     },
                 ],
-                id="Verify target directions, first level, including tests, including hidden",
+                id="Verify target directions, first level, including tests and hidden",
+            ),
+            pytest.param(
+                "SamplePack4",
+                True,
+                None,
+                False,
+                MarketplaceVersions.XSOAR,
+                Direction.TARGETS,
+                False,
+                True,
+                False,
+                [],
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": "",
+                    },
+                    {
+                        "object_id": "SamplePack1",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                id="Verify target directions first level dependencies, show reasons, including tests",
+            ),
+            pytest.param(
+                "SamplePack1",
+                True,
+                None,
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
+                False,
+                False,
+                [],
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
+                    },
+                    {
+                        "object_id": "SamplePack3",
+                        "mandatorily": False,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": "",
+                    },
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": False,
+                        "minDepth": 2,
+                        "is_test": False,
+                        "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
+                    }
+                ],
+                id="Verify both dirs, all level dependencies, show reasons",
+            ),
+            pytest.param(
+                "SamplePack1",
+                True,
+                None,
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
+                True,
+                True,
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": False,
+                        "minDepth": 3,
+                        "is_test": True,
+                        "reasons": "* Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack1",
+                    },
+                    {
+                        "object_id": "SamplePack3",
+                        "mandatorily": False,
+                        "minDepth": 2,
+                        "is_test": True,
+                        "reasons": "* Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack1",
+                    },
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
+                    },
+                    {
+                        "object_id": "SamplePack3",
+                        "mandatorily": False,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": "",
+                    },
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": False,
+                        "minDepth": 2,
+                        "is_test": False,
+                        "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
+                    },
+                    {
+                        "object_id": "SamplePack5",
+                        "mandatorily": False,
+                        "minDepth": 3,
+                        "is_test": False,
+                        "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack5\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack5",
+                    },
+                ],
+                id="Verify both dirs, all level dependencies, show reasons, include tests and hidden.",
+            ),
+            pytest.param(
+                "SamplePack1",
+                True,
+                None,
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                True,
+                True,
+                True,
+                [
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
+                    },
+                ],
+                id="Verify both dirs, all level dependencies, show reasons, mandatory only, include tests and hidden.",
+            ),
+            pytest.param(
+                "SamplePack1",
+                True,
+                "SamplePack4",
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
+                True,
+                True,
+                [
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                [
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": False,
+                        "minDepth": 2,
+                        "is_test": False,
+                        "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
+                    },
+                ],
+                id="Verify both dirs, specific dependency 'SamplePack4', all level dependencies, show reasons, include tests and hidden.",
+            ),
+            pytest.param(
+                "SamplePack1",
+                True,
+                "SamplePack4",
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                True,
+                True,
+                True,
+                [
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                [],
+                id="Verify both dirs, specific dependency 'SamplePack4', all level dependencies, show reasons, mandatory only, include tests and hidden.",
             ),
         ],
     )

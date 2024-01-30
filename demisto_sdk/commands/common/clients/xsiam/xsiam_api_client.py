@@ -25,14 +25,14 @@ class XsiamClient(XsoarSaasClient):
     @property
     def is_server_type(self) -> bool:
         about = self.about
-        if about.get("productMode") == "xsiam":
+        if about.product_mode == "xsiam":
             return True
 
         try:
             self.get_ioc_rules()
             return True
         except ApiException as error:
-            logger.debug(f"{self} is not {self.server_type}, error: {error}")
+            logger.debug(f"{self} is not {self.server_type} server, error: {error}")
             return False
 
     @property

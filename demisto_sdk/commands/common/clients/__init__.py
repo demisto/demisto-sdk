@@ -7,6 +7,10 @@ from demisto_sdk.commands.common.clients.configs import (
     XsoarClientConfig,
     XsoarSaasClientConfig,
 )
+from demisto_sdk.commands.common.clients.errors import (
+    InvalidServerType,
+    UnHealthyServer,
+)
 from demisto_sdk.commands.common.clients.xsiam.xsiam_api_client import XsiamClient
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
@@ -158,7 +162,7 @@ def get_client_from_server_type(
             ),
             should_validate_server_type=True,
         )
-    except Exception as error:
+    except (UnHealthyServer, InvalidServerType) as error:
         logger.debug(f"{error=}")
         try:
             return XsoarSaasClient(
@@ -172,5 +176,6 @@ def get_client_from_server_type(
             )
         except Exception as error:
             raise RuntimeError(
-                f"Could not determine the correct api-client for {_base_url}"
+                f"Could not determine the correct api-client for {_base_url}, "
+                f"make sure the {DEMISTO_BASE_URL}, {DEMISTO_KEY}, {AUTH_ID} are defined properly"
             ) from error

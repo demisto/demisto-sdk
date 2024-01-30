@@ -52,12 +52,15 @@ class XsoarSaasClient(XsoarClient):
     @property
     def is_server_type(self) -> bool:
         about = self.about
-        return (
-            about.get("productMode") == "xsoar"
-            and about.get("deploymentMode") == "saas"
+        is_xsoar_saas = (
+            about.product_mode == "xsoar" and about.deployment_mode == "saas"
         ) or bool(
             (self.version and self.version >= Version(MINIMUM_XSOAR_SAAS_VERSION))
         )
+        if not is_xsoar_saas:
+            logger.debug(f"{self} is not {self.server_type} server")
+            return False
+        return True
 
     @property
     def server_type(self) -> ServerType:

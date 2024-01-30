@@ -3,7 +3,6 @@ import re
 import socket
 import time
 import urllib.parse
-from dataclasses import dataclass, field
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
@@ -17,6 +16,7 @@ from demisto_client.demisto_api.api.default_api import DefaultApi
 from demisto_client.demisto_api.models.entry import Entry
 from demisto_client.demisto_api.rest import ApiException, RESTResponse
 from packaging.version import Version
+from pydantic import BaseModel, Field
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 from urllib3 import HTTPResponse
@@ -44,9 +44,10 @@ class ServerType(str, Enum):
     XSIAM = "xsiam"
 
 
-@dataclass
-class ServerAbout:
-    a: str = field()
+class ServerAbout(BaseModel):
+    product_mode: str = Field("", alias="productMode")
+    deployment_mode: str = Field("", alias="deploymentMode")
+    version: str = Field("", alias="demistoVersion")
 
 
 class XsoarClient:
@@ -84,9 +85,13 @@ class XsoarClient:
     @property
     def is_server_type(self) -> bool:
         about = self.about
-        return (
-            about.get("productMode") == "xsoar" and about.get("deploymentMode") == "opp"
+        is_xsoar_on_prem = (
+            about.product_mode == "xsoar" and about.deployment_mode == "opp"
         ) or bool((self.version and self.version < Version(MINIMUM_XSOAR_SAAS_VERSION)))
+        if not is_xsoar_on_prem:
+            logger.debug(f"{self} is not {self.server_type} server")
+            return False
+        return True
 
     @property
     def server_type(self) -> ServerType:
@@ -125,7 +130,7 @@ class XsoarClient:
 
     @cached_property
     @retry(exceptions=ApiException)
-    def about(self) -> Dict[str, Any]:
+    def about(self) -> ServerAbout:
         raw_response, _, response_headers = self._xsoar_client.generic_request(
             "/about", "GET", response_type="object"
         )
@@ -134,7 +139,7 @@ class XsoarClient:
                 f"the {self._xsoar_client.api_client.configuration.host} URL is not the api-url",
             )
         logger.debug(f"about={raw_response}")
-        return raw_response
+        return ServerAbout(**raw_response)
 
     @property
     def containers_health(self) -> Dict[str, int]:
@@ -148,7 +153,7 @@ class XsoarClient:
         """
         Returns XSOAR version
         """
-        if xsoar_version := self.about.get("demistoVersion"):
+        if xsoar_version := self.about.version:
             logger.debug(f"{self.base_url} xsoar-server version is {xsoar_version}")
             return Version(xsoar_version)
         raise RuntimeError(f"Could not get version from instance {self.xsoar_host_url}")

@@ -61,6 +61,7 @@ class XsoarClient:
         config: XsoarClientConfig,
         client: Optional[DefaultApi] = None,
         raise_if_server_not_healthy: bool = True,
+        should_validate_server_type: bool = False,
     ):
         self.server_config = config
         self._xsoar_client = client or demisto_client.configure(
@@ -73,7 +74,7 @@ class XsoarClient:
         )
         if raise_if_server_not_healthy and not self.is_healthy:
             raise UnHealthyServer(str(self))
-        if not self.is_server_type:
+        if should_validate_server_type and not self.is_server_type:
             raise InvalidServerType(str(self), server_type=self.server_type)
 
     def __str__(self) -> str:
@@ -87,7 +88,7 @@ class XsoarClient:
         about = self.about
         return (
             about.get("productMode") == "xsoar" and about.get("deploymentMode") == "opp"
-        ) or (self.version and self.version < Version(MINIMUM_XSOAR_SAAS_VERSION))
+        ) or bool((self.version and self.version < Version(MINIMUM_XSOAR_SAAS_VERSION)))
 
     @property
     def server_type(self) -> ServerType:

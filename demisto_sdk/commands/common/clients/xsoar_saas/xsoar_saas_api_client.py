@@ -31,6 +31,7 @@ class XsoarSaasClient(XsoarClient):
         config: XsoarClientConfig,
         client: Optional[DefaultApi] = None,
         raise_if_server_not_healthy: bool = True,
+        should_validate_server_type: bool = False,
     ):
         self._xdr_client = Session()
         self._xdr_client.verify = config.verify_ssl
@@ -45,6 +46,7 @@ class XsoarSaasClient(XsoarClient):
             config,
             client=client,
             raise_if_server_not_healthy=raise_if_server_not_healthy,
+            should_validate_server_type=should_validate_server_type,
         )
 
     @property
@@ -53,7 +55,9 @@ class XsoarSaasClient(XsoarClient):
         return (
             about.get("productMode") == "xsoar"
             and about.get("deploymentMode") == "saas"
-        ) or (self.version and self.version >= Version(MINIMUM_XSOAR_SAAS_VERSION))
+        ) or bool(
+            (self.version and self.version >= Version(MINIMUM_XSOAR_SAAS_VERSION))
+        )
 
     @property
     def server_type(self) -> ServerType:

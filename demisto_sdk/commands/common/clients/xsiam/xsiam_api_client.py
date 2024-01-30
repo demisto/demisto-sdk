@@ -1,15 +1,13 @@
 import gzip
 from pprint import pformat
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 from urllib.parse import urljoin
 
 import requests
-from demisto_client.demisto_api.api.default_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import ServerType
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
-    XsoarClientConfig,
     XsoarSaasClient,
 )
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -23,18 +21,6 @@ class XsiamClient(XsoarSaasClient):
     """
     api client for xsiam
     """
-
-    def __init__(
-        self,
-        config: XsoarClientConfig,
-        client: Optional[DefaultApi] = None,
-        raise_if_server_not_healthy: bool = True,
-    ):
-        super().__init__(
-            config,
-            client=client,
-            raise_if_server_not_healthy=raise_if_server_not_healthy,
-        )
 
     @property
     def is_server_type(self) -> bool:

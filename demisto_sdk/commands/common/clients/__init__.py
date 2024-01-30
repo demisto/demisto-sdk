@@ -2,15 +2,11 @@ import os
 from functools import lru_cache
 from typing import Optional
 
-import demisto_client
-import pydantic
-
 from demisto_sdk.commands.common.clients.configs import (
     XsiamClientConfig,
     XsoarClientConfig,
     XsoarSaasClientConfig,
 )
-from demisto_sdk.commands.common.clients.errors import UnHealthyServer
 from demisto_sdk.commands.common.clients.xsiam.xsiam_api_client import XsiamClient
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
@@ -25,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_VERIFY_SSL,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
 
 
@@ -139,65 +136,7 @@ def get_client_from_server_type(
         else string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))
     )
 
-    _client = demisto_client.configure(
-        base_url=_base_url,
-        api_key=_api_key,
-        auth_id=_auth_id,
-        verify_ssl=_verify_ssl,
-        username=_username,
-        password=_password,
-    )
-
-    if not XsoarClient.is_xsoar_healthy(_client):
-        raise UnHealthyServer(_client.api_client.configuration.host)
-
-    about = XsoarClient.get_xsoar_about(_client)
-    product_mode = about.get("productMode")
-    deployment_mode = about.get("deploymentMode")
-    server_version = about.get("demistoVersion")
-
-    if XsiamClient.is_xsiam(_client, product_mode=product_mode):
-        return XsiamClient(
-            config=XsiamClientConfig(
-                base_api_url=_base_url,
-                api_key=_api_key,
-                auth_id=_auth_id,
-                verify_ssl=_verify_ssl,
-                about=about,
-            ),
-            client=_client,
-            about_xsoar=about,
-        )
-
-    if XsoarSaasClient.is_xsoar_saas(
-        server_version, product_mode=product_mode, deployment_mode=deployment_mode
-    ):
-        try:
-            return XsoarSaasClient(
-                config=XsoarSaasClientConfig(
-                    base_api_url=_base_url,
-                    api_key=_api_key,
-                    auth_id=_auth_id,
-                    verify_ssl=_verify_ssl,
-                ),
-                client=_client,
-            )
-        except pydantic.ValidationError:
-            # xsoar-on-prem that can have server version > 8.0.0
-            return XsoarClient(
-                config=XsoarClientConfig(
-                    base_api_url=_base_url,
-                    api_key=_api_key,
-                    user=_username,
-                    password=_password,
-                    verify_ssl=_verify_ssl,
-                ),
-                client=_client,
-            )
-
-    if XsoarClient.is_xsoar_on_prem(
-        server_version, product_mode=product_mode, deployment_mode=deployment_mode
-    ):
+    if not _auth_id and (_api_key or (_username and _password)):
         return XsoarClient(
             config=XsoarClientConfig(
                 base_api_url=_base_url,
@@ -206,8 +145,32 @@ def get_client_from_server_type(
                 password=_password,
                 verify_ssl=_verify_ssl,
             ),
-            client=_client,
-            about=about,
+            should_validate_server_type=True,
         )
 
-    raise RuntimeError(f"Could not determine the correct api-client for {base_url}")
+    try:
+        return XsiamClient(
+            config=XsiamClientConfig(
+                base_api_url=_base_url,
+                api_key=_api_key,
+                auth_id=_auth_id,
+                verify_ssl=_verify_ssl,
+            ),
+            should_validate_server_type=True,
+        )
+    except Exception as error:
+        logger.debug(f"{error=}")
+        try:
+            return XsoarSaasClient(
+                config=XsoarSaasClientConfig(
+                    base_api_url=_base_url,
+                    api_key=_api_key,
+                    auth_id=_auth_id,
+                    verify_ssl=_verify_ssl,
+                ),
+                should_validate_server_type=True,
+            )
+        except Exception as error:
+            raise RuntimeError(
+                f"Could not determine the correct api-client for {base_url}"
+            ) from error

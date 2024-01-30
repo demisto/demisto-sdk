@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the **pre-commit** pycln hook won't work in a repo when the repo name contains a hypen.
+  type: fix
+pr_number: 3998

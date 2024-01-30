@@ -69,9 +69,12 @@ class Changelog:
         log = INITIAL_LOG
         log["pr_number"] = int(self.pr_number)
 
-        with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
+        file_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
+
+        with file_path.open("w") as f:
             yaml.dump(log, f)
 
+        Repo(git_path()).git.add(file_path)
         logger.info(f"Created changelog template at .changelog/{self.pr_number}.yml")
 
     """ RELEASE """

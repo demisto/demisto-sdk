@@ -2062,8 +2062,8 @@ def test_IsValidParamDisplayValidator_fix():
     """
     Given
         An integration with 4 params:
-        - one param with invalid display because it's starting with lowercase letter and has underscore.
-        - one param with invalid display because it has underscore.
+        - One param with invalid display because it's starting with lowercase letter and has underscore.
+        - One param with invalid display because it has underscore.
         - One param with valid display.
         - one param with invalid display because it's starting with lowercase letter.
     When
@@ -3101,6 +3101,7 @@ def test_DoesCommonOutputsHaveDescriptionValidator_fix():
         validator.fix(content_item).message
         == "Added description for the following outputs: \n\tThe command ip: \n\t\tThe contextPath Test.Test_1 description is now: This is test 1 output.\n\t\tThe contextPath Test.Test_3 description is now: This is test 3 output.\n\tThe command url: \n\t\tThe contextPath Test.Test_1 description is now: This is test 1 output."
     )
+    # Validate that for all items that appear in the default field there're no empty descriptions.
     assert all(
         [
             all(

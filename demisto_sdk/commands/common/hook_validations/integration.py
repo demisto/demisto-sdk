@@ -1445,16 +1445,19 @@ class IntegrationValidator(ContentEntityValidator):
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
                 is_valid = (
                     (
-                        any(
+                        # Validate that the mentioned fields (k) are part of the parameter fields and the value is one of the options of the mentioned values (v).
+                        all(
                             k in param_details and param_details[k] in v
                             for k, v in must_be_one_of.items()
                         )
                         or not must_be_one_of
                     )
+                    # Validate that the mentioned fields (k) are part of the parameter fields and the value is equal the mentioned value (v).
                     and all(
                         k in param_details and param_details[k] == v
                         for k, v in equal_key_values.items()
                     )
+                    # Validate that the mentioned fields (k) are part of the parameter fields and the value contains mentioned value (v).
                     and all(
                         k in param_details and v in param_details[k]
                         for k, v in contained_key_values.items()

@@ -160,7 +160,7 @@ def create_ps_integration_object(
 def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
-    pack_name: Optional[str] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
 ):
     """Creating an script object with altered fields from a default script yml structure.
 
@@ -174,7 +174,9 @@ def create_script_object(
     """
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
-    pack = REPO.create_pack(pack_name)
+    pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
     script = pack.create_script(yml=yml_content)
     script.code.write("from MicrosoftApiModule import *")
     return BaseContent.from_path(Path(script.path))

@@ -41,6 +41,7 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                     if arg.name in BANG_COMMAND_ARGS_MAPPING_DICT.get(
                         command.name, {}
                     ).get("default", []):
+                        # If the argument is found, validate that the argument is according to the standards.
                         flag_found_arg = True
                         if not arg.default or not arg.isArray:
                             if command.name == "endpoint":
@@ -54,6 +55,7 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                 if not flag_found_arg and BANG_COMMAND_ARGS_MAPPING_DICT.get(
                     command.name, {}
                 ).get("required", True):
+                    # If the argument isn't found and is required - will fail the validation.
                     missing_arg = BANG_COMMAND_ARGS_MAPPING_DICT.get(
                         command.name, {}
                     ).get("default", [])[0]

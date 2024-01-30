@@ -23,7 +23,7 @@ ContentTypes = Integration
 
 class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN124"
-    description = "Validate that a param isis not hidden if not hiddenable."
+    description = "Validate that a param is not hidden if it can not be hidden."
     error_message = (
         "The following fields are hidden and cannot be hidden, please unhide them: {0}."
     )

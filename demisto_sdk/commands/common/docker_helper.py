@@ -97,7 +97,6 @@ def docker_login(docker_client) -> bool:
     Returns:
         bool: True if logged in successfully.
     """
-
     docker_user = os.getenv("DOCKERHUB_USER")
     docker_pass = os.getenv("DOCKERHUB_PASSWORD")
     if docker_user and docker_pass:

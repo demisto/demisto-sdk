@@ -202,7 +202,11 @@ class Initiator:
     DEFAULT_TEMPLATE_PACK_NAME = "StarterPack"
     HELLO_WORLD_PACK_NAME = "HelloWorld"
     DEFAULT_TEMPLATES = [DEFAULT_INTEGRATION_TEMPLATE, DEFAULT_SCRIPT_TEMPLATE]
-    HELLO_WORLD_BASE_TEMPLATES = [HELLO_WORLD_SCRIPT, HELLO_WORLD_INTEGRATION]
+    HELLO_WORLD_BASE_TEMPLATES = [
+        HELLO_WORLD_SCRIPT,
+        HELLO_WORLD_INTEGRATION,
+        HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
+    ]
 
     DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
     PACK_INITIAL_VERSION = "1.0.0"
@@ -1406,10 +1410,6 @@ class Initiator:
                 template_files = template_files.union(
                     self.DEFAULT_INTEGRATION_TEST_DATA_FILES
                 )
-            elif self.template == self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION:
-                template_files = template_files.union(
-                    self.DEFAULT_EVENT_COLLECTOR_TEST_DATA_FILES
-                )
         elif self.template == self.HELLO_WORLD_MODELING_RULES:
             template_files = set(self.TEMPLATE_MODELING_RULES_FILES)
         elif self.template == self.HELLO_WORLD_PARSING_RULES:
@@ -1449,13 +1449,9 @@ class Initiator:
             pack_name = self.DEFAULT_TEMPLATE_PACK_NAME
 
         elif self.template in self.HELLO_WORLD_BASE_TEMPLATES + [
-            self.HELLO_WORLD_FEED_INTEGRATION
-        ]:
-            pack_name = self.HELLO_WORLD_PACK_NAME
-        elif self.template in [
+            self.HELLO_WORLD_FEED_INTEGRATION,
             self.HELLO_WORLD_PARSING_RULES,
             self.HELLO_WORLD_MODELING_RULES,
-            self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
         ]:
             pack_name = self.HELLO_WORLD_PACK_NAME
         else:

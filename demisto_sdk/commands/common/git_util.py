@@ -634,7 +634,7 @@ class GitUtil:
         except Exception as e:
             logger.warning(
                 f"Failed to fetch branch '{self.get_current_working_branch()}' "
-                f"from remote '{self.repo.remote()}' ({self.repo.remote().url}). Continuing without fetching."
+                f"from remote '{self.repo.remote().name}' ({self.repo.remote().url}). Continuing without fetching."
             )
             logger.debug(f"Error: {e}")
 

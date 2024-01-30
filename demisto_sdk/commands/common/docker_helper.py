@@ -54,7 +54,6 @@ class DockerException(Exception):
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     global DOCKER_CLIENT
-
     if DOCKER_CLIENT is None:
         if log_prompt:
             logger.debug(f"{log_prompt} - init and login the docker client")

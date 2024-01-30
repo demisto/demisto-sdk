@@ -20,7 +20,7 @@ class PyclnHook(Hook):
             for path in PYTHONPATH
             if path.absolute() != CONTENT_PATH.absolute()
         )
-        builtins_to_skip = ("demisto", "ComonServerUserPython")
+        builtins_to_skip = ("demisto", "CommonServerUserPython")
 
         skip_imports = f"--skip-imports={','.join(paths_to_skip + builtins_to_skip)}"
         safe_update_hook_args(self.base_hook, skip_imports)

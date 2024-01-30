@@ -54,6 +54,8 @@ class DockerException(Exception):
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     global DOCKER_CLIENT
+    registry = os.getenv("DOCKER_IO_DOMAIN", "https://index.docker.io/v1")
+
     if DOCKER_CLIENT is None:
         if log_prompt:
             logger.debug(f"{log_prompt} - init and login the docker client")
@@ -76,7 +78,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 DOCKER_CLIENT.login(
                     username=docker_user,
                     password=docker_pass,
-                    registry="https://index.docker.io/v1",
+                    registry=registry,
                 )
             except Exception:
                 logger.exception(f"{log_prompt} - failed to login to docker registry")

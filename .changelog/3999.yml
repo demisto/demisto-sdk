@@ -1,4 +1,4 @@
 changes:
-- description: Fixes an issue where running **pre-commit** with `run-hook` argument didn't execute the hook in some cases.
+- description: Fixed an issue where running **pre-commit** with `run-hook` argument didn't execute the hook in some cases.
   type: fix
 pr_number: 3999

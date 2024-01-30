@@ -747,7 +747,7 @@ class OldValidateManager:
                 path.name == "CommonServerPython.py"
                 and path.parent.parent.name != "Base"
             )
-            or (LISTS_DIR in path.parts and path.name.endswith("_data.json"))
+            or (LISTS_DIR in path.parts[-3:] and path.name.endswith("_data.json"))
         )
 
     # flake8: noqa: C901

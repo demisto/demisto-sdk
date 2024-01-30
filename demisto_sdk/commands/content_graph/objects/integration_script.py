@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
+    Auto,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
@@ -21,6 +22,21 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+
+
+class Argument(BaseModel):
+    name: str
+    description: str
+    required: Optional[bool] = False
+    default: Optional[bool] = False
+    predefined: Optional[List[str]] = None
+    isArray: Optional[bool] = False
+    defaultvalue: Optional[Any] = None
+    secret: Optional[bool] = False
+    deprecated: Optional[bool] = False
+    type: Optional[str] = None
+    hidden: Optional[bool] = False
+    auto: Optional[Auto] = None
 
 
 class IntegrationScript(ContentItem):

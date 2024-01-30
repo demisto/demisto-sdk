@@ -314,7 +314,7 @@ jobs:
               source $(poetry env info --path)/bin/activate
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
               mkdir -p $ARTIFACTS_FOLDER
-              export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER/demisto_sdk_debug.log
+              export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER
               cd content
               demisto-sdk -v
               echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
@@ -335,7 +335,7 @@ jobs:
               source $(poetry env info --path)/bin/activate
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
               mkdir -p $ARTIFACTS_FOLDER
-              export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER/demisto_sdk_debug.log
+              export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER
               cd content
               demisto-sdk -v
               echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
@@ -436,7 +436,7 @@ jobs:
             source $(poetry env info --path)/bin/activate
             export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
             mkdir -p $ARTIFACTS_FOLDER
-            export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER/demisto_sdk_debug.log
+            export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER
             cd content
             demisto-sdk -v
             mkdir ./tmp

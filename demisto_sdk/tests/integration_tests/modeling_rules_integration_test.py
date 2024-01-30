@@ -11,8 +11,6 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 from TestSuite.test_tools import str_in_call_args_list
 
-logger = logging.getLogger("demisto-sdk")
-
 ONE_MODEL_RULE_TEXT = """
 [MODEL: dataset=fake_fakerson_raw]
 alter

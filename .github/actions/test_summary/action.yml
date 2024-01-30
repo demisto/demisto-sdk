@@ -3,14 +3,6 @@ description: 'Uploads artifacts, prints out a summary and check if there are any
 author: 'Demisto-SDK'
 
 inputs:
-  python-version:
-    required: true
-    type: string
-    description: "The python version"
-  artifacts-folder-name:
-    required: false
-    type: string
-    description: "The folder name to save artifacts"
   summary-display-options:
     required: false
     type: string
@@ -21,21 +13,34 @@ inputs:
     type: "string"
     description: "The junit-path file to post its summary in github workflow summary"
     default: ""
-
+  artifacts-path-dir:
+    required: false
+    type: string
+    default: $GITHUB_JOB
+    description: "The path to the artifacts dir"
+  artifact-name:
+    required: false
+    type: string
+    default: $GITHUB_JOB
+    description: "The name of of the artifact to upload"
 
 
 runs:
   using: 'composite'
   steps:
+    - name: Combine Artifacts
+      if: always()
+      run: |
+        # move logs files created and .coverage to artifacts folder
+        mv .coverage ${{ inputs.artifacts-path-dir }}/.coverage || true
+        mv demisto_sdk_debug*.log ${{ inputs.artifacts-path-dir }}/logs || true
+      shell: bash
     - name: Upload artifacts
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: ./.github/actions/upload_artifacts
       with:
-        name: ${{ inputs.artifacts-folder-name }}-artifacts-python-${{ inputs.python-version }}
-        path: |
-          ${{ inputs.artifacts-folder-name }}
-          node_versions_info.json
-          .coverage
+        artifacts-path-dir: ${{ inputs.artifacts-path-dir }}
+        artifact-name: ${{ inputs.artifact-name }}
     - name: Print Summary of pytest results in workflow summary
       if: ${{ inputs.junit-path != '' }}
       uses: pmeier/pytest-results-action@main
@@ -44,13 +49,13 @@ runs:
         summary: true
         display-options: ${{ inputs.summary-display-options }}
         fail-on-empty: false
-    - name: Check if ${{ inputs.artifacts-folder-name }} have passed
+    - name: Check if tests have have passed
       shell: bash
       if: always()
       run: |
         if [[ "$PYTEST_EXIT_CODE" -ne 0 ]]; then
-          echo "There are ${{ inputs.artifacts-folder-name }} that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the ${{ inputs.artifacts-folder-name }} summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
+          echo "There are tests that failed, pytest finished with exit code $PYTEST_EXIT_CODE, to see the tests summary refer to https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}?pr=${{ github.event.pull_request.number }}"
         else
-          echo "All ${{ inputs.artifacts-folder-name }} have passed, congratulations!"
+          echo "All tests have passed, congratulations!"
         fi
         exit $PYTEST_EXIT_CODE

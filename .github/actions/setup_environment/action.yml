@@ -1,5 +1,5 @@
-name: 'Setup python environment for demisto-sdk jobs'
-description: 'Setup python environment for demisto-sdk jobs'
+name: 'Setup testing environment for demisto-sdk jobs'
+description: 'Setup testing environment for demisto-sdk jobs - that includes adding python/create-artifacts/install dependencies'
 author: 'Demisto-SDK'
 
 inputs:

@@ -285,7 +285,8 @@ def add_reasons_to_dependencies(
             if len(targets) == 1:
                 reasons += f"* {source} -> [USES] -> {targets[0]}\n"
             else:
-                formatted_targets = "\n  - ".join(targets.sort())  # type: ignore
+                targets.sort()
+                formatted_targets = "\n  - ".join(targets)  # type: ignore
                 reasons += f"* {source} -> [USES]:\n  - {formatted_targets}\n"
         return reasons
 

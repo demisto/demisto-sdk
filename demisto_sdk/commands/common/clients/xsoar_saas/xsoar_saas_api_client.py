@@ -101,7 +101,7 @@ class XsoarSaasClient(XsoarClient):
         return self.xsoar_host_url.replace("api", "ext")
 
     @retry(exceptions=RequestException)
-    def get_tenant_info(self) -> Response:
+    def get_xdr_tenant_info(self) -> Response:
         """
         Returns tenant info on SaaS based xsoar/xsiam.
         """

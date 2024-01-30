@@ -79,9 +79,7 @@ class XsoarClient:
 
     def __str__(self) -> str:
         # TODO - consider adding the server-type
-        return (
-            f"api-url={self.server_config.base_api_url}, xsoar-version={self.version}"
-        )
+        return f"{self.__class__.__name__}(api-url={self.server_config.base_api_url}, xsoar-version={self.version})"
 
     @property
     def is_server_type(self) -> bool:

@@ -172,5 +172,5 @@ def get_client_from_server_type(
             )
         except Exception as error:
             raise RuntimeError(
-                f"Could not determine the correct api-client for {base_url}"
+                f"Could not determine the correct api-client for {_base_url}"
             ) from error

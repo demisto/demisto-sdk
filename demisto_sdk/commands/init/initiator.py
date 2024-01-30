@@ -138,10 +138,6 @@ class Initiator:
         os.path.join(TEST_DATA_DIR, "baseintegration-dummy.json")
     }
 
-    DEFAULT_EVENT_COLLECTOR_TEST_DATA_FILES = {
-        os.path.join(TEST_DATA_DIR, "baseintegrationEventCollector-dummy.json")
-    }
-
     TEMPLATE_MODELING_RULES_FILES = {
         "HelloWorldModelingRules_schema.json",
         "HelloWorldModelingRules.xif",

@@ -866,6 +866,7 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
     res = initiator.integration_init()
     expected_files = {
         "command_examples",
+        "test_data",
         "README.md",
         f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.py",
         f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml",
@@ -930,6 +931,7 @@ def test_integration_init_xsiam_files_existence(mocker, monkeypatch, initiator, 
     integration_dir_files = set(listdir(integration_path))
     expected_files = {
         "command_examples",
+        "test_data",
         "README.md",
         f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.py",
         f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml",

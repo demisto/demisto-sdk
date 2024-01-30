@@ -4360,7 +4360,7 @@ def get_pack_latest_rn_version(pack_path: str) -> str:
         return ""
 
 
-def is_str_bool(input_: str):
+def is_str_bool(input_: str) -> bool:
     try:
         string_to_bool(input_)
         return True

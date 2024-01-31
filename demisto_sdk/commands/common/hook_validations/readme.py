@@ -345,7 +345,6 @@ class ReadMeValidator(BaseValidator):
         # If there are errors in one of the following validations return False
         return not self.check_readme_relative_url_paths()
 
-
     def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
         """Validate readme url relative paths.
             prints an error if relative paths in README are found since they are not supported.

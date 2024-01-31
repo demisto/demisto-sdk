@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ClassVar, Iterable, List
+from typing import ClassVar, Dict, Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -19,7 +19,7 @@ class IsValidParamDisplayValidator(BaseValidator[ContentTypes]):
     fix_message = "The following param displays has been modified: {0}."
     related_field = "display"
     is_auto_fixable = True
-    invalid_params: ClassVar[dict[str, List[str]]] = {}
+    invalid_params: ClassVar[Dict[str, List[str]]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

@@ -48,7 +48,7 @@ class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
     def get_invalid_commands(
         self, commands: List[Command], integration_name: str
     ) -> Dict[str, List[str]]:
-        integration_command_missing: dict[str, List[str]] = {}
+        integration_command_missing: Dict[str, List[str]] = {}
         for command in commands:
             command_missing: List[str] = [
                 output.contextPath

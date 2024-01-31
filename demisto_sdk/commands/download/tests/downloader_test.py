@@ -1177,7 +1177,8 @@ def test_uuids_replacement_in_content_items_with_special_character_names(
     repo, mocker, content_item_name: str
 ):
     """
-    Given: A content item name that contains special YAML characters (that requires wrapping the string quotes)
+    Given: A YAML-based content item name that contains special YAML characters
+          (that requires wrapping the string quotes)
     When: Calling 'self.replace_uuid_ids' method.
     Then: Ensure that the UUIDs are replaced properly and that the update YAML file is valid.
     """
@@ -1213,6 +1214,53 @@ def test_uuids_replacement_in_content_items_with_special_character_names(
     assert logger_warning.call_count == 0
     # Assert ID value is always in quotes
     assert f"id: '{file_object['name']}'" in file_object["file"].getvalue()
+
+
+@pytest.mark.parametrize("quote_type", ("'", '"'))
+def test_uuids_replacement_in_content_items_with_with_quotes(
+    repo, mocker, quote_type: str
+):
+    """
+    Given: A YAML-based content item, with the ID surrounded in quotes on the file
+    When: Calling 'self.replace_uuid_ids' method.
+    Then: Ensure that the replaced ID is properly surrounded by quotes and doesn't have duplicate quotes.
+    """
+    repo = repo.create_pack()
+    playbook_data = {"id": "d470522f-0a68-43c7-a62f-224f04b2e0c9", "name": "Test"}
+    playbook: Playbook = repo.create_playbook(yml=playbook_data)
+
+    with playbook.obj_path.open("w") as f:
+        f.write(
+            f"id: {quote_type}{playbook_data['id']}{quote_type}\nname: {playbook_data['name']}"
+        )
+
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
+    downloader = Downloader(
+        all_custom_content=True,
+        auto_replace_uuids=True,
+    )
+
+    file_name = playbook.obj_path.name
+    file_object = downloader.create_content_item_object(
+        file_name=file_name,
+        file_data=StringIO(safe_read_unicode(playbook.obj_path.read_bytes())),
+        _loaded_data=playbook_data,
+    )
+    custom_content_objects = {file_name: file_object}
+
+    uuid_mapping = downloader.create_uuid_to_name_mapping(
+        custom_content_objects=custom_content_objects
+    )
+    downloader.replace_uuid_ids(
+        custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping
+    )
+    # Assert no warnings logged (error raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
+    assert logger_warning.call_count == 0
+    # Assert ID value is always in quotes
+    assert (
+        file_object["file"].getvalue().splitlines()[0] == f"id: '{file_object['name']}'"
+    )
 
 
 def test_get_system_playbooks(mocker):

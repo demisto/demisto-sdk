@@ -417,7 +417,9 @@ jobs:
           source $(poetry env info --path)/bin/activate
 
           cd content
+          
           mkdir -p test-lint/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-lint/logs
 
           # python file (CommonServerPython lint is running over python 3 and 2)
           demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython --coverage-report test-lint/coverage-report

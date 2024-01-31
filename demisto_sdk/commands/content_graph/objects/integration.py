@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import demisto_client
 
+from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
@@ -79,6 +80,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = False
+    is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     is_beta: bool = False
     is_mappable: bool = False
@@ -86,6 +88,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     category: str
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
+    has_unittests: bool = False
 
     @property
     def imports(self) -> List["Script"]:
@@ -176,3 +179,4 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             )
 
         data["script"]["commands"] = yml_commands
+        write_dict(self.path, data, indent=4)

@@ -222,8 +222,9 @@ class ContentItem(BaseContent):
     def ordered_data(self) -> dict:
         return get_file(self.path, keep_order=True)
 
-    def save(self):
-        super()._save(self.path, self.ordered_data)
+    def save(self, path=""):
+        path = self.path if not path else path
+        super()._save(path, self.ordered_data)
 
     def prepare_for_upload(
         self,

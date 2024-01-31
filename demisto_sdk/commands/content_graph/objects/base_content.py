@@ -196,6 +196,8 @@ class BaseContent(BaseNode):
         """
         for key, val in self.field_mapping.items():
             attr = getattr(self, key)
+            if isinstance(attr, dict):
+                attr = {task_id: elem.dict(exclude_unset=True) for task_id, elem in attr.items()}
             if key == "marketplaces":
                 if (
                     MarketplaceVersions.XSOAR_SAAS in attr

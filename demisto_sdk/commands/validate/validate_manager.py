@@ -39,6 +39,12 @@ class ValidateManager:
             BaseContent
         ] = self.initializer.gather_objects_to_run_on()
         self.use_git = self.initializer.use_git
+        # playbook =  list(self.objects_to_run)[0]
+        # for id, data in playbook.tasks.items():
+        #     if data.task.name == 'xdr-get-endpoints':
+        #         data.task.name = 'core-get-endpoints'
+        #         data.task.script = '|||core-get-endpoints'
+        # playbook.save()
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
             self.config_reader.gather_validations_to_run(

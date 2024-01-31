@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 import networkx
 
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
@@ -52,7 +53,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "id"})
+        super().field_mapping.update({"object_id": "id", "tasks": "tasks"})
         return super().field_mapping
 
     def is_mandatory_dependency(self, task_id: str) -> bool:
@@ -76,6 +77,10 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
                 target_type=ContentType.PLAYBOOK,
                 mandatorily=is_mandatory,
             )
+
+    @property
+    def tasks(self) -> Optional[Dict]:
+        return get_value(self.yml_data, self.field_mapping.get("tasks", {}))
 
     def handle_script_task(self, task: Dict[str, Any], is_mandatory: bool) -> None:
         """Collects a script dependency.

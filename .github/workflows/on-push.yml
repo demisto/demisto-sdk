@@ -400,8 +400,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -418,15 +416,7 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
 
-          export SDK_LINT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/lint)
-
-          if [[ -z "${SDK_LINT_FILES_CHANGED}" ]]; then
-              echo "files under demisto_sdk/commands/lint did not change - Skipping lint runs."
-              exit 0
-          fi
-          cd content
-          echo "lint files changed. running lint"
-          
+          cd content          
           mkdir -p test-lint/logs
           
           # python file (CommonServerPython lint is running over python 3 and 2)

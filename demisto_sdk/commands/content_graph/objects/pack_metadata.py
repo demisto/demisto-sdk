@@ -163,6 +163,7 @@ class PackMetadata(BaseModel):
             content_displays[
                 content_item.content_type.metadata_name
             ] = content_item.content_type.metadata_display_name
+
         content_displays = {
             content_type: content_type_display
             if (
@@ -172,9 +173,6 @@ class PackMetadata(BaseModel):
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
-        # to_check = ContentType.ASSETS_MODELING_RULE.lower()
-        # if to_check in content_displays:
-        #     content_displays[f'n{to_check}'] = content_displays.pop(to_check)
 
         return collected_content_items, content_displays
 

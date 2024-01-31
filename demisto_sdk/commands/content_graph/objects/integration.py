@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import demisto_client
 
+from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
@@ -13,10 +14,11 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import Auto, MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
+    Argument,
     IntegrationScript,
 )
 
@@ -36,21 +38,6 @@ class Parameter(BaseModel):
     hiddenusername: Optional[bool] = False
     hiddenpassword: Optional[bool] = False
     fromlicense: Optional[str] = None
-
-
-class Argument(BaseModel):
-    name: str
-    description: str
-    required: Optional[bool] = False
-    default: Optional[bool] = False
-    predefined: Optional[List[str]] = None
-    isArray: Optional[bool] = False
-    defaultvalue: Optional[Any] = None
-    secret: Optional[bool] = False
-    deprecated: Optional[bool] = False
-    type: Optional[str] = None
-    hidden: Optional[bool] = False
-    auto: Optional[Auto] = None
 
 
 class Output(BaseModel):
@@ -93,6 +80,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = False
+    is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     is_beta: bool = False
     is_mappable: bool = False
@@ -100,6 +88,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     category: str
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
+    has_unittests: bool = False
 
     @property
     def imports(self) -> List["Script"]:
@@ -190,3 +179,4 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             )
 
         data["script"]["commands"] = yml_commands
+        write_dict(self.path, data, indent=4)

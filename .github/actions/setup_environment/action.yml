@@ -17,11 +17,6 @@ inputs:
     type: string
     default: "-E generate-unit-tests"
     description: "the arguments for the poetry install command"
-  artifacts-dir:
-    required: false
-    type: string
-    default: $GITHUB_JOB
-    description: "The name of the artifacts dir"
 
 runs:
   using: 'composite'

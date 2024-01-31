@@ -789,7 +789,7 @@ class ContentEntityValidator(BaseValidator):
 
         if any(invalid_suffix.values()):
             error_message, error_code = invalid_suffix_function(
-                self.file_path, name_suffix, **invalid_suffix
+                self.file_path, id_suffix, name_suffix, **invalid_suffix
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

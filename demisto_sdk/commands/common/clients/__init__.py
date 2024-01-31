@@ -164,7 +164,7 @@ def get_client_from_server_type(
             should_validate_server_type=should_validate_server_type,
         )
     except InvalidServerType:
-        logger.debug(f'The {_base_url} is not xsiam server')
+        logger.debug(f"The {_base_url} is not xsiam server")
 
     try:
         return XsoarSaasClient(
@@ -177,7 +177,7 @@ def get_client_from_server_type(
             should_validate_server_type=should_validate_server_type,
         )
     except InvalidServerType:
-        logger.debug(f'The {_base_url} is not xsoar-saas server')
+        logger.debug(f"The {_base_url} is not xsoar-saas server")
 
     try:
         # if xsiam-auth-id is defined by mistake
@@ -192,10 +192,9 @@ def get_client_from_server_type(
             should_validate_server_type=should_validate_server_type,
         )
     except Exception as error:
-        logger.debug(f'The {_base_url} is not xsoar-on-prem server, error: {error}')
+        logger.debug(f"The {_base_url} is not xsoar-on-prem server, error: {error}")
         logger.error(
             f"Could not determine the correct api-client for {_base_url}, "
             f"make sure the {DEMISTO_BASE_URL}, {DEMISTO_KEY}, {AUTH_ID} are defined properly"
         )
         raise
-

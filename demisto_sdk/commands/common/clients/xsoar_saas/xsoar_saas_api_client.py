@@ -68,6 +68,12 @@ class XsoarSaasClient(XsoarClient):
 
     @property
     def is_healthy(self) -> bool:
+        """
+        Validates that xdr server part is healthy
+
+        Returns:
+            bool: True if xdr server part is healthy, False if not.
+        """
         if not super().is_healthy:
             return False
         url = urljoin(self.server_config.base_api_url, "public_api/v1/healthcheck")

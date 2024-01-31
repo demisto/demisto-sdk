@@ -79,7 +79,6 @@ class XsoarClient:
             raise InvalidServerType(str(self), server_type=self.server_type)
 
     def __str__(self) -> str:
-        # TODO - consider adding the server-type
         try:
             version: Union[Version, str] = self.version
         except Exception as error:
@@ -97,6 +96,9 @@ class XsoarClient:
 
     @property
     def is_server_type(self) -> bool:
+        """
+        Validates whether the configured server actually matches to the class initialized
+        """
         about = self.about
         is_xsoar_on_prem = (
             about.product_mode == "xsoar" and about.deployment_mode == "opp"
@@ -149,7 +151,7 @@ class XsoarClient:
         )
         if "text/html" in response_headers.get("Content-Type"):
             raise ValueError(
-                f"the {self._xsoar_client.api_client.configuration.host} URL is not the api-url",
+                f"The {self.server_config.base_api_url} URL is not the api-url",
             )
         logger.debug(f"about={raw_response}")
         return ServerAbout(**raw_response)

@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from git import InvalidGitRepositoryError
 
@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     specify_files_from_directory,
 )
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import (
@@ -345,6 +346,20 @@ class Initializer:
         added_files = self.filter_files(added_files)
         renamed_files = self.filter_files(renamed_files)
         deleted_files = self.filter_files(deleted_files)
+        file_by_status_dict = {file: GitStatuses.MODIFIED for file in modified_files}
+        file_by_status_dict.update({file: GitStatuses.ADDED for file in added_files})
+        file_by_status_dict.update(
+            {file: GitStatuses.RENAMED for file in renamed_files}
+        )
+        file_by_status_dict.update(
+            {file: GitStatuses.DELETED for file in deleted_files}
+        )
+        items_by_package_dict: Dict[Path, List] = {}
+        self.sort_items_by_package(items_by_package_dict, modified_files)
+        self.sort_items_by_package(items_by_package_dict, added_files)
+        self.sort_items_by_package(items_by_package_dict, renamed_files)
+        self.sort_items_by_package(items_by_package_dict, deleted_files)
+        statuses_dict: Dict[Path, GitStatuses] = self.get_items_status(items_by_package_dict, file_by_status_dict)
         basecontent_with_path_set: Set[BaseContent] = set()
         basecontent_with_path_set = basecontent_with_path_set.union(
             self.paths_to_basecontent_set(
@@ -359,11 +374,6 @@ class Initializer:
         basecontent_with_path_set = basecontent_with_path_set.union(
             self.paths_to_basecontent_set(
                 added_files, GitStatuses.ADDED, git_sha=self.prev_ver
-            )
-        )
-        basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_set(
-                deleted_files, GitStatuses.DELETED, git_sha=self.prev_ver
             )
         )
         return basecontent_with_path_set
@@ -414,7 +424,83 @@ class Initializer:
         Returns:
             Set: The set of filtered files.
         """
-        extensions_list_to_filter = [".png", ".md", ".svg"]
-        return set(
-            file for file in files_set if file.suffix not in extensions_list_to_filter
-        )
+        # extensions_list_to_filter = [".png", ".md", ".svg", ".py"]
+        # removed_suffixes_ls = [file for file in files_set if file.suffix not in extensions_list_to_filter]
+        # return set(removed_test_data_items)
+        return set([file for file in files_set if "test_data" not in file.parts])
+
+    def sort_items_by_package(
+        self, items_by_package_dict: Dict[Path, List], files_set: Set[Path]
+    ):
+        for file in files_set:
+            path = file.parent
+            if path in items_by_package_dict:
+                items_by_package_dict[path].append(file)
+            else:
+                items_by_package_dict[path] = [file]
+
+    def get_items_status(self, items_by_package_dict, file_by_status_dict):
+        statuses_dict = {}
+        for package_path, package_content in items_by_package_dict.items():
+            try:
+                content_type: ContentType = ContentType.by_path(package_path)
+                if content_type in [
+                    ContentType.CLASSIFIER,
+                    ContentType.CORRELATION_RULE,
+                    ContentType.DASHBOARD,
+                    ContentType.GENERIC_DEFINITION,
+                    ContentType.GENERIC_FIELD,
+                    ContentType.GENERIC_MODULE,
+                    ContentType.GENERIC_TYPE,
+                    ContentType.INCIDENT_FIELD,
+                    ContentType.INCIDENT_TYPE,
+                    ContentType.INDICATOR_FIELD,
+                    ContentType.INDICATOR_TYPE,
+                    ContentType.JOB,
+                    ContentType.LAYOUT,
+                    ContentType.LIST,
+                    ContentType.MAPPER,
+                    ContentType.REPORT,
+                    ContentType.TRIGGER,
+                    ContentType.WIDGET,
+                    ContentType.XSIAM_DASHBOARD,
+                    ContentType.XSIAM_REPORT,
+                    ContentType.WIZARD,
+                    ContentType.LAYOUT_RULE,
+                    ContentType.XDRC_TEMPLATE,
+                    ContentType.PACK
+                ]:
+                    if content_item := [file for file in package_content if file.suffix == ".json"]:
+                        statuses_dict[package_path] = file_by_status_dict[content_item[0]]
+                    else:
+                        statuses_dict[package_path] = None
+                        
+                elif content_type in [
+                    ContentType.INTEGRATION,
+                    ContentType.SCRIPT,
+                    ContentType.TEST_SCRIPT,
+                    ContentType.TEST_PLAYBOOK,
+                    ContentType.PLAYBOOK,
+                ]:
+                    if content_item := [file for file in package_content if file.suffix == ".yml"]:
+                        statuses_dict[package_path] = file_by_status_dict[content_item[0]]
+                    elif content_item := [file for file in package_content if file.suffix == ".py"]:
+                        statuses_dict[package_path] = file_by_status_dict[content_item[0]]
+                    else:
+                        statuses_dict[package_path] = None
+                        
+                elif content_type in [
+                    ContentType.PARSING_RULE,
+                    ContentType.MODELING_RULE,
+                    ContentType.ASSETS_MODELING_RULE
+                ]:
+                    if content_item := [file for file in package_content if file.suffix == ".yml"]:
+                        statuses_dict[package_path] = file_by_status_dict[content_item[0]]
+                    elif content_item := [file for file in package_content if file.suffix == ".xif"]:
+                        statuses_dict[package_path] = file_by_status_dict[content_item[0]]
+                    elif content_item := [file for file in package_content if file.suffix == ".json"]:
+                        statuses_dict[package_path] = file_by_status_dict[content_item[0]]
+            except Exception as e:
+                logger.error(f"Could not fine type for content item {str(package_path)}, reason: {str(e)}")
+                
+        return statuses_dict

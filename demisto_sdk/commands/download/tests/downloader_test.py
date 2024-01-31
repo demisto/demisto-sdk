@@ -1186,7 +1186,7 @@ def test_uuids_replacement_in_content_items_with_special_character_names(repo, m
     }
     playbook: Playbook = repo.create_playbook(yml=playbook_data)
 
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
 
     downloader = Downloader(
         all_custom_content=True,
@@ -1203,8 +1203,8 @@ def test_uuids_replacement_in_content_items_with_special_character_names(repo, m
 
     uuid_mapping = downloader.create_uuid_to_name_mapping(custom_content_objects=custom_content_objects)
     downloader.replace_uuid_ids(custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping)
-    # Assert no errors were logged (raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
-    assert logger_error.call_count == 0
+    # Assert no warnings logged (error raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
+    assert logger_warning.call_count == 0
     # Assert ID value is always in quotes
     assert f"id: '{file_object['name']}'" in file_object["file"].getvalue()
 

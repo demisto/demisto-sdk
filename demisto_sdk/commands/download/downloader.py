@@ -472,7 +472,7 @@ class Downloader:
 
             except Exception as e:
                 # If UUID replacement failed, we skip the file
-                logger.error(
+                logger.warning(
                     f"Could not replace UUID IDs in '{file_object['name']}'. "
                     f"Content item will be skipped.\nError: {e}"
                 )

@@ -1217,7 +1217,7 @@ def test_uuids_replacement_in_content_items_with_special_character_names(
 
 
 @pytest.mark.parametrize("quote_type", ("'", '"'))
-def test_uuids_replacement_in_content_items_with_with_quotes(
+def test_uuids_replacement_in_content_items_with_quoted_id_field(
     repo, mocker, quote_type: str
 ):
     """

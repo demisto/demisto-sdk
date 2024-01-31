@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where validate would state that it failed, even though it shouldn't, and then it would display an empty list of content items.
+  type: fix
+pr_number: 4006

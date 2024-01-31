@@ -80,7 +80,20 @@ class XsoarClient:
 
     def __str__(self) -> str:
         # TODO - consider adding the server-type
-        return f"{self.__class__.__name__}(api-url={self.server_config.base_api_url}, xsoar-version={self.version})"
+        try:
+            version: Union[Version, str] = self.version
+        except Exception as error:
+            logger.debug(
+                f"Could not get version of {self.server_config.base_api_url}, error={error}"
+            )
+            version = ""
+
+        summary = (
+            f"{self.__class__.__name__}(api-url={self.server_config.base_api_url})"
+        )
+        if version:
+            return f"{summary}, (version={version})"
+        return summary
 
     @property
     def is_server_type(self) -> bool:
@@ -153,10 +166,7 @@ class XsoarClient:
         """
         Returns XSOAR version
         """
-        if xsoar_version := self.about.version:
-            logger.debug(f"{self.base_url} xsoar-server version is {xsoar_version}")
-            return Version(xsoar_version)
-        raise RuntimeError(f"Could not get version from instance {self.xsoar_host_url}")
+        return Version(self.about.version)
 
     @property
     def build_number(self) -> str:

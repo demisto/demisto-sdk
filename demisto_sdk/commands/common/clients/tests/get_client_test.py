@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.clients import (
     XsoarSaasClient,
     XsoarSaasClientConfig,
 )
-from demisto_sdk.commands.common.clients.errors import UnAuthorized
+from demisto_sdk.commands.common.clients.errors import UnAuthorized, UnHealthyServer
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
@@ -436,3 +436,72 @@ def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_wi
         type(get_client_from_server_type(base_url="https://test9.com", api_key="test"))
         == XsoarClient
     )
+
+
+def test_get_client_from_server_type_unhealthy_xsoar_server(mocker, requests_mock):
+    """
+    Given:
+     - server which its xsoar part is not healthy
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure the UnHealthyServer is raised
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/health/server":
+            return "", 434, ""
+        if path == "/about":
+            raise ApiException(status=500, reason="error")
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    mocker.patch("demisto_sdk.commands.common.tools.time.sleep")
+
+    with pytest.raises(UnHealthyServer):
+        get_client_from_server_type(
+            base_url="https://test10.com", api_key="test", auth_id="1"
+        )
+
+
+def test_get_client_from_server_type_unhealthy_xdr_server(mocker, requests_mock):
+    """
+    Given:
+     - server which its xdr part is not healthy
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure the UnHealthyServer is raised
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/health/server":
+            return "", 200, ""
+        if path == "/about":
+            raise ApiException(status=500, reason="error")
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    mocker.patch("demisto_sdk.commands.common.tools.time.sleep")
+    requests_mock.get(
+        "https://test11.com/public_api/v1/healthcheck",
+        json={"status": "not-available"},
+        status_code=200,
+    )
+
+    with pytest.raises(UnHealthyServer):
+        get_client_from_server_type(
+            base_url="https://test11.com", api_key="test", auth_id="1"
+        )

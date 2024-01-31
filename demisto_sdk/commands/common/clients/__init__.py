@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.clients.configs import (
 )
 from demisto_sdk.commands.common.clients.errors import (
     InvalidServerType,
-    UnHealthyServer,
 )
 from demisto_sdk.commands.common.clients.xsiam.xsiam_api_client import XsiamClient
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
@@ -141,6 +140,7 @@ def get_client_from_server_type(
     )
 
     if not _auth_id and (_api_key or (_username and _password)):
+        # if no auth-id is provided, it must be xsoar-on-prem
         return XsoarClient(
             config=XsoarClientConfig(
                 base_api_url=_base_url,
@@ -163,7 +163,7 @@ def get_client_from_server_type(
             ),
             should_validate_server_type=should_validate_server_type,
         )
-    except (UnHealthyServer, InvalidServerType) as error:
+    except InvalidServerType as error:
         logger.debug(f"{error=}")
         try:
             return XsoarSaasClient(
@@ -175,7 +175,7 @@ def get_client_from_server_type(
                 ),
                 should_validate_server_type=should_validate_server_type,
             )
-        except (UnHealthyServer, InvalidServerType) as error:
+        except InvalidServerType as error:
             logger.debug(f"{error=}")
             try:
                 # if xsiam-auth-id is defined by mistake

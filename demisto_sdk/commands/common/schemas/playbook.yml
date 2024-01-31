@@ -183,8 +183,10 @@ mapping:
               description:
                 type: str
                 required: true
+                pattern: '^(?!\s*$).+'
               description_x2:
                 type: str
+                pattern: '^(?!\s*$).+'
               scriptName:
                 type: str
               scriptName_x2:

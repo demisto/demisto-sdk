@@ -149,8 +149,9 @@ def get_client_from_server_type(
                 password=_password,
                 verify_ssl=_verify_ssl,
             ),
-            should_validate_server_type=True,
         )
+
+    should_validate_server_type = True
 
     try:
         return XsiamClient(
@@ -160,7 +161,7 @@ def get_client_from_server_type(
                 auth_id=_auth_id,
                 verify_ssl=_verify_ssl,
             ),
-            should_validate_server_type=True,
+            should_validate_server_type=should_validate_server_type,
         )
     except (UnHealthyServer, InvalidServerType) as error:
         logger.debug(f"{error=}")
@@ -172,7 +173,7 @@ def get_client_from_server_type(
                     auth_id=_auth_id,
                     verify_ssl=_verify_ssl,
                 ),
-                should_validate_server_type=True,
+                should_validate_server_type=should_validate_server_type,
             )
         except (UnHealthyServer, InvalidServerType) as error:
             logger.debug(f"{error=}")
@@ -186,7 +187,7 @@ def get_client_from_server_type(
                         password=_password,
                         verify_ssl=_verify_ssl,
                     ),
-                    should_validate_server_type=True,
+                    should_validate_server_type=should_validate_server_type,
                 )
             except Exception as error:
                 raise RuntimeError(

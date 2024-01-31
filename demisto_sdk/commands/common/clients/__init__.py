@@ -174,8 +174,22 @@ def get_client_from_server_type(
                 ),
                 should_validate_server_type=True,
             )
-        except Exception as error:
-            raise RuntimeError(
-                f"Could not determine the correct api-client for {_base_url}, "
-                f"make sure the {DEMISTO_BASE_URL}, {DEMISTO_KEY}, {AUTH_ID} are defined properly"
-            ) from error
+        except (UnHealthyServer, InvalidServerType) as error:
+            logger.debug(f"{error=}")
+            try:
+                # if xsiam-auth-id is defined by mistake
+                return XsoarClient(
+                    config=XsoarClientConfig(
+                        base_api_url=_base_url,
+                        api_key=_api_key,
+                        user=_username,
+                        password=_password,
+                        verify_ssl=_verify_ssl,
+                    ),
+                    should_validate_server_type=True,
+                )
+            except Exception as error:
+                raise RuntimeError(
+                    f"Could not determine the correct api-client for {_base_url}, "
+                    f"make sure the {DEMISTO_BASE_URL}, {DEMISTO_KEY}, {AUTH_ID} are defined properly"
+                ) from error

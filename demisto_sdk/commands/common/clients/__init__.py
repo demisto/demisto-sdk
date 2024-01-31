@@ -11,7 +11,10 @@ from demisto_sdk.commands.common.clients.errors import (
     InvalidServerType,
 )
 from demisto_sdk.commands.common.clients.xsiam.xsiam_api_client import XsiamClient
-from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
+from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import (
+    ServerType,
+    XsoarClient,
+)
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
     XsoarSaasClient,
 )
@@ -141,6 +144,9 @@ def get_client_from_server_type(
 
     if not _auth_id and (_api_key or (_username and _password)):
         # if no auth-id is provided, it must be xsoar-on-prem
+        logger.debug(
+            f"Assuming {_base_url} is {ServerType.XSOAR} server as {AUTH_ID} is not defined"
+        )
         return XsoarClient(
             config=XsoarClientConfig(
                 base_api_url=_base_url,
@@ -164,7 +170,7 @@ def get_client_from_server_type(
             should_validate_server_type=should_validate_server_type,
         )
     except InvalidServerType:
-        logger.debug(f"The {_base_url} is not xsiam server")
+        logger.debug(f"Checking if {_base_url} is {ServerType.XSOAR_SAAS}")
 
     try:
         return XsoarSaasClient(
@@ -177,7 +183,7 @@ def get_client_from_server_type(
             should_validate_server_type=should_validate_server_type,
         )
     except InvalidServerType:
-        logger.debug(f"The {_base_url} is not xsoar-saas server")
+        logger.debug(f"Checking if {_base_url} is {ServerType.XSOAR}")
 
     try:
         # if xsiam-auth-id is defined by mistake

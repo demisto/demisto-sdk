@@ -169,14 +169,6 @@ class XsoarClient:
         return Version(self.about.version)
 
     @property
-    def build_number(self) -> str:
-        if build_number := self.about.get("buildNum"):
-            return build_number
-        raise RuntimeError(
-            f"Could not get build number from instance {self.xsoar_host_url}"
-        )
-
-    @property
     def xsoar_host_url(self) -> str:
         """
         Returns the base api url used for api requests to xsoar endpoints

@@ -95,7 +95,6 @@ class DockerImageFlagOption(Enum):
     NATIVE_CANDIDATE = "native:candidate"
 
 
-
 class Linter:
     """Linter used to activate lint command on single package
 

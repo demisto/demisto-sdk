@@ -416,9 +416,9 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
 
-          cd content          
+          cd content
           mkdir -p test-lint/logs
-          
+
           # python file (CommonServerPython lint is running over python 3 and 2)
           demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython --coverage-report test-lint/coverage-report
           if [[ -f test-lint/coverage-report/html/index.html && -f test-lint/coverage-report/coverage.xml ]]

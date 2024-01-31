@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_files_in_dir, get_json, get_value
+from demisto_sdk.commands.common.tools import get_json, get_value
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -23,6 +23,8 @@ class JSONContentItemParser(ContentItemParser):
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces)
+        self.path = self.get_path_with_suffix(".json")
+
         self.json_data: Dict[str, Any] = self.get_json(git_sha=git_sha)
         self.original_json_data: Dict[str, Any] = self.json_data
         if not isinstance(self.json_data, dict):
@@ -92,14 +94,4 @@ class JSONContentItemParser(ContentItemParser):
         return self.get_marketplaces(self.json_data)
 
     def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
-        if self.path.is_dir():
-            json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
-            if len(json_files_in_dir) != 1:
-                raise NotAContentItemException(
-                    f"Directory {self.path} must have a single JSON file."
-                )
-            self.path = Path(json_files_in_dir[0])
-        if not self.path.suffix.lower() == ".json":
-            raise NotAContentItemException
-
-        return get_json(self.path.as_posix(), git_sha=git_sha)
+        return get_json(str(self.path), git_sha=git_sha)

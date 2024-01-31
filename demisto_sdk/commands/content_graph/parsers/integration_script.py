@@ -38,7 +38,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
     @property
     def alt_docker_images(self) -> List[str]:
         return get_value(
-            self.yml_data, self.field_mapping.get("alt_dockerimages", []), []
+            self.yml_data, self.field_mapping.get("alt_docker_images", []), []
         )
 
     @property
@@ -60,7 +60,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         """Creates IMPORTS relationships with the API modules used in the integration."""
         code = self.code
         if not code:
-            raise ValueError("Integration code is not available")
+            raise ValueError(
+                f"Could not get integration code from {self.object_id} integration lying in folder {self.path.parent}"
+            )
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
         for api_module in api_modules:
             self.add_relationship(

@@ -341,6 +341,10 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
+        modified_files = self.filter_files(modified_files)
+        added_files = self.filter_files(added_files)
+        renamed_files = self.filter_files(renamed_files)
+        deleted_files = self.filter_files(deleted_files)
         basecontent_with_path_set: Set[BaseContent] = set()
         basecontent_with_path_set = basecontent_with_path_set.union(
             self.paths_to_basecontent_set(
@@ -387,6 +391,8 @@ class Initializer:
                         old_file_path=Path(file_path[1]),
                         git_sha=git_sha,
                     )
+                elif git_status == GitStatuses.ADDED:
+                    temp_obj = BaseContent.from_path(Path(file_path), git_status)
                 else:
                     temp_obj = BaseContent.from_path(
                         Path(file_path), git_status, git_sha=git_sha
@@ -398,3 +404,17 @@ class Initializer:
             except InvalidContentItemException:
                 invalid_content_items.append(file_path)
         return basecontent_with_path_set
+
+    def filter_files(self, files_set: Set[Path]):
+        """Filter out all the files with suffixes that are not supported by BaseContent.
+
+        Args:
+            files_set (Set[Path]): The set of paths to filter
+
+        Returns:
+            Set: The set of filtered files.
+        """
+        extensions_list_to_filter = [".png", ".md", ".svg"]
+        return set(
+            file for file in files_set if file.suffix not in extensions_list_to_filter
+        )

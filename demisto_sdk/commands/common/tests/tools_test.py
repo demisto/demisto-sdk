@@ -13,6 +13,7 @@ import requests
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     DOC_FILES_DIR,
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
@@ -67,6 +68,7 @@ from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,
     arg_to_list,
+    check_timestamp_format,
     compare_context_path_in_yml_and_readme,
     extract_field_from_mapping,
     field_to_cli_name,
@@ -137,6 +139,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_LIST_PATH,
     VALID_MD,
     VALID_PLAYBOOK_ID_PATH,
+    VALID_PRE_PROCESSING_RULE_PATH,
     VALID_REPUTATION_FILE,
     VALID_SCRIPT_PATH,
     VALID_WIDGET_PATH,
@@ -345,6 +348,7 @@ class TestGenericFunctions:
         (METADATA_FILE_NAME, FileType.METADATA),
         ("", None),
         (VULTURE_WHITELIST_PATH, FileType.VULTURE_WHITELIST),
+        (VALID_PRE_PROCESSING_RULE_PATH, FileType.PRE_PROCESS_RULES),
     ]
 
     @pytest.mark.parametrize("path, _type", data_test_find_type)
@@ -626,7 +630,7 @@ class TestGetRemoteFileLocally:
     FILE_CONTENT = '{"id": "some_file"}'
 
     git_util = Content.git_util()
-    main_branch = git_util.handle_prev_ver()[1]
+    main_branch = DEMISTO_GIT_PRIMARY_BRANCH
 
     def setup_method(self):
         # create local git repo
@@ -3303,3 +3307,26 @@ def test_set_value(dict, paths, value, expected_dict):
     """
     set_value(dict, paths, value)
     assert expected_dict == dict
+
+
+def test_check_timestamp_format():
+    """
+    Given
+    - timestamps in various formats.
+
+    When
+    - Running check_timestamp_format on them.
+
+    Then
+    - Ensure True for iso format and False for any other format.
+    """
+    good_format_timestamp = "2020-04-14T00:00:00Z"
+    missing_z = "2020-04-14T00:00:00"
+    missing_t = "2020-04-14 00:00:00Z"
+    only_date = "2020-04-14"
+    with_hyphen = "2020-04-14T00-00-00Z"
+    assert check_timestamp_format(good_format_timestamp)
+    assert not check_timestamp_format(missing_t)
+    assert not check_timestamp_format(missing_z)
+    assert not check_timestamp_format(only_date)
+    assert not check_timestamp_format(with_hyphen)

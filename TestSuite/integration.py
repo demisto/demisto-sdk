@@ -3,19 +3,26 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 from TestSuite.file import File
+from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
 
 yaml = YAML_Handler()
 
 
-class Integration:
+class Integration(TestSuiteBase):
     def __init__(
-        self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False
+        self,
+        tmpdir: Path,
+        name,
+        repo,
+        create_unified: Optional[bool] = False,
+        _type: str = "python",
     ):
         # Save entities
         self.name = name
@@ -30,9 +37,15 @@ class Integration:
         self.create_unified = create_unified
 
         self.path = str(self._tmpdir_integration_path)
-        self.code = File(
-            self._tmpdir_integration_path / f"{self.name}.py", self._repo.path
-        )
+        self.type = _type
+        if self.type == "python":
+            self.code = File(
+                self._tmpdir_integration_path / f"{self.name}.py", self._repo.path
+            )
+        else:
+            self.code = File(
+                self._tmpdir_integration_path / f"{self.name}.js", self._repo.path
+            )
         self.test = File(
             self._tmpdir_integration_path / f"{self.name}_test.py", self._repo.path
         )
@@ -53,6 +66,7 @@ class Integration:
         self.commands_txt = File(
             self._tmpdir_integration_path / "commands.txt", self._repo.path
         )
+        super().__init__(self._tmpdir_integration_path)
 
     def build(
         self,
@@ -69,7 +83,10 @@ class Integration:
         if code is not None:
             self.code.write(code)
         else:
-            self.code.write("from CommonServerPython import *\n\n\n")
+            if self.type == "python":
+                self.code.write("from CommonServerPython import *\n\n\n")
+            else:  # javascript
+                self.code.write("console.log('Hello World');")
 
         self.test.write("from CommonServerPython import *\n\n\n")
 
@@ -150,3 +167,17 @@ class Integration:
             changelog=changelog,
             description=description,
         )
+
+    def set_data(self, **key_path_to_val):
+        yml_contents = self.yml.read_dict()
+        for key_path, val in key_path_to_val.items():
+            set_value(yml_contents, key_path, val)
+        self.yml.write_dict(yml_contents)
+        self.clear_from_path_cache()
+
+    def set_commands(self, commands: List[str]):
+        commands_data = [
+            {"name": command, "description": f"{command}-description"}
+            for command in commands
+        ]
+        self.set_data(**{"script.commands": commands_data})

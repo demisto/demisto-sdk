@@ -1,4 +1,5 @@
 # Site packages
+import platform
 import sys
 
 import click
@@ -36,7 +37,11 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -55,6 +60,7 @@ from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
+from demisto_sdk.commands.setup_env.setup_environment import IDEType
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import (
     init_test_data,
@@ -67,8 +73,6 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "[red]An internet connection is required for this command. If connected to the "
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 # Third party packages
@@ -156,16 +160,13 @@ def logging_setup_decorator(func, *args, **kwargs):
         help="Minimum logging threshold for the file logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
-    @click.option(
-        "--log-file-path",
-        help="Path to the log file. Default: Content root path.",
-    )
+    @click.option("--log-file-path", help="Path to save log files onto.")
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
             console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
             file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log_file_path") or None,
+            log_file_path=kwargs.get("log_file_path"),
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -203,15 +204,20 @@ def main(ctx, config, version, release_notes, **kwargs):
         console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
         file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
         log_file_path=kwargs.get("log_file_path"),
+        skip_log_file_creation=True,  # Log file creation is handled in the logger setup of the sub-command
     )
-    global logger
-    logger = logging.getLogger("demisto-sdk")
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
     import dotenv
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
+
+    if platform.system() == "Windows":
+        logger.warning(
+            "Using Demisto-SDK on Windows is not supported. Use WSL2 or run in a container."
+        )
+
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
     ) and not is_sdk_defined_working_offline():  # If the key exists/called to version
@@ -230,9 +236,9 @@ def main(ctx, config, version, release_notes, **kwargs):
                 last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
-                logger.info(
-                    f"[yellow]however version {last_release} is available.\n"
-                    f"To update, run pip3 install --upgrade demisto-sdk[/yellow]"
+                logger.warning(
+                    f"A newer version ({last_release}) is available. "
+                    f"To update, run 'pip3 install --upgrade demisto-sdk'"
                 )
             if release_notes:
                 rn_entries = get_release_note_entries(__version__)
@@ -306,10 +312,11 @@ def split(ctx, config, **kwargs):
         FileType.GENERIC_MODULE,
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
+        FileType.LISTS,
         FileType.ASSETS_MODELING_RULE,
     ]:
         logger.info(
-            "[red]File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.[/red]"
+            "[red]File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.[/red]"
         )
         return 1
 
@@ -331,6 +338,7 @@ def split(ctx, config, **kwargs):
             output=kwargs.get("output"),  # type: ignore[arg-type]
             no_auto_create_dir=kwargs.get("no_auto_create_dir"),  # type: ignore[arg-type]
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
+            file_type=file_type,
         )
         return json_splitter.split_json()
 
@@ -1101,7 +1109,7 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 @click.option(
     "--prev-ver",
     help="Previous branch or SHA1 commit to run checks against",
-    default="master",
+    default=os.getenv("DEMISTO_DEFAULT_BRANCH", default="master"),
 )
 @click.option(
     "--test-xml",
@@ -1262,12 +1270,8 @@ def lint(ctx, **kwargs):
     type=str,
 )
 @click.pass_context
+@logging_setup_decorator
 def coverage_analyze(ctx, **kwargs):
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
     try:
@@ -2612,7 +2616,6 @@ def find_dependencies(ctx, **kwargs):
     output_path = kwargs.get("output_path", ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get("dependency", "")
     try:
-
         PackDependencies.find_dependencies_manager(
             id_set_path=str(id_set_path),
             update_pack_metadata=update_pack_metadata,
@@ -2675,6 +2678,7 @@ def find_dependencies(ctx, **kwargs):
 )
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def postman_codegen(
     ctx,
     config,
@@ -2688,11 +2692,6 @@ def postman_codegen(
     **kwargs,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
     )
@@ -3454,6 +3453,14 @@ def update_content_graph(
 
 @main.command(short_help="Setup integration environments")
 @click.option(
+    "--ide",
+    help="IDE type to configure the environment for. If not specified, the IDE will be auto-detected. Case-insensitive.",
+    default="auto-detect",
+    type=click.Choice(
+        ["auto-detect"] + [IDEType.value for IDEType in IDEType], case_sensitive=False
+    ),
+)
+@click.option(
     "-i",
     "--input",
     type=PathsParamType(
@@ -3465,55 +3472,85 @@ def update_content_graph(
     "--create-virtualenv",
     is_flag=True,
     default=False,
-    help="Create a virtualenv for the environment",
+    help="Create a virtualenv for the environment.",
 )
 @click.option(
     "--overwrite-virtualenv",
     is_flag=True,
     default=False,
-    help="Overwrite existing virtualenvs. Use with the create-virtualenv flag",
+    help="Overwrite existing virtualenvs. Relevant only if the 'create-virtualenv' flag is used.",
 )
 @click.option(
     "--secret-id",
-    help="Secret ID, to use with Google Secret Manager instance with `DEMISTO_SDK_GCP_PROJECT_ID` environment variable set.",
+    help="Secret ID to use for the Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.",
     required=False,
 )
 @click.option(
     "--instance-name",
     required=False,
-    help="Instance name to configure in XSOAR/XSIAM.",
+    help="Instance name to configure in XSOAR / XSIAM.",
 )
 @click.option(
     "--run-test-module",
     required=False,
     is_flag=True,
     default=False,
-    help="Whether to run test-module on the configured XSOAR/XSIAM instance",
+    help="Whether to run test-module on the configured XSOAR / XSIAM instance.",
+)
+@click.option(
+    "--clean",
+    is_flag=True,
+    default=False,
+    help="Clean the repository of temporary files created by the 'lint' command.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
     input,
+    ide,
     file_paths,
     create_virtualenv,
     overwrite_virtualenv,
     secret_id,
     instance_name,
     run_test_module,
+    clean,
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup_env,
     )
 
+    if ide == "auto-detect":
+        # Order decides which IDEType will be selected for configuration if multiple IDEs are detected
+        if (CONTENT_PATH / ".vscode").exists():
+            logger.info(
+                "Visual Studio Code IDEType has been detected and will be configured."
+            )
+            ide_type = IDEType.VSCODE
+        elif (CONTENT_PATH / ".idea").exists():
+            logger.info(
+                "PyCharm / IDEA IDEType has been detected and will be configured."
+            )
+            ide_type = IDEType.PYCHARM
+        else:
+            raise RuntimeError(
+                "Could not detect IDEType. Please select a specific IDEType using the --ide flag."
+            )
+
+    else:
+        ide_type = IDEType(ide)
+
     if input:
         file_paths = tuple(input.split(","))
 
     setup_env(
-        file_paths,
+        file_paths=file_paths,
+        ide_type=ide_type,
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,
         secret_id=secret_id,
         instance_name=instance_name,
         test_module=run_test_module,
+        clean=clean,
     )
 
 
@@ -3537,7 +3574,7 @@ def pre_commit(
         dir_okay=True,
         resolve_path=True,
         show_default=False,
-        help=("The paths to run pre-commit on. May pass multiple paths."),
+        help="The paths to run pre-commit on. May pass multiple paths.",
     ),
     staged_only: bool = typer.Option(
         False, "--staged-only", help="Whether to run only on staged files"
@@ -3584,7 +3621,28 @@ def pre_commit(
         True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
     ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "--console-log-threshold",
+        help="Minimum logging threshold for the console logger.",
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "--file-log-threshold",
+        help="Minimum logging threshold for the file logger.",
+    ),
+    log_file_path: Optional[str] = typer.Option(
+        None,
+        "--log-file-path",
+        help="Path to save log files onto.",
+    ),
 ):
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
+
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
     return_code = pre_commit_manager(

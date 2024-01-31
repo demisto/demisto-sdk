@@ -1,0 +1,45 @@
+name: 'Setup test environment for running all tests (unit/integration/graph) in the demisto-sdk'
+description: 'Setup test environment for running all tests (unit/integration/graph) in the demisto-sdk'
+author: 'Demisto-SDK'
+
+inputs:
+  python-version:
+    required: true
+    type: string
+    description: "The python version"
+  node-version:
+    required: false
+    type: string
+    default: "20"
+    description: "The node version to install"
+  artifacts-dir:
+    required: false
+    type: string
+    default: "artifacts-dir"
+    description: "The name of the artifacts dir"
+
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create Artifacts Dir
+      run: |
+        mkdir -p ${{ inputs.artifacts-dir }}
+        echo "Created directory ${{ inputs.artifacts-dir }} successfully"
+      shell: bash
+
+    - name: Python ${{ matrix.python-version }} - Setup Environment
+      uses: ./.github/actions/setup_environment
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install npm
+      run: |
+        npm install
+        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > ${{ inputs.artifacts-dir }}/node_versions_info.json
+      shell: bash

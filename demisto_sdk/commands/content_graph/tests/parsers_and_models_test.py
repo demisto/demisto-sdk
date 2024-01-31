@@ -324,9 +324,9 @@ class TestParsersAndModels:
             dependency_ids={
                 "Github": ContentType.INCIDENT_TYPE,
                 "DevSecOps New Git PR": ContentType.INCIDENT_TYPE,
-                "isEqualString": ContentType.SCRIPT,
-                "isNotEmpty": ContentType.SCRIPT,
-                "getField": ContentType.SCRIPT,
+                "isEqualString": ContentType.BASE_SCRIPT,
+                "isNotEmpty": ContentType.BASE_SCRIPT,
+                "getField": ContentType.BASE_SCRIPT,
             },
         )
         model = Classifier.from_orm(parser)
@@ -399,8 +399,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DetectionsCount": ContentType.SCRIPT,
-                "DetectionsData": ContentType.SCRIPT,
+                "DetectionsCount": ContentType.BASE_SCRIPT,
+                "DetectionsData": ContentType.BASE_SCRIPT,
             },
         )
         model = Dashboard.from_orm(parser)
@@ -561,7 +561,7 @@ class TestParsersAndModels:
             expected_name="CVE",
             expected_path=incident_field_path,
             expected_content_type=ContentType.INCIDENT_FIELD,
-            expected_fromversion="5.0.0",
+            expected_fromversion="5.5.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
         assert model.cli_name == "cve"
@@ -595,7 +595,7 @@ class TestParsersAndModels:
             parser.relationships,
             dependency_ids={
                 "Traps": ContentType.LAYOUT,
-                "Palo Alto Networks - Endpoint Malware Investigation": ContentType.PLAYBOOK,
+                "Palo Alto Networks - Endpoint Malware Investigation": ContentType.BASE_PLAYBOOK,
             },
         )
         model = IncidentType.from_orm(parser)
@@ -683,7 +683,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "URLReputation": ContentType.SCRIPT,
+                "URLReputation": ContentType.BASE_SCRIPT,
                 "url": ContentType.COMMAND,
                 "urlRep": ContentType.LAYOUT,
             },
@@ -807,7 +807,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "job-TestJob_playbook": ContentType.PLAYBOOK,
+                "job-TestJob_playbook": ContentType.BASE_PLAYBOOK,
             },
         )
         model = Job.from_orm(parser)
@@ -832,12 +832,23 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
+        from demisto_sdk.commands.content_graph.objects import Layout
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 
         layout = pack.create_layout("TestLayout")
         layout_path = Path(layout.path)
-        with pytest.raises(NotAContentItemException):
-            LayoutParser(layout_path, list(MarketplaceVersions))
+        parser = LayoutParser(layout_path, list(MarketplaceVersions))
+        model = Layout.from_orm(parser)
+
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="TestLayout",
+            expected_name="TestLayout",
+            expected_path=layout_path,
+            expected_content_type=ContentType.LAYOUT,
+            expected_fromversion="6.8.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
 
     def test_layoutscontainer_parser(self, pack: Pack):
         """
@@ -978,7 +989,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "substringTo": ContentType.SCRIPT,
+                "substringTo": ContentType.BASE_SCRIPT,
             },
             dependency_names={
                 "DevSecOps New Git PR": ContentType.INCIDENT_TYPE,
@@ -1023,7 +1034,7 @@ class TestParsersAndModels:
             dependency_ids={
                 "description": ContentType.INCIDENT_FIELD,
                 "azuredevopsprojectname": ContentType.INCIDENT_FIELD,
-                "MapValuesTransformer": ContentType.SCRIPT,
+                "MapValuesTransformer": ContentType.BASE_SCRIPT,
             },
             dependency_names={
                 "Azure DevOps": ContentType.INCIDENT_TYPE,
@@ -1072,7 +1083,7 @@ class TestParsersAndModels:
             expected_id="duo_modeling_rule",
             expected_name="Duo Modeling Rule",
             expected_content_type=ContentType.MODELING_RULE,
-            expected_fromversion="6.8.0",
+            expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -1138,7 +1149,7 @@ class TestParsersAndModels:
             expected_id="_parsing_rule_id",
             expected_name="My Rule",
             expected_content_type=ContentType.PARSING_RULE,
-            expected_fromversion="6.8.0",
+            expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -1165,7 +1176,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DeleteContext": ContentType.SCRIPT,
+                "DeleteContext": ContentType.BASE_SCRIPT,
             },
         )
         model = Playbook.from_orm(parser)
@@ -1200,8 +1211,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "ProofpointTAPMostAttackedUsers": ContentType.SCRIPT,
-                "ProofpointTapTopClickers": ContentType.SCRIPT,
+                "ProofpointTAPMostAttackedUsers": ContentType.BASE_SCRIPT,
+                "ProofpointTapTopClickers": ContentType.BASE_SCRIPT,
             },
         )
         model = Report.from_orm(parser)
@@ -1279,7 +1290,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DeleteContext": ContentType.SCRIPT,
+                "DeleteContext": ContentType.BASE_SCRIPT,
             },
         )
         model = TestPlaybook.from_orm(parser)
@@ -1313,7 +1324,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "NGFW Scan": ContentType.PLAYBOOK,
+                "NGFW Scan": ContentType.BASE_PLAYBOOK,
             },
         )
         model = Trigger.from_orm(parser)
@@ -1323,7 +1334,7 @@ class TestParsersAndModels:
             expected_name="NGFW Scanning Alerts",
             expected_path=trigger_path,
             expected_content_type=ContentType.TRIGGER,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
@@ -1382,7 +1393,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "FeedIntegrationErrorWidget": ContentType.SCRIPT,
+                "FeedIntegrationErrorWidget": ContentType.BASE_SCRIPT,
             },
         )
         model = Widget.from_orm(parser)
@@ -1541,16 +1552,19 @@ class TestParsersAndModels:
         """
         from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 
+        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+
         pack = repo.create_pack("HelloWorld")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        pack.create_classifier("sample", load_json("classifier.json"))
         pack.create_incident_field("sample", load_json("incident_field.json"))
         pack.create_incident_type("sample", load_json("incident_type.json"))
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
-        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+
+        pack.create_classifier("sample", load_json("classifier.json"))
         with open(f"{pack.path}/.pack-ignore", "w") as f:
             f.write("[file:classifier-sample.json]\nignore=SC100")
+
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {
@@ -1584,7 +1598,7 @@ class TestParsersAndModels:
             expected_tags=["TIM"],
             expected_categories=["Utilities"],
             expected_use_cases=["Identity And Access Management"],
-            expected_keywords=[],
+            expected_keywords=["common"],
             expected_marketplaces=[
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.XSOAR,

@@ -11,6 +11,7 @@ from git import GitCommandError
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
     PACK_METADATA_DESC,
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
@@ -29,9 +30,6 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-logger = logging.getLogger("demisto-sdk")
-
 
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
@@ -75,7 +73,9 @@ class TestPackUniqueFilesValidator:
         )
     )
     FAKE_PATH_NAME = "fake_pack"
-    validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
+    validator = PackUniqueFilesValidator(
+        FAKE_PATH_NAME, prev_ver=DEMISTO_GIT_PRIMARY_BRANCH
+    )
     validator.pack_path = FAKE_PACK_PATH
 
     def restart_validator(self):
@@ -334,29 +334,6 @@ class TestPackUniqueFilesValidator:
             "The pack price was changed from 2 to 3 - revert the change",
         )
 
-    def test_check_timestamp_format(self):
-        """
-        Given
-        - timestamps in various formats.
-
-        When
-        - Running check_timestamp_format on them.
-
-        Then
-        - Ensure True for iso format and False for any other format.
-        """
-        fake_validator = PackUniqueFilesValidator("fake")
-        good_format_timestamp = "2020-04-14T00:00:00Z"
-        missing_z = "2020-04-14T00:00:00"
-        missing_t = "2020-04-14 00:00:00Z"
-        only_date = "2020-04-14"
-        with_hyphen = "2020-04-14T00-00-00Z"
-        assert fake_validator.check_timestamp_format(good_format_timestamp)
-        assert not fake_validator.check_timestamp_format(missing_t)
-        assert not fake_validator.check_timestamp_format(missing_z)
-        assert not fake_validator.check_timestamp_format(only_date)
-        assert not fake_validator.check_timestamp_format(with_hyphen)
-
     def test_validate_pack_dependencies_invalid_id_set(self, mocker, repo):
         """
         Given
@@ -479,6 +456,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: [],
             }
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -566,6 +547,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -614,7 +599,10 @@ class TestPackUniqueFilesValidator:
             }
         )
 
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(
             tools,
             "get_dict_from_file",
@@ -651,7 +639,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):
@@ -1003,12 +994,6 @@ class TestPackUniqueFilesValidator:
         )
         assert self.validator.validate_pack_readme_file_is_not_empty()
 
-    def test_validate_pack_readme_file_is_not_empty_missing_file(self):
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack")
-        )
-        assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
-
     def test_validate_pack_readme_valid_images(self, mocker):
         """
         Given
@@ -1063,7 +1048,7 @@ class TestPackUniqueFilesValidator:
             not in errors
         )
 
-    def test_validate_pack_readme_invalid_images(self):
+    def test_validate_pack_readme_invalid_images(self, mocker):
         """
         Given
             - A pack README file with invalid absolute and relative image paths in it.
@@ -1078,6 +1063,7 @@ class TestPackUniqueFilesValidator:
         self.validator = PackUniqueFilesValidator(
             os.path.join(self.FILES_PATH, "DummyPack2")
         )
+        mocker.patch("demisto_sdk.commands.common.tools.sleep")
 
         with requests_mock.Mocker() as m:
             # Mock get requests

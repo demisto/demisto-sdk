@@ -46,6 +46,7 @@ def setup_method(mocker):
     bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
+    mocker.patch.object(ContentGraphInterface, "export_graph", return_value=None)
     mocker.patch(
         "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
         return_value={
@@ -594,7 +595,7 @@ def test_is_file_using_unknown_content(
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,
-        "Content item 'SampleIntegration' using content items: SampleClassifier which"
+        "Content item 'SampleIntegration' using content items: 'SampleClassifier' which"
         " cannot be found in the repository",
     )
 

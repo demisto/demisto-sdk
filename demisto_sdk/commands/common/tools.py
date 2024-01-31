@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import glob
-import logging
 import os
 import re
 import shlex
@@ -77,6 +76,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
+    ISO_TIMESTAMP_FORMAT,
     JOBS_DIR,
     LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
@@ -107,6 +107,7 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
+    STRING_TO_BOOL_MAP,
     TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
@@ -137,11 +138,10 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
-
-logger = logging.getLogger("demisto-sdk")
 
 yaml_safe_load = YAML_Handler(typ="safe")
 
@@ -595,7 +595,8 @@ def get_remote_file(
         if default_value is None:
             raise NoInternetConnectionException
         return default_value
-
+    if not tag:
+        tag = DEMISTO_GIT_PRIMARY_BRANCH
     tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
     if not git_content_config:
         try:
@@ -1669,6 +1670,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.MODELING_RULE_SCHEMA
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
+        elif PRE_PROCESS_RULES_DIR in path.parts:
+            return FileType.PRE_PROCESS_RULES
 
     elif (path.stem.endswith("_image") and path.suffix == ".png") or (
         (path.stem.endswith("_dark") or path.stem.endswith("_light"))
@@ -3690,20 +3693,6 @@ def normalize_field_name(field: str) -> str:
     return field.replace("incident_", "").replace("indicator_", "")
 
 
-STRING_TO_BOOL_MAP = {
-    "y": True,
-    "1": True,
-    "yes": True,
-    "true": True,
-    "n": False,
-    "0": False,
-    "no": False,
-    "false": False,
-    "t": True,
-    "f": False,
-}
-
-
 def string_to_bool(
     input_: Any,
     default_when_empty: Optional[bool] = None,
@@ -4341,3 +4330,39 @@ def get_integration_params(secret_id: str, project_id: Optional[str] = None) -> 
 
         raise SecretManagerException
     return payload["params"]
+
+
+def check_timestamp_format(timestamp: str) -> bool:
+    """Check that the timestamp is in ISO format"""
+    try:
+        datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)
+        return True
+    except ValueError:
+        return False
+
+
+def get_pack_latest_rn_version(pack_path: str) -> str:
+    """
+    Extract all the Release notes from the pack and return the highest version of release note in the Pack.
+
+    Return:
+        (str): The lastest version of RN.
+    """
+    list_of_files = glob.glob(pack_path + "/ReleaseNotes/*")
+    list_of_release_notes = [Path(file).name for file in list_of_files]
+    list_of_versions = [
+        rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
+    ]
+    if list_of_versions:
+        list_of_versions.sort(key=Version)
+        return list_of_versions[-1]
+    else:
+        return ""
+
+
+def is_str_bool(input_: str) -> bool:
+    try:
+        string_to_bool(input_)
+        return True
+    except ValueError:
+        return False

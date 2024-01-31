@@ -16,6 +16,9 @@ from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
+from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
+    IDNameValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name_all_statuses import (
     IDNameAllStatusesValidator,
 )
@@ -29,9 +32,6 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA108_pack_metadata_name_not_valid import (
     PackMetadataNameValidator,
-)
-from demisto_sdk.commands.validate.validators.super_classes.BA101_id_should_equal_name import (
-    IDNameValidator,
 )
 from TestSuite.test_tools import str_in_call_args_list
 
@@ -131,8 +131,8 @@ def test_filter_validators(mocker, validations_to_run, sub_classes, expected_res
             "custom_category",
             True,
             {
+                "ignorable_errors": ["BA101"],
                 "custom_category": {
-                    "ignorable_errors": ["BA101"],
                     "select": ["BA101", "BC100", "PA108"],
                 },
                 "use_git": {"select": ["TE105", "TE106", "TE107"]},
@@ -219,7 +219,6 @@ def test_gather_validations_to_run(
                     validator=IDNameValidator(),
                     message="",
                     content_object=INTEGRATION,
-                    old_content_object=None,
                 )
             ],
             [],
@@ -241,7 +240,6 @@ def test_gather_validations_to_run(
                     validator=IDNameValidator(),
                     message="",
                     content_object=INTEGRATION,
-                    old_content_object=None,
                 )
             ],
             [
@@ -397,7 +395,7 @@ def test_post_results(
 @pytest.mark.parametrize(
     "validator, expected_results",
     [
-        (IDNameValidator(), True),
+        (IDNameAllStatusesValidator(), True),
         (PackMetadataNameValidator(), False),
         (BreakingBackwardsSubtypeValidator(), False),
     ],
@@ -406,9 +404,9 @@ def test_should_run(validator, expected_results):
     """
     Given:
     A validator.
-        - Case 1: IDNameValidator which support Integration content type.
+        - Case 1: IDNameAllStatusesValidator which support Integration content type.
         - Case 2: PackMetadataNameValidator which doesn't support Integration content type.
-        - Case 3: IDNameValidator which support Integration content type only for modified and renamed git statuses.
+        - Case 3: BreakingBackwardsSubtypeValidator which support Integration content type only for modified and renamed git statuses.
     When:
     - Calling the should_run function on a given integration.
     Then:

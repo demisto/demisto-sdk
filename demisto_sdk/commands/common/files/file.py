@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional, Type, Union
 import requests
 from bs4.dammit import UnicodeDammit
 from pydantic import BaseModel, PrivateAttr, validator
-from requests.exceptions import RequestException
+from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import retry
 
 
 class File(ABC, BaseModel):
@@ -127,7 +128,7 @@ class File(ABC, BaseModel):
 
     @classmethod
     @lru_cache
-    def from_path(
+    def _from_path(
         cls,
         input_path: Union[Path, str],
         git_util: Optional[GitUtil] = None,
@@ -220,10 +221,10 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_local_path.cache_clear()
-        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
-        return model.read_local_file()
+        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
+        return model.__read_local_file()
 
-    def read_local_file(self) -> Any:
+    def __read_local_file(self) -> Any:
         try:
             return self.load(self.content)
         except FileReadError:
@@ -259,10 +260,10 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
-        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
-        return model.read_git_file(tag, from_remote=from_remote)
+        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
+        return model.__read_git_file(tag, from_remote=from_remote)
 
-    def read_git_file(
+    def __read_git_file(
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
     ) -> Any:
         try:
@@ -389,6 +390,7 @@ class File(ABC, BaseModel):
         )
 
     @classmethod
+    @retry(times=5, exceptions=(Timeout, ConnectionError))
     @lru_cache
     def read_from_http_request(
         cls,
@@ -482,7 +484,7 @@ class File(ABC, BaseModel):
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         raise NotImplementedError(
-            "_write must be implemented for each File concrete object"
+            "__write must be implemented for each File concrete object"
         )
 
     def write(

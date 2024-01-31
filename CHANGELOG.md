@@ -1,6 +1,45 @@
 # Changelog
+
 ## Unreleased
 * Fixed an issue where when using a match case to select the command function in an integration, the error `unimplemented-test-module` was raised.
+
+## 1.26.0
+* Log file path (can be set by the `--log-file-path` flag or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable) can now only accept directory values. Setting it to a file path is no longer supported (file name is now constantly `demisto_sdk_debug.log` and cannot be changed). The path will now be automatically generated if it doesn't exist. [#3912](https://github.com/demisto/demisto-sdk/pull/3912)
+* Log files will now be saved by default to `$HOME/.demisto-sdk/logs`. This behavior can be overridden by the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable. [#3912](https://github.com/demisto/demisto-sdk/pull/3912)
+* Added warning when running on Windows (not supported) [#3950](https://github.com/demisto/demisto-sdk/pull/3950)
+* Fixed an issue where the ***validate*** command failed on pre-processing rules. [#3977](https://github.com/demisto/demisto-sdk/pull/3977)
+* Fixed an issue in **upload** where customFields with explicitly defined values (e.g., ${}) caused the command to fail. [#3970](https://github.com/demisto/demisto-sdk/pull/3970)
+* Fixed an issue where validate command failed with Lists folder containing a data json file. [#3971](https://github.com/demisto/demisto-sdk/pull/3971)
+* Added graph capabilities in **TestSuite**. [#3932](https://github.com/demisto/demisto-sdk/pull/3932)
+
+## 1.25.3
+* Fixed false positives in **validate** in `GR103` validations [#3873](https://github.com/demisto/demisto-sdk/pull/3873)
+* Add command `sdk-changelog` for creating a yml file to describe the development changes in the SDK [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+* Locking the `CHANGELOG.md` file for changes when the PR is not a release process [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+
+## 1.25.2
+* Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
+* Fixed an issue where **lint** command didn't work on detached heads.
+* Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
+* Added support to check the version of the modeling rule against the demisto version of the XSIAM tenant when running the **modeling-rule test** command, and skip incompatible modeling rules.
+* Added support for JetBrains IDEs (PyCharm, IDEA, etc.) to the **setup-env** command, and added a new `--ide` flag.
+* Internal: Fixed an issue where `nativeimage` tags were not uploaded to buckets.
+* Fixed an issue where **lint -g** crashed when comparing changes against branches which are not `master`.
+* Fixed an issue in **prepare-content** command where the `incident to alert` process was not triggered when the playbook is set to only XSIAM.
+* Fixed an issue where **validate -g** command crashed when comparing changes against branches when in detached head state.
+* Add support for tests to run on specified marketplaces.
+
+## 1.25.1
+* Added the `clean` flag to **setup-env** to delete temp files that were created by `lint` from the repo.
+* Fixed an issue in **validate** where there is a specific value for marketplace in `isFetch` parameter.
+* Fixed an issue where the build number was incorrectly shown in XSOAR marketplace when using the **upload** command on external repositories via GitLab Pipelines.
+* Added support for `excluding_support_level` property in **pre-commit** command to exclude specific support level from running hooks.
+* Added support for the `List` content-item to **prepare-content** and **split**.
+* **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
+* Fixed an issue in **generate-docs** where the description field was missing from an argument.
+* Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
+
+## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.
 * Added support to return war-room entries when running cli commands.
 * Added support to automatically detect the correct file model by file path when reading files.
@@ -9,7 +48,7 @@
 * Fixed an issue where *validate* command failed with release notes files for assets modeling rules folder.
 * Added support for `skip` property in **pre-commit** hooks.
 * **generate-unit-tests** command will require installation with `pip install demisto-sdk[generate-unit-tests]`.
-* added the *IN150* and *IN161* errors to *allowed ignore errors* list.
+* Added the *IN150* and *IN161* errors to *allowed ignore errors* list.
 * Added support for `env`, `copy_files` property in **pre-commit** docker hooks.
 * Added support to run specific hooks in **pre-commit**. Use with `demisto-sdk pre-commit <hook>`.
 * **Breaking change**: Removed the command **run-unit-tests**. Use `demisto-sdk pre-commit pytest-in-docker` instead.

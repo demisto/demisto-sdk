@@ -12,6 +12,7 @@ import demisto_client
 import pytest
 from urllib3.response import HTTPResponse
 
+from TestSuite.playbook import Playbook
 from demisto_sdk.commands.common.constants import (
     DEMISTO_BASE_URL,
     DEMISTO_KEY,
@@ -1169,6 +1170,43 @@ def test_uuids_replacement_in_content_items(mocker):
             changed_uuids_count += 1
 
     assert changed_uuids_count == 7
+
+
+@pytest.mark.parametrize("content_item_name", ("Test: Test", "[Test] Test"))
+def test_uuids_replacement_in_content_items_with_special_character_names(repo, mocker, content_item_name: str):
+    """
+    Given: A content item name that contains special YAML characters (that requires wrapping the string quotes)
+    When: Calling 'self.replace_uuid_ids' method.
+    Then: Ensure that the UUIDs are replaced properly and that the update YAML file is valid.
+    """
+    repo = repo.create_pack()
+    playbook_data = {
+        "name": content_item_name,
+        "id": "d470522f-0a68-43c7-a62f-224f04b2e0c9",
+    }
+    playbook: Playbook = repo.create_playbook(yml=playbook_data)
+
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+    downloader = Downloader(
+        all_custom_content=True,
+        auto_replace_uuids=True,
+    )
+
+    file_name = playbook.obj_path.name
+    file_object = downloader.create_content_item_object(
+        file_name=file_name,
+        file_data=StringIO(safe_read_unicode(playbook.obj_path.read_bytes())),
+        _loaded_data=playbook_data,
+    )
+    custom_content_objects = {file_name: file_object}
+
+    uuid_mapping = downloader.create_uuid_to_name_mapping(custom_content_objects=custom_content_objects)
+    downloader.replace_uuid_ids(custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping)
+    # Assert no errors were logged (raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
+    assert logger_error.call_count == 0
+    # Assert ID value is always in quotes
+    assert f"id: '{file_object['name']}'" in file_object["file"].getvalue()
 
 
 def test_get_system_playbooks(mocker):

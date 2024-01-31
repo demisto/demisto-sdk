@@ -16,9 +16,7 @@ class IsNameContainIncidentInCorePackValidator(BaseValidator[ContentTypes]):
     error_code = "IN139"
     description = "Validate that there's no 'incident' in any of the commands names or arguments names for core packs integrations."
     error_message = "The following commands contain the word 'incident' in one or more of their fields, please remove:\n{0}"
-    fix_message = "Fixed and modified the following commands: {0}"
     related_field = "name"
-    is_auto_fixable = True
     invalid_commands: ClassVar[dict[str, dict]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

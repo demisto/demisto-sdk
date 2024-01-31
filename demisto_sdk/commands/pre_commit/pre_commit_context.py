@@ -125,7 +125,7 @@ class PreCommitContext:
             for hook in repo.get("hooks", []):
                 if not self.run_docker_hooks and hook["id"].endswith("in-docker"):
                     continue
-                if (self.run_hook and hook["id"] in self.run_hook) or (
+                if (self.run_hook and self.run_hook in hook["id"]) or (
                     not self.run_hook
                     and hook["id"] not in self.skipped_hooks
                     and not get_property(hook, self.mode, "skip")

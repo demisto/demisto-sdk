@@ -409,7 +409,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - if else claus exists when the if contains only one command instead of two.
+            - if else clause exists when the if contains only one command instead of two.
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
@@ -459,12 +459,43 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
 
+    def test_regular_match_statement_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - match case exists with only one command instead of two.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint for each appearance.
+        """
+        self.checker.commands = ["test-1", "test2"]
+        node_a = astroid.parse(
+            """
+            match command:
+                case 'test-1': #@
+                    return True
+            """
+        ).body[0]
+        assert node_a
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="unimplemented-commands-exist",
+                node=node_a,
+                args=str(["test2"]),
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="unimplemented-test-module", node=node_a
+            ),
+        ):
+            self.checker.visit_match(node_a)
+            self.checker.leave_module(node_a)
+
     def test_test_module_checker(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - if else claus exists when the if contains all commands and test-module.
+            - if else clause exists when the if contains all commands and test-module.
         Then:
             - Ensure no errors
         """
@@ -541,12 +572,43 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         ):
             self.checker.leave_module(node_a)
 
+    def test_all_command_match_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Command names are part of a match case.
+        Then:
+            - Ensure that nothing being added to the message errors of pylint for each appearance.
+        """
+
+        self.checker.commands = ["test-1", "test-2"]
+        node_a = astroid.parse(
+            """
+            match command:
+                case 'test-1' | 'test-2': #@
+                    return True
+                case _:
+                    return False
+            """
+        ).body[0]
+        # assert type(node_a) is astroid.Match
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_match(node_a)
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="unimplemented-test-module", node=node_a
+            )
+        ):
+            self.checker.leave_module(node_a)
+
     def test_not_all_if_command_in_list_checker(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Commands appear in the if claus as a list.
+            - Commands appear in the if clause as a list.
             - Two of the commands appear in the list.
             - The last command does not appear in the list.
         Then:
@@ -581,7 +643,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - All commands appear in the if claus as a list.
+            - All commands appear in the if clause as a list.
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """
@@ -607,7 +669,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Commands appear in the if claus as a tuple.
+            - Commands appear in the if clause as a tuple.
             - Two of the commands appear in the tuple.
             - The last command does not appear in the tuple.
         Then:
@@ -641,7 +703,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - All commands appear in the if claus as a tuple.
+            - All commands appear in the if clause as a tuple.
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """
@@ -667,7 +729,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Commands appear in the if claus as a tuple.
+            - Commands appear in the if clause as a tuple.
             - Two of the commands appear in the set.
             - The last command does not appear in the set.
         Then:
@@ -701,7 +763,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - All commands appear in the if claus as a set.
+            - All commands appear in the if clause as a set.
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """
@@ -727,7 +789,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - All commands appear in the if claus as a tuple.
+            - All commands appear in the if clause as a tuple.
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """
@@ -754,7 +816,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - All commands appear in the if claus as a tuple.
+            - All commands appear in the if clause as a tuple.
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """

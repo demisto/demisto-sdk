@@ -409,7 +409,7 @@ def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_wi
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 
-    def _generic_request_side_effect(
+    def _xsoar_generic_request_side_effect(
         path: str, method: str, response_type: str = "object"
     ):
         if path == "/health/server":
@@ -424,7 +424,7 @@ def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_wi
             )
 
     mocker.patch.object(
-        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
     )
     requests_mock.get(
         "https://test9.com/public_api/v1/healthcheck",
@@ -505,3 +505,51 @@ def test_get_client_from_server_type_unhealthy_xdr_server(mocker, requests_mock)
         get_client_from_server_type(
             base_url="https://test11.com", api_key="test", auth_id="1"
         )
+
+
+def test_get_xsoar_on_prem_client_from_server_type_with_auth_id(mocker, requests_mock):
+    """
+    Given:
+     - xsoar 6.13.0 version
+     - base url + auth-id + api-key provided
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure the XsoarClient is returned even when auth_id is defined (which is not needed)
+    """
+
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _xsoar_generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/health/server":
+            return "", 200, ""
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException(status=500, reason="error")
+        if path == "/about" and method == "GET" and response_type == "object":
+            return (
+                {"demistoVersion": "6.13.0"},
+                200,
+                {"Content-Type": "application/json"},
+            )
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
+    )
+    requests_mock.get(
+        "https://test12.com/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
+    )
+
+    assert (
+        type(
+            get_client_from_server_type(
+                base_url="https://test12.com", api_key="test", auth_id="1"
+            )
+        )
+        == XsoarClient
+    )

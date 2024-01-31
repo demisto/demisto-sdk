@@ -12,7 +12,6 @@ import demisto_client
 import pytest
 from urllib3.response import HTTPResponse
 
-from TestSuite.playbook import Playbook
 from demisto_sdk.commands.common.constants import (
     DEMISTO_BASE_URL,
     DEMISTO_KEY,
@@ -26,6 +25,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import get_child_files
 from demisto_sdk.commands.download.downloader import *
+from TestSuite.playbook import Playbook
 from TestSuite.test_tools import str_in_call_args_list
 
 TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
@@ -1173,7 +1173,9 @@ def test_uuids_replacement_in_content_items(mocker):
 
 
 @pytest.mark.parametrize("content_item_name", ("Test: Test", "[Test] Test"))
-def test_uuids_replacement_in_content_items_with_special_character_names(repo, mocker, content_item_name: str):
+def test_uuids_replacement_in_content_items_with_special_character_names(
+    repo, mocker, content_item_name: str
+):
     """
     Given: A content item name that contains special YAML characters (that requires wrapping the string quotes)
     When: Calling 'self.replace_uuid_ids' method.
@@ -1201,8 +1203,12 @@ def test_uuids_replacement_in_content_items_with_special_character_names(repo, m
     )
     custom_content_objects = {file_name: file_object}
 
-    uuid_mapping = downloader.create_uuid_to_name_mapping(custom_content_objects=custom_content_objects)
-    downloader.replace_uuid_ids(custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping)
+    uuid_mapping = downloader.create_uuid_to_name_mapping(
+        custom_content_objects=custom_content_objects
+    )
+    downloader.replace_uuid_ids(
+        custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping
+    )
     # Assert no warnings logged (error raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
     assert logger_warning.call_count == 0
     # Assert ID value is always in quotes

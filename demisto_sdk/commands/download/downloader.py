@@ -448,7 +448,9 @@ class Downloader:
         logger.debug("Custom content items loaded to memory successfully.")
         return loaded_files
 
-    def replace_uuid_ids(self, custom_content_objects: dict[str, dict], uuid_mapping: dict[str, str]):
+    def replace_uuid_ids(
+        self, custom_content_objects: dict[str, dict], uuid_mapping: dict[str, str]
+    ):
         """
         Find and replace UUID IDs of custom content items with their names (using the provided mapping).
 
@@ -466,7 +468,7 @@ class Downloader:
         for original_file_name, file_object in custom_content_objects.items():
             try:
                 if self.replace_uuid_ids_for_item(
-                        custom_content_object=file_object, uuid_mapping=uuid_mapping
+                    custom_content_object=file_object, uuid_mapping=uuid_mapping
                 ):
                     changed_uuids_count += 1
 

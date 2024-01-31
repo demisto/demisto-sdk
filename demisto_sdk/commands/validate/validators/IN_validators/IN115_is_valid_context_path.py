@@ -16,7 +16,7 @@ class IsValidContextPathValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the contextPath field of each output is in the right format."
     )
-    error_message = "The following commands include outputs with context path different from missing contextPath, please make sure to add: {0}."
+    error_message = "The following commands include outputs with missing contextPath, please make sure to add: {0}."
     related_field = "contextPath"
     is_auto_fixable = False
 

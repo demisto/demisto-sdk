@@ -12,12 +12,10 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
     MODELING_RULE_ID_SUFFIX,
-    MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
     PARSING_RULE_ID_SUFFIX,
-    PARSING_RULE_NAME_SUFFIX,
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -4285,22 +4283,22 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_modeling_rule_suffix_name(file_path, **kwargs):
+    def invalid_modeling_rule_suffix_name(file_path, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
             message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod
     @error_code_decorator
-    def invalid_parsing_rule_suffix_name(file_path, **kwargs):
+    def invalid_parsing_rule_suffix_name(file_path, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
             message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{PARSING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod

@@ -9,6 +9,8 @@ from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
+    ASSETS_MODELING_RULE,
+    ASSETS_MODELING_RULE_NAME_SUFFIX,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEMISTO_GIT_UPSTREAM,
     ENTITY_NAME_SEPARATORS,
@@ -775,6 +777,10 @@ class ContentEntityValidator(BaseValidator):
             id_suffix = PARSING_RULE_ID_SUFFIX
             name_suffix = PARSING_RULE_NAME_SUFFIX
             invalid_suffix_function = Errors.invalid_parsing_rule_suffix_name
+        if rule_type == ASSETS_MODELING_RULE:
+            id_suffix = MODELING_RULE_ID_SUFFIX
+            name_suffix = ASSETS_MODELING_RULE_NAME_SUFFIX
+            invalid_suffix_function = Errors.invalid_modeling_rule_suffix_name
 
         invalid_suffix = {
             "invalid_id": not rule_id.endswith(id_suffix),
@@ -783,7 +789,7 @@ class ContentEntityValidator(BaseValidator):
 
         if any(invalid_suffix.values()):
             error_message, error_code = invalid_suffix_function(
-                self.file_path, **invalid_suffix
+                self.file_path, name_suffix, **invalid_suffix
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

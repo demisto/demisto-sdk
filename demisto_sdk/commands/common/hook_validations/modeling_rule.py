@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import List
 
 from demisto_sdk.commands.common.constants import (
+    ASSETS_MODELING_RULE,
     MODELING_RULE,
+    FileType,
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -37,7 +39,18 @@ class ModelingRuleValidator(ContentEntityValidator):
             ignored_errors=ignored_errors,
             json_file_path=json_file_path,
         )
-        self._is_valid = self.is_valid_rule_suffix(MODELING_RULE)
+        rule_type = (
+            MODELING_RULE
+            if structure_validator.file_type
+            in [
+                FileType.MODELING_RULE,
+                FileType.MODELING_RULE_SCHEMA,
+                FileType.MODELING_RULE_XIF,
+                FileType.MODELING_RULE_TEST_DATA,
+            ]
+            else ASSETS_MODELING_RULE
+        )
+        self._is_valid = self.is_valid_rule_suffix(rule_type)
         self.schema_path = None
         self.schema_content = None
         self.xif_path = None

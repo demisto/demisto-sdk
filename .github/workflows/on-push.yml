@@ -417,7 +417,7 @@ jobs:
           source $(poetry env info --path)/bin/activate
 
           cd content
-          
+
           mkdir -p test-lint/logs
           export DEMISTO_SDK_LOG_FILE_PATH=./test-lint/logs
 

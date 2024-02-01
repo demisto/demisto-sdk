@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where downloading custom content items with special YAML characters (like `:`) in their names would cause an error during UUID ID replacement when using the **download** command.
+  type: fix
+pr_number: 3990

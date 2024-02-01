@@ -7,7 +7,7 @@ import tempfile
 import venv
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import dotenv
 from demisto_client.demisto_api.rest import ApiException
@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.clients import (
 )
 from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -625,7 +626,7 @@ def configure_integration(
         integration_script, IntegrationScript
     ), "Expected Integration Script"
     add_demistomock_and_commonserveruser(integration_script)
-    docker_image = integration_script.docker_image
+    docker_image: Union[str, DockerImage] = integration_script.docker_image
     interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
     configure_params(integration_script, secret_id, instance_name, test_module)
     if not docker_image:

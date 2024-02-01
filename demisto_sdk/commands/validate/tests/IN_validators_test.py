@@ -980,6 +980,43 @@ def test_IsDisplayContainBetaValidator_is_valid(
                         ]
                     ],
                 ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "description": "test command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "test",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "test argument",
+                                    },
+                                ],
+                                "outputs": [],
+                            },
+                            {
+                                "name": "test_2",
+                                "description": "test command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "test",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "test argument",
+                                    },
+                                ],
+                                "outputs": [],
+                            },
+                        ]
+                    ],
+                ),
             ],
             0,
             [],
@@ -1038,9 +1075,10 @@ def test_IsCommandArgsContainDuplicationsValidator_is_valid(
     """
     Given
     content_items iterables.
-        - Case 1: Two valid integrations:
+        - Case 1: Three valid integrations:
             - One integration without commands.
             - One integration with one command without duplicated args.
+            - One integration with two commands, both have the same argument.
         - Case 2: One invalid integration with a command with 3 arguments Two of the same name and one different..
     When
     - Calling the IsCommandArgsContainDuplicationsValidator is valid function.

@@ -19,7 +19,7 @@ class IsNoneCommandArgsValidator(BaseValidator[ContentTypes]):
     related_field = "script.commands"
     is_auto_fixable = True
     fix_message = "Set an empty list value to the following commands arguments: {0}."
-    invalid_commands: ClassVar[Dict[str,List[str]]] = {}
+    invalid_commands: ClassVar[Dict[str, List[str]]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -30,11 +30,15 @@ class IsNoneCommandArgsValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                invalid_commands := self.get_invalid_commands(content_item.data, content_item.name)
+                invalid_commands := self.get_invalid_commands(
+                    content_item.data, content_item.name
+                )
             )
         ]
-        
-    def get_invalid_commands(self, yml_data: Dict[str, Any], integration_name: str) -> List[str]:
+
+    def get_invalid_commands(
+        self, yml_data: Dict[str, Any], integration_name: str
+    ) -> List[str]:
         """iterate on the commands section in a yml and retrieve the commands with None value as an argument
 
         Args:
@@ -44,15 +48,21 @@ class IsNoneCommandArgsValidator(BaseValidator[ContentTypes]):
         Returns:
             List[str]: The list of the names of the commands that has a None value for the argument section.
         """
-        self.invalid_commands[integration_name] = [command.get("name") for command in yml_data.get("script", {}).get("commands", []) if "arguments" in command and command.get("arguments") is None]
+        self.invalid_commands[integration_name] = [
+            command.get("name")
+            for command in yml_data.get("script", {}).get("commands", [])
+            if "arguments" in command and command.get("arguments") is None
+        ]
         return self.invalid_commands[integration_name]
-    
+
     def fix(self, content_item: ContentTypes) -> FixResult:
         for command in content_item.data.get("script", {}).get("commands", []):
             if command.get("name") in self.invalid_commands[content_item.name]:
                 command["arguments"] = []
         return FixResult(
             validator=self,
-            message=self.fix_message.format(", ".join(self.invalid_commands[content_item.name])),
+            message=self.fix_message.format(
+                ", ".join(self.invalid_commands[content_item.name])
+            ),
             content_object=content_item,
         )

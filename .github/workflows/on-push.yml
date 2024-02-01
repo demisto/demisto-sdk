@@ -391,3 +391,38 @@ jobs:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
           validate-script-path: Tests/scripts/new_validate.sh
+
+  containerize-check:
+    runs-on: ubuntu-latest
+    name: Test SDK Containerized Successfully
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: '3.10'
+
+      - name: Fetch Dockerfile from another repository
+        run: |
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          REPO="demisto/dockerfiles"  # Replace with the owner and repository name
+          BRANCH="main"  # Replace with the branch or tag name
+          FILE_PATH="docker/demisto-sdk/Dockerfile"  # Adjust the path to your Dockerfile
+    
+          curl -H "Authorization: Bearer $TOKEN" \
+               -H "Accept: application/vnd.github.v3.raw" \
+               -o Dockerfile \
+               -L "https://api.github.com/repos/$REPO/contents/$FILE_PATH?ref=$BRANCH"
+
+      - name: Build Docker image
+        run: |
+          poetry export -f requirements.txt --output requirements.txt --without-hashes
+          docker build -t demisto-sdk-image .
+
+      - name: Run Docker image
+        run: |
+          docker run -d --name demisto-sdk-container demisto-sdk-image
+          docker logs

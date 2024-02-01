@@ -409,7 +409,7 @@ jobs:
         run: |
           TOKEN="${{ secrets.GITHUB_TOKEN }}"
           REPO="demisto/dockerfiles"  # Replace with the owner and repository name
-          BRANCH="main"  # Replace with the branch or tag name
+          BRANCH="master"  # Replace with the branch or tag name
           FILE_PATH="docker/demisto-sdk/Dockerfile"  # Adjust the path to your Dockerfile
     
           curl -H "Authorization: Bearer $TOKEN" \

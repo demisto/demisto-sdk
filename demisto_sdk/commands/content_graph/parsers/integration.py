@@ -36,11 +36,17 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
+        self.is_fetch_events_and_assets = self.script_info.get(
+            "isfetcheventsandassets", False
+        )
         self.is_mappable = self.script_info.get("ismappable", False)
         self.is_feed = self.script_info.get("feed", False)
         self.is_beta = self.script_info.get("beta", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.is_long_running = self.script_info.get("longRunning", False)
+        self.has_unittests: bool = (
+            self.path.parent / self.path.parts[-1].replace(".yml", "_test.py")
+        ).exists()
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()

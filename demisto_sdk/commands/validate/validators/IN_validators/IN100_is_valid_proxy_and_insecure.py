@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import ClassVar, Iterable, List, Tuple, Union
 
-from demisto_sdk.commands.common.constants import COMMON_PARAMS_DISPLAY_NAME
+from demisto_sdk.commands.common.constants import (
+    COMMON_PARAMS_DISPLAY_NAME,
+    ParameterType,
+)
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
@@ -32,7 +35,7 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n".join(
                         [
-                            f"The {key} param display name should be '{val['display']}', the 'defaultvalue' field should be 'False', the 'required' field should be 'False', and the 'required' field should be 8."
+                            f"The {key} param display name should be '{val['display']}', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8."
                             for key, val in self.fixed_params[content_item.name].items()
                         ]
                     )
@@ -68,7 +71,7 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
                 current_param.display != COMMON_PARAMS_DISPLAY_NAME[current_param.name],
                 current_param.defaultvalue not in (False, "false", None),
                 current_param.required,
-                current_param.type != 8,
+                current_param.type != ParameterType.BOOLEAN.value,
             ]
         ):
             self.fixed_params[integration_name] = self.fixed_params.get(
@@ -78,7 +81,7 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
                 "display": COMMON_PARAMS_DISPLAY_NAME[current_param.name],
                 "defaultvalue": False,
                 "required": False,
-                "type": 8,
+                "type": ParameterType.BOOLEAN.value,
             }
             return False
         return True
@@ -91,9 +94,9 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
             for param in content_item.params:
                 if param.name == key:
                     param.display = val["display"]
-                    param.defaultvalue = False
+                    param.defaultvalue = "false"
                     param.required = False
-                    param.type = 8
+                    param.type = ParameterType.BOOLEAN.value
                     break
         return FixResult(
             validator=self,

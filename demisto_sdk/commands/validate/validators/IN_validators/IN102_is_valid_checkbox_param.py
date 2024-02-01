@@ -50,7 +50,7 @@ class IsValidCheckboxParamValidator(BaseValidator[ContentTypes]):
             for param in params
             if param.type == ParameterType.BOOLEAN.value
             and param.name not in ("insecure", "unsecure", "proxy", "isFetch")
-            and not param.required
+            and param.required
         ]
         return self.misconfigured_checkbox_params_by_integration[integration_name]
 

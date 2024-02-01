@@ -11,6 +11,7 @@ from packaging.version import Version
 
 
 PROJECT_DATA_DIR = Path.home() / ".demisto-sdk"
+CACHE_DIR = PROJECT_DATA_DIR / "cache"
 LOGS_DIR = PROJECT_DATA_DIR / "logs"
 NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"
 

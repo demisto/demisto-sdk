@@ -44,7 +44,7 @@ class ValidateManager:
         #     if data.task.name == 'xdr-get-endpoints':
         #         data.task.name = 'core-get-endpoints'
         #         data.task.script = '|||core-get-endpoints'
-        # playbook.save()
+        # playbook.save(f"{playbook.path.parent}/{playbook.path.stem}_converted.yml")
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
             self.config_reader.gather_validations_to_run(

@@ -152,7 +152,6 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_playbook
 
-    def save(self):
-        file_path = f"{self.path.parent}/{self.path.stem}_converted.yml"
-        super().save(file_path)  # type: ignore
+    def save(self, output_path: str = ""):
+        super().save(output_path)  # type: ignore
 

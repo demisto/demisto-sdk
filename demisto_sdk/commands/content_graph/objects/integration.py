@@ -164,8 +164,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             return True
         return False
 
-    def save(self):
-        super().save()
+    def save(self, output_path: str = ""):
+        super().save(output_path)
         data = self.data
         data["script"]["commands"] = []
         yml_commands = []

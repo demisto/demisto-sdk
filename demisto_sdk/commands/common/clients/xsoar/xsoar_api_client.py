@@ -82,7 +82,7 @@ class XsoarClient:
         try:
             about: Union[ServerAbout, None] = self.about
         except Exception as error:
-            logger.debug(
+            logger.warning(
                 f"Could not get server /about of {self.server_config.base_api_url}, error={error}"
             )
             about = None

@@ -1,4 +1,4 @@
 changes:
-- description: Added support to check the health status when initialing a client for xsoar-on-prem/xsoar-saas by default.
+- description: Added support to check the health status when initialing a client for xsoar-on-prem/xsoar-saas by default, will throw exception if server is not healthy.
   type: feature
 pr_number: 3985

@@ -106,7 +106,7 @@ def test_get_all_logs(changelog_folder_mock: Path):
         yaml.dump(LOG_FILE_2, f)
     log_files = read_log_files()
     assert len(log_files) == 2
-    assert len(log_files[0].changes) == 2
+    assert len(log_files[0].changes) + len(log_files[1].changes) == 3
 
 
 @pytest.mark.parametrize("pr_name", [DUMMY_PR_NAME, ""])

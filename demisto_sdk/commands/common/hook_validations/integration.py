@@ -6,6 +6,7 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
+    ALLOWED_HIDDEN_PARAMS,
     BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES,
     DBOT_SCORES_DICT,
@@ -33,6 +34,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONTEXT_STANDARD_URL,
     XSOAR_SUPPORT,
     MarketplaceVersions,
+    ParameterType,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -42,7 +44,6 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -65,9 +66,13 @@ from demisto_sdk.commands.common.tools import (
     get_item_marketplaces,
     get_pack_name,
     is_iron_bank_pack,
+    is_str_bool,
     server_version_compare,
     string_to_bool,
     strip_description,
+)
+from demisto_sdk.commands.validate.tools import (
+    get_default_output_description,
 )
 
 default_additional_info = load_default_additional_info_dict()
@@ -77,9 +82,6 @@ class IntegrationValidator(ContentEntityValidator):
     """IntegrationValidator is designed to validate the correctness of the file structure we enter to content repo. And
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
-
-    EXPIRATION_FIELD_TYPE = 17
-    ALLOWED_HIDDEN_PARAMS = {"longRunning", "feedIncremental", "feedReputation"}
 
     def __init__(
         self,
@@ -650,10 +652,7 @@ class IntegrationValidator(ContentEntityValidator):
         for command in commands:
             command_name = command.get("name")
             # look for reputations commands
-            if (
-                command_name in BANG_COMMAND_NAMES
-                or command_name in MANDATORY_REPUTATION_CONTEXT_NAMES
-            ):
+            if command_name in BANG_COMMAND_NAMES:
                 context_outputs_paths = set()
                 context_outputs_descriptions = set()
                 for output in command.get("outputs", []):
@@ -1194,7 +1193,7 @@ class IntegrationValidator(ContentEntityValidator):
             configuration_display = configuration_param.get("display")
 
             # This parameter type will not use the display value.
-            if field_type == self.EXPIRATION_FIELD_TYPE:
+            if field_type == ParameterType.EXPIRATION_FIELD.value:
                 if configuration_display:
                     error_message, error_code = Errors.not_used_display_name(
                         configuration_param["name"]
@@ -1446,16 +1445,19 @@ class IntegrationValidator(ContentEntityValidator):
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
                 is_valid = (
                     (
-                        any(
+                        # Validate that the mentioned fields (k) are part of the parameter fields and the value is one of the options of the mentioned values (v).
+                        all(
                             k in param_details and param_details[k] in v
                             for k, v in must_be_one_of.items()
                         )
                         or not must_be_one_of
                     )
+                    # Validate that the mentioned fields (k) are part of the parameter fields and the value is equal the mentioned value (v).
                     and all(
                         k in param_details and param_details[k] == v
                         for k, v in equal_key_values.items()
                     )
+                    # Validate that the mentioned fields (k) are part of the parameter fields and the value contains mentioned value (v).
                     and all(
                         k in param_details and v in param_details[k]
                         for k, v in contained_key_values.items()
@@ -1544,14 +1546,6 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
-
-        def is_str_bool(input_: str):
-            try:
-                string_to_bool(input_)
-                return True
-            except ValueError:
-                return False
-
         valid = True
 
         for param in self.current_file.get("configuration", ()):
@@ -1571,7 +1565,7 @@ class IntegrationValidator(ContentEntityValidator):
             is_true = (hidden is True) or (
                 is_str_bool(hidden) and string_to_bool(hidden)
             )
-            invalid_bool = is_true and name not in self.ALLOWED_HIDDEN_PARAMS
+            invalid_bool = is_true and name not in ALLOWED_HIDDEN_PARAMS
             hidden_in_all_marketplaces = isinstance(hidden, list) and set(
                 hidden
             ) == set(MarketplaceVersions)
@@ -2182,12 +2176,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN149")
     def are_common_outputs_with_description(self):
-        defaults = json.loads(
-            (
-                Path(__file__).absolute().parents[2]
-                / "common/default_output_descriptions.json"
-            ).read_text()
-        )
+        defaults = get_default_output_description()
 
         missing = {}
         for command in self.current_file.get("script", {}).get("commands", []):

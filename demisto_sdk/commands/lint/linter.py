@@ -18,6 +18,7 @@ from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
+    DOCKER_REGISTRY_URL,
     FORMATTING_SCRIPT,
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_FILE_NAME,
@@ -365,10 +366,10 @@ class Linter:
                 return True
             self._facts["images"] = [[image, -1] for image in images]
 
-            # we want to use the docker-io.art.code.pan.run only if we run in content build (and not CI/CD for example)
+            # we want to use DOCKER_REGISTRY_URL only if we run in content build (and not CI/CD for example)
             if os.getenv("CONTENT_GITLAB_CI", False):
                 self._facts["images"] = [
-                    [f"docker-io.art.code.pan.run/{image[0]}", -1]
+                    [f"{DOCKER_REGISTRY_URL}/{image[0]}", -1]
                     for image in self._facts["images"]
                 ]
             # Gather environment variables for docker execution

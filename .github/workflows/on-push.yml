@@ -89,7 +89,7 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
 
-          poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml || pytest_exit_code=$?
+          poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml --profile || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
@@ -129,7 +129,7 @@ jobs:
         run: |
           source "$(poetry env info --path)/bin/activate"
 
-          poetry run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html:integration-tests/coverage --junitxml=integration-tests/junit.xml || pytest_exit_code=$?
+          poetry run pytest -v demisto_sdk/tests/integration_tests --cov=demisto_sdk --cov-report=html:integration-tests/coverage --junitxml=integration-tests/junit.xml --profile || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           exit $pytest_exit_code
@@ -168,7 +168,7 @@ jobs:
         run: |
           source "$(poetry env info --path)/bin/activate"
 
-          poetry run pytest -v demisto_sdk/commands/content_graph --cov=demisto_sdk --cov-report=html:graph-tests/coverage --junitxml=graph-tests/junit.xml || pytest_exit_code=$?
+          poetry run pytest -v demisto_sdk/commands/content_graph --cov=demisto_sdk --cov-report=html:graph-tests/coverage --junitxml=graph-tests/junit.xml --profile || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           exit $pytest_exit_code

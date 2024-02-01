@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import API_MODULES_PACK
 from demisto_sdk.commands.common.tools import get_current_categories
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.tools import validate_categories_approved
@@ -29,8 +30,11 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if len(content_item.categories) != 1  # type:ignore[arg-type]
-            or not validate_categories_approved(
-                content_item.pack_metadata_dict.get("categories", []), approved_list  # type: ignore[union-attr]
+            if (
+                len(content_item.categories) != 1  # type:ignore[arg-type]
+                or not validate_categories_approved(
+                    content_item.pack_metadata_dict.get("categories", []), approved_list  # type: ignore[union-attr]
+                )
             )
+            and content_item.name != API_MODULES_PACK
         ]

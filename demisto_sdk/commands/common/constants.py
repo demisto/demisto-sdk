@@ -1424,6 +1424,8 @@ COMMON_PARAMS_DISPLAY_NAME = {
     "proxy": "Use system proxy settings",
 }
 
+REQUIRED_ALLOWED_PARAMS = ("insecure", "unsecure", "proxy", "isFetch")
+
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}

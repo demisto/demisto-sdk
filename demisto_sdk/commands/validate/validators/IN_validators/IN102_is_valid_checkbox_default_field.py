@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Iterable, List
 
-from demisto_sdk.commands.common.constants import ParameterType
+from demisto_sdk.commands.common.constants import REQUIRED_ALLOWED_PARAMS, ParameterType
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
@@ -16,11 +16,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-class IsValidCheckboxParamValidator(BaseValidator[ContentTypes]):
+class IsValidCheckboxDefaultFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IN102"
     description = "Validate that th a checkbox param is configured correctly with required argument set to true."
-    error_message = "The following checkbox params required field is not set to True: {0}.\nMake sure to set it to True."
-    fix_message = "Set required field of the following params was set to True: {0}."
+    error_message = "The following checkbox params required field is set to True: {0}.\nMake sure to change it to False/remove the field."
+    fix_message = "Set required field of the following params was set to False: {0}."
     related_field = "configuration"
     is_auto_fixable = True
     misconfigured_checkbox_params_by_integration: ClassVar[dict] = {}
@@ -49,7 +49,7 @@ class IsValidCheckboxParamValidator(BaseValidator[ContentTypes]):
             param.name
             for param in params
             if param.type == ParameterType.BOOLEAN.value
-            and param.name not in ("insecure", "unsecure", "proxy", "isFetch")
+            and param.name not in REQUIRED_ALLOWED_PARAMS
             and param.required
         ]
         return self.misconfigured_checkbox_params_by_integration[integration_name]
@@ -60,7 +60,7 @@ class IsValidCheckboxParamValidator(BaseValidator[ContentTypes]):
                 param.name
                 in self.misconfigured_checkbox_params_by_integration[content_item.name]
             ):
-                param.required = True
+                param.required = False
         return FixResult(
             validator=self,
             message=self.fix_message.format(

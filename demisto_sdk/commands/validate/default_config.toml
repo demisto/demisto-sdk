@@ -54,7 +54,7 @@ warning = []
 
 
 [Custom_Categories]
-select = ["IN106"]
+select = []
 warning = []
 
 

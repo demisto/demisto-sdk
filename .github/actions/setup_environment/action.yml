@@ -44,4 +44,3 @@ runs:
         cd ${{ inputs.working-dir }}
         poetry install ${{ inputs.poetry-install-arguments }}
       shell: bash
-

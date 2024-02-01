@@ -43,7 +43,7 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                     ).get("default", []):
                         # If the argument is found, validate that the argument is according to the standards.
                         flag_found_arg = True
-                        if arg.default is False or not arg.isArray:
+                        if arg.default is False:
                             mandatory_fields_suffix = ", the 'isArray' field should be True, and the default field should not be set to False."
                             invalid_commands.append(
                                 f"- The {command.name} command arguments are invalid, it should include the following argument with the following configuration: name should be '{arg.name}'{mandatory_fields_suffix}"

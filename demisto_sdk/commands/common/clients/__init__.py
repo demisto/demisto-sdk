@@ -190,7 +190,7 @@ def get_client_from_server_type(
 
     try:
         # if xsiam-auth-id is defined by mistake
-        os.environ.pop(AUTH_ID)
+        os.environ.pop(AUTH_ID, None)
         return XsoarClient(
             config=XsoarClientConfig(
                 base_api_url=_base_url,

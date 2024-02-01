@@ -122,8 +122,8 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN149_does_common_ou
 from demisto_sdk.commands.validate.validators.IN_validators.IN150_is_valid_display_for_siem_integration import (
     IsValidDisplayForSiemIntegrationValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_empty_command_args import (
-    IsEmptyCommandArgsValidator,
+from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_none_command_args import (
+    IsNoneCommandArgsValidator,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN152_is_valid_default_value_for_checkbox_param import (
     IsValidDefaultValueForCheckboxParamValidator,
@@ -2740,44 +2740,132 @@ def test_IsValidDefaultValueForCheckboxParamValidator_fix():
     )
 
 
-def test_IsEmptyCommandArgsValidator_is_valid_success():
-    """
-    Given
-    Two valid integrations:
-        - One integration with commands with arguments.
-        - One integration without commands.
-    When
-    - Calling the IsEmptyCommandArgsValidator is valid function.
-    Then
-        - Make sure all validations passed.
-    """
-    content_items = [
-        create_integration_object(),
-        create_integration_object(
-            paths=["script.commands"],
-            values=[[]],
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "description": "test command",
+                                "deprecated": False,
+                                "arguments": [],
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "description": "test command",
+                                "deprecated": False,
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
         ),
-    ]
-    results = IsEmptyCommandArgsValidator().is_valid(content_items)
-    assert len(results) == 0
-
-
-def test_IsEmptyCommandArgsValidator_is_valid_failure():
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "description": "test command",
+                                "deprecated": False,
+                                "arguments": None,
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The following commands arguments are None: test.\nIf the command has no arguments, use `arguments: []` or remove the `arguments` field."
+            ],
+        ),
+    ],
+)
+def test_IsNoneCommandArgsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
     """
     Given
-    One invalid integration with command without arguments.
+    content_items iterables.
+        - Case 1: Four valid integrations:
+            - One integration with valid commands with non-empty arguments list.
+            - One integration with commands.
+            - One integration with a command with arguments = empty list.
+            - One integration with a command without arguments field.
+        - Case 2: An invalid integration with command with arguments field = None.
     When
-    - Calling the IsEmptyCommandArgsValidator is valid function.
+    - Calling the IsNoneCommandArgsValidator is valid function.
     Then
-        - Make sure the validation fail and the right error message is returned.
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
     """
-    content_item = create_integration_object()
-    content_item.commands[0].args = []
-    results = IsEmptyCommandArgsValidator().is_valid([content_item])
-    assert len(results) == 1
+    results = IsNoneCommandArgsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsNoneCommandArgsValidator_fix():
+    """
+    Given
+        An integration with command with arguments field = None.
+    When
+    - Calling the IsNoneCommandArgsValidator fix function.
+    Then
+        - Make sure that the arguments field was set to an empty list and that the right fix message was returned.
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "test",
+                    "description": "test command",
+                    "deprecated": False,
+                    "arguments": None,
+                }
+            ]
+        ],
+    )
     assert (
-        results[0].message
-        == "The following commands doesn't include any arguments: test-command.\nPlease make sure to include at least one argument."
+        content_item.data.get("script", {}).get("commands", [])[0].get("arguments")
+        is None
+    )
+    validator = IsNoneCommandArgsValidator()
+    IsNoneCommandArgsValidator.invalid_commands[content_item.name] = ["test"]
+    assert (
+        validator.fix(content_item).message
+        == "Set an empty list value to the following commands arguments: test."
+    )
+    assert (
+        content_item.data.get("script", {}).get("commands", [])[0].get("arguments")
+        == []
     )
 
 

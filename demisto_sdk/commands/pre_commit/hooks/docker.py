@@ -13,6 +13,8 @@ from docker.errors import DockerException
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
+    TESTS_REQUIRE_ISOLATED_PACK_IGNORE,
+    TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
 )
@@ -185,6 +187,30 @@ def _split_by_objects(
     return object_to_files
 
 
+def should_enable_network(integration_script: IntegrationScript) -> bool:
+    pack = integration_script.in_pack
+    if pack and (ignored_errors_dict := pack.ignored_errors_dict):
+        if TESTS_REQUIRE_NETWORK_PACK_IGNORE in ignored_errors_dict:
+            ignored_integrations_scripts_ids = ignored_errors_dict[
+                TESTS_REQUIRE_NETWORK_PACK_IGNORE
+            ]
+            if integration_script.object_id in ignored_integrations_scripts_ids:
+                return True
+    return False
+
+
+def should_isolate_container(integration_script: IntegrationScript) -> bool:
+    pack = integration_script.in_pack
+    if pack and (ignored_errors_dict := pack.ignored_errors_dict):
+        if TESTS_REQUIRE_ISOLATED_PACK_IGNORE in ignored_errors_dict:
+            ignored_integrations_scripts_ids = ignored_errors_dict[
+                TESTS_REQUIRE_ISOLATED_PACK_IGNORE
+            ]
+            if integration_script.object_id in ignored_integrations_scripts_ids:
+                return True
+    return False
+
+
 class DockerHook(Hook):
     """
     This class will make common manipulations on commands that need to run in docker
@@ -302,6 +328,8 @@ class DockerHook(Hook):
             integration_script,
             files_with_objects,
         ) in object_to_files_with_objects.items():
+            if "test" in new_hook["id"]:
+                pass
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
             if integration_script is not None:

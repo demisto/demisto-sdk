@@ -34,7 +34,8 @@ runs:
         # move logs files created and .coverage to artifacts folder
         mv .coverage ${{ inputs.artifacts-path-dir }}/.coverage || true
         mv demisto_sdk_debug*.log ${{ inputs.artifacts-path-dir }}/logs || true
-        mv prof/combined.svg ${{ inputs.artifacts-path-dir }}/profiling.svg || true
+        ls -a
+        mv ./prof/combined.svg ${{ inputs.artifacts-path-dir }}/profiling.svg
       shell: bash
     - name: Upload artifacts
       if: always()

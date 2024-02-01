@@ -80,19 +80,23 @@ class XsoarClient:
 
     def __str__(self) -> str:
         try:
-            version: Union[Version, str] = self.version
+            about: Union[ServerAbout, None] = self.about
         except Exception as error:
             logger.debug(
-                f"Could not get version of {self.server_config.base_api_url}, error={error}"
+                f"Could not get server /about of {self.server_config.base_api_url}, error={error}"
             )
-            version = ""
+            about = None
 
-        summary = (
-            f"{self.__class__.__name__}(api-url={self.server_config.base_api_url})"
-        )
-        if version:
-            return f"{summary}, (version={version})"
-        return summary
+        summary = f"api-url={self.server_config.base_api_url}"
+        if about:
+            if about.version:
+                summary = f"{summary}, version={about.version}"
+            if about.deployment_mode:
+                summary = f"{summary}, deployment-mode={self.about.deployment_mode}"
+            if about.product_mode:
+                summary = f"{summary}, product-mode={self.about.product_mode}"
+
+        return f"{self.__class__.__name__}({summary})"
 
     @property
     def is_server_type(self) -> bool:
@@ -131,14 +135,14 @@ class XsoarClient:
             )[1]
             if not status_code == requests.codes.ok:
                 logger.error(
-                    f"The XSOAR server part of {self.server_config} is not healthy"
+                    f"The XSOAR server part of {self.server_config.base_api_url} is not healthy"
                 )
                 return False
             return True
         except ApiException as err:
             if err.status == requests.codes.unauthorized:
                 raise UnAuthorized(
-                    message=f"Could not connect to {self.server_config}, credentials are invalid",
+                    message=f"Could not connect to {self.server_config.base_api_url}, credentials are invalid",
                     status_code=err.status,
                 )
             raise

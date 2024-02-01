@@ -2,6 +2,8 @@ import os
 from functools import lru_cache
 from typing import Optional
 
+from urllib3.exceptions import MaxRetryError
+
 from demisto_sdk.commands.common.clients.configs import (
     XsiamClientConfig,
     XsoarClientConfig,
@@ -158,6 +160,7 @@ def get_client_from_server_type(
         )
 
     should_validate_server_type = True
+    logger.debug(f"Checking if {_base_url} is {ServerType.XSIAM}")
 
     try:
         return XsiamClient(
@@ -169,7 +172,7 @@ def get_client_from_server_type(
             ),
             should_validate_server_type=should_validate_server_type,
         )
-    except InvalidServerType:
+    except (InvalidServerType, MaxRetryError):
         logger.debug(f"Checking if {_base_url} is {ServerType.XSOAR_SAAS}")
 
     try:
@@ -182,11 +185,12 @@ def get_client_from_server_type(
             ),
             should_validate_server_type=should_validate_server_type,
         )
-    except InvalidServerType:
+    except (InvalidServerType, MaxRetryError):
         logger.debug(f"Checking if {_base_url} is {ServerType.XSOAR}")
 
     try:
         # if xsiam-auth-id is defined by mistake
+        os.environ.pop(AUTH_ID)
         return XsoarClient(
             config=XsoarClientConfig(
                 base_api_url=_base_url,
@@ -198,7 +202,9 @@ def get_client_from_server_type(
             should_validate_server_type=should_validate_server_type,
         )
     except Exception as error:
-        logger.debug(f"The {_base_url} is not xsoar-on-prem server, error: {error}")
+        logger.debug(
+            f"The {_base_url} is not {ServerType.XSOAR} server, error: {error}"
+        )
         logger.error(
             f"Could not determine the correct api-client for {_base_url}, "
             f"make sure the {DEMISTO_BASE_URL}, {DEMISTO_KEY}, {AUTH_ID} are defined properly"

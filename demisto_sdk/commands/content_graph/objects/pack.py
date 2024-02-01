@@ -524,7 +524,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             *[content_item.to_dict() for content_item in self.content_items],
         )
 
-    def save(self, output_path: str = ""):
+    def save(self, output_path: str = None):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
         super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore

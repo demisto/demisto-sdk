@@ -222,7 +222,7 @@ class ContentItem(BaseContent):
     def ordered_data(self) -> dict:
         return get_file(self.path, keep_order=True)
 
-    def save(self, output_path: str = ""):
+    def save(self, output_path: str = None):
         output_path = output_path if output_path else self.path
         super()._save(output_path, self.ordered_data)
 

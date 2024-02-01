@@ -218,7 +218,7 @@ class BaseContent(BaseNode):
     def __hash__(self):
         return hash(self.path)
 
-    def save(self, output_path: str = None):
+    def save(self, output_path: Path = None):
         raise NotImplementedError
 
     @property

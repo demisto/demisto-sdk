@@ -57,9 +57,9 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
                 verify_ssl=False,
                 encoding="utf-8-sig",
             )
-        except FileReadError:
+        except FileReadError as error:
             logger.error(
-                f"Could not read {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repository"
+                f"Could not read {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repository, error: {error}"
             )
             dockerfiles_metadata = {"docker_images": {}}
 
@@ -78,9 +78,9 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         if not self.docker_images:
             return None
 
-        if isinstance(docker_image, str):
+        if not isinstance(docker_image, DockerImage):
             try:
-                docker_image = DockerImage.parse(docker_image)
+                docker_image = DockerImage(docker_image, raise_if_not_valid=True)
             except ValueError as error:
                 logger.debug(
                     f"Could not parse docker-image {docker_image}, error:{error}"

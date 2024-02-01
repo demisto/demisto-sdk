@@ -425,7 +425,7 @@ class File(ABC, BaseModel):
             timeout: timeout for the request
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
-            encoding: whether to apply any custom encoding
+            encoding: the encoding to apply
 
         Returns:
             Any: the file content in the desired format

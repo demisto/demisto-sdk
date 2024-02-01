@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.common import lazy_property
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
@@ -102,3 +103,7 @@ class IntegrationScript(ContentItem):
                 native_image_config=NativeImageConfig.get_instance(),
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
+
+    @property
+    def readme(self) -> str:
+        return get_file(str(self.path / "README.md"), return_content=True, git_sha=git_sha)

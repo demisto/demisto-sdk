@@ -145,7 +145,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @property
     def readme(self) -> str:
-        return get_file(str(self.path / "README.md"), return_content=True)
+        return get_file(str(self.path / "README.md"), return_content=True, git_sha=git_sha)
 
     @property
     def pack_id(self) -> str:

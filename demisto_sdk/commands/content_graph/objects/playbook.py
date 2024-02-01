@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 
@@ -14,3 +15,7 @@ class Playbook(BasePlaybook, content_type=ContentType.PLAYBOOK):  # type: ignore
             if TEST_PLAYBOOKS_DIR not in path.parts and path.suffix == ".yml":
                 return True
         return False
+
+    @property
+    def readme(self) -> str:
+        return get_file(str(self.path / "README.md"), return_content=True, git_sha=git_sha)

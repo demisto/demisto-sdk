@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    FileSuffix,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_json, get_value
@@ -24,6 +25,7 @@ class JSONContentItemParser(ContentItemParser):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.path = self.get_path_with_suffix(".json")
+        self.file_type = FileSuffix.JSON
 
         self.json_data: Dict[str, Any] = self.get_json(git_sha=git_sha)
         self.original_json_data: Dict[str, Any] = self.json_data

@@ -179,6 +179,7 @@ class BaseContent(BaseNode):
     field_mapping: dict = Field({}, exclude=True)
     path: Path
     git_status: Optional[GitStatuses]
+    git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
 
     def _save(
@@ -252,13 +253,25 @@ class BaseContent(BaseNode):
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         # if the file was added or renamed - add a pointer to the object created from the old file content / path.
-        if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
+        # if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
+        #     obj = BaseContent.from_path(path)
+        #     if obj:
+        #         path = path if not old_file_path else old_file_path
+        #         obj.git_status = git_status
+        #         old_obj = BaseContent.from_path(path, git_sha=git_sha)
+        #         obj.old_base_content_object = old_obj
+        #     return obj
+        if git_sha:
             obj = BaseContent.from_path(path)
             if obj:
-                path = path if not old_file_path else old_file_path
                 obj.git_status = git_status
-                old_obj = BaseContent.from_path(path, git_sha=git_sha)
-                obj.old_base_content_object = old_obj
+                if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
+                    path = path if not old_file_path else old_file_path
+                    obj.old_base_content_object = BaseContent.from_path(path, git_sha=git_sha)
+                else:
+                    obj.old_base_content_object = obj.copy(deep=True)
+                if obj.old_base_content_object:
+                    obj.old_base_content_object.git_sha = git_sha
             return obj
         if (
             path.is_dir()

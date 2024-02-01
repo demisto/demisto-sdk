@@ -342,10 +342,6 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
-        modified_files = self.filter_files(modified_files)
-        added_files = self.filter_files(added_files)
-        renamed_files = self.filter_files(renamed_files)
-        deleted_files = self.filter_files(deleted_files)
         file_by_status_dict = {file: GitStatuses.MODIFIED for file in modified_files}
         file_by_status_dict.update({file: GitStatuses.ADDED for file in added_files})
         file_by_status_dict.update(
@@ -360,26 +356,64 @@ class Initializer:
         self.sort_items_by_package(items_by_package_dict, renamed_files)
         self.sort_items_by_package(items_by_package_dict, deleted_files)
         statuses_dict: Dict[Path, GitStatuses] = self.get_items_status(items_by_package_dict, file_by_status_dict)
-        basecontent_with_path_set: Set[BaseContent] = set()
-        basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_set(
-                modified_files, GitStatuses.MODIFIED, git_sha=self.prev_ver
+        # basecontent_with_path_set: Set[BaseContent] = self.paths_to_basecontent_set(
+        #         modified_files, GitStatuses.MODIFIED, git_sha=self.prev_ver
+        #     )
+        # basecontent_with_path_set = basecontent_with_path_set.union(
+        #     self.paths_to_basecontent_set(
+        #         renamed_files, GitStatuses.RENAMED, git_sha=self.prev_ver
+        #     )
+        # )
+        # basecontent_with_path_set = basecontent_with_path_set.union(
+        #     self.paths_to_basecontent_set(
+        #         added_files, GitStatuses.ADDED, git_sha=self.prev_ver
+        #     )
+        # )
+        basecontent_with_path_set: Set[BaseContent] = self.paths_to_basecontent_set(
+                statuses_dict, git_sha=self.prev_ver
             )
-        )
-        basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_set(
-                renamed_files, GitStatuses.RENAMED, git_sha=self.prev_ver
-            )
-        )
-        basecontent_with_path_set = basecontent_with_path_set.union(
-            self.paths_to_basecontent_set(
-                added_files, GitStatuses.ADDED, git_sha=self.prev_ver
-            )
-        )
         return basecontent_with_path_set
 
+    # def paths_to_basecontent_set(
+    #     self, files_set: set, git_status: Optional[str], git_sha: Optional[str] = None
+    # ) -> Set[BaseContent]:
+    #     """Return a set of all the successful casts to BaseContent from given set of files.
+
+    #     Args:
+    #         files_set (set): The set of file paths to case into BaseContent.
+    #         git_status (Optional[str]): The git status for the given files (if given).
+
+    #     Returns:
+    #         Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
+    #     """
+    #     basecontent_with_path_set: Set[BaseContent] = set()
+    #     invalid_content_items: List[str] = []
+    #     for file_path in files_set:
+    #         try:
+    #             if git_status == GitStatuses.RENAMED:
+    #                 temp_obj: Optional[BaseContent] = BaseContent.from_path(
+    #                     Path(file_path[0]),
+    #                     git_status=git_status,
+    #                     old_file_path=Path(file_path[1]),
+    #                     git_sha=git_sha,
+    #                 )
+    #             elif git_status == GitStatuses.ADDED:
+    #                 temp_obj = BaseContent.from_path(Path(file_path), git_status)
+    #             else:
+    #                 temp_obj = BaseContent.from_path(
+    #                     Path(file_path), git_status, git_sha=git_sha
+    #                 )
+    #             if temp_obj is None:
+    #                 invalid_content_items.append(file_path)
+    #             else:
+    #                 basecontent_with_path_set.add(temp_obj)
+    #         except InvalidContentItemException:
+    #             invalid_content_items.append(file_path)
+    #     return basecontent_with_path_set
+    
+    
     def paths_to_basecontent_set(
-        self, files_set: set, git_status: Optional[str], git_sha: Optional[str] = None
+        self, statuses_dict: Dict[Path, GitStatuses], git_sha: Optional[str] = None
     ) -> Set[BaseContent]:
         """Return a set of all the successful casts to BaseContent from given set of files.
 
@@ -392,7 +426,7 @@ class Initializer:
         """
         basecontent_with_path_set: Set[BaseContent] = set()
         invalid_content_items: List[str] = []
-        for file_path in files_set:
+        for file_path, git_status in statuses_dict.items():
             try:
                 if git_status == GitStatuses.RENAMED:
                     temp_obj: Optional[BaseContent] = BaseContent.from_path(
@@ -401,8 +435,6 @@ class Initializer:
                         old_file_path=Path(file_path[1]),
                         git_sha=git_sha,
                     )
-                elif git_status == GitStatuses.ADDED:
-                    temp_obj = BaseContent.from_path(Path(file_path), git_status)
                 else:
                     temp_obj = BaseContent.from_path(
                         Path(file_path), git_status, git_sha=git_sha
@@ -414,20 +446,6 @@ class Initializer:
             except InvalidContentItemException:
                 invalid_content_items.append(file_path)
         return basecontent_with_path_set
-
-    def filter_files(self, files_set: Set[Path]):
-        """Filter out all the files with suffixes that are not supported by BaseContent.
-
-        Args:
-            files_set (Set[Path]): The set of paths to filter
-
-        Returns:
-            Set: The set of filtered files.
-        """
-        # extensions_list_to_filter = [".png", ".md", ".svg", ".py"]
-        # removed_suffixes_ls = [file for file in files_set if file.suffix not in extensions_list_to_filter]
-        # return set(removed_test_data_items)
-        return set([file for file in files_set if "test_data" not in file.parts])
 
     def sort_items_by_package(
         self, items_by_package_dict: Dict[Path, List], files_set: Set[Path]

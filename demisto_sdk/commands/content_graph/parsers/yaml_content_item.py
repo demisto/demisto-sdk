@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    FileSuffix,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_value, get_yaml
@@ -27,6 +28,7 @@ class YAMLContentItemParser(ContentItemParser):
         super().__init__(path, pack_marketplaces)
         self.path = self.get_path_with_suffix(".yml")
         self.yml_data: Dict[str, Any] = self.get_yaml(git_sha=git_sha)
+        self.file_type = FileSuffix.YML
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(

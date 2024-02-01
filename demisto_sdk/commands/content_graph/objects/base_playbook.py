@@ -1,4 +1,4 @@
-from typing import Callable, Optional, List, Dict, Any
+from typing import Any, Callable, Dict, List, Optional
 
 import demisto_client
 from pydantic import BaseModel, Field
@@ -10,6 +10,7 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
     MarketplaceIncidentToAlertPlaybooksPreparer,
 )
 
+
 class TimerTriggerSchema(BaseModel):
     fieldname: str
     action: str
@@ -18,11 +19,14 @@ class TimerTriggerSchema(BaseModel):
 class EvidenceDataDescription(BaseModel):
     simple: Optional[str]
 
+
 class EvidenceDataOccurred(BaseModel):
     simple: Optional[str]
 
+
 class EvidenceDataTags(BaseModel):
     simple: Optional[str]
+
 
 class EvidenceData(BaseModel):
     description: Optional[EvidenceDataDescription]
@@ -50,7 +54,7 @@ class Task(BaseModel):
     type: Optional[str]
     iscommand: bool
     elasticcommonfields: Optional[Dict[str, str]]
-    brand: str
+    brand: Optional[str]
     issystemtask: Optional[bool]
     clonedfrom: Optional[str]
     name_xsoar: Optional[str]
@@ -64,11 +68,13 @@ class Task(BaseModel):
     description_xsoar_saas: Optional[str]
     description_xsoar_on_prem: Optional[str]
 
+
 class ArgFilterSchema(BaseModel):
     operator: str
     ignorecase: Optional[bool]
     left: Dict[str, Any]
     right: Optional[Dict[str, Any]]
+
 
 class Loop(BaseModel):
     iscommand: Optional[bool]
@@ -81,11 +87,13 @@ class Loop(BaseModel):
     wait: Optional[int]
     forEach: Optional[bool]
 
+
 class ConditionSchema(BaseModel):
     # Define the fields in condition_schema
     # You might need to adjust the field types based on the actual structure
     label: str
     condition: Optional[List[list]]
+
 
 class TaskConfig(BaseModel):
     id: str
@@ -154,4 +162,3 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
 
     def save(self, output_path: str = ""):
         super().save(output_path)  # type: ignore
-

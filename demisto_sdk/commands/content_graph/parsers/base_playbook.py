@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional
 
 import networkx
 
-from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     build_tasks_graph,

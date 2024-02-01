@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -463,7 +464,7 @@ def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR], skip_prepare=[])
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,
@@ -483,7 +484,7 @@ def mock_integration(name: str = "SampleIntegration", deprecated: bool = False):
         marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
         deprecated=deprecated,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         category="blabla",
         commands=[
             Command(name="test-command", description=""),

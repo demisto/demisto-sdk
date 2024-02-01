@@ -6,16 +6,14 @@ from pathlib import Path
 import docker
 import requests
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.constants import NEO4J_DIR
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
-    NEO4J_FOLDER,
     NEO4J_PASSWORD,
 )
 
-REPO_PATH = CONTENT_PATH.absolute()
 NEO4J_VERSION = "5.13.0"
 
 NEO4J_SERVICE_IMAGE = f"neo4j:{NEO4J_VERSION}"
@@ -70,7 +68,7 @@ def _download_apoc():
         return
     download_url = apocs[0].get("downloadUrl")
     sha1 = apocs[0].get("sha1")
-    plugins_folder = REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER
+    plugins_folder = NEO4J_DIR / NEO4J_PLUGINS_FOLDER
     plugins_folder.mkdir(parents=True, exist_ok=True)
 
     if _is_apoc_available(plugins_folder, sha1):
@@ -88,9 +86,9 @@ def _docker_start():
     logger.debug("Starting neo4j service")
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
-    (REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
-    (REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER).mkdir(parents=True, exist_ok=True)
-    (REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER).mkdir(parents=True, exist_ok=True)
+    (NEO4J_DIR / NEO4J_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
+    (NEO4J_DIR / NEO4J_IMPORT_FOLDER).mkdir(parents=True, exist_ok=True)
+    (NEO4J_DIR / NEO4J_PLUGINS_FOLDER).mkdir(parents=True, exist_ok=True)
     # suppress logs in docker init to avoid spamming
 
     docker_client.containers.run(
@@ -98,9 +96,9 @@ def _docker_start():
         name="neo4j-content",
         ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
         volumes=[
-            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
-            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
-            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
+            f"{NEO4J_DIR / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
+            f"{NEO4J_DIR / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
+            f"{NEO4J_DIR / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
         ],
         detach=True,
         environment={
@@ -137,7 +135,7 @@ def start():
         logger.debug("Neo4j is running locally. Start manually")
         return
 
-    Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
+    NEO4J_DIR.mkdir(exist_ok=True, parents=True)
     # we download apoc only if we are running on docker
     # if the user is running locally he needs to setup apoc manually
     _download_apoc()
@@ -147,7 +145,7 @@ def start():
         logger.debug(
             f"Could not start neo4j container, delete data folder and trying again. {e}"
         )
-        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
+        shutil.rmtree(NEO4J_DIR / NEO4J_DATA_FOLDER, ignore_errors=True)
         _docker_start()
 
 
@@ -161,9 +159,9 @@ def stop(force: bool = False, clean: bool = False):
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
     if clean:
-        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
+        shutil.rmtree(NEO4J_DIR / NEO4J_DATA_FOLDER, ignore_errors=True)
         shutil.rmtree(
-            REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER, ignore_errors=True
+            NEO4J_DIR / NEO4J_PLUGINS_FOLDER, ignore_errors=True
         )
 
 
@@ -181,4 +179,4 @@ def is_running_on_docker():
 def get_neo4j_import_path() -> Path:
     if not is_running_on_docker():
         return LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER
-    return REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER
+    return NEO4J_DIR / NEO4J_IMPORT_FOLDER

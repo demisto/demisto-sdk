@@ -28,18 +28,21 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 from demisto_sdk.commands.content_graph.tests.update_content_graph_test import (
     _get_pack_by_id,
 )
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 FORMAT_CMD = "format"
 
 
 @pytest.fixture(autouse=True)
-def setup_method(mocker, repo):
+def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
     bc.CONTENT_PATH = Path(repo.path)
-    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    mocker.patch.object(
+        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    )
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch(
         "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",

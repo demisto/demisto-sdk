@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 import demisto_client

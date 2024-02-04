@@ -2076,6 +2076,8 @@ PACK_DEFAULT_MARKETPLACES: List = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
+
+
 class FileSuffix(str, Enum):
     YML = ".yml"
     JSON = ".json"

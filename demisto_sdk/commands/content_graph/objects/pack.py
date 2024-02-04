@@ -145,7 +145,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @property
     def readme(self) -> str:
-        return get_file(str(self.path / "README.md"), return_content=True, git_sha=git_sha)
+        return get_file(
+            str(self.path / "README.md"), return_content=True, git_sha=self.git_sha
+        )
 
     @property
     def pack_id(self) -> str:
@@ -528,3 +530,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
         super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
+
+    def get_related_content(self):
+        super().get_related_content().extend(
+            [self.path / ".pack-ignore.md", self.path / ".secrets-ignore.md"]
+        )

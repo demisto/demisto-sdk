@@ -106,4 +106,19 @@ class IntegrationScript(ContentItem):
 
     @property
     def readme(self) -> str:
-        return get_file(str(self.path / "README.md"), return_content=True, git_sha=git_sha)
+        return get_file(
+            str(self.path.parent / "README.md"),
+            return_content=True,
+            git_sha=self.git_sha,
+        )
+
+    def get_related_content(self) -> List[Path]:
+        related_content_ls = super().get_related_content()
+        related_content_ls.extend(
+            [
+                self.path.parent / "README.md",
+                self.path.parent / f"{self.path.parts[-2]}_test.py",
+                self.path.parent / f"{self.path.parts[-2]}.py",
+            ]
+        )
+        return related_content_ls

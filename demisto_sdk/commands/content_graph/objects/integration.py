@@ -180,3 +180,15 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
 
         data["script"]["commands"] = yml_commands
         write_dict(self.path, data, indent=4)
+
+    def get_related_content(self) -> List[Path]:
+        related_content_ls = super().get_related_content()
+        related_content_ls.extend(
+            [
+                self.path.parent / f"{self.path.parts[-2]}_image.png",
+                self.path.parent / f"{self.path.parts[-2]}_description.md",
+                self.path.parent / f"{self.path.parts[-2]}_light.svg",
+                self.path.parent / f"{self.path.parts[-2]}_dark.svg",
+            ]
+        )
+        return related_content_ls

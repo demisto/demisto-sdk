@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC
+from pathlib import Path
 from typing import (
     ClassVar,
+    Dict,
     Generic,
     Iterable,
     List,
@@ -13,7 +15,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import FileSuffix, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
@@ -37,6 +39,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     fix_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
+    expected_file_types: (ClassVar[Optional[List[FileSuffix]]]): The list of file types (suffixes) the validation should run on.
     run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
@@ -49,6 +52,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     fix_message: ClassVar[str] = ""
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
+    expected_file_types: ClassVar[Optional[List[FileSuffix]]] = [
+        FileSuffix.YML,
+        FileSuffix.JSON,
+    ]
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
@@ -64,6 +71,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         content_item: ContentTypes,
         ignorable_errors: list,
         support_level_dict: dict,
+        statuses_dict: Dict[Path, GitStatuses],
     ) -> bool:
         """check whether to run validation on the given content item or not.
 
@@ -71,6 +79,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             content_item (BaseContent): The content item to run the validation on.
             ignorable_errors (list): The list of the errors that can be ignored.
             support_level_dict (dict): A dict with the lists of validation to run / not run according to the support level.
+            statuses_dict (Dict[Path, GitStatuses]): A dict with a mapping of the files from file to git status.
 
         Returns:
             bool: True if the validation should run. Otherwise, return False.
@@ -81,6 +90,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
+                ),
+                should_run_according_to_file_type(
+                    content_item, statuses_dict, self.expected_file_types
                 ),
                 not is_error_ignored(
                     self.error_code, content_item.ignored_errors, ignorable_errors
@@ -211,3 +223,22 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:
         return False
     return True
+
+
+def should_run_according_to_file_type(
+    content_item: ContentTypes,
+    statuses_dict: Dict[Path, GitStatuses],
+    expected_file_types: List[FileSuffix],
+) -> bool:
+    """
+    Check if the given content item git status is in the given expected git statuses for the specific validation.
+
+    Args:
+        content_item_git_status (Optional[str]): The content item git status (Added, Modified, Renamed, Deleted or None if file was created via -i/-a)
+        expected_git_statuses (Optional[List[str]]): The validation's expected git statuses, if None then validation should run on all cases.
+
+    Returns:
+        bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
+    """
+    package_path = content_item.path.parent
+    items_with

@@ -181,6 +181,7 @@ class BaseContent(BaseNode):
     git_status: Optional[GitStatuses]
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
+    related_content_by_status: dict = {}
 
     def _save(
         self,
@@ -243,6 +244,9 @@ class BaseContent(BaseNode):
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
 
+    def get_related_content(self) -> List[Path]:
+        return []
+
     @staticmethod
     @lru_cache
     def from_path(
@@ -267,7 +271,9 @@ class BaseContent(BaseNode):
                 obj.git_status = git_status
                 if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
                     path = path if not old_file_path else old_file_path
-                    obj.old_base_content_object = BaseContent.from_path(path, git_sha=git_sha)
+                    obj.old_base_content_object = BaseContent.from_path(
+                        path, git_sha=git_sha
+                    )
                 else:
                     obj.old_base_content_object = obj.copy(deep=True)
                 if obj.old_base_content_object:

@@ -1,5 +1,7 @@
-from typing import List, Set
+from pathlib import Path
+from typing import Dict, List, Set
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_abstract_class
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -35,9 +37,12 @@ class ValidateManager:
         self.validation_results = validation_results
         self.config_reader = config_reader
         self.initializer = initializer
-        self.objects_to_run: Set[
-            BaseContent
-        ] = self.initializer.gather_objects_to_run_on()
+        self.objects_to_run: Set[BaseContent] = set()
+        self.statuses_dict: Dict[Path, GitStatuses] = {}
+        (
+            self.objects_to_run,
+            self.statuses_dict,
+        ) = self.initializer.gather_objects_to_run_on()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
@@ -63,6 +68,7 @@ class ValidateManager:
                         content_object,
                         self.configured_validations.ignorable_errors,
                         self.configured_validations.support_level_dict,
+                        self.statuses_dict,
                     ),
                     self.objects_to_run,
                 )

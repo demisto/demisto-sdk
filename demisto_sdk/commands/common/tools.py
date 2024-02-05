@@ -4239,6 +4239,7 @@ def retry(
     times: int = 3,
     delay: int = 1,
     exceptions: Union[Tuple[Type[Exception], ...], Type[Exception]] = Exception,
+    recover: Callable = None,
 ):
     """
     retries to execute a function until an exception isn't raised anymore.
@@ -4247,6 +4248,7 @@ def retry(
         times: the amount of times to try and execute the function
         delay: the number of seconds to wait between each time
         exceptions: the exceptions that should be caught when executing the function
+        recover: a recover function to run when wrapped function failed
 
     Returns:
         Any: the decorated function result
@@ -4265,6 +4267,10 @@ def retry(
                     logger.debug(
                         f"error when executing func {func_name}, error: {error}, time {i}"
                     )
+                    if recover:
+                        logger.debug(f"The function {func_name} has failed. recovering "
+                                     f"using the {recover.__name__} function")
+                        recover(*args, **kwargs)
                     if i == times:
                         raise
                     time.sleep(delay)
@@ -4358,11 +4364,3 @@ def get_pack_latest_rn_version(pack_path: str) -> str:
         return list_of_versions[-1]
     else:
         return ""
-
-
-def is_str_bool(input_: str) -> bool:
-    try:
-        string_to_bool(input_)
-        return True
-    except ValueError:
-        return False

@@ -105,19 +105,24 @@ class IntegrationDocUpdateManager:
         - `Path` if the YAML was found, `None` otherwise.
         """
 
-        # TODO move to debug
-        logger.info(
+        logger.debug(
             f"Reading {self.integration_name} YAML from {'remote' if remote else 'local'} git path..."
         )
 
         path = None
 
+        if not self.new_yaml_path.is_absolute():
+            yml_path = str(self.new_yaml_path.resolve())
+        else:
+            yml_path = os.path.join(
+                INTEGRATIONS_DIR, self.integration_name, self.new_yaml_path.name
+            )
         try:
             if self.is_ui_contribution or not remote:
-                path = list(get_content_path().rglob(self.new_yaml_path.name))[0]
+                path = list(get_content_path().rglob(yml_path))[0]
             elif remote:
                 remote_yaml_txt = TextFile.read_from_git_path(
-                    self.new_yaml_path, from_remote=remote
+                    yml_path, from_remote=remote
                 )
 
                 tmp_file = tempfile.NamedTemporaryFile(
@@ -135,8 +140,8 @@ class IntegrationDocUpdateManager:
             GitFileReadError,
             KeyError,
             IndexError,
-        ) as err:
-            msg = f"Could not find file '{str(self.new_yaml_path)}' in {'remote' if remote else 'local'}: {str(err)}"
+        ):
+            msg = f"Could not find file '{str(self.new_yaml_path)}' in {'remote' if remote else 'local'}. Please specify the full path to the integration YAML file, e.g. `demisto-sdk generate-docs -i $(realpath {self.new_yaml_path})`"
             logger.error(msg)
             self.update_errors.append(msg)
             path = None
@@ -146,7 +151,7 @@ class IntegrationDocUpdateManager:
             self.update_errors.append(msg)
             path = None
         finally:
-            logger.info(f"Path returned: '{path}'")
+            logger.debug(f"Path returned: '{path}'")
             return path if path and path.exists() else None
 
     def get_integration_readme_path(self, remote: bool) -> Optional[Path]:
@@ -164,21 +169,24 @@ class IntegrationDocUpdateManager:
         Returns:
         - `Path` if the README was found in remote/local, `None` if not.
         """
+
+        if not self.new_readme_path.is_absolute():
+            readme_path = str(self.new_readme_path.resolve())
+        else:
+            readme_path = os.path.join(
+                INTEGRATIONS_DIR, self.integration_name, INTEGRATIONS_README_FILE_NAME
+            )
+
         try:
-            # TODO move to debug
-            logger.info(
+            logger.debug(
                 f"Reading {self.integration_name} README from {'remote' if remote else 'local'} git path..."
             )
 
             if self.is_ui_contribution or not remote:
-                path = list(
-                    get_content_path().rglob(
-                        f"{INTEGRATIONS_DIR}/{self.integration_name}/{INTEGRATIONS_README_FILE_NAME}"
-                    )
-                )[0]
+                path = list(get_content_path().rglob(readme_path))[0]
             elif remote:
                 remote_readme_txt = TextFile.read_from_git_path(
-                    self.new_readme_path, from_remote=remote
+                    readme_path, from_remote=remote
                 )
 
                 tmp_file = tempfile.NamedTemporaryFile(

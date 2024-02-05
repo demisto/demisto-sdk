@@ -31,7 +31,7 @@ COMMAND_OUTPUTS_FILENAME = "get_dependencies_outputs.json"
 )
 def get_dependencies(
     ctx: typer.Context,
-    input: str = typer.Argument(
+    pack: str = typer.Argument(
         ...,
         help="The ID of the pack to check dependencies for.",
     ),
@@ -40,7 +40,7 @@ def get_dependencies(
         "-sr/-nsr",
         "--show-reasons/--no-show-reasons",
         is_flag=True,
-        help="If true, prints the exact content items relationships paths of the returned pack dependencies.",
+        help="If true, prints the exact relationships paths of the returned pack dependencies.",
     ),
     dependency: str = typer.Option(
         None,
@@ -141,7 +141,7 @@ def get_dependencies(
             update_content_graph(graph)
         result = get_dependencies_by_pack_path(
             graph,
-            input,
+            pack,
             show_reasons,
             dependency,
             all_level_dependencies,

@@ -200,3 +200,77 @@ demisto-sdk graph get-relationships Packs/SplunkPy/Integrations/SplunkPy/SplunkP
 ```
 demisto-sdk graph get-relationships Packs/Jira -d 5 --relationship depends_on --mandatory-only --direction targets
 ```
+
+### get-dependencies
+Returns dependencies of a given content pack.
+
+#### Arguments
+* **pack**
+
+    The ID of the pack to check dependencies for. [required]
+
+* **-sr/nsr, --show-reasons/--no-show-reasons**
+
+    If true, prints the exact relationships paths of the returned pack dependencies.
+
+* **-d, --dependency**
+
+    A specific dependency pack ID to get the data for.
+
+* **-mp, --marketplace**
+
+    The marketplace to generate the graph for.
+
+* **-m, --mandatory-only**
+
+    If true, returns only mandatory dependencies.
+
+* **-ald, --all-level-dependencies**
+
+    If true, will retrieve all level of dependencies.
+
+* **--include-test-dependencies**
+
+    If true, includes test dependencies in outputs.
+
+* **--include-hidden**
+
+    If true, includes hidden packs in outputs.
+
+* **-dir, --direction**
+
+    Specifies whether to return only sources, only targets or both sides of dependencies [Default is only targets].
+
+* **-u/nu, --update-graph/--no-update-graph**
+
+    If true, runs an update on the graph before querying.
+
+* **-o, --output**
+
+    A path to a directory in which to dump the outputs to.
+
+* **-clt, --console_log_threshold**
+
+    Minimum logging threshold for the console logger.
+
+* **-flt, --file_log_threshold**
+
+    Minimum logging threshold for the file logger.
+
+* **-lp, --log_file_path**
+
+    Path to store all levels of logs.
+
+#### Examples
+```
+demisto-sdk graph get-dependencies SplunkPy -sr
+```
+```
+demisto-sdk graph get-dependencies Campaign -sr --include-test-dependencies --include-hidden -ald -m
+```
+```
+demisto-sdk graph get-dependencies Campaign -sr -ald -m -dir both
+```
+```
+demisto-sdk graph get-dependencies Campaign -sr -dir both -d Phishing
+```

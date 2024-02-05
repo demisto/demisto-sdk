@@ -208,7 +208,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
         errors += result.errors
         errors_and_warnings.append(result.errors_and_warnings)
     errors_and_warnings_concat = "\n".join(elem for elem in errors_and_warnings if elem)
-    logger.warning(errors_and_warnings_concat)
+    logger.info(errors_and_warnings_concat)
 
     if any(return_codes):  # An error was found
         errors_str = "\n".join(error for error in errors if error)

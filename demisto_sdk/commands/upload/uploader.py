@@ -97,6 +97,7 @@ class Uploader:
         self.marketplace = marketplace
         self.zip = zip  # -z flag
         self.destination_zip_dir = destination_zip_dir
+        self._use_custom_upload_endpoint_pack = kwargs.get("custom_upload_endpoint")
 
     def _upload_zipped(self, path: Path) -> bool:
         """
@@ -176,6 +177,7 @@ class Uploader:
                 target_demisto_version=Version(str(self.demisto_version)),
                 skip_validations=True,
                 marketplace=self.marketplace,
+                use_custom_upload_endpoint_pack=self._use_custom_upload_endpoint_pack
             ):
                 self._successfully_uploaded_zipped_packs.extend(pack_names)
                 return True
@@ -285,6 +287,7 @@ class Uploader:
                 target_demisto_version=Version(str(self.demisto_version)),
                 zip=self.zip,  # only used for Packs
                 destination_zip_dir=self.destination_zip_dir,  # only used for Packs
+                use_custom_upload_endpoint_pack=self._use_custom_upload_endpoint_pack
             )
 
             # upon reaching this line, the upload is surely successful

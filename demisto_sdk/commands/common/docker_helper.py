@@ -223,6 +223,17 @@ class DockerBase:
                 with open(tar_file_path.name, "rb") as byte_file:
                     container.put_archive("/", byte_file.read())
 
+    def remove_container(self, **kwargs):
+        container: docker.models.containers.Container = (
+            init_global_docker_client().containers.get(kwargs.get('name'))
+        )
+        container.remove()
+
+    @retry(
+        times=3,
+        exceptions=(requests.exceptions.ConnectionError, requests.exceptions.Timeout),
+        recover=remove_container,
+    )
     def create_container(
         self,
         image: str,
@@ -440,10 +451,6 @@ class MountableDocker(DockerBase):
                 logger.debug(f"Failed to mount {src} to {target}")
         return mounts
 
-    @retry(
-        times=3,
-        exceptions=(requests.exceptions.ConnectionError, requests.exceptions.Timeout),
-    )
     def create_container(
         self,
         image: str,

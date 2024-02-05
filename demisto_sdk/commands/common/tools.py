@@ -4364,3 +4364,11 @@ def get_pack_latest_rn_version(pack_path: str) -> str:
         return list_of_versions[-1]
     else:
         return ""
+
+
+def is_str_bool(input_: str) -> bool:
+    try:
+        string_to_bool(input_)
+        return True
+    except ValueError:
+        return False

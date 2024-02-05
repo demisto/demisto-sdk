@@ -1,11 +1,17 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
+    AUTHOR_IMAGE_FILE_NAME,
     DEMISTO_GIT_UPSTREAM,
+    PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME,
+    PACKS_WHITELIST_FILE_NAME,
+    RELEASE_NOTES_DIR,
     GitStatuses,
     PathLevel,
 )
@@ -18,7 +24,6 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     specify_files_from_directory,
 )
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import (
@@ -328,7 +333,7 @@ class Initializer:
             content_objects_to_run_with_packs.add(content_object)
         return content_objects_to_run_with_packs
 
-    def get_files_from_git(self) -> Set[BaseContent]:
+    def get_files_from_git(self) -> Tuple[Set[BaseContent], Dict[Path, GitStatuses]]:
         """Return all files added/changed/deleted.
 
         Returns:
@@ -345,7 +350,9 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
-        file_by_status_dict: Dict[Path, GitStatuses] = {file: GitStatuses.MODIFIED for file in modified_files}
+        file_by_status_dict: Dict[Path, GitStatuses] = {
+            file: GitStatuses.MODIFIED for file in modified_files
+        }
         file_by_status_dict.update({file: GitStatuses.ADDED for file in added_files})
         file_by_status_dict.update(
             {file: GitStatuses.RENAMED for file in renamed_files}
@@ -353,72 +360,19 @@ class Initializer:
         file_by_status_dict.update(
             {file: GitStatuses.DELETED for file in deleted_files}
         )
-        # items_by_package_dict: Dict[Path, List] = {}
-        # self.sort_items_by_package(items_by_package_dict, modified_files)
-        # self.sort_items_by_package(items_by_package_dict, added_files)
-        # self.sort_items_by_package(items_by_package_dict, renamed_files)
-        # self.sort_items_by_package(items_by_package_dict, deleted_files)
-        # statuses_dict: Dict[Path, GitStatuses] = self.get_items_status(
-        #     items_by_package_dict, file_by_status_dict
-        # )
-        # basecontent_with_path_set: Set[BaseContent] = self.paths_to_basecontent_set(
-        #         modified_files, GitStatuses.MODIFIED, git_sha=self.prev_ver
-        #     )
-        # basecontent_with_path_set = basecontent_with_path_set.union(
-        #     self.paths_to_basecontent_set(
-        #         renamed_files, GitStatuses.RENAMED, git_sha=self.prev_ver
-        #     )
-        # )
-        # basecontent_with_path_set = basecontent_with_path_set.union(
-        #     self.paths_to_basecontent_set(
-        #         added_files, GitStatuses.ADDED, git_sha=self.prev_ver
-        #     )
-        # )
+        statuses_dict: Dict[Path, Union[GitStatuses, None]] = self.get_items_status(
+            file_by_status_dict
+        )
         basecontent_with_path_set: Set[BaseContent] = self.paths_to_basecontent_set(
             statuses_dict, git_sha=self.prev_ver
         )
-        self.connect_related_files(self, basecontent_with_path_set, file_by_status_dict)
-        return basecontent_with_path_set
-
-    # def paths_to_basecontent_set(
-    #     self, files_set: set, git_status: Optional[str], git_sha: Optional[str] = None
-    # ) -> Set[BaseContent]:
-    #     """Return a set of all the successful casts to BaseContent from given set of files.
-
-    #     Args:
-    #         files_set (set): The set of file paths to case into BaseContent.
-    #         git_status (Optional[str]): The git status for the given files (if given).
-
-    #     Returns:
-    #         Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
-    #     """
-    #     basecontent_with_path_set: Set[BaseContent] = set()
-    #     invalid_content_items: List[str] = []
-    #     for file_path in files_set:
-    #         try:
-    #             if git_status == GitStatuses.RENAMED:
-    #                 temp_obj: Optional[BaseContent] = BaseContent.from_path(
-    #                     Path(file_path[0]),
-    #                     git_status=git_status,
-    #                     old_file_path=Path(file_path[1]),
-    #                     git_sha=git_sha,
-    #                 )
-    #             elif git_status == GitStatuses.ADDED:
-    #                 temp_obj = BaseContent.from_path(Path(file_path), git_status)
-    #             else:
-    #                 temp_obj = BaseContent.from_path(
-    #                     Path(file_path), git_status, git_sha=git_sha
-    #                 )
-    #             if temp_obj is None:
-    #                 invalid_content_items.append(file_path)
-    #             else:
-    #                 basecontent_with_path_set.add(temp_obj)
-    #         except InvalidContentItemException:
-    #             invalid_content_items.append(file_path)
-    #     return basecontent_with_path_set
+        self.connect_related_files(basecontent_with_path_set, file_by_status_dict)
+        return basecontent_with_path_set, file_by_status_dict
 
     def paths_to_basecontent_set(
-        self, statuses_dict: Dict[Path, GitStatuses], git_sha: Optional[str] = None
+        self,
+        statuses_dict: Dict[Path, Union[GitStatuses, None]],
+        git_sha: Optional[str] = None,
     ) -> Set[BaseContent]:
         """Return a set of all the successful casts to BaseContent from given set of files.
 
@@ -452,111 +406,76 @@ class Initializer:
                 invalid_content_items.append(str(file_path))
         return basecontent_with_path_set
 
-    def sort_items_by_package(
-        self, items_by_package_dict: Dict[Path, List], files_set: Set[Path]
-    ):
-        for file in files_set:
-            path = file.parent
-            if path in items_by_package_dict:
-                items_by_package_dict[path].append(file)
+    def get_items_status(
+        self, file_by_status_dict: Dict[Path, GitStatuses]
+    ) -> Dict[Path, Union[GitStatuses, None]]:
+        statuses_dict: Dict[Path, Union[GitStatuses, None]] = {}
+        for path, git_status in file_by_status_dict.items():
+            path_str = str(path)
+            if PACKS_PACK_META_FILE_NAME in path_str:
+                # implement logic for pack_metadata.
+                statuses_dict[path] = git_status
+            elif any(
+                file in path_str
+                for file in (
+                    PACKS_PACK_IGNORE_FILE_NAME,
+                    RELEASE_NOTES_DIR,
+                    PACKS_WHITELIST_FILE_NAME,
+                    PACKS_README_FILE_NAME,
+                    AUTHOR_IMAGE_FILE_NAME,
+                )
+            ):
+                metadata_path = Path(
+                    f"Packs/{path.parts[1]}/{PACKS_PACK_META_FILE_NAME}"
+                )
+                if not statuses_dict[metadata_path]:
+                    statuses_dict[metadata_path] = None
+            elif "Integrations" in path_str or "Scripts" in path_str:
+                if path_str.endswith(".yml"):
+                    statuses_dict[path] = git_status
+                elif path.suffix in (".py", "js", "ps1") and not any(
+                    [
+                        path_str.endswith("_test.py"),
+                        path_str.endswith("_test.js"),
+                        path_str.endswith("_test.ps1"),
+                    ]
+                ):
+                    path = Path(
+                        path_str.replace(".py", ".yml")
+                        .replace(".js", ".yml")
+                        .replace(".ps1", ".yml")
+                    )
+                    statuses_dict[path] = git_status
+                else:
+                    path = Path(path.parent / f"{path.parts[-2]}.yml")
+                    statuses_dict[path] = None
+            elif "Playbooks" in path_str:
+                if path_str.endswith(".yml"):
+                    statuses_dict[path] = git_status
+                else:
+                    path = Path(
+                        path.parent
+                        / str(path.parts[-1]).replace(
+                            f"_{PACKS_README_FILE_NAME}", ".yml"
+                        )
+                    )
+                    statuses_dict[path] = None
             else:
-                items_by_package_dict[path] = [file]
+                statuses_dict[path] = git_status
 
-    # def get_items_status(self, items_by_package_dict, file_by_status_dict):
-    #     statuses_dict = {}
-    #     for package_path, package_content in items_by_package_dict.items():
-    #         try:
-    #             content_type: ContentType = ContentType.by_path(package_path)
-    #             if content_type in [
-    #                 ContentType.CLASSIFIER,
-    #                 ContentType.DASHBOARD,
-    #                 ContentType.GENERIC_DEFINITION,
-    #                 ContentType.GENERIC_FIELD,
-    #                 ContentType.GENERIC_MODULE,
-    #                 ContentType.GENERIC_TYPE,
-    #                 ContentType.INCIDENT_FIELD,
-    #                 ContentType.INCIDENT_TYPE,
-    #                 ContentType.INDICATOR_FIELD,
-    #                 ContentType.INDICATOR_TYPE,
-    #                 ContentType.JOB,
-    #                 ContentType.LAYOUT,
-    #                 ContentType.LIST,
-    #                 ContentType.MAPPER,
-    #                 ContentType.REPORT,
-    #                 ContentType.TRIGGER,
-    #                 ContentType.WIDGET,
-    #                 ContentType.XSIAM_DASHBOARD,
-    #                 ContentType.XSIAM_REPORT,
-    #                 ContentType.WIZARD,
-    #                 ContentType.LAYOUT_RULE,
-    #                 ContentType.XDRC_TEMPLATE,
-    #                 ContentType.PACK,
-    #             ]:
-    #                 if content_item := [
-    #                     file for file in package_content if file.suffix == ".json"
-    #                 ]:
-    #                     statuses_dict[package_path] = file_by_status_dict[
-    #                         content_item[0]
-    #                     ]
-    #                 else:
-    #                     statuses_dict[package_path] = None
+        return statuses_dict
 
-    #             elif content_type in [
-    #                 ContentType.INTEGRATION,
-    #                 ContentType.SCRIPT,
-    #                 ContentType.TEST_SCRIPT,
-    #                 ContentType.TEST_PLAYBOOK,
-    #                 ContentType.PLAYBOOK,
-    #                 ContentType.CORRELATION_RULE,
-    #             ]:
-    #                 if content_item := [
-    #                     file for file in package_content if file.suffix == ".yml"
-    #                 ]:
-    #                     statuses_dict[package_path] = file_by_status_dict[
-    #                         content_item[0]
-    #                     ]
-    #                 elif content_item := [
-    #                     file for file in package_content if file.suffix == ".py"
-    #                 ]:
-    #                     statuses_dict[package_path] = file_by_status_dict[
-    #                         content_item[0]
-    #                     ]
-    #                 else:
-    #                     statuses_dict[package_path] = None
-
-    #             elif content_type in [
-    #                 ContentType.PARSING_RULE,
-    #                 ContentType.MODELING_RULE,
-    #                 ContentType.ASSETS_MODELING_RULE,
-    #             ]:
-    #                 if content_item := [
-    #                     file for file in package_content if file.suffix == ".yml"
-    #                 ]:
-    #                     statuses_dict[package_path] = file_by_status_dict[
-    #                         content_item[0]
-    #                     ]
-    #                 elif content_item := [
-    #                     file for file in package_content if file.suffix == ".xif"
-    #                 ]:
-    #                     statuses_dict[package_path] = file_by_status_dict[
-    #                         content_item[0]
-    #                     ]
-    #                 elif content_item := [
-    #                     file for file in package_content if file.suffix == ".json"
-    #                 ]:
-    #                     statuses_dict[package_path] = file_by_status_dict[
-    #                         content_item[0]
-    #                     ]
-    #         except Exception as e:
-    #             logger.error(
-    #                 f"Could not fine type for content item {str(package_path)}, reason: {str(e)}"
-    #             )
-
-    #     return statuses_dict
-
-    def connect_related_files(self, basecontent_with_path_set: Set[BaseContent], statuses_dict: Dict[Path, GitStatuses]):
+    def connect_related_files(
+        self,
+        basecontent_with_path_set: Set[BaseContent],
+        statuses_dict: Dict[Path, GitStatuses],
+    ):
         paths_set = set(statuses_dict.keys())
         for content_item in basecontent_with_path_set:
-            if related_paths := set(content_item.get_related_content()).intersection(paths_set):
+            if related_paths := set(content_item.get_related_content()).intersection(
+                paths_set
+            ):
                 for related_path in related_paths:
-                    content_item.related_content_by_status[related_path] = statuses_dict[related_path]
+                    content_item.related_content_by_status[
+                        related_path
+                    ] = statuses_dict[related_path]

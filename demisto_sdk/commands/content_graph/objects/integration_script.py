@@ -114,11 +114,14 @@ class IntegrationScript(ContentItem):
 
     def get_related_content(self) -> List[Path]:
         related_content_ls = super().get_related_content()
+        suffix = (
+            ".ps1" if self.is_powershell else ".js" if self.is_javascript else ".py"
+        )
         related_content_ls.extend(
             [
                 self.path.parent / "README.md",
-                self.path.parent / f"{self.path.parts[-2]}_test.py",
-                self.path.parent / f"{self.path.parts[-2]}.py",
+                self.path.parent / f"{self.path.parts[-2]}_test{suffix}",
+                self.path.parent / f"{self.path.parts[-2]}{suffix}",
             ]
         )
         return related_content_ls

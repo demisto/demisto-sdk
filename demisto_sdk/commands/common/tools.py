@@ -83,7 +83,6 @@ from demisto_sdk.commands.common.constants import (
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
     MARKETPLACE_TO_CORE_PACKS_FILE,
-    METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
     OFFICIAL_CONTENT_GRAPH_PATH,
@@ -1650,7 +1649,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
-        elif path.name == METADATA_FILE_NAME:
+        elif path.name == PACKS_PACK_META_FILE_NAME:
             return FileType.METADATA
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
@@ -3296,12 +3295,12 @@ def get_mp_types_from_metadata_by_item(file_path):
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
     if (
-        METADATA_FILE_NAME in Path(file_path).parts
+        PACKS_PACK_META_FILE_NAME in Path(file_path).parts
     ):  # for when the type is pack, the item we get is the metadata path
         metadata_path = file_path
     else:
         metadata_path_parts = get_pack_dir(file_path)
-        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+        metadata_path = Path(*metadata_path_parts) / PACKS_PACK_META_FILE_NAME
 
     try:
         if not (

@@ -91,9 +91,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
                 ),
-                should_run_according_to_file_type(
-                    content_item, statuses_dict, self.expected_file_types
-                ),
+                # should_run_according_to_file_type(
+                #     content_item, statuses_dict, self.expected_file_types
+                # ),
                 not is_error_ignored(
                     self.error_code, content_item.ignored_errors, ignorable_errors
                 ),
@@ -225,20 +225,20 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     return True
 
 
-def should_run_according_to_file_type(
-    content_item: ContentTypes,
-    statuses_dict: Dict[Path, GitStatuses],
-    expected_file_types: List[FileSuffix],
-) -> bool:
-    """
-    Check if the given content item git status is in the given expected git statuses for the specific validation.
+# def should_run_according_to_file_type(
+#     content_item: ContentTypes,
+#     statuses_dict: Dict[Path, GitStatuses],
+#     expected_file_types: List[FileSuffix],
+# ) -> bool:
+#     """
+#     Check if the given content item git status is in the given expected git statuses for the specific validation.
 
-    Args:
-        content_item_git_status (Optional[str]): The content item git status (Added, Modified, Renamed, Deleted or None if file was created via -i/-a)
-        expected_git_statuses (Optional[List[str]]): The validation's expected git statuses, if None then validation should run on all cases.
+#     Args:
+#         content_item_git_status (Optional[str]): The content item git status (Added, Modified, Renamed, Deleted or None if file was created via -i/-a)
+#         expected_git_statuses (Optional[List[str]]): The validation's expected git statuses, if None then validation should run on all cases.
 
-    Returns:
-        bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
-    """
-    package_path = content_item.path.parent
-    items_with
+#     Returns:
+#         bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
+#     """
+#     package_path = content_item.path.parent
+#     items_with

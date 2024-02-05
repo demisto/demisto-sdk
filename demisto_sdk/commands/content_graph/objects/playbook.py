@@ -39,6 +39,6 @@ class Playbook(BasePlaybook, content_type=ContentType.PLAYBOOK):  # type: ignore
                 / "doc_files"
                 / str(self.path.parts[-1])
                 .replace(".yml", ".png")
-                .removeprefix("playbook-"),
+                .replace("playbook-", ""),
             ]
         )

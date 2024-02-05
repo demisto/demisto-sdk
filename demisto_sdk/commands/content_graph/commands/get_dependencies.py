@@ -48,7 +48,7 @@ def get_dependencies(
         "--dependency",
         show_default=True,
         case_sensitive=False,
-        help="Dependency pack ID to get the data for.",
+        help="A specific dependency pack ID to get the data for.",
     ),
     marketplace: MarketplaceVersions = typer.Option(
         MarketplaceVersions.XSOAR,
@@ -92,6 +92,13 @@ def get_dependencies(
         case_sensitive=False,
         help="Specifies whether to return only dependents (sources), only dependencies (targets) or both.",
     ),
+    update_graph: bool = typer.Option(
+        True,
+        "-u/-nu",
+        "--update-graph/--no-update-graph",
+        is_flag=True,
+        help="If true, runs an update on the graph before querying.",
+    ),
     output: Optional[Path] = typer.Option(
         None,
         "-o",
@@ -130,7 +137,8 @@ def get_dependencies(
         log_file_path=log_file_path,
     )
     with ContentGraphInterface() as graph:
-        update_content_graph(graph)
+        if update_graph:
+            update_content_graph(graph)
         result = get_dependencies_by_pack_path(
             graph,
             input,

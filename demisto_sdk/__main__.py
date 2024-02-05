@@ -4,9 +4,6 @@ import sys
 
 import click
 
-from demisto_sdk.commands.content_graph.commands.get_dependencies import (
-    get_dependencies,
-)
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
@@ -54,6 +51,9 @@ from demisto_sdk.commands.common.tools import (
     parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.commands.create import create
+from demisto_sdk.commands.content_graph.commands.get_dependencies import (
+    get_dependencies,
+)
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,
 )

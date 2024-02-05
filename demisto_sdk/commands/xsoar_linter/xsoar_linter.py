@@ -131,7 +131,7 @@ class ProcessResults:
     """Class for keeping track of a process execution results."""
 
     return_code: int = 0
-    errors: Optional[List[str]] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
     errors_and_warnings: str = ""
 
 

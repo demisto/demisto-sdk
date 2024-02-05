@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Iterable, List
 
-from demisto_sdk.commands.common.constants import ParameterType
+from demisto_sdk.commands.common.constants import GitStatuses, ParameterType
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
@@ -26,6 +26,7 @@ class ShouldHaveDisplayFieldValidator(BaseValidator[ContentTypes]):
     related_field = "display, type"
     is_auto_fixable = True
     invalid_params: ClassVar[dict] = {}
+    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

@@ -224,9 +224,9 @@ class DockerBase:
                 with open(tar_file_path.name, "rb") as byte_file:
                     container.put_archive("/", byte_file.read())
 
-    def remove_container(self, **kwargs):
+    def remove_container(self, name, **kwargs):
         container: docker.models.containers.Container = (
-            init_global_docker_client().containers.get(kwargs.get('name'))
+            init_global_docker_client().containers.get(name)
         )
         container.remove()
 

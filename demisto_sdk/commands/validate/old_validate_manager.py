@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
+    LISTS_DIR,
     OLDEST_SUPPORTED_VERSION,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
@@ -142,7 +143,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
-from demisto_sdk.commands.common.logger import get_log_file, logger
+from demisto_sdk.commands.common.logger import LOG_FILE_PATH, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     detect_file_level,
@@ -729,7 +730,7 @@ class OldValidateManager:
         return True
 
     def is_skipped_file(self, file_path: str) -> bool:
-        """check wether the file in the given file_path is in the SKIPPED_FILES list.
+        """check whether the file in the given file_path is in the 'SKIPPED_FILES' list.
 
         Args:
             file_path: the file on which to run.
@@ -738,10 +739,15 @@ class OldValidateManager:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
         path = Path(file_path)
-        if get_log_file() == path:
+        if LOG_FILE_PATH and LOG_FILE_PATH == path:
             return True
-        return path.name in SKIPPED_FILES or (
-            path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"
+        return (
+            path.name in SKIPPED_FILES
+            or (
+                path.name == "CommonServerPython.py"
+                and path.parent.parent.name != "Base"
+            )
+            or (path.parent.name == LISTS_DIR and path.name.endswith("_data.json"))
         )
 
     # flake8: noqa: C901

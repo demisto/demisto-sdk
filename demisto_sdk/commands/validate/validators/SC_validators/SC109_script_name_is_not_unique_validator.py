@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import replace_incident_to_alert
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -13,8 +14,10 @@ ContentTypes = Script
 
 
 class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
-    error_code = "GR106"
-    description = "Validate that there are no 2 content items with the same type and the same name."
+    error_code = "SC109"
+    description = (
+        "Validate that there are no scripts with the same type and the same name."
+    )
     error_message = (
         "Cannot create a script with the name {0}, because a script with the name {1} already exists.\n"
         "(it will not be possible to create a new script whose name includes the word Alert/Alerts "
@@ -23,7 +26,6 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         "it will not be possible to create a script with the name `getAlert`)"
     )
     related_field = "name"
-    content_types = ContentTypes
     is_auto_fixable = False
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -32,7 +34,8 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
         when the script name included `alert`.
         """
         file_paths_to_objects = {
-            str(content_item.path): content_item for content_item in content_items
+            str(content_item.path.relative_to(CONTENT_PATH)): content_item
+            for content_item in content_items
         }
         query_results = self.graph.get_duplicate_script_name_included_incident(
             list(file_paths_to_objects)

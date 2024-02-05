@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
+import dotenv
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
@@ -68,6 +69,8 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
+
+dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
 
 SDK_OFFLINE_ERROR_MESSAGE = (
     "[red]An internet connection is required for this command. If connected to the "
@@ -209,9 +212,6 @@ def main(ctx, config, version, release_notes, **kwargs):
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
-    import dotenv
-
-    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
 
     if platform.system() == "Windows":
         logger.warning(

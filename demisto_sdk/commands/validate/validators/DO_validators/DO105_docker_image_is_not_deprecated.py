@@ -43,14 +43,12 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     content_item.docker_image,
                     self.deprecated_dockers_to_reasons.get(
-                        content_item.docker_image_object.name
+                        content_item.docker_image.name
                     ),
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
             if not content_item.is_javascript
-            and self.deprecated_dockers_to_reasons.get(
-                content_item.docker_image_object.name
-            )
+            and self.deprecated_dockers_to_reasons.get(content_item.docker_image.name)
         ]

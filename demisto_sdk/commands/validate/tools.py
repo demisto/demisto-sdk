@@ -1,9 +1,13 @@
 import re
+from pathlib import Path
 from typing import Dict, List, Optional, Set
 
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_approved_tags_from_branch
-from demisto_sdk.commands.content_graph.objects.integration import Parameter
+from demisto_sdk.commands.common.tools import (
+    get_approved_tags_from_branch,
+)
+from demisto_sdk.commands.content_graph.objects.integration import Command, Parameter
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 
 
@@ -104,17 +108,42 @@ def validate_categories_approved(categories: list, approved_list: list):
     return True
 
 
+def get_default_output_description():
+    return json.loads(
+        (
+            Path(__file__).absolute().parents[1]
+            / "common/default_output_descriptions.json"
+        ).read_text()
+    )
+
+
 def find_param(params: List[Parameter], param_to_find: str) -> Optional[Parameter]:
-    """_summary_
+    """Retrieve the parameter with the given name.
 
     Args:
         params (List[Parameter]): The integration's params list.
         param_to_find (str): The name of the param we wish to find.
 
     Returns:
-        dict: The param with the given name or an empty string.
+        Command: The Parameter with the given name or None.
     """
     for param in params:
         if param.name == param_to_find:
             return param
+    return None
+
+
+def find_command(commands: List[Command], command_to_find: str) -> Optional[Command]:
+    """Retrieve the command with the given name.
+
+    Args:
+        commands (List[Command]): The integration's commands list.
+        command_to_find (str): The name of the command we wish to find.
+
+    Returns:
+        Command: The command with the given name or None.
+    """
+    for command in commands:
+        if command.name == command_to_find:
+            return command
     return None

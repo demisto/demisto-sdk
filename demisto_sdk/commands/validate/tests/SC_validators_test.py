@@ -74,14 +74,14 @@ def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_is_valid(mocker)
         create_script_object(
             paths=["name", "args"],
             values=["InvalidScript", [{"name": "incident-id", "description": "test"}]],
-            pack_name="PackWithInvalidScript",
+            pack_info={"name": "PackWithInvalidScript"},
         ),
         create_script_object(
             paths=["args"],
             values=[
                 [{"name": "incident-id", "description": "test", "deprecated": True}],
             ],
-            pack_name="PackWithValidScript",
+            pack_info={"name": "PackWithValidScript"},
         ),
         create_script_object(),
     )

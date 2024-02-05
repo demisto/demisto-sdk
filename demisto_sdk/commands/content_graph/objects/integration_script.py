@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
+    Auto,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
@@ -23,10 +24,25 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 )
 
 
+class Argument(BaseModel):
+    name: str
+    description: str
+    required: Optional[bool] = False
+    default: Optional[bool] = None
+    predefined: Optional[List[str]] = None
+    isArray: Optional[bool] = False
+    defaultvalue: Optional[Any] = None
+    secret: Optional[bool] = False
+    deprecated: Optional[bool] = False
+    type: Optional[str] = None
+    hidden: Optional[bool] = False
+    auto: Optional[Auto] = None
+
+
 class IntegrationScript(ContentItem):
     type: str
     subtype: Optional[str]
-    docker_image: Optional[str]
+    docker_image: DockerImage = DockerImage("")
     alt_docker_images: List[str] = []
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
@@ -48,10 +64,6 @@ class IntegrationScript(ContentItem):
     @property
     def docker_images(self) -> List[str]:
         return [self.docker_image] + self.alt_docker_images if self.docker_image else []
-
-    @property
-    def docker_image_object(self) -> DockerImage:
-        return DockerImage.parse(self.docker_image or "")
 
     @property
     def is_powershell(self) -> bool:

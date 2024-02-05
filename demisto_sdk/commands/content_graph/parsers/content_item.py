@@ -7,6 +7,7 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
+    PACK_DEFAULT_MARKETPLACES,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
@@ -80,7 +81,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def __init__(
         self,
         path: Path,
-        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        pack_marketplaces: List[MarketplaceVersions] = PACK_DEFAULT_MARKETPLACES,
         git_sha: Optional[str] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces

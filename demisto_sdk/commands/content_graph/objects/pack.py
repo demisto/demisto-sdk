@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
+    PACKS_README_FILE_NAME,
     ImagesFolderNames,
     MarketplaceVersions,
 )
@@ -533,5 +534,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     def get_related_content(self):
         super().get_related_content().extend(
-            [self.path / ".pack-ignore.md", self.path / ".secrets-ignore.md"]
+            [self.path / ".pack-ignore",
+             self.path / ".secrets-ignore",
+             self.path / "Author_image.png",
+             self.path / PACKS_README_FILE_NAME]
         )

@@ -4268,8 +4268,10 @@ def retry(
                         f"error when executing func {func_name}, error: {error}, time {i}"
                     )
                     if recover:
-                        logger.debug(f"The function {func_name} has failed. recovering "
-                                     f"using the {recover.__name__} function")
+                        logger.debug(
+                            f"The function {func_name} has failed. recovering "
+                            f"using the {recover.__name__} function"
+                        )
                         recover(*args, **kwargs)
                     if i == times:
                         raise

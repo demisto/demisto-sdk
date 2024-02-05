@@ -3,29 +3,41 @@ import os
 import re
 import subprocess
 import sys
-from packaging.version import Version
-from pathlib import Path
-from typing import Optional, List
-
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import List, Optional
 
-from demisto_sdk.commands.common.cpu_count import cpu_count
+from packaging.version import Version
+
 from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import cert_partner_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import community_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import partner_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import xsoar_msg
 from demisto_sdk.commands.content_graph.objects import Integration, Script
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import (
+    cert_partner_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import (
+    community_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import (
+    partner_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import (
+    xsoar_msg,
+)
 
 ENV = os.environ
-ERROR_CODE_REGEX = r'^/[^:\n]+:\d+:\d+: E\d+ .*$'
+ERROR_CODE_REGEX = r"^/[^:\n]+:\d+:\d+: E\d+ .*$"
 
 
-def build_xsoar_linter_command(support_level: str = "base", formatting_script: bool = False) -> List[str]:
+def build_xsoar_linter_command(
+    support_level: str = "base", formatting_script: bool = False
+) -> List[str]:
     """
     Build the xsoar linter command.
     Args:
@@ -44,9 +56,10 @@ def build_xsoar_linter_command(support_level: str = "base", formatting_script: b
         "community": "base_checker,community_level_checker",
         "partner": "base_checker,community_level_checker,partner_level_checker",
         "certified partner": "base_checker,community_level_checker,partner_level_checker,"
-                             "certified_partner_level_checker",
+        "certified_partner_level_checker",
         "xsoar": "base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,"
-                 "xsoar_level_checker", }
+        "xsoar_level_checker",
+    }
     # messages from all level linters
     Msg_XSOAR_linter = {
         "base_checker": base_msg,
@@ -57,7 +70,7 @@ def build_xsoar_linter_command(support_level: str = "base", formatting_script: b
     }
 
     command = [
-        f'{Path(sys.executable).parent}/pylint',
+        f"{Path(sys.executable).parent}/pylint",
         "-E",
         "--disable=all",
         "--fail-under=-100",
@@ -105,7 +118,9 @@ def build_xsoar_linter_env_var(integration_script: IntegrationScript) -> dict:
     # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
     # as a result we can use the env vars as a getway.
     if isinstance(integration_script, Integration):
-        xsoar_linter_env["commands"] = ','.join([command.name for command in integration_script.commands])
+        xsoar_linter_env["commands"] = ",".join(
+            [command.name for command in integration_script.commands]
+        )
     xsoar_linter_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
 
     return xsoar_linter_env
@@ -114,6 +129,7 @@ def build_xsoar_linter_env_var(integration_script: IntegrationScript) -> dict:
 @dataclass
 class ProcessResults:
     """Class for keeping track of a process execution results."""
+
     return_code: int = 0
     errors: Optional[List[str]] = field(default_factory=list)
     errors_and_warnings: str = ""
@@ -136,7 +152,7 @@ def process_file(file_path: Path) -> ProcessResults:
 
     if not isinstance(integration_script, IntegrationScript):
         return results
-    file = integration_script.path.parent / f'{integration_script.path.stem}.py'
+    file = integration_script.path.parent / f"{integration_script.path.stem}.py"
     if not file.exists():
         return results
 
@@ -149,22 +165,24 @@ def process_file(file_path: Path) -> ProcessResults:
         process = subprocess.run(command, capture_output=True, env=env, timeout=60)
         results.return_code = process.returncode
         log_data = process.stdout
-        errors_and_warnings_str = log_data.decode('utf-8')
+        errors_and_warnings_str = log_data.decode("utf-8")
         results.errors_and_warnings = errors_and_warnings_str
         # catch only error codes from the error and warning string
         pattern = re.compile(ERROR_CODE_REGEX, re.MULTILINE)
         results.errors += pattern.findall(errors_and_warnings_str)
     except subprocess.TimeoutExpired:
-        results.errors.append(f"Got a timeout while processing the following file: {str(file_path)}")
+        results.errors.append(
+            f"Got a timeout while processing the following file: {str(file_path)}"
+        )
         results.return_code = 1
-    except Exception as e:
+    except Exception:
         results.errors.append(f"Failed processing the following file: {str(file_path)}")
         results.return_code = 1
 
     return results
 
-def xsoar_linter_manager(
-    file_paths: Optional[List[Path]]):
+
+def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     """
     Manages the xsoar linter command multiprocessing pool.
     Args:
@@ -189,11 +207,11 @@ def xsoar_linter_manager(
         return_codes.append(result.return_code)
         errors += result.errors
         errors_and_warnings.append(result.errors_and_warnings)
-    errors_and_warnings_concat = '\n'.join(elem for elem in errors_and_warnings if elem)
+    errors_and_warnings_concat = "\n".join(elem for elem in errors_and_warnings if elem)
     logger.warning(errors_and_warnings_concat)
 
-    if any(return_codes): # An error was found
-        errors_str = '\n'.join(error for error in errors if error)
-        logger.error(f'Found the following errors: \n{errors_str}')
+    if any(return_codes):  # An error was found
+        errors_str = "\n".join(error for error in errors if error)
+        logger.error(f"Found the following errors: \n{errors_str}")
 
     return int(any(return_codes))

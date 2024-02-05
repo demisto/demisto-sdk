@@ -249,7 +249,7 @@ class BaseContent(BaseNode):
         git_status: Optional[GitStatuses] = None,
         old_file_path: Optional[Path] = None,
         git_sha: Optional[str] = None,
-        metadata_only: bool = False
+        metadata_only: bool = False,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         # if the file was added or renamed - add a pointer to the object created from the old file content / path.

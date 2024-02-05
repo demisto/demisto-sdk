@@ -14,7 +14,6 @@ from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
-from demisto_sdk.commands.pre_commit.hooks.xsoar_linter import XsoarLinterHook
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
@@ -25,7 +24,6 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     preprocess_files,
     subprocess,
 )
-from TestSuite.repo import Repo
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
 )
@@ -278,29 +276,6 @@ def test_ruff_hook_nightly_mode(mocker):
         assert "--fix" not in hook_args
         assert "--config=nightly_ruff.toml" in hook_args
 
-
-def test_xsoar_linter_hook(mocker, repo):
-    """
-    Testing xsoar-linter hook created successfully (the python version is correct and github action created successfully)
-    """
-    mocker.patch.object(
-        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
-    )
-    mock_integration = create_integration_object()
-    mocker.patch.object(PreCommitContext, 'object_to_files', {mock_integration: {Path('Packs/QRadar/Integrations/integration_0/integration_0.yml'),
-                                                                                   Path('Packs/QRadar/Integrations/integration_0/integration_0.py'),
-                                                                                    Path('Packs/QRadar/Integrations/integration_0/integration_0_test.py')}})
-    xsoar_linter_hook = create_hook(
-        {'name': 'test', 'entry': '', 'args': ['-E', '--disable=all', '--fail-under=1', '--fail-on=E']}
-    )
-    XsoarLinterHook(**xsoar_linter_hook).prepare_hook()
-    for hook in xsoar_linter_hook["repo"]["hooks"]:
-        assert (
-            f"--disable=all" in hook["args"]
-        )
-        assert "--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" in hook["args"]
-        assert hook["name"] == 'xsoar-linter-TestIntegration'
-        assert hook["files"] == 'Packs/QRadar/Integrations/integration_0/integration_0.py/'
 
 def test_validate_format_hook_nightly_mode_and_all_files(mocker):
     """

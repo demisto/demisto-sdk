@@ -4,10 +4,10 @@ import sys
 
 import click
 
-from demisto_sdk.commands.xsoar_linter.xsoar_linter import xsoar_linter_manager
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
+from demisto_sdk.commands.xsoar_linter.xsoar_linter import xsoar_linter_manager
 
 try:
     import git
@@ -3703,15 +3703,15 @@ graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relations
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 
 
-# ====================== Xsoar-Linter ====================== #
+# ====================== Xsoar-Lint ====================== #
 
-xsoar_linter_app = typer.Typer(name="Xsoar-Linter")
+xsoar_linter_app = typer.Typer(name="Xsoar-Lint")
+
 
 @xsoar_linter_app.command(
     no_args_is_help=True,
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
-
 def xsoar_linter(
     file_paths: Optional[List[Path]] = typer.Argument(
         None,
@@ -3719,7 +3719,9 @@ def xsoar_linter(
         dir_okay=True,
         resolve_path=True,
         show_default=False,
-        help=("The paths to run xsoar linter on. May pass multiple paths."))):
+        help=("The paths to run xsoar linter on. May pass multiple paths."),
+    )
+):
 
     return_code = xsoar_linter_manager(
         file_paths,
@@ -3727,7 +3729,8 @@ def xsoar_linter(
     if return_code:
         raise typer.Exit(1)
 
-main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-linter")
+
+main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-lint")
 
 
 if __name__ == "__main__":

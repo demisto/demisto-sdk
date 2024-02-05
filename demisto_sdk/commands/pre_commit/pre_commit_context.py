@@ -121,7 +121,9 @@ class PreCommitContext:
         }
 
     @cached_property
-    def support_level_to_files_with_objects(self) -> Dict[str, Set[Tuple[Path, IntegrationScript]]]:
+    def support_level_to_files_with_objects(
+        self,
+    ) -> Dict[str, Set[Tuple[Path, IntegrationScript]]]:
         support_level_to_files = defaultdict(set)
         for path, obj in self.files_to_run_with_objects:
             if obj:

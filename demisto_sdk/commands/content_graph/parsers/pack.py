@@ -225,7 +225,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     content_type = ContentType.PACK
 
-    def __init__(self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False) -> None:
+    def __init__(
+        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False
+    ) -> None:
         """Parses a pack and its content items.
 
         Args:

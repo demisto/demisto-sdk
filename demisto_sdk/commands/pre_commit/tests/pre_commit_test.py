@@ -24,9 +24,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     preprocess_files,
     subprocess,
 )
-from demisto_sdk.commands.validate.tests.test_tools import (
-    create_integration_object,
-)
+from TestSuite.repo import Repo
 
 TEST_DATA_PATH = (
     Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"

@@ -15,7 +15,7 @@ inputs:
   poetry-install-arguments:
     required: false
     type: string
-    default: "-E generate-unit-tests"
+    default: "--with dev --all-extras"
     description: "the arguments for the poetry install command"
 
 runs:

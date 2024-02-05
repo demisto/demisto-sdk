@@ -32,96 +32,66 @@ autopep8 = "^1.6.0"
 bandit = "^1.7.4"
 mypy = "^0.982"
 pylint = "2.12.2"
-vulture = "^2.3"
+vulture = "^2.3"  # Used inside a Docker (which is a different separate environment), so we can remove?
 beautifulsoup4 = "^4.11.1"
-chardet = ">=4,<6"
+chardet = "^5.2.0"  # Used by bs4.dammit. Can be replaced with `charset-normalizer` which is 20x faster.
 click = "^8.0.0"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
 coverage = "^7.2.1"
-decorator = "^5.1.1"
+decorator = "^5.1.1"  # Used once on 'error.py'. Can probably be removed and written ourselves with a few additional lines.
 demisto-py = "^3.2.10"
-dictor = "^0.1.9"
+dictor = "^0.1.9"  # Used in a single place (download command), should be easy to implement ourselves. Remove?
 docker = "^5.0.3"
-flatten-dict = "^0.4.2"
-gitdb = "^4.0.9"
+flatten-dict = "^0.4.2"  # Used in a single place (download command), should be easy to implement ourselves. Remove?
+gitdb = "^4.0.9"  # Used only for 'except gitdb.exc.BadName' in GitUtil. Probably a sub-dependency of another module. Remove and handle exception without importing?
 google-cloud-storage = "^2.13.0"
-inflection = "^0.5.1"
+inflection = "^0.5.1"  # No updates for over a year, used in a single place. We use 2 very simple functions (~6 lines of code). Remove?
 jsonschema = "^4.4.0"
-mergedeep = "^1.3.4"
+mergedeep = "^1.3.4"  # Used (only by download command)
 networkx = "^2.7.1"
-nltk = "^3.7"
+nltk = "^3.7"  # Used (only by doc-review command)
 prettytable = "^3.2.0"
 pykwalify = "^1.8.0"
-pyspellchecker = "^0.6.3"
+pyspellchecker = "^0.6.3"  # Used (only by doc-review command)
 requests = "^2.27.1"
 "ruamel.yaml" = "^0.17.21"
 slack-sdk = "^3.17.0"
-
 tenacity = "^8.2.3"
 tabulate = ">=0.8.9,<0.10.0"
 ujson = "^5.1.0"
 urllib3 = "^1.26.9"
 wcmatch = "^8.3"
-yamlordereddictloader = "^0.4.0"
 GitPython = "^3.1.37"
 Pebble = ">=4.6.3,<6.0.0"
 PyPDF2 = "^1.28.6"
 giturlparse = "^0.10.0"
-pytest-freezegun = "^0.4.2"
 python-dotenv = "^0.20.0"
 importlib-resources = "^5.6.0"
 dictdiffer = "^0.9.0"
 imagesize = "^1.3.0"
-cryptography = "^36.0.2"
 dateparser = "^1.1.1"
-typed-ast = "^1.5.2"
-types-dateparser = "^1.1.0"
-types-PyYAML = "^6.0.5"
-types-requests = "2.28.11"
-types-pytz = ">=2021.3.6,<2023.0.0"
-types-python-dateutil = "^2.8.10"
-types-pyvmomi = ">=7.0.6,<9.0.0"
-types-tabulate = ">=0.8.6,<0.10.0"
-types-paramiko = "^2.8.17"
-types-emoji = ">=1.2.7,<3.0.0"
-types-ipaddress = "^1.0.8"
-types-chardet = ">=4.0.3,<6.0.0"
-types-six = "^1.16.12"
-types-PyMySQL = "^1.0.15"
-typing-extensions = "^4.1.1"
-gsutil = {version = "5.17", optional = true}
-ordered-set = "^4.1.0"
-types-filelock = "^3.2.5"
-types-Markdown = "^3.3.21"
-types-futures = "^3.3.8"
-paramiko = "^2.11.0"
+ordered-set = { version = "^4.1.0", optional = true }
 neo4j = "^5.14.0"
 pydantic = "^1.10"
-types-decorator = "^5.1.8"
-types-mock = "^4.0.15"
-types-setuptools = ">=65.6.0.1,<68.0.0.0"
-types-ujson = "^5.6.0.0"
 typer = {extras = ["all"], version = ">=0.6.1,<0.8.0"}
-types-pkg-resources = "^0.1.3"
-types-toml = "^0.10.8.7"
 packaging = "^23.1"
-orjson = "^3.8.3"
+orjson = "^3.8.3"  # Used by 'orjson_handler', which is not in use anywhere (we use 'ujson' instead).
 more-itertools = "^9.0.0"
 junitparser = "^3.1.0"
 google-cloud-secret-manager = "^2.16.2"
 json5 = "^0.9.14"
-types-protobuf = "^4.24.0.4"
 klara = { version = "^0.6.3", optional = true }
-
-
-
 pre-commit = "^3.5.0"
 lxml = "^5.0.0"
+pytz = "^2024.1"
+toml = "^0.10.2"  # Should we replace with 'tomli' as 'toml' isn't maintained and supports only up to 3.9?
+python-dateutil = "^2.8.2"
+astor = { version = "^0.8.1", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"
-mock = "^4.0.3"
+werkzeug = "<3.0.0"  # Needed for 'mitmproxy'. See https://stackoverflow.com/a/77215455
 pytest = "^7.1.1"
 pytest-cov = "^4.0.0"
 pytest-datadir-ng = "^1.1.1"
@@ -134,10 +104,22 @@ ruff = "^0.1.11"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
 pygithub = "^2.2.0"
+freezegun = "^1.4.0"
+
+[tool.poetry.group.typing.dependencies]
+types-dateparser = "^1.1.0"
+types-requests = "2.28.11"
+types-pytz = "^2024.1.0.20240203"
+types-python-dateutil = "^2.8.10"
+types-tabulate = ">=0.8.6,<0.10.0"
+types-futures = "^3.3.8"
+types-decorator = "^5.1.8"
+types-ujson = "^5.6.0.0"
+types-pkg-resources = "^0.1.3"  # We use pkg_resources, but it's deprecated (https://setuptools.pypa.io/en/latest/pkg_resources.html). Replace with 'importlib.resources'?
+types-toml = "^0.10.8.7"
 
 [tool.poetry.extras]
-build = ["gsutil"]
-generate-unit-tests = ["klara"]
+generate-unit-tests = ["astor", "klara", "ordered-set"]
 
 [tool.mypy]
 check_untyped_defs = true

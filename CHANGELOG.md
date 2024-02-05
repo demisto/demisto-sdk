@@ -1,6 +1,4 @@
 # Changelog
-* Added a new command **xsoar-lint** and added it as a hook to **pre-commit**.
-
 ## 1.26.1
 * Added retry mechanism for create docker container. As default, will attempt three times. [#3988](https://github.com/demisto/demisto-sdk/pull/3988)
 * Fixed the init command to successfully create event collector integration [#3995](https://github.com/demisto/demisto-sdk/pull/3995)

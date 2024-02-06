@@ -1,4 +1,0 @@
-changes:
-- description: Fixed the init command to successfully create event collector integration
-  type: fix
-pr_number: 3995

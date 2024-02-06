@@ -11,63 +11,57 @@ from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.logger import logger
 
 
-class DockerImage:
-
-    DOCKER_IMAGE_REGX = (
-        r"^([^/]+)/(.*?)(?::(.*))?$"  # regex to extract parts of a docker-image
-    )
+class DockerImage(str):
+    # regex to extract parts of any docker-image in the following structure (repo/image-name:tag)
+    DOCKER_IMAGE_REGX = r"^([^/]+)/(.*?)(?::(.*))?$"
     DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
+    _dockerhub_client = DockerHubClient()
 
-    def __init__(
-        self,
-        dockerhub_client: DockerHubClient,
-        repository: str = "",
-        image_name: str = "",
-        tag: str = "",
-    ):
-        self._dockerhub_client = dockerhub_client
-        self.repository = repository  # the repository e.g.: demisto
-        self.image_name = image_name  # the image name e.g.: python3, pan-os-python
-        self.tag = tag  # the tag
-
-    @classmethod
-    def parse(
-        cls,
-        docker_image: str,
-        dockerhub_client: Optional[DockerHubClient] = None,
-        raise_if_not_valid: bool = False,
+    def __new__(
+        cls, docker_image: str, raise_if_not_valid: bool = False
     ) -> "DockerImage":
         """
-        Parses a docker-image into repository, image name and its tag
+        Creates a new instance of DockerImage
 
         Args:
-            docker_image: the docker image to parse
-            dockerhub_client: client to interact with dockerhub client
-            raise_if_not_valid: raise ValueError if the docker-image structure is not valid
+            docker_image: the full docker image
+            raise_if_not_valid: if True, will raise ValueError if the docker-image has an invalid structure.
         """
-        _dockerhub_client = dockerhub_client or DockerHubClient()
+        docker_image_instance = super().__new__(cls, docker_image)
         pattern = re.compile(cls.DOCKER_IMAGE_REGX)
         if matches := pattern.match(docker_image):
-            docker_image_object = cls(
-                _dockerhub_client,
-                repository=matches.group(1),
-                image_name=matches.group(2),
-                tag=matches.group(3),
-            )
+            docker_image_instance._repository = matches.group(1)  # type: ignore[attr-defined]
+            docker_image_instance._image_name = matches.group(2)  # type: ignore[attr-defined]
+            docker_image_instance._tag = matches.group(3)  # type: ignore[attr-defined]
         else:
-            docker_image_object = cls(_dockerhub_client)
+            docker_image_instance._repository = ""  # type: ignore[attr-defined]
+            docker_image_instance._image_name = ""  # type: ignore[attr-defined]
+            docker_image_instance._tag = ""  # type: ignore[attr-defined]
 
-        if raise_if_not_valid and not docker_image_object.is_valid:
+        if raise_if_not_valid and not docker_image_instance.is_valid:
             raise ValueError(
                 f"Docker image {docker_image} is not valid, should be in the form of repository/image-name:tag"
             )
 
-        return docker_image_object
+        return docker_image_instance
 
-    def __str__(self):
-        return f"{self.repository}/{self.image_name}:{self.tag}"
+    @property
+    def summary(self) -> str:
+        return f"DockerImage(docker-image={self}, valid={self.is_valid}, creation-date={self.creation_date}, python-version:{self.python_version}, latest-tag={self.latest_tag})"
+
+    @property
+    def repository(self) -> str:
+        return getattr(self, "_repository", "")
+
+    @property
+    def image_name(self) -> str:
+        return getattr(self, "_image_name", "")
+
+    @property
+    def tag(self) -> str:
+        return getattr(self, "_tag", "")
 
     @property
     def name(self):
@@ -100,6 +94,10 @@ class DockerImage:
         return self.repository == "demisto"
 
     @property
+    def is_python3_image(self) -> bool:
+        return self.is_demisto_repository and self.image_name == "python3"
+
+    @property
     def is_native_image(self) -> bool:
         return self.name == NATIVE_IMAGE_DOCKER_NAME
 
@@ -114,11 +112,13 @@ class DockerImage:
         if self.is_valid:
             if "pwsh" == self.image_name or "powershell" == self.image_name:
                 logger.debug(
-                    f"The {self} is a powershell image, does not have python version"
+                    f"The {self} image is a powershell image, does not have python version"
                 )
                 return None
 
-            if match := self.DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(str(self)):
+            if self.is_python3_image and (
+                match := self.DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(self)
+            ):
                 return Version(match.group("python_version"))
 
             logger.debug(f"Could not get python version for image {self} from regex")
@@ -135,11 +135,11 @@ class DockerImage:
                 return Version(python_version)
 
             logger.error(f"Could not find python-version of docker-image {self}")
-            return None
 
-        logger.debug(
-            f"docker-image {self} is not valid, could not get its python-version"
-        )
+        else:
+            logger.debug(
+                f"docker-image {self} is not valid, could not get its python-version"
+            )
         return None
 
     @property
@@ -152,3 +152,10 @@ class DockerImage:
     @property
     def latest_tag(self) -> Version:
         return self._dockerhub_client.get_latest_docker_image_tag(self.name)
+
+    @property
+    def latest_docker_image(self) -> "DockerImage":
+        """
+        Returns the docker image with the latest tag
+        """
+        return DockerImage(self._dockerhub_client.get_latest_docker_image(self.name))

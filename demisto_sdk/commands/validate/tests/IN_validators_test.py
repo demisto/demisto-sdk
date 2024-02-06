@@ -29,8 +29,8 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
     IsValidProxyAndInsecureValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN102_is_valid_checkbox_param import (
-    IsValidCheckboxParamValidator,
+from demisto_sdk.commands.validate.validators.IN_validators.IN102_is_valid_checkbox_default_field import (
+    IsValidCheckboxDefaultFieldValidator,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN104_is_valid_category import (
     IsValidCategoryValidator,
@@ -110,6 +110,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN141_is_valid_endpo
 from demisto_sdk.commands.validate.validators.IN_validators.IN142_is_containing_default_additional_info import (
     IsContainingDefaultAdditionalInfoValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN144_is_rep_command_contain_is_array_argument import (
+    IsRepCommandContainIsArrayArgumentValidator,
+)
 from demisto_sdk.commands.validate.validators.IN_validators.IN145_is_api_token_in_credential_type import (
     IsAPITokenInCredentialTypeValidator,
 )
@@ -122,8 +125,8 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN149_does_common_ou
 from demisto_sdk.commands.validate.validators.IN_validators.IN150_is_valid_display_for_siem_integration import (
     IsValidDisplayForSiemIntegrationValidator,
 )
-from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_empty_command_args import (
-    IsEmptyCommandArgsValidator,
+from demisto_sdk.commands.validate.validators.IN_validators.IN151_is_none_command_args import (
+    IsNoneCommandArgsValidator,
 )
 from demisto_sdk.commands.validate.validators.IN_validators.IN152_is_valid_default_value_for_checkbox_param import (
     IsValidDefaultValueForCheckboxParamValidator,
@@ -557,10 +560,10 @@ def test_IsValidProxyAndInsecureValidator_fix():
                                 "required": True,
                             },
                             {
-                                "name": "test_param_5",
+                                "name": "insecure",
                                 "type": 8,
                                 "display": "test param 5",
-                                "required": False,
+                                "required": True,
                             },
                             {
                                 "name": "test_param_6",
@@ -572,16 +575,14 @@ def test_IsValidProxyAndInsecureValidator_fix():
                     ],
                 ),
             ],
-            3,
+            1,
             [
-                "The following checkbox params required field is not set to True: test_param_1.\nMake sure to set it to True.",
-                "The following checkbox params required field is not set to True: test_param_3.\nMake sure to set it to True.",
-                "The following checkbox params required field is not set to True: test_param_5, test_param_6.\nMake sure to set it to True.",
+                "The following checkbox params required field is set to True: test_param_4.\nMake sure to change it to False/remove the field."
             ],
         ),
     ],
 )
-def test_IsValidCheckboxParamValidator_is_valid(
+def test_IsValidCheckboxDefaultFieldValidator_is_valid(
     content_items: List[Integration],
     expected_number_of_failures: int,
     expected_msgs: List[str],
@@ -593,14 +594,14 @@ def test_IsValidCheckboxParamValidator_is_valid(
             - One integration with a param of type 8 but no required field.
             - One integration with a param of type 0 and no required field.
             - One integration with a param of type 8 but required field set to False.
-            - One integration with 3 param of type 8, one's required field is set to True and the other two are set to False.
+            - One integration with 3 param of type 8, one's required field is set to True, one's required field is set to True and the name is part of the required allowed params, and the other two are set to False.
     When
-    - Calling the IsValidCheckboxParamValidator is valid function.
+    - Calling the IsValidCheckboxDefaultFieldValidator is valid function.
     Then
         - Make sure the validation fail when it needs to and the right error message is returned.
-        - Case 1: Should fail all except test_param 2 & 4.
+        - Case 1: Should fail only the first param of the last integration.
     """
-    results = IsValidCheckboxParamValidator().is_valid(content_items)
+    results = IsValidCheckboxDefaultFieldValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -610,12 +611,12 @@ def test_IsValidCheckboxParamValidator_is_valid(
     )
 
 
-def test_IsValidCheckboxParamValidator_fix():
+def test_IsValidCheckboxDefaultFieldValidator_fix():
     """
     Given
         An integration with invalid proxy & insecure params.
     When
-    - Calling the IsValidCheckboxParamValidator fix function.
+    - Calling the IsValidCheckboxDefaultFieldValidator fix function.
     Then
         - Make sure that all the relevant fields were added/fixed and that the right msg was returned.
     """
@@ -624,36 +625,24 @@ def test_IsValidCheckboxParamValidator_fix():
         values=[
             [
                 {
-                    "name": "test_param_4",
+                    "name": "test_param",
                     "type": 8,
-                    "display": "test param 4",
+                    "display": "test param",
                     "required": True,
-                },
-                {
-                    "name": "test_param_5",
-                    "type": 8,
-                    "display": "test param 5",
-                    "required": False,
-                },
-                {
-                    "name": "test_param_6",
-                    "type": 8,
-                    "display": "test param 6",
-                    "required": False,
                 },
             ]
         ],
     )
-    validator = IsValidCheckboxParamValidator()
+    assert content_item.params[0].required
+    validator = IsValidCheckboxDefaultFieldValidator()
     validator.misconfigured_checkbox_params_by_integration[content_item.name] = [
-        "test_param_5",
-        "test_param_6",
+        "test_param",
     ]
     assert (
         validator.fix(content_item).message
-        == "Set required field of the following params was set to True: test_param_5, test_param_6."
+        == "Set required field of the following params was set to False: test_param."
     )
-    assert all([param.required for param in content_item.params])
+    assert not content_item.params[0].required
 
 
 @pytest.mark.parametrize(
@@ -980,6 +969,43 @@ def test_IsDisplayContainBetaValidator_is_valid(
                         ]
                     ],
                 ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test_1",
+                                "description": "test command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "test",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "test argument",
+                                    },
+                                ],
+                                "outputs": [],
+                            },
+                            {
+                                "name": "test_2",
+                                "description": "test command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "test",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "test argument",
+                                    },
+                                ],
+                                "outputs": [],
+                            },
+                        ]
+                    ],
+                ),
             ],
             0,
             [],
@@ -1038,9 +1064,10 @@ def test_IsCommandArgsContainDuplicationsValidator_is_valid(
     """
     Given
     content_items iterables.
-        - Case 1: Two valid integrations:
+        - Case 1: Three valid integrations:
             - One integration without commands.
             - One integration with one command without duplicated args.
+            - One integration with two commands, both have the same argument.
         - Case 2: One invalid integration with a command with 3 arguments Two of the same name and one different..
     When
     - Calling the IsCommandArgsContainDuplicationsValidator is valid function.
@@ -2702,14 +2729,14 @@ def test_IsValidDefaultValueForCheckboxParamValidator_fix():
                 {
                     "name": "test_1",
                     "type": 8,
-                    "required": False,
+                    "required": True,
                     "display": "test display",
                     "defaultvalue": False,
                 },
                 {
                     "name": "test_2",
                     "type": 8,
-                    "required": False,
+                    "required": True,
                     "display": "test display",
                     "defaultvalue": "something wrong",
                 },
@@ -2740,44 +2767,132 @@ def test_IsValidDefaultValueForCheckboxParamValidator_fix():
     )
 
 
-def test_IsEmptyCommandArgsValidator_is_valid_success():
-    """
-    Given
-    Two valid integrations:
-        - One integration with commands with arguments.
-        - One integration without commands.
-    When
-    - Calling the IsEmptyCommandArgsValidator is valid function.
-    Then
-        - Make sure all validations passed.
-    """
-    content_items = [
-        create_integration_object(),
-        create_integration_object(
-            paths=["script.commands"],
-            values=[[]],
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "description": "test command",
+                                "deprecated": False,
+                                "arguments": [],
+                            }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "description": "test command",
+                                "deprecated": False,
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
         ),
-    ]
-    results = IsEmptyCommandArgsValidator().is_valid(content_items)
-    assert len(results) == 0
-
-
-def test_IsEmptyCommandArgsValidator_is_valid_failure():
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "test",
+                                "description": "test command",
+                                "deprecated": False,
+                                "arguments": None,
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The following commands arguments are None: test.\nIf the command has no arguments, use `arguments: []` or remove the `arguments` field."
+            ],
+        ),
+    ],
+)
+def test_IsNoneCommandArgsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
     """
     Given
-    One invalid integration with command without arguments.
+    content_items iterables.
+        - Case 1: Four valid integrations:
+            - One integration with valid commands with non-empty arguments list.
+            - One integration with commands.
+            - One integration with a command with arguments = empty list.
+            - One integration with a command without arguments field.
+        - Case 2: An invalid integration with command with arguments field = None.
     When
-    - Calling the IsEmptyCommandArgsValidator is valid function.
+    - Calling the IsNoneCommandArgsValidator is valid function.
     Then
-        - Make sure the validation fail and the right error message is returned.
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail.
     """
-    content_item = create_integration_object()
-    content_item.commands[0].args = []
-    results = IsEmptyCommandArgsValidator().is_valid([content_item])
-    assert len(results) == 1
+    results = IsNoneCommandArgsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsNoneCommandArgsValidator_fix():
+    """
+    Given
+        An integration with command with arguments field = None.
+    When
+    - Calling the IsNoneCommandArgsValidator fix function.
+    Then
+        - Make sure that the arguments field was set to an empty list and that the right fix message was returned.
+    """
+    content_item = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "test",
+                    "description": "test command",
+                    "deprecated": False,
+                    "arguments": None,
+                }
+            ]
+        ],
+    )
     assert (
-        results[0].message
-        == "The following commands doesn't include any arguments: test-command.\nPlease make sure to include at least one argument."
+        content_item.data.get("script", {}).get("commands", [])[0].get("arguments")
+        is None
+    )
+    validator = IsNoneCommandArgsValidator()
+    IsNoneCommandArgsValidator.invalid_commands[content_item.name] = ["test"]
+    assert (
+        validator.fix(content_item).message
+        == "Set an empty list value to the following commands arguments: test."
+    )
+    assert (
+        content_item.data.get("script", {}).get("commands", [])[0].get("arguments")
+        == []
     )
 
 
@@ -3656,49 +3771,21 @@ def test_IsValidDeprecatedIntegrationDisplayNameValidator_fix():
                                 "arguments": [
                                     {
                                         "name": "ip",
-                                        "default": True,
+                                        "default": False,
                                         "required": True,
                                         "description": "nothing description.",
                                     }
                                 ],
                                 "outputs": [],
-                            },
-                            {
-                                "name": "url",
-                                "description": "url command",
-                                "deprecated": False,
-                                "arguments": [
-                                    {
-                                        "name": "url",
-                                        "isArray": True,
-                                        "required": True,
-                                        "description": "url description.",
-                                    }
-                                ],
-                                "outputs": [],
-                            },
-                            {
-                                "name": "endpoint",
-                                "description": "endpoint command",
-                                "deprecated": False,
-                                "arguments": [
-                                    {
-                                        "name": "url",
-                                        "isArray": True,
-                                        "required": True,
-                                        "description": "url description.",
-                                    }
-                                ],
-                                "outputs": [],
-                            },
+                            }
                         ]
                     ],
                 ),
             ],
             2,
             [
-                "The following reputation commands are invalid:\n- The ip command arguments are invalid, it should include the following argument with the following configuration: name should be 'ip', the 'default', 'isArray', and 'required' fields should be True.\nMake sure to fix the issue both in the yml and the code.",
-                "The following reputation commands are invalid:\n- The ip command arguments are invalid, it should include the following argument with the following configuration: name should be 'ip', the 'default', 'isArray', and 'required' fields should be True.\n- The url command arguments are invalid, it should include the following argument with the following configuration: name should be 'url', the 'default', 'isArray', and 'required' fields should be True.\nMake sure to fix the issue both in the yml and the code.",
+                "The following reputation commands are invalid:\n- The ip command arguments are invalid, it should include the following argument with the following configuration: name should be 'ip', the 'isArray' field should be True, and the default field should not be set to False.\nMake sure to fix the issue both in the yml and the code.",
+                "The following reputation commands are invalid:\n- The ip command arguments are invalid, it should include the following argument with the following configuration: name should be 'ip', the 'isArray' field should be True, and the default field should not be set to False.\nMake sure to fix the issue both in the yml and the code.",
             ],
         ),
     ],
@@ -3714,14 +3801,14 @@ def test_IsValidRepCommandValidator_is_valid(
             - One integration without commands.
             - One integration with valid reputation command.
         - Case 2: Two invalid integrations:
-            - One integration with one invalid ip command due to missing argument, and a valid url command.
-            - One integration with one invalid ip command due to missing isArray field, one invalid ip command due to missing required field, and one valid endpoint command.
+            - One integration with one invalid ip command due to missing required default argument, and a valid url command.
+            - One integration with one invalid ip command due to default set to False.
     When
     - Calling the IsValidRepCommandValidator is valid function.
     Then
         - Make sure the validation fail when it needs to and the right error message is returned.
         - Case 1: Should pass all.
-        - Case 2: Should fail only the ip command for the first integration and the ip & url commands for the second integration.
+        - Case 2: Should fail only the ip commands for for both integrations.
     """
     results = IsValidRepCommandValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
@@ -3768,6 +3855,38 @@ def test_IsValidRepCommandValidator_is_valid(
                                     }
                                 ],
                             }
+                        ]
+                    ],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "file",
+                                "description": "file command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "file",
+                                        "default": True,
+                                        "required": True,
+                                        "description": "file description.",
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "File.MD5",
+                                        "contextPath": "File.MD5",
+                                        "description": "File.MD5 description",
+                                    },
+                                    {
+                                        "name": "File.SHA1",
+                                        "contextPath": "File.SHA1",
+                                        "description": "File.SHA1 description",
+                                    },
+                                ],
+                            },
                         ]
                     ],
                 ),
@@ -3820,43 +3939,10 @@ def test_IsValidRepCommandValidator_is_valid(
                         ]
                     ],
                 ),
-                create_integration_object(
-                    paths=["script.commands"],
-                    values=[
-                        [
-                            {
-                                "name": "file",
-                                "description": "file command",
-                                "deprecated": False,
-                                "arguments": [
-                                    {
-                                        "name": "file",
-                                        "default": True,
-                                        "required": True,
-                                        "description": "file description.",
-                                    }
-                                ],
-                                "outputs": [
-                                    {
-                                        "name": "File.MD5",
-                                        "contextPath": "File.MD5",
-                                        "description": "File.MD5 description",
-                                    },
-                                    {
-                                        "name": "File.SHA1",
-                                        "contextPath": "File.SHA1",
-                                        "description": "File.SHA1 description",
-                                    },
-                                ],
-                            },
-                        ]
-                    ],
-                ),
             ],
-            2,
+            1,
             [
-                "The integration contains invalid reputation command(s):\n\tThe command 'url' is missing the following output contextPaths: URL.Data.",
-                "The integration contains invalid reputation command(s):\n\tThe command 'file' is missing the following output contextPaths: File.SHA256.",
+                "The integration contains invalid reputation command(s):\n\tThe command 'url' should include at least one of the output contextPaths: URL.Data.",
             ],
         ),
     ],
@@ -3871,15 +3957,14 @@ def test_IsMissingReputationOutputValidator_is_valid(
             - One integration without reputation commands.
             - One integration without commands.
             - One integration with valid reputation command.
-        - Case 2: Two invalid integrations:
-            - One integration with one valid ip command, and an invalid url command due to missing outputs.
-            - One integration with one invalid file command due to missing some of the outputs.
+            - One integration with valid file command due to having one of the required outputs.
+        - Case 2: One invalid integration with one valid ip command, and an invalid url command due to missing outputs.
     When
     - Calling the IsMissingReputationOutputValidator is valid function.
     Then
         - Make sure the validation fail when it needs to and the right error message is returned.
         - Case 1: Should pass all.
-        - Case 2: Should fail only the url command for the first integration and the file command for the second integration, but mention only the missing context paths in the msg.
+        - Case 2: Should fail all.
     """
     results = IsMissingReputationOutputValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
@@ -5457,3 +5542,113 @@ def test_IntegrationDisplayNameVersionedCorrectlyValidator_is_valid():
         results[0].content_object
     )
     assert fix_result.content_object.display_name == "test v3"
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[[]],
+                ),
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip",
+                                        "default": True,
+                                        "isArray": True,
+                                        "required": True,
+                                        "description": "ip description.",
+                                    }
+                                ],
+                                "outputs": [],
+                            }
+                        ]
+                    ],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "ip",
+                                        "default": True,
+                                        "required": True,
+                                        "description": "ip description.",
+                                    }
+                                ],
+                                "outputs": [],
+                            },
+                            {
+                                "name": "url",
+                                "description": "url command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "url",
+                                        "default": True,
+                                        "isArray": False,
+                                        "required": True,
+                                        "description": "url description.",
+                                    }
+                                ],
+                                "outputs": [],
+                            },
+                        ]
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The following reputation commands contain default arguments without 'isArray: True':\nThe command ip is missing the isArray value on its default argument ip.\nThe command url is missing the isArray value on its default argument url."
+            ],
+        ),
+    ],
+)
+def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One integration without reputation commands.
+            - One integration without commands.
+            - One integration with valid reputation command.
+        - Case 2: One invalid integration with invalid ip command due to missing required isArray argument, and an invalid url command due to isArray argument set to False.
+    When
+    - Calling the IsRepCommandContainIsArrayArgumentValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all.
+    """
+    results = IsRepCommandContainIsArrayArgumentValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

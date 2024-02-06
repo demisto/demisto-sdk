@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -19,6 +20,11 @@ class IsValidContextPathValidator(BaseValidator[ContentTypes]):
     error_message = "The following commands include outputs with missing contextPath, please make sure to add: {0}."
     related_field = "contextPath"
     is_auto_fixable = False
+    expected_git_statuses = [
+        GitStatuses.RENAMED,
+        GitStatuses.MODIFIED,
+        GitStatuses.ADDED,
+    ]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

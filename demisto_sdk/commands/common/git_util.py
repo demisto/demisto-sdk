@@ -83,9 +83,9 @@ class GitUtil:
         if from_remote:
             # check if file exist in remote branch
             try:
-                remote_branch = self.repo.refs[  # type: ignore[index]
-                    f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
-                ]
+                if DEMISTO_GIT_UPSTREAM not in commit_or_branch:
+                    commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
+                remote_branch = self.repo.refs[commit_or_branch]  # type: ignore[index]
                 return remote_branch.commit
             except IndexError as e:
                 # there isn't remote branch like this

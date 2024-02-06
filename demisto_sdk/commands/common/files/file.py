@@ -35,6 +35,7 @@ from demisto_sdk.commands.common.tools import retry
 
 class File(ABC, BaseModel):
     git_util: GitUtil
+    git_sha: Optional[str] = None
     input_path: Path
     _input_path_content: bytes = PrivateAttr(None)
     default_encoding: str = "utf-8"  # default encoding is utf-8
@@ -52,14 +53,15 @@ class File(ABC, BaseModel):
     def get_input_path(cls, v: Path, values: Dict) -> Path:
         input_path = v
         git_util = values["git_util"]
-
+        git_sha = values["git_sha"]
         if input_path.is_absolute():
             return input_path
         else:
             logger.debug(
                 f"path {input_path} is not absolute, trying to get full relative path from {git_util.repo.working_dir}"
             )
-
+        if git_sha and git_util.is_file_exist_in_commit_or_branch(input_path, git_sha):
+            return input_path
         input_path = git_util.repo.working_dir / input_path
         if not input_path.exists():
             raise FileNotFoundError(f"File {input_path} does not exist")
@@ -132,6 +134,7 @@ class File(ABC, BaseModel):
         cls,
         input_path: Union[Path, str],
         git_util: Optional[GitUtil] = None,
+        tag: Optional[str] = None,
         **kwargs,
     ) -> "File":
         """
@@ -150,6 +153,7 @@ class File(ABC, BaseModel):
         model_attributes: Dict[str, Any] = {
             "input_path": input_path,
             "git_util": git_util,
+            "git_sha": tag,
         }
 
         model_attributes.update(kwargs)
@@ -260,7 +264,9 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
-        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
+        model = cls._from_path(
+            input_path=path, git_util=git_util, handler=handler, tag=tag
+        )
         return model.__read_git_file(tag, from_remote=from_remote)
 
     def __read_git_file(

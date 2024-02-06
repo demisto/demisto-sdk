@@ -7,6 +7,7 @@ from git import InvalidGitRepositoryError
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     DEMISTO_GIT_UPSTREAM,
+    PACKS_CONTRIBUTORS_FILE_NAME,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
@@ -230,7 +231,7 @@ class Initializer:
             committed_only=self.committed_only,
             staged_only=self.staged,
             debug=True,
-            get_only_current_file_names=True,
+            get_only_current_file_names=False,
         )
 
         return modified_files, added_files, renamed_files
@@ -294,10 +295,10 @@ class Initializer:
         statuses_dict: Dict[Path, GitStatuses] = {}
         content_objects_to_run: Set[BaseContent] = set()
         if self.use_git:
-            content_objects_to_run, statuses_dict = self.get_files_from_git()
+            content_objects_to_run, statuses_dict = self.get_files_using_git()
         elif self.file_path:
             content_objects_to_run = self.paths_to_basecontent_set(
-                set(self.file_path.split(",")), None
+                set(self.file_path.split(","))
             )
         elif self.all_files:
             content_dto = ContentDTO.from_path(CONTENT_PATH)
@@ -307,7 +308,7 @@ class Initializer:
         else:
             self.use_git = (True,)
             self.committed_only = True
-            content_objects_to_run, statuses_dict = self.get_files_from_git()
+            content_objects_to_run, statuses_dict = self.get_files_using_git()
         content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
             content_objects_to_run
         )
@@ -333,7 +334,7 @@ class Initializer:
             content_objects_to_run_with_packs.add(content_object)
         return content_objects_to_run_with_packs
 
-    def get_files_from_git(self) -> Tuple[Set[BaseContent], Dict[Path, GitStatuses]]:
+    def get_files_using_git(self) -> Tuple[Set[BaseContent], Dict[Path, GitStatuses]]:
         """Return all files added/changed/deleted.
 
         Returns:
@@ -355,53 +356,82 @@ class Initializer:
         }
         file_by_status_dict.update({file: GitStatuses.ADDED for file in added_files})
         file_by_status_dict.update(
-            {file: GitStatuses.RENAMED for file in renamed_files}
+            {new_path: GitStatuses.RENAMED for _, new_path in renamed_files}
         )
+        renamed_files = {new_path: old_path for old_path, new_path in renamed_files}
         file_by_status_dict.update(
             {file: GitStatuses.DELETED for file in deleted_files}
         )
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = self.get_items_status(
             file_by_status_dict
         )
-        basecontent_with_path_set: Set[BaseContent] = self.paths_to_basecontent_set(
-            statuses_dict, git_sha=self.prev_ver
+        statuses_dict_with_renamed_files_tuple: Dict[
+            Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]
+        ] = {}
+        for path, status in statuses_dict.items():
+            if status == GitStatuses.RENAMED:
+                statuses_dict_with_renamed_files_tuple[
+                    (path, renamed_files[path])
+                ] = status
+            else:
+                statuses_dict_with_renamed_files_tuple[path] = status
+        basecontent_with_path_set: Set[BaseContent] = self.git_paths_to_basecontent_set(
+            statuses_dict_with_renamed_files_tuple, git_sha=self.prev_ver
         )
         self.connect_related_files(basecontent_with_path_set, file_by_status_dict)
         return basecontent_with_path_set, file_by_status_dict
 
-    def paths_to_basecontent_set(
-        self,
-        statuses_dict: Dict[Path, Union[GitStatuses, None]],
-        git_sha: Optional[str] = None,
-    ) -> Set[BaseContent]:
+    def paths_to_basecontent_set(self, files_set: Set[str]) -> Set[BaseContent]:
         """Return a set of all the successful casts to BaseContent from given set of files.
 
         Args:
             files_set (set): The set of file paths to case into BaseContent.
-            git_status (Optional[str]): The git status for the given files (if given).
 
         Returns:
             Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
         """
+        # To Do: implement unpacking system for paths.
         basecontent_with_path_set: Set[BaseContent] = set()
         invalid_content_items: List[str] = []
-        for file_path, git_status in statuses_dict.items():
+        for file_path in files_set:
             try:
-                if git_status == GitStatuses.RENAMED:
-                    temp_obj: Optional[BaseContent] = BaseContent.from_path(
-                        Path(file_path[0]),
-                        git_status=git_status,
-                        old_file_path=Path(file_path[1]),
-                        git_sha=git_sha,
-                    )
-                else:
-                    temp_obj = BaseContent.from_path(
-                        Path(file_path), git_status, git_sha=git_sha
-                    )
+                temp_obj = BaseContent.from_path(Path(file_path), git_sha=None)
                 if temp_obj is None:
                     invalid_content_items.append(str(file_path))
                 else:
                     basecontent_with_path_set.add(temp_obj)
+            except InvalidContentItemException:
+                invalid_content_items.append(str(file_path))
+        return basecontent_with_path_set
+
+    def git_paths_to_basecontent_set(
+        self,
+        statuses_dict: Dict[Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]],
+        git_sha: Optional[str] = None,
+    ) -> Set[BaseContent]:
+        basecontent_with_path_set: Set[BaseContent] = set()
+        invalid_content_items: List[str] = []
+        for file_path, git_status in statuses_dict.items():
+            try:
+                old_path = file_path
+                if isinstance(file_path, tuple):
+                    file_path, old_path = file_path
+                obj = BaseContent.from_path(file_path)
+                if obj:
+                    obj.git_status = git_status
+                    # Check if the file exists
+                    if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
+                        obj.old_base_content_object = BaseContent.from_path(
+                            old_path, git_sha=git_sha
+                        )
+                    else:
+                        obj.old_base_content_object = obj.copy(deep=True)
+                    if obj.old_base_content_object:
+                        obj.old_base_content_object.git_sha = git_sha
+                elif obj is None:
+                    invalid_content_items.append(str(file_path))
+                else:
+                    basecontent_with_path_set.add(obj)
             except InvalidContentItemException:
                 invalid_content_items.append(str(file_path))
         return basecontent_with_path_set
@@ -412,25 +442,18 @@ class Initializer:
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = {}
         for path, git_status in file_by_status_dict.items():
             path_str = str(path)
-            if PACKS_PACK_META_FILE_NAME in path_str:
-                # implement logic for pack_metadata.
-                statuses_dict[path] = git_status
-            elif any(
-                file in path_str
+            if any(
+                file in path_str.lower()
                 for file in (
-                    PACKS_PACK_IGNORE_FILE_NAME,
-                    RELEASE_NOTES_DIR,
-                    PACKS_WHITELIST_FILE_NAME,
-                    PACKS_README_FILE_NAME,
-                    AUTHOR_IMAGE_FILE_NAME,
+                    "commands_example.txt",
+                    "commands_examples.txt",
+                    "command_examples.txt",
+                    "test_data",
+                    "testdata",
                 )
             ):
-                metadata_path = Path(
-                    f"Packs/{path.parts[1]}/{PACKS_PACK_META_FILE_NAME}"
-                )
-                if not statuses_dict[metadata_path]:
-                    statuses_dict[metadata_path] = None
-            elif "Integrations" in path_str or "Scripts" in path_str:
+                continue
+            if "Integrations" in path_str or "Scripts" in path_str:
                 if path_str.endswith(".yml"):
                     statuses_dict[path] = git_status
                 elif path.suffix in (".py", "js", "ps1") and not any(
@@ -445,10 +468,12 @@ class Initializer:
                         .replace(".js", ".yml")
                         .replace(".ps1", ".yml")
                     )
-                    statuses_dict[path] = git_status
+                    if path not in statuses_dict:
+                        statuses_dict[path] = git_status
                 else:
                     path = Path(path.parent / f"{path.parts[-2]}.yml")
-                    statuses_dict[path] = None
+                    if path not in statuses_dict:
+                        statuses_dict[path] = None
             elif "Playbooks" in path_str:
                 if path_str.endswith(".yml"):
                     statuses_dict[path] = git_status
@@ -459,7 +484,26 @@ class Initializer:
                             f"_{PACKS_README_FILE_NAME}", ".yml"
                         )
                     )
-                    statuses_dict[path] = None
+                    if path not in statuses_dict:
+                        statuses_dict[path] = None
+            elif PACKS_PACK_META_FILE_NAME in path_str:
+                statuses_dict[path] = git_status
+            elif any(
+                file in path_str
+                for file in (
+                    PACKS_PACK_IGNORE_FILE_NAME,
+                    RELEASE_NOTES_DIR,
+                    PACKS_WHITELIST_FILE_NAME,
+                    PACKS_README_FILE_NAME,
+                    AUTHOR_IMAGE_FILE_NAME,
+                    PACKS_CONTRIBUTORS_FILE_NAME,
+                )
+            ):
+                metadata_path = Path(
+                    f"Packs/{path.parts[1]}/{PACKS_PACK_META_FILE_NAME}"
+                )
+                if metadata_path not in statuses_dict:
+                    statuses_dict[metadata_path] = None
             else:
                 statuses_dict[path] = git_status
 

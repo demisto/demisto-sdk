@@ -24,7 +24,9 @@ class JSONContentItemParser(ContentItemParser):
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.path = self.get_path_with_suffix(".json")
+        self.path = (
+            self.get_path_with_suffix(".json") if not git_sha else self.path / ".json"
+        )
         self.file_type = FileSuffix.JSON
 
         self.json_data: Dict[str, Any] = self.get_json(git_sha=git_sha)

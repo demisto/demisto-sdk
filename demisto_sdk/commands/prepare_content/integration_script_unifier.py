@@ -590,7 +590,10 @@ class IntegrationScriptUnifier(Unifier):
         if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
             contributor_type = support_level_header
 
-        if " Contribution)" not in unified_yml["display"] and contributor_type != "xsoar":
+        if (
+            " Contribution)" not in unified_yml["display"]
+            and contributor_type != "xsoar"
+        ):
             unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(
                 contributor_type.capitalize()
             )

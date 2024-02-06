@@ -391,3 +391,51 @@ jobs:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
           validate-script-path: Tests/scripts/new_validate.sh
+
+  test-lint:
+    runs-on: ubuntu-latest
+    name: Test Lint Command
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: '3.10'
+
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          repository: demisto/content
+          path: content
+
+      - name: Run lint on python and powershell files
+        run: |
+          source $(poetry env info --path)/bin/activate
+
+          cd content
+
+          mkdir -p test-lint/logs
+          export DEMISTO_SDK_LOG_FILE_PATH=./test-lint/logs
+
+          # python file (CommonServerPython lint is running over python 3 and 2)
+          demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython --coverage-report test-lint/coverage-report
+          if [[ -f test-lint/coverage-report/html/index.html && -f test-lint/coverage-report/coverage.xml ]]
+            then
+              echo "coverage files found."
+            else
+              echo "coverage files not found."
+              exit 1
+          fi
+          # ps file
+          demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: content/test-lint
+          artifact-name: test-lint-artifacts

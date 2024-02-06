@@ -233,7 +233,6 @@ class DockerBase:
     @retry(
         times=3,
         exceptions=(requests.exceptions.ConnectionError, requests.exceptions.Timeout),
-        recover=remove_container,
     )
     def create_container(
         self,
@@ -246,11 +245,14 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
-        container: docker.models.containers.Container = (
-            init_global_docker_client().containers.create(
-                image=image, command=command, environment=environment, **kwargs
+        try:
+            container: docker.models.containers.Container = (
+                init_global_docker_client().containers.create(
+                    image=image, command=command, environment=environment, **kwargs
+                )
             )
-        )
+        except DockerException:
+
         if files_to_push:
             self.copy_files_container(container, files_to_push)
         return container

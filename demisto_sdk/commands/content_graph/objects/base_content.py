@@ -303,7 +303,7 @@ class BaseContent(BaseNode):
             return None
         try:
             obj = model.from_orm(content_item_parser)  # type: ignore
-            obj.in_pack  # type: ignore # will trigger the in_pack function property.
+            # obj.in_pack  # type: ignore # will trigger the in_pack function property.
             if obj:
                 obj.git_status = git_status
             return obj

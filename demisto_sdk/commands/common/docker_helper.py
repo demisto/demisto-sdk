@@ -245,16 +245,23 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
+        docker_client = init_global_docker_client()
+
         try:
             container: docker.models.containers.Container = (
-                init_global_docker_client().containers.create(
+                docker_client.containers.create(
                     image=image, command=command, environment=environment, **kwargs
                 )
             )
         except DockerException:
+            if container_name := kwargs.get('name'):
+                docker_container = docker_client.containers.get(container_name).remove()
+                docker_container.remove()
+                return
 
         if files_to_push:
             self.copy_files_container(container, files_to_push)
+
         return container
 
     def push_image(self, image: str, log_prompt: str = ""):

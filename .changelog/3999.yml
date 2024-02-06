@@ -1,4 +1,0 @@
-changes:
-- description: Fixes an issue where running **pre-commit** with the `run-hook` argument didn't execute the hook in some cases.
-  type: fix
-pr_number: 3999

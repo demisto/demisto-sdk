@@ -45,12 +45,11 @@ class IsCommandArgsContainDuplicationsValidator(BaseValidator[ContentTypes]):
         for command in commands:
             appeared_set = set()
             duplicated_args = set()
-            for command in commands:
-                for arg in command.args:
-                    if arg.name in appeared_set:
-                        duplicated_args.add(arg.name)
-                    else:
-                        appeared_set.add(arg.name)
-                if duplicated_args:
-                    duplicated_args_by_command[command.name] = duplicated_args
+            for arg in command.args:
+                if arg.name in appeared_set:
+                    duplicated_args.add(arg.name)
+                else:
+                    appeared_set.add(arg.name)
+            if duplicated_args:
+                duplicated_args_by_command[command.name] = duplicated_args
         return duplicated_args_by_command

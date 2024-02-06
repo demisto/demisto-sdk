@@ -30,18 +30,18 @@ class TextFile(File):
         except UnicodeDecodeError:
             original_file_encoding = UnicodeDammit(file_content).original_encoding
             logger.debug(
-                f"Error when decoding file {self.input_path} with {self.default_encoding}, "
+                f"Error when decoding file {self.path} with {self.default_encoding}, "
                 f"trying to decode the file with original encoding {original_file_encoding}"
             )
             try:
                 return UnicodeDammit(file_content).unicode_markup
             except UnicodeDecodeError as e:
                 logger.error(
-                    f"Could not auto detect encoding for file {self.input_path}"
+                    f"Could not auto detect encoding for file {self.path}"
                 )
-                raise LocalFileReadError(self.input_path, exc=e)
+                raise LocalFileReadError(self.path, exc=e)
         except Exception as e:
-            raise LocalFileReadError(self.input_path, exc=e)
+            raise LocalFileReadError(self.path, exc=e)
 
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=self.__read_local_file())

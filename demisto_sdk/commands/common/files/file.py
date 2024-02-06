@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional, Type, Union
 import requests
 from bs4.dammit import UnicodeDammit
 from pydantic import BaseModel, PrivateAttr, validator
+from functools import cached_property
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.constants import (
@@ -33,61 +34,55 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 
-class File(ABC, BaseModel):
-    git_util: GitUtil
-    input_path: Path
-    _input_path_content: bytes = PrivateAttr(None)
-    default_encoding: str = "utf-8"  # default encoding is utf-8
+def get_file_path(path: Union[str, Path], git_sha: Optional[str] = None, git_util: Optional[GitUtil] = None) -> Path:
+    _git_util = git_util or GitUtil.from_content_path()
 
-    class Config:
-        arbitrary_types_allowed = (
-            True  # allows having custom classes for properties in model
+    if git_sha:
+        if git_util.is_file_exist_in_commit_or_branch(path, commit_or_branch=git_sha) or git_util.is_file_exist_in_commit_or_branch(path, commit_or_branch=git_sha, from_remote=False):
+            return path
+        raise FileNotFoundError(f"File {path} does not exist in commit/branch {git_sha}")
+
+    if path.is_absolute():
+        return path
+    else:
+        logger.debug(
+            f"path {path} is not absolute, trying to get full relative path from {git_util.repo.working_dir}"
         )
 
-    @validator("git_util", pre=True, always=True)
-    def get_git_util(cls, v: Optional[GitUtil]) -> GitUtil:
-        return v or GitUtil.from_content_path()
+    input_path = git_util.repo.working_dir / path
+    if not input_path.exists():
+        raise FileNotFoundError(f"File {input_path} does not exist")
 
-    @validator("input_path", always=True)
-    def get_input_path(cls, v: Path, values: Dict) -> Path:
-        input_path = v
-        git_util = values["git_util"]
+    return input_path
 
-        if input_path.is_absolute():
-            return input_path
-        else:
-            logger.debug(
-                f"path {input_path} is not absolute, trying to get full relative path from {git_util.repo.working_dir}"
-            )
 
-        input_path = git_util.repo.working_dir / input_path
-        if not input_path.exists():
-            raise FileNotFoundError(f"File {input_path} does not exist")
+class File(ABC):
 
-        return input_path
+    def __init__(self, path: Union[Path, str], git_sha: Optional[str] = None, encoding: Optional[str] = None, git_util: Optional[GitUtil] = None):
+        self.git_util = git_util or GitUtil.from_content_path()
+        self.path = get_file_path(path, git_sha=git_sha, git_util=git_util)
+        self.default_encoding = encoding
 
-    @property
-    def content(self) -> bytes:
-        if self._input_path_content is None:
-            self._input_path_content = self.input_path.read_bytes()
-        return self._input_path_content
+    @cached_property
+    def file_content(self) -> bytes:
+        return self.path.read_bytes()
 
     @property
     def normalized_suffix(self) -> str:
-        if suffix := self.input_path.suffix.lower():
+        if suffix := self.path.suffix.lower():
             return suffix[1:]
         return suffix
 
     @property
-    def input_path_original_encoding(self) -> Optional[str]:
-        return UnicodeDammit(self.content).original_encoding
+    def original_encoding(self) -> Optional[str]:
+        return UnicodeDammit(self.file_content).original_encoding
 
     @property
     def size(self) -> int:
-        return self.input_path.stat().st_size
+        return self.path.stat().st_size
 
     def copy_file(self, destination_path: Union[Path, str]):
-        shutil.copyfile(self.input_path, destination_path)
+        shutil.copyfile(self.path, destination_path)
 
     @abstractmethod
     def load(self, file_content: bytes) -> Any:
@@ -130,36 +125,30 @@ class File(ABC, BaseModel):
     @lru_cache
     def _from_path(
         cls,
-        input_path: Union[Path, str],
-        git_util: Optional[GitUtil] = None,
+        path: Union[Path, str],
+        git_sha: Optional[str] = None,
+        encoding: Optional[str] = None,
         **kwargs,
     ) -> "File":
         """
         Returns the correct file model
 
         Args:
-            input_path: the file input path
+            path: the file input path
             git_util: whether there should be any customized git util
             **kwargs: any additional arguments to initialize the model
 
         Returns:
             File: any subclass of the File model.
         """
-        input_path = Path(input_path)
-
-        model_attributes: Dict[str, Any] = {
-            "input_path": input_path,
-            "git_util": git_util,
-        }
-
-        model_attributes.update(kwargs)
+        path = Path(path)
 
         if cls is File:
-            model = cls.__file_factory(input_path)
+            model = cls.__file_factory(path)
         else:
             model = cls
-        logger.debug(f"Using model {model} for file {input_path}")
-        return model.parse_obj(model_attributes)
+        logger.debug(f"Using class {model} for file {path}")
+        return model(path, git_sha=git_sha, encoding=encoding, **kwargs)
 
     @classmethod
     @lru_cache
@@ -221,7 +210,7 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_local_path.cache_clear()
-        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
+        model = cls._from_path(path=path, git_util=git_util, handler=handler)
         return model.__read_local_file()
 
     def __read_local_file(self) -> Any:
@@ -229,7 +218,7 @@ class File(ABC, BaseModel):
             return self.load(self.content)
         except FileReadError:
             logger.exception(
-                f"Could not read file {self.input_path} as {self.__class__.__name__} file"
+                f"Could not read file {self.path} as {self.__class__.__name__} file"
             )
             raise
 
@@ -260,7 +249,7 @@ class File(ABC, BaseModel):
         """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
-        model = cls._from_path(input_path=path, git_util=git_util, handler=handler)
+        model = cls._from_path(path=path, git_util=git_util, handler=handler)
         return model.__read_git_file(tag, from_remote=from_remote)
 
     def __read_git_file(
@@ -269,17 +258,17 @@ class File(ABC, BaseModel):
         try:
             return self.load(
                 self.git_util.read_file_content(
-                    self.input_path, commit_or_branch=tag, from_remote=from_remote
+                    self.path, commit_or_branch=tag, from_remote=from_remote
                 )
             )
         except Exception as e:
             if from_remote:
                 tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
             logger.exception(
-                f"Could not read git file {self.input_path} from {tag} as {self.__class__.__name__} file"
+                f"Could not read git file {self.path} from {tag} as {self.__class__.__name__} file"
             )
             raise GitFileReadError(
-                self.input_path,
+                self.path,
                 tag=tag,
                 exc=e,
             )

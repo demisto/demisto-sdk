@@ -8,16 +8,17 @@ from pydantic import Field, validator
 
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
+from demisto_sdk.commands.common.git_util import GitUtil
 
 
 class StructuredFile(TextFile, ABC):
 
-    handler: XSOAR_Handler = Field(None, exclude=True)
+    default_handler: Type[XSOAR_Handler] = None
 
-    @validator("handler", always=True)
-    @abstractmethod
-    def validate_handler(cls, v: Type[XSOAR_Handler]) -> Type[XSOAR_Handler]:
-        raise NotImplementedError("validate_handler must be implemented")
+    def __init__(self, path: Union[Path, str], git_sha: Optional[str] = None, encoding: Optional[str] = None,
+                 git_util: Optional[GitUtil] = None, handler: Optional[XSOAR_Handler] = None):
+        super().__init__(path, git_sha=git_sha, encoding=encoding, git_util=git_util)
+        self.handler = handler or self.default_handler
 
     @classmethod
     @lru_cache
@@ -27,7 +28,7 @@ class StructuredFile(TextFile, ABC):
         handler: Optional[XSOAR_Handler] = None,
     ) -> Any:
         return super().read_from_file_content(
-            file_content, handler=cls.validate_handler(handler)
+            file_content, handler=handler or cls.default_handler
         )
 
     def load(self, file_content: bytes) -> Any:
@@ -46,7 +47,7 @@ class StructuredFile(TextFile, ABC):
             data,
             output_path=output_path,
             encoding=encoding,
-            handler=cls.validate_handler(handler),
+            handler=handler or cls.default_handler,
             **kwargs
         )
 

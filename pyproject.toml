@@ -129,6 +129,7 @@ black = "^22.10.0"
 ipykernel = "^6.16.1"
 ruff = "^0.1.11"
 pytest-github-actions-annotate-failures = "^0.2.0"
+pytest-sugar = "^1.0.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]

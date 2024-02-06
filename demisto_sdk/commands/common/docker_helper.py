@@ -248,7 +248,7 @@ class DockerBase:
                 )
             )
         except DockerException:
-            if container_name := kwargs.get('name'):
+            if container_name := kwargs.get("name"):
                 docker_container = docker_client.containers.get(container_name).remove()
                 docker_container.remove()
                 return

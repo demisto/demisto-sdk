@@ -28,7 +28,7 @@ class Argument(BaseModel):
     name: str
     description: str
     required: Optional[bool] = False
-    default: Optional[bool] = False
+    default: Optional[bool] = None
     predefined: Optional[List[str]] = None
     isArray: Optional[bool] = False
     defaultvalue: Optional[Any] = None
@@ -42,7 +42,7 @@ class Argument(BaseModel):
 class IntegrationScript(ContentItem):
     type: str
     subtype: Optional[str]
-    docker_image: Optional[str]
+    docker_image: DockerImage = DockerImage("")
     alt_docker_images: List[str] = []
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
@@ -64,10 +64,6 @@ class IntegrationScript(ContentItem):
     @property
     def docker_images(self) -> List[str]:
         return [self.docker_image] + self.alt_docker_images if self.docker_image else []
-
-    @property
-    def docker_image_object(self) -> DockerImage:
-        return DockerImage.parse(self.docker_image or "")
 
     @property
     def is_powershell(self) -> bool:

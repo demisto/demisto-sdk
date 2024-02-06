@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
@@ -94,7 +95,7 @@ def mock_integration(
         marketplaces=[MarketplaceVersions.XSOAR],
         deprecated=False,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         category="blabla",
         commands=[Command(name="test-command", description="")],
     )
@@ -126,7 +127,7 @@ def mock_script(
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,

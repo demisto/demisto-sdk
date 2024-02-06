@@ -24,6 +24,7 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "1061"
 )  # Default value is the ID of the content repo on GitLab
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+DOCKER_REGISTRY_URL = os.getenv("DOCKER_IO", "docker.io")
 
 
 # Authentication
@@ -571,6 +572,18 @@ SCHEMA_REGEX = "Tests/schemas/.*.yml"
 
 # regex pattern used to convert incident/indicator fields to their CLI names
 NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r"[^a-zA-Z0-9]")
+INCORRECT_PACK_NAME_PATTERN = (
+    "[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK["
+    "^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook["
+    "^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK["
+    "^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook["
+    "^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration["
+    "^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION["
+    "^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration["
+    "^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script["
+    "^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT["
+    "^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ "
+)
 
 PACKS_DIR_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}"
 PACK_DIR_REGEX = rf"{PACKS_DIR_REGEX}\/([^\\\/]+)"
@@ -1379,12 +1392,31 @@ GET_MAPPING_FIELDS_COMMAND = {
     "name": GET_MAPPING_FIELDS_COMMAND_NAME,
 }
 
+FEED_RELIABILITY = "feedReliability"
+RELIABILITY = "reliability"
+
 RELIABILITY_PARAMETER_NAMES = [
     "integration_reliability",  # First item in the list will be used in errors
     "integrationReliability",
-    "feedReliability",
-    "reliability",
+    FEED_RELIABILITY,
+    RELIABILITY,
 ]
+
+RELIABILITY_PARAM = {
+    "name": RELIABILITY,
+    "display": "Source Reliability",
+    "type": 15,
+    "required": True,
+    "options": [
+        "A - Completely reliable",
+        "B - Usually reliable",
+        "C - Fairly reliable",
+        "D - Not usually reliable",
+        "E - Unreliable",
+        "F - Reliability cannot be judged",
+    ],
+    "additionalinfo": "Reliability of the source providing the intelligence data",
+}
 
 COMMON_PARAMS_DISPLAY_NAME = {
     "insecure": "Trust any certificate (not secure)",
@@ -1392,19 +1424,19 @@ COMMON_PARAMS_DISPLAY_NAME = {
     "proxy": "Use system proxy settings",
 }
 
+REQUIRED_ALLOWED_PARAMS = ("insecure", "unsecure", "proxy", "isFetch")
+
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
 
 BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
-    "file": {
-        "default": ["file"],
-    },
-    "email": {"default": ["email"]},
-    "domain": {"default": ["domain"]},
-    "url": {"default": ["url"]},
-    "ip": {"default": ["ip"]},
-    "cve": {"default": ["cve"]},
+    "file": {"default": ["file"], "required": True},
+    "email": {"default": ["email"], "required": True},
+    "domain": {"default": ["domain"], "required": True},
+    "url": {"default": ["url"], "required": True},
+    "ip": {"default": ["ip"], "required": True},
+    "cve": {"default": ["cve"], "required": True},
     "endpoint": {"default": ["ip"], "required": False},
 }
 
@@ -1549,7 +1581,7 @@ FEED_REQUIRED_PARAMS = [
         "must_be_one_of": {},
     },
     {
-        "name": "feedReliability",
+        "name": FEED_RELIABILITY,
         "must_equal": {
             "display": "Source Reliability",
             "type": 15,
@@ -1627,6 +1659,8 @@ FEED_REQUIRED_PARAMS = [
         },
     },
 ]
+
+ALLOWED_HIDDEN_PARAMS = {"longRunning", "feedIncremental", "feedReputation"}
 
 INCIDENT_FETCH_REQUIRED_PARAMS = [
     {"display": "Incident type", "name": "incidentType", "type": 13},
@@ -1932,11 +1966,11 @@ FileType_ALLOWED_TO_DELETE = {
 
 
 class ParameterType(Enum):
-    STRING = 0
-    NUMBER = 1
-    ENCRYPTED = 4
-    BOOLEAN = 8
-    AUTH = 9
+    STRING = 0  # holds a string argument.
+    NUMBER = 1  # holds an int argument.
+    ENCRYPTED = 4  # holds a password argument.
+    BOOLEAN = 8  # holds a boolean argument (checkbox).
+    AUTH = 9  # holds an auth struct (credentials type).
     DOWNLOAD_LINK = 11
     TEXT_AREA = 12
     INCIDENT_TYPE = 13
@@ -1944,6 +1978,10 @@ class ParameterType(Enum):
     SINGLE_SELECT = 15
     MULTI_SELECT = 16
     EXPIRATION_FIELD = 17
+    FEED_REPUDATION = 18
+    INTERVAL = 19
+    BOLD_TITLE = 20
+    DAY_DROPDOWN = 21
 
 
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
@@ -2046,3 +2084,9 @@ class IncidentState(str, Enum):
 # Used to format the writing of the yml/json file
 DEFAULT_JSON_INDENT = 4
 DEFAULT_YAML_INDENT = 0
+
+
+PACK_DEFAULT_MARKETPLACES: List = [
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.MarketplaceV2.value,
+]

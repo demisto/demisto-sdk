@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
     MarketplaceVersions,
 )
@@ -37,11 +38,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
 )
-
-DEFAULT_MARKETPLACES = [
-    MarketplaceVersions.XSOAR.value,
-    MarketplaceVersions.MarketplaceV2.value,
-]
 
 
 class PackContentItems:
@@ -150,7 +146,7 @@ class PackMetadataParser:
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
         self.marketplaces: List[str] = (
-            metadata.get("marketplaces") or DEFAULT_MARKETPLACES
+            metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
         )
         if MarketplaceVersions.XSOAR.value in self.marketplaces:
             # Since we want xsoar-saas and xsoar to contain the same content items.

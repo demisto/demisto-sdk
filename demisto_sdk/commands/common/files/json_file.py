@@ -1,10 +1,7 @@
 from pathlib import Path
-from typing import Type
-
-from pydantic import Field, validator
 
 from demisto_sdk.commands.common.files.structured_file import StructuredFile
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json, XSOAR_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
 

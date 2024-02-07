@@ -2,15 +2,13 @@ import inspect
 import shutil
 import urllib.parse
 from abc import ABC, abstractmethod
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Optional, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
-from pydantic import BaseModel, PrivateAttr, validator
-from functools import cached_property
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.constants import (
@@ -34,34 +32,50 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
 
 
-def get_file_path(path: Union[str, Path], git_sha: Optional[str] = None, git_util: Optional[GitUtil] = None) -> Path:
-    _git_util = git_util or GitUtil.from_content_path()
-
-    if git_sha:
-        if git_util.is_file_exist_in_commit_or_branch(path, commit_or_branch=git_sha) or git_util.is_file_exist_in_commit_or_branch(path, commit_or_branch=git_sha, from_remote=False):
-            return path
-        raise FileNotFoundError(f"File {path} does not exist in commit/branch {git_sha}")
-
-    if path.is_absolute():
-        return path
-    else:
-        logger.debug(
-            f"path {path} is not absolute, trying to get full relative path from {git_util.repo.working_dir}"
-        )
-
-    input_path = git_util.repo.working_dir / path
-    if not input_path.exists():
-        raise FileNotFoundError(f"File {input_path} does not exist")
-
-    return input_path
-
-
 class File(ABC):
 
-    def __init__(self, path: Union[Path, str], git_sha: Optional[str] = None, encoding: Optional[str] = None, git_util: Optional[GitUtil] = None):
-        self.git_util = git_util or GitUtil.from_content_path()
-        self.path = get_file_path(path, git_sha=git_sha, git_util=git_util)
-        self.default_encoding = encoding
+    git_util = GitUtil.from_content_path()
+
+    @classmethod
+    def get_file_path(
+        cls,
+        path: Union[str, Path],
+        git_sha: Optional[str] = None,
+        from_remote: Optional[bool] = None,
+    ) -> Path:
+        cls.git_util = GitUtil()
+        path = Path(path)
+
+        if git_sha and from_remote is not None:
+            if cls.git_util.is_file_exist_in_commit_or_branch(
+                path, commit_or_branch=git_sha, from_remote=from_remote
+            ):
+                # when reading from git we need relative path from the repo root
+                return cls.git_util.path_from_git_root(path)
+            raise FileNotFoundError(
+                f"File {path} does not exist in commit/branch {git_sha}"
+            )
+
+        if path.is_absolute():
+            return path
+        else:
+            logger.debug(
+                f"path {path} is not absolute, trying to get full relative path from {cls.git_util.repo.working_dir}"
+            )
+
+        path = cls.git_util.repo.working_dir / path
+        if not path.exists():
+            raise FileNotFoundError(f"File {path} does not exist")
+
+        return path
+
+    @property
+    def path(self) -> Path:
+        return getattr(self, "_path")
+
+    @property
+    def git_sha(self) -> str:
+        return getattr(self, "_git_sha", "")
 
     @cached_property
     def file_content(self) -> bytes:
@@ -126,17 +140,12 @@ class File(ABC):
     def _from_path(
         cls,
         path: Union[Path, str],
-        git_sha: Optional[str] = None,
-        encoding: Optional[str] = None,
-        **kwargs,
-    ) -> "File":
+    ) -> Type["File"]:
         """
         Returns the correct file model
 
         Args:
             path: the file input path
-            git_util: whether there should be any customized git util
-            **kwargs: any additional arguments to initialize the model
 
         Returns:
             File: any subclass of the File model.
@@ -144,55 +153,55 @@ class File(ABC):
         path = Path(path)
 
         if cls is File:
-            model = cls.__file_factory(path)
+            file_class = cls.__file_factory(path)
         else:
-            model = cls
-        logger.debug(f"Using class {model} for file {path}")
-        return model(path, git_sha=git_sha, encoding=encoding, **kwargs)
+            file_class = cls
+        logger.debug(f"Using class {file_class} for file {path}")
+        return file_class
+
+    @classmethod
+    def as_default(cls, **kwargs):
+        return super().__new__(cls)
 
     @classmethod
     @lru_cache
     def read_from_file_content(
-        cls,
-        file_content: Union[bytes, BytesIO],
-        handler: Optional[XSOAR_Handler] = None,
+        cls, file_content: Union[bytes, BytesIO], **kwargs
     ) -> Any:
         """
         Read a file from its representation in bytes.
 
         Args:
             file_content: the file content in bytes / bytesIo
-            handler: whether a custom handler is required, if not takes the default.
+
+        Keyword Args:
+            encoding: any custom encoding if needed, relevant only for Text based files
+            handler: whether a custom handler is required, if not takes the default, relevant only for json/yaml files
 
         Returns:
             Any: the file content in the desired format
         """
-        if cls is File:
-            raise ValueError(
-                "when reading from file content please specify concrete class"
-            )
-
-        model_attributes: Dict[str, Any] = {"_input_path_content": file_content}
-        if handler:
-            model_attributes["handler"] = handler
-
-        # builds up the object without validations, when loading from file content, no need to init path and git_util
-        model = cls.construct(**model_attributes)
-        if isinstance(file_content, BytesIO):
-            file_content = file_content.read()
+        instance = cls.as_default(**kwargs)
 
         try:
-            return model.load(file_content)
+            instance.load(file_content)
         except LocalFileReadError as e:
             logger.error(f"Could not read file content as {cls.__name__} file")
             raise FileContentReadError(exc=e.original_exc)
+
+    @classmethod
+    def with_local_path(cls, path: Path, **kwargs):
+        path = cls.get_file_path(path)
+        instance = super().__new__(cls)
+        instance._path = path
+        return instance
 
     @classmethod
     @lru_cache
     def read_from_local_path(
         cls,
         path: Union[Path, str],
-        git_util: Optional[GitUtil] = None,
+        encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ) -> Any:
@@ -201,7 +210,7 @@ class File(ABC):
 
         Args:
             path: the path of the file
-            git_util: whether custom git-util is required
+            encoding: any custom encoding if needed
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
 
@@ -210,17 +219,27 @@ class File(ABC):
         """
         if clear_cache:
             cls.read_from_local_path.cache_clear()
-        model = cls._from_path(path=path, git_util=git_util, handler=handler)
-        return model.__read_local_file()
+        file_class = cls._from_path(path)
+        return file_class.with_local_path(
+            path, encoding=encoding, handler=handler
+        ).__read_local_file()
 
     def __read_local_file(self) -> Any:
         try:
-            return self.load(self.content)
+            return self.load(self.file_content)
         except FileReadError:
-            logger.exception(
+            logger.error(
                 f"Could not read file {self.path} as {self.__class__.__name__} file"
             )
             raise
+
+    @classmethod
+    def with_git_path(cls, path: Path, git_sha: str, from_remote: bool, **kwargs):
+        path = cls.get_file_path(path, git_sha=git_sha, from_remote=from_remote)
+        instance = super().__new__(cls)
+        instance._path = path
+        instance._git_sha = git_sha
+        return instance
 
     @classmethod
     @lru_cache
@@ -228,7 +247,7 @@ class File(ABC):
         cls,
         path: Union[str, Path],
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
-        git_util: Optional[GitUtil] = None,
+        encoding: Optional[str] = None,
         from_remote: bool = True,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
@@ -239,7 +258,7 @@ class File(ABC):
         Args:
             path: the path to the file
             tag: branch / sha of the desired commit
-            git_util: whether custom git-util is required
+            encoding: any custom encoding if needed
             from_remote: whether it should be taken from remote branch/sha or local branch/sha
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
@@ -249,27 +268,34 @@ class File(ABC):
         """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
-        model = cls._from_path(path=path, git_util=git_util, handler=handler)
-        return model.__read_git_file(tag, from_remote=from_remote)
+        file_class = cls._from_path(path)
+        return file_class.with_git_path(
+            path,
+            git_sha=tag,
+            encoding=encoding,
+            handler=handler,
+            from_remote=from_remote,
+        ).__read_git_file(from_remote)
 
-    def __read_git_file(
-        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
-    ) -> Any:
+    def __read_git_file(self, from_remote: bool = True) -> Any:
         try:
             return self.load(
                 self.git_util.read_file_content(
-                    self.path, commit_or_branch=tag, from_remote=from_remote
+                    self.path, commit_or_branch=self.git_sha, from_remote=from_remote
                 )
             )
         except Exception as e:
-            if from_remote:
-                tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
-            logger.exception(
-                f"Could not read git file {self.path} from {tag} as {self.__class__.__name__} file"
+            git_sha = (
+                f"{DEMISTO_GIT_UPSTREAM}:{self.git_sha}"
+                if from_remote
+                else self.git_sha
+            )
+            logger.error(
+                f"Could not read git file {self.path} from {git_sha} as {self.__class__.__name__} file"
             )
             raise GitFileReadError(
                 self.path,
-                tag=tag,
+                tag=git_sha,
                 exc=e,
             )
 
@@ -278,6 +304,7 @@ class File(ABC):
         cls,
         path: str,
         git_content_config: Optional[GitContentConfig] = None,
+        encoding: Optional[str] = None,
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
@@ -289,6 +316,7 @@ class File(ABC):
         Args:
             path: the path to the file in github
             git_content_config: git content config object
+            encoding: any custom encoding if needed
             tag: the branch/sha to take the file from within Github
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
@@ -320,6 +348,7 @@ class File(ABC):
                 handler=handler,
                 clear_cache=clear_cache,
                 verify=verify_ssl,
+                encoding=encoding,
             )
         except FileReadError as e:
             logger.warning(
@@ -332,7 +361,7 @@ class File(ABC):
                     timeout=timeout,
                 )
             except FileReadError:
-                logger.exception(
+                logger.error(
                     f"Could not retrieve the content of {git_path_url} file from Github"
                 )
                 raise
@@ -346,6 +375,7 @@ class File(ABC):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
         verify_ssl: bool = True,
+        encoding: Optional[str] = None,
     ) -> Any:
         """
         Reads a file from Gitlab api.
@@ -357,6 +387,7 @@ class File(ABC):
             handler: whether a custom handler is required, if not takes the default.
             clear_cache: whether to clear cache
             verify_ssl: whether SSL should be verified
+            encoding: any custom encoding if needed
 
         Returns:
             Any: the file content in the desired format
@@ -376,6 +407,7 @@ class File(ABC):
             handler=handler,
             clear_cache=clear_cache,
             verify=verify_ssl,
+            encoding=encoding,
         )
 
     @classmethod
@@ -389,6 +421,7 @@ class File(ABC):
         verify: bool = True,
         timeout: Optional[int] = None,
         handler: Optional[XSOAR_Handler] = None,
+        encoding: Optional[str] = None,
         clear_cache: bool = False,
     ) -> Any:
         """
@@ -401,6 +434,7 @@ class File(ABC):
             verify: whether SSL should be verified
             timeout: timeout for the request
             handler: whether a custom handler is required, if not takes the default.
+            encoding: any custom encoding if needed
             clear_cache: whether to clear cache
 
         Returns:
@@ -427,9 +461,11 @@ class File(ABC):
             raise HttpFileReadError(url, exc=e)
 
         try:
-            return cls.read_from_file_content(response.content, handler=handler)
+            return cls.read_from_file_content(
+                response.content, encoding=encoding, handler=handler
+            )
         except FileContentReadError as e:
-            logger.exception(f"Could not read file from {url} as {cls.__name__} file")
+            logger.error(f"Could not read file from {url} as {cls.__name__} file")
             raise HttpFileReadError(url, exc=e)
 
     @classmethod
@@ -454,52 +490,19 @@ class File(ABC):
         output_path = Path(output_path)
 
         if cls is File:
-            raise ValueError("when writing file please specify concrete class")
+            raise ValueError("when writing file specify concrete class")
 
-        model_attributes: Dict[str, Any] = {}
-        if handler:
-            model_attributes["handler"] = handler
-
-        # builds up the object without validations, when writing file, no need to init path and git_util
-        model = cls.construct(**model_attributes)
+        model = cls.as_default(encoding=encoding, handler=handler)
         try:
             model.write(data, path=output_path, encoding=encoding, **kwargs)
         except Exception as e:
-            logger.exception(f"Could not write {output_path} as {cls.__name__} file")
+            logger.error(f"Could not write {output_path} as {cls.__name__} file")
             raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
-    def _write(
-        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
-    ) -> None:
-        raise NotImplementedError(
-            "__write must be implemented for each File concrete object"
-        )
+    def _write(self, data: Any, path: Path, **kwargs) -> None:
+        raise NotImplementedError
 
-    def write(
-        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
-    ) -> None:
-        def _write_safe_unicode():
-            self._write(data, path=path, **kwargs)
-
-        if encoding:
-            self._write(data, path=path, encoding=encoding, **kwargs)
-        else:
-            try:
-                _write_safe_unicode()
-            except UnicodeDecodeError:
-                original_file_encoding = UnicodeDammit(
-                    path.read_bytes()
-                ).original_encoding
-                if original_file_encoding == self.default_encoding:
-                    logger.error(
-                        f"{path} is encoded as unicode, cannot handle the error, raising it"
-                    )
-                    raise
-
-                logger.debug(
-                    f"deleting {path} - it will be rewritten as unicode (was {original_file_encoding})"
-                )
-                path.unlink()  # deletes the file
-                logger.debug(f"rewriting {path} as unicode file")
-                _write_safe_unicode()  # recreates the file
+    @abstractmethod
+    def write(self, data: Any, path: Path, **kwargs) -> None:
+        raise NotImplementedError

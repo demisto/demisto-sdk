@@ -1,9 +1,7 @@
 from pathlib import Path
 
-from pydantic import Field, validator
-
 from demisto_sdk.commands.common.files.structured_file import StructuredFile
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml, XSOAR_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
 

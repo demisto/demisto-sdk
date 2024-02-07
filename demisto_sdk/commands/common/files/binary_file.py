@@ -14,3 +14,8 @@ class BinaryFile(File):
 
     def _write(self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs):
         path.write_bytes(data)
+
+    def write(
+        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
+    ) -> None:
+        self._write(data, path=path)

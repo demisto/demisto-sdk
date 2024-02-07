@@ -5,12 +5,49 @@ from typing import Any, List, Optional
 from bs4.dammit import UnicodeDammit
 
 from demisto_sdk.commands.common.constants import PACKS_WHITELIST_FILE_NAME
-from demisto_sdk.commands.common.files.errors import LocalFileReadError
+from demisto_sdk.commands.common.files.errors import (
+    LocalFileReadError,
+)
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.logger import logger
 
 
 class TextFile(File):
+    # def __new__(
+    #     cls,
+    #     path: Optional[Union[Path, str]] = None,
+    #     git_sha: Optional[str] = None,
+    #     validate_path: bool = True,
+    #     **kwargs,
+    # ):
+    #     file_instance = super().__new__(
+    #         cls, path=path, git_sha=git_sha, validate_path=validate_path, **kwargs
+    #     )
+    #     file_instance.encoding = kwargs.get("encoding") or "utf-8"
+    #     return file_instance
+
+    @classmethod
+    def with_local_path(cls, path: Path, **kwargs):
+        instance = super().with_local_path(path)
+        instance._encoding = kwargs.get("encoding") or "utf-8"
+        return instance
+
+    @classmethod
+    def as_default(cls, **kwargs):
+        instance = super().as_default()
+        instance._encoding = kwargs.get("encoding") or "utf-8"
+        return instance
+
+    @classmethod
+    def with_git_path(cls, path: Path, git_sha: str, from_remote: bool, **kwargs):
+        instance = super().with_git_path(path, git_sha=git_sha, from_remote=from_remote)
+        instance._encoding = kwargs.get("encoding") or "utf-8"
+        return instance
+
+    @property
+    def encoding(self) -> str:
+        return getattr(self, "_encoding", "")
+
     @property
     def num_lines(self):
         return len(self.__read_local_file().splitlines())
@@ -26,19 +63,17 @@ class TextFile(File):
 
     def load(self, file_content: bytes) -> Any:
         try:
-            return file_content.decode(self.default_encoding)
+            return file_content.decode(self.encoding)
         except UnicodeDecodeError:
             original_file_encoding = UnicodeDammit(file_content).original_encoding
             logger.debug(
-                f"Error when decoding file {self.path} with {self.default_encoding}, "
+                f"Error when decoding file {self.path} with {self.encoding}, "
                 f"trying to decode the file with original encoding {original_file_encoding}"
             )
             try:
                 return UnicodeDammit(file_content).unicode_markup
             except UnicodeDecodeError as e:
-                logger.error(
-                    f"Could not auto detect encoding for file {self.path}"
-                )
+                logger.error(f"Could not auto detect encoding for file {self.path}")
                 raise LocalFileReadError(self.path, exc=e)
         except Exception as e:
             raise LocalFileReadError(self.path, exc=e)
@@ -46,7 +81,33 @@ class TextFile(File):
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=self.__read_local_file())
 
-    def _write(
+    def write(
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
-        path.write_text(data=data, encoding=encoding or self.default_encoding)
+        def _write_safe_unicode():
+            self._write(data, path=path, **kwargs)
+
+        if self.encoding != "utf-8":
+            self._write(data, path=path, encoding=encoding, **kwargs)
+        else:
+            try:
+                _write_safe_unicode()
+            except UnicodeDecodeError:
+                original_file_encoding = UnicodeDammit(
+                    path.read_bytes()
+                ).original_encoding
+                if original_file_encoding == "utf-8":
+                    logger.error(
+                        f"{path} is encoded as unicode, cannot handle the error, raising it"
+                    )
+                    raise
+
+                logger.debug(
+                    f"deleting {path} - it will be rewritten as unicode (was {original_file_encoding})"
+                )
+                path.unlink()  # deletes the file
+                logger.debug(f"rewriting {path} as unicode file")
+                _write_safe_unicode()  # recreates the file
+
+    def _write(self, data: Any, path: Path, **kwargs) -> None:
+        path.write_text(data=data, encoding=self.encoding)

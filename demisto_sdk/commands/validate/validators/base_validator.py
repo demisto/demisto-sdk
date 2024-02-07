@@ -145,7 +145,7 @@ class BaseResult(BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.content_object.path.relative_to(CONTENT_PATH))}: {self.validator.error_code} - {self.message}"
+        return f"{str(self.content_object.path.relative_to(CONTENT_PATH))}: [{self.validator.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
@@ -165,7 +165,7 @@ class FixResult(BaseResult, BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"Fixing {str(self.content_object.path)}: {self.validator.error_code} - {self.message}"
+        return f"Fixing {str(self.content_object.path)}: [{self.validator.error_code}] - {self.message}"
 
 
 def is_error_ignored(

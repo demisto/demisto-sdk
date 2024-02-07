@@ -91,39 +91,39 @@ def safe_lock_integrations(test_playbook) -> bool:
     return locked
 
 
-def workflow_still_running(workflow_id: str, test_playbook) -> bool:
+def build_still_running(build_id: str, test_playbook) -> bool:
     """
-    This method takes a workflow id and checks if the workflow is still running
-    If given workflow ID is the same as the current workflow, will simply return True
-    else it will query circleci api for the workflow and return the status
+    This method takes a build id and checks if the build is still running
+    If given build ID is the same as the current build, will simply return True
+    else it will query circleci api for the build and return the status
     Args:
-        workflow_id: The ID of the workflow
+        build_id: The ID of the build
         test_playbook (TestPlaybook): The test playbook instance we want to test under the lock's context
 
     Returns:
-        True if the workflow is running, else False
+        True if the build is running, else False
     """
-    # If this is the current workflow_id
-    if workflow_id == WORKFLOW_ID:
+    # If this is the current job_id
+    if build_id == BUILD_NUM:
         return True
     else:
         try:
             test_playbook.build_context.logging_module.debug(
-                f"Getting status for gitlab pipeline with id: {workflow_id}"
+                f"Getting status for gitlab build with id: {build_id}"
             )
             api_v4_url = os.environ.get("CI_API_V4_URL")
             ci_project_id = os.environ.get("CI_PROJECT_ID")
-            workflow_details_response = requests.get(
-                f"{api_v4_url}/projects/{ci_project_id}/pipelines/{workflow_id}",
+            build_details_response = requests.get(
+                f"{api_v4_url}/projects/{ci_project_id}/jobs/{build_id}",
                 headers={"PRIVATE-TOKEN": GITLAB_STATUS_TOKEN},
             )
-            workflow_details_response.raise_for_status()
+            build_details_response.raise_for_status()
         except Exception:
             test_playbook.build_context.logging_module.exception(
-                f"Failed to get gitlab-ci response about pipeline with id {workflow_id}."
+                f"Failed to get gitlab-ci response about build with id {build_id}."
             )
             return True
-        return workflow_details_response.json().get("status") not in (
+        return build_details_response.json().get("status") not in (
             "canceled",
             "success",
             "failed",
@@ -152,7 +152,7 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
         # Each file has content in the form of <circleci-build-number>:<timeout in seconds>
         # If it has not expired - it means the integration is currently locked by another test.
         try:
-            workflow_id, build_number, lock_timeout = (
+            _, build_number, lock_timeout = (
                 lock_file.download_as_string().decode().split(":")
             )
         except NotFound:
@@ -161,8 +161,8 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
             )
             continue
 
-        if not lock_expired(lock_file, lock_timeout) and workflow_still_running(
-            workflow_id, test_playbook
+        if not lock_expired(lock_file, lock_timeout) and build_still_running(
+            build_number, test_playbook
         ):
             # there is a locked integration for which the lock is not expired - test cannot be executed at the moment
             test_playbook.build_context.logging_module.warning(

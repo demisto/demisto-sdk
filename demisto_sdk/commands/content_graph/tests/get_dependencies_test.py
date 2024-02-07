@@ -91,8 +91,10 @@ def compare(
 
         if show_reasons:
             assert actual.get("reasons") == expected.get("reasons")
+            assert actual.get("formatted_reasons") == expected.get("formatted_reasons")
         else:
             assert "reasons" not in actual
+            assert "formatted_reasons" not in actual
 
 
 class TestGetRelationships:
@@ -115,19 +117,82 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
-                        "reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
+                        "reasons": {"Script:SampleScript": ["Integration:SampleIntegration2", "Script:SampleScript2"]},
+                        "formatted_reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
                     },
                     {
                         "object_id": "SamplePack4",
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
-                        "reasons": "",
+                        "reasons": {},
+                        "formatted_reasons": "",
                     },
                 ],
                 [],
                 id="Verify source first level dependency",
-            ),
+            )
+        ]
+    )
+    def test_get_dependencies_only_sources(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get only source dependents.
+        Then:
+            - Make sure the resulted sources are as expected.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
             pytest.param(
                 "SamplePack2",
                 False,
@@ -147,8 +212,69 @@ class TestGetRelationships:
                         "is_test": False,
                     }
                 ],
-                id="Verify target first level dependency",
-            ),
+                id="Verify targets first level dependency",
+            )
+        ]
+    )
+    def test_get_dependencies_only_targets(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get only target dependencies.
+        Then:
+            - Make sure the resulted targets are as expected.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
             pytest.param(
                 "SamplePack4",
                 False,
@@ -176,8 +302,69 @@ class TestGetRelationships:
                         "is_test": False,
                     }
                 ],
-                id="Verify both directions first level dependencies",
-            ),
+                id="Verify both directions first level dependency",
+            )
+        ]
+    )
+    def test_get_dependencies_both_directions(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get both directions dependencies.
+        Then:
+            - Make sure the resulted sources and targets are as expected.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
             pytest.param(
                 "SamplePack4",
                 False,
@@ -223,7 +410,68 @@ class TestGetRelationships:
                     },
                 ],
                 id="Verify both directions all level dependencies",
-            ),
+            )
+        ]
+    )
+    def test_get_dependencies_both_dirs_all_level(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get both directions all level dependencies.
+        Then:
+            - Make sure the resulted sources and targets are as expected.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
             pytest.param(
                 "SamplePack4",
                 False,
@@ -244,7 +492,68 @@ class TestGetRelationships:
                     }
                 ],
                 id="Verify both directions all level dependencies, mandatory only",
-            ),
+            )
+        ]
+    )
+    def test_get_dependencies_mandatory_all_level(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get only mandatory all level dependencies.
+        Then:
+            - Make sure the resulted sources and targets are as expected and only mandatory.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
             pytest.param(
                 "SamplePack4",
                 False,
@@ -278,7 +587,68 @@ class TestGetRelationships:
                     },
                 ],
                 id="Verify both directions, first level dependencies, including tests",
-            ),
+            )
+        ]
+    )
+    def test_get_dependencies_include_tests(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get both directions first level dependencies and include tests.
+        Then:
+            - Make sure the resulted sources and targets are as expected and are including test dependencies.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
             pytest.param(
                 "SamplePack4",
                 False,
@@ -311,222 +681,10 @@ class TestGetRelationships:
                     },
                 ],
                 id="Verify target directions, first level, including tests and hidden",
-            ),
-            pytest.param(
-                "SamplePack4",
-                True,
-                None,
-                False,
-                MarketplaceVersions.XSOAR,
-                Direction.TARGETS,
-                False,
-                True,
-                False,
-                [],
-                [
-                    {
-                        "object_id": "SamplePack2",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": False,
-                        "reasons": "",
-                    },
-                    {
-                        "object_id": "SamplePack1",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": True,
-                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
-                    },
-                ],
-                id="Verify target directions first level dependencies, show reasons, including tests",
-            ),
-            pytest.param(
-                "SamplePack1",
-                True,
-                None,
-                True,
-                MarketplaceVersions.XSOAR,
-                Direction.BOTH,
-                False,
-                False,
-                False,
-                [],
-                [
-                    {
-                        "object_id": "SamplePack2",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": False,
-                        "reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
-                    },
-                    {
-                        "object_id": "SamplePack3",
-                        "mandatorily": False,
-                        "minDepth": 1,
-                        "is_test": False,
-                        "reasons": "",
-                    },
-                    {
-                        "object_id": "SamplePack4",
-                        "mandatorily": False,
-                        "minDepth": 2,
-                        "is_test": False,
-                        "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
-                    },
-                ],
-                id="Verify both dirs, all level dependencies, show reasons",
-            ),
-            pytest.param(
-                "SamplePack1",
-                True,
-                None,
-                True,
-                MarketplaceVersions.XSOAR,
-                Direction.BOTH,
-                False,
-                True,
-                True,
-                [
-                    {
-                        "object_id": "SamplePack2",
-                        "mandatorily": False,
-                        "minDepth": 3,
-                        "is_test": True,
-                        "reasons": "* Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack1",
-                    },
-                    {
-                        "object_id": "SamplePack3",
-                        "mandatorily": False,
-                        "minDepth": 2,
-                        "is_test": True,
-                        "reasons": "* Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack1",
-                    },
-                    {
-                        "object_id": "SamplePack4",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": True,
-                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
-                    },
-                ],
-                [
-                    {
-                        "object_id": "SamplePack2",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": False,
-                        "reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
-                    },
-                    {
-                        "object_id": "SamplePack3",
-                        "mandatorily": False,
-                        "minDepth": 1,
-                        "is_test": False,
-                        "reasons": "",
-                    },
-                    {
-                        "object_id": "SamplePack4",
-                        "mandatorily": False,
-                        "minDepth": 2,
-                        "is_test": False,
-                        "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
-                    },
-                    {
-                        "object_id": "SamplePack5",
-                        "mandatorily": False,
-                        "minDepth": 3,
-                        "is_test": False,
-                        "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack5\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack5",
-                    },
-                ],
-                id="Verify both dirs, all level dependencies, show reasons, include tests and hidden.",
-            ),
-            pytest.param(
-                "SamplePack1",
-                True,
-                None,
-                True,
-                MarketplaceVersions.XSOAR,
-                Direction.BOTH,
-                True,
-                True,
-                True,
-                [
-                    {
-                        "object_id": "SamplePack4",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": True,
-                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
-                    },
-                ],
-                [
-                    {
-                        "object_id": "SamplePack2",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": False,
-                        "reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
-                    },
-                ],
-                id="Verify both dirs, all level dependencies, show reasons, mandatory only, include tests and hidden.",
-            ),
-            pytest.param(
-                "SamplePack1",
-                True,
-                "SamplePack4",
-                True,
-                MarketplaceVersions.XSOAR,
-                Direction.BOTH,
-                False,
-                True,
-                True,
-                [
-                    {
-                        "object_id": "SamplePack4",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": True,
-                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
-                    },
-                ],
-                [
-                    {
-                        "object_id": "SamplePack4",
-                        "mandatorily": False,
-                        "minDepth": 2,
-                        "is_test": False,
-                        "reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
-                    },
-                ],
-                id="Verify both dirs, specific dependency 'SamplePack4', all level dependencies, show reasons, include tests and hidden.",
-            ),
-            pytest.param(
-                "SamplePack1",
-                True,
-                "SamplePack4",
-                True,
-                MarketplaceVersions.XSOAR,
-                Direction.BOTH,
-                True,
-                True,
-                True,
-                [
-                    {
-                        "object_id": "SamplePack4",
-                        "mandatorily": True,
-                        "minDepth": 1,
-                        "is_test": True,
-                        "reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
-                    },
-                ],
-                [],
-                id="Verify both dirs, specific dependency 'SamplePack4', all level dependencies, show reasons, mandatory only, include tests and hidden.",
-            ),
-        ],
+            )
+        ]
     )
-    def test_get_dependencies(
+    def test_get_dependencies_include_tests_and_hidden(
         self,
         graph_repo: Repo,
         pack_id: str,
@@ -545,9 +703,604 @@ class TestGetRelationships:
         Given:
             - A repository with multiple packs and dependencies.
         When:
-            - Running get_dependencies_by_pack_path() for the above test cases.
+            - Running get_dependencies_by_pack_path() to get target first level dependencies, include tests and hidden packs.
         Then:
-            - Make sure the resulted sources and targets are as expected.
+            - Make sure the resulted sources and targets are as expected and are including test and hidden packs dependencies.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
+            pytest.param(
+                "SamplePack4",
+                True,
+                None,
+                False,
+                MarketplaceVersions.XSOAR,
+                Direction.TARGETS,
+                False,
+                True,
+                False,
+                [],
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": {},
+                        "formatted_reasons": "",
+                    },
+                    {
+                        "object_id": "SamplePack1",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                id="Verify target directions first level dependencies, show reasons, including tests",
+            )
+        ]
+    )
+    def test_get_dependencies_include_tests_and_reasons(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get target first level dependencies, include tests and show reasons.
+        Then:
+            - Make sure the resulted sources and targets are as expected and are including test and hidden packs dependencies.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
+            pytest.param(
+                "SamplePack1",
+                True,
+                None,
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
+                False,
+                False,
+                [],
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": {"Script:SampleScript": ["Integration:SampleIntegration2", "Script:SampleScript2"]},
+                        "formatted_reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
+                    },
+                    {
+                        "object_id": "SamplePack3",
+                        "mandatorily": False,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": {},
+                        "formatted_reasons": "",
+                    },
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": False,
+                        "minDepth": 2,
+                        "is_test": False,
+                        "reasons": [["SamplePack1", "SamplePack3", "SamplePack4"], ["SamplePack1", "SamplePack2", "SamplePack3", "SamplePack4"]],
+                        "formatted_reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
+                    },
+                ],
+                id="Verify both dirs, all level dependencies, show reasons",
+            )
+        ]
+    )
+    def test_get_dependencies_both_dirs_all_level_reasons(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get both dirs and all level dependencies, show reasons.
+        Then:
+            - Make sure the resulted sources and targets are as expected and are including test and hidden packs dependencies.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
+            pytest.param(
+                "SamplePack1",
+                True,
+                None,
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
+                True,
+                True,
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": False,
+                        "minDepth": 3,
+                        "is_test": True,
+                        "reasons": [["SamplePack2", "SamplePack3", "SamplePack4", "SamplePack1"]],
+                        "formatted_reasons": "* Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack1",
+                    },
+                    {
+                        "object_id": "SamplePack3",
+                        "mandatorily": False,
+                        "minDepth": 2,
+                        "is_test": True,
+                        "reasons": [[ "SamplePack3", "SamplePack4", "SamplePack1"]],
+                        "formatted_reasons": "* Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack1",
+                    },
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": {"Script:SampleScript": ["Integration:SampleIntegration2", "Script:SampleScript2"]},
+                        "formatted_reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
+                    },
+                    {
+                        "object_id": "SamplePack3",
+                        "mandatorily": False,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": {},
+                        "formatted_reasons": "",
+                    },
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": False,
+                        "minDepth": 2,
+                        "is_test": False,
+                        "reasons": [["SamplePack1", "SamplePack3", "SamplePack4"], ["SamplePack1", "SamplePack2", "SamplePack3", "SamplePack4"]],
+                        "formatted_reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
+                    },
+                    {
+                        "object_id": "SamplePack5",
+                        "mandatorily": False,
+                        "minDepth": 3,
+                        "is_test": False,
+                        "reasons": [["SamplePack1", "SamplePack3", "SamplePack4", "SamplePack5"], ["SamplePack1", "SamplePack2", "SamplePack3", "SamplePack4", "SamplePack5"]],
+                        "formatted_reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack5\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack5",
+                    },
+                ],
+                id="Verify both dirs, all level dependencies, show reasons, include tests and hidden.",
+            )
+        ]
+    )
+    def test_get_dependencies_both_dirs_all_level_reasons_tests_hidden(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get both dirs and all level dependencies, show reasons.
+        Then:
+            - Make sure the resulted sources and targets are as expected and are including test and hidden packs dependencies.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
+            pytest.param(
+                "SamplePack1",
+                True,
+                None,
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                True,
+                True,
+                True,
+                [
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                [
+                    {
+                        "object_id": "SamplePack2",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": False,
+                        "reasons": {"Script:SampleScript": ["Integration:SampleIntegration2", "Script:SampleScript2"]},
+                        "formatted_reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
+                    },
+                ],
+                id="Verify both dirs, all level dependencies, show reasons, mandatory only, include tests and hidden.",
+            )
+        ]
+    )
+    def test_get_dependencies_all_level_mandatory_tests_hidden(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get both dirs and all level dependencies, show reasons.
+        Then:
+            - Make sure the resulted sources and targets are as expected and are including test and hidden packs dependencies.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
+            pytest.param(
+                "SamplePack1",
+                True,
+                "SamplePack4",
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
+                True,
+                True,
+                [
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                [
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": False,
+                        "minDepth": 2,
+                        "is_test": False,
+                        "reasons": [["SamplePack1", "SamplePack3", "SamplePack4"], ["SamplePack1", "SamplePack2", "SamplePack3", "SamplePack4"]],
+                        "formatted_reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
+                    },
+                ],
+                id="Verify both dirs, specific dependency 'SamplePack4', all level dependencies, show reasons, include tests and hidden.",
+            )
+        ]
+    )
+    def test_get_dependencies_specific_dependency_all_level(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get data for a specific dependency "SamplePack4".
+        Then:
+            - Make sure the result is only the given dependency pack data.
+        """
+        create_mini_content(graph_repo)
+        graph = graph_repo.create_graph()
+        result = get_dependencies_by_pack_path(
+            graph,
+            pack_id,
+            show_reasons,
+            dependency_pack,
+            all_level_dependencies,
+            marketplace,
+            direction,
+            mandatory_only,
+            include_tests,
+            False,
+            include_hidden,
+        )
+        sources, targets = result["source_dependents"], result["target_dependencies"]
+        compare(
+            sources,
+            expected_sources,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+        compare(
+            targets,
+            expected_targets,
+            dependency_pack,
+            mandatory_only,
+            include_tests,
+            show_reasons,
+        )
+
+    @pytest.mark.parametrize(
+        "pack_id, show_reasons, dependency_pack, all_level_dependencies, marketplace, direction, mandatory_only, include_tests, include_hidden, expected_sources, expected_targets",
+        [
+            pytest.param(
+                "SamplePack1",
+                True,
+                "SamplePack4",
+                True,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                True,
+                True,
+                True,
+                [
+                    {
+                        "object_id": "SamplePack4",
+                        "mandatorily": True,
+                        "minDepth": 1,
+                        "is_test": True,
+                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
+                    },
+                ],
+                [],
+                id="Verify both dirs, specific dependency 'SamplePack4', all level dependencies, show reasons, mandatory only, include tests and hidden.",
+            )
+        ]
+    )
+    def test_get_dependencies_specific_dependency_mandatory(
+        self,
+        graph_repo: Repo,
+        pack_id: str,
+        show_reasons: bool,
+        dependency_pack: str,
+        all_level_dependencies: bool,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_hidden: bool,
+        expected_sources: list,
+        expected_targets: list,
+    ) -> None:
+        """
+        Given:
+            - A repository with multiple packs and dependencies.
+        When:
+            - Running get_dependencies_by_pack_path() to get data for a specific dependency "SamplePack4" and only mandatory.
+        Then:
+            - Make sure the result is only the given dependency pack data and only mandatory.
         """
         create_mini_content(graph_repo)
         graph = graph_repo.create_graph()

@@ -209,9 +209,9 @@ Returns dependencies of a given content pack.
 
     The ID of the pack to check dependencies for. [required]
 
-* **-sr/nsr, --show-reasons/--no-show-reasons**
+* **-sr, --show-reasons**
 
-    If true, prints the exact relationships paths of the returned pack dependencies.
+    This flag prints all of the relationships between the given content pack and its dependencies. The default is not to print these relationships.
 
 * **-d, --dependency**
 
@@ -219,31 +219,31 @@ Returns dependencies of a given content pack.
 
 * **-mp, --marketplace**
 
-    The marketplace to generate the graph for.
+    The marketplace to generate the graph for. The default value is xsoar. Other options are marketplacev2, xpanse, xsoar_saas, xsoar_on_prem.
 
 * **-m, --mandatory-only**
 
-    If true, returns only mandatory dependencies.
+    If provided, returns only mandatory dependencies in the result.
 
 * **-ald, --all-level-dependencies**
 
-    If true, will retrieve all level of dependencies.
+    If provided, will retrieve all level of dependencies.
 
 * **--include-test-dependencies**
 
-    If true, includes test dependencies in outputs.
+    If provided, includes test dependencies in result.
 
 * **--include-hidden**
 
-    If true, includes hidden packs in outputs.
+    If provided, includes hidden packs dependencies in result.
 
 * **-dir, --direction**
 
     Specifies whether to return only sources, only targets or both sides of dependencies [Default is only targets].
 
-* **-u/nu, --update-graph/--no-update-graph**
+* **-nu, --no-update-graph**
 
-    If true, runs an update on the graph before querying.
+    If provided, does not run an update on the graph before querying. If you do not include this argument, the update is run.
 
 * **-o, --output**
 

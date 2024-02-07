@@ -37,10 +37,10 @@ def get_dependencies(
     ),
     show_reasons: bool = typer.Option(
         False,
-        "-sr/-nsr",
-        "--show-reasons/--no-show-reasons",
+        "-sr",
+        "--show-reasons",
         is_flag=True,
-        help="If true, prints the exact relationships paths of the returned pack dependencies.",
+        help="This flag prints all of the relationships between the given content pack and its dependencies.",
     ),
     dependency: str = typer.Option(
         None,
@@ -94,8 +94,8 @@ def get_dependencies(
     ),
     update_graph: bool = typer.Option(
         True,
-        "-u/-nu",
-        "--update-graph/--no-update-graph",
+        "-nu",
+        "--no-update-graph",
         is_flag=True,
         help="If true, runs an update on the graph before querying.",
     ),

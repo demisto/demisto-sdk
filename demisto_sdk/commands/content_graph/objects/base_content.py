@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
     GitStatuses,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -242,8 +243,8 @@ class BaseContent(BaseNode):
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
 
-    def get_related_content(self) -> List[Path]:
-        return []
+    def get_related_content(self) -> Dict[RelatedFileType, dict]:
+        return {}
 
     @staticmethod
     @lru_cache

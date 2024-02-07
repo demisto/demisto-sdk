@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import demisto_client
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, RelatedFileType
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -181,14 +181,26 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data["script"]["commands"] = yml_commands
         write_dict(self.path, data, indent=4)
 
-    def get_related_content(self) -> List[Path]:
+    def get_related_content(self) -> Dict[RelatedFileType, dict]:
         related_content_ls = super().get_related_content()
-        related_content_ls.extend(
-            [
-                self.path.parent / f"{self.path.parts[-2]}_image.png",
-                self.path.parent / f"{self.path.parts[-2]}_description.md",
-                self.path.parent / f"{self.path.parts[-2]}_light.svg",
-                self.path.parent / f"{self.path.parts[-2]}_dark.svg",
-            ]
+        related_content_ls.update(
+            {
+                RelatedFileType.IMAGE: {
+                    "path": self.path.parent / f"{self.path.parts[-2]}_image.png",
+                    "git_status": None,
+                },
+                RelatedFileType.DARK_SVG: {
+                    "path": self.path.parent / f"{self.path.parts[-2]}_description.md",
+                    "git_status": None,
+                },
+                RelatedFileType.LIGHT_SVG: {
+                    "path": self.path.parent / f"{self.path.parts[-2]}_light.svg",
+                    "git_status": None,
+                },
+                RelatedFileType.DESCRIPTION: {
+                    "path": self.path.parent / f"{self.path.parts[-2]}_dark.svg",
+                    "git_status": None,
+                },
+            }
         )
         return related_content_ls

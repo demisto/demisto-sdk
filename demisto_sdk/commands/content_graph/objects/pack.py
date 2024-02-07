@@ -2,7 +2,7 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_WHITELIST_FILE_NAME,
     ImagesFolderNames,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -545,12 +546,26 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         data = get_file(file_path)
         super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
 
-    def get_related_content(self):
-        super().get_related_content().extend(
-            [
-                self.path / PACKS_PACK_IGNORE_FILE_NAME,
-                self.path / PACKS_WHITELIST_FILE_NAME,
-                self.path / AUTHOR_IMAGE_FILE_NAME,
-                self.path / PACKS_README_FILE_NAME,
-            ]
+    def get_related_content(self) -> Dict[RelatedFileType, dict]:
+        related_content_ls = super().get_related_content()
+        related_content_ls.update(
+            {
+                RelatedFileType.PACK_IGNORE: {
+                    "path": self.path / PACKS_PACK_IGNORE_FILE_NAME,
+                    "git_status": None,
+                },
+                RelatedFileType.SECRETS_IGNORE: {
+                    "path": self.path / PACKS_WHITELIST_FILE_NAME,
+                    "git_status": None,
+                },
+                RelatedFileType.AUTHOR_IMAGE: {
+                    "path": self.path / AUTHOR_IMAGE_FILE_NAME,
+                    "git_status": None,
+                },
+                RelatedFileType.README: {
+                    "path": self.path / PACKS_README_FILE_NAME,
+                    "git_status": None,
+                },
+            }
         )
+        return related_content_ls

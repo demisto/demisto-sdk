@@ -1,12 +1,14 @@
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
+    PACKS_README_FILE_NAME,
     Auto,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker_helper import (
@@ -107,21 +109,36 @@ class IntegrationScript(ContentItem):
     @property
     def readme(self) -> str:
         return get_file(
-            str(self.path.parent / "README.md"),
+            str(self.path.parent / PACKS_README_FILE_NAME),
             return_content=True,
             git_sha=self.git_sha,
         )
 
-    def get_related_content(self) -> List[Path]:
+    def get_related_content(self) -> Dict[RelatedFileType, dict]:
         related_content_ls = super().get_related_content()
         suffix = (
             ".ps1" if self.is_powershell else ".js" if self.is_javascript else ".py"
         )
-        related_content_ls.extend(
-            [
-                self.path.parent / "README.md",
-                self.path.parent / f"{self.path.parts[-2]}_test{suffix}",
-                self.path.parent / f"{self.path.parts[-2]}{suffix}",
-            ]
+        related_content_ls.update(
+            {
+                RelatedFileType.README: {
+                    "path": (
+                        self.path.parent / PACKS_README_FILE_NAME,
+                        str(self.path).replace(".yml", f"_{PACKS_README_FILE_NAME}"),
+                    ),
+                    "git_status": None,
+                },
+                RelatedFileType.TEST_CODE: {
+                    "path": self.path.parent / f"{self.path.parts[-2]}_test{suffix}",
+                    "git_status": None,
+                },
+                RelatedFileType.CODE: {
+                    "path": (
+                        self.path.parent / f"{self.path.parts[-2]}{suffix}",
+                        self.path,
+                    ),
+                    "git_status": None,
+                },
+            }
         )
         return related_content_ls

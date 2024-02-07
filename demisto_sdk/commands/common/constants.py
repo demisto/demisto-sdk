@@ -2091,12 +2091,18 @@ PACK_DEFAULT_MARKETPLACES: List = [
 ]
 
 
-class FileSuffix(str, Enum):
-    YML = ".yml"
-    JSON = ".json"
-    MD = ".md"
-    Python = ".py"
-    JavaScript = ".js"
-    Powershell = ".ps1"
-    PNG = ".png"
-    SVG = ".svg"
+class RelatedFileType(Enum):
+    YML = "YML"
+    JSON = "JSON"
+    README = "README"
+    DESCRIPTION = "DESCRIPTION"
+    IMAGE = "IMAGE"
+    DARK_SVG = "DARK_SVG"
+    LIGHT_SVG = "LIGHT_SVG"
+    CODE = "CODE"
+    TEST_CODE = "TEST_CODE"
+    SCHEMA = "SCHEMA"
+    XIF = "XIF"
+    PACK_IGNORE = "PACK_IGNORE"
+    SECRETS_IGNORE = "SECRETS_IGNORE"
+    AUTHOR_IMAGE = "AUTHOR_IMAGE"

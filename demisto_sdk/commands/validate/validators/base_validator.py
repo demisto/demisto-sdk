@@ -15,7 +15,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import FileSuffix, GitStatuses
+from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
@@ -39,7 +39,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     fix_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
-    expected_file_types: (ClassVar[Optional[List[FileSuffix]]]): The list of file types (suffixes) the validation should run on.
+    expected_file_types: (ClassVar[Optional[List[RelatedFileType]]]): The list of file types (suffixes) the validation should run on.
     run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
@@ -52,9 +52,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     fix_message: ClassVar[str] = ""
     related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
-    expected_file_types: ClassVar[Optional[List[FileSuffix]]] = [
-        FileSuffix.YML,
-        FileSuffix.JSON,
+    expected_file_types: ClassVar[Optional[List[RelatedFileType]]] = [
+        RelatedFileType.YML,
+        RelatedFileType.JSON,
     ]
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
@@ -228,7 +228,7 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
 # def should_run_according_to_file_type(
 #     content_item: ContentTypes,
 #     statuses_dict: Dict[Path, GitStatuses],
-#     expected_file_types: List[FileSuffix],
+#     expected_file_types: List[RelatedFileType],
 # ) -> bool:
 #     """
 #     Check if the given content item git status is in the given expected git statuses for the specific validation.

@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import List
+from typing import Dict
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, RelatedFileType
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     ContentItemXSIAM,
@@ -29,12 +29,18 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
                 return True
         return False
 
-    def get_related_content(self) -> List[Path]:
+    def get_related_content(self) -> Dict[RelatedFileType, dict]:
         related_content_ls = super().get_related_content()
-        related_content_ls.extend(
-            [
-                Path((str(self.path).replace(".yml", ".xif"))),
-                Path((str(self.path).replace(".yml", "_Schema.json"))),
-            ]
+        related_content_ls.update(
+            {
+                RelatedFileType.SCHEMA: {
+                    "path": str(self.path).replace(".yml", "_Schema.json"),
+                    "git_status": None,
+                },
+                RelatedFileType.XIF: {
+                    "path": str(self.path).replace(".yml", ".xif"),
+                    "git_status": None,
+                },
+            }
         )
         return related_content_ls

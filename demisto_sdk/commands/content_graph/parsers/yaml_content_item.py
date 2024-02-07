@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional, Union
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    FileSuffix,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -34,7 +34,7 @@ class YAMLContentItemParser(ContentItemParser):
             else self.path
         )
         self.yml_data: Dict[str, Any] = self.get_yaml(git_sha=git_sha)
-        self.file_type = FileSuffix.YML
+        self.file_type = RelatedFileType.YML
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(

@@ -378,7 +378,7 @@ class Initializer:
         basecontent_with_path_set: Set[BaseContent] = self.git_paths_to_basecontent_set(
             statuses_dict_with_renamed_files_tuple, git_sha=self.prev_ver
         )
-        self.connect_related_files(basecontent_with_path_set, file_by_status_dict)
+        # self.connect_related_files(basecontent_with_path_set, file_by_status_dict)
         return basecontent_with_path_set, file_by_status_dict
 
     def paths_to_basecontent_set(self, files_set: Set[str]) -> Set[BaseContent]:
@@ -512,17 +512,17 @@ class Initializer:
 
         return statuses_dict
 
-    def connect_related_files(
-        self,
-        basecontent_with_path_set: Set[BaseContent],
-        statuses_dict: Dict[Path, GitStatuses],
-    ):
-        paths_set = set(statuses_dict.keys())
-        for content_item in basecontent_with_path_set:
-            if related_paths := set(content_item.get_related_content()).intersection(
-                paths_set
-            ):
-                for related_path in related_paths:
-                    content_item.related_content_by_status[
-                        related_path
-                    ] = statuses_dict[related_path]
+    # def connect_related_files(
+    #     self,
+    #     basecontent_with_path_set: Set[BaseContent],
+    #     statuses_dict: Dict[Path, GitStatuses],
+    # ):
+    #     paths_set = set(statuses_dict.keys())
+    #     for content_item in basecontent_with_path_set:
+    #         if related_paths := set(content_item.get_related_content()).intersection(
+    #             paths_set
+    #         ):
+    #             for related_path in related_paths:
+    #                 content_item.related_content_by_status[
+    #                     related_path
+    #                 ] = statuses_dict[related_path]

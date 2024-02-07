@@ -29,7 +29,6 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         self.is_test: bool = is_test_script
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.skip_prepare: List[str] = self.yml_data.get("skipprepare", [])
-
         self.connect_to_dependencies()
         self.connect_to_tests()
 
@@ -75,9 +74,16 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         """
         if self.is_unified or self.yml_data.get("script") not in ["-", ""]:
             return self.yml_data.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(
-            self.path.parent
-        )[1]
+        if not self.git_sha:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data(
+                self.path.parent
+            )[1]
+        else:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
+                self.path, self.git_sha, self.yml_data
+            )[
+                1
+            ]
 
     def get_depends_on(self) -> Set[str]:
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])

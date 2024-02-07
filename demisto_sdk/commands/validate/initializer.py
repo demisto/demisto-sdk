@@ -428,10 +428,9 @@ class Initializer:
                         obj.old_base_content_object = obj.copy(deep=True)
                     if obj.old_base_content_object:
                         obj.old_base_content_object.git_sha = git_sha
+                    basecontent_with_path_set.add(obj)
                 elif obj is None:
                     invalid_content_items.append(str(file_path))
-                else:
-                    basecontent_with_path_set.add(obj)
             except InvalidContentItemException:
                 invalid_content_items.append(str(file_path))
         return basecontent_with_path_set
@@ -470,6 +469,10 @@ class Initializer:
                     )
                     if path not in statuses_dict:
                         statuses_dict[path] = git_status
+                elif f"_{PACKS_README_FILE_NAME}" in path_str:
+                    path = Path(path_str.replace(f"_{PACKS_README_FILE_NAME}", ".yml"))
+                    if path not in statuses_dict:
+                        statuses_dict[path] = None
                 else:
                     path = Path(path.parent / f"{path.parts[-2]}.yml")
                     if path not in statuses_dict:

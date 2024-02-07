@@ -25,11 +25,13 @@ class YAMLContentItemParser(ContentItemParser):
         pack_marketplaces: List[MarketplaceVersions],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha)
         self.path = (
             self.get_path_with_suffix(".yml")
             if not git_sha
             else self.path / f"{self.path.name}.yml"
+            if not self.path.suffix == ".yml"
+            else self.path
         )
         self.yml_data: Dict[str, Any] = self.get_yaml(git_sha=git_sha)
         self.file_type = FileSuffix.YML
@@ -127,4 +129,3 @@ class YAMLContentItemParser(ContentItemParser):
             return YmlFile.read_from_git_path(path=self.path, tag=git_sha)
         else:
             return YmlFile.read_from_local_path(path=self.path)
-        # return get_yaml(str(self.path), git_sha=git_sha)

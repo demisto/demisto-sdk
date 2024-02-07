@@ -20,9 +20,7 @@ from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
-import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
-    MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
     GitStatuses,
@@ -271,20 +269,10 @@ class BaseContent(BaseNode):
         try:
             content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
         except NotAContentItemException:
-            # This is a workaround because `create-content-artifacts` still creates deprecated content items
-            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
-                "0.0.0"
+            logger.error(
+                f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
             )
-            try:
-                content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
-            except NotAContentItemException:
-                logger.error(
-                    f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
-                )
-                return None
-            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
-                MARKETPLACE_MIN_VERSION
-            )
+            return None
         except InvalidContentItemException:
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
@@ -297,10 +285,7 @@ class BaseContent(BaseNode):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         try:
-            obj = model.from_orm(content_item_parser)  # type: ignore
-            if obj:
-                obj.git_status = git_status
-            return obj
+            return model.from_orm(content_item_parser)  # type: ignore
         except Exception as e:
             logger.error(
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"

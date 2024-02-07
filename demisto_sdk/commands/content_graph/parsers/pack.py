@@ -263,7 +263,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")
         self.parse_pack_folders()
-        self.parse_ignored_errors()
+        self.parse_ignored_errors(git_sha)
         self.get_rn_info()
 
         logger.debug(f"Successfully parsed {self.node_id}")
@@ -333,9 +333,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
             return True
         return False
 
-    def parse_ignored_errors(self):
+    def parse_ignored_errors(self, git_sha):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {})  # type: ignore
+        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {}) if not git_sha else {}  # type: ignore
 
     def get_rn_info(self):
         self.latest_rn_version = get_pack_latest_rn_version(str(self.path))

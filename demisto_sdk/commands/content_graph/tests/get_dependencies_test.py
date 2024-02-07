@@ -117,7 +117,12 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
-                        "reasons": {"Script:SampleScript": ["Integration:SampleIntegration2", "Script:SampleScript2"]},
+                        "reasons": {
+                            "Script:SampleScript": [
+                                "Integration:SampleIntegration2",
+                                "Script:SampleScript2",
+                            ]
+                        },
                         "formatted_reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
                     },
                     {
@@ -132,7 +137,7 @@ class TestGetRelationships:
                 [],
                 id="Verify source first level dependency",
             )
-        ]
+        ],
     )
     def test_get_dependencies_only_sources(
         self,
@@ -214,7 +219,7 @@ class TestGetRelationships:
                 ],
                 id="Verify targets first level dependency",
             )
-        ]
+        ],
     )
     def test_get_dependencies_only_targets(
         self,
@@ -304,7 +309,7 @@ class TestGetRelationships:
                 ],
                 id="Verify both directions first level dependency",
             )
-        ]
+        ],
     )
     def test_get_dependencies_both_directions(
         self,
@@ -411,7 +416,7 @@ class TestGetRelationships:
                 ],
                 id="Verify both directions all level dependencies",
             )
-        ]
+        ],
     )
     def test_get_dependencies_both_dirs_all_level(
         self,
@@ -493,7 +498,7 @@ class TestGetRelationships:
                 ],
                 id="Verify both directions all level dependencies, mandatory only",
             )
-        ]
+        ],
     )
     def test_get_dependencies_mandatory_all_level(
         self,
@@ -588,7 +593,7 @@ class TestGetRelationships:
                 ],
                 id="Verify both directions, first level dependencies, including tests",
             )
-        ]
+        ],
     )
     def test_get_dependencies_include_tests(
         self,
@@ -682,7 +687,7 @@ class TestGetRelationships:
                 ],
                 id="Verify target directions, first level, including tests and hidden",
             )
-        ]
+        ],
     )
     def test_get_dependencies_include_tests_and_hidden(
         self,
@@ -768,13 +773,15 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": True,
-                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "reasons": {
+                            "TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]
+                        },
                         "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
                     },
                 ],
                 id="Verify target directions first level dependencies, show reasons, including tests",
             )
-        ]
+        ],
     )
     def test_get_dependencies_include_tests_and_reasons(
         self,
@@ -852,7 +859,12 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
-                        "reasons": {"Script:SampleScript": ["Integration:SampleIntegration2", "Script:SampleScript2"]},
+                        "reasons": {
+                            "Script:SampleScript": [
+                                "Integration:SampleIntegration2",
+                                "Script:SampleScript2",
+                            ]
+                        },
                         "formatted_reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
                     },
                     {
@@ -868,13 +880,21 @@ class TestGetRelationships:
                         "mandatorily": False,
                         "minDepth": 2,
                         "is_test": False,
-                        "reasons": [["SamplePack1", "SamplePack3", "SamplePack4"], ["SamplePack1", "SamplePack2", "SamplePack3", "SamplePack4"]],
+                        "reasons": [
+                            ["SamplePack1", "SamplePack3", "SamplePack4"],
+                            [
+                                "SamplePack1",
+                                "SamplePack2",
+                                "SamplePack3",
+                                "SamplePack4",
+                            ],
+                        ],
                         "formatted_reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
                     },
                 ],
                 id="Verify both dirs, all level dependencies, show reasons",
             )
-        ]
+        ],
     )
     def test_get_dependencies_both_dirs_all_level_reasons(
         self,
@@ -951,7 +971,9 @@ class TestGetRelationships:
                         "mandatorily": False,
                         "minDepth": 3,
                         "is_test": True,
-                        "reasons": [["SamplePack2", "SamplePack3", "SamplePack4", "SamplePack1"]],
+                        "reasons": [
+                            ["SamplePack2", "SamplePack3", "SamplePack4", "SamplePack1"]
+                        ],
                         "formatted_reasons": "* Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack1",
                     },
                     {
@@ -959,7 +981,7 @@ class TestGetRelationships:
                         "mandatorily": False,
                         "minDepth": 2,
                         "is_test": True,
-                        "reasons": [[ "SamplePack3", "SamplePack4", "SamplePack1"]],
+                        "reasons": [["SamplePack3", "SamplePack4", "SamplePack1"]],
                         "formatted_reasons": "* Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack1",
                     },
                     {
@@ -967,7 +989,9 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": True,
-                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "reasons": {
+                            "TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]
+                        },
                         "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
                     },
                 ],
@@ -977,7 +1001,12 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
-                        "reasons": {"Script:SampleScript": ["Integration:SampleIntegration2", "Script:SampleScript2"]},
+                        "reasons": {
+                            "Script:SampleScript": [
+                                "Integration:SampleIntegration2",
+                                "Script:SampleScript2",
+                            ]
+                        },
                         "formatted_reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
                     },
                     {
@@ -993,7 +1022,15 @@ class TestGetRelationships:
                         "mandatorily": False,
                         "minDepth": 2,
                         "is_test": False,
-                        "reasons": [["SamplePack1", "SamplePack3", "SamplePack4"], ["SamplePack1", "SamplePack2", "SamplePack3", "SamplePack4"]],
+                        "reasons": [
+                            ["SamplePack1", "SamplePack3", "SamplePack4"],
+                            [
+                                "SamplePack1",
+                                "SamplePack2",
+                                "SamplePack3",
+                                "SamplePack4",
+                            ],
+                        ],
                         "formatted_reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
                     },
                     {
@@ -1001,13 +1038,27 @@ class TestGetRelationships:
                         "mandatorily": False,
                         "minDepth": 3,
                         "is_test": False,
-                        "reasons": [["SamplePack1", "SamplePack3", "SamplePack4", "SamplePack5"], ["SamplePack1", "SamplePack2", "SamplePack3", "SamplePack4", "SamplePack5"]],
+                        "reasons": [
+                            [
+                                "SamplePack1",
+                                "SamplePack3",
+                                "SamplePack4",
+                                "SamplePack5",
+                            ],
+                            [
+                                "SamplePack1",
+                                "SamplePack2",
+                                "SamplePack3",
+                                "SamplePack4",
+                                "SamplePack5",
+                            ],
+                        ],
                         "formatted_reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack5\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4 -> [DEPENDS_ON] -> Pack:SamplePack5",
                     },
                 ],
                 id="Verify both dirs, all level dependencies, show reasons, include tests and hidden.",
             )
-        ]
+        ],
     )
     def test_get_dependencies_both_dirs_all_level_reasons_tests_hidden(
         self,
@@ -1084,7 +1135,9 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": True,
-                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "reasons": {
+                            "TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]
+                        },
                         "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
                     },
                 ],
@@ -1094,13 +1147,18 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": False,
-                        "reasons": {"Script:SampleScript": ["Integration:SampleIntegration2", "Script:SampleScript2"]},
+                        "reasons": {
+                            "Script:SampleScript": [
+                                "Integration:SampleIntegration2",
+                                "Script:SampleScript2",
+                            ]
+                        },
                         "formatted_reasons": "* Script:SampleScript -> [USES]:\n  - Integration:SampleIntegration2\n  - Script:SampleScript2\n",
                     },
                 ],
                 id="Verify both dirs, all level dependencies, show reasons, mandatory only, include tests and hidden.",
             )
-        ]
+        ],
     )
     def test_get_dependencies_all_level_mandatory_tests_hidden(
         self,
@@ -1177,7 +1235,9 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": True,
-                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "reasons": {
+                            "TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]
+                        },
                         "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
                     },
                 ],
@@ -1187,13 +1247,21 @@ class TestGetRelationships:
                         "mandatorily": False,
                         "minDepth": 2,
                         "is_test": False,
-                        "reasons": [["SamplePack1", "SamplePack3", "SamplePack4"], ["SamplePack1", "SamplePack2", "SamplePack3", "SamplePack4"]],
+                        "reasons": [
+                            ["SamplePack1", "SamplePack3", "SamplePack4"],
+                            [
+                                "SamplePack1",
+                                "SamplePack2",
+                                "SamplePack3",
+                                "SamplePack4",
+                            ],
+                        ],
                         "formatted_reasons": "* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4\n* Pack:SamplePack1 -> [DEPENDS_ON] -> Pack:SamplePack2 -> [DEPENDS_ON] -> Pack:SamplePack3 -> [DEPENDS_ON] -> Pack:SamplePack4",
                     },
                 ],
                 id="Verify both dirs, specific dependency 'SamplePack4', all level dependencies, show reasons, include tests and hidden.",
             )
-        ]
+        ],
     )
     def test_get_dependencies_specific_dependency_all_level(
         self,
@@ -1270,14 +1338,16 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "minDepth": 1,
                         "is_test": True,
-                        "reasons": {"TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]},
+                        "reasons": {
+                            "TestPlaybook:SamplePlaybookTest": ["Script:SampleScript"]
+                        },
                         "formatted_reasons": "* TestPlaybook:SamplePlaybookTest -> [USES] -> Script:SampleScript\n",
                     },
                 ],
                 [],
                 id="Verify both dirs, specific dependency 'SamplePack4', all level dependencies, show reasons, mandatory only, include tests and hidden.",
             )
-        ]
+        ],
     )
     def test_get_dependencies_specific_dependency_mandatory(
         self,

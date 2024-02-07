@@ -247,11 +247,9 @@ class DockerBase:
                     image=image, command=command, environment=environment, **kwargs
                 )
             )
-        except DockerException:
-            if container_name := kwargs.get("name"):
-                docker_container = docker_client.containers.get(container_name).remove()
-                docker_container.remove()
-                return
+        except DockerException as e:
+            container.remove()
+            raise e
 
         if files_to_push:
             self.copy_files_container(container, files_to_push)

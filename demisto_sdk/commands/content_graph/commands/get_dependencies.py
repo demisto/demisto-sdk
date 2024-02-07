@@ -240,10 +240,12 @@ def to_tabulate(
 
     if show_reasons:
         headers.append("Reasons")
-        fieldnames_to_collect.append("reasons")
+        fieldnames_to_collect.append("formatted_reasons")
 
     tabulated_data = []
     for record in data:
+        if show_reasons:
+            format_reasons(record)
         tabulated_data.append([record[f] for f in fieldnames_to_collect])
 
     return tabulate(
@@ -264,8 +266,8 @@ def add_reasons_to_dependencies(
     """
     Iterates over the resulted sources or/and targets dependencies and adds the dependency reasons.
 
-    For first level dependencies, the reason will be the content items USES relationships path between the packs.
-    For all level dependencies, the reason will be the DEPENDS_ON relationships path between the packs.
+    For first level dependencies, the reason will be the pack's content items USES relationships.
+    For all level dependencies, the reason will be the DEPENDS_ON relationship path between the packs.
 
     Args:
         pack_id (str): The given pack ID.
@@ -279,24 +281,15 @@ def add_reasons_to_dependencies(
     def get_content_items_relationship_reasons(
         pack_depends_on_reasons: list, mandatory_only: bool, include_tests: bool
     ):
-        reasons_result_obj: Dict[str, list] = {}
+        reasons_result: Dict[str, list] = {}
         for reason in pack_depends_on_reasons:
             if (reason.get("mandatorily") or not mandatory_only) and (
                 not reason.get("is_test") or include_tests
             ):
-                reasons_result_obj.setdefault(reason.get("source"), []).append(
+                reasons_result.setdefault(reason.get("source"), []).append(
                     reason.get("target")
                 )
-
-        reasons = ""
-        for source, targets in reasons_result_obj.items():
-            if len(targets) == 1:
-                reasons += f"* {source} -> [USES] -> {targets[0]}\n"
-            else:
-                targets.sort()
-                formatted_targets = "\n  - ".join(targets)  # type: ignore
-                reasons += f"* {source} -> [USES]:\n  - {formatted_targets}\n"
-        return reasons
+        return reasons_result
 
     def get_packs_relationship_reasons(
         record: dict, mandatory_only: bool, include_tests: bool
@@ -307,16 +300,13 @@ def add_reasons_to_dependencies(
                 not path.get("is_test") or include_tests
             ):
                 reasons_result.append(
-                    " -> [DEPENDS_ON] -> ".join(
-                        [
-                            f'Pack:{path_element["name"]}'
-                            for idx, path_element in enumerate(path["path"])
-                            if idx % 2 == 0
-                        ]
-                    )
+                    [
+                        path_element["name"]
+                        for idx, path_element in enumerate(path["path"])
+                        if idx % 2 == 0
+                    ]
                 )
-        reasons = "* "
-        return reasons + "\n* ".join(reasons_result)
+        return reasons_result
 
     def add_reasons_to_dependency(
         dependency_record: dict,
@@ -349,4 +339,41 @@ def add_reasons_to_dependencies(
         )
         add_reasons_to_dependency(
             dependency_record, pack_depends_on_obj, mandatory_only, include_tests
+        )
+
+
+def format_reasons(dependency_record: dict):
+    """
+    Formats the dependency reasons to a readable MD output.
+
+    Args:
+        dependency_record (dict): A dependency record object.
+    """
+
+    def format_content_items_relationship_path(dependency_record: dict):
+        reasons = ""
+        for source, targets in dependency_record["reasons"].items():
+            if len(targets) == 1:
+                reasons += f"* {source} -> [USES] -> {targets[0]}\n"
+            else:
+                targets.sort()
+                formatted_targets = "\n  - ".join(targets)  # type: ignore
+                reasons += f"* {source} -> [USES]:\n  - {formatted_targets}\n"
+        return reasons
+
+    def format_packs_relationship_path(dependency_record):
+        return "* " + "\n* ".join(
+            [
+                " -> [DEPENDS_ON] -> ".join([f"Pack:{pack}" for pack in path])
+                for path in dependency_record["reasons"]
+            ]
+        )
+
+    if dependency_record.get("minDepth") == 1:
+        dependency_record["formatted_reasons"] = format_content_items_relationship_path(
+            dependency_record
+        )
+    else:
+        dependency_record["formatted_reasons"] = format_packs_relationship_path(
+            dependency_record
         )

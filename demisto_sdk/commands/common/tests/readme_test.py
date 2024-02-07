@@ -44,14 +44,16 @@ def test_is_file_valid(mocker, current, answer):
         "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
         return_value="PackName",
     )
-    integration_yml = f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml'
-    mocker.patch("demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
-                 return_value=([integration_yml], integration_yml))
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
+        return_value=([integration_yml], integration_yml),
+    )
 
     mocker.patch.object(Path, "is_file", return_value=answer)
     mocker.patch.object(os.path, "isfile", return_value=answer)
     readme_validator = ReadMeValidator(current)
-    integration_yml = f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml'
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
     valid = ReadMeValidator.are_modules_installed_for_verify(
         readme_validator.content_path
     )
@@ -89,9 +91,11 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
         "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
         return_value="PackName",
     )
-    integration_yml = f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml'
-    mocker.patch("demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
-                 return_value=([integration_yml], integration_yml))
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
+        return_value=([integration_yml], integration_yml),
+    )
     mocker.patch("demisto_sdk.commands.common.tools.sleep")
     mocker.patch.object(Path, "is_file", return_value=answer)
     mocker.patch.object(os.path, "isfile", return_value=answer)

@@ -676,9 +676,13 @@ class TestValidators:
         )
         mocker.patch.object(OldValidateManager, "is_node_exist", return_value=True)
         validate_manager = OldValidateManager(file_path=file_path, skip_conf_json=True)
-        integration_yml = f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml'
-        mocker.patch("demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
-                     return_value=([integration_yml], integration_yml))
+        integration_yml = (
+            f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
+        )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
+            return_value=([integration_yml], integration_yml),
+        )
         assert validate_manager.run_validation_on_specific_files()
 
     INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS = [

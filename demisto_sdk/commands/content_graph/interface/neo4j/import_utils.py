@@ -4,12 +4,13 @@ from typing import List, Optional, Set
 from zipfile import ZipFile
 
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.singleton import SingletonMeta
 from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_path
 
 GRAPHML_FILE_SUFFIX = ".graphml"
 
 
-class Neo4jImportHandler:
+class Neo4jImportHandler(metaclass=SingletonMeta):
     def __init__(self) -> None:
         """This class handles the import of data to neo4j.
         import_path is the path to the directory where the data is located.

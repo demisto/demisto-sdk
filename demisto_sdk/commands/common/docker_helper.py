@@ -247,8 +247,9 @@ class DockerBase:
                     image=image, command=command, environment=environment, **kwargs
                 )
             )
-        except DockerException as e:
-            container.remove()
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            if container_name := kwargs.get("container_name"):
+                docker_client.containers.get(container_name).remove(force=True)
             raise e
 
         if files_to_push:

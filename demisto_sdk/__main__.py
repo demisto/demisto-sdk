@@ -3363,10 +3363,6 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    logger.warning(
-        "[WARNING] The 'create-content-graph' command is deprecated and will be removed "
-        "in upcoming versions. Use 'demisto-sdk graph create' instead."
-    )
     ctx.invoke(
         create,
         ctx,
@@ -3442,10 +3438,6 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    logger.warning(
-        "[WARNING] The 'update-content-graph' command is deprecated and will be removed "
-        "in upcoming versions. Use 'demisto-sdk graph update' instead."
-    )
     ctx.invoke(
         update,
         ctx,

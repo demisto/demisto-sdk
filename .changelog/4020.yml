@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where **upload** failed when trying to upload a content item that was missing a description or type field.
+- description: Fixed an issue where **upload** failed when trying to upload a content item that was missing a *description* or *type* fields.
   type: fix
 pr_number: 4020

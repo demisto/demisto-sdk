@@ -1,4 +1,4 @@
 changes:
-- description: Added a recover function in the retry wrapper (in case of failures).
+- description: Updated **create_container** function to remove containers created with errors.
   type: feature
 pr_number: 4019

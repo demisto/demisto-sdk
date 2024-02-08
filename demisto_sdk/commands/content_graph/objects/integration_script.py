@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     RelatedFileType,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
@@ -124,19 +125,31 @@ class IntegrationScript(ContentItem):
             {
                 RelatedFileType.README: {
                     "path": (
-                        self.path.parent / PACKS_README_FILE_NAME,
-                        str(self.path).replace(".yml", f"_{PACKS_README_FILE_NAME}"),
+                        (self.path.parent / PACKS_README_FILE_NAME).relative_to(
+                            CONTENT_PATH
+                        ),
+                        (
+                            Path(
+                                str(self.path).replace(
+                                    ".yml", f"_{PACKS_README_FILE_NAME}"
+                                )
+                            )
+                        ).relative_to(CONTENT_PATH),
                     ),
                     "git_status": None,
                 },
                 RelatedFileType.TEST_CODE: {
-                    "path": self.path.parent / f"{self.path.parts[-2]}_test{suffix}",
+                    "path": (
+                        self.path.parent / f"{self.path.parts[-2]}_test{suffix}"
+                    ).relative_to(CONTENT_PATH),
                     "git_status": None,
                 },
                 RelatedFileType.CODE: {
                     "path": (
-                        self.path.parent / f"{self.path.parts[-2]}{suffix}",
-                        self.path,
+                        (
+                            self.path.parent / f"{self.path.parts[-2]}{suffix}"
+                        ).relative_to(CONTENT_PATH),
+                        (self.path).relative_to(CONTENT_PATH),
                     ),
                     "git_status": None,
                 },

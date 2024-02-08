@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     RelatedFileType,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_playbooks_prepare import (
@@ -50,18 +51,22 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
         related_content_ls.update(
             {
                 RelatedFileType.IMAGE: {
-                    "path": self.path.parents[1]
-                    / "doc_files"
-                    / str(self.path.parts[-1])
-                    .replace(".yml", ".png")
-                    .replace("playbook-", ""),
+                    "path": (
+                        self.path.parents[1]
+                        / "doc_files"
+                        / str(self.path.parts[-1])
+                        .replace(".yml", ".png")
+                        .replace("playbook-", "")
+                    ).relative_to(CONTENT_PATH),
                     "git_status": None,
                 },
                 RelatedFileType.README: {
-                    "path": self.path.parent
-                    / str(self.path.parts[-1]).replace(
-                        ".yml", f"_{PACKS_README_FILE_NAME}"
-                    ),
+                    "path": (
+                        self.path.parent
+                        / str(self.path.parts[-1]).replace(
+                            ".yml", f"_{PACKS_README_FILE_NAME}"
+                        )
+                    ).relative_to(CONTENT_PATH),
                     "git_status": None,
                 },
             }

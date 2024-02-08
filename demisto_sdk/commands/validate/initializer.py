@@ -582,27 +582,28 @@ class Initializer:
         return files_set
 
     def get_type_by_path(self, path):
-        if "description" in path:
+        str_path = str(path)
+        if "description" in str_path:
             return RelatedFileType.DESCRIPTION
-        elif PACKS_PACK_IGNORE_FILE_NAME in path:
+        elif PACKS_PACK_IGNORE_FILE_NAME in str_path:
             return RelatedFileType.PACK_IGNORE
-        elif PACKS_WHITELIST_FILE_NAME in path:
+        elif PACKS_WHITELIST_FILE_NAME in str_path:
             return RelatedFileType.SECRETS_IGNORE
-        elif ".xif" in path:
+        elif ".xif" in str_path:
             return RelatedFileType.XIF
-        elif "_schema" in path:
+        elif "_schema" in str_path:
             return RelatedFileType.SCHEMA
-        elif "_dark.svg" in path:
+        elif "_dark.svg" in str_path:
             return RelatedFileType.DARK_SVG
-        elif "_light.svg" in path:
+        elif "_light.svg" in str_path:
             return RelatedFileType.LIGHT_SVG
-        elif PACKS_README_FILE_NAME in path:
+        elif PACKS_README_FILE_NAME in str_path:
             return RelatedFileType.README
-        elif "Author_image" in path:
+        elif "Author_image" in str_path:
             return RelatedFileType.AUTHOR_IMAGE
-        elif ".png" in path:
+        elif ".png" in str_path:
             return RelatedFileType.IMAGE
         elif path.suffix in (".py", "js", "ps1"):
-            if "_test" in path:
+            if "_test" in str_path:
                 return RelatedFileType.TEST_CODE
             return RelatedFileType.CODE

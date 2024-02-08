@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions, RelatedFileType
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     ContentItemXSIAM,
@@ -34,11 +35,15 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
         related_content_ls.update(
             {
                 RelatedFileType.SCHEMA: {
-                    "path": str(self.path).replace(".yml", "_Schema.json"),
+                    "path": (
+                        Path(str(self.path).replace(".yml", "_Schema.json"))
+                    ).relative_to(CONTENT_PATH),
                     "git_status": None,
                 },
                 RelatedFileType.XIF: {
-                    "path": str(self.path).replace(".yml", ".xif"),
+                    "path": (Path(str(self.path).replace(".yml", ".xif"))).relative_to(
+                        CONTENT_PATH
+                    ),
                     "git_status": None,
                 },
             }

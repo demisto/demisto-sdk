@@ -147,3 +147,33 @@ def find_command(commands: List[Command], command_to_find: str) -> Optional[Comm
         if command.name == command_to_find:
             return command
     return None
+
+
+def check_readme_content_contain_text(
+    text_list: List[str],
+    is_lower: bool = False,
+    to_split: bool = False,
+    readme_content: str = "",
+):
+    """
+    Args:
+        text_list (List[str]): list of words/sentences to search in line content.
+        is_lower (bool): True to check when line is lower cased.
+        to_split (bool): True to split the line in order to search specific word
+        readme_content (str): The readme content to search.
+
+    Returns:
+        list of lines which contains the given text.
+    """
+    invalid_lines = []
+
+    for line_num, line in enumerate(readme_content.split("\n")):
+        if is_lower:
+            line = line.lower()
+        if to_split:
+            line = line.split()  # type: ignore
+        for text in text_list:
+            if text in line:
+                invalid_lines.append(str(line_num + 1))
+
+    return invalid_lines

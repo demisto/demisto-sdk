@@ -545,19 +545,27 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         related_content_ls.update(
             {
                 RelatedFileType.PACK_IGNORE: {
-                    "path": self.path / PACKS_PACK_IGNORE_FILE_NAME,
+                    "path": (self.path / PACKS_PACK_IGNORE_FILE_NAME).relative_to(
+                        CONTENT_PATH
+                    ),
                     "git_status": None,
                 },
                 RelatedFileType.SECRETS_IGNORE: {
-                    "path": self.path / PACKS_WHITELIST_FILE_NAME,
+                    "path": (self.path / PACKS_WHITELIST_FILE_NAME).relative_to(
+                        CONTENT_PATH
+                    ),
                     "git_status": None,
                 },
                 RelatedFileType.AUTHOR_IMAGE: {
-                    "path": self.path / AUTHOR_IMAGE_FILE_NAME,
+                    "path": (self.path / AUTHOR_IMAGE_FILE_NAME).relative_to(
+                        CONTENT_PATH
+                    ),
                     "git_status": None,
                 },
                 RelatedFileType.README: {
-                    "path": self.path / PACKS_README_FILE_NAME,
+                    "path": (self.path / PACKS_README_FILE_NAME).relative_to(
+                        CONTENT_PATH
+                    ),
                     "git_status": None,
                 },
             }

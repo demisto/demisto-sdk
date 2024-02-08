@@ -105,13 +105,13 @@ class File(ABC):
         path: Union[Path, str],
     ) -> Type["File"]:
         """
-        Returns the correct file model
+        Returns the correct file cls based on its path
 
         Args:
             path: the file input path
 
         Returns:
-            File: any subclass of the File model.
+            File: any subclass (cls) of the File model.
         """
         path = Path(path)
 
@@ -142,16 +142,14 @@ class File(ABC):
             encoding: any custom encoding if needed, relevant only for Text based files
             handler: whether a custom handler is required, if not takes the default, relevant only for json/yaml files
 
-
         Returns:
             Any: the file content in the desired format
         """
         if cls is File:
             raise ValueError("when reading file content, specify concrete file class")
-        file_instance = cls.as_default(encoding=encoding, handler=handler)
 
         try:
-            return file_instance.load(file_content)
+            return cls.as_default(encoding=encoding, handler=handler).load(file_content)
         except LocalFileReadError as e:
             logger.error(f"Could not read file content as {cls.__name__} file")
             raise FileContentReadError(exc=e.original_exc)

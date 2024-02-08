@@ -25,7 +25,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 
 class Parameter(BaseModel):
     name: str
-    type: int
+    type: int = 0
     additionalinfo: Optional[str] = None
     defaultvalue: Optional[Any] = None
     required: Optional[bool] = False
@@ -41,7 +41,7 @@ class Parameter(BaseModel):
 
 
 class Output(BaseModel):
-    description: str
+    description: str = ""
     contentPath: Optional[str] = None
     contextPath: Optional[str] = None
     important: Optional[bool] = False

@@ -341,8 +341,10 @@ class ReadMeValidator(BaseValidator):
         Returns:
             bool: True If there are no invalid relative urls.
         """
+        result = self.check_readme_relative_url_paths()
+        logger.info(f'[yellow]verify_readme_relative_urls result={result}[/yellow]')
         # If there are errors in one of the following validations return False
-        return not self.check_readme_relative_url_paths()
+        return not result
 
     @error_codes("RM112")
     def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:

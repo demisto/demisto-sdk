@@ -1,6 +1,6 @@
 changes:
-- description: The `content-graph-create` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph create` command instead.
+- description: The `create-content-graph` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph create` command instead.
   type: feature
-- description: The `content-graph-update` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph update` command instead.
+- description: The `update-content-graph` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph update` command instead.
   type: feature
 pr_number: 4027

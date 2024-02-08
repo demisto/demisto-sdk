@@ -12,17 +12,18 @@ For a new checker, add the invalid statement in the relevant file and add it to 
 import pytest
 from wcmatch.pathlib import Path
 
-from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.xsoar_linter.xsoar_linter import xsoar_linter_manager, build_xsoar_linter_command
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
+    xsoar_linter_manager,
+)
 from demisto_sdk.tests.constants_test import (
-    GIT_ROOT,
     XSOAR_LINTER_PY3_INVALID,
     XSOAR_LINTER_PY3_INVALID_WARNINGS,
     XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER,
     XSOAR_LINTER_PY3_NO_DEMISTO_RESULTS_WARNINGS,
     XSOAR_LINTER_PY3_VALID,
 )
+from TestSuite.test_tools import ChangeCWD
 
 files = [
     # ---------------------------------------- For Valid file -------------------------------------------------
@@ -270,16 +271,14 @@ def test_xsoar_linter_errors(
     - Ensure invalid files fail with the correct error messages.
     """
     pack = git_repo.create_pack()
-    pack.pack_metadata.update({'support': support_level})
+    pack.pack_metadata.update({"support": support_level})
 
-
-    test_path = Path(f"{GIT_ROOT}/demisto_sdk/tests/test_files")
-    with open(file,'r') as f:
+    with open(file, "r") as f:
         test_content = f.read()
     integration_obj = pack.create_integration()
     integration_obj.set_commands(commands)
 
-    with open(integration_obj.code.path, 'w') as f:
+    with open(integration_obj.code.path, "w") as f:
         f.write(test_content)
 
     with ChangeCWD(pack.repo_path):

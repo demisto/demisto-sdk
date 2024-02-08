@@ -27,12 +27,6 @@ class StructuredFile(TextFile, ABC):
         instance._handler = kwargs.get("handler") or cls.default_handler
         return instance
 
-    @classmethod
-    def with_git_path(cls, path: Path, git_sha: str, from_remote: bool, **kwargs):
-        instance = super().with_git_path(path, git_sha=git_sha, from_remote=from_remote)
-        instance._handler = kwargs.get("handler") or cls.default_handler
-        return instance
-
     def load(self, file_content: bytes) -> Any:
         return self.handler.load(StringIO(super().load(file_content)))
 

@@ -13,19 +13,6 @@ from demisto_sdk.commands.common.logger import logger
 
 
 class TextFile(File):
-    # def __new__(
-    #     cls,
-    #     path: Optional[Union[Path, str]] = None,
-    #     git_sha: Optional[str] = None,
-    #     validate_path: bool = True,
-    #     **kwargs,
-    # ):
-    #     file_instance = super().__new__(
-    #         cls, path=path, git_sha=git_sha, validate_path=validate_path, **kwargs
-    #     )
-    #     file_instance.encoding = kwargs.get("encoding") or "utf-8"
-    #     return file_instance
-
     @classmethod
     def with_local_path(cls, path: Path, **kwargs):
         instance = super().with_local_path(path)
@@ -35,12 +22,6 @@ class TextFile(File):
     @classmethod
     def as_default(cls, **kwargs):
         instance = super().as_default()
-        instance._encoding = kwargs.get("encoding") or "utf-8"
-        return instance
-
-    @classmethod
-    def with_git_path(cls, path: Path, git_sha: str, from_remote: bool, **kwargs):
-        instance = super().with_git_path(path, git_sha=git_sha, from_remote=from_remote)
         instance._encoding = kwargs.get("encoding") or "utf-8"
         return instance
 

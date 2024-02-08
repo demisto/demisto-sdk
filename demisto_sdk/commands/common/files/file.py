@@ -36,46 +36,9 @@ class File(ABC):
 
     git_util = GitUtil.from_content_path()
 
-    @classmethod
-    def get_file_path(
-        cls,
-        path: Union[str, Path],
-        git_sha: Optional[str] = None,
-        from_remote: Optional[bool] = None,
-    ) -> Path:
-        cls.git_util = GitUtil()
-        path = Path(path)
-
-        if git_sha and from_remote is not None:
-            if cls.git_util.is_file_exist_in_commit_or_branch(
-                path, commit_or_branch=git_sha, from_remote=from_remote
-            ):
-                # when reading from git we need relative path from the repo root
-                return cls.git_util.path_from_git_root(path)
-            raise FileNotFoundError(
-                f"File {path} does not exist in commit/branch {git_sha}"
-            )
-
-        if path.is_absolute():
-            return path
-        else:
-            logger.debug(
-                f"path {path} is not absolute, trying to get full relative path from {cls.git_util.repo.working_dir}"
-            )
-
-        path = cls.git_util.repo.working_dir / path
-        if not path.exists():
-            raise FileNotFoundError(f"File {path} does not exist")
-
-        return path
-
     @property
     def path(self) -> Path:
         return getattr(self, "_path")
-
-    @property
-    def git_sha(self) -> str:
-        return getattr(self, "_git_sha", "")
 
     @cached_property
     def file_content(self) -> bytes:
@@ -166,22 +129,24 @@ class File(ABC):
     @classmethod
     @lru_cache
     def read_from_file_content(
-        cls, file_content: Union[bytes, BytesIO], **kwargs
+        cls,
+        file_content: Union[bytes, BytesIO],
+        encoding: Optional[str] = None,
+        handler: Optional[XSOAR_Handler] = None,
     ) -> Any:
         """
         Read a file from its representation in bytes.
 
         Args:
             file_content: the file content in bytes / bytesIo
-
-        Keyword Args:
             encoding: any custom encoding if needed, relevant only for Text based files
             handler: whether a custom handler is required, if not takes the default, relevant only for json/yaml files
+
 
         Returns:
             Any: the file content in the desired format
         """
-        instance = cls.as_default(**kwargs)
+        instance = cls.as_default(encoding=encoding, handler=handler)
 
         try:
             instance.load(file_content)
@@ -192,7 +157,7 @@ class File(ABC):
     @classmethod
     def with_local_path(cls, path: Path, **kwargs):
         path = cls.get_file_path(path)
-        instance = super().__new__(cls)
+        instance = cls.as_default()
         instance._path = path
         return instance
 
@@ -219,12 +184,22 @@ class File(ABC):
         """
         if clear_cache:
             cls.read_from_local_path.cache_clear()
-        file_class = cls._from_path(path)
-        return file_class.with_local_path(
-            path, encoding=encoding, handler=handler
-        ).__read_local_file()
 
-    def __read_local_file(self) -> Any:
+        if not path.is_absolute():
+            logger.debug(
+                f"path {path} is not absolute, trying to get full relative path from {cls.git_util.repo.working_dir}"
+            )
+            path = cls.git_util.repo.working_dir / path
+            if not path.exists():
+                raise FileNotFoundError(f"File {path} does not exist")
+
+        return (
+            cls._from_path(path)
+            .with_local_path(path, encoding=encoding, handler=handler)
+            .__read_local_file()
+        )
+
+    def __read_local_file(self):
         try:
             return self.load(self.file_content)
         except FileReadError:
@@ -232,14 +207,6 @@ class File(ABC):
                 f"Could not read file {self.path} as {self.__class__.__name__} file"
             )
             raise
-
-    @classmethod
-    def with_git_path(cls, path: Path, git_sha: str, from_remote: bool, **kwargs):
-        path = cls.get_file_path(path, git_sha=git_sha, from_remote=from_remote)
-        instance = super().__new__(cls)
-        instance._path = path
-        instance._git_sha = git_sha
-        return instance
 
     @classmethod
     @lru_cache
@@ -268,34 +235,39 @@ class File(ABC):
         """
         if clear_cache:
             cls.read_from_git_path.cache_clear()
-        file_class = cls._from_path(path)
-        return file_class.with_git_path(
-            path,
-            git_sha=tag,
-            encoding=encoding,
-            handler=handler,
-            from_remote=from_remote,
-        ).__read_git_file(from_remote)
 
-    def __read_git_file(self, from_remote: bool = True) -> Any:
+        if cls.git_util.is_file_exist_in_commit_or_branch(
+            path, commit_or_branch=tag, from_remote=from_remote
+        ):
+            # when reading from git we need relative path from the repo root
+            path = cls.git_util.path_from_git_root(path)
+        else:
+            raise FileNotFoundError(
+                f"File {path} does not exist in commit/branch {tag}"
+            )
+
+        return (
+            cls._from_path(path)
+            .with_local_path(path, encoding=encoding, handler=handler)
+            .__read_git_file(tag, from_remote)
+        )
+
+    def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
         try:
             return self.load(
                 self.git_util.read_file_content(
-                    self.path, commit_or_branch=self.git_sha, from_remote=from_remote
+                    self.path, commit_or_branch=tag, from_remote=from_remote
                 )
             )
         except Exception as e:
-            git_sha = (
-                f"{DEMISTO_GIT_UPSTREAM}:{self.git_sha}"
-                if from_remote
-                else self.git_sha
-            )
+            if from_remote:
+                tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
             logger.error(
-                f"Could not read git file {self.path} from {git_sha} as {self.__class__.__name__} file"
+                f"Could not read git file {self.path} from {tag} as {self.__class__.__name__} file"
             )
             raise GitFileReadError(
                 self.path,
-                tag=git_sha,
+                tag=tag,
                 exc=e,
             )
 

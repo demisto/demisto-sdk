@@ -30,8 +30,27 @@ class StructuredFile(TextFile, ABC):
     def load(self, file_content: bytes) -> Any:
         return self.handler.load(StringIO(super().load(file_content)))
 
-    def _do_write(
-        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
-    ) -> None:
+    @classmethod
+    def do_custom_write(
+        cls,
+        data: Any,
+        output_path: Path,
+        handler: Optional[XSOAR_Handler] = None,
+        encoding: Optional[str] = None,
+        indent: int=None,
+        sort_keys=False,
+        **kwargs
+    ):
+        cls.write_file(
+            data,
+            output_path,
+            encoding=encoding,
+            handler=handler,
+            indent=indent,
+            sort_keys=sort_keys,
+            **kwargs
+        )
+
+    def _do_write(self, data: Any, path: Path, **kwargs) -> None:
         with path.open("w", encoding=self.encoding) as output_file:
             self.handler.dump(data, output_file, **kwargs)

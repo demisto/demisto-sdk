@@ -181,6 +181,8 @@ class File(ABC):
         Returns:
             Any: the file content in the desired format
         """
+        path = Path(path)
+
         if clear_cache:
             cls.read_from_local_path.cache_clear()
 
@@ -232,6 +234,8 @@ class File(ABC):
         Returns:
             Any: the file content in the desired format
         """
+        path = Path(path)
+
         if clear_cache:
             cls.read_from_git_path.cache_clear()
 

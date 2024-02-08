@@ -30,7 +30,7 @@ class StructuredFile(TextFile, ABC):
     def load(self, file_content: bytes) -> Any:
         return self.handler.load(StringIO(super().load(file_content)))
 
-    def _write(
+    def _do_write(
         self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
     ) -> None:
         with path.open("w", encoding=self.encoding) as output_file:

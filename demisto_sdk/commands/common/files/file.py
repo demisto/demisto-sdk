@@ -467,17 +467,13 @@ class File(ABC):
         if cls is File:
             raise ValueError("when writing file specify concrete class")
 
-        model = cls.as_default(encoding=encoding, handler=handler)
+        file_instance = cls.as_default(encoding=encoding, handler=handler)
         try:
-            model.write(data, path=output_path, encoding=encoding, **kwargs)
+            file_instance.__write(data, path=output_path, encoding=encoding, **kwargs)
         except Exception as e:
             logger.error(f"Could not write {output_path} as {cls.__name__} file")
             raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
-    def _write(self, data: Any, path: Path, **kwargs) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def write(self, data: Any, path: Path, **kwargs) -> None:
+    def __write(self, data: Any, path: Path, **kwargs) -> None:
         raise NotImplementedError

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from demisto_sdk.commands.common.files.file import File
 
@@ -12,10 +12,5 @@ class BinaryFile(File):
     def load(self, file_content: bytes) -> bytes:
         return file_content
 
-    def _write(self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs):
+    def __write(self, data: Any, path: Path, **kwargs):
         path.write_bytes(data)
-
-    def write(
-        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
-    ) -> None:
-        self._write(data, path=path)

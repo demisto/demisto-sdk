@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List
 
 from bs4.dammit import UnicodeDammit
 
@@ -62,17 +62,13 @@ class TextFile(File):
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=self.__read_local_file())
 
-    def write(
-        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
-    ) -> None:
-        def _write_safe_unicode():
-            self._write(data, path=path, **kwargs)
+    def __write(self, data: Any, path: Path, **kwargs) -> None:
 
         if self.encoding != "utf-8":
-            self._write(data, path=path, encoding=encoding, **kwargs)
+            self._do_write(data, path=path, **kwargs)
         else:
             try:
-                _write_safe_unicode()
+                self._do_write(data, path=path, **kwargs)
             except UnicodeDecodeError:
                 original_file_encoding = UnicodeDammit(
                     path.read_bytes()
@@ -88,7 +84,7 @@ class TextFile(File):
                 )
                 path.unlink()  # deletes the file
                 logger.debug(f"rewriting {path} as unicode file")
-                _write_safe_unicode()  # recreates the file
+                self._do_write(data, path=path, **kwargs)  # recreates the file
 
-    def _write(self, data: Any, path: Path, **kwargs) -> None:
+    def _do_write(self, data: Any, path: Path, **kwargs) -> None:
         path.write_text(data=data, encoding=self.encoding)

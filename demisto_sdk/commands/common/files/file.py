@@ -156,7 +156,6 @@ class File(ABC):
 
     @classmethod
     def with_local_path(cls, path: Path, **kwargs):
-        path = cls.get_file_path(path)
         instance = cls.as_default()
         instance._path = path
         return instance

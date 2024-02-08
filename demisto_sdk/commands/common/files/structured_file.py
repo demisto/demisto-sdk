@@ -16,8 +16,8 @@ class StructuredFile(TextFile, ABC):
         return getattr(self, "_handler")
 
     @classmethod
-    def with_local_path(cls, path: Path, **kwargs):
-        instance = super().with_local_path(path, **kwargs)
+    def with_path(cls, path: Path, **kwargs):
+        instance = super().with_path(path, **kwargs)
         instance._handler = kwargs.get("handler") or cls.default_handler
         return instance
 
@@ -37,8 +37,8 @@ class StructuredFile(TextFile, ABC):
         output_path: Path,
         handler: Optional[XSOAR_Handler] = None,
         encoding: Optional[str] = None,
-        indent: int=None,
-        sort_keys=False,
+        indent: Optional[int] = None,
+        sort_keys: bool = False,
         **kwargs
     ):
         cls.write_file(

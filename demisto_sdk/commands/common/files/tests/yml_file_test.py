@@ -27,6 +27,7 @@ class TestYMLFile(FileTesting):
         )
 
         if git_util := git_repo.git_util:
+            YmlFile.git_util = git_util
             git_util.commit_files("commit all yml files")
 
         yml_file_paths = [

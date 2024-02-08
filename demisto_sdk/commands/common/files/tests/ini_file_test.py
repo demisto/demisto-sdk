@@ -34,6 +34,7 @@ class TestIniFile(FileTesting):
         )
 
         if git_util := git_repo.git_util:
+            IniFile.git_util = git_util
             git_util.commit_files("commit all INI files")
 
         ini_file_paths = [pack.pack_ignore.path, _ini_file_path]

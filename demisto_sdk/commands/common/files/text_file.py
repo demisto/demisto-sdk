@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.logger import logger
 
 class TextFile(File):
     @classmethod
-    def with_local_path(cls, path: Path, **kwargs):
-        instance = super().with_local_path(path)
+    def with_path(cls, path: Path, **kwargs):
+        instance = super().with_path(path)
         instance._encoding = kwargs.get("encoding") or "utf-8"
         return instance
 
@@ -62,7 +62,7 @@ class TextFile(File):
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=self.__read_local_file())
 
-    def __write(self, data: Any, path: Path, **kwargs) -> None:
+    def _write(self, data: Any, path: Path, **kwargs) -> None:
 
         if self.encoding != "utf-8":
             self._do_write(data, path=path, **kwargs)

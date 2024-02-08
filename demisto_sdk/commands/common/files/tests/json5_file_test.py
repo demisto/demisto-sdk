@@ -20,6 +20,7 @@ class TestJson5File(FileTesting):
         Json5File.write_file({"test": "test"}, output_path=json5_file_path)
 
         if git_util := git_repo.git_util:
+            Json5File.git_util = git_util
             git_util.commit_files("commit all json5 files")
 
         return json5_file_path, git_repo.path

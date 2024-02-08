@@ -12,5 +12,5 @@ class BinaryFile(File):
     def load(self, file_content: bytes) -> bytes:
         return file_content
 
-    def __write(self, data: Any, path: Path, **kwargs):
+    def _write(self, data: Any, path: Path, **kwargs):
         path.write_bytes(data)

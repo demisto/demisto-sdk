@@ -116,11 +116,11 @@ class File(ABC):
         path = Path(path)
 
         if cls is File:
-            file_class = cls.__file_factory(path)
+            file_cls = cls.__file_factory(path)
         else:
-            file_class = cls
-        logger.debug(f"Using class {file_class} for file {path}")
-        return file_class
+            file_cls = cls
+        logger.debug(f"Using class {file_cls} for file {path}")
+        return file_cls
 
     @classmethod
     def as_default(cls, **kwargs):
@@ -146,16 +146,18 @@ class File(ABC):
         Returns:
             Any: the file content in the desired format
         """
-        instance = cls.as_default(encoding=encoding, handler=handler)
+        if cls is File:
+            raise ValueError("when reading file content, specify concrete file class")
+        file_instance = cls.as_default(encoding=encoding, handler=handler)
 
         try:
-            instance.load(file_content)
+            return file_instance.load(file_content)
         except LocalFileReadError as e:
             logger.error(f"Could not read file content as {cls.__name__} file")
             raise FileContentReadError(exc=e.original_exc)
 
     @classmethod
-    def with_local_path(cls, path: Path, **kwargs):
+    def with_path(cls, path: Path, **kwargs):
         instance = cls.as_default()
         instance._path = path
         return instance
@@ -196,7 +198,7 @@ class File(ABC):
 
         return (
             cls._from_path(path)
-            .with_local_path(path, encoding=encoding, handler=handler)
+            .with_path(path, encoding=encoding, handler=handler)
             .__read_local_file()
         )
 
@@ -251,7 +253,7 @@ class File(ABC):
 
         return (
             cls._from_path(path)
-            .with_local_path(path, encoding=encoding, handler=handler)
+            .with_path(path, encoding=encoding, handler=handler)
             .__read_git_file(tag, from_remote)
         )
 
@@ -462,14 +464,13 @@ class File(ABC):
             handler: whether a custom handler is required, if not takes the default.
 
         """
-        output_path = Path(output_path)
-
         if cls is File:
             raise ValueError("when writing file specify concrete class")
 
-        file_instance = cls.as_default(encoding=encoding, handler=handler)
+        output_path = Path(output_path)
+
         try:
-            file_instance.__write(
+            return cls.as_default(encoding=encoding, handler=handler)._write(
                 data, path=output_path, encoding=encoding, handler=handler, **kwargs
             )
         except Exception as e:
@@ -477,5 +478,5 @@ class File(ABC):
             raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
-    def __write(self, data: Any, path: Path, **kwargs) -> None:
+    def _write(self, data: Any, path: Path, **kwargs) -> None:
         raise NotImplementedError

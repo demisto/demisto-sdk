@@ -21,6 +21,7 @@ class TestBinaryFile(FileTesting):
         BinaryFile.write_file("test".encode(), output_path=_bin_file_path)
 
         if git_util := git_repo.git_util:
+            BinaryFile.git_util = git_util
             git_util.commit_files("commit all binary files")
 
         binary_file_paths = [integration.image.path, _bin_file_path]

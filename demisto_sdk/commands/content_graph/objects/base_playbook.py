@@ -1,8 +1,12 @@
-from typing import Callable, Optional
+from typing import Callable, Dict, Optional
 
 import demisto_client
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    PACKS_README_FILE_NAME,
+    MarketplaceVersions,
+    RelatedFileType,
+)
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_playbooks_prepare import (
@@ -11,6 +15,8 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 
 
 class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
+    file_type: RelatedFileType = RelatedFileType.YML
+
     def summary(
         self,
         marketplace: Optional[MarketplaceVersions] = None,
@@ -25,7 +31,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        **kwargs
+        **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
         return MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
@@ -38,3 +44,26 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_playbook
+
+    def get_related_content(self) -> Dict[RelatedFileType, dict]:
+        related_content_ls = super().get_related_content()
+        related_content_ls.update(
+            {
+                RelatedFileType.IMAGE: {
+                    "path": self.path.parents[1]
+                    / "doc_files"
+                    / str(self.path.parts[-1])
+                    .replace(".yml", ".png")
+                    .replace("playbook-", ""),
+                    "git_status": None,
+                },
+                RelatedFileType.README: {
+                    "path": self.path.parent
+                    / str(self.path.parts[-1]).replace(
+                        ".yml", f"_{PACKS_README_FILE_NAME}"
+                    ),
+                    "git_status": None,
+                },
+            }
+        )
+        return related_content_ls

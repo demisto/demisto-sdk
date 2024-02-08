@@ -149,12 +149,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.premium or False
 
     @property
-    def readme(self) -> str:
-        return get_file(
-            str(self.path / "README.md"), return_content=True, git_sha=self.git_sha
-        )
-
-    @property
     def pack_id(self) -> str:
         return self.object_id
 

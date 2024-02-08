@@ -1,3 +1,4 @@
+import copy
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
@@ -15,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR,
     GitStatuses,
     PathLevel,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -285,17 +287,16 @@ class Initializer:
 
     def gather_objects_to_run_on(
         self,
-    ) -> Tuple[Set[BaseContent], Dict[Path, GitStatuses]]:
+    ) -> Set[BaseContent]:
         """
         Filter the file that should run according to the given flag (-i/-g/-a).
 
         Returns:
             Set[BaseContent]: the set of files that should run.
         """
-        statuses_dict: Dict[Path, GitStatuses] = {}
         content_objects_to_run: Set[BaseContent] = set()
         if self.use_git:
-            content_objects_to_run, statuses_dict = self.get_files_using_git()
+            content_objects_to_run = self.get_files_using_git()
         elif self.file_path:
             content_objects_to_run = self.paths_to_basecontent_set(
                 set(self.file_path.split(","))
@@ -308,11 +309,11 @@ class Initializer:
         else:
             self.use_git = (True,)
             self.committed_only = True
-            content_objects_to_run, statuses_dict = self.get_files_using_git()
+            content_objects_to_run = self.get_files_using_git()
         content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
             content_objects_to_run
         )
-        return content_objects_to_run_with_packs, statuses_dict
+        return content_objects_to_run_with_packs
 
     def get_items_from_packs(
         self, content_objects_to_run: Set[BaseContent]
@@ -334,7 +335,7 @@ class Initializer:
             content_objects_to_run_with_packs.add(content_object)
         return content_objects_to_run_with_packs
 
-    def get_files_using_git(self) -> Tuple[Set[BaseContent], Dict[Path, GitStatuses]]:
+    def get_files_using_git(self) -> Set[BaseContent]:
         """Return all files added/changed/deleted.
 
         Returns:
@@ -378,8 +379,10 @@ class Initializer:
         basecontent_with_path_set: Set[BaseContent] = self.git_paths_to_basecontent_set(
             statuses_dict_with_renamed_files_tuple, git_sha=self.prev_ver
         )
-        # self.connect_related_files(basecontent_with_path_set, file_by_status_dict)
-        return basecontent_with_path_set, file_by_status_dict
+        self.connect_related_files(
+            basecontent_with_path_set, file_by_status_dict, renamed_files
+        )
+        return basecontent_with_path_set
 
     def paths_to_basecontent_set(self, files_set: Set[str]) -> Set[BaseContent]:
         """Return a set of all the successful casts to BaseContent from given set of files.
@@ -512,17 +515,94 @@ class Initializer:
 
         return statuses_dict
 
-    # def connect_related_files(
-    #     self,
-    #     basecontent_with_path_set: Set[BaseContent],
-    #     statuses_dict: Dict[Path, GitStatuses],
-    # ):
-    #     paths_set = set(statuses_dict.keys())
-    #     for content_item in basecontent_with_path_set:
-    #         if related_paths := set(content_item.get_related_content()).intersection(
-    #             paths_set
-    #         ):
-    #             for related_path in related_paths:
-    #                 content_item.related_content_by_status[
-    #                     related_path
-    #                 ] = statuses_dict[related_path]
+    def connect_related_files(
+        self,
+        basecontent_with_path_set: Set[BaseContent],
+        statuses_dict: Dict[Path, GitStatuses],
+        renamed_files,
+    ):
+        paths_set = set(statuses_dict.keys())
+        for content_item in basecontent_with_path_set:
+            content_item_related_files = content_item.get_related_content()
+            old_content_item_related_files = (
+                content_item.old_base_content_object.get_related_content()
+                if content_item.old_base_content_object
+                else copy.deepcopy(content_item_related_files)
+            )
+            if related_paths := (
+                self.get_paths_from_dict(content_item_related_files)
+            ).intersection(paths_set):
+                for related_path in related_paths:
+                    file_type = self.get_type_by_path(related_path)
+                    if file_type:
+                        if statuses_dict[related_path] == GitStatuses.RENAMED:
+                            content_item_related_files[file_type]["path"] = related_path
+                            content_item_related_files[file_type][
+                                "git_status"
+                            ] = statuses_dict[related_path]
+                            old_content_item_related_files[file_type][
+                                "path"
+                            ] = renamed_files[related_path]
+                        elif statuses_dict[related_path] == GitStatuses.ADDED:
+                            content_item_related_files[file_type]["path"] = related_path
+                            content_item_related_files[file_type][
+                                "git_status"
+                            ] = statuses_dict[related_path]
+                            old_content_item_related_files[file_type]["path"] = None
+                        elif statuses_dict[related_path] == GitStatuses.MODIFIED:
+                            content_item_related_files[file_type]["path"] = related_path
+                            content_item_related_files[file_type][
+                                "git_status"
+                            ] = statuses_dict[related_path]
+                            old_content_item_related_files[file_type][
+                                "path"
+                            ] = related_path
+                        else:
+                            content_item_related_files[file_type]["path"] = None
+                            content_item_related_files[file_type][
+                                "git_status"
+                            ] = statuses_dict[related_path]
+                            old_content_item_related_files[file_type][
+                                "path"
+                            ] = related_path
+            content_item.related_content = content_item_related_files
+            if content_item.old_base_content_object:
+                content_item.old_base_content_object.related_content = (
+                    old_content_item_related_files
+                )
+
+    def get_paths_from_dict(self, content_item_related_files) -> set:
+        files_set = set()
+        for related_file in content_item_related_files.values():
+            if isinstance(related_file["path"], tuple):
+                for path in related_file["path"]:
+                    files_set.add(path)
+            else:
+                files_set.add(related_file["path"])
+        return files_set
+
+    def get_type_by_path(self, path):
+        if "description" in path:
+            return RelatedFileType.DESCRIPTION
+        elif PACKS_PACK_IGNORE_FILE_NAME in path:
+            return RelatedFileType.PACK_IGNORE
+        elif PACKS_WHITELIST_FILE_NAME in path:
+            return RelatedFileType.SECRETS_IGNORE
+        elif ".xif" in path:
+            return RelatedFileType.XIF
+        elif "_schema" in path:
+            return RelatedFileType.SCHEMA
+        elif "_dark.svg" in path:
+            return RelatedFileType.DARK_SVG
+        elif "_light.svg" in path:
+            return RelatedFileType.LIGHT_SVG
+        elif PACKS_README_FILE_NAME in path:
+            return RelatedFileType.README
+        elif "Author_image" in path:
+            return RelatedFileType.AUTHOR_IMAGE
+        elif ".png" in path:
+            return RelatedFileType.IMAGE
+        elif path.suffix in (".py", "js", "ps1"):
+            if "_test" in path:
+                return RelatedFileType.TEST_CODE
+            return RelatedFileType.CODE

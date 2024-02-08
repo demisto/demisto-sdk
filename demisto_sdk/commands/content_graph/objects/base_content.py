@@ -180,7 +180,8 @@ class BaseContent(BaseNode):
     git_status: Optional[GitStatuses]
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
-    related_content_by_status: dict = {}
+    related_content: dict = {}
+    file_type: RelatedFileType = RelatedFileType.JSON
 
     def _save(
         self,
@@ -296,6 +297,20 @@ class BaseContent(BaseNode):
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         pass
+
+    @property
+    def readme(self) -> str:
+        from demisto_sdk.commands.common.files import TextFile
+
+        if self.git_sha:
+            return TextFile.read_from_git_path(
+                path=self.related_content[RelatedFileType.README]["path"],
+                tag=self.git_sha,
+            )
+        else:
+            return TextFile.read_from_local_path(
+                path=self.related_content[RelatedFileType.README]["path"]
+            )
 
 
 class UnknownContent(BaseNode):

@@ -51,6 +51,7 @@ class IntegrationScript(ContentItem):
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
+    file_type: RelatedFileType = RelatedFileType.YML
 
     @lazy_property
     def python_version(self) -> Optional[str]:

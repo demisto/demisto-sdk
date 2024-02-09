@@ -46,16 +46,25 @@ class File(ABC):
 
     @property
     def normalized_suffix(self) -> str:
+        """
+        Returns the suffix of the file (without .)
+        """
         if suffix := self.path.suffix.lower():
             return suffix[1:]
         return suffix
 
     @property
     def original_encoding(self) -> Optional[str]:
+        """
+        Returns the encoding of the file
+        """
         return UnicodeDammit(self.file_content).original_encoding
 
     @property
     def size(self) -> int:
+        """
+        Returns the size of the file
+        """
         return self.path.stat().st_size
 
     def copy_file(self, destination_path: Union[Path, str]):
@@ -72,17 +81,21 @@ class File(ABC):
         Returns:
             Any: the file content in the desired format
         """
-        raise NotImplementedError(
-            "load must be implemented for each File concrete object"
-        )
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
     def is_model_type_by_path(cls, path: Path) -> bool:
+        """
+        Returns whether a file based on its path fits to the class based on file-name/file-suffix
+        """
         raise NotImplementedError
 
     @classmethod
     def __file_factory(cls, path: Path) -> Type["File"]:
+        """
+        Returns the correct file class (cls) based on the path of the file.
+        """
         def _file_factory(_cls):
             for subclass in _cls.__subclasses__():
                 if not inspect.isabstract(subclass) and subclass.is_model_type_by_path(
@@ -105,7 +118,8 @@ class File(ABC):
         path: Union[Path, str],
     ) -> Type["File"]:
         """
-        Returns the correct file cls based on its path
+        Returns the correct file cls based on its path when using File cls directly, otherwise returns the predefined
+        file cls.
 
         Args:
             path: the file input path
@@ -124,6 +138,9 @@ class File(ABC):
 
     @classmethod
     def as_default(cls, **kwargs):
+        """
+        Returns the base instance of the file subclasses, used mainly when reading files directly from memory
+        """
         return super().__new__(cls)
 
     @classmethod
@@ -156,6 +173,9 @@ class File(ABC):
 
     @classmethod
     def as_path(cls, path: Path, **kwargs):
+        """
+        Returns the base instance of the file subclasses
+        """
         instance = cls.as_default()
         instance._path = path
         return instance
@@ -460,6 +480,8 @@ class File(ABC):
             output_path: the output path to write to
             encoding: any custom encoding if needed
             handler: whether a custom handler is required, if not takes the default.
+
+        Keyword Args: any additional arguments when dumping yml/json files, use write_custom_file
 
         """
         if cls is File:

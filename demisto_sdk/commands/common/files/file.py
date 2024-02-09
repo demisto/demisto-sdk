@@ -174,7 +174,7 @@ class File(ABC):
     @classmethod
     def as_path(cls, path: Path, **kwargs):
         """
-        Returns the base instance of the file subclasses
+        Returns the base instance of the file subclasses with path
         """
         instance = cls.as_default()
         instance._path = path

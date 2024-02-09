@@ -492,7 +492,7 @@ class File(ABC):
 
         try:
             return cls.as_default(encoding=encoding, handler=handler)._write(
-                data, path=output_path, encoding=encoding, handler=handler, **kwargs
+                data, path=output_path, **kwargs
             )
         except Exception as e:
             logger.error(f"Could not write {output_path} as {cls.__name__} file")

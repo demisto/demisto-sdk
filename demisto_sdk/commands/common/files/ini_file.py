@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from demisto_sdk.commands.common.constants import PACKS_PACK_IGNORE_FILE_NAME
 from demisto_sdk.commands.common.files.text_file import TextFile
@@ -19,15 +19,13 @@ class IniFile(TextFile):
         config_parser.read_string(super().load(file_content))
         return config_parser
 
-    def _do_write(
-        self, data: Any, path: Path, encoding: Optional[str] = None, **kwargs
-    ):
+    def _do_write(self, data: Any, path: Path, **kwargs):
         """
         Writes an INI file.
 
         Args:
             data: the data to write
-            encoding: whether any custom encoding is needed
+            path: the output path
 
         data example:
             data = {

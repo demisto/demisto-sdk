@@ -18,7 +18,7 @@ class TestBinaryFile(FileTesting):
         pack = git_repo.create_pack("test")
         integration = pack.create_integration()
         _bin_file_path = str(Path(git_repo.path) / "file.bin")
-        BinaryFile.write_file("test".encode(), output_path=_bin_file_path)
+        BinaryFile.write("test".encode(), output_path=_bin_file_path)
 
         if git_util := git_repo.git_util:
             BinaryFile.git_util = git_util
@@ -178,6 +178,6 @@ class TestBinaryFile(FileTesting):
         """
         _path = Path(git_repo.path) / "file.bin"
         file_content = "text".encode()
-        BinaryFile.write_file(file_content, output_path=_path)
+        BinaryFile.write(file_content, output_path=_path)
         assert _path.exists()
         assert _path.read_bytes() == file_content

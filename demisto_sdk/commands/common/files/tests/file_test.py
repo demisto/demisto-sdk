@@ -135,7 +135,7 @@ class TestFile:
         )
         _ini_file_path = str(Path(repo.path) / "file.ini")
 
-        IniFile.write_file(
+        IniFile.write(
             {
                 "test": {
                     "test": "1,2,3",
@@ -163,7 +163,7 @@ class TestFile:
         pack = repo.create_pack("test")
         integration = pack.create_integration()
         _bin_file_path = str(Path(repo.path) / "file.bin")
-        BinaryFile.write_file("test".encode(), output_path=_bin_file_path)
+        BinaryFile.write("test".encode(), output_path=_bin_file_path)
 
         binary_file_paths = [integration.image.path, _bin_file_path]
         for path in binary_file_paths:
@@ -181,7 +181,7 @@ class TestFile:
          - make sure UnknownFileError exception is raised
         """
         _path = Path(repo.path) / "file.unknown-suffix"
-        TextFile.write_file("text", output_path=_path)
+        TextFile.write("text", output_path=_path)
         with pytest.raises(UnknownFileError):
             File._from_path(_path)
 
@@ -226,20 +226,6 @@ class TestFile:
         """
         with pytest.raises(ValueError):
             File.read_from_http_request("not/valid/url")
-
-    def test_write_file_error(self):
-        """
-        Given:
-         - invalid path
-
-        When:
-         - Running write_file method from File object
-
-        Then:
-         - make sure ValueError is raised
-        """
-        with pytest.raises(ValueError):
-            File.write_file({}, output_path="some/path")
 
 
 class FileTesting(ABC):

@@ -1,10 +1,12 @@
 from abc import ABC
 from io import StringIO
 from pathlib import Path
-from typing import Any, Optional, Type
+from typing import Any, Optional, Type, Union
 
+from demisto_sdk.commands.common.files.errors import FileWriteError
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
+from demisto_sdk.commands.common.logger import logger
 
 
 class StructuredFile(TextFile, ABC):
@@ -31,25 +33,25 @@ class StructuredFile(TextFile, ABC):
         return self.handler.load(StringIO(super().load(file_content)))
 
     @classmethod
-    def do_custom_write(
+    def write(
         cls,
         data: Any,
-        output_path: Path,
-        handler: Optional[XSOAR_Handler] = None,
+        output_path: Union[Path, str],
         encoding: Optional[str] = None,
+        handler: Optional[XSOAR_Handler] = None,
         indent: Optional[int] = None,
         sort_keys: bool = False,
-        **kwargs
+        **kwargs,
     ):
-        cls.write_file(
-            data,
-            output_path,
-            encoding=encoding,
-            handler=handler,
-            indent=indent,
-            sort_keys=sort_keys,
-            **kwargs
-        )
+        output_path = Path(output_path)
+
+        try:
+            cls.as_default(encoding=encoding, handler=handler).write_safe_unicode(
+                data, path=output_path, indent=indent, sort_keys=sort_keys, **kwargs
+            )
+        except Exception as e:
+            logger.error(f"Could not write {output_path} as {cls.__name__} file")
+            raise FileWriteError(output_path, exc=e)
 
     def _do_write(self, data: Any, path: Path, **kwargs) -> None:
         with path.open("w", encoding=self.encoding) as output_file:

@@ -19,7 +19,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.files.errors import (
     FileContentReadError,
     FileReadError,
-    FileWriteError,
     GitFileReadError,
     HttpFileReadError,
     LocalFileReadError,
@@ -463,41 +462,3 @@ class File(ABC):
         except FileContentReadError as e:
             logger.error(f"Could not read file from {url} as {cls.__name__} file")
             raise HttpFileReadError(url, exc=e)
-
-    @classmethod
-    def write_file(
-        cls,
-        data: Any,
-        output_path: Union[Path, str],
-        encoding: Optional[str] = None,
-        handler: Optional[XSOAR_Handler] = None,
-        **kwargs,
-    ):
-        """
-        Writes a file into to the local file system.
-
-        Args:
-            data: the data to write
-            output_path: the output path to write to
-            encoding: any custom encoding if needed
-            handler: whether a custom handler is required, if not takes the default.
-
-        Keyword Args: any additional arguments when dumping yml/json files, use write_custom_file
-
-        """
-        if cls is File:
-            raise ValueError("when writing file specify concrete class")
-
-        output_path = Path(output_path)
-
-        try:
-            return cls.as_default(encoding=encoding, handler=handler)._write(
-                data, path=output_path, **kwargs
-            )
-        except Exception as e:
-            logger.error(f"Could not write {output_path} as {cls.__name__} file")
-            raise FileWriteError(output_path, exc=e)
-
-    @abstractmethod
-    def _write(self, data: Any, path: Path, **kwargs) -> None:
-        raise NotImplementedError

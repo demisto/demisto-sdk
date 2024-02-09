@@ -23,7 +23,7 @@ class TestIniFile(FileTesting):
         )
         _ini_file_path = str(Path(git_repo.path) / "file.ini")
 
-        IniFile.write_file(
+        IniFile.write(
             {
                 "test": {
                     "test": "1,2,3",
@@ -182,7 +182,7 @@ class TestIniFile(FileTesting):
          - make sure writing ini file is successful.
         """
         _path = Path(git_repo.path) / "file.ini"
-        IniFile.write_file(
+        IniFile.write(
             {
                 "test": {
                     "test": "1,2,3",

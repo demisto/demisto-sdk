@@ -1,11 +1,12 @@
 import re
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional, Union
 
 from bs4.dammit import UnicodeDammit
 
 from demisto_sdk.commands.common.constants import PACKS_WHITELIST_FILE_NAME
 from demisto_sdk.commands.common.files.errors import (
+    FileWriteError,
     LocalFileReadError,
 )
 from demisto_sdk.commands.common.files.file import File
@@ -62,7 +63,19 @@ class TextFile(File):
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=self.__read_local_file())
 
-    def _write(self, data: Any, path: Path, **kwargs) -> None:
+    @classmethod
+    def write(
+        cls, data: Any, output_path: Union[Path, str], encoding: Optional[str] = None
+    ):
+        output_path = Path(output_path)
+
+        try:
+            cls.as_default(encoding=encoding).write_safe_unicode(data, path=output_path)
+        except Exception as e:
+            logger.error(f"Could not write {output_path} as {cls.__name__} file")
+            raise FileWriteError(output_path, exc=e)
+
+    def write_safe_unicode(self, data: Any, path: Path, **kwargs) -> None:
 
         if self.encoding != "utf-8":
             self._do_write(data, path=path, **kwargs)

@@ -96,6 +96,7 @@ class File(ABC):
         """
         Returns the correct file class (cls) based on the path of the file.
         """
+
         def _file_factory(_cls):
             for subclass in _cls.__subclasses__():
                 if not inspect.isabstract(subclass) and subclass.is_model_type_by_path(

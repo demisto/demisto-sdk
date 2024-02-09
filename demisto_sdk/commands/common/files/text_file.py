@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.logger import logger
 
 class TextFile(File):
     @classmethod
-    def with_path(cls, path: Path, **kwargs):
-        instance = super().with_path(path)
+    def as_path(cls, path: Path, **kwargs):
+        instance = super().as_path(path)
         instance._encoding = kwargs.get("encoding") or "utf-8"
         return instance
 

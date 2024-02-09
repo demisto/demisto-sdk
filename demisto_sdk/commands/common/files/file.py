@@ -155,7 +155,7 @@ class File(ABC):
             raise FileContentReadError(exc=e.original_exc)
 
     @classmethod
-    def with_path(cls, path: Path, **kwargs):
+    def as_path(cls, path: Path, **kwargs):
         instance = cls.as_default()
         instance._path = path
         return instance
@@ -196,7 +196,7 @@ class File(ABC):
 
         return (
             cls._from_path(path)
-            .with_path(path, encoding=encoding, handler=handler)
+            .as_path(path, encoding=encoding, handler=handler)
             .__read_local_file()
         )
 
@@ -251,7 +251,7 @@ class File(ABC):
 
         return (
             cls._from_path(path)
-            .with_path(path, encoding=encoding, handler=handler)
+            .as_path(path, encoding=encoding, handler=handler)
             .__read_git_file(tag, from_remote)
         )
 

@@ -16,8 +16,8 @@ class StructuredFile(TextFile, ABC):
         return getattr(self, "_handler")
 
     @classmethod
-    def with_path(cls, path: Path, **kwargs):
-        instance = super().with_path(path, **kwargs)
+    def as_path(cls, path: Path, **kwargs):
+        instance = super().as_path(path, **kwargs)
         instance._handler = kwargs.get("handler") or cls.default_handler
         return instance
 

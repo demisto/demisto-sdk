@@ -28,7 +28,7 @@ class TextFile(File):
 
     @property
     def encoding(self) -> str:
-        return getattr(self, "_encoding", "")
+        return getattr(self, "_encoding", "utf-8")
 
     @property
     def num_lines(self):

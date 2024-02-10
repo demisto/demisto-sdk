@@ -1572,6 +1572,8 @@ class Linter:
 
         di_from_yml = script_obj.get("dockerimage")
         # If the 'dockerimage' key does not exist in yml - run on native image checks will be skipped
+        if not di_from_yml:
+            return imgs
         native_image_config = NativeImageConfig.get_instance()
         # parsed docker_native_image_config.json file (a singleton obj)
         supported_native_images_obj = ScriptIntegrationSupportedNativeImages(

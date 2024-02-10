@@ -1,15 +1,17 @@
 import functools
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_DOCKER_NAME
 from demisto_sdk.commands.common.content_constant_paths import NATIVE_IMAGE_PATH
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
+from demisto_sdk.commands.common.docker.dockerhub_client import (
+    DockerHubRequestException,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import PydanticSingleton
-from demisto_sdk.commands.common.tools import extract_docker_image_from_text
 
 
 class NativeImage(BaseModel):
@@ -28,33 +30,20 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
 
 
 @functools.lru_cache
-def get_dev_native_image() -> Optional[str]:
+def get_dev_native_image() -> DockerImage:
     """
     Gets the development (dev) native image, which is the latest tag of the native image from Docker Hub.
-    Args:
+
     Returns: The reference of the dev native image.
     """
     log_prompt = "Get Dev Native Image"
     logger.info(f"{log_prompt} - Started")
 
-    # Get the latest tag of the native image from Docker Hub
-    latest_native_image_tag = DockerImageValidator.get_docker_image_latest_tag_request(
-        NATIVE_IMAGE_DOCKER_NAME
-    )
-
-    if latest_native_image_tag:
-        dev_native_image_full_name = (
-            f"{NATIVE_IMAGE_DOCKER_NAME}:{latest_native_image_tag}"
-        )
-        return dev_native_image_full_name
-
-    else:  # latest tag not found
-        err_msg = (
-            f"{log_prompt} - Error: Failed getting the native image latest tag from"
-            f" Docker Hub."
-        )
-        logger.error(err_msg)
-        raise RuntimeError(err_msg)
+    try:
+        return DockerImage(docker_image=NATIVE_IMAGE_DOCKER_NAME).latest_docker_image
+    except DockerHubRequestException as error:
+        logger.error(f"Could not retrieve the latest native image - {error}")
+        raise RuntimeError from error
 
 
 class NativeImageConfig(PydanticSingleton, BaseModel):
@@ -101,7 +90,7 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
 
     def get_native_image_reference(
         self, native_image, include_dev=False
-    ) -> Optional[str]:
+    ) -> Optional[DockerImage]:
         """
         Gets the docker reference of the given native image
 
@@ -114,7 +103,8 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
         if include_dev and native_image == "native:dev":
             return get_dev_native_image()
         if native_image_obj := self.native_images.get(native_image):
-            return native_image_obj.docker_ref
+            if docker_ref := native_image_obj.docker_ref:
+                return DockerImage(docker_ref, raise_if_not_valid=True)
 
         return None
 
@@ -139,14 +129,12 @@ class ScriptIntegrationSupportedNativeImages:
         self,
         _id: str,
         native_image_config: NativeImageConfig,
-        docker_image: Optional[str] = None,
+        docker_image: Union[DockerImage, str],
     ):
         self.id = _id
-        self.docker_image = (
-            extract_docker_image_from_text(text=docker_image, with_no_tag=True)
-            if docker_image
-            else docker_image
-        )
+        if not isinstance(docker_image, DockerImage):
+            docker_image = DockerImage(docker_image)
+        self.docker_image: DockerImage = docker_image
         self.native_image_config = native_image_config
 
     def __docker_image_to_native_images_support(self) -> List[str]:
@@ -155,7 +143,7 @@ class ScriptIntegrationSupportedNativeImages:
         """
         return (
             self.native_image_config.docker_images_to_native_images_mapping.get(
-                self.docker_image
+                self.docker_image.image_name
             )
             or []
         )

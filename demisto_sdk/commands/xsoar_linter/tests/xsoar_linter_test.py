@@ -110,10 +110,9 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
 
 
 @pytest.mark.parametrize(
-    "integration_path, mock_object, expected_res",
+    "mock_object, expected_res",
     [
         (
-            create_integration_object(paths=["script.longRunning"], values=[True]).path,
             MockProcessError,
             ProcessResults(
                 2,
@@ -125,7 +124,6 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
             ),
         ),
         (
-            create_integration_object().path,
             MockProcessValid,
             ProcessResults(
                 0,
@@ -135,7 +133,7 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
         ),
     ],
 )
-def test_process_file(mocker, integration_path, mock_object, expected_res):
+def test_process_file(mocker, integration, mock_object, expected_res):
     """
     Given:
         An integration path.
@@ -148,5 +146,5 @@ def test_process_file(mocker, integration_path, mock_object, expected_res):
 
     """
     mocker.patch.object(subprocess, "run", return_value=mock_object)
-    res = process_file(integration_path)
+    res = process_file(Path(integration.path))
     assert res == expected_res

@@ -467,7 +467,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          poetry export -f requirements.txt --output requirements.txt --without-hashes
+          sed -i 's/python3 -m pip install --no-cache-dir -r requirements.txt/poetry install/g' Dockerfile
+          # poetry export -f requirements.txt --output requirements.txt --without-hashes
           docker build -t demisto-sdk-image .
 
       - name: Run Docker image

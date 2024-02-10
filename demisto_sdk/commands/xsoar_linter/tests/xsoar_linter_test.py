@@ -113,7 +113,7 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
     "mock_object, expected_res",
     [
         (
-            MockProcessError,
+            MockProcessError(),
             ProcessResults(
                 2,
                 [
@@ -124,7 +124,7 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
             ),
         ),
         (
-            MockProcessValid,
+            MockProcessValid(),
             ProcessResults(
                 0,
                 [],

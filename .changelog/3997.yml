@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where **validate** failed on _data.json, when saved in a folder under `Lists` (rather than directly under `Lists`).
+  type: fix
+pr_number: 3997

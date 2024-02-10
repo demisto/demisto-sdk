@@ -1,0 +1,4 @@
+changes:
+- description: Update the lock_integrations in **test-content** command to check if the current job still running (and not the pipeline).
+  type: internal
+pr_number: 4016

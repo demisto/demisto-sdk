@@ -26,9 +26,9 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 class Argument(BaseModel):
     name: str
-    description: str
+    description: str = ""
     required: Optional[bool] = False
-    default: Optional[bool] = False
+    default: Optional[bool] = None
     predefined: Optional[List[str]] = None
     isArray: Optional[bool] = False
     defaultvalue: Optional[Any] = None

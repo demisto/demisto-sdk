@@ -133,7 +133,7 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
         ),
     ],
 )
-def test_process_file(mocker, integration, mock_object, expected_res):
+def test_process_file(mocker, git_repo, mock_object, expected_res):
     """
     Given:
         An integration path.
@@ -145,6 +145,9 @@ def test_process_file(mocker, integration, mock_object, expected_res):
         Assert that errors and warnings were successfully caught.
 
     """
+    pack = git_repo.create_pack()
+    integration_obj = pack.create_integration()
+
     mocker.patch.object(subprocess, "run", return_value=mock_object)
-    res = process_file(Path(integration.path))
+    res = process_file(Path(integration_obj.path))
     assert res == expected_res

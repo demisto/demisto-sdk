@@ -172,13 +172,17 @@ class ContentType(str, enum.Enum):
 
     @classmethod
     def by_path(cls, path: Path) -> "ContentType":
+        print(f"*** by path: {str(path)}")
         for idx, folder in enumerate(path.parts):
+            print(f"*** idx: {str(idx)}")
+            print(f"*** folder: {str(folder)}")
             if folder == PACKS_FOLDER:
                 if len(path.parts) <= idx + 2:
                     raise ValueError("Invalid content path.")
                 content_type_dir = path.parts[idx + 2]
                 break
         else:
+            print(f"*** parts: {str(path.parts)}")
             # less safe option - will raise an exception if the path
             # is not to the content item directory or file
             if path.parts[-2][:-1] in ContentType.values():

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in **setup-environment** command where `.env` files were not loaded correctly.
+  type: fix
+pr_number: 4029

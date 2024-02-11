@@ -121,7 +121,7 @@ def main():
         slack_client.chat_postMessage(
             channel=slack_channel,
             attachments=slack_message,
-            username="Demisto-SDK CircleCI",
+            username="Demisto-SDK Github-Actions",
         )
 
 

@@ -7,15 +7,11 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Tuple,
-    Type,
     TypeVar,
-    Union,
     get_args,
 )
 
 from pydantic import BaseModel
-from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -28,15 +24,8 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
 )
-from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 
-ValidatableTypes = Union[BaseContent, ConfJSON]
-
-ContentTypes = TypeVar(
-    "ContentTypes",
-    bound=ValidatableTypes,
-    # confJSON is not content, but can be validated
-)
+ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
@@ -50,8 +39,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
     run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
-    graph_initialized: (ClassVar[bool]): If the graph was initialized or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
+    dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
     """
 
     error_code: ClassVar[str]
@@ -62,20 +51,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
-    graph_initialized: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
 
-    def get_content_types(self) -> Tuple[Type[ValidatableTypes], ...]:
-        """
-        Here we return the types of objects supported. The heavy `type: ignore`ing here is a result of the need to support
-        multiple python versions. (can be prettier when support for 3.9 is removed)
-
-        Retruning ModelMetaclass is used for non-BaseContent items.
-        The result is validated (isinstance(<current_object_type>, get_content_types()))
-        """
+    def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
-        if isinstance(args, (BaseContent, BaseContentMetaclass, ModelMetaclass)):
-            return args  # type: ignore
+        if isinstance(args, (BaseContent, BaseContentMetaclass)):
+            return args
         return get_args(args)
 
     def should_run(
@@ -84,7 +65,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         ignorable_errors: list,
         support_level_dict: dict,
     ) -> bool:
-        """check wether to run validation on the given content item or not.
+        """check whether to run validation on the given content item or not.
 
         Args:
             content_item (BaseContent): The content item to run the validation on.
@@ -94,15 +75,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         Returns:
             bool: True if the validation should run. Otherwise, return False.
         """
-        is_relevant_type = isinstance(content_item, self.get_content_types())
-
-        if isinstance(content_item, ConfJSON):
-            return is_relevant_type
-
-        assert isinstance(content_item, BaseContent)
         return all(
-            (
-                is_relevant_type,
+            [
+                isinstance(content_item, self.get_content_types()),
                 should_run_on_deprecated(self.run_on_deprecated, content_item),
                 should_run_according_to_status(
                     content_item.git_status, self.expected_git_statuses
@@ -113,7 +88,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                 not is_support_level_support_validation(
                     self.error_code, support_level_dict, content_item.support_level
                 ),
-            )
+            ]
         )
 
     def is_valid(
@@ -130,15 +105,14 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     @property
     def graph(self) -> ContentGraphInterface:
-        if not BaseValidator.graph_initialized:
+        if not self.graph_interface:
             logger.info("Graph validations were selected, will init graph")
-            BaseValidator.graph_initialized = True
             BaseValidator.graph_interface = ContentGraphInterface()
             update_content_graph(
                 BaseValidator.graph_interface,
                 use_git=True,
             )
-        return BaseValidator.graph_interface
+        return self.graph_interface
 
     def __dir__(self):
         # Exclude specific properties from being displayed when hovering over 'self'
@@ -148,7 +122,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
         )
-        fields = {"graph": {"exclude": True}}  # Exclude the property from the repr
+        # Exclude the properties from the repr
+        fields = {"graph": {"exclude": True}, "dockerhub_client": {"exclude": True}}
 
 
 class BaseResult(BaseModel):
@@ -158,7 +133,7 @@ class BaseResult(BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.content_object.path.relative_to(CONTENT_PATH))}: {self.validator.error_code} - {self.message}"
+        return f"{str(self.content_object.path.relative_to(CONTENT_PATH))}: [{self.validator.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
@@ -178,7 +153,7 @@ class FixResult(BaseResult, BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"Fixing {str(self.content_object.path)}: {self.validator.error_code} - {self.message}"
+        return f"Fixing {str(self.content_object.path)}: [{self.validator.error_code}] - {self.message}"
 
 
 def is_error_ignored(

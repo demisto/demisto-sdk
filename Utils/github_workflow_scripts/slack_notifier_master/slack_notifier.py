@@ -51,6 +51,7 @@ def get_failed_jobs(workflow_run: WorkflowRun):
             f'{job_name}[{", ".join(failed_steps)}]' if failed_steps else job_name
         )
 
+    print(f'{failed_jobs=}')
     return failed_jobs
 
 

@@ -325,7 +325,7 @@ class Repo:
 
     def init_git(self):
         if not self.git_util:
-            GitUtil.REPO_CLS.init(self.path)
+            GitUtil.REPO_CLS.init(self.path, initial_branch=DEMISTO_GIT_PRIMARY_BRANCH)
             self.git_util = GitUtil(self.path)
             self.git_util.commit_files("Initial Commit")
             self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)

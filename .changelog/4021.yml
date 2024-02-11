@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue with **prepare-content** where partner event collectors which are supported by PANW add irrelevant suffixes to their display names.
+  type: fix
+pr_number: 4021

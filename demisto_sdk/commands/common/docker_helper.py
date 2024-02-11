@@ -226,7 +226,11 @@ class DockerBase:
 
     @retry(
         times=3,
-        exceptions=(requests.exceptions.ConnectionError, requests.exceptions.Timeout, DockerException),
+        exceptions=(
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            DockerException,
+        ),
     )
     def create_container(
         self,
@@ -247,7 +251,11 @@ class DockerBase:
                     image=image, command=command, environment=environment, **kwargs
                 )
             )
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, DockerException) as e:
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            DockerException
+        ) as e:
             if container := docker_client.containers.get(kwargs.get("name")):
                 container.remove(force=True)
             raise e

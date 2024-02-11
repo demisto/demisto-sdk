@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     ProcessResults,
@@ -148,6 +149,7 @@ def test_process_file(mocker, git_repo, mock_object, expected_res):
     pack = git_repo.create_pack()
     integration_obj = pack.create_integration()
 
-    mocker.patch.object(subprocess, "run", return_value=mock_object)
-    res = process_file(Path(integration_obj.path))
-    assert res == expected_res
+    with ChangeCWD(pack.repo_path):
+        mocker.patch.object(subprocess, "run", return_value=mock_object)
+        res = process_file(Path(integration_obj.path))
+        assert res == expected_res

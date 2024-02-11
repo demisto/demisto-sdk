@@ -20,7 +20,6 @@ import os
 from pathlib import Path
 from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
-import dotenv
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
@@ -74,8 +73,6 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "[red]An internet connection is required for this command. If connected to the "
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
 )
-
-dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
 
 
 # Third party packages
@@ -212,6 +209,9 @@ def main(ctx, config, version, release_notes, **kwargs):
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
+    import dotenv
+
+    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
 
     if platform.system() == "Windows":
         logger.warning(

@@ -69,7 +69,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
             task (Dict[str, Any]): The task details.
             is_mandatory (bool): Whether or not the dependency is mandatory.
         """
-        if playbook := task.get("task", {}).get("playbookName"):
+        if playbook := (task.get("task", {}).get("playbookName") or task.get("task", {}).get("playbookId")):
             self.add_relationship(
                 RelationshipType.USES_PLAYBOOK,
                 target=playbook,

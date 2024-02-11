@@ -1,4 +1,3 @@
-import functools
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -29,7 +28,6 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
     return native_image.replace("native:", "")
 
 
-@functools.lru_cache
 def get_dev_native_image() -> DockerImage:
     """
     Gets the development (dev) native image, which is the latest tag of the native image from Docker Hub.

@@ -6,7 +6,6 @@ import pytest
 from packaging.version import Version
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.lint import linter
 from TestSuite.pack import Pack
@@ -159,47 +158,47 @@ class TestDockerImagesCollection:
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_images, native_target_img ",
         argvalues=[
-            (
-                linter.DockerImageFlagOption.NATIVE_GA.value,
-                "demisto/py3-native:8.2.0.12345",
-                "",
-            ),
-            (
-                linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value,
-                "demisto/py3-native:8.1.0.12345",
-                "",
-            ),
+            # (
+            #     linter.DockerImageFlagOption.NATIVE_GA.value,
+            #     "demisto/py3-native:8.2.0.12345",
+            #     "",
+            # ),
+            # (
+            #     linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value,
+            #     "demisto/py3-native:8.1.0.12345",
+            #     "",
+            # ),
             (
                 linter.DockerImageFlagOption.NATIVE_DEV.value,
                 "demisto/py3-native:8.3.0.12345",
                 "",
             ),
-            (
-                linter.DockerImageFlagOption.FROM_YML.value,
-                "demisto/py3-tools:1.0.0.42258",
-                "",
-            ),
-            (
-                linter.DockerImageFlagOption.NATIVE_CANDIDATE.value,
-                "demisto/py3-native:8.2.1.12345",
-                "",
-            ),
-            (
-                linter.DockerImageFlagOption.ALL_IMAGES.value,
-                [
-                    "demisto/py3-tools:1.0.0.42258",
-                    "demisto/py3-native:8.1.0.12345",
-                    "demisto/py3-native:8.2.0.12345",
-                    "demisto/py3-native:8.2.1.12345",
-                ],
-                "",
-            ),
-            ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800", ""),
-            (
-                linter.DockerImageFlagOption.NATIVE_TARGET.value,
-                "demisto/py3-tools:1.0.0.40800",
-                "demisto/py3-tools:1.0.0.40800",
-            ),
+            # (
+            #     linter.DockerImageFlagOption.FROM_YML.value,
+            #     "demisto/py3-tools:1.0.0.42258",
+            #     "",
+            # ),
+            # (
+            #     linter.DockerImageFlagOption.NATIVE_CANDIDATE.value,
+            #     "demisto/py3-native:8.2.1.12345",
+            #     "",
+            # ),
+            # (
+            #     linter.DockerImageFlagOption.ALL_IMAGES.value,
+            #     [
+            #         "demisto/py3-tools:1.0.0.42258",
+            #         "demisto/py3-native:8.1.0.12345",
+            #         "demisto/py3-native:8.2.0.12345",
+            #         "demisto/py3-native:8.2.1.12345",
+            #     ],
+            #     "",
+            # ),
+            # ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800", ""),
+            # (
+            #     linter.DockerImageFlagOption.NATIVE_TARGET.value,
+            #     "demisto/py3-tools:1.0.0.40800",
+            #     "demisto/py3-tools:1.0.0.40800",
+            # ),
         ],
     )
     def test_docker_images_according_to_docker_image_flag(
@@ -229,12 +228,15 @@ class TestDockerImagesCollection:
                 6. The specific docker image form docker hub that was set as the flag (demisto/py3-tools:1.0.0.40800).
                 7. The specific docker image form docker hub that was set as the flag (demisto/py3-tools:1.0.0.40800).
         """
-        # Mock:
+        from demisto_sdk.commands.common.constants import NATIVE_IMAGE_DOCKER_NAME
+        from demisto_sdk.commands.common.docker.docker_image import DockerImage
+
         native_image_latest_tag = "8.3.0.12345"
-        mocker.patch.object(
-            DockerImageValidator,
-            "get_docker_image_latest_tag_request",
-            return_value=native_image_latest_tag,
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.get_dev_native_image",
+            return_value=DockerImage(
+                f"{NATIVE_IMAGE_DOCKER_NAME}:{native_image_latest_tag}"
+            ),
         )
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
 

@@ -246,6 +246,7 @@ def configure_module_discovery(ide_type: IDEType):
     """
     if ide_type == IDEType.VSCODE:
         ide_folder = CONTENT_PATH / ".vscode"
+        ide_folder.mkdir(exist_ok=True, parents=True)
         configure_vscode_settings(ide_folder=ide_folder)
         # Delete PYTHONPATH and MYPYPATH from env file because they are not needed
         env_file = CONTENT_PATH / ".env"

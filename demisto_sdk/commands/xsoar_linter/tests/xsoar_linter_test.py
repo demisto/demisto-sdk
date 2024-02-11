@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.content_graph.objects.content_item as content_item
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     ProcessResults,
@@ -134,7 +135,7 @@ def test_build_xsoar_linter_env_var(integration_script, expected_env):
         ),
     ],
 )
-def test_process_file(mocker, graph_repo, mock_object, expected_res):
+def test_process_file(mocker, git_repo, mock_object, expected_res):
     """
     Given:
         An integration path.
@@ -146,9 +147,11 @@ def test_process_file(mocker, graph_repo, mock_object, expected_res):
         Assert that errors and warnings were successfully caught.
 
     """
-    pack = graph_repo.create_pack()
+    pack = git_repo.create_pack()
+    mocker.patch.object(content_item, "CONTENT_PATH", Path(pack.repo_path))
     integration_obj = pack.create_integration(name="test")
-    mocker.patch.object(content_item, "CONTENT_PATH", Path(graph_repo.path))
+    print(integration_obj.object.code)
+    print(integration_obj.object.is_unified)
     mocker.patch.object(subprocess, "run", return_value=mock_object)
     res = process_file(Path(integration_obj.path))
     assert res == expected_res

@@ -389,7 +389,10 @@ class IntegrationScriptUnifier(Unifier):
         code_path = IntegrationScriptUnifier.get_code_file(
             package_path, TYPE_TO_EXTENSION[code_type]
         )
+        print(f"*** in get_script_or_integration_package_data1: {str(code_path)}")
         code = get_file(code_path, return_content=True)
+        print(f"*** in get_script_or_integration_package_data2: {str(yml_path)}")
+        print(f"*** in get_script_or_integration_package_data3: {str(code)}")
 
         return yml_path, code
 

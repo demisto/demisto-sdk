@@ -5,10 +5,6 @@ from typing import Collection, Dict, List
 from github import Github, WorkflowRun
 from slack_sdk import WebClient
 
-# using an access token
-
-# Public Web Github
-
 
 DEFAULT_SLACK_CHANNEL = "dmst-sdk-slack-notifier-test"
 

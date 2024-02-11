@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import demisto_sdk.commands.content_graph.objects.content_item as content_item
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     ProcessResults,
@@ -12,7 +13,6 @@ from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     build_xsoar_linter_env_var,
     process_file,
 )
-from TestSuite.test_tools import ChangeCWD
 
 
 @dataclass
@@ -148,6 +148,7 @@ def test_process_file(mocker, graph_repo, mock_object, expected_res):
     """
     pack = graph_repo.create_pack()
     integration_obj = pack.create_integration(name="test")
+    mocker.patch.object(content_item, "CONTENT_PATH", Path(graph_repo.path))
     mocker.patch.object(subprocess, "run", return_value=mock_object)
     res = process_file(Path(integration_obj.path))
     assert res == expected_res

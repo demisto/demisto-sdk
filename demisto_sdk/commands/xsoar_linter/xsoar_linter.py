@@ -145,36 +145,38 @@ def process_file(file_path: Path) -> ProcessResults:
     Returns:
         A ProcessResults data class which keeps the execution return code and collected errors and warnings.
     """
-
-    env = ENV.copy()
-    integration_script = BaseContent.from_path(file_path)
     results = ProcessResults()
 
-    if not isinstance(integration_script, IntegrationScript):
-        return results
-    file = integration_script.path.parent / f"{integration_script.path.stem}.py"
-    if not file.exists():
-        return results
-
-    xsoar_linter_env = build_xsoar_linter_env_var(integration_script)
-    env.update(xsoar_linter_env)
-    command = build_xsoar_linter_command(integration_script.support_level)
-    command.append(str(file))
-
     try:
-        process = subprocess.run(command, capture_output=True, env=env, timeout=60)
-        results.return_code = process.returncode
-        log_data = process.stdout
-        errors_and_warnings_str = log_data.decode("utf-8")
-        results.errors_and_warnings = errors_and_warnings_str
-        # catch only error codes from the error and warning string
-        pattern = re.compile(ERROR_CODE_REGEX, re.MULTILINE)
-        results.errors += pattern.findall(errors_and_warnings_str)
-    except subprocess.TimeoutExpired:
-        results.errors.append(
-            f"Got a timeout while processing the following file: {str(file_path)}"
-        )
-        results.return_code = 1
+        env = ENV.copy()
+        integration_script = BaseContent.from_path(file_path)
+        results = ProcessResults()
+
+        if not isinstance(integration_script, IntegrationScript):
+            return results
+        file = integration_script.path.parent / f"{integration_script.path.stem}.py"
+        if not file.exists():
+            return results
+
+        xsoar_linter_env = build_xsoar_linter_env_var(integration_script)
+        env.update(xsoar_linter_env)
+        command = build_xsoar_linter_command(integration_script.support_level)
+        command.append(str(file))
+
+        try:
+            process = subprocess.run(command, capture_output=True, env=env, timeout=60)
+            results.return_code = process.returncode
+            log_data = process.stdout
+            errors_and_warnings_str = log_data.decode("utf-8")
+            results.errors_and_warnings = errors_and_warnings_str
+            # catch only error codes from the error and warning string
+            pattern = re.compile(ERROR_CODE_REGEX, re.MULTILINE)
+            results.errors += pattern.findall(errors_and_warnings_str)
+        except subprocess.TimeoutExpired:
+            results.errors.append(
+                f"Got a timeout while processing the following file: {str(file_path)}"
+            )
+            results.return_code = 1
     except Exception:
         results.errors.append(f"Failed processing the following file: {str(file_path)}")
         results.return_code = 1

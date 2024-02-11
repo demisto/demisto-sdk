@@ -147,7 +147,8 @@ def test_process_file(mocker, git_repo, mock_object, expected_res):
 
     """
     pack = git_repo.create_pack()
-    integration_obj = pack.create_integration()
+    integration_obj = pack.create_integration(name="test")
+    integration_obj.create_default_integration()
 
     with ChangeCWD(pack.repo_path):
         mocker.patch.object(subprocess, "run", return_value=mock_object)

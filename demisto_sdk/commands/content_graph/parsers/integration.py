@@ -139,12 +139,14 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             str: The integration code.
         """
         print(f"*** in code1: {self.is_unified}")
+        print(f"*** in code2: {self.path}")
+        print(f"*** in code3: {self.path.parent}")
         if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
 
         x = IntegrationScriptUnifier.get_script_or_integration_package_data(
             self.path.parent
         )
-        print(f"*** in code2: {str(x[0])}")
-        print(f"*** in code3: {str(x[1])}")
+        print(f"*** in code4: {str(x[0])}")
+        print(f"*** in code5: {str(x[1])}")
         return x[1]

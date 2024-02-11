@@ -147,8 +147,10 @@ def test_process_file(mocker, git_repo, mock_object, expected_res):
 
     """
     pack = git_repo.create_pack()
+    mocker.patch.object(content_item, "CONTENT_PATH", Path(pack.repo_path))
     integration_obj = pack.create_integration(name="test")
-    mocker.patch.object(content_item, "CONTENT_PATH", Path(git_repo.path))
+    print(integration_obj.object.code)
+    print(integration_obj.object.is_unified)
     mocker.patch.object(subprocess, "run", return_value=mock_object)
     res = process_file(Path(integration_obj.path))
     assert res == expected_res

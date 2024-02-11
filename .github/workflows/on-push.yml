@@ -440,21 +440,21 @@ jobs:
           artifacts-path-dir: content/test-lint
           artifact-name: test-lint-artifacts
 
-  slack_notification_master_failure:
-    needs: [ integration-tests ]
+  slack-notify-master-failure:
+    needs: [ pre-commit-checks, unit-tests, integration-tests, graph-tests, test-content-infrastructure, test-pre-commit-command, test-graph-commands, validate-files-old-validate, validate-files-new-validate, test-lint]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: '3.10'
+
       - name: Run Slack Notification
-        uses: rohammosalli/slack-action@master
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.MY_SLACK_TOKEN }}
-          SLACK_CHANNEL: "dmst-sdk-slack-notifier-test"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-          REPO_OWNER: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
-          RUN_ID: ${{ github.run_id }}
-          SEND_SUCCESS_MESSAGE: "false"
+        run: |
+          poetry run .github/scripts/slack_notifier.py -wd ${{ github.run_id }} -st $SLACK_TOKEN -ght ${{ secrets.GITHUB_TOKEN }}
+ 
+          

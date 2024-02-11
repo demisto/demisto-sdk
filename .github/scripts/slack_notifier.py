@@ -22,6 +22,7 @@ def options_handler():
         "--workflow_id",
         help="The workflow id triggered by the PR",
         required=True,
+        type=int
     )
     parser.add_argument(
         "-st", "--slack_token", help="The token for slack", required=True
@@ -103,7 +104,7 @@ def main():
     options = options_handler()
     slack_token = options.slack_token
     github_token = options.github_token
-    workflow_id = int(options.workflow_id)
+    workflow_id = options.workflow_id
     slack_channel = options.slack_channel
 
     # TODO - remove Verify=False and TOKEN env var

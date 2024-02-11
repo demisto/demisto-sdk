@@ -2231,7 +2231,7 @@ class TestContext:
             server_url = get_ui_url(self.client.api_client.configuration.host)
             if self.build_context.is_saas_server_type:
                 self.playbook.log_info(
-                    f"Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId="
+                    f"Investigation URL: {self.build_context.xsiam_ui_path}/incident-view/alerts_and_insights?caseId="
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
                 )
             else:

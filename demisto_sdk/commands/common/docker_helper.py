@@ -256,8 +256,9 @@ class DockerBase:
             requests.exceptions.Timeout,
             DockerException,
         ) as e:
-            if container := docker_client.containers.get(kwargs.get("name")):
-                container.remove(force=True)
+            if container_name := kwargs.get("name"):
+                if container := docker_client.containers.get(container_name):
+                    container.remove(force=True)
             raise e
 
         if files_to_push:

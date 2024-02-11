@@ -1,4 +1,17 @@
 # Changelog
+## 1.26.2
+* Added support to check the health status when initialing a client for xsoar-on-prem/xsoar-saas by default, will throw exception if server is not healthy. [#3985](https://github.com/demisto/demisto-sdk/pull/3985)
+* The `create-content-graph` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph create` command instead. [#4027](https://github.com/demisto/demisto-sdk/pull/4027)
+* The `update-content-graph` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph update` command instead. [#4027](https://github.com/demisto/demisto-sdk/pull/4027)
+* Fixed an issue where downloading custom content items with special YAML characters (like `:`) in their names would cause an error during UUID ID replacement when using the **download** command. [#3990](https://github.com/demisto/demisto-sdk/pull/3990)
+* Fixed an issue where **validate** failed on _data.json, when saved in a folder under `Lists` (rather than directly under `Lists`). [#3997](https://github.com/demisto/demisto-sdk/pull/3997)
+* Fixed an issue where the **pre-commit** pycln hook failed when the repo name contained hypens. [#3998](https://github.com/demisto/demisto-sdk/pull/3998)
+* Fixed an issue with **prepare-content** where partner event collectors which are supported by PANW add irrelevant suffixes to their display names. [#4021](https://github.com/demisto/demisto-sdk/pull/4021)
+* Fixed an issue in **setup-environment** command where `.env` files were not loaded correctly. [#4029](https://github.com/demisto/demisto-sdk/pull/4029)
+* Fixed an issue where **upload** failed when trying to upload a content item that was missing a *description* or *type* fields. [#4020](https://github.com/demisto/demisto-sdk/pull/4020)
+* Update the lock_integrations in **test-content** command to check if the current job still running (and not the pipeline). [#4016](https://github.com/demisto/demisto-sdk/pull/4016)
+* Fixed an issue where some unit-tests failed in github-actions CI. [#4023](https://github.com/demisto/demisto-sdk/pull/4023)
+
 ## 1.26.1
 * Added retry mechanism for create docker container. As default, will attempt three times. [#3988](https://github.com/demisto/demisto-sdk/pull/3988)
 * Fixed the init command to successfully create event collector integration [#3995](https://github.com/demisto/demisto-sdk/pull/3995)

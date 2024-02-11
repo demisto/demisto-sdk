@@ -6,7 +6,7 @@ from pathlib import Path
 import docker
 import requests
 
-from demisto_sdk.commands.common.constants import NEO4J_DIR
+from demisto_sdk.commands.common.constants import DEMISTO_SDK_NEO4J_VERSION, NEO4J_DEFAULT_VERSION, NEO4J_DIR
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
@@ -14,8 +14,7 @@ from demisto_sdk.commands.content_graph.common import (
     NEO4J_PASSWORD,
 )
 
-NEO4J_VERSION = "5.13.0"
-
+NEO4J_VERSION = os.getenv(DEMISTO_SDK_NEO4J_VERSION, NEO4J_DEFAULT_VERSION)
 NEO4J_SERVICE_IMAGE = f"neo4j:{NEO4J_VERSION}"
 
 LOCAL_NEO4J_PATH = Path("/var/lib/neo4j")
@@ -91,6 +90,7 @@ def _docker_start():
     (NEO4J_DIR / NEO4J_PLUGINS_FOLDER).mkdir(parents=True, exist_ok=True)
     # suppress logs in docker init to avoid spamming
 
+    logger.info(f"Starting neo4j container using image '{NEO4J_SERVICE_IMAGE}'.")
     docker_client.containers.run(
         image=NEO4J_SERVICE_IMAGE,
         name="neo4j-content",

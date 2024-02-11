@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
+    is_sdk_defined_working_offline,
     write_dict,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
@@ -27,7 +28,10 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 XSOAR_CERTIFIED = "certified"
 XSOAR_EULA_URL = "https://github.com/demisto/content/blob/master/LICENSE"
 
-CORE_PACKS_LIST = get_core_pack_list()
+if not is_sdk_defined_working_offline():
+    CORE_PACKS_LIST = get_core_pack_list()
+else:  # In case the sdk defined working offline (customers)
+    CORE_PACKS_LIST = []
 
 
 class PackMetaData(JSONObject):

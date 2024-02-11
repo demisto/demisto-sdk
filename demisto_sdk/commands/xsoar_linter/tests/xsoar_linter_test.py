@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     ProcessResults,
@@ -13,6 +12,7 @@ from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     build_xsoar_linter_env_var,
     process_file,
 )
+from TestSuite.test_tools import ChangeCWD
 
 
 @dataclass

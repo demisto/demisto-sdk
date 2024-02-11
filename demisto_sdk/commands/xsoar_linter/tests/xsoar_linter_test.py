@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.content_graph.objects.content_item as content_item
-from demisto_sdk.commands.common.logger import logger
+from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     ProcessResults,
@@ -147,11 +147,12 @@ def test_process_file(mocker, git_repo, mock_object, expected_res):
         Assert that errors and warnings were successfully caught.
 
     """
-    pack = git_repo.create_pack()
-    mocker.patch.object(content_item, "CONTENT_PATH", Path(pack.repo_path))
-    integration_obj = pack.create_integration(name="test")
-    print(integration_obj.object.code)
-    print(integration_obj.object.is_unified)
-    mocker.patch.object(subprocess, "run", return_value=mock_object)
-    res = process_file(Path(integration_obj.path))
-    assert res == expected_res
+    pack = git_repo.create_pack("pack")
+    integration = pack.create_integration("integration")
+    with ChangeCWD(git_repo.path):
+        # mocker.patch.object(content_item, "CONTENT_PATH", Path(pack.repo_path))
+        print(integration.object.code)
+        print(integration.object.is_unified)
+        mocker.patch.object(subprocess, "run", return_value=mock_object)
+        res = process_file(Path(integration.path))
+        assert res == expected_res

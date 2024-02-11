@@ -177,8 +177,8 @@ def process_file(file_path: Path) -> ProcessResults:
                 f"Got a timeout while processing the following file: {str(file_path)}"
             )
             results.return_code = 1
-    except Exception:
-        results.errors.append(f"Failed processing the following file: {str(file_path)}")
+    except Exception as e:
+        results.errors.append(f"Failed processing the following file: {str(file_path)}: {e}")
         results.return_code = 1
 
     return results

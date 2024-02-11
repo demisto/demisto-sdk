@@ -23,6 +23,7 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
     - Ensure spell check runs on yml and md files only.
     - Ensure no misspelled words are found.
     """
+    assert False
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 

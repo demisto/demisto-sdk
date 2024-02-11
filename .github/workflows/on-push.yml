@@ -439,3 +439,22 @@ jobs:
         with:
           artifacts-path-dir: content/test-lint
           artifact-name: test-lint-artifacts
+
+  slack_notification_master_failure:
+    needs: [ integration-tests ]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Run Slack Notification
+        uses: rohammosalli/slack-action@master
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.MY_SLACK_TOKEN }}
+          SLACK_CHANNEL: "dmst-sdk-slack-notifier-test"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          RUN_ID: ${{ github.run_id }}
+          SEND_SUCCESS_MESSAGE: "false"

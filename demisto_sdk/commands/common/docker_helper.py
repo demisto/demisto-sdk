@@ -254,7 +254,7 @@ class DockerBase:
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.Timeout,
-            DockerException
+            DockerException,
         ) as e:
             if container := docker_client.containers.get(kwargs.get("name")):
                 container.remove(force=True)

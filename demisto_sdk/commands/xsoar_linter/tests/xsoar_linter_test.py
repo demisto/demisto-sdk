@@ -146,11 +146,9 @@ def test_process_file(mocker, git_repo, mock_object, expected_res):
         Assert that errors and warnings were successfully caught.
 
     """
-    pack = git_repo.create_pack()
-    integration_obj = pack.create_integration(name="test")
-    integration_obj.create_default_integration()
-
-    with ChangeCWD(pack.repo_path):
+    with ChangeCWD(git_repo.path):
+        pack = git_repo.create_pack()
+        integration_obj = pack.create_integration(name="test")
         mocker.patch.object(subprocess, "run", return_value=mock_object)
         res = process_file(Path(integration_obj.path))
         assert res == expected_res

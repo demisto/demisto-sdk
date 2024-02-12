@@ -44,10 +44,16 @@ def test_is_file_valid(mocker, current, answer):
         "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
         return_value="PackName",
     )
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
+        return_value=([integration_yml], integration_yml),
+    )
+
     mocker.patch.object(Path, "is_file", return_value=answer)
     mocker.patch.object(os.path, "isfile", return_value=answer)
-
     readme_validator = ReadMeValidator(current)
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
     valid = ReadMeValidator.are_modules_installed_for_verify(
         readme_validator.content_path
     )
@@ -85,6 +91,12 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
         "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
         return_value="PackName",
     )
+    integration_yml = f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml"
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_yml_paths_in_dir",
+        return_value=([integration_yml], integration_yml),
+    )
+    mocker.patch("demisto_sdk.commands.common.tools.sleep")
     mocker.patch.object(Path, "is_file", return_value=answer)
     mocker.patch.object(os.path, "isfile", return_value=answer)
 
@@ -365,7 +377,7 @@ def test_copyright_sections(integration, file_input):
             "FILL IN REQUIRED PERMISSIONS HERE",
         ),
         (
-            "This integration was integrated and tested with version xx of integration v2",
+            "This integration was integrated and tested with version xx of integration v2.",
             "version xx",
         ),
         (
@@ -663,6 +675,7 @@ def test_verify_readme_image_paths(mocker):
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
     )
+    mocker.patch("demisto_sdk.commands.common.tools.sleep")
 
     with requests_mock.Mocker() as m:
         # Mock get requests
@@ -678,6 +691,11 @@ def test_verify_readme_image_paths(mocker):
             text="Test2",
         )
         m.get("https://github.com/demisto/test3.png", status_code=200, text="Test3")
+        m.get(
+            "https://raw.githubusercontent.com/demisto/content/master/Packs/132/some_image.png",
+            status_code=200,
+            text="Test4",
+        )
         is_valid = readme_validator.verify_readme_image_paths()
 
     sys.stdout = sys.__stdout__  # reset stdout.
@@ -690,20 +708,19 @@ def test_verify_readme_image_paths(mocker):
             ),
             str_in_call_args_list(
                 logger_error.call_args_list,
-                "![Identity with High Risk Score](../../default.png)",
+                "../../default.png",
             ),
             str_in_call_args_list(
                 logger_error.call_args_list,
                 "Branch name was found in the URL, please change it to the commit hash:\n",
             ),
-            str_in_call_args_list(logger_error.call_args_list, "![branch in url]"),
             str_in_call_args_list(
                 logger_error.call_args_list,
                 "\n".join(
                     (
                         "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
                         "The following image link seems to be broken, please repair it:",
-                        "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
+                        "https://github.com/demisto/test1.png",
                     )
                 ),
             ),
@@ -713,7 +730,7 @@ def test_verify_readme_image_paths(mocker):
                     (
                         "[RM108] - Error in readme image: got HTTP response code 404 ",
                         "The following image link seems to be broken, please repair it:",
-                        "(https://github.com/demisto/content/raw/test2.png)",
+                        "https://github.com/demisto/content/raw/test2.png",
                     )
                 ),
             ),
@@ -723,17 +740,16 @@ def test_verify_readme_image_paths(mocker):
     assert not str_in_call_args_list(
         logger_error.call_args_list,
         "The following image relative path is not valid, please recheck it:\n"
-        "![Identity with High Risk Score](default.png)",
+        "default.png",
     )
     assert not str_in_call_args_list(
         logger_error.call_args_list,
         "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![commit hash in url]",
+        "https://raw.githubusercontent.com/demisto/content/123456/Packs/CommonPlaybooks/doc_files/some_image.png",
     )
     assert not str_in_call_args_list(
         logger_error.call_args_list,
-        "please repair it:\n"
-        "![Identity with High Risk Score](https://github.com/demisto/test3.png)",
+        "please repair it:\n" "https://github.com/demisto/test3.png",
     )
 
 

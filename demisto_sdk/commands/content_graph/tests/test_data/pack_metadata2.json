@@ -1,13 +1,12 @@
 {
     "name": "HelloWorld2",
-    "description": "This is the Hello World integration for getting started.",
-    "support": "community",
-    "currentVersion": "1.2.12",
+    "description": "This is the Hello World 2 integration for getting started.",
+    "support": "xsoar",
+    "currentVersion": "1.2.13",
     "author": "Cortex XSOAR",
     "url": "https://www.paloaltonetworks.com/cortex",
     "email": "",
     "created": "2020-03-10T08:37:18Z",
-    "certification": "verified",
     "categories": [
         "Utilities"
     ],

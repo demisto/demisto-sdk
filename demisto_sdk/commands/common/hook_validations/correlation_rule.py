@@ -34,7 +34,6 @@ class CorrelationRuleValidator(ContentEntityValidator):
                 FileType.CORRELATION_RULE
             ],
         )
-        self._is_valid = True
 
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """
@@ -47,6 +46,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         answers = [
             self.no_leading_hyphen(),
             self.is_files_naming_correct(),
+            self.validate_execution_mode_search_window(),
             super().is_valid_fromversion(),
         ]
         return all(answers)
@@ -67,7 +67,6 @@ class CorrelationRuleValidator(ContentEntityValidator):
         if isinstance(self.current_file, list):
             error_message, error_code = Errors.correlation_rule_starts_with_hyphen()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
                 return False
         return True
 
@@ -81,6 +80,19 @@ class CorrelationRuleValidator(ContentEntityValidator):
                 [self.file_path]
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self._is_valid = False
+                return False
+        return True
+
+    @error_codes("CR102")
+    def validate_execution_mode_search_window(self):
+        """
+        Validates 'search_window' existence and non-emptiness for 'execution_mode' = 'SCHEDULED'.
+        """
+        if ("search_window" not in self.current_file) or (
+            self.current_file["execution_mode"] == "SCHEDULED"
+            and not self.current_file["search_window"]
+        ):
+            error_message, error_code = Errors.correlation_rules_missing_search_window()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

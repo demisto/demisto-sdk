@@ -1,6 +1,7 @@
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
 
@@ -12,6 +13,9 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     MAX_FETCH_PARAM,
+    PARTNER_SUPPORT,
+    SUPPORT_LEVEL_HEADER,
+    XSOAR_SUPPORT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
@@ -1913,6 +1917,8 @@ class TestIntegrationValidator:
                     MarketplaceVersions.XSOAR,
                     MarketplaceVersions.MarketplaceV2,
                     MarketplaceVersions.XPANSE,
+                    MarketplaceVersions.XSOAR_SAAS,
+                    MarketplaceVersions.XSOAR_ON_PREM,
                 ],
                 False,
             ),
@@ -1943,6 +1949,59 @@ class TestIntegrationValidator:
                 )
             ).is_valid_hidden_params()
             == is_valid
+        )
+
+    @pytest.mark.parametrize(
+        "support_level_header, is_valid",
+        [
+            (XSOAR_SUPPORT, True),
+            (PARTNER_SUPPORT, False),
+        ],
+    )
+    def test_is_partner_collector_has_xsoar_support_level_header(
+        self, mocker, pack, support_level_header: str, is_valid: bool
+    ):
+        """
+        Given
+        - Case A: support_level_header = xsoar
+        - Case B: support_level_header = partner
+
+        When
+        - run is_partner_collector_has_xsoar_support_level_header
+
+        Then
+        - Case A: make sure the validation succeed
+        - Case B: make sure the validation fails
+        """
+        name = "test"
+        yml = {
+            "commonfields": {"id": name, "version": -1},
+            "name": name,
+            "display": name,
+            "description": name,
+            "category": "category",
+            "script": {
+                "type": "python",
+                "subtype": "python3",
+                "script": "",
+                "isfetchevents": True,
+                "commands": [],
+            },
+            "configuration": [],
+            SUPPORT_LEVEL_HEADER: support_level_header,
+        }
+
+        integration = pack.create_integration(name, yml=yml)
+        validator = IntegrationValidator(
+            mock_structure(integration.path, current_file=integration.yml.read_dict())
+        )
+        mocker.patch.object(
+            IntegrationValidator,
+            "get_metadata_file_content",
+            return_value={"support": PARTNER_SUPPORT},
+        )
+        assert (
+            validator.is_partner_collector_has_xsoar_support_level_header() == is_valid
         )
 
 
@@ -2021,6 +2080,20 @@ class TestIsFetchParamsExist:
                 ),
             ]
         )
+
+    def test_specific_for_marketplace(self):
+        """
+        Given:
+            a schema whit a custom value for specific marketplace on fetch
+
+        When:
+            running is_valid_fetch
+
+        Then:
+            validate that the validation pass
+        """
+        self.validator.current_file["configuration"][-1]["defaultValue:xsoar"] = "test"
+        assert self.validator.is_valid_fetch()
 
     def test_not_fetch(self, mocker):
         self.test_malformed_field(mocker)
@@ -2228,6 +2301,16 @@ class TestIsFeedParamsExist:
         for item in configuration:
             if item.get("additionalinfo"):
                 item["additionalinfo"] = f"""{item['additionalinfo']}."""
+        assert (
+            self.validator.all_feed_params_exist() is True
+        ), "all_feed_params_exist() returns False instead True"
+
+    def test_value_for_marketplace_feed(self):
+        configuration = self.validator.current_file["configuration"]
+        for item in configuration:
+            if item.get("name") == "feed":
+                item["name:xsoar"] = "test-name"
+                item["something:xsoar"] = "test"
         assert (
             self.validator.all_feed_params_exist() is True
         ), "all_feed_params_exist() returns False instead True"
@@ -2590,9 +2673,9 @@ class TestisContextChanged:
         When: running validate on integration with at least one command
         Then: Validate it's synced with the README.
         """
-        patcher = patch("os.path.exists")
+        patcher = patch("pathlib.Path.exists")
         mock_thing = patcher.start()
-        mock_thing.side_effect = lambda x: True
+        mock_thing.side_effect = lambda: True
         with patch("builtins.open", mock_open(read_data=readme)) as _:
             current = {"script": {}}
             structure = mock_structure("Pack/Test", current)
@@ -2642,7 +2725,7 @@ class TestisContextChanged:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(integration.readme.path)
+            Path(integration.readme.path).unlink()
         assert (
             integration_validator.validate_readme_exists(
                 integration_validator.validate_all
@@ -2682,3 +2765,342 @@ class TestisContextChanged:
             integration_validator.is_native_image_does_not_exist_in_yml()
             == is_validation_ok
         )
+
+    @pytest.mark.parametrize(
+        "yml_content, use_git, expected_results",
+        [
+            ({"description": "description without dot"}, False, True),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description that ends with a url www.test.com",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has www.test.com in the middle of the sentence",
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has an 'example without dot at the end of the string.'",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has a trailing new line.\n",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has a trailing new line.\n",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot in the bracket (like this.)",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "a contextPath description with a dot in the bracket (like this.)",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {"description": "This description is okay!"},
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": 'This description ends with a json list [\n{\n"name": "example json ending on another line"\n}\n]'
+                },
+                True,
+                True,
+            ),
+        ],
+    )
+    def test_is_line_ends_with_dot(
+        self, repo, yml_content: dict, use_git: bool, expected_results: bool
+    ):
+        """
+        Given:
+            A yml content, use_git flag, and expected_results.
+            - Case 1: A yml content with a description without a dot at the end of the sentence, and use_git flag set to False.
+            - Case 2: A yml content with a command that an argument with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 3: A yml content with a command that a context path with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 4: A yml content with a command that an argument with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 5: A yml content with a command that a context path with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 6: A yml content with a description that ends with a url address and not dot, and use_git flag set to True.
+            - Case 7: A yml content with a description that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
+            - Case 8: A yml content with a description that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
+            - Case 9: A yml content with a description that ends with a dot followed by new line, and use_git flag set to True.
+            - Case 10: A yml content with an empty description, and use_git flag set to True.
+            - Case 11: A yml content with a command with an empty description for the output contextPath, and use_git flag set to True.
+            - Case 12: A yml content with a description and contextPath with a description that ends with a dot inside a bracket, and use_git flag set to True.
+            - Case 13: A yml content with a description that ends with exclamation mark, and use_git flag set to True.
+            - Case 14: a yml content with a description that ends with new line followed by square bracket, and use_git flag set to True.
+        When:
+            - when executing the is_line_ends_with_dot method
+        Then:
+            - Case 1: make sure the validation pass.
+            - Case 2: make sure the validation fails.
+            - Case 3: make sure the validation fails.
+            - Case 4: make sure the validation pass.
+            - Case 5: make sure the validation pass.
+            - Case 6: make sure the validation pass.
+            - Case 7: make sure the validation fails.
+            - Case 8: make sure the validation pass.
+            - Case 9: make sure the validation pass.
+            - Case 10: make sure the validation pass.
+            - Case 11: make sure the validation pass.
+            - Case 12: make sure the validation pass.
+            - Case 13: make sure the validation pass.
+            - Case 14: make sure the validation pass.
+        """
+        pack = repo.create_pack("test")
+        integration = pack.create_integration(yml=yml_content)
+        structure_validator = StructureValidator(integration.yml.path)
+        integration_validator = IntegrationValidator(
+            structure_validator, json_file_path=integration.yml.path, using_git=use_git
+        )
+        assert integration_validator.is_line_ends_with_dot() is expected_results
+
+    VALID_COMMAND_OUTPUTS = {
+        "name": "url",
+        "outputs": [
+            {
+                "contextPath": "URL.Data",
+                "description": "test description.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    INVALID_COMMAND_OUTPUTS = {
+        "name": "url",
+        "outputs": [
+            {
+                "contextPath": "Url.Data",
+                "description": "data.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    MISSING_COMMAND_OUTPUTS = {
+        "name": "endpoint",
+        "outputs": [
+            {
+                "contextPath": "Endpoint.Critical",
+                "description": "The percentage of critical findings on the host.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Indicator",
+                "description": "The indicator that was tested.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Type",
+                "description": "The indicator type.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Vendor",
+                "description": "The vendor used to calculate the score.",
+                "type": "string",
+            },
+            {
+                "contextPath": "DBotScore.Score",
+                "description": "The actual score.",
+                "type": "string",
+            },
+        ],
+    }
+    IS_OUTPUT_FOR_REPUTATION_INPUTS = [
+        (VALID_COMMAND_OUTPUTS, True),
+        (INVALID_COMMAND_OUTPUTS, False),
+        (MISSING_COMMAND_OUTPUTS, False),
+    ]
+
+    @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
+    def test_is_valid_spelling_command_custom_outputs(
+        self, outputs: List[Dict[str, Any]], result: bool
+    ):
+        """
+        Cover IN159 validation which validates the spelling of command output paths for reputation commands.
+        Given
+        The outputs and command_name of a command context.
+            - Case 1: A valid command output, URL is spelled correctly, all DBotScore outputs are present.
+            - Case 2: An invalid command output, URL is not spelled correctly (Url), all DBotScore outputs are present.
+            - Case 3: An invalid command output, Endpoint is missing one of the mandatory output paths (ID, IPAddress, Hostname), all DBotScore outputs are present.
+        When
+        - Calling the is_outputs_for_reputations_commands_valid validation.
+        Then
+            - Case 1: Make sure validation pass.
+            - Case 2: Make sure validation fails.
+            - Case 3: Make sure validation fails.
+        """
+        content = {"script": {"commands": [outputs]}}
+        structure = mock_structure("", content)
+        validator = IntegrationValidator(structure)
+        validator.current_file = content
+        assert validator.is_outputs_for_reputations_commands_valid() == result

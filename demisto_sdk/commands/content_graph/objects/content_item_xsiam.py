@@ -7,6 +7,10 @@ from packaging.version import Version
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import (
+    write_dict,
+)
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
 )
@@ -41,11 +45,7 @@ class ContentItemXSIAM(ContentItem, ABC):
         )
 
         for file in output_paths:
-            with open(file, "w") as f:
-                self.handler.dump(
-                    data,
-                    f,
-                )
+            write_dict(file, data=data, handler=self.handler)
 
     def _upload(
         self,
@@ -57,3 +57,15 @@ class ContentItemXSIAM(ContentItem, ABC):
         The rest will raise as default.
         """
         raise NotIndivitudallyUploadableException(self)
+
+    def get_preview_image_gcs_path(self):
+        """
+        Updates the summary object with the preview image path in GCS if there is such an image in the content repo.
+        This is for XSIAM dashboards and reports.
+        """
+        if (
+            self.content_type in [ContentType.XSIAM_DASHBOARD, ContentType.XSIAM_REPORT]
+            and (self.path.parent / f"{self.path.stem}_image.png").exists()
+        ):
+            return f"content/packs/{self.pack_id}/{self.in_pack.current_version}/{self.content_type.as_folder}/{self.path.stem}_image.png"  # type:ignore[union-attr]
+        return ""

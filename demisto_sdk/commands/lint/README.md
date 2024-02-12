@@ -12,16 +12,18 @@
   folder.
 
 Options:
+* **-clt, --console_log_threshold**
+  Minimum logging threshold for the console logger.  [default: INFO]
+* **-flt --file_log_threshold**
+  Minimum logging threshold for the file logger. [default: DEBUG]
+* **-lp, --log_file_path**
+  Path to the log file. Default: ./demisto_sdk_debug.log. [default: ./demisto_sdk_debug.log]
 *  **-i, --input PATH**
     Specify directory(s) of integration/script
 *  **-g, --git**
     Will run only on changed packages
 *  **-a, --all-packs**
     Run lint on all directories in content repo
-*  **-v, --verbose**
-    Verbosity level -v / -vv / -vvv  [default: vv]
-*  **-q, --quiet**
-    Quiet output, only output results in the end
 *  **-p, --parallel INTEGER RANGE**
     Run tests in parallel  [default: 1]
 *  **--no-flake8**
@@ -50,9 +52,7 @@ Options:
     Path to store pytest xml results
 *  **--failure-report PATH**
     Path to store failed packs report
-*  **-lp, --log-path PATH**
-    Path to store all levels of logs
-*  **-j, --json-file**
+* **-j, --json-file**
     The JSON file path to which to output the command results
 *  **--no-coverage**
     Do NOT report coverage

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
 from packaging.version import Version
@@ -21,6 +21,9 @@ from demisto_sdk.commands.common.constants import (
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    SUPPORT_LEVEL_HEADER,
+    XSOAR_CONTEXT_AND_OUTPUTS_URL,
+    XSOAR_SUPPORT,
     FileType,
     MarketplaceVersions,
 )
@@ -52,7 +55,7 @@ PRESET_ERROR_TO_CHECK = {
     "deprecated": ["ST", "BC", "BA", "IN127", "IN128", "PB104", "SC101"],
 }
 
-ERROR_CODE = {
+ERROR_CODE: Dict = {
     # BA - Basic
     "wrong_version": {
         "code": "BA100",
@@ -332,6 +335,10 @@ ERROR_CODE = {
         "code": "DS107",
         "related_field": "detaileddescription",
     },
+    "description_missing_dot_at_the_end": {
+        "code": "DS108",
+        "related_field": "description",
+    },
     # GF - Generic Fields
     "invalid_generic_field_group_value": {
         "code": "GF100",
@@ -581,14 +588,6 @@ ERROR_CODE = {
         "code": "IN127",
         "related_field": "display",
     },
-    "invalid_integration_deprecation__only_display_name_suffix": {
-        "code": "IN157",
-        "related_field": "deprecated",
-    },
-    "invalid_deprecation__only_description_deprecated": {
-        "code": "IN158",
-        "related_field": "deprecated",
-    },
     "invalid_deprecated_integration_description": {
         "code": "IN128",
         "related_field": "",
@@ -681,10 +680,6 @@ ERROR_CODE = {
         "code": "IN150",
         "related_field": "display",
     },
-    "invalid_siem_marketplaces_entry": {
-        "code": "IN151",
-        "related_field": "display",
-    },
     "empty_command_arguments": {
         "code": "IN151",
         "related_field": "arguments",
@@ -712,6 +707,26 @@ ERROR_CODE = {
     "nativeimage_exist_in_integration_yml": {
         "code": "IN157",
         "related_field": "script",
+    },
+    "invalid_deprecation__only_description_deprecated": {
+        "code": "IN158",
+        "related_field": "deprecated",
+    },
+    "command_reputation_output_capitalization_incorrect": {
+        "code": "IN159",
+        "related_field": "outputs",
+    },
+    "invalid_integration_deprecation__only_display_name_suffix": {
+        "code": "IN160",
+        "related_field": "deprecated",
+    },
+    "invalid_siem_marketplaces_entry": {
+        "code": "IN161",
+        "related_field": "display",
+    },
+    "partner_collector_does_not_have_xsoar_support_level": {
+        "code": "IN162",
+        "related_field": "",
     },
     # IT - Incident Types
     "incident_type_integer_field": {
@@ -960,6 +975,10 @@ ERROR_CODE = {
     },
     "pack_metadata_modules_for_non_xsiam": {
         "code": "PA136",
+        "related_field": "",
+    },
+    "pack_have_nonignorable_error": {
+        "code": "PA137",
         "related_field": "",
     },
     # PB - Playbooks
@@ -1296,7 +1315,6 @@ ERROR_CODE = {
         "code": "ST112",
         "related_field": "",
     },
-    "invalid_yml_file": {"code": "ST113", "related_field": ""},
     # WD - Widgets
     "remove_field_from_widget": {
         "code": "WD100",
@@ -1400,6 +1418,10 @@ ERROR_CODE = {
         "code": "CR101",
         "related_field": "",
     },
+    "correlation_rules_missing_search_window": {
+        "code": "CR102",
+        "related_field": "",
+    },
     # XR - XSIAM Reports
     "xsiam_report_files_naming_error": {
         "code": "XR100",
@@ -1457,6 +1479,11 @@ ERROR_CODE = {
         "code": "GR107",
         "related_field": "",
     },
+    "hidden_pack_not_mandatory_dependency": {
+        "code": "GR108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -1477,6 +1504,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA119",
         "BA124",
         "BA125",
+        "DS108",
         "DS107",
         "GF102",
         "IF100",
@@ -1536,13 +1564,14 @@ ALLOWED_IGNORE_ERRORS = (
         "RN114",
         "RN115",
         "RN116",
-        "MR104",
-        "MR105",
         "MR108",
         "PR101",
         "LO107",
         "IN107",
         "DB100",
+        "GR103",
+        "IN150",
+        "IN161",
     ]
 )
 
@@ -2199,6 +2228,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def partner_collector_does_not_have_xsoar_support_level(path: str):
+        return f"the integration {path} should have the key {SUPPORT_LEVEL_HEADER} = {XSOAR_SUPPORT} in its yml"
+
+    @staticmethod
+    @error_code_decorator
     def invalid_deprecated_integration_description():
         return (
             "The description of all deprecated integrations should follow one of the formats:"
@@ -2659,7 +2693,8 @@ class Errors:
             f'A new release notes file contains the phrase "breaking changes" '
             "without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). "
             f'Please run "demisto-sdk update-release-notes -i {json_path[:-4]}md -bc". '
-            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+            "For more information, refer to the following documentation: "
+            "https://xsoar.pan.dev/docs/documentation/release-notes#breaking-changes-version"
         )
 
     @staticmethod
@@ -2910,6 +2945,13 @@ class Errors:
     @error_code_decorator
     def description_contains_demisto_word(line_nums, yml_or_file):
         return f"Found the word 'Demisto' in the description content {yml_or_file} in lines: {line_nums}."
+
+    @staticmethod
+    @error_code_decorator
+    def description_missing_dot_at_the_end(details: str):
+        return (
+            f'Description must end with a period ("."), fix the following:\n{details}'
+        )
 
     @staticmethod
     @error_code_decorator
@@ -3260,7 +3302,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_invalid_modules():
-        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+        return f"Module field can include only label from the following options: {', '.join(MODULES)}."
 
     @staticmethod
     @error_code_decorator
@@ -4326,7 +4368,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def using_unknown_content(content_name: str, unknown_content_names: List[str]):
+    def using_unknown_content(content_name: str, unknown_content_names: Set[str]):
         return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
 
     @staticmethod
@@ -4334,6 +4376,7 @@ class Errors:
     def multiple_packs_with_same_display_name(
         content_name: str, pack_display_names: List[str]
     ):
+        pack_display_names = [f"'{name}'" for name in pack_display_names]
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "
 
     @staticmethod
@@ -4350,3 +4393,30 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def hidden_pack_not_mandatory_dependency(
+        hidden_pack: str, dependant_packs_ids: Set[str]
+    ):
+        return f"{', '.join(dependant_packs_ids)} pack(s) cannot have a mandatory dependency on the hidden pack {hidden_pack}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_have_nonignorable_error(nonignorable_errors: List[str]):
+        return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rules_missing_search_window():
+        return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
+
+    @staticmethod
+    @error_code_decorator
+    def command_reputation_output_capitalization_incorrect(
+        command_name: str,
+        invalid_output: str,
+        reputation_name: str,
+    ):
+        return f"The {command_name} command returns the following reputation output:\n{invalid_output} for reputation: {reputation_name}.\
+The capitalization is incorrect. For further information refer to {XSOAR_CONTEXT_AND_OUTPUTS_URL}"

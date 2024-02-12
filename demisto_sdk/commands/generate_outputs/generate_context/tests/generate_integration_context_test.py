@@ -2,7 +2,7 @@ import os
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, write_yml
+from demisto_sdk.commands.common.tools import get_yaml, write_dict
 
 # Test data files
 FAKE_INTEGRATION_YML = get_yaml(
@@ -177,7 +177,7 @@ def test_generate_integration_context(mocker, tmpdir):
 
     # Temp file to check
     filename = os.path.join(tmpdir.strpath, "fake_integration.yml")
-    write_yml(filename, FAKE_INTEGRATION_YML)
+    write_dict(filename, FAKE_INTEGRATION_YML)
 
     # Make sure that there are no outputs
     yml_data = get_yaml(filename)

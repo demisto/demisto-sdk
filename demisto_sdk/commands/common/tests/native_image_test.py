@@ -5,13 +5,12 @@ import pytest
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
-    file_to_native_image_config,
 )
 
 
 @pytest.fixture
 def native_image_config(repo) -> NativeImageConfig:
-    return file_to_native_image_config(repo.docker_native_image_config.path)
+    return NativeImageConfig.from_path(repo.docker_native_image_config.path)
 
 
 def test_load_native_image_config(native_image_config):

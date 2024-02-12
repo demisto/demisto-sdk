@@ -1,22 +1,23 @@
 """
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
-import glob
 import os
 import re
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, Tuple
 
 from dateutil import parser
-from git import GitCommandError, Repo
+from git import GitCommandError
 from packaging.version import Version, parse
 
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     EXCLUDED_DISPLAY_NAME_WORDS,
+    INCORRECT_PACK_NAME_PATTERN,
     INTEGRATIONS_DIR,
+    MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_KEY_PACK_METADATA,
     MODULES,
     PACK_METADATA_CATEGORIES,
@@ -26,24 +27,25 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_DEPENDENCIES,
     PACK_METADATA_DESC,
     PACK_METADATA_EMAIL,
-    PACK_METADATA_FIELDS,
-    PACK_METADATA_KEYWORDS,
+    PACK_METADATA_MANDATORY_FILLED_FIELDS,
     PACK_METADATA_MODULES,
     PACK_METADATA_NAME,
     PACK_METADATA_SUPPORT,
-    PACK_METADATA_TAGS,
     PACK_METADATA_URL,
     PACK_METADATA_USE_CASES,
+    PACK_SUPPORT_OPTIONS,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
+    PARTNER_SUPPORT,
+    SUPPORTED_CONTRIBUTORS_LIST,
     VERSION_REGEX,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.errors import ALLOWED_IGNORE_ERRORS, Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -53,32 +55,27 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    check_timestamp_format,
+    extract_error_codes_from_file,
     get_core_pack_list,
+    get_current_categories,
+    get_current_usecases,
     get_json,
     get_local_remote_file,
+    get_pack_latest_rn_version,
     get_remote_file,
+    is_external_repository,
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
+from demisto_sdk.commands.validate.tools import (
+    extract_non_approved_tags,
+    filter_by_marketplace,
+    validate_categories_approved,
+)
 
-CONTRIBUTORS_LIST = ["partner", "developer", "community"]
-SUPPORTED_CONTRIBUTORS_LIST = ["partner", "developer"]
-ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
 MAXIMUM_DESCRIPTION_FIELD_LENGTH = 130
-SUPPORT_TYPES = ["community", "xsoar"] + SUPPORTED_CONTRIBUTORS_LIST
-INCORRECT_PACK_NAME_PATTERN = (
-    "[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK["
-    "^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook["
-    "^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK["
-    "^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook["
-    "^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration["
-    "^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION["
-    "^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration["
-    "^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script["
-    "^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT["
-    "^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ "
-)
 
 
 class BlockingValidationFailureException(BaseException):
@@ -134,11 +131,11 @@ class PackUniqueFilesValidator(BaseValidator):
         self.metadata_content: Dict = dict()
 
         if not prev_ver:
-            git_util = GitUtil(repo=Content.git())
+            git_util = Content.git_util()
             main_branch = git_util.handle_prev_ver()[1]
             self.prev_ver = (
-                f"origin/{main_branch}"
-                if not main_branch.startswith("origin")
+                f"{DEMISTO_GIT_UPSTREAM}/{main_branch}"
+                if not main_branch.startswith(DEMISTO_GIT_UPSTREAM)
                 else main_branch
             )
         else:
@@ -190,24 +187,6 @@ class PackUniqueFilesValidator(BaseValidator):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
 
-    def _get_pack_latest_rn_version(self):
-        """
-        Extract all the Release notes from the pack and reutrn the highest version of release note in the Pack.
-
-        Return:
-            (str): The lastest version of RN.
-        """
-        list_of_files = glob.glob(self.pack_path + "/ReleaseNotes/*")
-        list_of_release_notes = [os.path.basename(file) for file in list_of_files]
-        list_of_versions = [
-            rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
-        ]
-        if list_of_versions:
-            list_of_versions.sort(key=Version)
-            return list_of_versions[-1]
-        else:
-            return ""
-
     @error_codes("PA128,PA100")
     def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
         """
@@ -215,7 +194,7 @@ class PackUniqueFilesValidator(BaseValidator):
         is_required is True means that absence of the file should block other tests from running
             (see BlockingValidationFailureException).
         """
-        if not os.path.isfile(self._get_pack_file_path(file_name)):
+        if not Path(self._get_pack_file_path(file_name)).is_file():
             error_function = (
                 Errors.required_pack_file_does_not_exist
                 if is_required
@@ -279,15 +258,6 @@ class PackUniqueFilesValidator(BaseValidator):
         current_marketplaces = current_meta_file_content.get("marketplaces", [])
         return set(old_marketplaces) != set(current_marketplaces)
 
-    @staticmethod
-    def check_timestamp_format(timestamp):
-        """Check that the timestamp is in ISO format"""
-        try:
-            datetime.strptime(timestamp, ISO_TIMESTAMP_FORMAT)
-            return True
-        except ValueError:
-            return False
-
     # secrets validation
     def validate_secrets_file(self):
         """Validate everything related to .secrets-ignore file"""
@@ -342,9 +312,9 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("IM109")
     def validate_author_image_exists(self):
-        if self.metadata_content.get(PACK_METADATA_SUPPORT) == "partner":
+        if self.metadata_content.get(PACK_METADATA_SUPPORT) == PARTNER_SUPPORT:
             author_image_path = os.path.join(self.pack_path, "Author_image.png")
-            if not os.path.exists(author_image_path):
+            if not Path(author_image_path).exists():
                 if self._add_error(
                     Errors.author_image_is_missing(author_image_path),
                     file_path=author_image_path,
@@ -360,10 +330,10 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         playbooks_path = os.path.join(self.pack_path, "Playbooks")
         contains_playbooks = (
-            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0
+            Path(playbooks_path).exists() and len(os.listdir(playbooks_path)) != 0
         )
         if (
-            self.support == "partner" or contains_playbooks
+            self.support == PARTNER_SUPPORT or contains_playbooks
         ) and self._check_if_file_is_empty(self.readme_file):
             if self._add_error(Errors.empty_readme_error(), self.readme_file):
                 return False
@@ -404,7 +374,8 @@ class PackUniqueFilesValidator(BaseValidator):
         if self._is_pack_file_exists(self.pack_ignore_file) and all(
             [self._is_pack_ignore_file_structure_valid()]
         ):
-            return True
+            if self.validate_non_ignorable_error():
+                return True
 
         return False
 
@@ -422,6 +393,23 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
         return False
+
+    @error_codes("PA137")
+    def validate_non_ignorable_error(self):
+        """
+        Check if .pack-ignore includes error codes that cannot be ignored.
+        Returns False if an non-ignorable error code is found,
+        or True if all ignored errors are indeed ignorable.
+        """
+        error_codes = extract_error_codes_from_file(self.pack)
+        if error_codes:
+            nonignoable_errors = error_codes.difference(ALLOWED_IGNORE_ERRORS)
+            if nonignoable_errors and self._add_error(
+                Errors.pack_have_nonignorable_error(nonignoable_errors),
+                self.pack_ignore_file,
+            ):
+                return False
+        return True
 
     # pack metadata validation
     def validate_pack_meta_file(self):
@@ -540,7 +528,9 @@ class PackUniqueFilesValidator(BaseValidator):
                     raise BlockingValidationFailureException()
 
             missing_fields = [
-                field for field in PACK_METADATA_FIELDS if field not in metadata.keys()
+                field
+                for field in MANDATORY_PACK_METADATA_FIELDS
+                if field not in metadata.keys()
             ]
             if missing_fields:
                 if self._add_error(
@@ -576,7 +566,7 @@ class PackUniqueFilesValidator(BaseValidator):
             # check created field in iso format
             created_field = metadata.get(PACK_METADATA_CREATED, "")
             if created_field:
-                if not self.check_timestamp_format(created_field):
+                if not check_timestamp_format(created_field):
                     suggested_value = parser.parse(created_field).isoformat() + "Z"
                     if self._add_error(
                         Errors.pack_timestamp_field_not_in_iso_format(
@@ -587,12 +577,7 @@ class PackUniqueFilesValidator(BaseValidator):
                         return False
 
             # check metadata list fields and validate that no empty values are contained in this fields
-            for list_field in (
-                PACK_METADATA_KEYWORDS,
-                PACK_METADATA_TAGS,
-                PACK_METADATA_CATEGORIES,
-                PACK_METADATA_USE_CASES,
-            ):
+            for list_field in PACK_METADATA_MANDATORY_FILLED_FIELDS:
                 field = metadata[list_field]
                 if field and len(field) == 1:
                     value = field[0]
@@ -734,7 +719,10 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         try:
             pack_meta_file_content = self._read_metadata_content()
-            if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
+            if (
+                pack_meta_file_content[PACK_METADATA_SUPPORT]
+                not in PACK_SUPPORT_OPTIONS
+            ):
                 self._add_error(
                     Errors.pack_metadata_invalid_support_type(), self.pack_meta_file
                 )
@@ -755,13 +743,13 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
              bool: True if the usecases are approved, otherwise False
         """
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
 
         non_approved_usecases = set()
         try:
             pack_meta_file_content = self._read_metadata_content()
-            current_usecases = tools.get_current_usecases()
+            current_usecases = get_current_usecases()
             non_approved_usecases = set(
                 pack_meta_file_content[PACK_METADATA_USE_CASES]
             ) - set(current_usecases)
@@ -802,7 +790,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
             bool: True if the tags are approved, otherwise False
         """
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
 
         is_valid = True
@@ -830,15 +818,17 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
              bool: True if the tags are approved, otherwise False
         """
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
 
         is_valid_tag_prefixes = True
         non_approved_tags = set()
         marketplaces = [x.value for x in list(MarketplaceVersions)]
         try:
-            pack_tags, is_valid_tag_prefixes = self.filter_by_marketplace(marketplaces)
-            non_approved_tags = self.extract_non_approved_tags(pack_tags, marketplaces)
+            pack_tags, is_valid_tag_prefixes = filter_by_marketplace(
+                marketplaces, self._read_metadata_content()
+            )
+            non_approved_tags = extract_non_approved_tags(pack_tags, marketplaces)
             if non_approved_tags:
                 if self._add_error(
                     Errors.pack_metadata_non_approved_tags(non_approved_tags),
@@ -854,49 +844,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return is_valid_tag_prefixes
 
-    def filter_by_marketplace(self, marketplaces):
-        """Filtering pack_metadata tags by marketplace"""
-        pack_meta_file_content = self._read_metadata_content()
-
-        pack_tags: Dict[str, List[str]] = {}
-        for marketplace in marketplaces:
-            pack_tags[marketplace] = []
-        pack_tags["common"] = []
-
-        is_valid = True
-        for tag in pack_meta_file_content.get("tags", []):
-            if ":" in tag:
-                tag_data = tag.split(":")
-                tag_marketplaces = tag_data[0].split(",")
-
-                try:
-                    for tag_marketplace in tag_marketplaces:
-                        pack_tags[tag_marketplace].append(tag_data[1])
-                except KeyError:
-                    logger.warning(
-                        "[yellow]You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
-                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.[/yellow]'
-                    )
-                    is_valid = False
-
-            else:
-                pack_tags["common"].append(tag)
-
-        return pack_tags, is_valid
-
-    def extract_non_approved_tags(self, pack_tags, marketplaces) -> Set[str]:
-        approved_tags = tools.get_approved_tags_from_branch()
-
-        non_approved_tags = set(pack_tags.get("common", [])) - set(
-            approved_tags.get("common", [])
-        )
-        for marketplace in marketplaces:
-            non_approved_tags |= set(pack_tags.get(marketplace, [])) - set(
-                approved_tags.get(marketplace, [])
-            )
-
-        return non_approved_tags
-
     @error_codes("RN106,PA131")
     def _is_right_version(self):
         """Checks whether the currentVersion field in the pack metadata matches the version of the latest release note.
@@ -906,7 +853,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
         current_version = self.metadata_content.get("currentVersion", "0.0.0")
-        rn_version = self._get_pack_latest_rn_version()
+        rn_version = get_pack_latest_rn_version(self.pack_path)
         if not rn_version and current_version == "1.0.0":
             return True
         if not rn_version:
@@ -932,9 +879,9 @@ class PackUniqueFilesValidator(BaseValidator):
         layouts_path = os.path.join(self.pack_path, "Layouts")
 
         answers = [
-            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
-            os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
-            os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
+            Path(playbooks_path).exists() and len(os.listdir(playbooks_path)) != 0,
+            Path(incidents_path).exists() and len(os.listdir(incidents_path)) != 0,
+            Path(layouts_path).exists() and len(os.listdir(layouts_path)) != 0,
         ]
         return any(answers)
 
@@ -962,17 +909,17 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
-        current_repo = Repo(Path.cwd(), search_parent_directories=True)
+        current_repo = GitUtil()
 
         # if running on master branch in private repo - do not run the test
-        if current_repo.active_branch == "master":
+        if current_repo.get_current_git_branch_or_hash() == DEMISTO_GIT_PRIMARY_BRANCH:
             logger.debug(
                 "[yellow]Running on master branch - skipping price change validation[/yellow]"
             )
             return None
         try:
             tag = self.prev_ver
-            tag = tag.replace("origin/", "").replace("demisto/", "")
+            tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
             old_meta_file_content = get_local_remote_file(
                 full_file_path=metadata_file_path, tag=tag, return_content=True
             )
@@ -1170,32 +1117,16 @@ class PackUniqueFilesValidator(BaseValidator):
         Returns:
             bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
         """
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
         categories = self._read_metadata_content().get("categories", [])
-        approved_list = tools.get_current_categories()
-        if not len(categories) == 1 or not self.validate_categories_approved(
+        approved_list = get_current_categories()
+        if not len(categories) == 1 or not validate_categories_approved(
             categories, approved_list
         ):
             if self._add_error(
                 Errors.categories_field_does_not_match_standard(approved_list),
                 self.pack_meta_file,
             ):
-                return False
-        return True
-
-    def validate_categories_approved(self, categories, approved_list):
-        """
-        Check that the pack categories contain only approved categories.
-
-        Args:
-            categories (list): the list of the pack's categories.
-            approved_list (list): the predefined approved categories list.
-
-        Returns:
-            bool: True if all the pack categories is from the approved list. Otherwise, return False.
-        """
-        for category in categories:
-            if category not in approved_list:
                 return False
         return True

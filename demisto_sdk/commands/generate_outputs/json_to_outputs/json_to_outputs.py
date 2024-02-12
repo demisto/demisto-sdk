@@ -71,8 +71,8 @@ outputs:
   description: ''
   type: String
 """
-import os
 import sys
+from pathlib import Path
 from typing import Dict, Optional
 
 import dateparser
@@ -80,6 +80,7 @@ import dateparser
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_file
 
 
 def input_multiline():
@@ -273,9 +274,8 @@ def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]: 
         return None
 
     try:
-        if os.path.exists(descriptions):  # file input
-            with open(descriptions, encoding="utf8") as f:
-                return json.load(f)
+        if Path(descriptions).exists():  # file input
+            return get_file(descriptions, raise_on_error=True)
 
         else:
             parsed = json.loads(descriptions)  # argument input

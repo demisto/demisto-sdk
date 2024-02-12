@@ -1,6 +1,6 @@
 import logging
 import os
-from os.path import isfile
+from pathlib import Path
 from shutil import copyfile
 from typing import List, Tuple
 
@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.constants import (
     XDRC_TEMPLATE_YML_REGEX,
     XSIAM_DASHBOARD_JSON_REGEX,
     XSIAM_REPORT_JSON_REGEX,
+    FileType,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -46,6 +47,7 @@ from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator,
     checked_type_by_reg,
 )
+from demisto_sdk.commands.common.tools import get_file, write_dict
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET,
     DIR_LIST,
@@ -104,22 +106,21 @@ class TestStructureValidator:
     def setup_class(cls):
         # checking that the files in the test are not exists so they won't overwrites.
         for target in cls.INPUTS_TARGETS:
-            if isfile(target) is True:
+            if Path(target).is_file():
                 pytest.fail(f"{target} File in tests already exists!")
         # Creating directory for tests if they're not exists
 
         for directory in DIR_LIST:
-            if not os.path.exists(directory):
+            if not Path(directory).exists():
                 cls.CREATED_DIRS.append(directory)
                 os.makedirs(directory)
 
     @classmethod
     def teardown_class(cls):
         for target in cls.INPUTS_TARGETS:
-            if isfile(target) is True:
-                os.remove(target)
+            Path(target).unlink(missing_ok=True)
         for directory in cls.CREATED_DIRS:
-            if os.path.exists(directory):
+            if Path(directory).exists():
                 os.rmdir(directory)
 
     SCHEME_VALIDATION_INPUTS = [
@@ -225,7 +226,7 @@ class TestStructureValidator:
             structure = StructureValidator(target)
             assert structure.is_valid_file() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     pykwalify_error_1 = " - Cannot find required key 'category'. Path: ''.: Path: '/'>'"
     expected_error_1 = 'Missing the field "category" in root'
@@ -526,6 +527,32 @@ class TestStructureValidator:
             "incident-field-test", content=field_content
         )
         structure = StructureValidator(incident_field.path)
+        assert not structure.is_valid_scheme()
+
+    def test_with_marketplace_suffix(self, mocker, tmp_path):
+        mocker.patch.object(
+            StructureValidator, "get_file_type", return_value=FileType.INTEGRATION
+        )
+        mocker.patch.object(
+            StructureValidator,
+            "scheme_of_file_by_path",
+            return_value=FileType.INTEGRATION,
+        )
+        yml = get_file(VALID_INTEGRATION_TEST_PATH)
+        yml["name:xsoar"] = "xsoar"
+        yml["name:marketplacev2"] = "xsiam"
+        yml["name:xpanse"] = "xspanse"
+        yml["configuration"][0]["defaultvalue:xsoar_saas"] = "xsoar_saas"
+        write_dict(tmp_path / "integration.yml", yml)
+
+        structure = StructureValidator(str(tmp_path / "integration.yml"))
+        assert structure.is_valid_scheme()
+
+        yml["commonfields"]["id:xsoar"] = "not-valid"  # can't edit the id
+
+        write_dict(tmp_path / "integration-invalid.yml", yml)
+
+        structure = StructureValidator(str(tmp_path / "integration-invalid.yml"))
         assert not structure.is_valid_scheme()
 
 
@@ -940,3 +967,58 @@ class TestXSIAMStructureValidator(TestStructureValidator):
         xsiam_report.remove_field_by_path("templates_data.[0].global_id")
         validator = StructureValidator(xsiam_report.path)
         assert not validator.is_valid_scheme()
+
+    DEPRECATED_WITH_COMMENT = {
+        "comment": "Deprecated. No available replacement.",
+        "deprecated": True,
+    }
+
+    DEPRECATED_RULE = {
+        "deprecated": True,
+    }
+
+    @pytest.mark.parametrize(
+        "yml_data_update",
+        [DEPRECATED_RULE, DEPRECATED_WITH_COMMENT],
+    )
+    def test_deprecated_parsing_rule_is_valid(self, repo, yml_data_update):
+        """
+        Given:
+            Case a:
+                - A deprecated parsing rule without a comment.
+            Case b:
+                - A deprecated parsing rule with a comment.
+        When:
+            - Running is_schema_types_valid.
+        Then:
+            - Validate that the parsing rule is invalid.
+        """
+        with ChangeCWD(repo.path):
+            pack = repo.create_pack("TestPack")
+            parsing_rule = pack.create_parsing_rule(name="MyParsingRule")
+            parsing_rule.yml.update(yml_data_update)
+            structure_validator = StructureValidator(parsing_rule.yml.path)
+        assert structure_validator.is_valid_file()
+
+    @pytest.mark.parametrize(
+        "yml_data_update",
+        [DEPRECATED_RULE, DEPRECATED_WITH_COMMENT],
+    )
+    def test_deprecated_modeling_rule_is_valid(self, repo, yml_data_update):
+        """
+        Given:
+            Case a:
+                - A deprecated modeling rule without a comment.
+            Case b:
+                - A deprecated modeling rule with a comment.
+        When:
+            - Running is_schema_types_valid.
+        Then:
+            - Validate that the modeling rule is invalid.
+        """
+        with ChangeCWD(repo.path):
+            pack = repo.create_pack("TestPack")
+            modeling_rule = pack.create_modeling_rule("MyModelingRule")
+            modeling_rule.yml.update(yml_data_update)
+            structure_validator = StructureValidator(modeling_rule.yml.path)
+            assert structure_validator.is_valid_file()

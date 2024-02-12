@@ -1,0 +1,33 @@
+alert_category: EXECUTION
+alert_description: This alert will trigger in an event where multiple attempts of
+  unauthorized actions were detected
+alert_fields:
+  actor_image: null
+  actor_path: xdm.source.user.user_type
+  cmd: null
+  domain: null
+  hash: null
+  hostname: null
+  local_ip: null
+  remote_ip: xdm.source.ipv4
+  remote_port: null
+  username: xdm.source.user.username
+alert_name: Test
+crontab: '* * * * *'
+dataset: alerts
+description: Test
+drilldown_query_timeframe: ALERT
+execution_mode: SCHEDULED
+global_rule_id: 1234
+investigation_query_link: null
+mapping_strategy: CUSTOM
+mitre_defs: {}
+name: Test
+search_window: null
+severity: SEV_030_MEDIUM
+suppression_duration: null
+suppression_enabled: false
+suppression_fields: null
+user_defined_category: null
+user_defined_severity: null
+xql_query: null

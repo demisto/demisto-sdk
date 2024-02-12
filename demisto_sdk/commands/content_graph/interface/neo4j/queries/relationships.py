@@ -1,6 +1,6 @@
-from typing import Any, Dict, List
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-import more_itertools
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -15,8 +15,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     node_map,
     run_query,
 )
-
-CHUNK_SIZE = 500
 
 
 def build_source_properties() -> str:
@@ -73,27 +71,35 @@ RETURN count(r) AS relationships_merged"""
 
 
 def build_uses_relationships_query(
-    target_type: ContentType = ContentType.BASE_CONTENT,
     target_identifier: str = "object_id",
-    with_target_type: bool = True,
 ) -> str:
     return f"""// Creates USES relationships between parsed nodes.
 // Note: if a target node is created, it means the node does not exist in the repository.
 UNWIND $data AS rel_data
-
+MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
 // Get all content items with the specified properties
-MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
+CALL apoc.merge.node(
+    [rel_data.target_type, "{ContentType.BASE_NODE}"],
+    {build_target_properties(identifier=target_identifier)},
+    {{
+        not_in_repository: true,
+        object_id: rel_data.target,
+        name: rel_data.target,
+        cli_name: rel_data.target,
+        content_type: rel_data.target_type
+    }}
+) YIELD node as target
 
-// Get or create the targets with the given properties
-MERGE (target:{target_type}{
-    build_target_properties(identifier=target_identifier, with_content_type=with_target_type)
-})
-
-// If created, mark "not in repository" (all repository nodes were created already)
-ON CREATE
-    SET target.not_in_repository = true
+// We want to make sure that the we need to create the relationship
+// If the target node is not in the repository, we need to create the relationship only if there is not equivalent target does not exists in the repository
+// If the target node is in the repository, we need to create the relationship anyway
+OPTIONAL MATCH (existing_target:{ContentType.BASE_NODE}{{{target_identifier}: rel_data.target, not_in_repository: false}})
+WHERE rel_data.target_type in labels(existing_target)
+WITH source, target, rel_data, existing_target
+WHERE existing_target IS NULL OR target.not_in_repository = false
 
 // Get or create the relationship and set its "mandatorily" field based on relationship data
+
 MERGE (source)-[r:{RelationshipType.USES}]->(target)
 ON CREATE
     SET r.mandatorily = rel_data.mandatorily
@@ -108,7 +114,7 @@ def build_in_pack_relationships_query() -> str:
 UNWIND $data AS rel_data
 
 // Get the pack and the content item with the specified properties
-MATCH (content_item:{ContentType.BASE_CONTENT}{build_source_properties()})
+MATCH (content_item:{ContentType.BASE_NODE}{build_source_properties()})
 MATCH (pack:{ContentType.PACK}{build_target_properties()})
 
 // Get/create the relationship
@@ -121,10 +127,10 @@ def build_tested_by_relationships_query() -> str:
 UNWIND $data AS rel_data
 
 // Get the content item with the specified properties
-MATCH (content_item:{ContentType.BASE_CONTENT}{build_source_properties()})
+MATCH (content_item:{ContentType.BASE_NODE}{build_source_properties()})
 
 // Get or create the test playbook with the given id
-MERGE (tpb:{ContentType.TEST_PLAYBOOK}{build_target_properties(with_content_type=True)})
+MERGE (tpb:{ContentType.TEST_PLAYBOOK}{build_target_properties()})
 
 // If created, mark "not in repository" (all repository nodes were created already)
 ON CREATE
@@ -156,10 +162,12 @@ RETURN count(r) AS relationships_merged"""
 def build_default_relationships_query(relationship: RelationshipType) -> str:
     return f"""// A default method for creating relationships
 UNWIND $data AS rel_data
-MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
-MERGE (target:{ContentType.BASE_CONTENT}{build_target_properties()})
+MATCH (source:{ContentType.BASE_NODE}{build_source_properties()})
+MERGE (target:{ContentType.BASE_NODE}{build_target_properties()})
 ON CREATE
-    SET target.not_in_repository = true
+    SET target.not_in_repository = true,
+        target.object_id = rel_data.target,
+        target.name = rel_data.target
 MERGE (source)-[r:{relationship}]->(target)
 RETURN count(r) AS relationships_merged"""
 
@@ -167,6 +175,7 @@ RETURN count(r) AS relationships_merged"""
 def create_relationships(
     tx: Transaction,
     relationships: Dict[RelationshipType, List[Dict[str, Any]]],
+    timeout: Optional[int] = None,
 ) -> None:
     if relationships.get(RelationshipType.HAS_COMMAND):
         data = relationships.pop(RelationshipType.HAS_COMMAND)
@@ -191,17 +200,17 @@ def create_relationships_by_type(
         query = build_uses_relationships_query(
             target_identifier="name",
         )
+    elif relationship == RelationshipType.USES_BY_CLI_NAME:
+        query = build_uses_relationships_query(
+            target_identifier="cli_name",
+        )
     elif relationship == RelationshipType.USES_COMMAND_OR_SCRIPT:
         query = build_uses_relationships_query(
-            target_type=ContentType.COMMAND_OR_SCRIPT,
             target_identifier="object_id",
-            with_target_type=False,
         )
     elif relationship == RelationshipType.USES_PLAYBOOK:
         query = build_uses_relationships_query(
-            target_type=ContentType.PLAYBOOK,
             target_identifier="name",
-            with_target_type=False,
         )
     elif relationship == RelationshipType.IN_PACK:
         query = build_in_pack_relationships_query()
@@ -211,12 +220,8 @@ def create_relationships_by_type(
         query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
-    for chunk in more_itertools.chunked_even(data, CHUNK_SIZE):
-        result = run_query(tx, query, data=chunk).single()
-        merged_relationships_count = result["relationships_merged"]
-        logger.debug(
-            f"Merged {merged_relationships_count} relationships of type {relationship}."
-        )
+    run_query(tx, query, data=data)
+    logger.debug(f"Merged relationships of type {relationship}.")
 
 
 def _match_relationships(
@@ -253,3 +258,164 @@ RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS no
         )
         for item in run_query(tx, query, ids_list=list(ids_list) if ids_list else None)
     }
+
+
+def get_sources_by_path(
+    tx: Transaction,
+    path: Path,
+    relationship: RelationshipType,
+    content_type: ContentType,
+    depth: int,
+    marketplace: MarketplaceVersions,
+    mandatory_only: bool,
+    include_tests: bool,
+    include_deprecated: bool,
+    include_hidden: bool,
+) -> List[Dict[str, Any]]:
+    query = f"""// Returns all paths to a given node by relationship type and depth.
+MATCH (n{{path: "{path}"}})
+CALL apoc.path.expandConfig(n, {{
+    relationshipFilter: "<{relationship}",
+    labelFilter: ">{content_type}",
+    minLevel: 1,
+    maxLevel: {depth},
+    uniqueness: "NODE_PATH"
+}})
+YIELD path
+WITH
+    // the paths are returned in reversed order, so we fix this here:
+    reverse([n IN nodes(path) | {{
+        path: n.path,
+        name: n.name,
+        object_id: n.object_id,
+        content_type: n.content_type
+    }}]) AS node_paths,
+    reverse(nodes(path)) AS nodes,
+    reverse([r IN relationships(path) | properties(r)]) AS rels,
+    length(path) AS depth
+WITH
+    nodes,
+    nodes[0] AS source,
+    apoc.coll.flatten((apoc.coll.zip(rels, node_paths[1..]))) AS path_from_source,
+    CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
+    CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    depth,
+    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test,
+    CASE WHEN any(n IN nodes WHERE n.deprecated) THEN TRUE ELSE FALSE END AS deprecated,
+    CASE WHEN any(n IN nodes WHERE n.hidden) THEN TRUE ELSE FALSE END AS hidden
+WHERE
+    source.path IS NOT NULL
+    AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
+    {"AND NOT is_test" if not include_tests else ""}
+    {"AND NOT deprecated" if not include_deprecated else ""}
+    {"AND NOT hidden" if not include_hidden else ""}
+    {"AND mandatorily" if mandatory_only else ""}
+WITH
+    source,
+    min(depth) AS minDepth,
+    collect({{
+        path: apoc.coll.insert(
+            path_from_source,
+            0,
+            {{
+                path: source.path,
+                name: source.name,
+                object_id: source.object_id,
+                content_type: source.content_type
+            }}
+        ),
+        mandatorily: mandatorily,
+        depth: depth
+    }}) AS paths
+RETURN
+    source.object_id AS object_id,
+    source.name AS name,
+    source.content_type AS content_type,
+    source.path AS filepath,
+    TRUE AS is_source,
+    paths,
+    CASE WHEN any(p IN paths WHERE p.mandatorily) THEN TRUE ELSE
+    CASE WHEN all(p IN paths WHERE p.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    minDepth
+ORDER BY content_type, object_id"""
+    return run_query(tx, query).data()
+
+
+def get_targets_by_path(
+    tx: Transaction,
+    path: Path,
+    relationship: RelationshipType,
+    content_type: ContentType,
+    depth: int,
+    marketplace: MarketplaceVersions,
+    mandatory_only: bool,
+    include_tests: bool,
+    include_deprecated: bool,
+    include_hidden: bool,
+) -> List[Dict[str, Any]]:
+    query = f"""// Returns all paths from a given node by relationship type and depth.
+MATCH (n{{path: "{path}"}})
+CALL apoc.path.expandConfig(n, {{
+    relationshipFilter: "{relationship}>",
+    labelFilter: ">{content_type}",
+    minLevel: 1,
+    maxLevel: {depth},
+    uniqueness: "NODE_PATH"
+}})
+YIELD path
+WITH
+    [n IN nodes(path) | {{
+        path: n.path,
+        name: n.name,
+        object_id: n.object_id,
+        content_type: n.content_type
+    }}] AS node_paths,
+    nodes(path) AS nodes,
+    [r IN relationships(path) | properties(r)] AS rels,
+    length(path) AS depth
+WITH
+    nodes,
+    nodes[-1] AS target,
+    apoc.coll.flatten((apoc.coll.zip(node_paths[..-1], rels))) AS path_to_target,
+    CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
+    CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    depth,
+    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test,
+    CASE WHEN any(n IN nodes WHERE n.deprecated) THEN TRUE ELSE FALSE END AS deprecated,
+    CASE WHEN any(n IN nodes WHERE n.hidden) THEN TRUE ELSE FALSE END AS hidden
+WHERE
+    target.path IS NOT NULL
+    AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
+    {"AND NOT is_test" if not include_tests else ""}
+    {"AND NOT deprecated" if not include_deprecated else ""}
+    {"AND NOT hidden" if not include_hidden else ""}
+    {"AND mandatorily" if mandatory_only else ""}
+WITH
+    target,
+    min(depth) AS minDepth,
+    collect({{
+        path: apoc.coll.insert(
+            path_to_target,
+            size(path_to_target),
+            {{
+                path: target.path,
+                name: target.name,
+                object_id: target.object_id,
+                content_type: target.content_type
+            }}
+        ),
+        mandatorily: mandatorily,
+        depth: depth
+    }}) AS paths
+RETURN
+    target.object_id AS object_id,
+    target.name AS name,
+    target.content_type AS content_type,
+    target.path AS filepath,
+    FALSE AS is_source,
+    paths,
+    CASE WHEN any(p IN paths WHERE p.mandatorily) THEN TRUE ELSE
+    CASE WHEN all(p IN paths WHERE p.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    minDepth
+ORDER BY content_type, object_id"""
+    return run_query(tx, query).data()

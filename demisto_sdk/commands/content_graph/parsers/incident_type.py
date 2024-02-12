@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Set
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -10,14 +10,17 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDENT_TYPE):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
-        self.playbook = self.json_data.get("playbookId")
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        self.playbook = self.json_data.get("playbookId") or ""
         self.hours = self.json_data.get("hours")
         self.days = self.json_data.get("days")
         self.weeks = self.json_data.get("weeks")
-        self.closure_script = self.json_data.get("closureScript") or None
+        self.closure_script = self.json_data.get("closureScript", "")
 
         self.connect_to_dependencies()
 
@@ -27,6 +30,8 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
         }
 
     def connect_to_dependencies(self) -> None:

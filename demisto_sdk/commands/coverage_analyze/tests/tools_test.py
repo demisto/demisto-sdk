@@ -3,6 +3,9 @@ from datetime import datetime
 
 import pytest
 
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
+)
 from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     JSON_MIN_DATA_FILE,
     TEST_DATA_DIR,
@@ -32,7 +35,10 @@ class TestGetTotalCoverage:
     def test_get_total_coverage_from_history_url(self, requests_mock):
         date = datetime.now()
         requests_mock.get(
-            HISTORY_URL.format(date=date.strftime("%Y-%m-%d")),
+            HISTORY_URL.format(
+                DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV=DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
+                date=date.strftime("%Y-%m-%d"),
+            ),
             json=read_file(JSON_MIN_DATA_FILE),
         )
         assert get_total_coverage(date=date) == 52.38326848249027

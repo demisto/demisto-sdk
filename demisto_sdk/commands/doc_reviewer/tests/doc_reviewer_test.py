@@ -2,7 +2,6 @@ import logging
 import os
 import re
 from enum import Enum
-from os import path
 from pathlib import Path
 from typing import List
 
@@ -66,7 +65,7 @@ class TestDocReviewFilesAreFound:
         doc_review = DocReviewer(file_paths=[valid_spelled_content_pack.path])
         doc_review.get_files_to_run_on(file_path=valid_spelled_content_pack.path)
         for file in doc_review.files:
-            assert path.exists(file)
+            assert Path(file).exists()
 
     def test_find_single_file(self, valid_spelled_content_pack):
         """
@@ -86,7 +85,7 @@ class TestDocReviewFilesAreFound:
             file_path=valid_spelled_content_pack.integrations[0].yml.path
         )
         for file in doc_review.files:
-            assert path.exists(file)
+            assert Path(file).exists()
 
     def test_find_files_from_git(self, mocker, valid_spelled_content_pack):
         """
@@ -487,7 +486,6 @@ class TestDocReviewXSOAROnly:
         assert result.exit_code == self.CommandResultCode.FAIL.value
 
 
-@pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")
 class TestDocReviewPrinting:
     """
     Test scenarios of doc-review printing.

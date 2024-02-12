@@ -1,5 +1,4 @@
 import base64
-import os
 from pathlib import Path
 from unittest.mock import mock_open
 
@@ -10,6 +9,7 @@ from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -43,7 +43,7 @@ def test_extract_long_description(tmpdir):
     extractor.extract_long_description(extractor.output)
     with open(extractor.output, "rb") as temp_description:
         assert temp_description.read().decode("utf-8") == "detaileddescription"
-    os.remove(extractor.output)
+    Path(extractor.output).unlink()
 
 
 def test_extract_modeling_rules(tmpdir):
@@ -65,7 +65,7 @@ def test_extract_modeling_rules(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert "[MODEL: dataset=okta_okta_raw, model=Audit]" in str(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_modeling_rules_schema(tmpdir):
@@ -93,7 +93,7 @@ def test_extract_modeling_rules_schema(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert schema == json.loads(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_parsing_rules(tmpdir):
@@ -115,7 +115,7 @@ def test_extract_parsing_rules(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert "[RULE:extract_hipmatch_only_fields]" in str(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_parsing_rules_sampels(tmpdir):
@@ -146,7 +146,7 @@ def test_extract_parsing_rules_sampels(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert sample == json.loads(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_to_package_format_modeling_rule(tmpdir):
@@ -304,7 +304,7 @@ def test_extract_code(tmpdir, file_path, file_type):
         assert "### pack version: 1.0.3" not in file_data
         assert "# pack version: 1.0.3" not in file_data
         assert "#### pack version: 1.0.3" not in file_data
-    os.remove(extractor.output)
+    Path(extractor.output).unlink()
 
     extractor.common_server = False
     extractor.demisto_mock = False
@@ -357,11 +357,10 @@ def test_extract_javascript_code(tmpdir, file_type):
 def test_extract_powershell_code(tmpdir, file_type):
     """
     Given
-    Case 1: a unified integration file of powershell format.
-    Case 2: a unified beta-integration file of powershell format.
+        Case 1: a unified integration file of powershell format.
+        Case 2: a unified beta-integration file of powershell format.
     When
     - Running the YmlSplitter extract_code function.
-
     Then
     - Ensure the "### pack version: ..." comment was removed successfully.
     """
@@ -391,7 +390,7 @@ def test_extract_code__with_apimodule(tmpdir, file_type):
         Case 1: A unified integration YML which ApiModule code is auto-generated there
         Case 2: A unified beta-integration YML which ApiModule code is auto-generated there
     When:
-        - run YmlSpltter on this code
+        - Run YmlSplitter on this code
     Then:
         - Ensure generated code is being deleted, and the import line exists
     """
@@ -451,6 +450,40 @@ def test_extract_code_pwsh(tmpdir, file_type):
         file_data = temp_code.read()
         assert ". $PSScriptRoot\\CommonServerPowerShell.ps1\n" in file_data
         assert file_data[-1] == "\n"
+
+
+def test_extraction_with_period_in_filename(pack):
+    """
+    Given: A unified YAML file with a filename containing a period (that might be identified as an extension)
+    When: Running YmlSplitter on this file
+    Then: Files are extracted with the appropriate filenames
+    """
+    integration = pack.create_integration(
+        name="Zoom-v1.0",
+        description="Test",
+        create_unified=True,
+    )
+
+    YmlSplitter(
+        input=integration.yml.path,
+        output=str(Path(pack.path) / "Integrations"),
+        base_name="Zoom-v1.0",
+        file_type="integration",
+    ).extract_to_package_format()
+
+    expected_integration_dir = Path(pack.path) / "Integrations" / "ZoomV10"
+    assert expected_integration_dir.exists()
+
+    extracted_files = [str(file.name) for file in expected_integration_dir.glob("*")]
+    assert len(extracted_files) == 5
+
+    assert {
+        "README.md",
+        "Zoom-v1.0_description.md",
+        "Zoom-v1.0_image.png",
+        "Zoom-v1.0.py",
+        "Zoom-v1.0.yml",
+    } == set(extracted_files)
 
 
 def test_get_output_path():
@@ -546,7 +579,7 @@ def test_update_api_module_contribution(mocker):
     import_name = "from MicrosoftApiModule import *  # noqa: E402"
     module_name = "MicrosoftApiModule"
     code = IntegrationScriptUnifier.insert_module_code(
-        DUMMY_SCRIPT, {import_name: module_name}
+        DUMMY_SCRIPT, {import_name: module_name}, Path()
     )
     yml_splitter = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml",
@@ -560,3 +593,31 @@ def test_update_api_module_contribution(mocker):
         f"import demistomock as demisto  # noqa: F401\n"
         f"{get_dummy_module()}"
     )
+
+
+def test_input_file_data_parameter(mocker, monkeypatch):
+    """
+    Given: A unified YML file
+    When: Using YmlSplitter on this file with the 'input_file_data' parameter, which allows passing pre-loaded data,
+        to avoid unnecessary loading from disk.
+    Then: Ensure that the data is used instead of loading from disk.
+    """
+    import demisto_sdk.commands.common.tools
+
+    input_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml")
+    file_data = get_yaml(file_path=input_path)
+
+    get_yaml_mock = mocker.spy(demisto_sdk.commands.common.tools, "get_yaml")
+    monkeypatch.setattr(
+        "demisto_sdk.commands.split.ymlsplitter.get_yaml", get_yaml_mock
+    )
+    extractor = YmlSplitter(
+        input=str(input_path), input_file_data=file_data, file_type="integration"
+    )
+    assert get_yaml_mock.call_count == 0
+
+    # Assure "get_yaml" is called when not using 'input_file_data', and that the loaded data is the same as the
+    # preloaded data.
+    extractor = YmlSplitter(input=str(input_path), file_type="integration")
+    assert get_yaml_mock.call_count == 1
+    assert extractor.yml_data == file_data

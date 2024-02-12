@@ -82,12 +82,10 @@ class DemistoClientMock:
     @staticmethod
     def _search_integration_instances(*_, **__):
         return (
-            str(
-                {
-                    "configurations": DemistoClientMock.CONFIGURATIONS,
-                    "instances": DemistoClientMock.INSTANCES,
-                }
-            ),
+            {
+                "configurations": DemistoClientMock.CONFIGURATIONS,
+                "instances": DemistoClientMock.INSTANCES,
+            },
             200,
             "",
         )
@@ -97,7 +95,7 @@ class DemistoClientMock:
         module_instance = kwargs.get("body")
         module_instance["id"] = module_instance["brand"]
         DemistoClientMock.INSTANCES.append(module_instance)
-        return str(module_instance), 200, ""
+        return module_instance, 200, ""
 
     @staticmethod
     def _delete_integration_instance(integration_id):
@@ -108,11 +106,11 @@ class DemistoClientMock:
 
     @staticmethod
     def _test_integration_instance(*_, **__):
-        return str({"success": True, "message": ""}), 200, ""
+        return {"success": True, "message": ""}, 200, ""
 
     @staticmethod
     def _get_investigation_playbook_state(*_, **__):
-        return str({"state": PB_Status.COMPLETED}), 200, ""
+        return {"state": PB_Status.COMPLETED}, 200, ""
 
     @staticmethod
     def _reset_containers(*_, **__):

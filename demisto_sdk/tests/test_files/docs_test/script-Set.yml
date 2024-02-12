@@ -1,7 +1,7 @@
 commonfields:
-  id: Set
+  id: SampleScript
   version: -1
-name: Set
+name: SampleScript
 script: >-
   var ec = {};
 

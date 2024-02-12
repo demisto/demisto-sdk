@@ -1,19 +1,22 @@
 import logging
 import os
 import shutil
+from pathlib import Path
 from typing import Optional
 from unittest.mock import patch
 
 import pytest
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.format import (
     update_dashboard,
     update_incidenttype,
     update_indicatortype,
 )
-from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.format.format_module import (
+    format_manager,
+    is_graph_related_files,
+)
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
@@ -96,7 +99,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 @pytest.fixture()
@@ -176,7 +179,7 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target)
+        res = format_manager(input=target, output=target, use_graph=False)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -201,7 +204,7 @@ class TestFormattingJson:
 
         monkeypatch.setattr("builtins.input", lambda _: "N")
 
-        res = format_manager(input=target, output=target)
+        res = format_manager(input=target, output=target, use_graph=False)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -434,33 +437,36 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     Then
         - Ensure the key is deleted from the connection file
     """
-    connection_file_path = f"{tmpdir}canvas-context-connections.json"
-    connection_file_content = {
-        "canvasContextConnections": [
-            {
-                "contextKey1": "MD5",
-                "contextKey2": "SHA256",
-                "connectionDescription": "Belongs to the same file",
-                "parentContextKey": "File",
-                "not_needed key": "not needed value",
-            }
-        ],
-        "fromVersion": "5.0.0",
-    }
-    with open(connection_file_path, "w") as file:
-        json.dump(connection_file_content, file)
-    connection_formatter = ConnectionJSONFormat(
-        input=connection_file_path,
-        output=connection_file_path,
-        path=CONNECTION_SCHEMA_PATH,
-    )
-    connection_formatter.assume_answer = True
-    monkeypatch.setattr("builtins.input", lambda _: "N")
-    connection_formatter.format_file()
-    with open(connection_file_path) as file:
-        formatted_connection = json.load(file)
-    for connection in formatted_connection["canvasContextConnections"]:
-        assert "not_needed key" not in connection
+    with ChangeCWD(tmpdir):
+        connection_file_path = f"{tmpdir}canvas-context-connections.json"
+        connection_file_content = {
+            "canvasContextConnections": [
+                {
+                    "contextKey1": "MD5",
+                    "contextKey2": "SHA256",
+                    "connectionDescription": "Belongs to the same file",
+                    "parentContextKey": "File",
+                    "not_needed key": "not needed value",
+                }
+            ],
+            "fromVersion": "5.0.0",
+        }
+
+        with open(connection_file_path, "w") as file:
+            json.dump(connection_file_content, file)
+        connection_formatter = ConnectionJSONFormat(
+            input=connection_file_path,
+            output=connection_file_path,
+            path=CONNECTION_SCHEMA_PATH,
+        )
+        connection_formatter.assume_answer = True
+        monkeypatch.setattr("builtins.input", lambda _: "N")
+
+        connection_formatter.format_file()
+        with open(connection_file_path) as file:
+            formatted_connection = json.load(file)
+        for connection in formatted_connection["canvasContextConnections"]:
+            assert "not_needed key" not in connection
 
 
 def test_update_connection_updates_from_version(tmpdir):
@@ -472,30 +478,32 @@ def test_update_connection_updates_from_version(tmpdir):
     Then
         - Ensure fromVersion is updated accordingly
     """
-    connection_file_path = f"{tmpdir}canvas-context-connections.json"
-    connection_file_content = {
-        "canvasContextConnections": [
-            {
-                "contextKey1": "MD5",
-                "contextKey2": "SHA256",
-                "connectionDescription": "Belongs to the same file",
-                "parentContextKey": "File",
-            }
-        ],
-        "fromVersion": "5.0.0",
-    }
-    with open(connection_file_path, "w") as file:
-        json.dump(connection_file_content, file)
-    connection_formatter = ConnectionJSONFormat(
-        input=connection_file_path,
-        output=connection_file_path,
-        from_version="6.0.0",
-        path=CONNECTION_SCHEMA_PATH,
-    )
-    connection_formatter.format_file()
-    with open(connection_file_path) as file:
-        formatted_connection = json.load(file)
-    assert formatted_connection["fromVersion"] == "6.0.0"
+    with ChangeCWD(tmpdir):
+        connection_file_path = f"{tmpdir}canvas-context-connections.json"
+        connection_file_content = {
+            "canvasContextConnections": [
+                {
+                    "contextKey1": "MD5",
+                    "contextKey2": "SHA256",
+                    "connectionDescription": "Belongs to the same file",
+                    "parentContextKey": "File",
+                }
+            ],
+            "fromVersion": "5.0.0",
+        }
+        with open(connection_file_path, "w") as file:
+            json.dump(connection_file_content, file)
+        connection_formatter = ConnectionJSONFormat(
+            input=connection_file_path,
+            output=connection_file_path,
+            from_version="6.0.0",
+            path=CONNECTION_SCHEMA_PATH,
+        )
+
+        connection_formatter.format_file()
+        with open(connection_file_path) as file:
+            formatted_connection = json.load(file)
+        assert formatted_connection["fromVersion"] == "6.0.0"
 
 
 def test_update_id_indicatortype_positive(mocker, tmpdir):
@@ -630,50 +638,6 @@ def test_remove_spaces_end_of_id_and_name(pack, name):
     assert base_update_json.data["name"] == "MyDashboard"
 
 
-@pytest.mark.parametrize(
-    argnames="marketplaces",
-    argvalues=[
-        [MarketplaceVersions.MarketplaceV2.value],
-        [MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value],
-    ],
-)
-def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack, marketplaces):
-    """
-    Given
-        - An incident filed with aliases
-    When
-        - Run format command
-    Then
-        - Ensure that the marketplaces value in the aliased filed contain only the `xsoar` marketplace
-    """
-    mocked_field = {"marketplaces": marketplaces}
-
-    def mock_field_generator():
-        yield mocked_field, ""
-
-    mocker.patch.object(IncidentFieldJSONFormat, "_save_alias_field_file")
-    mocker.patch.object(
-        IncidentFieldJSONFormat,
-        "_get_incident_fields_by_aliases",
-        return_value=mock_field_generator(),
-    )
-
-    tested_filed = pack.create_incident_field(
-        name="tested_filed", content={"Aliases": [{"cliName": "aliased_field"}]}
-    )
-
-    incident_field_formatter = IncidentFieldJSONFormat(
-        input=tested_filed.path, id_set_path="mocked_path"
-    )
-    incident_field_formatter.format_marketplaces_field_of_aliases()
-    updated_marketplaces = incident_field_formatter._save_alias_field_file.call_args[1][
-        "field_data"
-    ]["marketplaces"]
-
-    assert len(updated_marketplaces) == 1
-    assert updated_marketplaces[0] == "xsoar"
-
-
 class TestFormattingLayoutscontainer:
     @pytest.fixture()
     def layoutscontainer_copy(self):
@@ -681,8 +645,7 @@ class TestFormattingLayoutscontainer:
         yield shutil.copyfile(
             SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY
         )
-        if os.path.exists(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY):
-            os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
+        Path(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY).unlink(missing_ok=True)
         shutil.rmtree(LAYOUTS_CONTAINER_PATH, ignore_errors=True)
 
     @pytest.fixture()
@@ -694,59 +657,6 @@ class TestFormattingLayoutscontainer:
             path=LAYOUTS_CONTAINER_SCHEMA_PATH,
         )
         yield layoutscontainer_formatter
-
-    @pytest.mark.parametrize(
-        "layout_key_field_1, layout_key_field_2",
-        [("detailsV2", "details"), ("close", "quickView")],
-    )
-    def test_remove_non_existent_fields(
-        self, layout_key_field_1, layout_key_field_2, pack, id_set_file_mock
-    ):
-        """
-        Given
-            - a layout container json file content
-
-        When
-            - removing in-existent fields from the container-layout.
-
-        Then
-            - Ensure incident fields which are not in the id set file are removed from the container-layout.
-        """
-        container_layout_content = {}
-        for layout_key in (layout_key_field_1, layout_key_field_2):
-            container_layout_content[layout_key] = {
-                "tabs": [
-                    {
-                        "sections": [
-                            {
-                                "items": [
-                                    {"fieldId": "incident-field-1"},
-                                    {"fieldId": "incident-field-3"},
-                                    {"fieldId": "incident-field-2"},
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-
-        formatter = LayoutBaseFormat(
-            input=pack.create_layoutcontainer(
-                name="layoutscontainer-in-existent-fields-test",
-                content=container_layout_content,
-            ).path,
-            id_set_path=id_set_file_mock.path,
-        )
-
-        # remove the original container layout
-        for layout_key in (layout_key_field_1, layout_key_field_2):
-            container_layout_content[layout_key]["tabs"][0]["sections"][0]["items"] = [
-                {"fieldId": "incident-field-1"},
-                {"fieldId": "incident-field-2"},
-            ]
-
-        formatter.remove_non_existent_fields_container_layout()
-        assert formatter.data == container_layout_content
 
     @patch("builtins.input", lambda *args: "incident")
     def test_set_group_field(self, layoutscontainer_formatter):
@@ -949,7 +859,7 @@ class TestFormattingLayoutscontainer:
         assert expected_path == layoutscontainer_formatter.output_file
 
         # since we are renaming the file, we need to clean it here
-        os.remove(layoutscontainer_formatter.output_file)
+        Path(layoutscontainer_formatter.output_file).unlink()
 
 
 class TestFormattingLayout:
@@ -957,7 +867,7 @@ class TestFormattingLayout:
     def layouts_copy(self):
         os.makedirs(LAYOUT_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY)
-        os.remove(DESTINATION_FORMAT_LAYOUT_COPY)
+        Path(DESTINATION_FORMAT_LAYOUT_COPY).unlink()
         os.rmdir(LAYOUT_PATH)
 
     @pytest.fixture()
@@ -989,46 +899,6 @@ class TestFormattingLayout:
         layouts_formatter.remove_unnecessary_keys()
         for field in ["fromServerVersion", "quickView", "sortValues", "locked"]:
             assert field not in layouts_formatter.data
-
-    def test_remove_non_existent_fields(self, pack, id_set_file_mock):
-        """
-        Given
-            - a layout json file content.
-
-        When
-            - removing in-existent fields from the layout.
-
-        Then
-            - Ensure incident fields which are not in the id set file are removed from the layout.
-        """
-        layout_content = {
-            "layout": {
-                "sections": [
-                    {
-                        "fields": [
-                            {"fieldId": "incident-field-4"},
-                            {"fieldId": "incident-field-2"},
-                            {"fieldId": "incident-field-5"},
-                        ]
-                    }
-                ]
-            }
-        }
-
-        formatter = LayoutBaseFormat(
-            input=pack.create_layout(
-                name="layout-non-existent-fields-test", content=layout_content
-            ).path,
-            id_set_path=id_set_file_mock.path,
-        )
-
-        # remove the original container layout
-        layout_content["layout"]["sections"][0]["fields"] = [
-            {"fieldId": "incident-field-2"}
-        ]
-
-        formatter.remove_non_existent_fields_layout()
-        assert formatter.data == layout_content
 
     def test_set_description(self, layouts_formatter):
         """
@@ -1108,7 +978,7 @@ class TestFormattingPreProcessRule:
             SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
             DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
         )
-        os.remove(DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
+        Path(DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY).unlink()
         os.rmdir(PRE_PROCESS_RULES_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1159,7 +1029,7 @@ class TestFormattingList:
     def lists_copy(self):
         os.makedirs(LISTS_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LISTS_COPY, DESTINATION_FORMAT_LISTS_COPY)
-        os.remove(DESTINATION_FORMAT_LISTS_COPY)
+        Path(DESTINATION_FORMAT_LISTS_COPY).unlink()
         os.rmdir(LISTS_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1202,7 +1072,7 @@ class TestFormattingClassifier:
     def classifier_copy(self):
         os.makedirs(CLASSIFIER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER)
-        os.remove(DESTINATION_FORMAT_CLASSIFIER)
+        Path(DESTINATION_FORMAT_CLASSIFIER).unlink()
         os.rmdir(CLASSIFIER_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1314,7 +1184,7 @@ class TestFormattingOldClassifier:
         yield shutil.copyfile(
             SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9
         )
-        os.remove(DESTINATION_FORMAT_CLASSIFIER_5_9_9)
+        Path(DESTINATION_FORMAT_CLASSIFIER_5_9_9).unlink()
         os.rmdir(CLASSIFIER_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1441,7 +1311,7 @@ class TestFormattingMapper:
     def mapper_copy(self):
         os.makedirs(MAPPER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_MAPPER, DESTINATION_FORMAT_MAPPER)
-        os.remove(DESTINATION_FORMAT_MAPPER)
+        Path(DESTINATION_FORMAT_MAPPER).unlink()
         os.rmdir(MAPPER_PATH)
 
     @pytest.fixture()
@@ -1449,45 +1319,6 @@ class TestFormattingMapper:
         yield MapperJSONFormat(
             input=mapper_copy, output=DESTINATION_FORMAT_MAPPER, path=MAPPER_SCHEMA_PATH
         )
-
-    @pytest.mark.parametrize("mapper_type", ["mapping-outgoing", "mapping-incoming"])
-    def test_remove_non_existent_fields(self, mapper_type, id_set_file_mock, pack):
-        """
-        Given
-            - outgoing json file content.
-            - incoming json file content.
-
-        When
-            - removing in-existent fields from the mapper.
-
-        Then
-            - Ensure incident fields which are not in the id set file are removed from the mapper.
-        """
-        mapper_content = {"mapping": {}, "type": mapper_type}
-        for i in range(1, 3):
-            mapper_content["mapping"][f"test-case-{i}"] = {
-                "internalMapping": {
-                    "Incident-Field-1": {"simple": "incident-field-1"},
-                    "Incident-Field-2": {"simple": "incident-field-2.dueDate"},
-                    f"not-existing-field-{i}": {"simple": "incident-field-3"},
-                }
-            }
-
-        formatter = MapperJSONFormat(
-            input=pack.create_classifier(
-                name=f"{mapper_type}-non-existent-fields-test", content=mapper_content
-            ).path,
-            id_set_path=id_set_file_mock.path,
-        )
-
-        formatter.remove_non_existent_fields()
-
-        for i in range(1, 3):
-            mapper_content["mapping"][f"test-case-{i}"]["internalMapping"].pop(
-                f"not-existing-field-{i}"
-            )
-
-        assert formatter.data == mapper_content
 
     def test_remove_unnecessary_keys(self, mapper_formatter):
         """
@@ -1538,7 +1369,7 @@ class TestFormattingWidget:
     def widget_copy(self):
         os.makedirs(WIDGET_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_WIDGET, DESTINATION_FORMAT_WIDGET)
-        os.remove(DESTINATION_FORMAT_WIDGET)
+        Path(DESTINATION_FORMAT_WIDGET).unlink()
         os.rmdir(WIDGET_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1610,7 +1441,7 @@ class TestFormattingReport:
     def report_copy(self):
         os.makedirs(REPORT_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_REPORT, DESTINATION_FORMAT_REPORT)
-        os.remove(DESTINATION_FORMAT_REPORT)
+        Path.unlink(Path(DESTINATION_FORMAT_REPORT))
         os.rmdir(REPORT_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1906,3 +1737,95 @@ def test_not_updating_modified_id_in_old_json_file(repo):
     json_object.data["id"] = "new_name"
     json_object.update_id()
     assert json_object.data["id"] == "old_name"
+
+
+def test_is_graph_related_files(repo):
+    """
+    Given
+    - Case A: A layout.
+    - Case B: An incident field.
+    - Case C: A mapper.
+    - Case D: A README.
+
+    When
+    - Running is_graph_related_files in order to understand if it is needed to start the graph in Format or not.
+
+    Then
+    - Case A: Assert True - the graph should be started for Layouts.
+    - Case B: Assert True - the graph should be started for Incident Fields.
+    - Case C: Assert True - the graph should be started for Mappers.
+    - Case D: Assert False - the graph should be started for a README.
+    """
+    pack = repo.create_pack("PackName")
+    layout = pack.create_layoutcontainer(
+        name="layout",
+        content={
+            "detailsV2": {
+                "tabs": [
+                    {
+                        "id": "caseinfoid",
+                        "name": "Incident Info",
+                        "sections": [
+                            {
+                                "displayType": "ROW",
+                                "h": 2,
+                                "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
+                                "isVisible": True,
+                                "items": [
+                                    {
+                                        "endCol": 2,
+                                        "fieldId": "incident_field",
+                                        "height": 22,
+                                        "id": "id1",
+                                        "index": 0,
+                                        "sectionItemType": "field",
+                                        "startCol": 0,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ]
+            },
+            "group": "incident",
+            "id": "Layout",
+            "name": "Layout",
+            "system": False,
+            "version": -1,
+            "fromVersion": "6.9.0",
+            "description": "",
+            "marketplaces": ["xsoar"],
+        },
+    )
+    incident_field = pack.create_incident_field(
+        name="incident_field",
+        content={
+            "cliName": "incidentfield",
+            "id": "incident_incidentfield",
+            "name": "Incident Field",
+            "marketplaces": ["xsoar"],
+        },
+    )
+    mapper = pack.create_mapper(
+        name="mapper",
+        content={
+            "description": "",
+            "feed": False,
+            "id": "Mapper - Incoming Mapper",
+            "mapping": {
+                "Mapper Finding": {
+                    "dontMapEventToLabels": True,
+                    "internalMapping": {"incident_field_name": {"simple": "Item"}},
+                },
+            },
+            "name": "Mapper - Incoming Mapper",
+            "type": "mapping-incoming",
+            "version": -1,
+            "fromVersion": "6.5.0",
+        },
+    )
+    readme = pack.create_doc_file(name="README")
+    assert is_graph_related_files([layout.path], True)
+    assert is_graph_related_files([incident_field.path], True)
+    assert is_graph_related_files([mapper.path], True)
+    assert not is_graph_related_files([readme.path], True)

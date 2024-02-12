@@ -4,7 +4,6 @@ from typing import Dict
 import pytest
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PACK_METADATA_NAME,
@@ -57,7 +56,7 @@ class TestPackMetadataValidator:
     )
     def test_metadata_validator_valid(self, mocker, metadata):
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
             return_value=["Data Enrichment & Threat Intelligence"],
         )
         mocker.patch.object(
@@ -176,24 +175,6 @@ class TestPackMetadataValidator:
         validator = PackUniqueFilesValidator("fake")
         mocker.patch.object(validator, "_add_error", return_value=True)
         assert validator.validate_pack_name(metadata_content) == expected
-
-    def test_name_does_not_contain_excluded_word(self):
-        """
-        Given:
-        - Pack name.
-
-        When:
-        - Validating pack name does not contain excluded word.
-
-        Then:
-        - Ensure expected result is returned.
-        """
-        pack_name: str = "Bitcoin Abuse"
-        validator = PackUniqueFilesValidator("fake")
-        assert validator.name_does_not_contain_excluded_word(pack_name)
-        for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS:
-            invalid_pack_name: str = f"{pack_name} ({excluded_word})"
-            assert not validator.name_does_not_contain_excluded_word(invalid_pack_name)
 
     @staticmethod
     def read_file(file_):
@@ -468,7 +449,7 @@ class TestPackMetadataValidator:
             - case 5: Should return False.
         """
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
             return_value=valid_list_mock,
         )
         validator = PackUniqueFilesValidator("test")

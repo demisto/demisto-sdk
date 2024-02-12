@@ -1047,46 +1047,6 @@ def test_dependencies(mocker, repo, test_number):
     assert dependencies == dependencies_from_pack_metadata
 
 
-@pytest.mark.parametrize("entity_class", CLASSES)
-def test_specific_entity(mocker, repo, entity_class):
-    """This test will run for each entity in the repo, when each time it will randomly generate dependencies
-    in the repo and verify that the expected dependencies has been updated in the pack metadata correctly.
-
-    Given
-    - Content repository and content entity
-    When
-    - Running find_dependencies
-    Then
-    - Update packs dependencies in pack metadata
-    """
-    mock_is_external_repo(mocker, False)
-    # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
-    mocker.patch.dict(os.environ, {"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL": "-1"})
-    assert os.getenv("DEMISTO_SDK_ID_SET_REFRESH_INTERVAL") == "-1"
-    number_of_packs = 20
-    repo.setup_content_repo(number_of_packs)
-    repo.setup_one_pack("CommonTypes")
-
-    methods_pool: list = [
-        (method_name, entity_class)
-        for method_name in list(entity_class.__dict__.keys())
-        if "_" != method_name[0]
-    ]
-
-    dependencies = run_defined_methods(repo, 0, methods_pool, len(methods_pool) // 2)
-
-    run_find_dependencies(mocker, repo.path, "pack_0")
-
-    dependencies_from_pack_metadata = (
-        repo.packs[0].pack_metadata.read_json_as_dict().get("dependencies").keys()
-    )
-
-    if "pack_0" in dependencies:
-        dependencies.remove("pack_0")
-
-    assert set(dependencies) == set(dependencies_from_pack_metadata)
-
-
 def mock_is_external_repo(mocker, is_external_repo_return):
     return mocker.patch(
         "demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository",

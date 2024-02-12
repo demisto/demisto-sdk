@@ -1,19 +1,31 @@
 # Site packages
+import platform
+import sys
+
+import click
+
+from demisto_sdk.commands.validate.config_reader import ConfigReader
+from demisto_sdk.commands.validate.initializer import Initializer
+from demisto_sdk.commands.validate.validation_results import ResultWriter
+
+try:
+    import git
+except ImportError:
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
+
 import copy
 import functools
 import logging
 import os
-import sys
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple, Union
+from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
-import click
-import git
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
@@ -25,7 +37,11 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -34,13 +50,17 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.commands.create import create
+from demisto_sdk.commands.content_graph.commands.get_relationships import (
+    get_relationships,
 )
+from demisto_sdk.commands.content_graph.commands.update import update
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
+from demisto_sdk.commands.setup_env.setup_environment import IDEType
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import (
     init_test_data,
@@ -53,8 +73,6 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "[red]An internet connection is required for this command. If connected to the "
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 # Third party packages
@@ -133,25 +151,22 @@ def logging_setup_decorator(func, *args, **kwargs):
         return None
 
     @click.option(
-        "--console_log_threshold",
+        "--console-log-threshold",
         help="Minimum logging threshold for the console logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
-        "--file_log_threshold",
+        "--file-log-threshold",
         help="Minimum logging threshold for the file logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
-    @click.option(
-        "--log_file_path",
-        help="Path to the log file. Default: Content root path.",
-    )
+    @click.option("--log-file-path", help="Path to save log files onto.")
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
             console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
             file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log_file_path") or None,
+            log_file_path=kwargs.get("log_file_path"),
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -189,20 +204,20 @@ def main(ctx, config, version, release_notes, **kwargs):
         console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
         file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
         log_file_path=kwargs.get("log_file_path"),
+        skip_log_file_creation=True,  # Log file creation is handled in the logger setup of the sub-command
     )
-    global logger
-    logger = logging.getLogger("demisto-sdk")
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
     import dotenv
 
-    if sys.version_info[:2] == (3, 8):
-        logger.info(
-            "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
+    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
+
+    if platform.system() == "Windows":
+        logger.warning(
+            "Using Demisto-SDK on Windows is not supported. Use WSL2 or run in a container."
         )
 
-    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
     ) and not is_sdk_defined_working_offline():  # If the key exists/called to version
@@ -211,7 +226,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         except DistributionNotFound:
             __version__ = "dev"
             logger.info(
-                "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
+                "[yellow]Could not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
             last_release = ""
@@ -221,9 +236,9 @@ def main(ctx, config, version, release_notes, **kwargs):
                 last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
-                logger.info(
-                    f"[yellow]however version {last_release} is available.\n"
-                    f"To update, run pip3 install --upgrade demisto-sdk[/yellow]"
+                logger.warning(
+                    f"A newer version ({last_release}) is available. "
+                    f"To update, run 'pip3 install --upgrade demisto-sdk'"
                 )
             if release_notes:
                 rn_entries = get_release_note_entries(__version__)
@@ -297,9 +312,11 @@ def split(ctx, config, **kwargs):
         FileType.GENERIC_MODULE,
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
+        FileType.LISTS,
+        FileType.ASSETS_MODELING_RULE,
     ]:
         logger.info(
-            "[red]File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.[/red]"
+            "[red]File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.[/red]"
         )
         return 1
 
@@ -308,6 +325,7 @@ def split(ctx, config, **kwargs):
         FileType.SCRIPT,
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
+        FileType.ASSETS_MODELING_RULE,
     ]:
         yml_splitter = YmlSplitter(
             configuration=config.configuration, file_type=file_type.value, **kwargs
@@ -320,6 +338,7 @@ def split(ctx, config, **kwargs):
             output=kwargs.get("output"),  # type: ignore[arg-type]
             no_auto_create_dir=kwargs.get("no_auto_create_dir"),  # type: ignore[arg-type]
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
+            file_type=file_type,
         )
         return json_splitter.split_json()
 
@@ -368,9 +387,15 @@ def extract_code(ctx, config, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The directory path to the files or path to the file to unify",
-    required=True,
-    type=click.Path(dir_okay=True),
+    help="Comma-separated list of paths to directories or files to unify.",
+    required=False,
+    type=PathsParamType(dir_okay=True, exists=True),
+)
+@click.option(
+    "-a",
+    "--all",
+    is_flag=True,
+    help="Run prepare-content on all content packs. If no output path is given, will dump the result in the current working path.",
 )
 @click.option(
     "-g",
@@ -415,7 +440,7 @@ def extract_code(ctx, config, **kwargs):
     help="The marketplace the content items are created for, that determines usage of marketplace "
     "unique text. Default is the XSOAR marketplace.",
     default="xsoar",
-    type=click.Choice(["xsoar", "marketplacev2", "v2"]),
+    type=click.Choice([mp.value for mp in list(MarketplaceVersions)] + ["v2"]),
 )
 @click.pass_context
 @logging_setup_decorator
@@ -423,29 +448,62 @@ def prepare_content(ctx, **kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
-    if click.get_current_context().info_name == "unify":
-        kwargs["unify_only"] = True
+    assert (
+        sum([bool(kwargs["all"]), bool(kwargs["input"])]) == 1
+    ), "Exactly one of the '-a' or '-i' parameters must be provided."
 
-    check_configuration_file("unify", kwargs)
-    # Input is of type Path.
-    kwargs["input"] = str(kwargs["input"])
-    file_type = find_type(kwargs["input"])
-    if marketplace := kwargs.get("marketplace"):
-        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
-    if file_type == FileType.GENERIC_MODULE:
-        from demisto_sdk.commands.prepare_content.generic_module_unifier import (
-            GenericModuleUnifier,
+    if kwargs["all"]:
+        content_DTO = ContentDTO.from_path()
+        output_path = kwargs.get("output", ".") or "."
+        content_DTO.dump(
+            dir=Path(output_path, "prepare-content-tmp"),
+            marketplace=parse_marketplace_kwargs(kwargs),
         )
+        return 0
 
-        # pass arguments to GenericModule unifier and call the command
-        generic_module_unifier = GenericModuleUnifier(**kwargs)
-        generic_module_unifier.merge_generic_module_with_its_dashboards()
-    else:
-        PrepareUploadManager.prepare_for_upload(**kwargs)
+    inputs = []
+    if input_ := kwargs["input"]:
+        inputs = input_.split(",")
+
+    if output_path := kwargs["output"]:
+        if "." in Path(output_path).name:  # check if the output path is a file
+            if len(inputs) > 1:
+                raise ValueError(
+                    "When passing multiple inputs, the output path should be a directory and not a file."
+                )
+        else:
+            dest_path = Path(output_path)
+            dest_path.mkdir(exist_ok=True)
+
+    for input_content in inputs:
+        if output_path and len(inputs) > 1:
+            path_name = Path(input_content).name
+            kwargs["output"] = str(Path(output_path, path_name))
+
+        if click.get_current_context().info_name == "unify":
+            kwargs["unify_only"] = True
+
+        check_configuration_file("unify", kwargs)
+        # Input is of type Path.
+        kwargs["input"] = str(input_content)
+        file_type = find_type(kwargs["input"])
+        if marketplace := kwargs.get("marketplace"):
+            os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
+        if file_type == FileType.GENERIC_MODULE:
+            from demisto_sdk.commands.prepare_content.generic_module_unifier import (
+                GenericModuleUnifier,
+            )
+
+            # pass arguments to GenericModule unifier and call the command
+            generic_module_unifier = GenericModuleUnifier(**kwargs)
+            generic_module_unifier.merge_generic_module_with_its_dashboards()
+        else:
+            PrepareUploadManager.prepare_for_upload(**kwargs)
     return 0
 
 
 main.add_command(prepare_content, name="unify")
+
 
 # ====================== zip-packs ====================== #
 
@@ -531,7 +589,7 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Skip conf.json validation.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip conf.json validation.",
 )
 @click.option(
     "-s",
@@ -539,12 +597,12 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Perform validations using the id_set file.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Perform validations using the id_set file.",
 )
 @click.option(
     "-idp",
     "--id-set-path",
-    help="The path of the id-set.json used for validations.",
+    help="Relevant only for the old validate flow and will be removed in a future release. The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True),
 )
 @click.option(
@@ -553,7 +611,7 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     default=False,
     show_default=True,
-    help="Perform validations on content graph.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Perform validations on content graph.",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
@@ -562,7 +620,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "--no-backward-comp",
     is_flag=True,
     show_default=True,
-    help="Whether to check backward compatibility or not.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to check backward compatibility or not.",
 )
 @click.option(
     "-g",
@@ -594,7 +652,7 @@ def zip_packs(ctx, **kwargs) -> int:
     "-iu",
     "--include-untracked",
     is_flag=True,
-    help="Whether to include untracked files in the validation. "
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to include untracked files in the validation. "
     "This applies only when the -g flag is supplied.",
 )
 @click.option(
@@ -616,31 +674,37 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "--skip-pack-release-notes",
     is_flag=True,
-    help="Skip validation of pack release notes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack release notes.",
 )
 @click.option(
-    "--print-ignored-errors", is_flag=True, help="Print ignored errors as warnings."
+    "--print-ignored-errors",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Print ignored errors as warnings.",
 )
 @click.option(
     "--print-ignored-files",
     is_flag=True,
-    help="Print which files were ignored by the command.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Print which files were ignored by the command.",
 )
 @click.option(
-    "--no-docker-checks", is_flag=True, help="Whether to run docker image validation."
+    "--no-docker-checks",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to run docker image validation.",
 )
 @click.option(
     "--silence-init-prints",
     is_flag=True,
-    help="Whether to skip the initialization prints.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to skip the initialization prints.",
 )
 @click.option(
     "--skip-pack-dependencies",
     is_flag=True,
-    help="Skip validation of pack dependencies.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Skip validation of pack dependencies.",
 )
 @click.option(
-    "--create-id-set", is_flag=True, help="Whether to create the id_set.json file."
+    "--create-id-set",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to create the id_set.json file.",
 )
 @click.option(
     "-j",
@@ -648,35 +712,79 @@ def zip_packs(ctx, **kwargs) -> int:
     help="The JSON file path to which to output the command results.",
 )
 @click.option(
-    "--skip-schema-check", is_flag=True, help="Whether to skip the file schema check."
+    "--skip-schema-check",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to skip the file schema check.",
 )
 @click.option(
-    "--debug-git", is_flag=True, help="Whether to print debug logs for git statuses."
+    "--debug-git",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to print debug logs for git statuses.",
 )
 @click.option(
-    "--print-pykwalify", is_flag=True, help="Whether to print the pykwalify log errors."
+    "--print-pykwalify",
+    is_flag=True,
+    help="Relevant only for the old validate flow and will be removed in a future release. Whether to print the pykwalify log errors.",
 )
 @click.option(
     "--quiet-bc-validation",
-    help="Set backwards compatibility validation's errors as warnings.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Set backwards compatibility validation's errors as warnings.",
     is_flag=True,
 )
 @click.option(
     "--allow-skipped",
-    help="Don't fail on skipped integrations or when all test playbooks are skipped.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True,
 )
 @click.option(
     "--no-multiprocessing",
-    help="run validate all without multiprocessing, for debugging purposes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. run validate all without multiprocessing, for debugging purposes.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "-sv",
     "--run-specific-validations",
-    help="Run specific validations by stating the error codes.",
+    help="Relevant only for the old validate flow and will be removed in a future release. Run specific validations by stating the error codes.",
     is_flag=False,
+)
+@click.option(
+    "--category-to-run",
+    help="Run specific validations by stating category they're listed under in the config file.",
+    is_flag=False,
+)
+@click.option(
+    "-f",
+    "--fix",
+    help="Wether to autofix failing validations with an available auto fix or not.",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--config-path",
+    help="Path for a config file to run, if not given - will run the default config at https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/default_config.toml",
+    is_flag=False,
+)
+@click.option(
+    "--ignore-support-level",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to skip validations based on their support level or not.",
+)
+@click.option(
+    "--skip-old-validate",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to skip the old validate flow.",
+)
+@click.option(
+    "--run-new-validate",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Wether to run the new validate flow.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
@@ -684,6 +792,7 @@ def zip_packs(ctx, **kwargs) -> int:
 @logging_setup_decorator
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
+    from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
     if is_sdk_defined_working_offline():
@@ -710,36 +819,65 @@ def validate(ctx, config, file_paths: str, **kwargs):
         if not kwargs.get("validate_all") and not kwargs["use_git"] and not file_path:
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
-        validator = ValidateManager(
-            is_backward_check=not kwargs["no_backward_comp"],
-            only_committed_files=kwargs["post_commit"],
-            prev_ver=kwargs["prev_ver"],
-            skip_conf_json=kwargs["no_conf_json"],
-            use_git=kwargs["use_git"],
-            file_path=file_path,
-            validate_all=kwargs.get("validate_all"),
-            validate_id_set=kwargs["id_set"],
-            validate_graph=kwargs.get("graph"),
-            skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
-            print_ignored_errors=kwargs["print_ignored_errors"],
-            is_external_repo=is_external_repo,
-            print_ignored_files=kwargs["print_ignored_files"],
-            no_docker_checks=kwargs["no_docker_checks"],
-            silence_init_prints=kwargs["silence_init_prints"],
-            skip_dependencies=kwargs["skip_pack_dependencies"],
-            id_set_path=kwargs.get("id_set_path"),
-            staged=kwargs["staged"],
-            create_id_set=kwargs.get("create_id_set"),
-            json_file_path=kwargs.get("json_file"),
-            skip_schema_check=kwargs.get("skip_schema_check"),
-            debug_git=kwargs.get("debug_git"),
-            include_untracked=kwargs.get("include_untracked"),
-            quiet_bc=kwargs.get("quiet_bc_validation"),
-            multiprocessing=run_with_mp,
-            check_is_unskipped=not kwargs.get("allow_skipped", False),
-            specific_validations=kwargs.get("run_specific_validations"),
-        )
-        return validator.run_validation()
+        exit_code = 0
+        if not kwargs["skip_old_validate"]:
+            validator = OldValidateManager(
+                is_backward_check=not kwargs["no_backward_comp"],
+                only_committed_files=kwargs["post_commit"],
+                prev_ver=kwargs["prev_ver"],
+                skip_conf_json=kwargs["no_conf_json"],
+                use_git=kwargs["use_git"],
+                file_path=file_path,
+                validate_all=kwargs.get("validate_all"),
+                validate_id_set=kwargs["id_set"],
+                validate_graph=kwargs.get("graph"),
+                skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
+                print_ignored_errors=kwargs["print_ignored_errors"],
+                is_external_repo=is_external_repo,
+                print_ignored_files=kwargs["print_ignored_files"],
+                no_docker_checks=kwargs["no_docker_checks"],
+                silence_init_prints=kwargs["silence_init_prints"],
+                skip_dependencies=kwargs["skip_pack_dependencies"],
+                id_set_path=kwargs.get("id_set_path"),
+                staged=kwargs["staged"],
+                create_id_set=kwargs.get("create_id_set"),
+                json_file_path=kwargs.get("json_file"),
+                skip_schema_check=kwargs.get("skip_schema_check"),
+                debug_git=kwargs.get("debug_git"),
+                include_untracked=kwargs.get("include_untracked"),
+                quiet_bc=kwargs.get("quiet_bc_validation"),
+                multiprocessing=run_with_mp,
+                check_is_unskipped=not kwargs.get("allow_skipped", False),
+                specific_validations=kwargs.get("run_specific_validations"),
+            )
+            exit_code += validator.run_validation()
+        if kwargs["run_new_validate"]:
+            validation_results = ResultWriter(
+                json_file_path=kwargs.get("json_file"),
+            )
+            config_reader = ConfigReader(
+                config_file_path=kwargs.get("config_path"),
+                category_to_run=kwargs.get("category_to_run"),
+            )
+            initializer = Initializer(
+                use_git=kwargs["use_git"],
+                staged=kwargs["staged"],
+                committed_only=kwargs["post_commit"],
+                prev_ver=kwargs["prev_ver"],
+                file_path=file_path,
+                all_files=kwargs.get("validate_all"),
+            )
+            validator_v2 = ValidateManager(
+                file_path=file_path,
+                validate_all=kwargs.get("validate_all"),
+                initializer=initializer,
+                validation_results=validation_results,
+                config_reader=config_reader,
+                allow_autofix=kwargs.get("fix"),
+                ignore_support_level=kwargs.get("ignore_support_level"),
+            )
+            exit_code += validator_v2.run_validations()
+        return exit_code
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.info(f"[red]{e}[/red]")
         logger.info(
@@ -971,7 +1109,7 @@ def secrets(ctx, config, file_paths: str, **kwargs):
 @click.option(
     "--prev-ver",
     help="Previous branch or SHA1 commit to run checks against",
-    default="master",
+    default=os.getenv("DEMISTO_DEFAULT_BRANCH", default="master"),
 )
 @click.option(
     "--test-xml",
@@ -1128,16 +1266,12 @@ def lint(ctx, **kwargs):
 @click.option(
     "--previous-coverage-report-url",
     help="URL of the previous coverage report.",
-    default="https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+    default=f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
     type=str,
 )
 @click.pass_context
+@logging_setup_decorator
 def coverage_analyze(ctx, **kwargs):
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
     try:
@@ -1166,6 +1300,9 @@ def coverage_analyze(ctx, **kwargs):
             or no_min_coverage_enforcement
         ):
             return 0
+    except FileNotFoundError as e:
+        logger.warning(e)
+        return 0
     except Exception as error:
         logger.error(error)
 
@@ -1242,8 +1379,15 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-s",
     "--id-set-path",
-    help="The path of the id_set json file.",
+    help="Deprecated. The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
+)
+@click.option(
+    "-gr/-ngr",
+    "--graph/--no-graph",
+    help="Whether to use the content graph or not.",
+    is_flag=True,
+    default=True,
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
@@ -1292,6 +1436,7 @@ def format(
             include_untracked=include_untracked,
             add_tests=add_tests,
             id_set_path=id_set_path,
+            use_graph=kwargs.get("graph", True),
         )
 
 
@@ -1392,52 +1537,53 @@ def upload(ctx, **kwargs):
 @click.option(
     "-o",
     "--output",
-    help="The path of a package directory to download custom content to",
+    help="A path to a pack directory to download content to.",
     required=False,
     multiple=False,
 )
 @click.option(
     "-i",
     "--input",
-    help="Custom content file name to be downloaded. Can be provided multiple times",
+    help="Name of a custom content item to download. The flag can be used multiple times to download multiple files.",
     required=False,
     multiple=True,
 )
 @click.option(
     "-r",
     "--regex",
-    help="Regex Pattern, download all the custom content files that match this regex pattern.",
+    help="Download all custom content items matching this RegEx pattern.",
     required=False,
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
-    "-f", "--force", help="Whether to override existing files or not", is_flag=True
+    "-f",
+    "--force",
+    help="If downloaded content already exists in the output directory, overwrite it. ",
+    is_flag=True,
 )
 @click.option(
     "-lf",
     "--list-files",
-    help="Prints a list of all custom content files available to be downloaded",
+    help="List all custom content items available to download and exit.",
     is_flag=True,
 )
 @click.option(
     "-a",
     "--all-custom-content",
-    help="Download all available custom content files",
+    help="Download all available custom content items.",
     is_flag=True,
 )
 @click.option(
     "-fmt",
     "--run-format",
-    help="Whether to run demisto-sdk format on downloaded files or not",
+    help="Format downloaded files.",
     is_flag=True,
 )
 @click.option("--system", help="Download system items", is_flag=True, default=False)
 @click.option(
     "-it",
     "--item-type",
-    help="The items type to download, use just when downloading system items, should be one "
-    "form the following list: [IncidentType, IndicatorType, Field, Layout, Playbook, "
-    "Automation, Classifier, Mapper]",
+    help="Type of the content item to download. Required and used only when downloading system items.",
     type=click.Choice(
         [
             "IncidentType",
@@ -1454,28 +1600,32 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--init",
-    help="Create a directory structure and download the items to it",
+    help="Initialize the output directory with a pack structure.",
     is_flag=True,
     default=False,
 )
 @click.option(
     "--keep-empty-folders",
-    help="Keep empty folders when using the --init flag",
+    help="Keep empty folders when a pack structure is initialized.",
     is_flag=True,
     default=False,
+)
+@click.option(
+    "--auto-replace-uuids/--no-auto-replace-uuids",
+    help="Whether to replace UUID IDs (automatically assigned to custom content by the server) for downloaded custom content.",
+    default=True,
 )
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):
-    """Download custom content from Demisto instance.
-    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
-    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """Download custom content from a Cortex XSOAR / XSIAM instance.
+    DEMISTO_BASE_URL environment variable should contain the server base URL.
+    DEMISTO_API_KEY environment variable should contain a valid API Key for the server.
     """
     from demisto_sdk.commands.download.downloader import Downloader
 
     check_configuration_file("download", kwargs)
-    downloader: Downloader = Downloader(**kwargs)
-    return downloader.download()
+    return Downloader(**kwargs).download()
 
 
 # ====================== update-xsoar-config-file ====================== #
@@ -1613,7 +1763,7 @@ def run(ctx, **kwargs):
 @click.option(
     "--url",
     "-u",
-    help="URL to a Demisto instance. You can also specify the URL as an environment variable named: DEMISTO_BASE_URL",
+    help="URL to a Demisto instance. If not provided, the url will be taken from DEMISTO_BASE_URL environment variable.",
 )
 @click.option("--playbook_id", "-p", help="The playbook ID to run.", required=True)
 @click.option(
@@ -1627,7 +1777,7 @@ def run(ctx, **kwargs):
     "-t",
     default=90,
     show_default=True,
-    help="Timeout for the command. The playbook will continue to run in Demisto",
+    help="Timeout to query for playbook's state. Relevant only if --wait has been passed.",
 )
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.pass_context
@@ -1641,7 +1791,13 @@ def run_playbook(ctx, **kwargs):
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
     check_configuration_file("run-playbook", kwargs)
-    playbook_runner = PlaybookRunner(**kwargs)
+    playbook_runner = PlaybookRunner(
+        playbook_id=kwargs.get("playbook_id", ""),
+        url=kwargs.get("url", ""),
+        wait=kwargs.get("wait", False),
+        timeout=kwargs.get("timeout", 90),
+        insecure=kwargs.get("insecure", False),
+    )
     return playbook_runner.run_playbook()
 
 
@@ -1887,6 +2043,11 @@ def generate_test_playbook(ctx, **kwargs):
 @click.option(
     "--script", is_flag=True, help="Create a Script based on BaseScript example"
 )
+@click.option(
+    "--xsiam",
+    is_flag=True,
+    help="Create an Event Collector based on a template, and create matching sub directories",
+)
 @click.option("--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
     "-t",
@@ -1921,7 +2082,8 @@ def init(ctx, **kwargs):
     from demisto_sdk.commands.init.initiator import Initiator
 
     check_configuration_file("init", kwargs)
-    initiator = Initiator(**kwargs)
+    marketplace = parse_marketplace_kwargs(kwargs)
+    initiator = Initiator(marketplace=marketplace, **kwargs)
     initiator.init()
     return 0
 
@@ -2006,6 +2168,13 @@ def init(ctx, **kwargs):
     help="The readme template that should be appended to the given README.md file",
     type=click.Choice(["syslog", "xdrc", "http-collector"]),
 )
+@click.option(
+    "-gr/-ngr",
+    "--graph/--no-graph",
+    help="Whether to use the content graph or not.",
+    is_flag=True,
+    default=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def generate_docs(ctx, **kwargs):
@@ -2038,7 +2207,7 @@ def generate_docs(ctx, **kwargs):
 
         else:
             raise Exception(
-                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file."
+                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.[/red]"
             )
 
         return 0
@@ -2076,19 +2245,18 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     skip_breaking_changes: bool = kwargs.get("skip_breaking_changes", False)
     custom_image_path: str = kwargs.get("custom_image_path", "")
     readme_template: str = kwargs.get("readme_template", "")
+    use_graph = kwargs.get("graph", True)
 
     try:
         if command:
             if (
                 output_path
-                and (not os.path.isfile(os.path.join(output_path, "README.md")))
+                and (not Path(output_path, "README.md").is_file())
                 or (not output_path)
                 and (
-                    not os.path.isfile(
-                        os.path.join(
-                            os.path.dirname(os.path.realpath(input_path)), "README.md"
-                        )
-                    )
+                    not Path(
+                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+                    ).is_file()
                 )
             ):
                 raise Exception(
@@ -2106,7 +2274,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
 
-        if old_version and not os.path.isfile(old_version):
+        if old_version and not Path(old_version).is_file():
             raise Exception(
                 f"[red]Input old version file {old_version} was not found.[/red]"
             )
@@ -2142,6 +2310,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 permissions=permissions,
                 limitations=limitations,
                 insecure=insecure,
+                use_graph=use_graph,
             )
         elif file_type == FileType.PLAYBOOK:
             logger.info(f"Generating {file_type.value.lower()} documentation")
@@ -2447,7 +2616,6 @@ def find_dependencies(ctx, **kwargs):
     output_path = kwargs.get("output_path", ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get("dependency", "")
     try:
-
         PackDependencies.find_dependencies_manager(
             id_set_path=str(id_set_path),
             update_pack_metadata=update_pack_metadata,
@@ -2510,6 +2678,7 @@ def find_dependencies(ctx, **kwargs):
 )
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def postman_codegen(
     ctx,
     config,
@@ -2523,11 +2692,6 @@ def postman_codegen(
     **kwargs,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
     )
@@ -2673,7 +2837,7 @@ def openapi_codegen(ctx, **kwargs):
         output_dir = kwargs["output_dir"]
 
     # Check the directory exists and if not, try to create it
-    if not os.path.exists(output_dir):
+    if not Path(output_dir).exists():
         try:
             os.mkdir(output_dir)
         except Exception as err:
@@ -2773,6 +2937,14 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.help_option("-h", "--help")
 @click.option(
+    "-a",
+    "--artifacts-path",
+    help="Destination directory to create the artifacts.",
+    type=click.Path(file_okay=False, resolve_path=True),
+    default=Path("./Tests"),
+    required=True,
+)
+@click.option(
     "-k", "--api-key", help="The Demisto API key for the server", required=True
 )
 @click.option("-s", "--server", help="The server URL to connect to")
@@ -2809,7 +2981,14 @@ def openapi_codegen(ctx, **kwargs):
     default=False,
 )
 @click.option(
-    "--server-type", help="Which server runs the tests? XSIAM or XSOAR", default="XSOAR"
+    "--server-type",
+    help="On which server type runs the tests:XSIAM, XSOAR, XSOAR SAAS",
+    default="XSOAR",
+)
+@click.option(
+    "--product-type",
+    help="On which product type runs the tests:XSIAM, XSOAR",
+    default="XSOAR",
 )
 @click.option(
     "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."
@@ -3184,17 +3363,18 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    from demisto_sdk.commands.content_graph.content_graph_commands import (
-        create_content_graph as create_content_graph_command,
+    logger.warning(
+        "[WARNING] The 'create-content-graph' command is deprecated and will be removed "
+        "in upcoming versions. Use 'demisto-sdk graph create' instead."
     )
-
-    with Neo4jContentGraphInterface() as content_graph_interface:
-        create_content_graph_command(
-            content_graph_interface,
-            marketplace=MarketplaceVersions(marketplace),
-            dependencies=not no_dependencies,
-            output_path=output_path,
-        )
+    ctx.invoke(
+        create,
+        ctx,
+        marketplace=marketplace,
+        no_dependencies=no_dependencies,
+        output_path=output_path,
+        **kwargs,
+    )
 
 
 # ====================== update-content-graph ====================== #
@@ -3230,13 +3410,6 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uc",
-    "--use-current",
-    is_flag=True,
-    help="Whether to use the current content graph to update",
-    default=False,
-)
-@click.option(
     "-p",
     "--packs",
     help="A comma-separated list of packs to update",
@@ -3263,190 +3436,130 @@ def update_content_graph(
     ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-    use_current: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
     output_path: Path = None,
     **kwargs,
 ):
-    from demisto_sdk.commands.content_graph.content_graph_commands import (
-        update_content_graph as update_content_graph_command,
+    logger.warning(
+        "[WARNING] The 'update-content-graph' command is deprecated and will be removed "
+        "in upcoming versions. Use 'demisto-sdk graph update' instead."
     )
-    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-        Neo4jContentGraphInterface,
-    )
-
-    if packs and not isinstance(packs, list):
-        # for some reason packs provided as tuple from click interface
-        packs = list(packs)
-    with Neo4jContentGraphInterface() as content_graph_interface:
-        update_content_graph_command(
-            content_graph_interface,
-            marketplace=MarketplaceVersions(marketplace),
-            use_git=use_git,
-            imported_path=imported_path,
-            use_current=use_current,
-            packs_to_update=packs or [],
-            dependencies=not no_dependencies,
-            output_path=output_path,
-        )
-
-
-@main.command(short_help="Runs pre-commit hooks on the files in the repository")
-@click.help_option("-h", "--help")
-@click.option(
-    "-i",
-    "--input",
-    help="The path to the input file to run the command on.",
-    type=PathsParamType(
-        exists=True, resolve_path=True
-    ),  # PathsParamType allows passing a list of paths
-)
-@click.option(
-    "-s",
-    "--staged-only",
-    help="Whether to run only on staged files",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "-g",
-    "--git-diff",
-    help="Whether to use git to determine which files to run on",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "-a",
-    "--all-files",
-    help="Whether to run on all files",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "-ut/--no-ut",
-    "--unit-test/--no-unit-test",
-    help="Whether to run unit tests for content items",
-    default=False,
-)
-@click.option(
-    "--skip",
-    help="A comma separated list of precommit hooks to skip",
-)
-@click.option(
-    "--validate/--no-validate",
-    help="Whether to run demisto-sdk validate",
-    default=True,
-)
-@click.option(
-    "--format/--no-format",
-    help="Whether to run demisto-sdk format",
-    default=False,
-)
-@click.option(
-    "--secrets/--no-secrets",
-    help="Whether to run demisto-sdk secrets",
-    default=True,
-)
-@click.option(
-    "-v",
-    "--verbose",
-    help="Verbose output of pre-commit",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--show-diff-on-failure",
-    help="Show diff on failure",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--sdk-ref",
-    help="The demisto-sdk ref to use for the pre-commit hooks",
-    default="",
-)
-@click.argument(
-    "file_paths",
-    nargs=-1,
-    type=click.Path(exists=True, resolve_path=True, path_type=Path),
-)
-@click.pass_context
-@logging_setup_decorator
-def pre_commit(
-    ctx,
-    input: str,
-    staged_only: bool,
-    git_diff: bool,
-    all_files: bool,
-    unit_test: bool,
-    skip: str,
-    validate: bool,
-    format: bool,
-    secrets: bool,
-    verbose: bool,
-    show_diff_on_failure: bool,
-    sdk_ref: str,
-    file_paths: Iterable[Path],
-    **kwargs,
-):
-    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
-
-    if file_paths and input:
-        logger.info(
-            "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
-        )
-    input_files = []
-    if input:
-        input_files = [Path(i) for i in input.split(",")]
-    elif file_paths:
-        input_files = list(file_paths)
-    if skip:
-        skip = skip.split(",")  # type: ignore[assignment]
-
-    sys.exit(
-        pre_commit_manager(
-            input_files,
-            staged_only,
-            git_diff,
-            all_files,
-            unit_test,
-            skip,
-            validate,
-            format,
-            secrets,
-            verbose,
-            show_diff_on_failure,
-            sdk_ref=sdk_ref,
-        )
+    ctx.invoke(
+        update,
+        ctx,
+        use_git=use_git,
+        marketplace=marketplace,
+        imported_path=imported_path,
+        packs_to_update=packs,
+        no_dependencies=no_dependencies,
+        output_path=output_path,
+        **kwargs,
     )
 
 
-@main.command(short_help="Run unit tests in a docker for integrations and scripts")
-@click.help_option("-h", "--help")
+@main.command(short_help="Setup integration environments")
+@click.option(
+    "--ide",
+    help="IDE type to configure the environment for. If not specified, the IDE will be auto-detected. Case-insensitive.",
+    default="auto-detect",
+    type=click.Choice(
+        ["auto-detect"] + [IDEType.value for IDEType in IDEType], case_sensitive=False
+    ),
+)
 @click.option(
     "-i",
     "--input",
     type=PathsParamType(
         exists=True, resolve_path=True
     ),  # PathsParamType allows passing a list of paths
-    help="The path of the content pack/file to validate specifically.",
+    help="A list of content packs/files to validate.",
 )
 @click.option(
-    "-v", "--verbose", is_flag=True, default=False, help="Verbose output of unit tests"
+    "--create-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Create a virtualenv for the environment.",
+)
+@click.option(
+    "--overwrite-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Overwrite existing virtualenvs. Relevant only if the 'create-virtualenv' flag is used.",
+)
+@click.option(
+    "--secret-id",
+    help="Secret ID to use for the Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.",
+    required=False,
+)
+@click.option(
+    "--instance-name",
+    required=False,
+    help="Instance name to configure in XSOAR / XSIAM.",
+)
+@click.option(
+    "--run-test-module",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Whether to run test-module on the configured XSOAR / XSIAM instance.",
+)
+@click.option(
+    "--clean",
+    is_flag=True,
+    default=False,
+    help="Clean the repository of temporary files created by the 'lint' command.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
-@click.pass_context
-@logging_setup_decorator
-def run_unit_tests(
-    ctx, input: str, file_paths: Tuple[str, ...], verbose: bool, **kwargs
+def setup_env(
+    input,
+    ide,
+    file_paths,
+    create_virtualenv,
+    overwrite_virtualenv,
+    secret_id,
+    instance_name,
+    run_test_module,
+    clean,
 ):
+    from demisto_sdk.commands.setup_env.setup_environment import (
+        setup_env,
+    )
+
+    if ide == "auto-detect":
+        # Order decides which IDEType will be selected for configuration if multiple IDEs are detected
+        if (CONTENT_PATH / ".vscode").exists():
+            logger.info(
+                "Visual Studio Code IDEType has been detected and will be configured."
+            )
+            ide_type = IDEType.VSCODE
+        elif (CONTENT_PATH / ".idea").exists():
+            logger.info(
+                "PyCharm / IDEA IDEType has been detected and will be configured."
+            )
+            ide_type = IDEType.PYCHARM
+        else:
+            raise RuntimeError(
+                "Could not detect IDEType. Please select a specific IDEType using the --ide flag."
+            )
+
+    else:
+        ide_type = IDEType(ide)
+
     if input:
         file_paths = tuple(input.split(","))
-    from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
 
-    sys.exit(unit_test_runner(file_paths, verbose))
+    setup_env(
+        file_paths=file_paths,
+        ide_type=ide_type,
+        create_virtualenv=create_virtualenv,
+        overwrite_virtualenv=overwrite_virtualenv,
+        secret_id=secret_id,
+        instance_name=instance_name,
+        test_module=run_test_module,
+        clean=clean,
+    )
 
 
 @main.result_callback()
@@ -3454,12 +3567,128 @@ def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
 
-app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
-app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
-app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)
-typer_click_object = typer.main.get_command(app)
-main.add_command(typer_click_object, "modeling-rules")
+# ====================== Pre-Commit ====================== #
+pre_commit_app = typer.Typer(name="Pre-Commit")
 
+
+@pre_commit_app.command()
+def pre_commit(
+    input_files: Optional[List[Path]] = typer.Option(
+        None,
+        "-i",
+        "--input",
+        "--files",
+        exists=True,
+        dir_okay=True,
+        resolve_path=True,
+        show_default=False,
+        help="The paths to run pre-commit on. May pass multiple paths.",
+    ),
+    staged_only: bool = typer.Option(
+        False, "--staged-only", help="Whether to run only on staged files"
+    ),
+    commited_only: bool = typer.Option(
+        False, "--commited-only", help="Whether to run on commited files only"
+    ),
+    git_diff: bool = typer.Option(
+        False,
+        "--git-diff",
+        "-g",
+        help="Whether to use git to determine which files to run on",
+    ),
+    all_files: bool = typer.Option(
+        False, "--all-files", "-a", help="Whether to run on all files"
+    ),
+    mode: str = typer.Option(
+        "", "--mode", help="Special mode to run the pre-commit with"
+    ),
+    skip: Optional[List[str]] = typer.Option(
+        None, "--skip", help="A list of precommit hooks to skip"
+    ),
+    validate: bool = typer.Option(
+        True, "--validate/--no-validate", help="Whether to run demisto-sdk validate"
+    ),
+    format: bool = typer.Option(
+        False, "--format/--no-format", help="Whether to run demisto-sdk format"
+    ),
+    secrets: bool = typer.Option(
+        True, "--secrets/--no-secrets", help="Whether to run demisto-sdk secrets"
+    ),
+    verbose: bool = typer.Option(
+        False, "-v", "--verbose", help="Verbose output of pre-commit"
+    ),
+    show_diff_on_failure: bool = typer.Option(
+        False, "--show-diff-on-failure", help="Show diff on failure"
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+    ),
+    docker: bool = typer.Option(
+        True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
+    ),
+    run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "--console-log-threshold",
+        help="Minimum logging threshold for the console logger.",
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "--file-log-threshold",
+        help="Minimum logging threshold for the file logger.",
+    ),
+    log_file_path: Optional[str] = typer.Option(
+        None,
+        "--log-file-path",
+        help="Path to save log files onto.",
+    ),
+):
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
+
+    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
+
+    return_code = pre_commit_manager(
+        input_files,
+        staged_only,
+        commited_only,
+        git_diff,
+        all_files,
+        mode,
+        skip,
+        validate,
+        format,
+        secrets,
+        verbose,
+        show_diff_on_failure,
+        run_docker_hooks=docker,
+        dry_run=dry_run,
+        run_hook=run_hook,
+    )
+    if return_code:
+        raise typer.Exit(1)
+
+
+main.add_command(typer.main.get_command(pre_commit_app), "pre-commit")
+
+
+# ====================== modeling-rules command group ====================== #
+modeling_rules_app = typer.Typer(
+    name="modeling-rules", hidden=True, no_args_is_help=True
+)
+modeling_rules_app.command("test", no_args_is_help=True)(
+    test_modeling_rule.test_modeling_rule
+)
+modeling_rules_app.command("init-test-data", no_args_is_help=True)(
+    init_test_data.init_test_data
+)
+typer_click_object = typer.main.get_command(modeling_rules_app)
+main.add_command(typer_click_object, "modeling-rules")
 
 app_generate_modeling_rules = typer.Typer(
     name="generate-modeling-rules", no_args_is_help=True
@@ -3470,6 +3699,16 @@ app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=T
 
 typer_click_object2 = typer.main.get_command(app_generate_modeling_rules)
 main.add_command(typer_click_object2, "generate-modeling-rules")
+
+
+# ====================== graph command group ====================== #
+
+graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
+graph_cmd_group.command("create", no_args_is_help=False)(create)
+graph_cmd_group.command("update", no_args_is_help=False)(update)
+graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
+main.add_command(typer.main.get_command(graph_cmd_group), "graph")
+
 
 if __name__ == "__main__":
     main()

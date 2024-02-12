@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.scripts.changelog.changelog import Changelog
 
 
-def comment_changelog_on_pr(pr_num: str, github_token: str) -> bool:
+def comment_changelog_on_pr(pr_num: int, github_token: str) -> bool:
     try:
         Changelog(pr_num).comment(github_token)
         sys.exit(0)

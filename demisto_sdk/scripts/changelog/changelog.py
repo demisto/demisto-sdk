@@ -66,14 +66,11 @@ class Changelog:
 
     """ Comment """
     def comment(self, github_token: str) -> None:
-        print("1")
         github_client = Github(login_or_token=github_token, verify=False)
-        print("2")
         changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
 
         current_commit = GIT_UTIL.repo.head.commit
         previous_commit = current_commit.parents[0].hexsha
-        print("3")
 
         current_changelog = YmlFile.read_from_local_path(changelog_path).get("description")
         pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)
@@ -83,12 +80,13 @@ class Changelog:
         except (FileReadError, FileNotFoundError) as error:
             # changelog was added in current commit, comment in the PR
             print(f'{changelog_path} does not exist in previous commit {previous_commit}')
-            pr.create_comment(body=f"Your changelog in markdwon :)\n:{current_changelog}")
+            pr.crea
+            pr.create_issue_comment(f"Your changelog in markdown :)\n:{current_changelog}")
             return
 
         if previous_changelog.get("description") != current_changelog.get("description"):
             # comment in the PR only if the last changelog was changed from previous commit
-            pr.create_comment(body=f"Your changelog in markdwon :)\n:{current_changelog}")
+            pr.create_issue_comment(f"Your changelog in markdown :)\n:{current_changelog}")
 
 
     """ INIT """

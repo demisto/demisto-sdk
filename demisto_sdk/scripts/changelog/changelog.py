@@ -72,20 +72,26 @@ class Changelog:
         current_commit = GIT_UTIL.repo.head.commit
         previous_commit = current_commit.parents[0].hexsha
 
-        current_changelog = YmlFile.read_from_local_path(changelog_path).get("description")
+        current_changelogs = LogFileObject(YmlFile.read_from_local_path(changelog_path)).get_log_entries()
         pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)
 
         try:
-            previous_changelog = YmlFile.read_from_git_path(changelog_path, tag=previous_commit, from_remote=False)
+            previous_changelogs = LogFileObject(YmlFile.read_from_git_path(changelog_path, tag=previous_commit))
         except (FileReadError, FileNotFoundError) as error:
             # changelog was added in current commit, comment in the PR
             print(f'{changelog_path} does not exist in previous commit {previous_commit}')
-            pr.create_issue_comment(f"Your changelog in markdown :)\n:{current_changelog}")
+            markdown = "Changelog(s) in markdown:\n"
+            markdown += "\n".join([changelog.description for changelog in current_changelogs])
+            pr.create_issue_comment(markdown)
             return
 
-        if previous_changelog.get("description") != current_changelog.get("description"):
+        if previous_changelogs.get("description") != current_changelogs.get("description"):
             # comment in the PR only if the last changelog was changed from previous commit
-            pr.create_issue_comment(f"Your changelog in markdown :)\n:{current_changelog}")
+            markdown = "Changelog(s) in markdown:\n"
+            markdown += "\n".join([changelog.description for changelog in current_changelogs])
+            pr.create_issue_comment(markdown)
+        else:
+            print(f'{changelog_path} has not been changed, not commenting on PR {pr_number}')
 
 
     """ INIT """

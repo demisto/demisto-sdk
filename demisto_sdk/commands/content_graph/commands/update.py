@@ -15,10 +15,7 @@ from demisto_sdk.commands.common.tools import (
     is_external_repository,
 )
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
-from demisto_sdk.commands.content_graph.commands.create import (
-    create,
-    create_content_graph,
-)
+from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_PASSWORD,

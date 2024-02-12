@@ -74,19 +74,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         if docker_user and docker_pass:
             logger.debug(f"{log_prompt} - logging in to docker registry")
             try:
-                if DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL and os.getenv(
-                    "CONTENT_GITLAB_CI"
-                ):
-                    DOCKER_CLIENT.login(
-                        username=docker_user,
-                        password=docker_pass,
-                        registry="https://index.docker.io/v1",
-                    )
-                DOCKER_CLIENT.login(
-                    username=docker_user,
-                    password=docker_pass,
-                    registry=DOCKER_REGISTRY_URL,
-                )
+                docker_login(DOCKER_CLIENT)
             except Exception:
                 logger.exception(f"{log_prompt} - failed to login to docker registry")
     else:
@@ -109,14 +97,30 @@ def docker_login(docker_client) -> bool:
     docker_pass = os.getenv("DOCKERHUB_PASSWORD")
     if docker_user and docker_pass:
         try:
-            docker_client.login(
-                username=docker_user,
-                password=docker_pass,
-                registry="https://index.docker.io/v1",
-            )
-            ping = docker_client.ping()
-            logger.debug(f"Successfully connected to dockerhub, login {ping=}")
-            return ping
+            if DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL and os.getenv(
+                "CONTENT_GITLAB_CI"
+            ):
+
+                docker_client.login(
+                    username=docker_user,
+                    password=docker_pass,
+                    registry="https://index.docker.io/v1",
+                )
+                ping = docker_client.ping()
+                logger.debug(f"Successfully connected to dockerhub, login {ping=}")
+                return ping
+            else:
+                # login to custom docker registry
+                docker_client.login(
+                    username=docker_user,
+                    password=docker_pass,
+                    registry=DOCKER_REGISTRY_URL,
+                )
+                ping = docker_client.ping()
+                logger.debug(
+                    f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
+                )
+                return ping
         except docker.errors.APIError:
             logger.info("Did not successfully log in to dockerhub")
             return False

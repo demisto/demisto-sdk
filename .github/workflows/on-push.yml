@@ -31,7 +31,9 @@ jobs:
 
       - name: Validate Changelog
         run: |
-          echo "Validating changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
+          # echo "Validating changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
+          echo ${{ github.event.pull_request.number }}
+          echo ${{ github.event.pull_request.title }}
           poetry run python ./Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py -n ${{ github.event.pull_request.number }} -t ${{ github.event.pull_request.title }}
       - name: Comment Changelog
         run: |

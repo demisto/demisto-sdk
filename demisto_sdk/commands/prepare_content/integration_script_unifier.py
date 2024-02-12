@@ -373,7 +373,6 @@ class IntegrationScriptUnifier(Unifier):
     def get_script_or_integration_package_data(package_path: Path):
         # should be static method
         _, yml_path = get_yml_paths_in_dir(str(package_path))
-        print(f"*** in get_script_or_integration_package_data0: {str(yml_path)}")
 
         if not yml_path:
             raise Exception(
@@ -390,10 +389,7 @@ class IntegrationScriptUnifier(Unifier):
         code_path = IntegrationScriptUnifier.get_code_file(
             package_path, TYPE_TO_EXTENSION[code_type]
         )
-        print(f"*** in get_script_or_integration_package_data1: {str(code_path)}")
         code = get_file(code_path, return_content=True)
-        print(f"*** in get_script_or_integration_package_data2: {str(code_type)}")
-        print(f"*** in get_script_or_integration_package_data3: {str(code)}")
 
         return yml_path, code
 

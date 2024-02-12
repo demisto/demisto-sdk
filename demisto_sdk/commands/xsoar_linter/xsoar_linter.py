@@ -178,7 +178,9 @@ def process_file(file_path: Path) -> ProcessResults:
             )
             results.return_code = 1
     except Exception as e:
-        results.errors.append(f"Failed processing the following file: {str(file_path)}: {e}")
+        results.errors.append(
+            f"Failed processing the following file: {str(file_path)}: {e}"
+        )
         results.return_code = 1
 
     return results

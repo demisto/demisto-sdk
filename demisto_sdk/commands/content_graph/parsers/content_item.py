@@ -108,7 +108,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 path = path.parent
         try:
             content_type: ContentType = ContentType.by_path(path)
-            print(f"*** by path2: {str(content_type)}")
         except ValueError:
             try:
                 optional_content_type = ContentType.by_schema(path)
@@ -118,7 +117,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             content_type = optional_content_type
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
-                print(f"*** parser_cls: {str(parser_cls)}")
                 return ContentItemParser.parse(
                     parser_cls, path, pack_marketplaces, git_sha
                 )

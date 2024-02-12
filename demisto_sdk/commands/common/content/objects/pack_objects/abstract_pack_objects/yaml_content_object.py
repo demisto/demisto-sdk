@@ -1,7 +1,7 @@
 import re
 from typing import List, Optional, Union
 
-from packaging.version import LegacyVersion, Version, parse
+from packaging.version import Version
 from wcmatch.pathlib import EXTGLOB, Path
 
 from demisto_sdk.commands.common.constants import (
@@ -77,9 +77,9 @@ class YAMLContentObject(YAMLObject):
         return self._readme
 
     @property
-    def from_version(self) -> Union[Version, LegacyVersion]:
+    def from_version(self) -> Version:
         """Object from_version attribute.
-
+        Note: On Packaging>=v23, Version('') is no longer equivalent to Version("0.0.0"), which is why we do the `or 0.0.0`
         Returns:
             version: Version object which able to be compared with other Version object.
 
@@ -87,11 +87,12 @@ class YAMLContentObject(YAMLObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        return Version(self.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
-    def to_version(self) -> Union[Version, LegacyVersion]:
+    def to_version(self) -> Version:
         """Object to_version attribute.
+        Note: On Packaging>=v23, Version('') is no longer equivalent to Version("0.0.0"), which is why we do the `or 0.0.0`
 
         Returns:
             version: Version object which able to be compared with other Version object.
@@ -100,7 +101,9 @@ class YAMLContentObject(YAMLObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION))
+        return Version(
+            self.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION) or "0.0.0"
+        )
 
     def dump(
         self,

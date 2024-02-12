@@ -1,17 +1,21 @@
 import gzip
 import os
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 import requests
+from packaging.version import Version
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
+from requests.exceptions import ConnectionError, Timeout
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import retry
 
 json = JSON_Handler()
 
@@ -125,6 +129,22 @@ class XsiamApiClient(XsiamApiInterface):
     @_session.setter
     def _session(self, value: requests.Session):
         self.__session = value
+
+    @lru_cache
+    @retry(times=5, exceptions=(RuntimeError, ConnectionError, Timeout))
+    def get_demisto_version(self) -> Version:
+        endpoint = urljoin(self.base_url, "xsoar/about")
+        response = self._session.get(endpoint)
+        response.raise_for_status()
+        data = response.json()
+        demisto_version = data.get("demistoVersion")
+        if not demisto_version:
+            raise RuntimeError("Could not get the tenant's demisto version")
+        logger.info(
+            f"[green]Demisto version of XSIAM tenant is {demisto_version}[/green]",
+            extra={"markup": True},
+        )
+        return Version(demisto_version)
 
     @property
     def installed_packs(self) -> List[Dict[str, Any]]:
@@ -247,7 +267,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
             response.raise_for_status()
 
-    def start_xql_query(self, query: str, print_req_error: bool = True):
+    def start_xql_query(self, query: str):
         body = {"request_data": {"query": query}}
         endpoint = urljoin(self.base_url, "public_api/v1/xql/start_xql_query/")
         logger.info(f"Starting xql query:\nendpoint={endpoint}\n{query=}")
@@ -258,14 +278,7 @@ class XsiamApiClient(XsiamApiInterface):
         if response.status_code in range(200, 300):
             execution_id: str = data.get("reply", "")
             return execution_id
-        elif print_req_error:
-            logger.error(
-                f'Failed to start xql query "{query}" - with status code {response.status_code}\n{pformat(data)}'
-            )
-            response.raise_for_status()
-        else:
-            logger.info("Still processing. Please wait...")
-            response.raise_for_status()
+        response.raise_for_status()
 
     def get_xql_query_result(self, execution_id: str, timeout: int = 300):
         payload = json.dumps(
@@ -289,14 +302,11 @@ class XsiamApiClient(XsiamApiInterface):
             response.status_code in range(200, 300)
             and data.get("reply", {}).get("status", "") == "SUCCESS"
         ):
-            reply_results_data = (
-                data.get("reply", {}).get("results", {}).get("data", [])
-            )
-            return reply_results_data
-        else:
-            err_msg = (
-                f'Failed to get xql query results for execution_id "{execution_id}"'
-                f" - with status code {response.status_code}. data:\n{pformat(data)}"
-            )
-            logger.error(err_msg)
-            response.raise_for_status()
+            return data.get("reply", {}).get("results", {}).get("data", [])
+        response.raise_for_status()
+
+    def delete_dataset(self, dataset_id: str):
+        endpoint = urljoin(self.base_url, "public_api/v1/xql/delete_dataset")
+        body = {"dataset_name": dataset_id}
+        response = self._session.post(endpoint, json=body)
+        response.raise_for_status()

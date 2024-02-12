@@ -77,6 +77,8 @@ If there are files that exist both in the output directory and are specified in 
 
     The items type to download, use just when downloading system items.
 
+* **--auto-replace-uuids/--no-auto-replace-uuids**
+  If False, avoid UUID replacements when downloading using the download command. The default value is True.
 
 ### Asumptions
 For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../Packs/TestPack/Integrations/TestIntegrationFullName/`.

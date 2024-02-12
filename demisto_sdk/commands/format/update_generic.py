@@ -1,12 +1,15 @@
 import os
 import re
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, Optional, Set, Union
 
 import dictdiffer
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
     GENERAL_DEFAULT_FROMVERSION,
+    VALID_SENTENCE_SUFFIX,
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -19,6 +22,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_file_from_content_repo,
     is_string_ends_with_url,
+    strip_description,
 )
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION,
@@ -29,7 +33,7 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
     VERSION_KEY,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
 
@@ -57,7 +61,7 @@ class BaseUpdate:
         output: str = "",
         path: str = "",
         from_version: str = "",
-        prev_ver: str = "master",
+        prev_ver: str = DEMISTO_GIT_PRIMARY_BRANCH,
         no_validate: bool = False,
         assume_answer: Union[bool, None] = None,
         interactive: bool = True,
@@ -84,7 +88,7 @@ class BaseUpdate:
         self.interactive = interactive
         self.updated_ids: Dict = {}
         if not self.no_validate:
-            self.validate_manager = ValidateManager(
+            self.validate_manager = OldValidateManager(
                 silence_init_prints=True,
                 skip_conf_json=True,
                 skip_dependencies=True,
@@ -99,7 +103,7 @@ class BaseUpdate:
             )
         try:
             self.data, self.file_type = get_dict_from_file(
-                self.source_file, clear_cache=clear_cache
+                self.source_file, clear_cache=clear_cache, keep_order=True
             )
         except Exception:
             raise Exception(f"Provided file {self.source_file} is not a valid file.")
@@ -116,7 +120,7 @@ class BaseUpdate:
         """
         if not output_file_path:
             source_dir = os.path.dirname(self.source_file)
-            file_name = os.path.basename(self.source_file)
+            file_name = Path(self.source_file).name
             if self.__class__.__name__ == "PlaybookYMLFormat":
                 if "Pack" not in source_dir:
                     if not file_name.startswith("playbook-"):
@@ -294,7 +298,7 @@ class BaseUpdate:
         else:
             user_answer = self.get_answer(
                 "Either no fromversion is specified in your file, "
-                "or it is lower than the minimal fromversion for this content type."
+                "or it is lower than the minimal fromversion for this content type. "
                 "Would you like to set it to the default? [Y/n]"
             )
         if not user_answer or user_answer.lower() in ["y", "yes"]:
@@ -466,19 +470,29 @@ class BaseUpdate:
                     self.data.pop(self.json_from_server_version_key)
 
     def adds_period_to_description(self):
-        """Adds a period to the end of the descriptions
+        """Adds a period to the end of the descriptions or comments
         if it does not already end with a period."""
 
         def _add_period(value: Optional[str]) -> Optional[str]:
-            if (
-                value
-                and isinstance(value, str)
-                and not value.endswith(".")
-                and not is_string_ends_with_url(value)
-            ):
-                return f"{value}."
+            if value and isinstance(value, str):
+                strip_value = strip_description(value)
+                if not is_string_ends_with_url(strip_value) and not any(
+                    strip_value.endswith(suffix) for suffix in VALID_SENTENCE_SUFFIX
+                ):
+                    return f"{strip_value}."
             return value
 
+        # script yml
+        if comment := self.data.get("comment"):
+            self.data["comment"] = _add_period(comment)
+        for arg in self.data.get("args", ()):
+            if description := arg.get("description"):
+                arg["description"] = _add_period(description)
+        for output in self.data.get("outputs", ()):
+            if description := output.get("description"):
+                output["description"] = _add_period(description)
+
+        # integration yml
         if data_description := self.data.get("description", {}):
             self.data["description"] = _add_period(data_description)
 

@@ -645,7 +645,59 @@ class TestScriptValidator:
                     "comment": "a yml with a comment that has an 'example without dot at the end of the string.'",
                 },
                 True,
-                False,
+                True,
+            ),
+            (
+                {
+                    "comment": "a yml with a description that has a trailing new line.\n",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "comment": "",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "comment": "a yml comment with a dot at the end.",
+                    "outputs": [
+                        {
+                            "contextPath": "test.path",
+                            "description": "",
+                        }
+                    ],
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "comment": "a yml description with a dot in the bracket (like this.)",
+                    "outputs": [
+                        {
+                            "contextPath": "test.path",
+                            "description": "a contextPath description with a dot in the bracket (like this.)",
+                        }
+                    ],
+                },
+                True,
+                True,
+            ),
+            (
+                {"comment": "is this description okay?"},
+                True,
+                True,
+            ),
+            (
+                {
+                    "comment": 'This description ends with a list a json object {\n"name": "example json ending on another line"\n}'
+                },
+                True,
+                True,
             ),
         ],
     )
@@ -663,6 +715,12 @@ class TestScriptValidator:
             - Case 6: A yml content with a comment that ends with a url address and not dot, and use_git flag set to True.
             - Case 7: A yml content with a comment that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
             - Case 8: A yml content with a comment that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
+            - Case 9: A yml content with a comment that ends with a dot followed by new line, and use_git flag set to True.
+            - Case 10: A yml content with an empty comment, and use_git flag set to True.
+            - Case 11: A yml content with a contextPath with empty description, and use_git flag set to True.
+            - Case 12: A yml content with a comment and contextPath with a description that ends with a dot inside a bracket, and use_git flag set to True.
+            - Case 13: A yml content with a comment that ends with a question mark, and use_git flag set to True.
+            - Case 14: a yml content with a comment that ends with new line followed by curly bracket, and use_git flag set to True.
         When:
             - when executing the is_line_ends_with_dot method
         Then:
@@ -673,7 +731,13 @@ class TestScriptValidator:
             - Case 5: make sure the validation pass.
             - Case 6: make sure the validation pass.
             - Case 7: make sure the validation fails.
-            - Case 8: make sure the validation fails.
+            - Case 8: make sure the validation pass.
+            - Case 9: make sure the validation pass.
+            - Case 10: make sure the validation pass.
+            - Case 11: make sure the validation pass.
+            - Case 12: make sure the validation pass.
+            - Case 13: make sure the validation pass.
+            - Case 14: make sure the validation pass.
         """
         pack = repo.create_pack("test")
         script = pack.create_script(yml=yml_content)

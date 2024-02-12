@@ -222,7 +222,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeimage was key was added with the native-images.
         """
         pack = repo.create_pack("PackName")
-        script = pack.create_script("dummy-script", "script-code")
+        script = pack.create_script("dummy-script")
         script.create_default_script()
 
         with ChangeCWD(pack.repo_path):
@@ -272,7 +272,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeImage key is not added to the script unified yml.
         """
         pack = repo.create_pack("PackName")
-        script = pack.create_script("dummy-script", "script-code")
+        script = pack.create_script("dummy-script")
         script.create_default_script()
 
         with ChangeCWD(pack.repo_path):

@@ -12,6 +12,7 @@ import requests
 import typer
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from junitparser.junitparser import Result
+from packaging.version import Version
 from tabulate import tabulate
 from tenacity import (
     Retrying,
@@ -35,7 +36,11 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import is_epoch_datetime, parse_int_or_default
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    is_epoch_datetime,
+    parse_int_or_default,
+)
 from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
     EXPECTED_SCHEMA_MAPPINGS,
     FAILURE_TO_PUSH_EXPLANATION,
@@ -87,7 +92,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
     data = [(key, str(val), str(received.get(key))) for key, val in expected.items()]
     return tabulate(
         data,
-        tablefmt="fancy_grid",
+        tablefmt="pretty",
         headers=["Model Field", "Expected Value", "Received Value"],
     )
 
@@ -172,6 +177,30 @@ def get_type_pretty_name(obj: Any) -> str:
     }.get(type(obj), str(type(obj)))
 
 
+def sanitize_received_value_by_expected_type(
+    received_value: Any, expected_type: str
+) -> Tuple[str, Any]:
+    """
+    XSIAM returns numeric values from the API always as float, so we need to check if the expected type is int and if that's the
+    case and the value returned is a numeric without a floating point value, we can assume it's an int.
+    Args:
+        expected_type: The expected type of the object.
+        received_value: The object to get the type for.
+
+    Returns:
+        The expected type of the object, and the object itself after being sanitized.
+    """
+    received_value_type = get_type_pretty_name(received_value)
+    # The values returned from XSIAM for int/float are always float, so we need to check if the expected type is int.
+    if (
+        expected_type == "int"
+        and received_value_type == "float"
+        and int(received_value) == received_value
+    ):
+        return "int", int(received_value)
+    return received_value_type, received_value
+
+
 def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying:
     """Create a Retrying object with the given retry_attempts and sleep_interval."""
     sleep_interval = parse_int_or_default(sleep_interval, XSIAM_CLIENT_SLEEP_INTERVAL)
@@ -179,7 +208,7 @@ def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying
     retry_params: Dict[str, Any] = {
         "reraise": True,
         "before_sleep": before_sleep_log(logger, logging.DEBUG),
-        "retry": retry_if_exception_type(requests.exceptions.HTTPError),
+        "retry": retry_if_exception_type(requests.exceptions.RequestException),
         "stop": stop_after_attempt(retry_attempts),
         "wait": wait_fixed(sleep_interval),
     }
@@ -192,7 +221,7 @@ def xsiam_execute_query(
     """Execute an XQL query and return the results.
     Wrapper for XsiamApiClient.execute_query() with retry logic.
     """
-    execution_id = xsiam_client.start_xql_query(query, print_req_error)
+    execution_id = xsiam_client.start_xql_query(query)
     return xsiam_client.get_xql_query_result(execution_id)
 
 
@@ -261,14 +290,17 @@ def verify_results(
 
     test_cases = []
     for i, result in enumerate(results, start=1):
+        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
+        msg = (
+            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
+            f" test_data_event_id:{td_event_id}"
+        )
         logger.info(
-            f"\n[cyan][underline]Result {i}/{len(results)}[/underline][/cyan]",
+            f"[cyan]{msg}[/cyan]",
             extra={"markup": True},
         )
-        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         result_test_case = TestCase(
-            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
-            f" test_data_event_id:{td_event_id}",
+            msg,
             classname=f"test_data_event_id:{td_event_id}",
         )
         verify_results_against_test_data(
@@ -311,44 +343,61 @@ def verify_results_against_test_data(
             )
         table_result = create_table(expected_values, result)
         logger.info(f"\n{table_result}")
-        for key, val in expected_values.items():
-            if val:
-                result_val = result.get(key)
-                out = f"Checking for key {key}:\n - expected: {val}\n - received: {result_val}"
+        for expected_key, expected_value in expected_values.items():
+            if expected_value:
+                received_value = result.get(expected_key)
+                expected_value_type = get_type_pretty_name(expected_value)
+                (
+                    received_value_type_sanitized,
+                    received_value_sanitized,
+                ) = sanitize_received_value_by_expected_type(
+                    received_value, expected_value_type
+                )
+                out = (
+                    f"Checking for key {expected_key} - "
+                    f"expected value:{expected_value} expected type:{expected_value_type} "
+                    f"received value:{received_value_sanitized} received type:{received_value_type_sanitized} "
+                    f"before sanitization - received value:{received_value} received type: "
+                    f"{get_type_pretty_name(received_value)}"
+                )
                 logger.debug(f"[cyan]{out}[/cyan]", extra={"markup": True})
                 result_test_case_system_out.append(out)
-
-                if type(result_val) == type(val) and result_val == val:
-                    out = f"Value:{result_val} and Type:{get_type_pretty_name(result_val)} Matched for key {key}"
+                if (
+                    received_value_sanitized == expected_value
+                    and received_value_type_sanitized == expected_value_type
+                ):
+                    out = f"Value:{received_value_sanitized} and Type:{received_value_type_sanitized} Matched for key {expected_key}"
                     result_test_case_system_out.append(out)
                     logger.debug(out)
                 else:
-                    if type(result_val) == type(val):
+                    if received_value_type_sanitized == expected_value_type:
                         err = (
-                            f"Expected value does not match for key {key}: - expected: {val} - received: {result_val} "
-                            f"Types match:{get_type_pretty_name(result_val)}"
+                            f"Expected value does not match for key {expected_key}: - expected: {expected_value} - "
+                            f"received: {received_value_sanitized} Types match:{received_value_type_sanitized}"
                         )
                         logger.error(
-                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}" '
-                            f"Types match:{get_type_pretty_name(result_val)}[/red]",
+                            f'[red][bold]{expected_key}[/bold] --- "{received_value_sanitized}" != "{expected_value}" '
+                            f"Types match:{received_value_type_sanitized}[/red]",
                             extra={"markup": True},
                         )
                     else:
+                        # Types don't match, so values are not matching either,
+                        # so it means that both do not match.
                         err = (
-                            f"Expected value and type do not match for key {key}: - expected: {val} - received: {result_val} "
-                            f"expected type: {get_type_pretty_name(val)} "
-                            f"received type: {get_type_pretty_name(result_val)}"
+                            f"Expected value and type do not match for key {expected_key}: - expected: {expected_value} - "
+                            f"received: {received_value_sanitized} expected type: {expected_value_type} "
+                            f"received type: {received_value_type_sanitized}"
                         )
                         logger.error(
-                            f'[red][bold]{key}[/bold][red] --- "{result_val}" != "{val}"\n'
-                            f' [bold]{key}[/bold][red] --- Received value type: "{get_type_pretty_name(result_val)}" '
-                            f'!= Expected value type: "{get_type_pretty_name(val)}"[/red]',
+                            f'[red][bold]{expected_key}[/bold][red] --- "{received_value_sanitized}" != "{expected_value}"\n'
+                            f' [bold]{expected_key}[/bold][red] --- Received value type: "{received_value_type_sanitized}" '
+                            f'!= Expected value type: "{expected_value_type}"[/red]',
                             extra={"markup": True},
                         )
                     result_test_case_system_err.append(err)
                     result_test_case_results.append(Failure(err))
             else:
-                err = f"No mapping for this {key} - skipping checking match"
+                err = f"No mapping for key {expected_key} - skipping checking match"
                 result_test_case_system_out.append(err)
                 result_test_case_results.append(Skipped(err))
                 logger.debug(f"[cyan]{err}[/cyan]", extra={"markup": True})
@@ -412,7 +461,7 @@ def validate_expected_values(
         validate_expected_values_test_case_system_out = [query_info]
         try:
             results = retrying_caller(xsiam_execute_query, xsiam_client, query)
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.RequestException:
             logger.error(
                 f"[red]{XQL_QUERY_ERROR_EXPLANATION}[/red]",
                 extra={"markup": True},
@@ -545,21 +594,22 @@ def validate_schema_aligned_with_test_data(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     retrying_caller: Retrying,
-    test_data: TestData,
+    dataset: str,
     init_sleep_time: int = 30,
+    print_errors: bool = True,
 ) -> TestCase:
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         retrying_caller (tenacity.Retrying): The retrying caller object.
-        test_data (init_test_data.TestData): The data parsed from the test data file.
+        dataset (str): The data set name.
         init_sleep_time (int, optional): The number of seconds to wait for dataset installation. Defaults to 30.
+        print_errors (bool): Whether to print errors.
     Returns:
         TestCase: Test case for checking if the dataset exists in the tenant.
     """
     process_failed = False
-    dataset_set = {data.dataset for data in test_data.data}
     dataset_set_test_case = TestCase(
         "Check if dataset exists in tenant", classname="Check dataset exists"
     )
@@ -569,49 +619,50 @@ def check_dataset_exists(
         f"Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly."
     )
     sleep(init_sleep_time)
-    for dataset in dataset_set:
-        start_time = datetime.now(tz=pytz.UTC)
-        results_exist = False
-        dataset_exist = False
-        logger.info(
-            f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
-            extra={"markup": True},
-        )
-        query = f"config timeframe = 10y | dataset = {dataset}"
-        try:
-            results = retrying_caller(xsiam_execute_query, xsiam_client, query)
+    start_time = datetime.now(tz=pytz.UTC)
+    results_exist = False
+    dataset_exist = False
+    logger.info(
+        f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
+        extra={"markup": True},
+    )
+    query = f"config timeframe = 10y | dataset = {dataset}"
+    try:
+        results = retrying_caller(xsiam_execute_query, xsiam_client, query)
 
-            dataset_exist = True
-            if results:
-                logger.info(
-                    f"[green]Dataset {dataset} exists[/green]",
-                    extra={"markup": True},
-                )
-                results_exist = True
-        except requests.exceptions.HTTPError:
-            results = []
-
-        # There are no results from the dataset, but it exists.
-        if not results:
-            err = (
-                f"Dataset {dataset} exists but no results were returned. This could mean that your testdata "
-                "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
-                "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
-                "meets the criteria for that rule."
+        dataset_exist = True
+        if results:
+            logger.info(
+                f"[green]Dataset {dataset} exists[/green]",
+                extra={"markup": True},
             )
-            test_case_results.append(Error(err))
+            results_exist = True
+    except requests.exceptions.RequestException:
+        results = []
+
+    # There are no results from the dataset, but it exists.
+    if not results:
+        err = (
+            f"Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+            "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+            "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+            "meets the criteria for that rule."
+        )
+        test_case_results.append(Error(err))
+        if print_errors:
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
-        if not dataset_exist:
-            err = f"[red]Dataset {dataset} does not exist[/red]"
-            test_case_results.append(Error(err))
+    if not dataset_exist:
+        err = f"[red]Dataset {dataset} does not exist[/red]"
+        test_case_results.append(Error(err))
+        if print_errors:
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
 
-        duration = datetime.now(tz=pytz.UTC) - start_time
-        logger.info(
-            f"Processing Dataset {dataset} finished after {duration.total_seconds():.2f} seconds"
-        )
-        # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
-        process_failed |= not (dataset_exist and results_exist)
+    duration = datetime.now(tz=pytz.UTC) - start_time
+    logger.info(
+        f"Processing Dataset {dataset} finished after {duration.total_seconds():.2f} seconds"
+    )
+    # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
+    process_failed |= not (dataset_exist and results_exist)
 
     if test_case_results:
         dataset_set_test_case.result += test_case_results
@@ -659,7 +710,7 @@ def push_test_data_to_tenant(
         )
         try:
             retrying_caller(xsiam_push_to_dataset, xsiam_client, events_test_data, rule)
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.RequestException:
             system_err = (
                 f"Failed pushing test data to tenant for dataset {rule.dataset}"
             )
@@ -750,8 +801,8 @@ def verify_pack_exists_on_tenant(
                 "[red]Pack does not exist on the tenant. Please install or upload the pack and try again[/red]",
                 extra={"markup": True},
             )
-            typer.echo(
-                f"demisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
+            logger.info(
+                f"\ndemisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
             )
             return False
     return True
@@ -780,17 +831,127 @@ def is_test_data_exists_on_server(
     return missing_event_data, missing_expected_values_data
 
 
+def verify_event_id_does_not_exist_on_tenant(
+    xsiam_client: XsiamApiClient,
+    modeling_rule: ModelingRule,
+    test_data: TestData,
+    retrying_caller: Retrying,
+) -> List[TestCase]:
+    """
+    Verify that the event ID does not exist on the tenant.
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        modeling_rule (ModelingRule): Modeling rule object parsed from the modeling rule file.
+        test_data (init_test_data.TestData): Test data object parsed from the test data file.
+        retrying_caller (Retrying): The retrying caller object.
+    """
+    logger.info(
+        "[cyan]Verifying that the event IDs does not exist on the tenant[/cyan]",
+        extra={"markup": True},
+    )
+    success_msg = "[green]The event IDs does not exists on the tenant[/green]"
+    error_msg = "The event id already exists in the tenant"
+    validate_expected_values_test_cases = []
+
+    for rule in modeling_rule.rules:
+        validate_event_id_does_not_exist_on_tenant_test_case = TestCase(
+            f"Validate event_id_does_not_exist_on_tenant {get_relative_path_to_content(modeling_rule.path)} dataset:{rule.dataset} "
+            f"vendor:{rule.vendor} product:{rule.product}",
+            classname="Validate event id does not exist query",
+        )
+        test_data_event_ids = [
+            f'"{d.test_data_event_id}"'
+            for d in test_data.data
+            if d.dataset == rule.dataset
+        ]
+        td_event_ids = ", ".join(test_data_event_ids)
+        query = f"config timeframe = 10y | datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids})"
+
+        try:
+            result = retrying_caller(xsiam_execute_query, xsiam_client, query)
+        except requests.exceptions.HTTPError:
+            logger.info(
+                success_msg,
+                extra={"markup": True},
+            )
+        else:
+            if not result:
+                logger.info(
+                    success_msg,
+                    extra={"markup": True},
+                )
+            else:
+                logger.error(
+                    error_msg,
+                    extra={"markup": True},
+                )
+                validate_event_id_does_not_exist_on_tenant_test_case.result += [
+                    Error(error_msg)
+                ]
+        validate_expected_values_test_cases.append(
+            validate_event_id_does_not_exist_on_tenant_test_case
+        )
+
+    return validate_expected_values_test_cases
+
+
+def delete_dataset(
+    xsiam_client: XsiamApiClient,
+    dataset_name: str,
+):
+    logger.info(
+        f"[cyan]Deleting existing {dataset_name} dataset[/cyan]",
+        extra={"markup": True},
+    )
+    xsiam_client.delete_dataset(dataset_name)
+    logger.info(
+        f"[green]Dataset {dataset_name} deleted successfully[/green]",
+        extra={"markup": True},
+    )
+
+
+def delete_existing_dataset_flow(
+    xsiam_client: XsiamApiClient, test_data: TestData, retrying_caller: Retrying
+) -> None:
+    """
+    Delete existing dataset if it exists in the tenant.
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        test_data (TestData): Test data object parsed from the test data file.
+        retrying_caller (Retrying): The retrying caller object.
+    """
+    dataset_to_check = list(set([data.dataset for data in test_data.data]))
+    for dataset in dataset_to_check:
+        dataset_set_test_case = check_dataset_exists(
+            xsiam_client, retrying_caller, dataset, print_errors=False
+        )
+        if dataset_set_test_case.is_passed:
+            delete_dataset(xsiam_client, dataset)
+        else:
+            logger.info("[cyan]Dataset does not exists on tenant[/cyan]")
+
+
+def verify_data_sets_exists(xsiam_client, retrying_caller, test_data):
+    datasets_test_case_ls = []
+    for dataset in test_data.data:
+        dataset_name = dataset.dataset
+        dataset_test_case = check_dataset_exists(
+            xsiam_client, retrying_caller, dataset_name
+        )
+        datasets_test_case_ls.append(dataset_test_case)
+    return datasets_test_case_ls
+
+
 def validate_modeling_rule(
     modeling_rule_directory: Path,
     xsiam_url: str,
     retrying_caller: Retrying,
-    api_key: str,
-    auth_id: str,
-    xsiam_token: str,
-    collector_token: str,
     push: bool,
     interactive: bool,
     ctx: typer.Context,
+    delete_existing_dataset: bool,
+    xsiam_client: XsiamApiClient,
+    tenant_demisto_version: Version,
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Validate a modeling rule.
 
@@ -798,18 +959,13 @@ def validate_modeling_rule(
         modeling_rule_directory (Path): Path to the modeling rule directory.
         retrying_caller (tenacity.Retrying): The retrying caller object.
         xsiam_url (str): URL of the xsiam tenant.
-        api_key (str): xsiam API key.
-        auth_id (str): xsiam auth ID.
-        xsiam_token (str): xsiam token.
-        collector_token: collector token.
         push (bool): Whether to push test event data to the tenant.
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
+        delete_existing_dataset (bool): Whether to delete the existing dataset in the tenant.
+        xsiam_client (XsiamApiClient): The XSIAM client used to do API calls to the tenant.
+        tenant_demisto_version (Version): The demisto version of the XSIAM tenant.
     """
-    logger.info(
-        f"[cyan]<<<< Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)} >>>>[/cyan]",
-        extra={"markup": True},
-    )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
     containing_pack = get_containing_pack(modeling_rule)
@@ -851,43 +1007,61 @@ def validate_modeling_rule(
         modeling_rule_test_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
     if modeling_rule.testdata_path:
         logger.info(
-            f"[cyan]Test data file found at {modeling_rule.testdata_path}\n"
+            f"[cyan]Test data file found at {get_relative_path_to_content(modeling_rule.testdata_path)}\n"
             f"Checking that event data was added to the test data file[/cyan]",
             extra={"markup": True},
         )
-        missing_event_data, _ = is_test_data_exists_on_server(
-            modeling_rule.testdata_path
-        )
-
-        # initialize xsiam client
-        xsiam_client_cfg = XsiamApiClientConfig(
-            base_url=xsiam_url,  # type: ignore[arg-type]
-            api_key=api_key,  # type: ignore[arg-type]
-            auth_id=auth_id,  # type: ignore[arg-type]
-            token=xsiam_token,  # type: ignore[arg-type]
-            collector_token=collector_token,  # type: ignore[arg-type]
-        )
-        xsiam_client = XsiamApiClient(xsiam_client_cfg)
-        if not verify_pack_exists_on_tenant(
-            xsiam_client, retrying_caller, modeling_rule, interactive
-        ):
-            test_case = TestCase(
-                "Pack not installed on tenant", classname="Modeling Rule"
-            )
-            return add_result_to_test_case(
-                "Pack not installed on tenant",
-                test_case,
-                modeling_rule_test_suite,
-            )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
-
-        schema_test_case = TestCase("Validate Schema", classname="Modeling Rule")
-        if schema_path := modeling_rule.schema_path:
-            with open(modeling_rule.schema_path) as schema_file:
+        modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
+            to_version=modeling_rule.to_version,
+            from_version=modeling_rule.from_version,
+            tenant_demisto_version=tenant_demisto_version,
+        )
+        if not modeling_rule_is_compatible:
+            # Modeling rule version is not compatible with the demisto version of the tenant, skipping
+            skipped = f"XSIAM Tenant's Demisto version doesn't match Modeling Rule {modeling_rule} version, skipping"
+            logger.warning(f"[yellow]{skipped}[/yellow]", extra={"markup": True})
+            test_case = TestCase(
+                "Modeling Rule not compatible with XSIAM tenant's demisto version",
+                classname=f"Modeling Rule {modeling_rule_file_name}",
+            )
+            test_case.result += [Skipped(skipped)]
+            modeling_rule_test_suite.add_testcase(test_case)
+            # Return True since we don't want to fail the command
+            return True, modeling_rule_test_suite
+        if (
+            Validations.TEST_DATA_CONFIG_IGNORE.value
+            not in test_data.ignored_validations
+        ):
+            logger.info(
+                "[green]test data config is not ignored starting the test data validation...[/green]",
+                extra={"markup": True},
+            )
+            missing_event_data, _ = is_test_data_exists_on_server(
+                modeling_rule.testdata_path
+            )
+            if not verify_pack_exists_on_tenant(
+                xsiam_client, retrying_caller, modeling_rule, interactive
+            ):
+                test_case = TestCase(
+                    "Pack not installed on tenant", classname="Modeling Rule"
+                )
+                return add_result_to_test_case(
+                    "Pack not installed on tenant",
+                    test_case,
+                    modeling_rule_test_suite,
+                )
+            if delete_existing_dataset:
+                delete_existing_dataset_flow(xsiam_client, test_data, retrying_caller)
+            schema_test_case = TestCase(
+                "Validate Schema",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+            )
+            if schema_path := modeling_rule.schema_path:
                 try:
-                    schema = json.load(schema_file)
+                    schema = get_file(schema_path)
                 except json.JSONDecodeError as ex:
-                    err = f"Failed to parse schema file {modeling_rule.schema_path} as JSON"
+                    err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
                     logger.error(
                         f"[red]{err}[/red]",
                         extra={"markup": True},
@@ -896,85 +1070,92 @@ def validate_modeling_rule(
                     return add_result_to_test_case(
                         err, schema_test_case, modeling_rule_test_suite
                     )
-        else:
-            err = f"Schema file does not exist in path {modeling_rule.schema_path}"
-            return log_error_to_test_case(
-                err, schema_test_case, modeling_rule_test_suite
-            )
-        if (
-            Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value
-            not in test_data.ignored_validations
-        ):
-            logger.info(
-                f"[green]Validating that the schema {get_relative_path_to_content(schema_path)} "
-                "is aligned with TestData file.[/green]",
-                extra={"markup": True},
-            )
-
-            success, results = validate_schema_aligned_with_test_data(
-                test_data=test_data, schema=schema
-            )
-            schema_test_case.result += results
-            if not success:
-                err = (
-                    f"The schema {get_relative_path_to_content(schema_path)} is not aligned with the test data file "
-                    f"{get_relative_path_to_content(modeling_rule.testdata_path)}"
-                )
+            else:
+                err = f"Schema file does not exist in path {get_relative_path_to_content(modeling_rule.schema_path)}"
                 return log_error_to_test_case(
                     err, schema_test_case, modeling_rule_test_suite
                 )
-        else:
-            skipped = (
-                f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
-                "is aligned with TestData file."
-            )
-            logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
-            schema_test_case.result += [Skipped(skipped)]
-            modeling_rule_test_suite.add_testcase(schema_test_case)
-
-        if push:
-            if missing_event_data:
-                return handle_missing_event_data_in_modeling_rule(
-                    missing_event_data,
-                    modeling_rule,
-                    modeling_rule_test_suite,
-                    executed_command,
+            if (
+                Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value
+                not in test_data.ignored_validations
+            ):
+                logger.info(
+                    f"[green]Validating that the schema {get_relative_path_to_content(schema_path)} "
+                    "is aligned with TestData file.[/green]",
+                    extra={"markup": True},
                 )
-            push_test_data_test_case = push_test_data_to_tenant(
+
+                success, results = validate_schema_aligned_with_test_data(
+                    test_data=test_data, schema=schema
+                )
+                schema_test_case.result += results
+                if not success:
+                    err = (
+                        f"The schema {get_relative_path_to_content(schema_path)} is not aligned with the test data file "
+                        f"{get_relative_path_to_content(modeling_rule.testdata_path)}"
+                    )
+                    return log_error_to_test_case(
+                        err, schema_test_case, modeling_rule_test_suite
+                    )
+            else:
+                skipped = (
+                    f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
+                    "is aligned with TestData file."
+                )
+                logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
+                schema_test_case.result += [Skipped(skipped)]
+                modeling_rule_test_suite.add_testcase(schema_test_case)
+
+            if push:
+                event_id_exists_test_case = verify_event_id_does_not_exist_on_tenant(
+                    xsiam_client, modeling_rule, test_data, retrying_caller
+                )
+                modeling_rule_test_suite.add_testcases(event_id_exists_test_case)
+                if missing_event_data:
+                    return handle_missing_event_data_in_modeling_rule(
+                        missing_event_data,
+                        modeling_rule,
+                        modeling_rule_test_suite,
+                        executed_command,
+                    )
+                push_test_data_test_case = push_test_data_to_tenant(
+                    xsiam_client, retrying_caller, modeling_rule, test_data
+                )
+                modeling_rule_test_suite.add_testcase(push_test_data_test_case)
+                if not push_test_data_test_case.is_passed:
+                    return False, modeling_rule_test_suite
+                datasets_test_case = verify_data_sets_exists(
+                    xsiam_client, retrying_caller, test_data
+                )
+                modeling_rule_test_suite.add_testcases(datasets_test_case)
+            else:
+                logger.info(
+                    '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
+                    extra={"markup": True},
+                )
+            logger.info(
+                "[cyan]Validating expected_values...[/cyan]", extra={"markup": True}
+            )
+            validate_expected_values_test_cases = validate_expected_values(
                 xsiam_client, retrying_caller, modeling_rule, test_data
             )
-            modeling_rule_test_suite.add_testcase(push_test_data_test_case)
-            if not push_test_data_test_case.is_passed:
-                return False, modeling_rule_test_suite
-
-            dataset_set_test_case = check_dataset_exists(
-                xsiam_client, retrying_caller, test_data
-            )
-            modeling_rule_test_suite.add_testcase(dataset_set_test_case)
-            if not dataset_set_test_case.is_passed:
-                return False, modeling_rule_test_suite
+            modeling_rule_test_suite.add_testcases(validate_expected_values_test_cases)
+            if (
+                not modeling_rule_test_suite.errors
+                and not modeling_rule_test_suite.failures
+            ):
+                logger.info(
+                    "[green]All mappings validated successfully[/green]",
+                    extra={"markup": True},
+                )
+                return True, modeling_rule_test_suite
+            return False, modeling_rule_test_suite
         else:
             logger.info(
-                '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
-                extra={"markup": True},
-            )
-        logger.info(
-            "[cyan]Validating expected_values...[/cyan]", extra={"markup": True}
-        )
-        validate_expected_values_test_cases = validate_expected_values(
-            xsiam_client, retrying_caller, modeling_rule, test_data
-        )
-        modeling_rule_test_suite.add_testcases(validate_expected_values_test_cases)
-        if (
-            not modeling_rule_test_suite.errors
-            and not modeling_rule_test_suite.failures
-        ):
-            logger.info(
-                "[green]All mappings validated successfully[/green]",
+                "[green]test data config is ignored skipping the test data validation[/green]",
                 extra={"markup": True},
             )
             return True, modeling_rule_test_suite
-        return False, modeling_rule_test_suite
     else:
         logger.warning(
             f"[yellow]No test data file found for {get_relative_path_to_content(modeling_rule_directory)}[/yellow]",
@@ -1044,18 +1225,45 @@ def validate_modeling_rule(
                 )
                 logger.error(
                     f"[red]Please create a test data file for "
-                    f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun[/red]",
+                    f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
                     extra={"markup": True},
                 )
-                typer.echo(executed_command)
         else:
+            err = (
+                f"Please create a test data file for {get_relative_path_to_content(modeling_rule_directory)} "
+                f"and then rerun\n{executed_command}"
+            )
             logger.error(
-                f"[red]Please create a test data file for "
-                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun[/red]",
+                f"[red]{err}[/red]",
                 extra={"markup": True},
             )
-            typer.echo(executed_command)
+            test_data_test_case = TestCase(
+                "Test data file does not exist",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+            )
+            test_data_test_case.result += [Error(err)]
+            modeling_rule_test_suite.add_testcase(test_data_test_case)
+            return False, modeling_rule_test_suite
         return False, None
+
+
+def validate_modeling_rule_version_against_tenant(
+    to_version: Version, from_version: Version, tenant_demisto_version: Version
+) -> bool:
+    """Checks if the version of the modeling rule is compatible with the XSIAM tenant's demisto version.
+    Compatibility is checked by: from_version <= tenant_xsiam_version <= to_version
+
+    Args:
+        to_version (Version): The to version of the modeling rule
+        from_version (Version): The from version of the modeling rule
+        tenant_demisto_version (Version): The demisto version of the XSIAM tenant
+
+    Returns:
+        bool: True if the version of the modeling rule is compatible, else False
+    """
+    return (
+        tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
+    )
 
 
 def handle_missing_event_data_in_modeling_rule(
@@ -1249,23 +1457,29 @@ def test_modeling_rule(
         show_default=True,
         help="The number of times to retry the request against the server.",
     ),
+    delete_existing_dataset: bool = typer.Option(
+        False,
+        "--delete_existing_dataset",
+        "-dd",
+        help="Deletion of the existing dataset from the tenant. Default: False.",
+    ),
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
         "--console-log-threshold",
-        help=("Minimum logging threshold for the console logger."),
+        help="Minimum logging threshold for the console logger.",
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
         "--file-log-threshold",
-        help=("Minimum logging threshold for the file logger."),
+        help="Minimum logging threshold for the file logger.",
     ),
-    log_file_path: str = typer.Option(
-        "demisto_sdk_debug.log",
+    log_file_path: Optional[str] = typer.Option(
+        None,
         "-lp",
         "--log-file-path",
-        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+        help="Path to save log files onto.",
     ),
 ):
     """
@@ -1279,33 +1493,57 @@ def test_modeling_rule(
     handle_deprecated_args(ctx.args)
 
     logger.info(
-        f"[cyan]Modeling Rules directories to test: {inputs}[/cyan]",
+        "[cyan]Test Modeling Rules directories to test:[/cyan]",
         extra={"markup": True},
     )
+
+    for modeling_rule_directory in inputs:
+        logger.info(
+            f"[cyan]\t{get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
+            extra={"markup": True},
+        )
 
     retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
 
     errors = False
     xml = JUnitXml()
     start_time = datetime.now(timezone.utc)
-    for modeling_rule_directory in inputs:
+    # initialize xsiam client
+    xsiam_client_cfg = XsiamApiClientConfig(
+        base_url=xsiam_url,  # type: ignore[arg-type]
+        api_key=api_key,  # type: ignore[arg-type]
+        auth_id=auth_id,  # type: ignore[arg-type]
+        token=xsiam_token,  # type: ignore[arg-type]
+        collector_token=collector_token,  # type: ignore[arg-type]
+    )
+    xsiam_client = XsiamApiClient(xsiam_client_cfg)
+    tenant_demisto_version: Version = xsiam_client.get_demisto_version()
+    for i, modeling_rule_directory in enumerate(inputs, start=1):
+        logger.info(
+            f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
+            extra={"markup": True},
+        )
         success, modeling_rule_test_suite = validate_modeling_rule(
             modeling_rule_directory,
             # can ignore the types since if they are not set to str values an error occurs
             xsiam_url,  # type: ignore[arg-type]
             retrying_caller,
-            api_key,  # type: ignore[arg-type]
-            auth_id,  # type: ignore[arg-type]
-            xsiam_token,  # type: ignore[arg-type]
-            collector_token,  # type: ignore[arg-type]
             push,
             interactive,
             ctx,
+            delete_existing_dataset,
+            xsiam_client=xsiam_client,
+            tenant_demisto_version=tenant_demisto_version,
         )
-        if not success:
+        if success:
+            logger.info(
+                f"[green]Test Modeling rule {get_relative_path_to_content(modeling_rule_directory)} passed[/green]",
+                extra={"markup": True},
+            )
+        else:
             errors = True
             logger.error(
-                f"[red]Error testing modeling rule {get_relative_path_to_content(modeling_rule_directory)}[/red]",
+                f"[red]Test Modeling Rule {get_relative_path_to_content(modeling_rule_directory)} failed[/red]",
                 extra={"markup": True},
             )
         if modeling_rule_test_suite:
@@ -1313,10 +1551,28 @@ def test_modeling_rule(
             xml.add_testsuite(modeling_rule_test_suite)
 
     if output_junit_file:
+        logger.info(
+            f"[cyan]Writing JUnit XML to {get_relative_path_to_content(output_junit_file)}[/cyan]",
+            extra={"markup": True},
+        )
         xml.write(output_junit_file.as_posix(), pretty=True)
+    else:
+        logger.info(
+            "[cyan]No JUnit XML file path was passed - skipping writing JUnit XML[/cyan]",
+            extra={"markup": True},
+        )
 
+    duration = duration_since_start_time(start_time)
     if errors:
+        logger.info(
+            f"[red]Test Modeling Rules: Failed, took:{duration} seconds[/red]",
+            extra={"markup": True},
+        )
         raise typer.Exit(1)
+    logger.info(
+        f"[green]Test Modeling Rules: Passed, took:{duration} seconds[/green]",
+        extra={"markup": True},
+    )
 
 
 if __name__ == "__main__":

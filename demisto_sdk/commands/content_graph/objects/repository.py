@@ -4,6 +4,7 @@ from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import List, Optional
 
+import tqdm
 from pydantic import BaseModel, DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -16,18 +17,25 @@ from demisto_sdk.commands.content_graph.parsers.repository import RepositoryPars
 USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
-def all_content_repo():
-    """
-    Returns a ContentDTO object with all the packs of the content repository.
-    """
-    repo_parser = RepositoryParser(CONTENT_PATH)
-    repo_parser.parse()
-    return ContentDTO.from_orm(repo_parser)
-
-
 class ContentDTO(BaseModel):
     path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
+
+    @staticmethod
+    def from_path(path: Path = CONTENT_PATH):
+        """
+        Returns a ContentDTO object with all the packs of the content repository.
+        """
+        repo_parser = RepositoryParser(path)
+        with tqdm.tqdm(
+            total=len(tuple(repo_parser.iter_packs())),
+            unit="packs",
+            desc="Parsing packs",
+            position=0,
+            leave=True,
+        ) as progress_bar:
+            repo_parser.parse(progress_bar=progress_bar)
+        return ContentDTO.from_orm(repo_parser)
 
     def dump(
         self,

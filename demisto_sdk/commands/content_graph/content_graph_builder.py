@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInter
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
-PACKS_PER_BATCH = 50
+PACKS_PER_BATCH = 600
 
 
 class ContentGraphBuilder:
@@ -24,7 +24,6 @@ class ContentGraphBuilder:
         self.content_graph = content_graph
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
-        self._preprepare_database()
 
     def update_graph(
         self,
@@ -40,7 +39,7 @@ class ContentGraphBuilder:
         self._parse_and_model_content(packs_to_update)
         self._create_or_update_graph()
 
-    def _preprepare_database(self) -> None:
+    def init_database(self) -> None:
         self.content_graph.clean_graph()
         self.content_graph.create_indexes_and_constraints()
 
@@ -71,9 +70,8 @@ class ContentGraphBuilder:
             leave=True,
         ) as progress_bar:
             for packs_batch in more_itertools.chunked(packs_to_parse, PACKS_PER_BATCH):
-                repository_parser.parse(packs_batch)
+                repository_parser.parse(packs_batch, progress_bar)
                 content_dtos.append(ContentDTO.from_orm(repository_parser))
-                progress_bar.update(len(packs_batch))
 
                 repository_parser.clear()
                 gc.collect()
@@ -93,5 +91,7 @@ class ContentGraphBuilder:
     def _create_or_update_graph(self) -> None:
         """Runs DB queries using the collected nodes and relationships to create or update the content graph."""
         self.content_graph.create_nodes(self.nodes)
+        gc.collect()
         self.content_graph.create_relationships(self.relationships)
+        gc.collect()
         self.content_graph.remove_non_repo_items()

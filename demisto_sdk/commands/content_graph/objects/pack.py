@@ -13,14 +13,18 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
     ImagesFolderNames,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import MarketplaceTagParser
+from demisto_sdk.commands.common.tools import (
+    MarketplaceTagParser,
+    get_file,
+    write_dict,
+)
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
     ContentType,
@@ -111,23 +115,55 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
+    ignored_errors_dict: dict = Field({}, exclude=True)
+    pack_readme: str = Field("", exclude=True)
+    latest_rn_version: str = Field("", exclude=True)
+    latest_rn_content: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+    pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
+
+    @classmethod
+    def from_orm(cls, obj) -> "Pack":
+        pack = super().from_orm(obj)
+        for content_item in pack.content_items:
+            content_item.pack = pack
+        return pack
 
     @validator("path", always=True)
-    def validate_path(cls, v: Path) -> Path:
+    def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
-        return CONTENT_PATH / v
+        if not CONTENT_PATH.name:
+            return CONTENT_PATH / v
+        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
 
     @property
     def is_private(self) -> bool:
         return self.premium or False
 
     @property
+    def readme(self) -> str:
+        return get_file(str(self.path / "README.md"), return_content=True)
+
+    @property
     def pack_id(self) -> str:
         return self.object_id
+
+    @property
+    def ignored_errors(self) -> list:
+        try:
+            return (
+                list(
+                    self.ignored_errors_dict.get(  # type: ignore
+                        f"file:{PACK_METADATA_FILENAME}", []
+                    ).items()
+                )[0][1].split(",")
+                or []
+            )
+        except:  # noqa: E722
+            return []
 
     @property
     def pack_name(self) -> str:
@@ -136,6 +172,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @property
     def pack_version(self) -> Optional[Version]:
         return Version(self.current_version) if self.current_version else None
+
+    @property
+    def support_level(self):
+        return self.support
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -147,11 +187,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool
@@ -226,9 +266,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata.update(
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
-
-        with open(path, "w") as f:
-            json.dump(metadata, f, indent=4, sort_keys=True)
+        write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
 
@@ -334,7 +372,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
         destination_zip_dir: Optional[Path] = None,
-        zip: bool = False,
+        zip: bool = True,
         **kwargs,
     ):
         if destination_zip_dir is None:
@@ -495,3 +533,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
+
+    def save(self):
+        file_path = self.path / PACK_METADATA_FILENAME
+        data = get_file(file_path)
+        super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore

@@ -1,33 +1,141 @@
 import os
 import re
+from functools import lru_cache
 from pathlib import Path
-from typing import Set, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union
 
 import click
 import gitdb
-from git import InvalidGitRepositoryError, Repo
+from git import (
+    InvalidGitRepositoryError,
+    Repo,  # noqa: TID251: required to create GitUtil
+)
 from git.diff import Lit_change_type
+from git.exc import GitError, NoSuchPathError
+from git.objects import Blob, Commit
 from git.remote import Remote
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
+    PACKS_FOLDER,
+)
+from demisto_sdk.commands.common.logger import logger
+
+
+class CommitOrBranchNotFoundError(GitError):
+    def __init__(
+        self, commit_or_branch: str, exception: Exception, from_remote: bool = True
+    ):
+        if from_remote:
+            commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
+        super().__init__(
+            f"Commit/Branch {commit_or_branch} could not be found, error: {exception}"
+        )
+
+
+class GitFileNotFoundError(NoSuchPathError):
+    def __init__(self, commit_or_branch: str, path: str, from_remote: bool = True):
+        if from_remote:
+            commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
+        super().__init__(
+            f"file {path} could not be found in commit/branch {commit_or_branch}"
+        )
 
 
 class GitUtil:
-    repo: Repo
+    # in order to use Repo class/static methods
+    REPO_CLS = Repo
 
-    def __init__(self, repo: Repo = None):
-        if not repo:
+    def __init__(
+        self,
+        path: Optional[Union[str, Path]] = None,
+        search_parent_directories: bool = True,
+    ):
+
+        if isinstance(path, str):
+            repo_path = Path(path)
+        else:
+            repo_path = path or Path.cwd()
+
+        try:
+            self.repo = Repo(
+                repo_path, search_parent_directories=search_parent_directories
+            )
+        except InvalidGitRepositoryError:
+            raise InvalidGitRepositoryError(
+                f"Unable to find Repository from current {repo_path.absolute()} - aborting"
+            )
+
+    @classmethod
+    def from_content_path(cls, path: Optional[Path] = None) -> "GitUtil":
+        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
+            return cls(Path(content_path), search_parent_directories=False)
+        return cls(path)
+
+    def path_from_git_root(self, path: Union[Path, str]) -> Path:
+        try:
+            return Path(path).relative_to(Path(self.repo.working_dir))
+        except ValueError:
+            return Path(os.path.relpath(str(path), self.git_path()))
+
+    def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> Commit:
+        if from_remote:
+            # check if file exist in remote branch
             try:
-                self.repo = Repo(Path.cwd(), search_parent_directories=True)
-            except InvalidGitRepositoryError:
-                raise InvalidGitRepositoryError(
-                    "Unable to find Repository from current working directory - aborting"
+                remote_branch = self.repo.refs[  # type: ignore[index]
+                    f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
+                ]
+                return remote_branch.commit
+            except IndexError as e:
+                # there isn't remote branch like this
+                raise CommitOrBranchNotFoundError(
+                    commit_or_branch, from_remote=from_remote, exception=e
                 )
         else:
-            self.repo = repo
+            # check if file exist in a local branch/commit
+            try:
+                return self.repo.commit(commit_or_branch)
+            except ValueError as e:
+                # commit/branch does not exist
+                raise CommitOrBranchNotFoundError(
+                    commit_or_branch, from_remote=from_remote, exception=e
+                )
 
+    def read_file_content(
+        self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
+    ) -> bytes:
+
+        commit = self.get_commit(commit_or_branch, from_remote=from_remote)
+        path = str(self.path_from_git_root(path))
+
+        try:
+            blob: Blob = commit.tree / path
+        except KeyError:
+            raise GitFileNotFoundError(
+                commit_or_branch, path=path, from_remote=from_remote
+            )
+        return blob.data_stream.read()
+
+    def is_file_exist_in_commit_or_branch(
+        self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
+    ) -> bool:
+
+        try:
+            commit = self.get_commit(commit_or_branch, from_remote=from_remote)
+        except CommitOrBranchNotFoundError:
+            return False
+
+        path = str(self.path_from_git_root(path))
+
+        try:
+            return commit.tree[path].path == path
+        except KeyError:
+            return False
+
+    @lru_cache
     def get_all_files(self) -> Set[Path]:
-        return set(map(Path, self.repo.git.ls_files().split("\n")))
+        return set(map(Path, self.repo.git.ls_files("-z").split("\x00")))
 
     def modified_files(
         self,
@@ -465,7 +573,7 @@ class GitUtil:
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
         return {
             file.parts[1]
-            for file in self.get_all_changed_files(prev_ver)
+            for file in self._get_all_changed_files(prev_ver) | self._get_staged_files()
             if file.parts[0] == PACKS_FOLDER
         }
 
@@ -497,6 +605,7 @@ class GitUtil:
 
         return extracted_paths
 
+    @lru_cache
     def _get_staged_files(self) -> Set[Path]:
         """Get only staged files
 
@@ -510,12 +619,25 @@ class GitUtil:
         }
 
     def _get_all_changed_files(self, prev_ver: str = "") -> Set[Path]:
-        """Get all the files changed in the current branch without status distinction.
+        """
+        Get all the files changed in the current branch without status distinction.
+
         Args:
             prev_ver (str): The base branch against which the comparison is made.
+
         Returns:
-            Set: of Paths to files changed in the current branch.
+            Set[Path]: of Paths to files changed in the current branch.
         """
+        try:
+            self.fetch()
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to fetch branch '{self.get_current_working_branch()}' "
+                f"from remote '{self.repo.remote().name}' ({self.repo.remote().url}). Continuing without fetching."
+            )
+            logger.debug(f"Error: {e}")
+
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
@@ -596,10 +718,15 @@ class GitUtil:
                 return ""
             for current_remote_ref in current_remote.refs:
                 current_remote_ref_str = str(current_remote_ref)
-                if current_remote_ref_str == "origin/main":
+                if current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/main":
                     return "main"
-                elif current_remote_ref_str == "origin/master":
+                elif current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/master":
                     return "master"
+                elif (
+                    current_remote_ref_str
+                    == f"{DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
+                ):
+                    return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
     def handle_prev_ver(self, prev_ver: str = ""):
@@ -750,25 +877,32 @@ class GitUtil:
         file_content = self.repo.git.show(git_file_path)
         return file_content
 
-    def get_local_remote_file_path(self, full_file_path: str, tag: str) -> str:
+    def get_local_remote_file_path(
+        self, full_file_path: str, tag: str, from_remote: bool = True
+    ) -> str:
         """Get local file path of remote branch. For example get origin/master:README.md
 
         Args:
             full_file_path: The file path to fetch. For example 'content/README.md'
             tag: The tag of the branch. For example 'master'
+            from_remote: whether to build the file path for remote branch or local branch
 
         Returns:
             The git file path. For example get origin/master:README.md
         """
-        relative_file_path = os.path.relpath(full_file_path, self.git_path())
-        try:
-            remote_name: Union[Remote, str] = self.repo.remote()
-        except ValueError as exc:
-            if "Remote named 'origin' didn't exist" in str(exc):
-                remote_name = "origin"
-            else:
-                raise exc
-        return f"{remote_name}/{tag}:{relative_file_path}"
+        git_file_path = f"{tag}:{self.path_from_git_root(full_file_path)}"
+
+        if from_remote:
+            try:
+                remote_name: Union[Remote, str] = self.repo.remote()
+            except ValueError as exc:
+                if "Remote named 'origin' didn't exist" in str(exc):
+                    remote_name = "origin"
+                else:
+                    raise exc
+            return f"{remote_name}/{git_file_path}"
+
+        return git_file_path
 
     def get_all_changed_files(
         self,
@@ -778,7 +912,8 @@ class GitUtil:
         debug: bool = False,
         include_untracked: bool = False,
     ) -> Set[Path]:
-        """Get a set of all changed files in the branch (modified, added and renamed)
+        """
+        Get a set of all changed files in the branch (modified, added and renamed)
 
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -787,8 +922,9 @@ class GitUtil:
             debug (bool): Whether to print the debug logs.
             include_untracked (bool): Whether to include untracked files.
         Returns:
-            Set. A set of all the changed files in the given branch when comparing to prev_ver
+            Set[Path]: A set of all the changed files in the given branch when comparing to prev_ver
         """
+        self.fetch()
         modified_files: Set[Path] = self.modified_files(
             prev_ver=prev_ver,
             committed_only=committed_only,
@@ -821,3 +957,14 @@ class GitUtil:
             bool: True if the file is ignored. Otherwise, return False.
         """
         return bool(self.repo.ignored(file_path))
+
+    def fetch(self):
+        self.repo.remote().fetch()
+
+    def fetch_all(self):
+        for remote in self.repo.remotes:
+            remote.fetch()
+
+    def commit_files(self, commit_message: str, files: Union[List, str] = "."):
+        self.repo.git.add(files)
+        self.repo.index.commit(commit_message)

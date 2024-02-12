@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_SDK_CI_SERVER_HOST,
     GENERIC_DEFINITIONS_DIR,
     GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR,
@@ -678,13 +679,21 @@ def get_fields_by_script_argument(task):
                 # the value should be a list of dicts in str format
                 custom_field_value = list(field_value.values())[0]
                 if isinstance(custom_field_value, str):
-                    custom_fields_list = json.loads(custom_field_value)
-                    if not isinstance(custom_fields_list, list):
-                        custom_fields_list = [custom_fields_list]
-                    for custom_field in custom_fields_list:
-                        for field_name in custom_field.keys():
-                            if field_name not in BUILT_IN_FIELDS:
-                                dependent_incident_fields.add(field_name)
+                    if custom_field_value.startswith("$"):
+                        logger.warning(
+                            "You're using an unrecommended method - ${} - to retrieve values from the context data."
+                        )
+                        continue
+                    else:
+                        custom_fields_list = json.loads(custom_field_value)
+                else:
+                    custom_fields_list = custom_field_value
+                if not isinstance(custom_fields_list, list):
+                    custom_fields_list = [custom_fields_list]
+                for custom_field in custom_fields_list:
+                    for field_name in custom_field.keys():
+                        if field_name not in BUILT_IN_FIELDS:
+                            dependent_incident_fields.add(field_name)
     return dependent_incident_fields
 
 
@@ -1634,7 +1643,7 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
     if (
         not id_ and "marketplacev2" in marketplaces
     ):  # TODO: Should be removed after we have an agreed id field for parsing rule
-        id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
+        id_ = f"{pack}-{Path(path).stem}"
 
     data = create_common_entity_data(
         path=path,
@@ -1662,7 +1671,7 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
     if (
         not id_ and "marketplacev2" in marketplaces
     ):  # TODO: Should be removed after we have an agreed id field for modeling rule
-        id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
+        id_ = f"{pack}-{Path(path).stem}"
 
     data = create_common_entity_data(
         path=path,
@@ -1771,7 +1780,7 @@ def process_integration(
                 res.append(get_integration_data(file_path, packs=packs))
         else:
             # package integration
-            package_name = os.path.basename(file_path)
+            package_name = Path(file_path).name
             file_path = os.path.join(file_path, f"{package_name}.yml")
             if should_skip_item_by_mp(
                 file_path,
@@ -1927,7 +1936,7 @@ def process_indicator_types(
             return [], excluded_items_from_id_set
         # ignore old reputations.json files
         if (
-            not os.path.basename(file_path) == "reputations.json"
+            not Path(file_path).name == "reputations.json"
             and find_type(file_path) == FileType.REPUTATION
         ):
             if print_logs:
@@ -2161,7 +2170,7 @@ def process_general_items(
                     logger.info(f"adding {file_path} to id_set")
                 res.append(data_extraction_func(file_path, packs=packs))
         else:
-            package_name = os.path.basename(file_path)
+            package_name = Path(file_path).name
             file_path = os.path.join(file_path, f"{package_name}.{suffix}")
             item_type = find_type(file_path)
             if Path(file_path).is_file() and item_type in expected_file_types:
@@ -3793,9 +3802,9 @@ def is_same_source(source1, source2) -> bool:
     host1, owner1, repo1 = source1
     host2, owner2, repo2 = source2
     if (
-        host1 in {"github.com", "code.pan.run"}
+        host1 in {"github.com", DEMISTO_SDK_CI_SERVER_HOST}
         and owner1 in {"demisto", "xsoar"}
-        and host2 in {"github.com", "code.pan.run"}
+        and host2 in {"github.com", DEMISTO_SDK_CI_SERVER_HOST}
         and owner2 in {"demisto", "xsoar"}
     ):
         return repo1 == repo2

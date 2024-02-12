@@ -5,6 +5,7 @@ from wcmatch.pathlib import EXTGLOB, NEGATE, Path
 
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.tools import get_file, write_dict
 
 from .dictionary_based_object import DictionaryBasedObject
 
@@ -52,15 +53,14 @@ class YAMLObject(DictionaryBasedObject):
     def _deserialize(self):
         """Load yaml to dictionary"""
         try:
-            self._as_dict = yaml.load(self.path)
+            self._as_dict = get_file(self.path, raise_on_error=True)
         except ScannerError as e:
             raise exc.ContentSerializeError(self, self.path, e.problem)
 
     def _serialize(self, dest_dir: Path):
         """Dump dictionary to yml file"""
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        with open(dest_file, "w") as file:
-            yaml.dump(self._as_dict, file)
+        write_dict(dest_file, data=self._as_dict, handler=yaml)
         return [dest_file]
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):

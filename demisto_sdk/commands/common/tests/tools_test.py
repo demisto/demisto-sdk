@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 import shutil
 from configparser import ConfigParser
@@ -6,13 +7,13 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
 
-import git
 import pytest
 import requests
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     DOC_FILES_DIR,
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
@@ -67,6 +68,7 @@ from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,
     arg_to_list,
+    check_timestamp_format,
     compare_context_path_in_yml_and_readme,
     extract_field_from_mapping,
     field_to_cli_name,
@@ -81,7 +83,6 @@ from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_display_name,
     get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type,
     get_file,
     get_file_displayed_name,
     get_file_version_suffix_if_exists,
@@ -109,10 +110,10 @@ from demisto_sdk.commands.common.tools import (
     is_pack_path,
     is_uuid,
     parse_multiple_path_inputs,
-    retrieve_file_ending,
     run_command_os,
     search_and_delete_from_conf,
     server_version_compare,
+    set_value,
     str2bool,
     string_to_bool,
     to_kebab_case,
@@ -135,11 +136,14 @@ from demisto_sdk.tests.constants_test import (
     VALID_INCIDENT_TYPE_PATH,
     VALID_INTEGRATION_TEST_PATH,
     VALID_LAYOUT_PATH,
+    VALID_LIST_PATH,
     VALID_MD,
     VALID_PLAYBOOK_ID_PATH,
+    VALID_PRE_PROCESSING_RULE_PATH,
     VALID_REPUTATION_FILE,
     VALID_SCRIPT_PATH,
     VALID_WIDGET_PATH,
+    VULTURE_WHITELIST_PATH,
 )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT,
@@ -151,7 +155,7 @@ from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 GIT_ROOT = git_path()
 
@@ -296,7 +300,7 @@ class TestGenericFunctions:
         "dir_path", ["demisto_sdk", f"{GIT_ROOT}/demisto_sdk/tests/test_files"]
     )
     def test_get_yml_paths_in_dir(self, dir_path):
-        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg="")
+        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path)
         yml_paths_test = glob.glob(os.path.join(dir_path, "*yml"))
         assert sorted(yml_paths) == sorted(yml_paths_test)
         if yml_paths_test:
@@ -335,6 +339,7 @@ class TestGenericFunctions:
         (VALID_GENERIC_FIELD_PATH, FileType.GENERIC_FIELD),
         (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
         (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
+        (VALID_LIST_PATH, FileType.LISTS),
         (IGNORED_PNG, None),
         ("Author_image.png", FileType.AUTHOR_IMAGE),
         (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
@@ -342,6 +347,8 @@ class TestGenericFunctions:
         (Path(DOC_FILES_DIR) / "foo", FileType.DOC_FILE),
         (METADATA_FILE_NAME, FileType.METADATA),
         ("", None),
+        (VULTURE_WHITELIST_PATH, FileType.VULTURE_WHITELIST),
+        (VALID_PRE_PROCESSING_RULE_PATH, FileType.PRE_PROCESS_RULES),
     ]
 
     @pytest.mark.parametrize("path, _type", data_test_find_type)
@@ -476,10 +483,6 @@ class TestGenericFunctions:
         files = filter_files_by_type(files, types)
 
         assert files == output
-
-    @pytest.mark.parametrize("path, output", [("demisto.json", "json"), ("wow", "")])
-    def test_retrieve_file_ending(self, path, output):
-        assert retrieve_file_ending(path) == output
 
     @pytest.mark.parametrize(
         "data, entity, output",
@@ -626,12 +629,12 @@ class TestGetRemoteFileLocally:
     FILE_NAME = "somefile.json"
     FILE_CONTENT = '{"id": "some_file"}'
 
-    git_util = GitUtil(repo=Content.git())
-    main_branch = git_util.handle_prev_ver()[1]
+    git_util = Content.git_util()
+    main_branch = DEMISTO_GIT_PRIMARY_BRANCH
 
     def setup_method(self):
         # create local git repo
-        example_repo = git.Repo.init(self.REPO_NAME)
+        example_repo = GitUtil.REPO_CLS.init(self.REPO_NAME)
         origin_branch = self.main_branch
         if not origin_branch.startswith("origin"):
             origin_branch = "origin/" + origin_branch
@@ -728,17 +731,6 @@ class TestEntityAttributes:
     )
     def test_get_entity_id_by_entity_type(self, data, entity):
         assert get_entity_id_by_entity_type(data, entity) == 1
-
-    @pytest.mark.parametrize(
-        "data, entity",
-        [
-            ({"typeId": "wow"}, LAYOUTS_DIR),
-            ({"name": "wow"}, LAYOUTS_DIR),
-            ({"name": "wow"}, PLAYBOOKS_DIR),
-        ],
-    )
-    def test_get_entity_name_by_entity_type(self, data, entity):
-        assert get_entity_name_by_entity_type(data, entity) == "wow"
 
 
 class TestGetFilesInDir:
@@ -862,7 +854,7 @@ def test_has_remote(mocker, git_value, response):
     :param git_value: Git string from `git remotes -v`
     """
     mocker.patch(
-        "demisto_sdk.commands.common.tools.run_command", return_value=git_value
+        "demisto_sdk.commands.common.tools.git_remote_v", return_value=git_value
     )
     test_remote = has_remote_configured()
     assert response == test_remote
@@ -887,7 +879,7 @@ def test_origin_content(mocker, git_value, response):
     :param git_value: Git string from `git remotes -v`
     """
     mocker.patch(
-        "demisto_sdk.commands.common.tools.run_command", return_value=git_value
+        "demisto_sdk.commands.common.tools.git_remote_v", return_value=git_value
     )
     test_remote = is_origin_content_repo()
     assert response == test_remote
@@ -1437,7 +1429,7 @@ def test_get_file_displayed_name__image(repo):
     integration.create_default_integration()
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
-        assert display_name == os.path.basename(integration.image.rel_path)
+        assert display_name == Path(integration.image.rel_path).name
 
 
 INCIDENTS_TYPE_FILES_INPUTS = [
@@ -2445,6 +2437,38 @@ class TestMarketplaceTagParser:
 {XSOAR_SAAS_INLINE_PREFIX} xsoar_saas inline test {XSOAR_SAAS_INLINE_SUFFIX}
 {XSOAR_ON_PREM_INLINE_PREFIX} xsoar_on_prem inline test {XSOAR_ON_PREM_INLINE_SUFFIX}"""
 
+    @pytest.mark.parametrize(
+        "res_file, marketplace_version",
+        [
+            ("EDL_xsoar_res.md", MarketplaceVersions.XSOAR.value),
+            ("EDL_xsiam_res.md", MarketplaceVersions.MarketplaceV2.value),
+        ],
+    )
+    def test_xsoar_tag_only_on_edl_description(self, res_file, marketplace_version):
+        """
+        Given:
+            - Am example of a real complex file with tags of xsoar and xsiam.
+        When:
+            - Parsing with the tag parser for xsoar mp
+            - Parsing with the tag parser for xsiam mp
+        Then:
+            - Validate the results fit the prepared marketplace
+        """
+        test_files_folder = Path(os.path.abspath(__file__)).parent / "test_files"
+        edl_test_file = test_files_folder / "EDL_description.md"
+        res_text_after_filter_by_mp = test_files_folder / res_file
+
+        self.MARKETPLACE_TAG_PARSER.marketplace = marketplace_version
+        with open(edl_test_file, "r") as f:
+            edl_content = f.read()
+
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(edl_content)
+
+        with open(res_text_after_filter_by_mp, "r") as f:
+            res = f.read()
+
+        assert actual == res
+
     def check_prefix_not_in_text(self, actual):
         assert self.XSOAR_PREFIX not in actual
         assert self.XSIAM_PREFIX not in actual
@@ -2630,6 +2654,7 @@ class TestMarketplaceTagParser:
         ({"layout": {"id": "Testlayout"}}, "Testlayout"),
         ({"dashboards_data": [{"name": "D Name"}]}, "D Name"),
         ({"templates_data": [{"report_name": "R Name"}]}, "R Name"),
+        ({"id": "Test1", "details": "Test2"}, "Test2"),  # IndicatorType Content Items
     ],
 )
 def test_get_display_name(data, answer, tmpdir):
@@ -3190,6 +3215,32 @@ def test_get_content_path(input_path, expected_output):
     assert tools.get_content_path(input_path) == expected_output
 
 
+def test_get_content_path_no_remote(mocker):
+    """
+    Given:
+        - A path to a file or directory in the content repo, with no remote
+    When:
+        - Running get_content_path
+    Then:
+        Validate that a warning is issued as (resulting from a raised exception).
+    """
+    from git import Repo  # noqa: TID251
+
+    def raise_value_exception(name):
+        raise ValueError()
+
+    mocker.patch.object(Repo, "remote", side_effect=raise_value_exception)
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    tools.get_content_path(Path("/User/username/test"))
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "[yellow]Please run demisto-sdk in content repository![/yellow]",
+    )
+
+
 @pytest.mark.parametrize(
     "string, expected_result",
     [
@@ -3222,3 +3273,60 @@ def test_is_epoch_datetime(string: str, expected_result: bool):
     from demisto_sdk.commands.common.tools import is_epoch_datetime
 
     assert is_epoch_datetime(string) == expected_result
+
+
+@pytest.mark.parametrize(
+    "dict, paths, value, expected_dict",
+    [
+        ({"test": "1"}, ["test"], 2, {"test": 2}),
+        ({"test": [1, 2, 3, 4]}, ["test[3]"], 2, {"test": [1, 2, 3, 2]}),
+        ({"test1": "1"}, ["test2", "test1"], 2, {"test1": 2}),
+        ({"test": "1"}, ["test2", "test1"], 2, {"test": "1", "test1": 2}),
+        ({"test": {"test2": 1}}, ["test.test2"], 2, {"test": {"test2": 2}}),
+    ],
+)
+def test_set_value(dict, paths, value, expected_dict):
+    """
+    Given:
+        a dictionary, path / list of paths, and a value to insert to the dict.
+        - Case 1: dict with items only in the root, a list with a path that exist in the dict, and a value to set there.
+        - Case 2: dict with a list in the root, a list with a path with the index in the list to replace, and a value to set there.
+        - Case 3: dict with items only in the root, a list of possible paths where one of them is in the dict, and a value to set there.
+        - Case 4: dict with items only in the root, a list of possible paths where none of them is in the dict, and a value to set there.
+        - Case 5: dict with items not only in the root, a list with a path not to the root that exist in the dict, and a value to set there.
+
+    When:
+        - run set_value
+    Then:
+        - Ensure that the value was inserted in the right place.
+        - Case 1: the dict should replce the value in the key.
+        - Case 2: the dict will have the value in the right index in the list.
+        - Case 3: the dict has the value changed in the key that existed and will not add keys in paths that doesn't exist.
+        - Case 4: the dict has the value added in the last given key.
+        - Case 5: the dict should replce the value in the key.
+    """
+    set_value(dict, paths, value)
+    assert expected_dict == dict
+
+
+def test_check_timestamp_format():
+    """
+    Given
+    - timestamps in various formats.
+
+    When
+    - Running check_timestamp_format on them.
+
+    Then
+    - Ensure True for iso format and False for any other format.
+    """
+    good_format_timestamp = "2020-04-14T00:00:00Z"
+    missing_z = "2020-04-14T00:00:00"
+    missing_t = "2020-04-14 00:00:00Z"
+    only_date = "2020-04-14"
+    with_hyphen = "2020-04-14T00-00-00Z"
+    assert check_timestamp_format(good_format_timestamp)
+    assert not check_timestamp_format(missing_t)
+    assert not check_timestamp_format(missing_z)
+    assert not check_timestamp_format(only_date)
+    assert not check_timestamp_format(with_hyphen)

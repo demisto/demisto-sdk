@@ -7,7 +7,13 @@
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 The Demisto SDK library can be used to manage your Cortex XSOAR content with ease and efficiency.
-The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
+
+Requirements:
+- Python 3.8, 3.9 or 3.10.
+- git installed.
+- A linux, mac or WSL2 machine.
+
+Windows machines are not supported - use WSL2 or run in a container instead.
 
 ## Usage
 
@@ -38,6 +44,12 @@ The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
       In order to set Demisto SDK to work with Cortex XSOAR instance, you need to delete the XSIAM_AUTH_ID parameter from your environment.
       ```bash
       unset XSIAM_AUTH_ID
+      ```
+
+      In case the primary git branch is not **master**, or the upstream is not named **origin**, set them with environment variables:
+      ```bash
+      export DEMISTO_DEFAULT_BRANCH = <branch name here>
+      export DEMISTO_DEFAULT_REMOTE = <upstream name here>
       ```
 
       >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repo (the SDK uses demisto-py to communicate with Cortex XSOAR).
@@ -108,6 +120,18 @@ Supported commands:
 20. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
 21. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
 22. [pre-commit (experimental)](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md)
+23. [setup-env](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/setup_env/README.md)
+
+---
+
+### Logs
+
+Log files are generated and stored automatically by default in the user's home directory:  
+**Linux / macOS**: `$HOME/.demisto-sdk/logs`  
+**Windows**: `%USERPROFILE%\.demisto-sdk\logs`  
+
+The default directory can be overriden using the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable.
+
 ---
 
 ### Customizable command configuration
@@ -148,30 +172,13 @@ update_type=minor
 
 ---
 
-### Autocomplete
-
-Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
-for zsh users run in the terminal
-
-```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
-```
-
-for regular bashrc users run in the terminal
-
-```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
-```
-
----
-
 ## License
 
 MIT - See [LICENSE](LICENSE) for more information.
 
 ---
 
-## How to setup development environment?
+## How to setup a development environment?
 
 Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk` dev environment.
 The development environment is connected to the branch you are currently using in the SDK repository.

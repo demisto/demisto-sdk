@@ -2,8 +2,16 @@ import shutil
 from pathlib import Path
 from typing import Optional, Union
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_JSON_INDENT,
+    DEFAULT_YAML_INDENT,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import (
+    write_dict,
+)
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -28,7 +36,8 @@ class PrepareUploadManager:
             input = Path(input)
         if isinstance(output, str):
             output = Path(output)
-
+        if not isinstance(marketplace, MarketplaceVersions):
+            marketplace = MarketplaceVersions(marketplace)
         if force:
             kwargs["force"] = True
         content_item = BaseContent.from_path(input)
@@ -65,13 +74,21 @@ class PrepareUploadManager:
             raise ValueError(
                 f"Unsupported input for {input}. Please provide a path to a content item. Got: {content_item}"
             )
+        content_item: ContentItem
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         if output.exists() and not force:
             raise FileExistsError(
                 f"Output file {output} already exists. Use --force to overwrite."
             )
-        with output.open("w") as f:
-            content_item.handler.dump(data, f)
+
+        write_dict(
+            output,
+            data=data,
+            handler=content_item.handler,
+            indent=DEFAULT_JSON_INDENT
+            if isinstance(content_item.handler, JSON_Handler)
+            else DEFAULT_YAML_INDENT,
+        )
 
         logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
         return output

@@ -6,19 +6,19 @@ mapping:
     type: str
   id:
     type: str
-    required: True
+    required: true
   version:
     type: number
   modified:
     type: str
   name:
     type: str
-    required: True
+    required: true
   name_x2:
     type: str
   prettyName:
     type: str
-    required: False
+    required: false
   ownerOnly:
     type: bool
   placeholder:
@@ -29,12 +29,12 @@ mapping:
     type: str
   cliName:
     type: str
-    required: True
+    required: true
   cliName_x2:
     type: str
   type:
     type: str
-    required: True
+    required: true
   closeForm:
     type: bool
   editForm:
@@ -104,28 +104,67 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: [ 'xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem'  ]
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
   Aliases:
     type: seq
     sequence:
-      - include: aliases_schema
+    - include: aliases_schema
   x2_fields:
     type: str
   aliasTo:
     type: str
 
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
+  required:xsoar:
+    type: bool
+  required:marketplacev2:
+    type: bool
+  required:xpanse:
+    type: bool
+  required:xsoar_saas:
+    type: bool
+  required:xsoar_on_prem:
+    type: bool
 schema;aliases_schema:
   type: map
   mapping:
     cliName:
       type: str
-      required: True
+      required: true
     name:
       type: str
-      required: True
+      required: true
     type:
       type: str
-      required: True
-      enum: [ 'shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number',
-              'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html' ]
+      required: true
+      enum: ['shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number', 'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html']
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str

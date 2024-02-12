@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 RETURN_ERROR_TARGET = "GetDockerImageLatestTag.return_error"
+DEPRECATED_IMAGES_URL = "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json"
 
 MOCK_TAG_LIST = [
     {
@@ -472,7 +473,7 @@ class TestDockerImage:
         )
         error, code = Errors.non_existing_docker(docker_image)
         requests_mock.get(
-            "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json",
+            DEPRECATED_IMAGES_URL,
             json=[
                 {
                     "image_name": "demisto/aiohttp",
@@ -501,7 +502,9 @@ class TestDockerImage:
         "native_image",
         ["demisto/py3-native:8.2.0.58349", "devdemisto/py3-native:8.2.0.58349"],
     )
-    def test_is_native_image_in_dockerimage_field(self, mocker, pack, native_image):
+    def test_is_native_image_in_dockerimage_field(
+        self, mocker, requests_mock, pack, native_image
+    ):
         """
         Given:
             native image that is configured into the yml for the dockerimage field
@@ -513,6 +516,11 @@ class TestDockerImage:
             make sure that validation for the integration/script with
             native image configured in the dockerimage field fails
         """
+        requests_mock.get(
+            DEPRECATED_IMAGES_URL,
+            json=[],
+        )
+
         integration = pack.create_integration(docker_image=native_image)
         script = pack.create_script(docker_image=native_image)
 
@@ -733,9 +741,8 @@ class TestDockerImage:
                 - Validates that the deprecated image is invalid
                 - Validates that the not deprecated image is valid
             """
-            api_url = "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json"
             requests_mock.get(
-                api_url,
+                DEPRECATED_IMAGES_URL,
                 json=[
                     {
                         "image_name": "demisto/aiohttp",
@@ -776,9 +783,8 @@ class TestDockerImage:
             Then:
                 - Validates that the image is deprecated and the command returns the right tuple response.
             """
-            api_url = "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json"
             requests_mock.get(
-                api_url,
+                DEPRECATED_IMAGES_URL,
                 json=[
                     {
                         "image_name": "demisto/aiohttp",

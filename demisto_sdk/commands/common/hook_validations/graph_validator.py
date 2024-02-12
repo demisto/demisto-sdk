@@ -5,7 +5,6 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -251,7 +250,7 @@ class GraphValidator(BaseValidator):
         For existing content, a warning is raised.
         """
         is_valid = True
-        new_files = GitUtil(repo=Content.git()).added_files()
+        new_files = Content.git_util().added_files()
         items: List[dict] = self.graph.find_items_using_deprecated_items(
             self.file_paths
         )
@@ -315,10 +314,10 @@ class GraphValidator(BaseValidator):
             raises_error=raises_error,
             include_optional=include_optional,
         ):
-            unknown_content_names = [
-                relationship.content_item_to.object_id or relationship.content_item_to.name  # type: ignore
+            unknown_content_names = {
+                f"'{relationship.content_item_to.object_id or relationship.content_item_to.name}'"  # type: ignore
                 for relationship in content_item.uses
-            ]
+            }
             error_message, error_code = Errors.using_unknown_content(
                 content_item.name, unknown_content_names
             )

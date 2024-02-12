@@ -42,14 +42,14 @@ def test_format_with_update_docker_flag(mocker, monkeypatch):
     from demisto_sdk.commands.common.git_util import GitUtil
     from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
     from demisto_sdk.commands.format.format_module import format_manager
-    from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
     mocker.patch.object(
         ReadMeValidator, "are_modules_installed_for_verify", return_value=False
     )
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
     mocker.patch.object(
-        ValidateManager,
+        OldValidateManager,
         "get_changed_files_from_git",
         return_value=(set(), set(), set(), set(), True),
     )

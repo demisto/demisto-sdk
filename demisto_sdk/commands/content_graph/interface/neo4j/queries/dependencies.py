@@ -109,7 +109,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
         tx (Transaction): _description_
     """
     query = f"""// Creates USES relationships between content items and integrations, based on the commands they use.
-MATCH (content_item:{ContentType.BASE_CONTENT})
+MATCH (content_item:{ContentType.BASE_NODE})
     -[r:{RelationshipType.USES}]->
         (command:{ContentType.COMMAND})<-[rcmd:{RelationshipType.HAS_COMMAND}]
         -(integration:{ContentType.INTEGRATION})
@@ -117,7 +117,7 @@ WHERE {is_target_available("content_item", "integration")}
 AND NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
 WITH command, count(DISTINCT rcmd) as command_count
 
-MATCH (content_item:{ContentType.BASE_CONTENT})
+MATCH (content_item:{ContentType.BASE_NODE})
     -[r:{RelationshipType.USES}]->
         (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]
         -(integration:{ContentType.INTEGRATION})
@@ -140,8 +140,8 @@ RETURN
 
 def create_depends_on_relationships(tx: Transaction) -> None:
     query = f"""// Creates DEPENDS_ON relationships
-MATCH (pack_a:{ContentType.BASE_CONTENT})<-[:{RelationshipType.IN_PACK}]-(a)
-    -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})
+MATCH (pack_a:{ContentType.BASE_NODE})<-[:{RelationshipType.IN_PACK}]-(a)
+    -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_NODE})
 WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
 AND elementId(pack_a) <> elementId(pack_b)
 AND NOT pack_b.object_id IN pack_a.excluded_dependencies

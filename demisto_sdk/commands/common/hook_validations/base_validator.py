@@ -191,7 +191,7 @@ class BaseValidator:
             if not isinstance(file_path, str):
                 file_path = str(file_path)
 
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
             try:
                 self.check_file_flags(file_name, file_path)
             except FileNotFoundError:

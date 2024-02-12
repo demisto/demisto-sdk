@@ -1,5 +1,5 @@
-import os
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Dict, List
 
 from packaging.version import Version
@@ -203,7 +203,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
 
     @error_codes("LO103")
     def is_valid_file_path(self) -> bool:
-        output_basename = os.path.basename(self.file_path)
+        output_basename = Path(self.file_path).name
         if not output_basename.startswith("layoutscontainer-"):
             error_message, error_code = Errors.invalid_file_path_layoutscontainer(
                 output_basename
@@ -347,7 +347,7 @@ class LayoutValidator(LayoutBaseValidator):
 
     @error_codes("LO102")
     def is_valid_file_path(self) -> bool:
-        output_basename = os.path.basename(self.file_path)
+        output_basename = Path(self.file_path).name
         if not output_basename.startswith("layout-"):
             error_message, error_code = Errors.invalid_file_path_layout(output_basename)
             if self.handle_error(error_message, error_code, file_path=self.file_path):

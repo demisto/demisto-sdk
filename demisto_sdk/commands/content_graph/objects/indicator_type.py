@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Set
+from typing import Any, List, Optional, Set
 
 import demisto_client
 from pydantic import Field
@@ -17,6 +17,7 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
     description: str = Field(alias="details")
     regex: Optional[str]
     reputation_script_name: Optional[str] = Field("", alias="reputationScriptName")
+    expiration: Any
     enhancement_script_names: Optional[List[str]] = Field(
         alias="enhancementScriptNames"
     )
@@ -45,3 +46,9 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
                 # Wrapping the dictionary with a list, as that's what the server expects
                 json.dump([self.prepare_for_upload(marketplace=marketplace)], f)
             client.import_reputation_handler(str(file_path))
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "regex" in _dict or "reputations" in _dict and path.suffix == ".json":
+            return True
+        return False

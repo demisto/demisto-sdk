@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, Optional, Set
 
 import demisto_client
@@ -26,3 +27,9 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_widget
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "widgetType" in _dict and path.suffix == ".json":
+            return True
+        return False

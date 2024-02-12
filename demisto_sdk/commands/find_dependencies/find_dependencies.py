@@ -640,7 +640,7 @@ class PackDependencies:
                     )
 
             logger.debug(
-                f'{os.path.basename(script.get("file_path", ""))} depends on: {script_dependencies}'
+                f'{Path(script.get("file_path", "")).name} depends on: {script_dependencies}'
             )
             dependencies_packs.update(script_dependencies)
 
@@ -922,7 +922,7 @@ class PackDependencies:
             if playbook_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: {playbook_dependencies}',
+                    f'{Path(playbook_data.get("file_path", "")).name} depends on: {playbook_dependencies}',
                 )
             dependencies_packs.update(playbook_dependencies)
 
@@ -1030,7 +1030,7 @@ class PackDependencies:
             if layout_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(layout_data.get("file_path", ""))} depends on: {layout_dependencies}'
+                    f'{Path(layout_data.get("file_path", "")).name} depends on: {layout_dependencies}'
                 )
             dependencies_packs.update(layout_dependencies)
 
@@ -1106,7 +1106,7 @@ class PackDependencies:
             if incident_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(incident_field_data.get("file_path", ""))} '
+                    f'{Path(incident_field_data.get("file_path", "")).name} '
                     f"depends on: {incident_field_dependencies}"
                 )
             dependencies_packs.update(incident_field_dependencies)
@@ -1193,7 +1193,7 @@ class PackDependencies:
             if indicator_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on:'
+                    f'{Path(indicator_type_data.get("file_path", "")).name} depends on:'
                     f" {indicator_type_dependencies}"
                 )
             dependencies_packs.update(indicator_type_dependencies)
@@ -1324,7 +1324,7 @@ class PackDependencies:
             if integration_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(integration_data.get("file_path", ""))} depends on: {integration_dependencies}'
+                    f'{Path(integration_data.get("file_path", "")).name} depends on: {integration_dependencies}'
                 )
             dependencies_packs.update(integration_dependencies)
 
@@ -1419,7 +1419,7 @@ class PackDependencies:
             if incident_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on:'
+                    f'{Path(incident_type_data.get("file_path", "")).name} depends on:'
                     f" {incident_type_dependencies}"
                 )
             dependencies_packs.update(incident_type_dependencies)
@@ -1552,7 +1552,7 @@ class PackDependencies:
             if classifier_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: {classifier_dependencies}'
+                    f'{Path(classifier_data.get("file_path", "")).name} depends on: {classifier_dependencies}'
                 )
             dependencies_packs.update(classifier_dependencies)
 
@@ -1739,7 +1739,7 @@ class PackDependencies:
             if mapper_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: {mapper_dependencies}'
+                    f'{Path(mapper_data.get("file_path", "")).name} depends on: {mapper_dependencies}'
                 )
             dependencies_packs.update(mapper_dependencies)
 
@@ -1809,7 +1809,7 @@ class PackDependencies:
             if widget_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(widget_data.get("file_path", ""))} depends on: {widget_dependencies}'
+                    f'{Path(widget_data.get("file_path", "")).name} depends on: {widget_dependencies}'
                 )
             dependencies_packs.update(widget_dependencies)
 
@@ -1931,7 +1931,7 @@ class PackDependencies:
             if generic_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(generic_type_data.get("file_path", ""))} depends on: {generic_type_dependencies}'
+                    f'{Path(generic_type_data.get("file_path", "")).name} depends on: {generic_type_dependencies}'
                 )
             dependencies_packs.update(generic_type_dependencies)
 
@@ -2052,7 +2052,7 @@ class PackDependencies:
             if generic_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(generic_field_data.get("file_path", ""))} '
+                    f'{Path(generic_field_data.get("file_path", "")).name} '
                     f"depends on: {generic_field_dependencies}"
                 )
             dependencies_packs.update(generic_field_dependencies)
@@ -2151,7 +2151,7 @@ class PackDependencies:
             if generic_module_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(generic_module_data.get("file_path", ""))} '
+                    f'{Path(generic_module_data.get("file_path", "")).name} '
                     f"depends on: {generic_module_dependencies}"
                 )
             dependencies_packs.update(generic_module_dependencies)
@@ -2244,7 +2244,7 @@ class PackDependencies:
             if job_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 logger.debug(
-                    f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}'
+                    f'{Path(job_data.get("file_path", "")).name} depends on: {job_dependencies}'
                 )
             all_job_dependencies.update(job_dependencies)
 

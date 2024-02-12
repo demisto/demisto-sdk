@@ -53,7 +53,7 @@ def get_relationships(
         help="The type of relationships to inspect.",
     ),
     content_type: ContentType = typer.Option(
-        ContentType.BASE_CONTENT,
+        ContentType.BASE_NODE,
         "-ct",
         "--content-type",
         show_default=True,
@@ -130,19 +130,19 @@ def get_relationships(
         "INFO",
         "-clt",
         "--console-log-threshold",
-        help=("Minimum logging threshold for the console logger."),
+        help="Minimum logging threshold for the console logger.",
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
         "--file-log-threshold",
-        help=("Minimum logging threshold for the file logger."),
+        help="Minimum logging threshold for the file logger.",
     ),
-    log_file_path: str = typer.Option(
-        "demisto_sdk_debug.log",
+    log_file_path: Optional[str] = typer.Option(
+        None,
         "-lp",
         "--log-file-path",
-        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+        help="Path to save log files onto.",
     ),
 ) -> None:
     """

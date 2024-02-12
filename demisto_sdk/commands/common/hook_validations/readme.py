@@ -17,6 +17,7 @@ from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
     HTML_IMAGE_LINK_REGEX,
     PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
@@ -405,9 +406,7 @@ class ReadMeValidator(BaseValidator):
             bool: True if the daemon is accessible
         """
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(
-                log_prompt="DockerPing"
-            )
+            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="DockerPing")  # type: ignore
             docker_client.ping()
             return True
         except Exception:
@@ -549,7 +548,7 @@ class ReadMeValidator(BaseValidator):
                 url_path_elem_list = urlparse(img_url).path.split("/")[1:]
                 if len(url_path_elem_list) >= 3 and (
                     url_path_elem_list[2] == working_branch_name
-                    and working_branch_name != "master"
+                    and working_branch_name != DEMISTO_GIT_PRIMARY_BRANCH
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
                         img_url,

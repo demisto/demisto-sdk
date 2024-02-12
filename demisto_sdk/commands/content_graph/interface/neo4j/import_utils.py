@@ -26,7 +26,6 @@ class Neo4jImportHandler:
     def extract_files_from_path(self, imported_path: Optional[Path] = None) -> None:
         if not imported_path:
             return None
-        logger.info(f"Importing from {imported_path}")
         with ZipFile(imported_path, "r") as zip_obj:
             zip_obj.extractall(self.import_path)
 

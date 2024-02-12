@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, validator
 
 class Validations(str, Enum):
     SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA = "schema_test_data_types"
+    TEST_DATA_CONFIG_IGNORE = "test_data_config_ignore"
 
     @classmethod
     def as_set(cls):
@@ -21,6 +22,11 @@ class EventLog(BaseModel):
     tenant_timezone: Optional[str] = "UTC"
     event_data: Optional[Dict[str, Any]] = {}
     expected_values: Optional[Dict[str, Any]] = {}
+
+    @validator("test_data_event_id")
+    def validate_test_data(cls, v):
+        v = uuid4()
+        return v
 
 
 class TestData(BaseModel):

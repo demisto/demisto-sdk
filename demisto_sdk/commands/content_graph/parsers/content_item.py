@@ -1,11 +1,13 @@
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Type, cast
+from typing import Any, Dict, List, Optional, Set, Type, cast
 
 from packaging.version import Version
+from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
+    PACK_DEFAULT_MARKETPLACES,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
@@ -74,11 +76,13 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     """
 
     content_type_to_parser: Dict[ContentType, Type["ContentItemParser"]] = {}
+    pack: Any = Field(default=None, exclude=True)
 
     def __init__(
         self,
         path: Path,
-        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        pack_marketplaces: List[MarketplaceVersions] = PACK_DEFAULT_MARKETPLACES,
+        git_sha: Optional[str] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
@@ -88,6 +92,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def from_path(
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        git_sha: Optional[str] = None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
@@ -95,23 +100,25 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
+        from demisto_sdk.commands.content_graph.common import ContentType
+
         logger.debug(f"Parsing content item {path}")
         if not ContentItemParser.is_content_item(path):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
-            else:
-                raise NotAContentItemException
         try:
             content_type: ContentType = ContentType.by_path(path)
-        except ValueError as e:
-            logger.error(f"Could not determine content type for {path}: {e}")
-            raise InvalidContentItemException from e
+        except ValueError:
+            try:
+                optional_content_type = ContentType.by_schema(path)
+            except ValueError as e:
+                logger.error(f"Could not determine content type for {path}: {e}")
+                raise InvalidContentItemException from e
+            content_type = optional_content_type
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
-                    parser_cls,
-                    path,
-                    pack_marketplaces,
+                    parser_cls, path, pack_marketplaces, git_sha
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(
@@ -131,9 +138,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         parser_cls: Type["ContentItemParser"],
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
         **kwargs,
     ) -> "ContentItemParser":
-        parser = parser_cls(path, pack_marketplaces, **kwargs)
+        parser = parser_cls(path, pack_marketplaces, git_sha=git_sha, **kwargs)
         logger.debug(f"Parsed {parser.node_id}")
         return parser
 
@@ -235,6 +243,31 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             path
         )
 
+    def get_path_with_suffix(self, suffix: str) -> Path:
+        """Sets the path of the content item with a given suffix.
+
+        Args:
+            suffix (str): The suffix of the content item (JSON or YAML).
+
+        """
+        if not self.path.is_dir():
+            if not self.path.exists() or not self.path.suffix == suffix:
+                raise NotAContentItemException
+            path = self.path
+        else:
+            paths = [path for path in self.path.iterdir() if path.suffix == suffix]
+            if not paths:
+                raise NotAContentItemException
+            if len(paths) == 1:
+                path = paths[0]
+            else:
+                for path in paths:
+                    if path == self.path / f"{self.path.name}{suffix}":
+                        break
+                else:
+                    path = paths[0]
+        return path
+
     def should_skip_parsing(self) -> bool:
         """Returns true if any of the minimal conditions for parsing is not met.
 
@@ -264,6 +297,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target (str): The identifier of the target content object (e.g, its node_id).
             kwargs: Additional information about the relationship.
         """
+        # target type has to be the base type, because in the server they are the same
+        if target_type == ContentType.SCRIPT:
+            target_type = ContentType.BASE_SCRIPT
+        if target_type == ContentType.PLAYBOOK:
+            target_type = ContentType.BASE_PLAYBOOK
         self.relationships.add(
             relationship,
             source_id=self.object_id,
@@ -320,6 +358,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         """
         self.add_relationship(
             RelationshipType.USES_BY_NAME,
+            target=dependency_name,
+            target_type=dependency_type,
+            mandatorily=is_mandatory,
+        )
+
+    def add_dependency_by_cli_name(
+        self,
+        dependency_name: str,
+        dependency_type: ContentType,
+        is_mandatory: bool = True,
+    ):
+        self.add_relationship(
+            RelationshipType.USES_BY_CLI_NAME,
             target=dependency_name,
             target_type=dependency_type,
             mandatorily=is_mandatory,

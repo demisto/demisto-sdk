@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path, PosixPath
 from typing import List
 
@@ -30,7 +29,7 @@ from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK_COPY,
@@ -100,18 +99,13 @@ CONF_JSON_ORIGINAL_CONTENT = {
 }
 
 
-class MyRepo:
-    active_branch = "not-master"
-
-    def remote(self):
-        return "remote_path"
-
-
 @pytest.fixture(autouse=True)
 def set_git_test_env(mocker):
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git", return_value=MyRepo())
-    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git_util", return_value=GitUtil())
+    mocker.patch.object(
+        OldValidateManager, "setup_prev_ver", return_value="origin/master"
+    )
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
 
@@ -273,7 +267,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
 
     test_playbooks = ["test1", "test2"]
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
@@ -329,7 +323,7 @@ def test_integration_format_configuring_conf_json_positive(
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
 
     test_playbooks = ["test1", "test2"]
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     with ChangeCWD(tmp_path):
@@ -394,7 +388,7 @@ def test_integration_format_configuring_conf_json_negative(
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
 
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
@@ -790,7 +784,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     mocker.patch.object(
         update_generic,
         "is_file_from_content_repo",
-        return_value=(True, f"{playbook.path}/playbook.yml"),
+        return_value=(True, playbook.path),
     )
     mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
     mocker.patch.object(
@@ -802,7 +796,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
 
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     monkeypatch.setattr("builtins.input", lambda _: "N")
-    with ChangeCWD(playbook.path):
+    with ChangeCWD(Path(playbook.path).parent):
         runner = CliRunner(mix_stderr=False)
         runner.invoke(
             main,
@@ -829,7 +823,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
             str_in_call_args_list(logger_info.call_args_list, current_str)
             for current_str in [
                 "======= Updating file",
-                f"Format Status   on file: {playbook.path}/playbook.yml - Success",
+                f"Format Status   on file: {playbook.path} - Success",
                 "The files are valid",
             ]
         ]

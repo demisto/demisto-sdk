@@ -214,3 +214,113 @@ class TestRunLintInContainer:
             linter_obj._docker_run_pwsh_analyze.assert_called_once()
         elif not no_pwsh_test and pack_type == TYPE_PWSH:
             linter_obj._docker_run_pwsh_test.assert_called_once()
+
+    @pytest.mark.parametrize(
+        argnames="image_name, expected_container_name",
+        argvalues=[
+            # Full image path.
+            (
+                "docker-io.art.code.pan.run/devtestdemisto/py3-native:8.2.0.123-abcd12345",
+                "some_pack-pylint-py3-native_8.2.0.123-abcd12345",
+            ),
+            # Name and tag only.
+            (
+                "py3-native:8.2.0.123-abcd12345",
+                "some_pack-pylint-py3-native_8.2.0.123-abcd12345",
+            ),
+            # Starts with invalid character.
+            (
+                "_py3-native:8.2.0.123-abcd12345",
+                "some_pack-pylint-py3-native_8.2.0.123-abcd12345",
+            ),
+            # Name only.
+            ("py3-native-no-tag", "some_pack-pylint-py3-native-no-tag"),
+            # Name and tag using an invalid char.
+            ("py3-native@some-tag", "some_pack-pylint-py3-native_some-tag"),
+        ],
+    )
+    def test_container_names(
+        self, linter_obj: Linter, image_name: str, expected_container_name: str
+    ):
+        """
+        Given: A docker image name
+        When: Running lint using docker
+        Then: Ensure the container name is valid and as expected.
+        """
+        linter_obj._linter_to_commands()
+        linter_obj._pack_name = "some_pack"
+
+        container_name = linter_obj.get_container_name(
+            run_type="pylint", image_name=image_name
+        )
+
+        assert container_name == expected_container_name
+
+    @pytest.mark.parametrize(
+        argnames="lint_check, lint_check_kwargs",
+        argvalues=[
+            ("_docker_run_linter", {"linter": "pylint", "keep_container": False}),
+            (
+                "_docker_run_pytest",
+                {"test_xml": "", "keep_container": False, "no_coverage": True},
+            ),
+            ("_docker_run_pwsh_analyze", {"keep_container": False}),
+            ("_docker_run_pwsh_test", {"keep_container": False}),
+        ],
+    )
+    def test_container_names_are_unique_per_tag(
+        self,
+        mocker,
+        lint_files,
+        linter_obj: Linter,
+        lint_check: str,
+        lint_check_kwargs: dict,
+    ):
+        """
+        Given:
+            - A native docker image and a native dev docker image to lint with.
+            - A lint sub-routine function
+        When: Running lint sub-routine using docker on a specific pack.
+        Then: Ensure the container names are different.
+        """
+        exp_container_log = "test"
+        # Docker client mocking
+        create_container_mock = mocker.patch.object(
+            DockerBase,
+            "create_container",
+            return_value=Container(
+                _wait={"StatusCode": 1},
+                _logs=exp_container_log.encode("utf-8"),
+            ),
+        )
+        mocker.patch.object(linter, "get_file_from_container")
+        mocker.patch.object(linter, "json")
+
+        linter_obj._linter_to_commands()
+        linter_obj._pack_name = "some_pack"
+        linter_obj._facts["lint_files"] = lint_files
+
+        native_image_example = (
+            "docker-io.art.code.pan.run/devtestdemisto/py3-native:8.2.0.123-abcd12345"
+        )
+        native_dev_image_example = (
+            "docker-io.art.code.pan.run/devtestdemisto/py3-native:8.2.0.1234-efgh6789"
+        )
+        lint_check_func = getattr(linter_obj, lint_check)
+
+        lint_check_kwargs["test_image"] = native_image_example
+
+        lint_check_func(**lint_check_kwargs)
+
+        lint_check_kwargs["test_image"] = native_dev_image_example
+
+        lint_check_func(**lint_check_kwargs)
+
+        container_name_native_image = create_container_mock.call_args_list[
+            0
+        ].kwargs.get("name")
+        container_name_native_dev_image = create_container_mock.call_args_list[
+            1
+        ].kwargs.get("name")
+
+        assert container_name_native_image != container_name_native_dev_image

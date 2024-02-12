@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional, Set
 
 from pydantic import DirectoryPath, Field
@@ -23,3 +24,17 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
             dir=dir / self.path.parent.name,
             marketplace=marketplace,
         )
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "id" in _dict and isinstance(_dict["id"], str):
+            if (
+                "definitionId" in _dict
+                and _dict["definitionId"]
+                and _dict["definitionId"].lower() not in ["incident", "indicator"]
+                and path.suffix == ".json"
+            ):
+                # we don't want to match the generic type
+                if "color" not in _dict:
+                    return True
+        return False

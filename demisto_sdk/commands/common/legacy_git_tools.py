@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Callable, List
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     KNOWN_FILE_STATUSES,
     PACKS_PACK_META_FILE_NAME,
     TESTS_AND_DOC_DIRECTORIES,
@@ -21,7 +23,7 @@ from demisto_sdk.commands.common.tools import (
     is_origin_content_repo,
     run_command,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
 
 @functools.lru_cache()
@@ -30,6 +32,7 @@ def git_path() -> str:
     return git_path.replace("\n", "")
 
 
+@functools.lru_cache()
 def get_current_working_branch() -> str:
     branches = run_command("git branch")
     branch_name_reg = re.search(r"\* (.*)", branches)
@@ -39,7 +42,9 @@ def get_current_working_branch() -> str:
     return ""
 
 
-def get_changed_files(from_branch: str = "master", filter_results: Callable = None):
+def get_changed_files(
+    from_branch: str = DEMISTO_GIT_PRIMARY_BRANCH, filter_results: Callable = None
+):
     temp_files = run_command(f"git diff --name-status {from_branch}").split("\n")
     files: List = []
     for file in temp_files:
@@ -66,7 +71,7 @@ def add_origin(branch_name, prev_ver):
     if "/" not in prev_ver and not (
         branch_name.startswith("20.") or branch_name.startswith("21.")
     ):
-        prev_ver = "origin/" + prev_ver
+        prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver
     return prev_ver
 
 
@@ -282,7 +287,9 @@ def get_modified_and_added_files(
 
 
 # flake8: noqa: C901
-def filter_changed_files(files_string, tag="master", print_ignored_files=False):
+def filter_changed_files(
+    files_string, tag=DEMISTO_GIT_PRIMARY_BRANCH, print_ignored_files=False
+):
     """Get lists of the modified files in your branch according to the files string.
 
     Args:
@@ -364,7 +371,7 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
             elif (
                 file_status.lower() in ["m", "a", "r"]
                 and file_type in [FileType.INTEGRATION, FileType.SCRIPT]
-                and ValidateManager.is_old_file_format(file_path, file_type)
+                and OldValidateManager.is_old_file_format(file_path, file_type)
             ):
                 old_format_files.add(file_path)
             # identify modified files

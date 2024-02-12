@@ -72,7 +72,10 @@ class Changelog:
         current_commit = GIT_UTIL.repo.head.commit
         previous_commit = current_commit.parents[0].hexsha
 
-        current_changelogs = LogFileObject(YmlFile.read_from_local_path(changelog_path)).get_log_entries()
+        a = YmlFile.read_from_local_path(changelog_path)
+        print(f'changelog: {a}')
+
+        current_changelogs = LogFileObject(a).get_log_entries()
         pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)
 
         try:

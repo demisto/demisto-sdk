@@ -122,10 +122,10 @@ def docker_login(docker_client) -> bool:
                 )
                 return ping
         except docker.errors.APIError:
-            logger.info("Did not successfully log in to dockerhub")
+            logger.info(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
             return False
 
-    logger.debug("Did not log in to dockerhub")
+    logger.debug(f"Did not log in to {DOCKER_REGISTRY_URL}")
     return False
 
 

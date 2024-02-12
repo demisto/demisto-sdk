@@ -393,6 +393,12 @@ class DockerBase:
         test_docker_image = (
             f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
         )
+        if (
+            not os.getenv("CONTENT_GITLAB_CI")
+            and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
+        ):
+            # if we use a custom registry, we need to have to pull the image and we can't use dockerhub api
+            should_pull = True
         if not should_pull and self.is_image_available(test_docker_image):
             return test_docker_image, errors
         base_image = self.get_image_registry(base_image)

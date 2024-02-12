@@ -2,6 +2,7 @@ import os
 from unittest import mock
 
 import pytest
+import requests_mock
 from packaging.version import Version
 
 import demisto_sdk.commands.common.docker_helper as dhelper
@@ -86,3 +87,16 @@ def test_cache_of_get_python_version_from_image():
     docker_helper.get_python_version(image)
     cache_info = docker_helper.get_python_version.cache_info()
     assert cache_info.hits == cache_info_before.hits + 1
+
+
+def test_create_docker_container_successfully(mocker):
+    from demisto_sdk.commands.common.docker_helper import DockerBase, init_global_docker_client
+
+    docker_base = DockerBase()
+    # docker_base = init_global_docker_client()
+    with requests_mock.Mocker() as m:
+        m.get('http+docker://localhost/v1.44/containers/create?name=test', status_code=200)
+        m.get('http+docker://localhost/version', status_code=200)
+        docker_container = docker_base.create_container(image='demisto/python3', name='test')
+
+    assert docker_container

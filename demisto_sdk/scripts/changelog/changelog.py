@@ -63,7 +63,6 @@ class Changelog:
             return
         else:
             _validate_branch(self.pr_number)
-            _comment_changelog_in_pr(self.pr_number)
 
     """ Comment """
     def comment(self, github_token: str) -> None:

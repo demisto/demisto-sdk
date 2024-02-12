@@ -183,6 +183,7 @@ jobs:
 
   coverage:
     needs: [unit-tests, integration-tests, graph-tests]
+    if: github.ref_name != 'master'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

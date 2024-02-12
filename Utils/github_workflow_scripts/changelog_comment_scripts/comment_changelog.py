@@ -9,8 +9,9 @@ def comment_changelog_on_pr(pr_num: str, github_token: str) -> bool:
     try:
         Changelog(pr_num).comment(github_token)
         sys.exit(0)
-    except Exception:
-        logger.exception("Changelog validation failed.")
+    except Exception as error:
+        raise error
+        logger.exception("Couldn't comment on the changelog.")
         sys.exit(1)
 
 

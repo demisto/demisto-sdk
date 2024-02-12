@@ -68,7 +68,7 @@ class LogEntry(BaseModel):
         return value
 
 
-class xLogFileObject(BaseModel):
+class LogFileObject(BaseModel):
     changes: List[LogEntry]
     pr_number: int
 

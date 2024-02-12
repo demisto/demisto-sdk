@@ -148,5 +148,5 @@ class TestClassifierSixConverter:
             f"{git_path()}/demisto_sdk/commands/convert/converters/classifier/"
             f"tests/test_data/{file_name}.json",
         )
-        assert os.path.exists(result_path)
+        assert Path(result_path).exists()
         assert util_load_json(result_path) == util_load_json(expected_result_path)

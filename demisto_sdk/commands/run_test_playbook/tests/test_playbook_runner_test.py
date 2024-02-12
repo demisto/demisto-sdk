@@ -127,7 +127,7 @@ class TestTestPlaybookRunner:
             )
             assert result == res
 
-            assert count_str_in_call_args_list(logger_info.call_args_list, message) == 7
+            assert count_str_in_call_args_list(logger_info.call_args_list, message) == 8
 
     @pytest.mark.parametrize(
         argnames="input_tpb, exit_code, err",

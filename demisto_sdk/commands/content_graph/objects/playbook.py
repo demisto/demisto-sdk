@@ -1,32 +1,16 @@
-from typing import Callable, Set
+from pathlib import Path
 
-import demisto_client
-
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_playbooks_prepare import (
-    MarketplaceIncidentToAlertPlaybooksPreparer,
-)
+from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 
 
-class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
-    def metadata_fields(self) -> Set[str]:
-        return {"name", "description"}
+class Playbook(BasePlaybook, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
+    is_test: bool = False
 
-    def prepare_for_upload(
-        self,
-        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        **kwargs
-    ) -> dict:
-        data = super().prepare_for_upload(current_marketplace, **kwargs)
-        return MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
-            self,
-            data,
-            current_marketplace=current_marketplace,
-            supported_marketplaces=self.marketplaces,
-        )
-
-    @classmethod
-    def _client_upload_method(cls, client: demisto_client) -> Callable:
-        return client.import_playbook
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "tasks" in _dict:
+            if TEST_PLAYBOOKS_DIR not in path.parts and path.suffix == ".yml":
+                return True
+        return False

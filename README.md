@@ -7,7 +7,13 @@
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 The Demisto SDK library can be used to manage your Cortex XSOAR content with ease and efficiency.
-The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
+
+Requirements:
+- Python 3.8, 3.9 or 3.10.
+- git installed.
+- A linux, mac or WSL2 machine.
+
+Windows machines are not supported - use WSL2 or run in a container instead.
 
 ## Usage
 
@@ -38,6 +44,12 @@ The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
       In order to set Demisto SDK to work with Cortex XSOAR instance, you need to delete the XSIAM_AUTH_ID parameter from your environment.
       ```bash
       unset XSIAM_AUTH_ID
+      ```
+
+      In case the primary git branch is not **master**, or the upstream is not named **origin**, set them with environment variables:
+      ```bash
+      export DEMISTO_DEFAULT_BRANCH = <branch name here>
+      export DEMISTO_DEFAULT_REMOTE = <upstream name here>
       ```
 
       >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repo (the SDK uses demisto-py to communicate with Cortex XSOAR).
@@ -90,25 +102,36 @@ Supported commands:
 2. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
 3. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md)
 4. [Secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
-5. [Unify](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/prepare_content/README.md#Unify)
-6. [Prepare-Content](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/prepare_content/README.md#prepare-content)
-7. [Split](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split/README.md)
-8. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
-9. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
-10. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
-11. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
-12. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
-13. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
-14. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
-15. [Generate-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_outputs/README.md)
-16. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
-17. [Zip-packs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/zip_packs/README.md)
-18. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
-19. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
-20. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
-21. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
-22. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
-23. [pre-commit (experimental)](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md)
+5. [Prepare-Content](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/prepare_content/README.md#prepare-content)
+6. [Split](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split/README.md)
+7. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
+8. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
+9. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
+10. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
+11. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
+12. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
+13. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
+14. [Generate-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_outputs/README.md)
+15. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+16. [Zip-packs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/zip_packs/README.md)
+17. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
+18. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
+19. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
+20. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
+21. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
+22. [pre-commit (experimental)](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md)
+23. [setup-env](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/setup_env/README.md)
+
+---
+
+### Logs
+
+Log files are generated and stored automatically by default in the user's home directory:  
+**Linux / macOS**: `$HOME/.demisto-sdk/logs`  
+**Windows**: `%USERPROFILE%\.demisto-sdk\logs`  
+
+The default directory can be overriden using the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable.
+
 ---
 
 ### Customizable command configuration
@@ -149,30 +172,13 @@ update_type=minor
 
 ---
 
-### Autocomplete
-
-Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
-for zsh users run in the terminal
-
-```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
-```
-
-for regular bashrc users run in the terminal
-
-```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
-```
-
----
-
 ## License
 
 MIT - See [LICENSE](LICENSE) for more information.
 
 ---
 
-## How to setup development environment?
+## How to setup a development environment?
 
 Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk` dev environment.
 The development environment is connected to the branch you are currently using in the SDK repository.
@@ -183,7 +189,6 @@ The development environment is connected to the branch you are currently using i
 
 Contributions are welcome and appreciated.
 For information regarding contributing, press [here](CONTRIBUTION.md).
-For release guide, press [here](docs/release_guide.md)
 
 ---
 
@@ -201,4 +206,14 @@ Note that the following commands may work partially without an internet connecti
 1. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md) - will fail when using the '-fmt, --run-format' argument.
 2. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md) - will fail when creating the image.
 
+- When working offline (or in an airgapped environment), set the `DEMISTO_SDK_OFFLINE_ENV` environment variable to `true`:
+   ```bash
+   export DEMISTO_SDK_OFFLINE_ENV=TRUE
+   ```
+
+   When set, Demisto-SDK features requiring an internet connection will not be run, often saving some time and avoiding errors.
+
 ---
+
+## XSOAR CI/CD
+For information regarding XSOAR CI/CD, please see [this article](https://xsoar.pan.dev/docs/reference/packs/content-management)

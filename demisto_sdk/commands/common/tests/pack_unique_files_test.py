@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import nullcontext as does_not_raise
+from pathlib import Path
 
 import pytest
 import requests_mock
@@ -10,12 +11,14 @@ from git import GitCommandError
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
     PACK_METADATA_DESC,
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
     PACK_METADATA_USE_CASES,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
+    PARTNER_SUPPORT,
     XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.common.errors import Errors
@@ -25,11 +28,8 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PackUniqueFilesValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-logger = logging.getLogger("demisto-sdk")
-
 
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
@@ -73,7 +73,9 @@ class TestPackUniqueFilesValidator:
         )
     )
     FAKE_PATH_NAME = "fake_pack"
-    validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
+    validator = PackUniqueFilesValidator(
+        FAKE_PATH_NAME, prev_ver=DEMISTO_GIT_PRIMARY_BRANCH
+    )
     validator.pack_path = FAKE_PACK_PATH
 
     def restart_validator(self):
@@ -182,11 +184,11 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         pack_metadata_no_email_and_url["email"] = ""
         pack_metadata_no_email_and_url["url"] = ""
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -216,7 +218,7 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             "Contributed packs must include email or url",
         )
 
@@ -241,7 +243,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate finds errors accordingly.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
@@ -253,7 +255,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             PackUniqueFilesValidator, "validate_pack_name", return_value=True
         )
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator,
             "get_master_private_repo_meta_file",
@@ -278,9 +280,9 @@ class TestPackUniqueFilesValidator:
             "The metadata URL leads to a GitHub repo instead of a support page."
         )
         if is_valid:
-            assert not str_in_call_args_list(logger_info.call_args_list, error_text)
+            assert not str_in_call_args_list(logger_error.call_args_list, error_text)
         else:
-            assert str_in_call_args_list(logger_info.call_args_list, error_text)
+            assert str_in_call_args_list(logger_error.call_args_list, error_text)
 
     def test_validate_partner_contribute_pack_metadata_price_change(
         self, mocker, monkeypatch, repo
@@ -295,7 +297,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
@@ -321,39 +323,16 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
-        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             "The pack price was changed from 2 to 3 - revert the change",
         )
-
-    def test_check_timestamp_format(self):
-        """
-        Given
-        - timestamps in various formats.
-
-        When
-        - Running check_timestamp_format on them.
-
-        Then
-        - Ensure True for iso format and False for any other format.
-        """
-        fake_validator = PackUniqueFilesValidator("fake")
-        good_format_timestamp = "2020-04-14T00:00:00Z"
-        missing_z = "2020-04-14T00:00:00"
-        missing_t = "2020-04-14 00:00:00Z"
-        only_date = "2020-04-14"
-        with_hyphen = "2020-04-14T00-00-00Z"
-        assert fake_validator.check_timestamp_format(good_format_timestamp)
-        assert not fake_validator.check_timestamp_format(missing_t)
-        assert not fake_validator.check_timestamp_format(missing_z)
-        assert not fake_validator.check_timestamp_format(only_date)
-        assert not fake_validator.check_timestamp_format(with_hyphen)
 
     def test_validate_pack_dependencies_invalid_id_set(self, mocker, repo):
         """
@@ -477,6 +456,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: [],
             }
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -564,6 +547,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -612,7 +599,10 @@ class TestPackUniqueFilesValidator:
             }
         )
 
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         mocker.patch.object(
             tools,
             "get_dict_from_file",
@@ -649,7 +639,10 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch(
+            "demisto_sdk.commands.common.hook_validations.pack_unique_files.is_external_repository",
+            return_value=False,
+        )
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):
@@ -759,7 +752,7 @@ class TestPackUniqueFilesValidator:
             active_branch = "master"
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo,
         )
         res = self.validator.get_master_private_repo_meta_file(
@@ -799,6 +792,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     raise GitCommandError("A", "B")
@@ -809,12 +806,10 @@ class TestPackUniqueFilesValidator:
             git = gitClass()
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo(),
         )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
-        )
+
         with ChangeCWD(repo.path):
             res = self.validator.get_master_private_repo_meta_file(
                 str(pack.pack_metadata.path)
@@ -853,6 +848,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 def show(self, var):
                     return None
@@ -863,11 +862,8 @@ class TestPackUniqueFilesValidator:
             git = gitClass()
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo(),
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
         )
         res = self.validator.get_master_private_repo_meta_file(
             str(pack.pack_metadata.path)
@@ -903,6 +899,10 @@ class TestPackUniqueFilesValidator:
             def remote(self):
                 return "remote_path"
 
+            @property
+            def working_dir(self):
+                return repo.path
+
             class gitClass:
                 remote_file_path = (
                     "remote_path/prev_ver:Packs/PackName/pack_metadata.json"
@@ -924,13 +924,6 @@ class TestPackUniqueFilesValidator:
 
             git = gitClass()
 
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
-            return_value=MyRepo(),
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
-        )
         mocker.patch("demisto_sdk.commands.common.git_util.Repo", return_value=MyRepo())
 
         with ChangeCWD(repo.path):
@@ -953,7 +946,7 @@ class TestPackUniqueFilesValidator:
              - Ensure result is False for empty README.md file and True otherwise.
         """
         self.validator = PackUniqueFilesValidator(self.FAKE_PACK_PATH)
-        self.validator.support = "partner"
+        self.validator.support = PARTNER_SUPPORT
         mocker.patch.object(
             PackUniqueFilesValidator, "_read_file_content", return_value=text
         )
@@ -1000,12 +993,6 @@ class TestPackUniqueFilesValidator:
             PackUniqueFilesValidator, "_read_file_content", return_value="text"
         )
         assert self.validator.validate_pack_readme_file_is_not_empty()
-
-    def test_validate_pack_readme_file_is_not_empty_missing_file(self):
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack")
-        )
-        assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
 
     def test_validate_pack_readme_valid_images(self, mocker):
         """
@@ -1061,7 +1048,7 @@ class TestPackUniqueFilesValidator:
             not in errors
         )
 
-    def test_validate_pack_readme_invalid_images(self):
+    def test_validate_pack_readme_invalid_images(self, mocker):
         """
         Given
             - A pack README file with invalid absolute and relative image paths in it.
@@ -1076,6 +1063,7 @@ class TestPackUniqueFilesValidator:
         self.validator = PackUniqueFilesValidator(
             os.path.join(self.FILES_PATH, "DummyPack2")
         )
+        mocker.patch("demisto_sdk.commands.common.tools.sleep")
 
         with requests_mock.Mocker() as m:
             # Mock get requests
@@ -1099,32 +1087,32 @@ class TestPackUniqueFilesValidator:
             errors = self.validator.get_errors()
         assert not result
         assert (
-            "Detected the following image relative path: ![Identity with High Risk Score](doc_files/High_Risk_User.png)"
+            "Detected the following image relative path: doc_files/High_Risk_User.png"
             in errors
         )
         assert (
-            "Detected the following image relative path: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)"
+            "Detected the following image relative path: home/test1/test2/doc_files/High_Risk_User.png"
             in errors
         )
         assert (
-            "Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)"
+            "Detected the following image relative path: ../../doc_files/Access_investigation_-_Generic_4_5.png"
             in errors
         )
         assert (
-            "Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)"
+            "Image link was not found, either insert it or remove it:\nInsert the link to your image here"
             in errors
         )
 
         assert (
-            "please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)"
+            "please repair it:\nhttps://github.com/demisto/content/raw/test1.png"
             in errors
         )
         assert (
-            "please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)"
+            "please repair it:\nhttps://raw.githubusercontent.com/demisto/content/raw/test1.png"
             in errors
         )
         assert (
-            "please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)"
+            "please repair it:\nhttps://raw.githubusercontent.com/demisto/content/raw/test1.jpg"
             in errors
         )
         # this path is not an image path and should not be shown.
@@ -1242,7 +1230,7 @@ class TestPackUniqueFilesValidator:
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):
-            os.remove(pack.readme.path)
+            Path(pack.readme.path).unlink()
             assert self.validator.validate_pack_readme_and_pack_description()
             assert (
                 '"README.md" file does not exist, create one in the root of the pack'
@@ -1339,7 +1327,7 @@ class TestPackUniqueFilesValidator:
         author_image_path = pack.author_image.path
 
         with ChangeCWD(repo.path):
-            os.remove(author_image_path)
+            Path(author_image_path).unlink()
             res = self.validator.validate_author_image_exists()
             assert not res
             assert (

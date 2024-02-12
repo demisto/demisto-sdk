@@ -44,6 +44,15 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
         (["<~XSIAM>", "Documentation and metadata improvements.", "</~XSIAM>"], True),
         (["<~XPANSE>Documentation and metadata improvements.</~XPANSE>"], True),
         (["<~XPANSE>", "Documentation and metadata improvements.", "</~XPANSE>"], True),
+        (["<~XSOAR_SAAS>Documentation and metadata improvements.</~XSOAR_SAAS>"], True),
+        (
+            [
+                "<~XSOAR_SAAS>",
+                "Documentation and metadata improvements.",
+                "</~XSOAR_SAAS>",
+            ],
+            True,
+        ),
         (["Maintenance and stability enhancements."], False),
         (["Stability and maintenance enhancements."], False),
         (["Blah."], False),

@@ -5,7 +5,7 @@ args:
   name: name
   required: false
   secret: false
-comment: Hello World Script
+comment: Hello World Script.
 commonfields:
   id: HelloWorldScript
   version: -1

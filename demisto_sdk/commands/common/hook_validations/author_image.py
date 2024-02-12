@@ -1,9 +1,11 @@
+from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
+    PARTNER_SUPPORT,
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -47,12 +49,12 @@ class AuthorImageValidator(ImageValidator):
         Returns:
             (bool): Whether author image is valid.
         """
-        if os.path.exists(self.file_path):
+        if Path(self.file_path).exists():
             self.validate_size(
                 allow_empty_image_file=False, maximum_size=self.maximum_image_size
             )
         else:
-            if self.get_support_level() == "partner":
+            if self.get_support_level() == PARTNER_SUPPORT:
                 error_message, error_code = Errors.author_image_is_missing(
                     self.file_path
                 )

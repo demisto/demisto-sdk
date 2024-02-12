@@ -1,5 +1,5 @@
-import logging
-from typing import Callable, List, Optional, Set, Union
+from pathlib import Path
+from typing import Callable, List, Optional, Union
 
 import demisto_client
 from pydantic import Field
@@ -7,8 +7,6 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call-arg]
@@ -24,9 +22,6 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     details: bool
     details_v2: bool
     mobile: bool
-
-    def metadata_fields(self) -> Set[str]:
-        return {"name", "description"}
 
     def prepare_for_upload(
         self,
@@ -54,6 +49,18 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_layout
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "group" in _dict and Path(path).suffix == ".json":
+            if "cliName" not in _dict:
+                if "id" not in _dict or (
+                    isinstance(_dict["id"], str)
+                    and not _dict["id"].startswith("incident")
+                    and not _dict["id"].startswith("indicator")
+                ):
+                    return True
+        return False
 
 
 def replace_layout_incident_alert(data: dict) -> dict:

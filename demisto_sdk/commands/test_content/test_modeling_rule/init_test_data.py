@@ -1,7 +1,7 @@
 import traceback
 from io import StringIO
 from pathlib import Path
-from typing import List, Set
+from typing import List, Optional
 
 import typer
 
@@ -46,20 +46,20 @@ def init_test_data(
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
-        "--console_log_threshold",
-        help=("Minimum logging threshold for the console logger."),
+        "--console-log-threshold",
+        help="Minimum logging threshold for the console logger.",
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
-        "--file_log_threshold",
-        help=("Minimum logging threshold for the file logger."),
+        "--file-log-threshold",
+        help="Minimum logging threshold for the file logger.",
     ),
-    log_file_path: str = typer.Option(
-        "demisto_sdk_debug.log",
+    log_file_path: Optional[str] = typer.Option(
+        None,
         "-lp",
-        "--log_file_path",
-        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+        "--log-file-path",
+        help="Path to save log files onto.",
     ),
 ):
     """
@@ -76,9 +76,6 @@ def init_test_data(
     for fp in input:
         try:
             mr_entity = ModelingRule(fp.as_posix())
-            all_mr_entity_fields: Set[str] = set()
-            for mr in mr_entity.rules:
-                all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
 
             operation_mode = "create"
             test_data_file = mr_entity.testdata_path

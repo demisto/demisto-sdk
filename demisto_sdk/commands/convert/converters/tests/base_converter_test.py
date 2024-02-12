@@ -158,7 +158,7 @@ class TestBaseConverter:
         - Ensure the file is created in the expected path and expected data.
         """
         BaseConverter.dump_new_entity("test_layout", {"id": "dummy_layout"})
-        assert os.path.exists("test_layout")
+        assert Path("test_layout").exists()
         layout_data = util_load_json("test_layout")
         assert layout_data == {"id": "dummy_layout"}
-        os.remove("test_layout")
+        Path("test_layout").unlink()

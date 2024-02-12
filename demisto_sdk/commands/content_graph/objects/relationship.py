@@ -3,18 +3,18 @@ from typing import Optional
 from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
 
 
 class RelationshipData(BaseModel):
     relationship_type: RelationshipType
 
     # These are the database ids of the relationships
-    source_id: int
-    target_id: int
+    source_id: str
+    target_id: str
 
     # this is the attribute we're interested in when querying
-    content_item_to: BaseContent
+    content_item_to: BaseNode
 
     is_direct: bool = True
 

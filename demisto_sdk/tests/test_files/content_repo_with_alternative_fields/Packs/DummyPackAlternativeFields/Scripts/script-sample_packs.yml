@@ -1,7 +1,6 @@
 commonfields:
   id: id
   version: -1
-  id_x2: id_x2
 name: name
 script: >-
   import json
@@ -31,5 +30,5 @@ outputs:
   description: Incident owner roles
 scripttarget: 0
 fromversion: 6.0.0
-name_x2: name_x2
-comment_x2: comment_x2
+name:marketplacev2: name_x2
+comment:marketplacev2: comment_x2

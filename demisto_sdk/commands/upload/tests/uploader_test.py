@@ -35,9 +35,11 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.widget import Widget
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
     mock_pack,
@@ -133,6 +135,7 @@ def test_upload_folder(
     )
     content_path = f"{git_path()}/demisto_sdk/tests/test_files/"
     mocker.patch.object(content_item, "CONTENT_PATH", Path(content_path))
+    mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
     path = Path(content_path, path_end)
 
@@ -921,6 +924,10 @@ class TestZippedPackUpload:
         mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+        )
+        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with TemporaryDirectory() as dir:
             click.Context(command=upload).invoke(
@@ -1031,7 +1038,7 @@ class TestItemDetacher:
         assert (
             ItemDetacher(
                 client=API_CLIENT,
-                file_path=f"{playbook1.path}/MyPlay1.yml",
+                file_path=playbook1.path,
                 marketplace=MarketplaceVersions.XSOAR,
             ).find_item_id_to_detach()
             == "sample playbook"
@@ -1100,6 +1107,7 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     shutil.rmtree(pack_to_zip.path)  # leave only the zip
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
+    mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
     zip_multiple_packs(
         [pack0.path, pack1.path, zipped_pack_path],
         MarketplaceVersions.XSOAR,

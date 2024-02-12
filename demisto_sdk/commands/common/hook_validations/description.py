@@ -1,4 +1,5 @@
 import glob
+from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import (
@@ -57,24 +58,29 @@ class DescriptionValidator(BaseValidator):
         self.is_duplicate_description()
         self.verify_demisto_in_description_content()
 
-        # make sure the description is a seperate file
+        # Validations that will run only on Markdown file
         if (
             not self.data_dictionary.get("detaileddescription")
             and ".md" in self.file_path
         ):
-            # self.has_markdown_lint_errors()
+            with open(self.file_path) as f:
+                file_content = f.read()
+
             self.is_valid_description_name()
-            self.contains_contrib_details()
+            # self.has_markdown_lint_errors(file_content=file_content)
+            self.contains_contrib_details(file_content=file_content)
+            if not self.validate_no_disallowed_terms_in_customer_facing_docs(
+                file_content=file_content, file_path=self.file_path
+            ):
+                self._is_valid = False
 
         return self._is_valid
 
     @error_codes("DS105")
-    def contains_contrib_details(self):
+    def contains_contrib_details(self, file_content: str):
         """check if DESCRIPTION file contains contribution details"""
-        with open(self.file_path) as f:
-            description_content = f.read()
         contrib_details = re.findall(
-            rf"### .* {CONTRIBUTOR_DETAILED_DESC}", description_content
+            rf"### .* {CONTRIBUTOR_DETAILED_DESC}", file_content
         )
         if contrib_details:
             error_message, error_code = Errors.description_contains_contrib_details()
@@ -145,15 +151,20 @@ class DescriptionValidator(BaseValidator):
         package_path = None
         md_file_path = None
 
+        file_path = Path(self.file_path)
+
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
-            package_path = os.path.dirname(self.file_path)
+            package_path = str(file_path.parent)
             try:
-                base_name_without_extension: str = os.path.basename(
-                    os.path.splitext(self.file_path)[0].replace("_description", "")
+                base_name_without_extension: str = file_path.stem.replace(
+                    "_description", ""
                 )
-                dir_name: str = os.path.dirname(self.file_path)
-                expected_description_name: str = os.path.join(
-                    dir_name, f"{base_name_without_extension}_description.md"
+
+                expected_description_name: str = str(
+                    Path(
+                        str(file_path.parent),
+                        f"{base_name_without_extension}_description.md",
+                    )
                 )
                 md_file_path = glob.glob(expected_description_name)[0]
             except IndexError:
@@ -197,8 +208,8 @@ class DescriptionValidator(BaseValidator):
         md_paths = glob.glob(os.path.join(os.path.dirname(self.file_path), "*.md"))
 
         description_file_path = self.file_path
-        integrations_folder = os.path.basename(os.path.dirname(description_file_path))
-        description_file = os.path.basename(description_file_path)
+        integrations_folder = Path(description_file_path).parent.name
+        description_file = Path(description_file_path).name
 
         # drop file extension
         description_file_base_name = description_file.rsplit("_", 1)[0]
@@ -262,7 +273,7 @@ class DescriptionValidator(BaseValidator):
                     f"{os.path.splitext(self.file_path)[0]}_description.md"
                 )
 
-                if not os.path.exists(description_path):
+                if not Path(description_path).exists():
                     error_message, error_code = Errors.no_description_file_warning()
                     self.handle_error(
                         error_message,
@@ -303,11 +314,9 @@ class DescriptionValidator(BaseValidator):
         return True
 
     # @error_codes("DS108")
-    def has_markdown_lint_errors(self):
-        with open(self.file_path) as f:
-            description_content = f.read()
+    def has_markdown_lint_errors(self, file_content: str):
         if mdx_server_is_up():
-            markdown_response = run_markdownlint(description_content)
+            markdown_response = run_markdownlint(file_content)
             if markdown_response.has_errors:
                 error_message, error_code = Errors.description_lint_errors(
                     self.file_path, markdown_response.validations

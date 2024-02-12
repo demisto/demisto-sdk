@@ -11,12 +11,12 @@ class TestNeo4jQueries:
         [
             (
                 ContentType.INTEGRATION,
-                [ContentType.BASE_CONTENT, ContentType.INTEGRATION],
+                [ContentType.BASE_NODE, ContentType.INTEGRATION],
             ),
             (
                 ContentType.TEST_PLAYBOOK,
                 [
-                    ContentType.BASE_CONTENT,
+                    ContentType.BASE_NODE,
                     ContentType.PLAYBOOK,
                     ContentType.TEST_PLAYBOOK,
                 ],
@@ -24,7 +24,7 @@ class TestNeo4jQueries:
             (
                 ContentType.SCRIPT,
                 [
-                    ContentType.BASE_CONTENT,
+                    ContentType.BASE_NODE,
                     ContentType.SCRIPT,
                     ContentType.COMMAND_OR_SCRIPT,
                 ],

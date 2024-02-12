@@ -14,6 +14,7 @@ from tabulate import tabulate
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     INTEGRATIONS_DIR,
+    LISTS_DIR,
     SCRIPTS_DIR,
     FileType,
     MarketplaceVersions,
@@ -83,6 +84,7 @@ class Uploader:
             Tuple[Union[ContentItem, Pack], str]
         ] = []
         self._failed_upload_version_mismatch: List[ContentItem] = []
+        self._skipped_upload_marketplace_mismatch: List[ContentItem] = []
         self._failed_upload_zips: List[str] = []
         self.failed_parsing: List[Tuple[Path, str]] = []
 
@@ -134,14 +136,7 @@ class Uploader:
                         logger.info(
                             "[red]Are you sure you want to continue? y/[N][/red]"
                         )
-                        try:
-                            return string_to_bool(
-                                str(input()),
-                                accept_yes_no=True,
-                                accept_single_letter=True,
-                            )
-                        except ValueError:
-                            return False
+                        return string_to_bool(str(input()), default_when_empty=False)
             return True
 
         def _parse_internal_pack_names(zip_path: Path) -> Optional[Tuple[str, ...]]:
@@ -258,7 +253,8 @@ class Uploader:
         Upload a content item, a pack, or a zip containing packs.
 
         Returns:
-            bool: whether the item is uploaded succesfully.
+            bool: whether the item is uploaded succesfully to the relevant
+            given marketplace.
 
         Raises:
             NotIndivitudallyUploadedException (see exception class)
@@ -275,7 +271,13 @@ class Uploader:
             )
             self.failed_parsing.append((path, reason))
             return False
-
+        if (
+            self.marketplace
+            and isinstance(content_item, ContentItem)
+            and self.marketplace not in content_item.marketplaces
+        ):
+            self._skipped_upload_marketplace_mismatch.append(content_item)
+            return True
         try:
             content_item.upload(
                 client=self.client,
@@ -357,6 +359,8 @@ class Uploader:
         if path.name in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
             # These folders have another level of content
             to_upload = filter(lambda p: p.is_dir(), path.iterdir())
+        elif path.name == LISTS_DIR:
+            to_upload = path.iterdir()
         else:
             to_upload = itertools.chain(path.glob("*.yml"), path.glob("*.json"))
 
@@ -428,6 +432,29 @@ class Uploader:
 
             logger.info(f"[green]SUCCESSFUL UPLOADS:\n{uploaded_str}\n[/green]")
 
+        if self._skipped_upload_marketplace_mismatch:
+            marketplace_mismatch_str = tabulate(
+                (
+                    (
+                        item.path.name,
+                        item.content_type,
+                        self.marketplace,
+                        [marketplace.value for marketplace in item.marketplaces],
+                    )
+                    for item in self._skipped_upload_marketplace_mismatch
+                ),
+                headers=[
+                    "NAME",
+                    "TYPE",
+                    "MARKETPLACE",
+                    "FILE_MARKETPLACES",
+                ],
+                tablefmt="fancy_grid",
+            )
+            logger.info(
+                f"[yellow]SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:\n{marketplace_mismatch_str}\n[/yellow]"
+            )
+
         if self._failed_upload_version_mismatch:
             version_mismatch_str = tabulate(
                 (
@@ -486,9 +513,7 @@ class Uploader:
 class ConfigFileParser:
     def __init__(self, path: Path):
         self.path = path
-
-        with self.path.open() as f:
-            self.content = json.load(f)
+        self.content = get_file(self.path, raise_on_error=True)
 
         self.custom_packs_paths: Tuple[Path, ...] = tuple(
             Path(pack["url"]) for pack in self.content.get("custom_packs", ())
@@ -531,9 +556,9 @@ class ItemDetacher:
 
         all_files = glob.glob(f"{self.file_path}/**/*", recursive=True)
         for file_path in all_files:
-            if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
+            if Path(file_path).is_file() and self.is_valid_file_for_detach(file_path):
                 file_type = self.find_item_type_to_detach(file_path)
-                file_data = get_file(file_path, file_type)
+                file_data = get_file(file_path)
                 file_id = file_data.get("id", "")
                 if file_id:
                     detach_files_list.append(
@@ -557,8 +582,8 @@ class ItemDetacher:
         return "yml" if "Playbooks" in file_path or "Scripts" in file_path else "json"
 
     def find_item_id_to_detach(self):
-        file_type = self.find_item_type_to_detach(self.file_path)
-        file_data = get_file(self.file_path, file_type)
+        self.find_item_type_to_detach(self.file_path)
+        file_data = get_file(self.file_path)
         return file_data.get("id")
 
     def detach(self, upload_file: bool = False) -> List[str]:
@@ -575,7 +600,7 @@ class ItemDetacher:
                         marketplace=self.marketplace,
                     ).upload()
 
-        elif os.path.isfile(self.file_path):
+        elif Path(self.file_path).is_file():
             file_id = self.find_item_id_to_detach()
             detach_files_list.append({"file_id": file_id, "file_path": self.file_path})
             self.detach_item(file_id=file_id, file_path=self.file_path)

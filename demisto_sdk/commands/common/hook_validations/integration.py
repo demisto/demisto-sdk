@@ -6,6 +6,7 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
+    ALLOWED_HIDDEN_PARAMS,
     BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES,
     DBOT_SCORES_DICT,
@@ -19,17 +20,21 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     IOC_OUTPUTS_DICT,
+    MANDATORY_REPUTATION_CONTEXT_NAMES,
     MAX_FETCH,
     MAX_FETCH_PARAM,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
+    PARTNER_SUPPORT,
     PYTHON_SUBTYPES,
     RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
+    SUPPORT_LEVEL_HEADER,
     TYPE_PWSH,
     XSOAR_CONTEXT_STANDARD_URL,
     XSOAR_SUPPORT,
     MarketplaceVersions,
+    ParameterType,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -39,7 +44,6 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -50,6 +54,7 @@ from demisto_sdk.commands.common.hook_validations.description import (
 )
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     compare_context_path_in_yml_and_readme,
@@ -61,8 +66,13 @@ from demisto_sdk.commands.common.tools import (
     get_item_marketplaces,
     get_pack_name,
     is_iron_bank_pack,
+    is_str_bool,
     server_version_compare,
     string_to_bool,
+    strip_description,
+)
+from demisto_sdk.commands.validate.tools import (
+    get_default_output_description,
 )
 
 default_additional_info = load_default_additional_info_dict()
@@ -73,9 +83,6 @@ class IntegrationValidator(ContentEntityValidator):
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
-    EXPIRATION_FIELD_TYPE = 17
-    ALLOWED_HIDDEN_PARAMS = {"longRunning", "feedIncremental", "feedReputation"}
-
     def __init__(
         self,
         structure_validator,
@@ -84,6 +91,7 @@ class IntegrationValidator(ContentEntityValidator):
         json_file_path=None,
         validate_all=False,
         deprecation_validator=None,
+        using_git=False,
     ):
         super().__init__(
             structure_validator,
@@ -91,6 +99,7 @@ class IntegrationValidator(ContentEntityValidator):
             json_file_path=json_file_path,
             skip_docker_check=skip_docker_check,
         )
+        self.running_validations_using_git = using_git
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
@@ -153,6 +162,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_display_name(),
             self.is_valid_default_value_for_checkbox(),
             self.is_valid_display_name_for_siem(),
+            self.is_valid_xsiam_marketplace(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_max_fetch_and_first_fetch(),
@@ -171,6 +181,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.are_common_outputs_with_description(),
             self.is_native_image_does_not_exist_in_yml(),
             self.validate_unit_test_exists(),
+            self.is_line_ends_with_dot(),
+            self.is_partner_collector_has_xsoar_support_level_header(),
         ]
 
         return all(answers)
@@ -265,7 +277,7 @@ class IntegrationValidator(ContentEntityValidator):
                     self.is_valid = False
         return self.is_valid
 
-    @error_codes("IN127,IN157")
+    @error_codes("IN127,IN160")
     def _is_valid_deprecated_integration_display_name(self) -> bool:
         is_deprecated = self.current_file.get("deprecated", False)
         is_display_name_deprecated = self.current_file.get("display", "").endswith(
@@ -405,14 +417,13 @@ class IntegrationValidator(ContentEntityValidator):
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            server_version_compare(
+            logger.error(
                 "{} Received the following error for {} validation:\n{}\n {}\n".format(
                     self.file_path,
                     param_name,
                     "\n".join(err_msgs),
                     Errors.suggest_fix(file_path=self.file_path),
-                ),
-                "red",
+                )
             )
             self.is_valid = False
             return False
@@ -533,7 +544,7 @@ class IntegrationValidator(ContentEntityValidator):
                         flag = False
 
         if not flag:
-            server_version_compare(Errors.suggest_fix(self.file_path), "red")
+            logger.error(Errors.suggest_fix(self.file_path))
         return flag
 
     @error_codes("IN134")
@@ -594,11 +605,43 @@ class IntegrationValidator(ContentEntityValidator):
 
         return missing_outputs, missing_descriptions
 
-    @error_codes("DB100,DB101,IN107")
+    def validate_reputation_name_spelling(
+        self, command_name: str, context_output_path: str
+    ) -> bool:
+        """
+        Validates that the context output for reputation outputs is spelled correctly.
+        Args:
+            command_name (str): The name of the command being validated.
+            context_output_path (str): The path to the context output of a command.
+        Returns:
+            bool: True if the reputation name is spelled correctly, False otherwise."""
+        result = True
+        for reputation_name in MANDATORY_REPUTATION_CONTEXT_NAMES:
+            # In context output we expect a dot after reputation name as this is the structure
+            # of a valid context output: URL.DATA, Domain.Admin etc.
+            if context_output_path.lower().startswith(f"{reputation_name.lower()}."):
+                if reputation_name not in context_output_path:
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.command_reputation_output_capitalization_incorrect(
+                        command_name, context_output_path, reputation_name
+                    )
+                    if self.handle_error(
+                        error_message,
+                        error_code,
+                        file_path=self.file_path,
+                        warning=self.structure_validator.quiet_bc,
+                    ):
+                        result = False
+        return result
+
+    @error_codes("DB100,DB101,IN107,IN159")
     def is_outputs_for_reputations_commands_valid(self) -> bool:
         """Check if a reputation command (domain/email/file/ip/url)
-            has the correct DBotScore outputs according to the context standard
-            https://xsoar.pan.dev/docs/integrations/context-standards
+            1. Has the correct DBotScore outputs according to the context standard
+               https://xsoar.pan.dev/docs/integrations/context-standards
+            2. Is spelled correctly.
 
         Returns:
             bool. Whether a reputation command holds valid outputs
@@ -613,8 +656,14 @@ class IntegrationValidator(ContentEntityValidator):
                 context_outputs_paths = set()
                 context_outputs_descriptions = set()
                 for output in command.get("outputs", []):
-                    context_outputs_paths.add(output.get("contextPath"))
+                    context_path = output.get("contextPath")
+                    context_outputs_paths.add(context_path)
                     context_outputs_descriptions.add(output.get("description"))
+                    output_for_reputation_valid = (
+                        self.validate_reputation_name_spelling(
+                            command_name, context_path
+                        )
+                    )
 
                 # validate DBotScore outputs and descriptions
                 if command_name in REPUTATION_COMMAND_NAMES:
@@ -1144,7 +1193,7 @@ class IntegrationValidator(ContentEntityValidator):
             configuration_display = configuration_param.get("display")
 
             # This parameter type will not use the display value.
-            if field_type == self.EXPIRATION_FIELD_TYPE:
+            if field_type == ParameterType.EXPIRATION_FIELD.value:
                 if configuration_display:
                     error_message, error_code = Errors.not_used_display_name(
                         configuration_param["name"]
@@ -1275,8 +1324,12 @@ class IntegrationValidator(ContentEntityValidator):
 
             # ignore optional fields
             for param in params:
-                for field in ["defaultvalue", "section", "advanced", "required"]:
-                    param.pop(field, None)
+                for field in param.copy():
+                    if (
+                        field in ["defaultvalue", "section", "advanced", "required"]
+                        or ":" in field
+                    ):
+                        param.pop(field, None)
 
             for fetch_required_param in fetch_required_params:
                 # If this condition returns true, we'll go over the params dict and we'll check if there's a param that match the fetch_required_param name.
@@ -1372,6 +1425,9 @@ class IntegrationValidator(ContentEntityValidator):
             for param in self.current_file.get("configuration", [])
         }
         for param_name, param_details in params.items():
+            for detail in param_details.copy():
+                if ":" in detail:
+                    param_details.pop(detail)
             if "defaultvalue" in param_details and param_name != "feed":
                 param_details.pop("defaultvalue")
             if "hidden" in param_details:
@@ -1389,16 +1445,19 @@ class IntegrationValidator(ContentEntityValidator):
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
                 is_valid = (
                     (
-                        any(
+                        # Validate that the mentioned fields (k) are part of the parameter fields and the value is one of the options of the mentioned values (v).
+                        all(
                             k in param_details and param_details[k] in v
                             for k, v in must_be_one_of.items()
                         )
                         or not must_be_one_of
                     )
+                    # Validate that the mentioned fields (k) are part of the parameter fields and the value is equal the mentioned value (v).
                     and all(
                         k in param_details and param_details[k] == v
                         for k, v in equal_key_values.items()
                     )
+                    # Validate that the mentioned fields (k) are part of the parameter fields and the value contains mentioned value (v).
                     and all(
                         k in param_details and v in param_details[k]
                         for k, v in contained_key_values.items()
@@ -1487,14 +1546,6 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
-
-        def is_str_bool(input_: str):
-            try:
-                string_to_bool(input_)
-                return True
-            except ValueError:
-                return False
-
         valid = True
 
         for param in self.current_file.get("configuration", ()):
@@ -1514,7 +1565,7 @@ class IntegrationValidator(ContentEntityValidator):
             is_true = (hidden is True) or (
                 is_str_bool(hidden) and string_to_bool(hidden)
             )
-            invalid_bool = is_true and name not in self.ALLOWED_HIDDEN_PARAMS
+            invalid_bool = is_true and name not in ALLOWED_HIDDEN_PARAMS
             hidden_in_all_marketplaces = isinstance(hidden, list) and set(
                 hidden
             ) == set(MarketplaceVersions)
@@ -1670,12 +1721,11 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN138,IN137")
     def is_valid_integration_file_path(self) -> bool:
-        absolute_file_path = self.file_path
-        integrations_folder = os.path.basename(os.path.dirname(absolute_file_path))
-        integration_file = os.path.basename(absolute_file_path)
+        absolute_file_path = Path(self.file_path)
+        integrations_folder = absolute_file_path.parent.name
 
         # drop file extension
-        integration_file, _ = os.path.splitext(integration_file)
+        integration_file = Path(absolute_file_path.name).stem
 
         if integrations_folder == "Integrations":
             if not integration_file.startswith("integration-"):
@@ -1726,10 +1776,10 @@ class IntegrationValidator(ContentEntityValidator):
             os.path.dirname(self.file_path), ["py"], False
         )
         invalid_files = []
-        integrations_folder = os.path.basename(os.path.dirname(self.file_path))
+        integrations_folder = Path(os.path.dirname(self.file_path)).name
 
         for file_path in files_to_check:
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
 
             # If the file is in an exclusion list, skip it.
             if file_name in excluded_files or any(
@@ -1784,7 +1834,7 @@ class IntegrationValidator(ContentEntityValidator):
         valid = True
 
         dir_path = os.path.dirname(self.file_path)
-        if not os.path.exists(os.path.join(dir_path, "README.md")):
+        if not Path(dir_path, "README.md").exists():
             return True
 
         # Only run validation if the validation has not run with is_context_different_in_yml on readme
@@ -1860,7 +1910,7 @@ class IntegrationValidator(ContentEntityValidator):
             true if the name is valid and there are no separators, and false if not.
         """
 
-        integration_folder_name = os.path.basename(os.path.dirname(self.file_path))
+        integration_folder_name = Path(os.path.dirname(self.file_path)).name
         valid_folder_name = self.remove_separators_from_name(integration_folder_name)
 
         if valid_folder_name != integration_folder_name:
@@ -1890,8 +1940,7 @@ class IntegrationValidator(ContentEntityValidator):
         valid_files = []
 
         for file_path in files_to_check:
-            file_name = os.path.basename(file_path)
-            if file_name.startswith("README"):
+            if (file_name := Path(file_path).name).startswith("README"):
                 continue
 
             if (
@@ -2127,12 +2176,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN149")
     def are_common_outputs_with_description(self):
-        defaults = json.loads(
-            (
-                Path(__file__).absolute().parents[2]
-                / "common/default_output_descriptions.json"
-            ).read_text()
-        )
+        defaults = get_default_output_description()
 
         missing = {}
         for command in self.current_file.get("script", {}).get("commands", []):
@@ -2210,7 +2254,7 @@ class IntegrationValidator(ContentEntityValidator):
         )
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(
-                os.path.basename(self.file_path), missing_commands_from_readme
+                Path(self.file_path).name, missing_commands_from_readme
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
@@ -2335,4 +2379,75 @@ class IntegrationValidator(ContentEntityValidator):
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
+        return True
+
+    @error_codes("IN161")
+    def is_valid_xsiam_marketplace(self):
+        """Checks if XSIAM integration has only the marketplacev2 entry"""
+        is_siem = self.current_file.get("script", {}).get("isfetchevents")
+        marketplaces = self.current_file.get("marketplaces", [])
+        if is_siem:
+            # Should have only marketplacev2 entry
+            if not len(marketplaces) == 1 or "marketplacev2" not in marketplaces:
+                error_message, error_code = Errors.invalid_siem_marketplaces_entry()
+                if self.handle_error(error_message, error_code, self.file_path):
+                    return False
+
+        return True
+
+    @error_codes("IN162")
+    def is_partner_collector_has_xsoar_support_level_header(self) -> bool:
+        """
+        Validates that event collectors under partner supported packs always has the supportlevelheader = xsoar key:value.
+        """
+        if (script := (self.current_file.get("script") or {})) and (
+            script.get("isfetchevents") or script.get("isfetcheventsandassets")
+        ):
+            pack_name = get_pack_name(self.file_path)
+            if pack_name:
+                metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+                metadata_content = self.get_metadata_file_content(metadata_path)
+
+                support_level_header = self.current_file.get(SUPPORT_LEVEL_HEADER)
+                if (
+                    metadata_content.get("support", "").lower() == PARTNER_SUPPORT
+                    and support_level_header != XSOAR_SUPPORT
+                ):
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.partner_collector_does_not_have_xsoar_support_level(
+                        self.file_path
+                    )
+                    if self.handle_error(error_message, error_code, self.file_path):
+                        return False
+        return True
+
+    @error_codes("DS108")
+    def is_line_ends_with_dot(self):
+        lines_with_missing_dot = ""
+        if self.running_validations_using_git:
+            for command in self.current_file.get("script", {}).get("commands", []):
+                current_command = super().is_line_ends_with_dot(command, "arguments")
+                if current_command:
+                    lines_with_missing_dot += (
+                        f"- In command {command.get('name')}:\n{current_command}"
+                    )
+            stripped_description = strip_description(
+                self.current_file.get("description", "")
+            )
+
+            if super().is_invalid_description_sentence(stripped_description):
+                lines_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
+            if lines_with_missing_dot:
+                error_message, error_code = Errors.description_missing_dot_at_the_end(
+                    lines_with_missing_dot
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix(self.file_path),
+                ):
+                    return False
         return True

@@ -1,0 +1,36 @@
+{
+    "python.testing.cwd": "Packs/HelloWorld/Integrations/HelloWorld",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "-v"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "coverage-gutters.coverageBaseDir": "coverage_report",
+    "python.testing.unittestEnabled": false,
+    "mypy-type-checker.args": [
+        "--follow-imports=silent",
+        "--ignore-missing-imports",
+        "--show-column-numbers",
+        "--no-pretty",
+        "--allow-redefinition"
+    ],
+    "pylint.args": [
+        "-E",
+        "--load-plugins",
+        "xsoar_level_checker,partner_level_checker,certified_partner_level_checker,community_level_checker,base_checker",
+        "--disable=all",
+        "--enable=E9001,W9005,W9011,E9004,E9011,E9002,E9010,W9012,E9012,W9014,W9019,W9013,W9009,W9010,W9017,W9018,E9007,E9005,W9008,W9016,E9003,E9006",
+        "--ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py,conftest.py,.venv,venv"
+    ],
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "cSpell.words": [
+        "demisto",
+        "xsoar",
+        "xsiam",
+        "fromversion",
+        "toversion",
+        "marketplacev2",
+        "ciac",
+        "whois"
+    ]
+}

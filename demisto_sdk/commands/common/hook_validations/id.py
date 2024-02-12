@@ -1,7 +1,6 @@
 import os
 import re
 from collections import OrderedDict
-from distutils.version import LooseVersion
 from typing import Dict, Optional, Tuple
 
 from packaging.version import Version
@@ -782,9 +781,9 @@ class IDSetValidations(BaseValidator):
             integration_from_valid_version_found = False
             for integration in implemented_integrations_list:
                 integration_version = self.get_integration_version(integration)
-                is_version_valid = not integration_version or LooseVersion(
+                is_version_valid = not integration_version or Version(
                     integration_version
-                ) <= LooseVersion(playbook_version)
+                ) <= Version(playbook_version)
                 if is_version_valid:
                     integration_from_valid_version_found = True
                     break

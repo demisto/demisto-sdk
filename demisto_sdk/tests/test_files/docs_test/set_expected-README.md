@@ -10,6 +10,20 @@ Set a value in context under the key you entered.
 | Tags | Utility |
 | Cortex XSOAR Version | 5.0.0 |
 
+## Dependencies
+
+---
+This script uses the following commands and scripts.
+
+* UsesScript
+
+## Used In
+
+---
+This script is used in the following playbooks and scripts.
+
+* SamplePlaybook
+
 ## Inputs
 
 ---

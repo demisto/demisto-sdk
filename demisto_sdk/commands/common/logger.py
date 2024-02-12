@@ -1,14 +1,87 @@
+import itertools
 import logging
 import logging.config
 import os.path
+import platform
+import re
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Dict, List, Optional, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools import string_to_bool
+# NOTE: Do not add internal imports here, as it may cause circular imports.
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_LOG_FILE_COUNT,
+    DEMISTO_SDK_LOG_FILE_PATH,
+    DEMISTO_SDK_LOG_FILE_SIZE,
+    DEMISTO_SDK_LOG_NO_COLORS,
+    DEMISTO_SDK_LOG_NOTIFY_PATH,
+    LOG_FILE_NAME,
+    LOGS_DIR,
+    STRING_TO_BOOL_MAP,
+)
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
+
+
+def environment_variable_to_bool(
+    variable_name: str, default_value: bool = False
+) -> bool:
+    """
+    Check if the environment variable is set and is a valid boolean value.
+    If it is not set or is not a valid boolean value, return the default value.
+
+    Args:
+        variable_name (str): The name of the environment variable.
+        default_value (bool): A default value to return if the environment variable is not set or is invalid.
+
+    Returns:
+        bool: The environment variable value if it is set and is a valid boolean value, otherwise the default value.
+    """
+    env_var = os.getenv(variable_name)
+
+    if not env_var:
+        return default_value
+
+    if isinstance(env_var, str) and env_var.casefold() in STRING_TO_BOOL_MAP:
+        return STRING_TO_BOOL_MAP[env_var.casefold()]
+
+    else:
+        logger.warning(
+            f"'{variable_name}' environment variable is set to '{env_var}', "
+            f"which is not a valid value. Default value '{default_value}' will be used."
+        )
+        return default_value
+
+
+def environment_variable_to_int(variable_name: str, default_value: int) -> int:
+    """
+    Check if the environment variable is set and is a valid integer value.
+    If it is not set or is not a valid integer value, return the default value.
+
+    Args:
+        variable_name (str): The name of the environment variable.
+        default_value (int): A default value to return if the environment variable is not set or is invalid.
+
+    Returns:
+        int: The environment variable value if it is set and is a valid integer value, otherwise the default value.
+    """
+    env_var = os.getenv(variable_name)
+
+    if not env_var:
+        return default_value
+
+    try:
+        return int(env_var)
+
+    except ValueError:
+        logger.warning(
+            f"'{variable_name}' environment variable is set to '{env_var}', "
+            f"which is not a valid integer value. Default value '{default_value}' will be used."
+        )
+
+        return default_value
+
 
 neo4j_log = logging.getLogger("neo4j")
 neo4j_log.setLevel(logging.CRITICAL)
@@ -16,11 +89,10 @@ neo4j_log.setLevel(logging.CRITICAL)
 CONSOLE_HANDLER = "console-handler"
 FILE_HANDLER = "file-handler"
 
-LOG_FILE_NAME: str = "demisto_sdk_debug.log"
-log_file_name_notified = False
-
-LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
-current_log_file_path: Path = LOG_FILE_PATH
+LOG_FILE_PATH: Optional[Path] = None
+LOG_FILE_PATH_PRINT = environment_variable_to_bool(
+    DEMISTO_SDK_LOG_NOTIFY_PATH, default_value=True
+)
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
@@ -31,12 +103,101 @@ DEPRECATED_PARAMETERS = {
     "--verbose": "--console-log-threshold or --file-log-threshold",
     "-q": "--console-log-threshold or --file-log-threshold",
     "--quiet": "--console-log-threshold or --file-log-threshold",
-    "-ln": "--log-path",
-    "--log-name": "--log-path",
+    "--console_log_threshold": "--console-log-threshold",
+    "--file_log_threshold": "--file-log-threshold",
+    "-ln": "--log-file-path",
+    "--log-name": "--log-file-path",
+    "--log_file_path": "--log-file-path",
     "no_logging": "--console-log-threshold or --file-log-threshold",
 }
 
 SUCCESS_LEVEL: int = 25
+LOG_FILE_SIZE = environment_variable_to_int(DEMISTO_SDK_LOG_FILE_SIZE, 1_048_576)  # 1MB
+LOG_FILE_COUNT = environment_variable_to_int(DEMISTO_SDK_LOG_FILE_COUNT, 10)
+
+FILE_LOG_RECORD_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s"
+
+if environment_variable_to_bool("CI"):
+    CONSOLE_LOG_RECORD_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
+    CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(asctime)s] [%(levelname)s] "
+else:
+    CONSOLE_LOG_RECORD_FORMAT = "[%(levelname)s] %(message)s"
+    CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(levelname)s] "
+
+
+CONSOLE_RECORD_FORMATS = {
+    logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
+    logging.INFO: "[lightgrey]%(message)s[/lightgrey]",
+    logging.WARNING: "[yellow]%(message)s[/yellow]",
+    logging.ERROR: "[red]%(message)s[/red]",
+    logging.CRITICAL: "[red][bold]%(message)s[/bold[/red]",
+    SUCCESS_LEVEL: "[green]%(message)s[/green]",
+}
+
+NO_COLOR_ESCAPE_CHAR = "\033[0m"
+
+DEMISTO_LOG_ALLOWED_ESCAPES = [  # The order of the list is by priority.
+    ("green", 32),
+    ("red", 91),
+    ("yellow", 93),
+    ("cyan", 36),
+    ("blue", 34),
+    ("orange", 33),
+    ("pink", 95),
+    ("purple", 35),
+    ("black", 30),
+    ("invisible", 8),
+    ("bold", 1),
+    ("disable", 2),
+    ("reverse", 7),
+    ("strikethrough", 9),
+    ("underline", 4),
+    ("darkgrey", 90),
+    ("darkred", 31),
+    ("lightblue", 94),
+    ("lightcyan", 96),
+    ("lightgreen", 92),
+    ("lightgrey", 37),
+    ("lightred", 91),
+]
+
+DEMISTO_LOG_LOOKUP = dict(  # Convert the list of tuples to a dict
+    itertools.chain.from_iterable(  # flatten the list of lists
+        map(
+            lambda color_to_number: [
+                (
+                    f"[{color_to_number[0]}]",  # The color key (i.e. [green])
+                    f"\033[{color_to_number[1]:>02}m",  # The color escape sequence (i.e. \033[32m)
+                ),
+                (
+                    f"[/{color_to_number[0]}]",  # The color closing key (i.e. [/green])
+                    NO_COLOR_ESCAPE_CHAR,  # The color closing escape sequence (i.e. \033[0m)
+                ),
+            ],
+            DEMISTO_LOG_ALLOWED_ESCAPES,
+        )
+    )
+)
+
+DEMISTO_LOGGER_PATTERN = re.compile(
+    "|".join(rf"\[(\/)?{key}\]" for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES)
+)
+
+
+def replace_log_coloring_tags(
+    text: str, replacements: Optional[Dict[str, str]] = None
+) -> str:
+    result: List[str] = []
+    last_index = 0
+    replacements = replacements if replacements is not None else DEMISTO_LOG_LOOKUP
+
+    for match in DEMISTO_LOGGER_PATTERN.finditer(text):
+        start, end = match.span()
+        result.extend((text[last_index:start], replacements.get(match.group(), "")))
+        last_index = end
+
+    result.append(text[last_index:])
+    return "".join(result)
 
 
 def handle_deprecated_args(input_args):
@@ -48,64 +209,15 @@ def handle_deprecated_args(input_args):
             )
 
 
-escapes = {
-    "[bold]": "\033[01m",
-    "[disable]": "\033[02m",
-    "[underline]": "\033[04m",
-    "[reverse]": "\033[07m",
-    "[strikethrough]": "\033[09m",
-    "[invisible]": "\033[08m",
-    "[/bold]": "\033[0m",
-    "[/disable]": "\033[0m",
-    "[/underline]": "\033[0m",
-    "[/reverse]": "\033[0m",
-    "[/strikethrough]": "\033[0m",
-    "[/invisible]": "\033[0m",
-    "[black]": "\033[30m",
-    "[red]": "\033[91m",
-    "[darkred]": "\033[31m",
-    "[lightred]": "\033[91m",
-    "[darkgrey]": "\033[90m",
-    "[lightgrey]": "\033[37m",
-    "[green]": "\033[32m",
-    "[orange]": "\033[33m",
-    "[lightgreen]": "\033[92m",
-    "[blue]": "\033[34m",
-    "[lightblue]": "\033[94m",
-    "[purple]": "\033[35m",
-    "[cyan]": "\033[36m",
-    "[lightcyan]": "\033[96m",
-    "[yellow]": "\033[93m",
-    "[pink]": "\033[95m",
-    "[/black]": "\033[0m",
-    "[/red]": "\033[0m",
-    "[/darkred]": "\033[0m",
-    "[/lightred]": "\033[0m",
-    "[/lightgrey]": "\033[0m",
-    "[/darkgrey]": "\033[0m",
-    "[/green]": "\033[0m",
-    "[/lightgreen]": "\033[0m",
-    "[/orange]": "\033[0m",
-    "[/blue]": "\033[0m",
-    "[/lightblue]": "\033[0m",
-    "[/purple]": "\033[0m",
-    "[/cyan]": "\033[0m",
-    "[/lightcyan]": "\033[0m",
-    "[/yellow]": "\033[0m",
-    "[/pink]": "\033[0m",
-}
-
-
-def get_handler_by_name(logger: logging.Logger, handler_name: str):
-    for current_handler in logger.handlers:
-        if current_handler.get_name == handler_name:
-            return current_handler
-    return None
-
-
-def set_demisto_logger(demisto_logger: logging.Logger):
-    global logger
-    logger = demisto_logger
+def get_handler_by_name(_logger: logging.Logger, handler_name: str):
+    return next(
+        (
+            current_handler
+            for current_handler in _logger.handlers
+            if current_handler.get_name == handler_name
+        ),
+        None,
+    )
 
 
 def _add_logging_level(
@@ -124,7 +236,7 @@ def _add_logging_level(
     `logging` module or if the method name is already present
     Example
     -------
-    >>> addLoggingLevel('TRACE', logging.DEBUG - 5)
+    >>> _add_logging_level('TRACE', logging.DEBUG - 5)
     >>> logging.getLogger(__name__).setLevel("TRACE")
     >>> logging.getLogger(__name__).trace('that worked')
     >>> logging.trace('so did this')
@@ -144,46 +256,40 @@ def _add_logging_level(
     # This method was inspired by the answers to Stack Overflow post
     # http://stackoverflow.com/q/2183233/2988730, especially
     # http://stackoverflow.com/a/13638084/2988730
-    def logForLevel(self, message, *args, **kwargs):
+    def log_for_level(self, message, *args, **kwargs):
         if self.isEnabledFor(level_num):
             self._log(level_num, message, args, **kwargs)
 
-    def logToRoot(message, *args, **kwargs):
+    def log_to_root(message, *args, **kwargs):
         logging.log(level_num, message, *args, **kwargs)
 
     logging.addLevelName(level_num, level_name)
     setattr(logging, level_name, level_num)
-    setattr(logging.getLoggerClass(), method_name, logForLevel)
-    setattr(logging, method_name, logToRoot)
+    setattr(logging.getLoggerClass(), method_name, log_for_level)
+    setattr(logging, method_name, log_to_root)
 
 
 class ColorConsoleFormatter(logging.Formatter):
-    FORMATS = {
-        logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
-        logging.INFO: "[lightgrey]%(message)s[/lightgrey]",
-        logging.WARNING: "[yellow]%(message)s[/yellow]",
-        logging.ERROR: "[red]%(message)s[/red]",
-        logging.CRITICAL: "[red][bold]%(message)s[/bold[/red]",
-        SUCCESS_LEVEL: "[green]%(message)s[/green]",
-    }
-
     def __init__(
         self,
+        fmt: Optional[str] = CONSOLE_LOG_RECORD_FORMAT,
+        datefmt: Optional[str] = DATE_FORMAT,
+        short_fmt: Optional[str] = CONSOLE_LOG_RECORD_FORMAT_SHORT,
+        record_formats: Optional[Dict[int, str]] = None,
     ):
         super().__init__(
-            fmt="[%(asctime)s] [%(levelname)s] %(message)s"
-            if os.getenv("CI")
-            else "[%(levelname)s] %(message)s",
-            datefmt=DATE_FORMAT,
+            fmt=fmt,
+            datefmt=datefmt,
         )
+        self.short_fmt = short_fmt or CONSOLE_LOG_RECORD_FORMAT_SHORT
+        self.record_formats = record_formats or CONSOLE_RECORD_FORMATS
 
     @staticmethod
     def _record_contains_escapes(record: logging.LogRecord) -> bool:
         message = record.getMessage()
-        for key in escapes:
-            if not key.startswith("[/]") and key in message:
-                return True
-        return False
+        return any(
+            not key.startswith("[/]") and key in message for key in DEMISTO_LOG_LOOKUP
+        )
 
     @staticmethod
     def _string_starts_with_escapes(string: str) -> bool:
@@ -203,7 +309,7 @@ class ColorConsoleFormatter(logging.Formatter):
         while ColorConsoleFormatter._string_starts_with_escapes(current_message):
 
             # Record starts with escapes - Extract them
-            current_escape = current_message[0 : current_message.find("]") + 1]
+            current_escape = current_message[: current_message.find("]") + 1]
             ret_value += current_escape
             current_message = current_message[
                 len(current_escape) : current_message.find("]", len(current_escape)) + 1
@@ -224,136 +330,159 @@ class ColorConsoleFormatter(logging.Formatter):
         if ColorConsoleFormatter._record_contains_escapes(record):
             message = ColorConsoleFormatter._insert_into_escapes(
                 record,
-                "[%(asctime)s] [%(levelname)s] "
-                if os.getenv("CI")
-                else "[%(levelname)s] ",
+                self.short_fmt,
             )
             message = logging.Formatter(message).format(record)
         else:
-            log_fmt = ColorConsoleFormatter.FORMATS.get(record.levelno)
+            log_fmt = self.record_formats.get(record.levelno)
             message = logging.Formatter(log_fmt).format(record)
-        message = ColorConsoleFormatter.replace_escapes(message)
-        return message
-
-    @staticmethod
-    def replace_escapes(message):
-        for key in escapes:
-            message = message.replace(key, escapes[key])
+        message = replace_log_coloring_tags(message)
         return message
 
 
 class NoColorFileFormatter(logging.Formatter):
     def __init__(
         self,
+        fmt: Optional[str] = FILE_LOG_RECORD_FORMAT,
+        datefmt: Optional[str] = DATE_FORMAT,
     ):
         super().__init__(
-            fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s",
-            datefmt=DATE_FORMAT,
+            fmt=fmt,
+            datefmt=datefmt,
         )
 
     def format(self, record):
         message = logging.Formatter.format(self, record)
-        message = self.replace_escapes(message)
-        return message
-
-    def replace_escapes(self, message):
-        for key in escapes:
-            message = message.replace(key, "")
+        message = replace_log_coloring_tags(
+            message, {}
+        )  # Remove all coloring tags, with supplying empty dict.
         return message
 
 
 def logging_setup(
-    console_log_threshold=logging.INFO,
-    file_log_threshold=logging.DEBUG,
-    log_file_path=LOG_FILE_PATH,
+    console_log_threshold: Union[int, str] = logging.INFO,
+    file_log_threshold: Union[int, str] = logging.DEBUG,
+    log_file_path: Optional[Union[str, Path]] = None,
+    skip_log_file_creation: bool = False,
 ) -> logging.Logger:
-    """Init logger object for logging in demisto-sdk
-        For more info - https://docs.python.org/3/library/logging.html
+    """
+    Initialize and configure the logger object for logging in demisto-sdk
+    For more info - https://docs.python.org/3/library/logging.html
 
     Args:
-        console_log_threshold(int): Minimum console log threshold. Defaults to logging.INFO
-        file_log_threshold(int): Minimum console log threshold. Defaults to logging.INFO
+        console_log_threshold (int | str, optional): Minimum console log threshold. Defaults to logging.INFO.
+        file_log_threshold(int | str, optional): Minimum console log threshold. Defaults to logging.DEBUG.
+        log_file_path (str | Path | None, optional): Path to log file. Defaults to None.
+        skip_log_file_creation (bool, optional): Whether to skip log file creation. Defaults to False.
 
     Returns:
         logging.Logger: logger object
     """
+    global LOG_FILE_PATH
 
     if not hasattr(logging.getLoggerClass(), "success"):
         _add_logging_level("SUCCESS", SUCCESS_LEVEL)
 
-    global logger
-    global current_log_file_path
-    global log_file_name_notified
-
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
-    console_handler.setLevel(
-        console_log_threshold if console_log_threshold else logging.INFO
-    )
+    console_handler.setLevel(console_log_threshold or logging.INFO)
 
-    if custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH"):
-        current_log_file_path = Path(custom_log_path)
-    else:
-        current_log_file_path = log_file_path or LOG_FILE_PATH
-        if Path(current_log_file_path).is_dir():
-            current_log_file_path = current_log_file_path / LOG_FILE_NAME
-    file_handler = RotatingFileHandler(
-        filename=current_log_file_path,
-        mode="a",
-        maxBytes=1048576,
-        backupCount=10,
-    )
-    file_handler.set_name(FILE_HANDLER)
-    file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
-
-    if string_to_bool(os.getenv("DEMISTO_SDK_LOG_NO_COLORS", "False")):
+    if environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS):
         console_handler.setFormatter(fmt=NoColorFileFormatter())
     else:
         console_handler.setFormatter(fmt=ColorConsoleFormatter())
 
-    file_formatter = NoColorFileFormatter()
-    file_handler.setFormatter(fmt=file_formatter)
+    log_handlers: List[logging.Handler] = [console_handler]
 
+    # We set up the console handler separately before the file logger is ready, so that we can display log messages
+    root_logger: logging.Logger = logging.getLogger("")
+    set_demisto_handlers_to_logger(_logger=root_logger, handlers=log_handlers)
+    set_demisto_handlers_to_logger(_logger=logger, handlers=log_handlers)
+    logger.propagate = False
+
+    if not skip_log_file_creation:
+        if log_file_directory_path_str := (
+            log_file_path or os.getenv(DEMISTO_SDK_LOG_FILE_PATH)
+        ):
+            current_log_file_path = Path(log_file_directory_path_str).resolve()
+
+            if current_log_file_path.is_dir():
+                final_log_file_path = current_log_file_path / LOG_FILE_NAME
+
+            elif current_log_file_path.is_file():
+                logger.warning(
+                    f"Log file path '{current_log_file_path}' is a file and not a directory. "
+                    f"Log file will be created in parent directory '{current_log_file_path.parent}'."
+                )
+                final_log_file_path = current_log_file_path.parent / LOG_FILE_NAME
+
+            else:  # Path is neither a file nor a directory
+                logger.warning(
+                    f"Log file path '{current_log_file_path}' does not exist and will be created."
+                )
+                current_log_file_path.mkdir(parents=True, exist_ok=True)
+                final_log_file_path = current_log_file_path / LOG_FILE_NAME
+
+        else:  # Use default log files path
+            log_file_directory_path = LOGS_DIR
+            log_file_directory_path.mkdir(
+                parents=True, exist_ok=True
+            )  # Generate directory if it doesn't exist
+            final_log_file_path = log_file_directory_path / LOG_FILE_NAME
+
+        # Update global variable
+        LOG_FILE_PATH = final_log_file_path
+
+        file_handler = RotatingFileHandler(
+            filename=LOG_FILE_PATH,
+            mode="a",
+            maxBytes=LOG_FILE_SIZE,
+            backupCount=LOG_FILE_COUNT,
+        )
+        file_handler.set_name(FILE_HANDLER)
+        file_handler.setLevel(file_log_threshold or logging.DEBUG)
+        file_handler.setFormatter(fmt=NoColorFileFormatter())
+        log_handlers.append(file_handler)
+
+    log_level = (
+        min(*[handler.level for handler in log_handlers])
+        if len(log_handlers) > 1
+        else log_handlers[0].level
+    )
     logging.basicConfig(
-        handlers=[console_handler, file_handler],
-        level=min(console_handler.level, file_handler.level),
+        handlers=log_handlers,
+        level=log_level,
     )
 
-    root_logger: logging.Logger = logging.getLogger("")
-    set_demisto_handlers_to_logger(root_logger, console_handler, file_handler)
+    # Set up handlers again, this time with the file handler
+    set_demisto_handlers_to_logger(_logger=root_logger, handlers=log_handlers)
+    set_demisto_handlers_to_logger(_logger=logger, handlers=log_handlers)
 
-    demisto_logger: logging.Logger = logging.getLogger("demisto-sdk")
-    set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
-    demisto_logger.propagate = False
+    logger.debug(f"Python version: {sys.version}")
+    logger.debug(f"Working dir: {Path.cwd()}")
+    logger.debug(f"Platform: {platform.system()}")
 
-    set_demisto_logger(demisto_logger)
+    if LOG_FILE_PATH_PRINT and not skip_log_file_creation:
+        logger.info(f"[yellow]Log file location: {LOG_FILE_PATH}[/yellow]")
 
-    demisto_logger.debug(f"Python version: {sys.version}")
-    demisto_logger.debug(f"Working dir: {os.getcwd()}")
-    import platform
-
-    demisto_logger.debug(f"Platform: {platform.system()}")
-
-    if not log_file_name_notified:
-        demisto_logger.info(
-            f"[yellow]Log file location: {current_log_file_path}[/yellow]"
-        )
-        log_file_name_notified = True
-
-    logger = demisto_logger
-
-    return demisto_logger
+    return logger
 
 
 def set_demisto_handlers_to_logger(
-    logger: logging.Logger, console_handler, file_handler
+    _logger: logging.Logger, handlers: List[logging.Handler]
 ):
-    while logger.handlers:
-        logger.removeHandler(logger.handlers[0])
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
-    logger.level = min(console_handler.level, file_handler.level)
+    if not handlers:
+        return
 
+    while _logger.handlers:
+        _logger.removeHandler(_logger.handlers[0])
 
-def get_log_file() -> Path:
-    return current_log_file_path
+    for handler in handlers:
+        _logger.addHandler(handler)
+
+    log_level = (
+        min(*[handler.level for handler in handlers])
+        if len(handlers) > 1
+        else handlers[0].level
+    )
+    _logger.level = log_level

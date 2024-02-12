@@ -8,13 +8,12 @@ import tarfile
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Dict, Generator, List, Optional, Union
+from typing import Callable, Dict, Generator, List, Union
 
 # Third party packages
 import coverage
 import docker
 import docker.errors
-import git
 import requests
 from docker.models.containers import Container
 from packaging.version import parse
@@ -25,10 +24,11 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
-from demisto_sdk.commands.common.tools import get_remote_file
+from demisto_sdk.commands.common.tools import get_remote_file, is_external_repository
 
 PYTHON2_REQ = ["flake8", "vulture"]
 
@@ -111,7 +111,7 @@ def build_skipped_exit_code(
 
 
 def get_test_modules(
-    content_repo: Optional[git.Repo], is_external_repo: bool
+    content_repo: GitUtil, is_external_repo: bool = is_external_repository()
 ) -> Dict[Path, bytes]:
     """Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py
@@ -148,7 +148,7 @@ def get_test_modules(
 
         for module in modules:
             try:
-                module_full_path = content_repo.working_dir / module  # type: ignore
+                module_full_path = content_repo.repo.working_dir / module  # type: ignore
                 logger.debug(f"read file {module_full_path}")
                 if module.match("*CommonServerPython.py"):
                     # Remove import of DemistoClassApiModule in CommonServerPython,
@@ -506,7 +506,7 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
             sql_connection.commit()
         cursor.close()
     if not index == 1:
-        os.remove(coverage_file)
+        Path(coverage_file).unlink()
 
 
 def coverage_files():
@@ -530,7 +530,7 @@ def generate_coverage_report(
     cov_file = os.path.join(cov_dir, ".coverage")
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
-    if not os.path.exists(cov_file):
+    if not Path(cov_file).exists():
         logger.warning(
             f"skipping coverage report {cov_file} file not found. "
             f"Should not expect this if code files were changed or when linting all with pytest."
@@ -555,7 +555,8 @@ def generate_coverage_report(
                 return
             raise warning
         report_data.seek(0)
-        logger.info(report_data.read())
+        # avoid parsing % that may exist in the data
+        logger.info("%s", report_data.read())
 
     if html:
         html_dir = os.path.join(cov_dir, "html")

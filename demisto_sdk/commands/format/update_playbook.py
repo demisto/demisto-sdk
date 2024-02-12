@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_string_uuid,
     remove_copy_and_dev_suffixes_from_str,
-    write_yml,
+    write_dict,
 )
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -197,7 +197,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                     f"Found usage of playbook in {file_path} tasks: "
                     f'{" ".join(updated_tasks)} - Updating playbookId'
                 )
-                write_yml(file_path, playbook_data)
+                write_dict(file_path, playbook_data)
 
 
 class PlaybookYMLFormat(BasePlaybookYMLFormat):

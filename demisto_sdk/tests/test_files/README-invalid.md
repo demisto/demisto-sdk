@@ -361,3 +361,6 @@ accessdata-get-processing-case-id
 
 ##### Valid image path
 <img width="500" src="https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png" />
+
+##### Valid image path
+<img width="500" src="https://github.com/demisto/content/assets/91506078/7915b150-bd26-4aed-b4ba-8820226dfe32" />

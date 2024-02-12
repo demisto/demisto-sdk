@@ -1,21 +1,20 @@
 import os
 import re
 from abc import ABC
-from typing import Dict, List, Tuple
+from pathlib import Path
+from typing import List, Set, Tuple
 
 from demisto_sdk.commands.common.constants import (
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
     FileType,
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
-    get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_layout,
-    normalize_field_name,
     remove_copy_and_dev_suffixes_from_str,
 )
-from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
+from demisto_sdk.commands.content_graph.objects import Layout
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION,
     ERROR_RETURN_CODE,
@@ -69,6 +68,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
+        self.graph = kwargs.get("graph")
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
@@ -117,10 +117,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.set_toVersion()
         self.layout__set_output_path()
         self.remove_copy_and_dev_suffixes_from_layout()
-        self.remove_non_existent_fields_layout()
 
     def layout__set_output_path(self):
-        output_basename = os.path.basename(self.output_file)
+        output_basename = Path(self.output_file).name
         if not output_basename.startswith(LAYOUT_PREFIX):
             new_output_basename = (
                 LAYOUT_PREFIX + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
@@ -146,7 +145,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.remove_non_existent_fields_container_layout()
 
     def layoutscontainer__set_output_path(self):
-        output_basename = os.path.basename(self.output_file)
+        output_basename = Path(self.output_file).name
         if not output_basename.startswith(LAYOUTS_CONTAINER_PREFIX):
             new_output_basename = (
                 LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]
@@ -301,13 +300,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         """
         Remove non-existent fields from a container layout.
         """
-        if not self.id_set_file:
-            logger.warning(
-                f"Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing"
+        if not self.graph:
+            logger.info(
+                f"Skipping formatting of non-existent-fields for {self.source_file} as the no-graph argument was given."
             )
             return
-
-        content_fields = self.get_available_content_fields()
 
         layout_container_items = [
             layout_container_field
@@ -315,86 +312,58 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             if self.data.get(layout_container_field)
         ]
 
+        # get the relevant content item from the graph
+        layout_object: ContentItem
+        result = self.graph.search(
+            path=Path(self.source_file).relative_to(self.graph.repo_path)
+        )
+        if not isinstance(result, List) or not result:
+            logger.error(f"Failed finding {self.source_file} in the content graph.")
+            return
+        layout_object = result[0]
+        if not isinstance(layout_object, Layout):
+            logger.error(
+                f"File {self.source_file} object isn't a layout, but {type(layout_object)}."
+            )
+            return
+
+        # find the fields that aren't in the content repo
+        fields_not_in_repo = {
+            field.content_item_to.object_id
+            for field in layout_object.uses
+            if isinstance(field.content_item_to, UnknownContent)
+        }
+
+        if fields_not_in_repo:
+            logger.info(
+                f"Removing the fields {fields_not_in_repo} from the layout {self.source_file} "
+                f"because they aren't in the content repo."
+            )
+
+        # remove the fields that aren't in the repo
         for layout_container_item in layout_container_items:
             layout = self.data.get(layout_container_item, {})
             layout_tabs = layout.get("tabs", [])
             self.remove_non_existent_fields_from_tabs(
-                layout_tabs=layout_tabs, content_fields=content_fields
+                layout_tabs=layout_tabs, fields_to_remove=fields_not_in_repo
             )
-
-    def remove_non_existent_fields_layout(self):
-        """
-        Remove non-existent fields from a layout.
-        """
-        if not self.id_set_file:
-            logger.warning(
-                f"Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing"
-            )
-            return
-
-        content_fields = self.get_available_content_fields()
-
-        layout = self.data.get("layout", {})
-        layout_sections = layout.get("sections", [])
-        for section in layout_sections:
-            fields = section.get("fields", [])
-            section["fields"] = self.extract_content_fields(
-                fields=fields, content_fields=content_fields
-            )
-
-        self.remove_non_existent_fields_from_tabs(
-            layout_tabs=layout.get("tabs", []), content_fields=content_fields
-        )
-
-    def get_available_content_fields(self):
-        """
-        Get all the available content indicator/incident fields available + all the built in fields.
-        """
-        return (
-            get_all_incident_and_indicator_fields_from_id_set(
-                self.id_set_file, "layout"
-            )
-            + [field.lower() for field in BUILT_IN_FIELDS]
-            + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
-        )
-
-    @staticmethod
-    def extract_content_fields(
-        fields: List[Dict], content_fields: List[str]
-    ) -> List[str]:
-        """
-        Get only incident/indicator fields which are part of the id json file.
-
-        Args:
-            fields (list[dict]): list of fields.
-            content_fields (list[str]): all the available content fields from id json.
-
-        Returns:
-            list[str]: fields which are part of the content items (id json).
-        """
-        return [
-            field  # type: ignore[misc]
-            for field in fields
-            if normalize_field_name(field=field.get("fieldId", "")).lower()
-            not in get_invalid_incident_fields_from_layout(
-                layout_incident_fields=fields, content_fields=content_fields
-            )
-        ]
 
     def remove_non_existent_fields_from_tabs(
-        self, layout_tabs: list, content_fields: List[str]
+        self, layout_tabs: list, fields_to_remove: Set
     ):
         """
         Remove non-existent fields which are not part of the id json from tabs.
 
         Args:
             layout_tabs (list[dict]): list of layout tabs.
-            content_fields (list[str]): all the available content fields from id json.
+            fields_to_remove (list[str]): all the available content fields from id json.
         """
         for tab in layout_tabs:
             layout_sections = tab.get("sections", [])
             for section in layout_sections:
-                items = section.get("items", [])
-                section["items"] = self.extract_content_fields(
-                    fields=items, content_fields=content_fields
-                )
+                if items := section.get("items", []):
+                    section["items"] = [
+                        item
+                        for item in items
+                        if item.get("fieldId", "") not in fields_to_remove
+                    ]

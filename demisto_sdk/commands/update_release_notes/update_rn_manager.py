@@ -21,7 +21,7 @@ from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN,
     update_api_modules_dependents_rn,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
 
 class UpdateReleaseNotesManager:
@@ -86,7 +86,7 @@ class UpdateReleaseNotesManager:
             )
 
     def filter_to_relevant_files(
-        self, file_set: set, validate_manager: ValidateManager
+        self, file_set: set, validate_manager: OldValidateManager
     ) -> Tuple[set, set, bool]:
         """
         Given a file set, filter it to only files which require RN and if given, from a specific pack
@@ -113,7 +113,7 @@ class UpdateReleaseNotesManager:
         modified_files: set,
         added_files: set,
         renamed_files: set,
-        validate_manager: ValidateManager,
+        validate_manager: OldValidateManager,
     ):
         """
         Filter the raw file sets to only the relevant files for RN
@@ -132,7 +132,7 @@ class UpdateReleaseNotesManager:
         return filtered_modified, filtered_added, old_format_files
 
     def setup_validate_manager(self):
-        return ValidateManager(
+        return OldValidateManager(
             skip_pack_rn_validation=True,
             prev_ver=self.prev_ver,
             silence_init_prints=True,

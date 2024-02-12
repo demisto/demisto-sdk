@@ -3,12 +3,14 @@ import os
 import shutil
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
 import coverage
 import pytest
 import requests
 from freezegun import freeze_time
 
+from demisto_sdk.commands.common.constants import TEST_COVERAGE_DEFAULT_URL
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.helpers import (
@@ -167,7 +169,7 @@ class TestExportReport:
 
 class TestCoverageSummary:
     class TestGetFilesSummary:
-        default_url = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+        default_url = TEST_COVERAGE_DEFAULT_URL
 
         @staticmethod
         def check_get_files(cache_dir, mock_min_cov_request, request_count):
@@ -363,7 +365,7 @@ class TestFixFilePath:
 
         fix_file_path(dot_cov_file_path, "some_path")
 
-        assert not os.path.exists(dot_cov_file_path)
+        assert not Path(dot_cov_file_path).exists()
         assert len(logger_debug.call_args_list) == 2
         assert all(
             [

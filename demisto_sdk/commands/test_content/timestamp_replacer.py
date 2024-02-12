@@ -1,10 +1,17 @@
+"""BEWARE:
+
+This file is used outside of the demisto-sdk.
+DO NOT import anything from custom packages, only use builtins.
+"""
+
 import functools
+import json  # noqa: TID251
 import logging
 import urllib.parse
 from ast import literal_eval
 from collections import OrderedDict
 from copy import deepcopy
-from os import path
+from pathlib import Path
 from time import ctime
 from typing import List, Union
 
@@ -14,10 +21,6 @@ from mitmproxy.addonmanager import Loader
 from mitmproxy.addons.serverplayback import ServerPlayback
 from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.script import concurrent
-
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
 
 logging.basicConfig(
     level=logging.DEBUG, format="[%(asctime)s] - [%(funcName)s] - %(message)s"
@@ -490,12 +493,15 @@ class TimestampReplacer:
         logging.info(
             f'reading in problematic keys data from "{repo_bad_keys_filepath}"'
         )
-        if not path.exists(self.bad_keys_filepath) and path.exists(
-            repo_bad_keys_filepath
+        if (
+            self.bad_keys_filepath
+            and not Path(self.bad_keys_filepath).exists()
+            and repo_bad_keys_filepath
+            and Path(repo_bad_keys_filepath).exists()
         ):
             with open(repo_bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
-        elif path.exists(self.bad_keys_filepath):
+        elif self.bad_keys_filepath and Path(self.bad_keys_filepath).exists():
             with open(self.bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
         else:
@@ -520,7 +526,7 @@ class TimestampReplacer:
         mitmdump in playback mode. Resets command line options with the key value pairs from the loaded dictionary.
         """
         logging.info('executing "load_problematic_keys" method')
-        if path.exists(self.bad_keys_filepath):
+        if self.bad_keys_filepath and Path(self.bad_keys_filepath).exists():
             logging.info(f'"{self.bad_keys_filepath}" path exists - loading bad keys')
 
             problem_keys = json.load(open(self.bad_keys_filepath))

@@ -14,14 +14,12 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-from TestSuite.test_tools import ChangeCWD
-
-logger = logging.getLogger("demisto-sdk")
-
+from TestSuite.test_tools import ChangeCWD, flatten_call_args
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -134,8 +132,8 @@ def mock_git(mocker):
     from demisto_sdk.commands.common.content import Content
 
     # Mock git working directory
-    mocker.patch.object(Content, "git")
-    Content.git().working_tree_dir = TEST_CONTENT_REPO
+    mocker.patch.object(Content, "git_util")
+    Content.git_util().repo.working_tree_dir = TEST_CONTENT_REPO
     yield
 
 
@@ -351,9 +349,8 @@ def test_duplicate_file_failure(mock_git):
     assert exit_code == 1
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("key, tool", [("some_key", False), ("", True)])
-def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
+def test_sign_packs_failure(repo, mocker, key, tool, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -372,6 +369,7 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
         sign_packs,
     )
 
+    logger = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     cca.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
@@ -394,10 +392,10 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
                 artifact_manager.signDirectory = Path(temp / "tool")
 
     sign_packs(artifact_manager)
-
+    logged = flatten_call_args(logger.error.call_args_list)
     assert (
         "Failed to sign packs. In order to do so, you need to provide both signature_key and "
-        "sign_directory arguments." in caplog.text
+        "sign_directory arguments." in logged[0]
     )
 
 
@@ -407,8 +405,10 @@ def mock_single_pack_git(mocker):
     from demisto_sdk.commands.common.content import Content
 
     # Mock git working directory
-    mocker.patch.object(Content, "git")
-    Content.git().working_tree_dir = TEST_DATA / "content_repo_with_alternative_fields"
+    mocker.patch.object(Content, "git_util")
+    Content.git_util().repo.working_tree_dir = (
+        TEST_DATA / "content_repo_with_alternative_fields"
+    )
     yield
 
 
@@ -454,7 +454,7 @@ def get_value_from_dict(object, path):
         (
             "demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/"
             "DummyPackAlternativeFields/Scripts/script-sample_packs.yml",
-            ["commonfields.id", "name", "comment"],
+            ["name", "comment"],
         ),
     ],
 )
@@ -472,5 +472,6 @@ def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
         modified_data = load_file(output_file)
         for current_key_path in keys_paths:
             assert get_value_from_dict(
-                original_data, current_key_path + "_x2"
+                original_data,
+                current_key_path + ":" + MarketplaceVersions.MarketplaceV2.value,
             ) == get_value_from_dict(modified_data, current_key_path)

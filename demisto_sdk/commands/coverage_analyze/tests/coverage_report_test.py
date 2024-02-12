@@ -5,6 +5,9 @@ from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.constants import (
+    TEST_COVERAGE_DEFAULT_URL as DEFAULT_URL,
+)
 from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 from demisto_sdk.commands.coverage_analyze.helpers import (
     fix_file_path,
@@ -15,16 +18,11 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     JSON_MIN_DATA_FILE,
     PYTHON_FILE_PATH,
     TEST_DATA_DIR,
-    TestCoverageSummary,
     copy_file,
     read_file,
 )
 from TestSuite.test_tools import flatten_call_args
 
-logger = logging.getLogger("demisto-sdk")
-
-
-DEFAULT_URL = TestCoverageSummary.TestGetFilesSummary.default_url
 REPORT_STR_FILE = os.path.join(TEST_DATA_DIR, "coverage.txt")
 
 
@@ -35,11 +33,39 @@ class TestCoverageReport:
             rf"^exporting {r_type} coverage report to [\w\-\./]+/{file_name}\.{suffix}$"
         )
 
+    def test_fail_without_coverage_file(self, monkeypatch, tmpdir):
+        """
+        Given:
+            - no .coverage file is given or exists.
+        When:
+            - Running demisto-sdk coverage-analyze.
+        Then:
+            - Make sure that there is an exception to file not found and a warning was added to the logger.
+        """
+        monkeypatch.chdir(tmpdir)
+        cov_report = CoverageReport()
+        try:
+            cov_report.coverage_report()
+        except FileNotFoundError as e:
+            assert str(e) == "The coverage file does not exist."
+
     def test_with_print_report(self, tmpdir, monkeypatch, mocker):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         monkeypatch.chdir(tmpdir)
-        cov_report = CoverageReport()
+
+        coverage_path = os.path.join(
+            COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations"
+        )
+        temp_cover_file = tmpdir.join(".coverage")
+        copy_file(coverage_path, temp_cover_file)
+
+        cov_report = CoverageReport(
+            report_dir=str(tmpdir),
+            report_type="html,json,xml",
+            coverage_file=temp_cover_file,
+            no_cache=True,
+        )
         cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         cov_report.coverage_report()
         assert (
@@ -89,7 +115,7 @@ class TestCoverageReport:
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
         # assert re.fullmatch(self.patern('txt', 'coverage', 'txt'), caplog.records[1].msg)
-        assert os.path.exists(tmpdir.join("coverage.txt"))
+        assert Path(tmpdir.join("coverage.txt")).exists()
 
     def test_with_json_min_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
@@ -107,7 +133,7 @@ class TestCoverageReport:
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
         # assert re.fullmatch(self.patern('json-min', 'coverage-min', 'json'), caplog.records[2].msg)
-        assert os.path.exists(tmpdir.join("coverage-min.json"))
+        assert Path(tmpdir.join("coverage-min.json")).exists()
 
     def test_get_report_str(self, tmpdir, monkeypatch):
         monkeypatch.chdir(tmpdir)
@@ -195,10 +221,9 @@ class TestFileMinCoverage:
     def test_with_exist_file(
         self, file_path, current_cover, expected_min_cover, tmpdir, monkeypatch
     ):
-        file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport()
-        cov_report._original_summary = {file_path: current_cover}
+        cov_report._original_summary = {os.path.relpath(file_path): current_cover}
         assert cov_report.file_min_coverage(file_path) == expected_min_cover
 
     data_test_with_custom_epsilon_file = [
@@ -216,10 +241,9 @@ class TestFileMinCoverage:
     def test_with_custom_epsilon_file(
         self, file_path, epsilon, expected_min_cover, tmpdir, monkeypatch
     ):
-        file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport(allowed_coverage_degradation_percentage=epsilon)
-        cov_report._original_summary = {file_path: 80.0}
+        cov_report._original_summary = {os.path.relpath(file_path): 80.0}
         assert cov_report.file_min_coverage(file_path) == expected_min_cover
 
 

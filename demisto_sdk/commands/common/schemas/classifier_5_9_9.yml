@@ -5,11 +5,11 @@ mapping:
   incidentSamples:
     type: seq
     sequence:
-      - type: str
+    - type: str
   indicatorSamples:
     type: seq
     sequence:
-      - type: str
+    - type: str
   propagationLabels:
     type: any
   isDefault:
@@ -18,32 +18,32 @@ mapping:
     type: any
   id:
     type: str
-    required: True
+    required: true
   version:
     type: number
-    required: True
+    required: true
   fromVersion:
     type: str
   toVersion:
     type: str
   brandName:
     type: str
-    required: True
+    required: true
   modified:
     type: str
   defaultIncidentType:
     type: str
   mapping:
     type: map
-    allowempty: True
+    allowempty: true
   unclassifiedCases:
     type: map
-    allowempty: True
+    allowempty: true
   transformer:
     type: map
-    allowempty: True
+    allowempty: true
   keyTypeMap:
     type: map
-    allowempty: True
+    allowempty: true
   custom:
     type: bool

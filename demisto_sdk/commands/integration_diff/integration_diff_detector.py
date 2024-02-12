@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     ARGUMENT_FIELDS_TO_CHECK,
@@ -12,12 +12,12 @@ from demisto_sdk.commands.common.tools import get_yaml
 class IntegrationDiffDetector:
     def __init__(self, new: str = "", old: str = "", docs_format: bool = False):
 
-        if not os.path.exists(new):
+        if not Path(new).exists():
             logger.error(
                 "[red]No such file or directory for the new integration version.[/red]"
             )
 
-        if not os.path.exists(old):
+        if not Path(old).exists():
             logger.error(
                 "[red]No such file or directory for the old integration version.[/red]"
             )

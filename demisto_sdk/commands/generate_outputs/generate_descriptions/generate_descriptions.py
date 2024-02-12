@@ -10,7 +10,7 @@ import requests
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml, write_yml
+from demisto_sdk.commands.common.tools import get_yaml, write_dict
 
 CREDENTIALS = 9
 
@@ -162,7 +162,7 @@ def write_desc(c_index, final_output, o_index, output_path, yml_data):
     yml_data["script"]["commands"][c_index]["outputs"][o_index][
         "description"
     ] = final_output
-    write_yml(output_path, yml_data)
+    write_dict(output_path, yml_data)
 
 
 def correct_interactively(command_output_path, final_output, output):
@@ -252,7 +252,7 @@ def generate_ai_descriptions(
                         yml_data["script"]["commands"][c_index]["outputs"][o_index][
                             "description"
                         ] = final_output
-                        write_yml(output_path, yml_data)
+                        write_dict(output_path, yml_data)
                         continue
                     else:
                         logger.info("Asking again...")

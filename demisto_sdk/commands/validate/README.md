@@ -109,6 +109,10 @@ This will validate all files under the content pack `HelloWorld` using only the 
 This will validate all files under the content pack `HelloWorld` using only the validations from error type of BA.
 <br><br>
 
+### Notes
+* In external repositories (repos which contain the `.private-repo-settings` file in its root) **all** the validations are ignorable.
+
+
 ### Error Codes and Ignoring Them
 Starting in version 1.0.9 of Demisto-SDK, each error found by validate (excluding `pykwalify` errors) has an error
 code attached to it - the code can be found in brackets preceding the error itself.
@@ -146,5 +150,3 @@ If you wish to ignore errors for a specific file in the pack insert the followin
 [file:FILE_NAME]
 ignore=BA101
 ```
-
-*Note*: Currently only `BA101` is ignorable.

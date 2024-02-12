@@ -1,4 +1,4 @@
-import os.path
+from pathlib import Path
 from typing import Optional
 from unittest.mock import patch
 
@@ -580,6 +580,12 @@ class TestPlaybookValidator:
         (INVALID_PLAYBOOK_INPUTS_USE, False, True),
     ]
 
+    def test_valid_schema(self, playbook):
+        structure = StructureValidator(
+            file_path=playbook.yml.path, predefined_scheme="playbook"
+        )
+        assert structure.is_valid_scheme()
+
     @pytest.mark.parametrize(
         "playbook_path, is_modified, expected_result", INVALID_INPUTS
     )
@@ -901,7 +907,7 @@ class TestPlaybookValidator:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(playbook.readme.path)
+            Path(playbook.readme.path).unlink()
         assert (
             playbook_validator.validate_readme_exists(playbook_validator.validate_all)
             is expected_result

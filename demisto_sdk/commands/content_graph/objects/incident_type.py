@@ -12,14 +12,26 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type: ignore[call-arg]
-    playbook: Optional[str]
+    playbook: Optional[str] = Field("")
     hours: int
     days: int
     weeks: int
-    closure_script: Optional[str] = Field(alias="closureScript")
+    closure_script: Optional[str] = Field("", alias="closureScript")
 
     def metadata_fields(self) -> Set[str]:
-        return {"name", "playbook", "closure_script", "hours", "days", "week"}
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "playbook",
+                    "closure_script",
+                    "hours",
+                    "days",
+                    "weeks",
+                }
+            )
+        )
 
     def _upload(
         self,
@@ -32,3 +44,14 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
                 # Wrapping the dictionary with a list, as that's what the server expects
                 json.dump([self.prepare_for_upload(marketplace=marketplace)], f)
             client.import_incident_types_handler(str(file_path))
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        if "color" in _dict and "cliName" not in _dict and path.suffix == ".json":
+            if not (
+                "definitionId" in _dict
+                and _dict["definitionId"]
+                and _dict["definitionId"].lower() not in ["incident", "indicator"]
+            ):
+                return True
+        return False

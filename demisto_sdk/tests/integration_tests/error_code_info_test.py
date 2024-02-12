@@ -1,9 +1,30 @@
 import logging
 
+import pytest
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import str_in_call_args_list
+
+
+@pytest.mark.parametrize("error_code", ["BA102"])
+def test_error_code_info_end_to_end(mocker, error_code):
+    """
+    Given
+     - an error code
+
+    When
+     - executing the error-code command via cli
+
+    Then
+     - make sure the command does not fail and exits gracefully.
+    """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, ["error-code", "-i", error_code])
+    assert result.exit_code == 0
+    assert not result.exception
+    assert logger_info.called
 
 
 def test_error_code_info_sanity(mocker, monkeypatch):

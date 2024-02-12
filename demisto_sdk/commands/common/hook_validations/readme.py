@@ -195,8 +195,7 @@ class ReadMeValidator(BaseValidator):
         Returns:
             bool: True if env configured else False.
         """
-        return all(
-            [
+        result = [
                 self.verify_readme_relative_urls(),
                 self.is_image_path_valid(),
                 self.verify_image_exist(),
@@ -214,6 +213,9 @@ class ReadMeValidator(BaseValidator):
                     file_content=self.readme_content, file_path=self.file_path_str
                 ),
             ]
+        logger.info(f'[yellow]is_valid_file {result=}[/yellow]')
+        return all(
+            result
         )
 
     def mdx_verify_server(self) -> bool:
@@ -900,13 +902,16 @@ class ReadMeValidator(BaseValidator):
             yield bool
 
         with ReadMeValidator._MDX_SERVER_LOCK:
+            logger.info('[yellow]In ReadMeValidator._MDX_SERVER_LOCK[/yellow]')
             if mdx_server_is_up():  # this allows for this context to be reentrant
                 logger.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
             if ReadMeValidator.are_modules_installed_for_verify(CONTENT_PATH):  # type: ignore
                 ReadMeValidator.add_node_env_vars()
+                logger.info('[yellow]Added node env vars[/yellow]')
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
+                logger.info('[yellow]Docker is available[/yellow]')
                 return start_docker_MDX_server(handle_error, file_path)
         return empty_context_mgr(False)
 

@@ -900,23 +900,33 @@ class OldValidateManager:
         elif file_type == FileType.README:
             if not self.is_possible_validate_readme:
                 error_message, error_code = Errors.error_uninstall_node()
-                if self.handle_error(
+                logger.info(f'[yellow]{self.is_possible_validate_readme=}, {error_message=}, {error_code=}[/yellow]')
+                handle_error = self.handle_error(
                     error_message=error_message,
                     error_code=error_code,
                     file_path=file_path,
                     ignored_errors=pack_error_ignore_list,
-                ):
+                )
+                if handle_error:
+                    logger.info(f'[yellow]{self.is_possible_validate_readme=}, {handle_error=}[/yellow]')
                     return False
             if not self.validate_all:
+                logger.info(f'[yellow]{self.validate_all=}[/yellow]')
                 ReadMeValidator.add_node_env_vars()
-                if (
-                    not ReadMeValidator.are_modules_installed_for_verify(
+                logger.info('[yellow]Added node env vars[/yellow]')
+                are_modules_installed_for_verify = ReadMeValidator.are_modules_installed_for_verify(
                         CONTENT_PATH  # type: ignore
                     )
-                    and not ReadMeValidator.is_docker_available()
+                is_docker_available = ReadMeValidator.is_docker_available()
+                logger.info(f'[yellow]{are_modules_installed_for_verify=}, {is_docker_available=}[/yellow]')
+                if (
+                    not are_modules_installed_for_verify
+                    and not is_docker_available
                 ):  # shows warning message
+                    logger.info('[yellow]Returning True[/yellow]')
                     return True
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+                    logger.info('[yellow]Starting mdx server[/yellow]')
                     return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)
 
@@ -1294,7 +1304,9 @@ class OldValidateManager:
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
-        return readme_validator.is_valid_file()
+        result = readme_validator.is_valid_file()
+        logger.info(f'[yellow]validate_readme {result=}[/yellow]')
+        return result
 
     def validate_python_file(self, file_path, pack_error_ignore_list):
         python_file_validator = PythonFileValidator(

@@ -148,8 +148,10 @@ def start_local_MDX_server(
         error_message, error_code = Errors.error_starting_mdx_server(line=line)
         if handle_error and file_path:
             if handle_error(error_message, error_code, file_path=file_path):
+                logger.info('[yellow]In start_local_MDX_server, under handle_error, returning False[/yellow]')
                 return False
         else:
+            logger.info('[yellow]Raising exception[/yellow]')
             raise Exception(error_message)
 
     try:

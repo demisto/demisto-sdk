@@ -331,7 +331,7 @@ class DockerBase:
                 tag=tag,
                 changes=self.changes[container_type],
             )
-        if push:
+        if push and os.getenv("CONTENT_GITLAB_CI"):
             self.push_image(image, log_prompt=log_prompt)
         return image
 

@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.scripts.changelog.changelog import Changelog
 
 
-def validate_changelog_and_logs(pr_num: str, github_token: str) -> bool:
+def comment_changelog_on_pr(pr_num: str, github_token: str) -> bool:
     try:
         Changelog(pr_num).comment(github_token)
         sys.exit(0)
@@ -34,7 +34,7 @@ def main():
     options = arguments_handler()
     pr_num = options.pr_number
     github_token = options.github_token
-    validate_changelog_and_logs(pr_num, github_token)
+    comment_changelog_on_pr(pr_num, github_token)
 
 
 if __name__ == "__main__":

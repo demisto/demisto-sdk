@@ -79,8 +79,10 @@ class Changelog:
         try:
             previous_changelog = YmlFile.read_from_git_path(changelog_path, tag=previous_commit, from_remote=False)
         except (FileReadError, FileNotFoundError) as error:
+            # changelog was added in current commit, comment in the PR
             print(f'{changelog_path} does not exist in previous commit {previous_commit}')
             pr.create_comment(body=f"Your changelog in markdwon :)\n:{current_changelog}")
+            return
 
         if previous_changelog.get("description") != current_changelog.get("description"):
             # comment in the PR only if the last changelog was changed from previous commit

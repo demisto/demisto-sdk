@@ -5,8 +5,6 @@ from pathlib import Path
 
 import pytest
 
-import demisto_sdk.commands.content_graph.objects.content_item as content_item
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.validate.tests.test_tools import create_integration_object
 from demisto_sdk.commands.xsoar_linter.xsoar_linter import (
     ProcessResults,

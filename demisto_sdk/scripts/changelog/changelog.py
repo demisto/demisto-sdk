@@ -5,6 +5,7 @@ from typing import Dict, List
 
 import typer
 from git import Repo  # noqa: TID251
+from demisto_sdk.commands.common.git_util import GitUtil
 from more_itertools import bucket
 from pydantic import ValidationError
 
@@ -21,11 +22,17 @@ from demisto_sdk.scripts.changelog.changelog_obj import (
     LogLine,
     LogType,
 )
+from demisto_sdk.commands.common.files.errors import FileReadError
+from demisto_sdk.commands.common.files.yml_file import YmlFile
+from github import Github
+import os
 
+
+DEMISTO_SDK_REPO = "demsito/demisto-sdk"
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
 CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
 RELEASE_VERSION_REGEX = re.compile(r"demisto-sdk release \d{1,2}\.\d{1,2}\.\d{1,2}")
-
+GIT_UTIL = GitUtil(".")
 yaml = DEFAULT_YAML_HANDLER
 json = DEFAULT_JSON_HANDLER
 sys.tracebacklimit = 0
@@ -48,11 +55,37 @@ class Changelog:
                 - checks that the `CHANGELOG.md` file has not changed
                 - checks that a log file has been added and its name is the same as the PR name
                 - ensure that the added log file is valid according to the `LogFileObject` model convention
+
+        Prints out a comment on how the PR would look like with the rn
+
         """
         if is_release(self.pr_name):
             return
         else:
             _validate_branch(self.pr_number)
+            _comment_changelog_in_pr(self.pr_number)
+
+    """ Comment """
+    def comment(self, github_token: str) -> None:
+        github_client = Github(login_or_token=github_token, verify=False)
+        changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
+
+        changelog_path = CHANGELOG_FOLDER / f"{pr_number}.yml"
+        current_commit = GIT_UTIL.repo.head.commit
+        previous_commit = current_commit.parents[0].hexsha
+
+        current_changelog = YmlFile.read_from_local_path(changelog_path).get("description")
+
+        try:
+            previous_changelog = YmlFile.read_from_git_path(changelog_path, tag=previous_commit, from_remote=False)
+        except (FileReadError, FileNotFoundError) as error:
+            print(f'{changelog_path} does not exist in previous commit {previous_commit}')
+            pr.create_comment(body=f"Your changelog in markdwon :)\n:{current_changelog}")
+
+        if previous_changelog.get("description") != current_changelog.get("description"):
+            # comment in the PR only if the last changelog was changed from previous commit
+            pr.create_comment(body=f"Your changelog in markdwon :)\n:{current_changelog}")
+
 
     """ INIT """
 
@@ -128,7 +161,7 @@ def extract_errors(error: str, file_name: Path) -> str:
 def is_changelog_modified() -> bool:
     return (
         "CHANGELOG.md"
-        in Repo(".").git.diff("HEAD..origin/master", name_only=True).split()
+        in GIT_UTIL.repo.git.diff("HEAD..origin/master", name_only=True).split()
     )
 
 

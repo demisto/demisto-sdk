@@ -66,12 +66,9 @@ class Changelog:
 
     """ Comment """
     def comment(self, github_token: str) -> None:
-        print(type(CHANGELOG_FOLDER / f"{self.pr_number}.yml"))
-        print(CHANGELOG_FOLDER / f"{self.pr_number}.yml")
         github_client = Github(login_or_token=github_token, verify=False)
         changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
 
-        changelog_path = CHANGELOG_FOLDER / f"{pr_number}.yml"
         current_commit = GIT_UTIL.repo.head.commit
         previous_commit = current_commit.parents[0].hexsha
 

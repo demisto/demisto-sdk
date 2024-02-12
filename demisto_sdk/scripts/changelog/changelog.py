@@ -66,11 +66,14 @@ class Changelog:
 
     """ Comment """
     def comment(self, github_token: str) -> None:
+        print("1")
         github_client = Github(login_or_token=github_token, verify=False)
+        print("2")
         changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
 
         current_commit = GIT_UTIL.repo.head.commit
         previous_commit = current_commit.parents[0].hexsha
+        print("3")
 
         current_changelog = YmlFile.read_from_local_path(changelog_path).get("description")
         pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)

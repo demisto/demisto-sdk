@@ -72,14 +72,11 @@ class Changelog:
         current_commit = GIT_UTIL.repo.head.commit
         previous_commit = current_commit.parents[0].hexsha
 
-        a = YmlFile.read_from_local_path(changelog_path)
-        print(f'changelog: {a}')
-
-        current_changelogs = LogFileObject(a).get_log_entries()
+        current_changelogs = LogFileObject(**YmlFile.read_from_local_path(changelog_path)).get_log_entries()
         pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)
 
         try:
-            previous_changelogs = LogFileObject(YmlFile.read_from_git_path(changelog_path, tag=previous_commit))
+            previous_changelogs = LogFileObject(**YmlFile.read_from_git_path(changelog_path, tag=previous_commit))
         except (FileReadError, FileNotFoundError) as error:
             # changelog was added in current commit, comment in the PR
             print(f'{changelog_path} does not exist in previous commit {previous_commit}')

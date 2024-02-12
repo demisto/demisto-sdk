@@ -17,6 +17,7 @@ from requests import JSONDecodeError
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_DOCKER_REGISTRY_URL,
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
     DOCKER_REGISTRY_URL,
@@ -73,10 +74,18 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         if docker_user and docker_pass:
             logger.debug(f"{log_prompt} - logging in to docker registry")
             try:
+                if DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL and os.getenv(
+                    "CONTENT_GITLAB_CI"
+                ):
+                    DOCKER_CLIENT.login(
+                        username=docker_user,
+                        password=docker_pass,
+                        registry="https://index.docker.io/v1",
+                    )
                 DOCKER_CLIENT.login(
                     username=docker_user,
                     password=docker_pass,
-                    registry="https://index.docker.io/v1",
+                    registry=DOCKER_REGISTRY_URL,
                 )
             except Exception:
                 logger.exception(f"{log_prompt} - failed to login to docker registry")
@@ -628,6 +637,12 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
+    if DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL and not os.getenv(
+        "CONTENT_GITLAB_CI"
+    ):
+        raise RuntimeError(
+            f"Docker registry is configured to be {DOCKER_REGISTRY_URL}, unable to query the dockerhub api"
+        )
     if ":" not in image:
         repo = image
         tag = "latest"

@@ -83,6 +83,13 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     return DOCKER_CLIENT
 
 
+def is_custom_registry():
+    return (
+        not os.getenv("CONTENT_GITLAB_CI")
+        and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
+    )
+
+
 @functools.lru_cache
 def docker_login(docker_client) -> bool:
     """Login to docker-hub using environment variables:
@@ -97,9 +104,7 @@ def docker_login(docker_client) -> bool:
     docker_pass = os.getenv("DOCKERHUB_PASSWORD")
     if docker_user and docker_pass:
         try:
-            if DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL and os.getenv(
-                "CONTENT_GITLAB_CI"
-            ):
+            if not is_custom_registry():
 
                 docker_client.login(
                     username=docker_user,
@@ -393,10 +398,7 @@ class DockerBase:
         test_docker_image = (
             f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
         )
-        if (
-            not os.getenv("CONTENT_GITLAB_CI")
-            and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
-        ):
+        if is_custom_registry():
             # if we use a custom registry, we need to have to pull the image and we can't use dockerhub api
             should_pull = True
         if not should_pull and self.is_image_available(test_docker_image):
@@ -647,9 +649,7 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
-    if DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL and not os.getenv(
-        "CONTENT_GITLAB_CI"
-    ):
+    if is_custom_registry():
         raise RuntimeError(
             f"Docker registry is configured to be {DOCKER_REGISTRY_URL}, unable to query the dockerhub api"
         )

@@ -221,19 +221,6 @@ def update(
     and updates it with the changes in the given repository
     or by an argument of packs to update with.
     """
-    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
-        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
-        ctx.invoke(
-            create,
-            ctx,
-            marketplace=marketplace,
-            no_dependencies=no_dependencies,
-            output_path=output_path,
-            console_log_threshold=console_log_threshold,
-            file_log_threshold=file_log_threshold,
-            log_file_path=log_file_path,
-        )
-        return
     logging_setup(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,

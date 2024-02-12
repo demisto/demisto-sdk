@@ -158,47 +158,47 @@ class TestDockerImagesCollection:
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_images, native_target_img ",
         argvalues=[
-            # (
-            #     linter.DockerImageFlagOption.NATIVE_GA.value,
-            #     "demisto/py3-native:8.2.0.12345",
-            #     "",
-            # ),
-            # (
-            #     linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value,
-            #     "demisto/py3-native:8.1.0.12345",
-            #     "",
-            # ),
+            (
+                linter.DockerImageFlagOption.NATIVE_GA.value,
+                "demisto/py3-native:8.2.0.12345",
+                "",
+            ),
+            (
+                linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value,
+                "demisto/py3-native:8.1.0.12345",
+                "",
+            ),
             (
                 linter.DockerImageFlagOption.NATIVE_DEV.value,
                 "demisto/py3-native:8.3.0.12345",
                 "",
             ),
-            # (
-            #     linter.DockerImageFlagOption.FROM_YML.value,
-            #     "demisto/py3-tools:1.0.0.42258",
-            #     "",
-            # ),
-            # (
-            #     linter.DockerImageFlagOption.NATIVE_CANDIDATE.value,
-            #     "demisto/py3-native:8.2.1.12345",
-            #     "",
-            # ),
-            # (
-            #     linter.DockerImageFlagOption.ALL_IMAGES.value,
-            #     [
-            #         "demisto/py3-tools:1.0.0.42258",
-            #         "demisto/py3-native:8.1.0.12345",
-            #         "demisto/py3-native:8.2.0.12345",
-            #         "demisto/py3-native:8.2.1.12345",
-            #     ],
-            #     "",
-            # ),
-            # ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800", ""),
-            # (
-            #     linter.DockerImageFlagOption.NATIVE_TARGET.value,
-            #     "demisto/py3-tools:1.0.0.40800",
-            #     "demisto/py3-tools:1.0.0.40800",
-            # ),
+            (
+                linter.DockerImageFlagOption.FROM_YML.value,
+                "demisto/py3-tools:1.0.0.42258",
+                "",
+            ),
+            (
+                linter.DockerImageFlagOption.NATIVE_CANDIDATE.value,
+                "demisto/py3-native:8.2.1.12345",
+                "",
+            ),
+            (
+                linter.DockerImageFlagOption.ALL_IMAGES.value,
+                [
+                    "demisto/py3-tools:1.0.0.42258",
+                    "demisto/py3-native:8.1.0.12345",
+                    "demisto/py3-native:8.2.0.12345",
+                    "demisto/py3-native:8.2.1.12345",
+                ],
+                "",
+            ),
+            ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800", ""),
+            (
+                linter.DockerImageFlagOption.NATIVE_TARGET.value,
+                "demisto/py3-tools:1.0.0.40800",
+                "demisto/py3-tools:1.0.0.40800",
+            ),
         ],
     )
     def test_docker_images_according_to_docker_image_flag(

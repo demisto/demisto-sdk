@@ -80,7 +80,6 @@ class Changelog:
         except (FileReadError, FileNotFoundError) as error:
             # changelog was added in current commit, comment in the PR
             print(f'{changelog_path} does not exist in previous commit {previous_commit}')
-            pr.crea
             pr.create_issue_comment(f"Your changelog in markdown :)\n:{current_changelog}")
             return
 

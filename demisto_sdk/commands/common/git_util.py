@@ -80,6 +80,7 @@ class GitUtil:
             return Path(os.path.relpath(str(path), self.git_path()))
 
     def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> Commit:
+        self.fetch()
         if from_remote:
             # check if file exist in remote branch
             try:
@@ -101,6 +102,9 @@ class GitUtil:
                 raise CommitOrBranchNotFoundError(
                     commit_or_branch, from_remote=from_remote, exception=e
                 )
+
+    def get_previous_commit(self) -> Commit:
+        return self.repo.head.commit.parents[0]
 
     def read_file_content(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True

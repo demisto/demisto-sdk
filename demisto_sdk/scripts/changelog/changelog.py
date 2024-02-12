@@ -75,6 +75,7 @@ class Changelog:
         previous_commit = current_commit.parents[0].hexsha
 
         current_changelog = YmlFile.read_from_local_path(changelog_path).get("description")
+        pr = github_client.get_repo(DEMISTO_SDK_REPO).get_pull(self.pr_number)
 
         try:
             previous_changelog = YmlFile.read_from_git_path(changelog_path, tag=previous_commit, from_remote=False)

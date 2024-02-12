@@ -147,8 +147,6 @@ def test_process_file(mocker, graph_repo, mock_object, expected_res):
     """
     pack = graph_repo.create_pack("pack")
     integration = pack.create_integration("integration")
-    print(integration.object.code)
-    print(integration.object.is_unified)
     mocker.patch.object(subprocess, "run", return_value=mock_object)
     res = process_file(Path(integration.path))
     assert res == expected_res

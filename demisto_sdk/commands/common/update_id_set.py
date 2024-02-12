@@ -70,7 +70,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
-    IntegrationScriptUnifierא,
+    IntegrationScriptUnifier,
 )
 
 CONTENT_ENTITIES = [

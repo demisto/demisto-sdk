@@ -1,6 +1,6 @@
 changes:
 - description: Added a new step in the **validate-changelog** to comment the changelog description in PR comments.
   type: internal
-- description: Added support to query the pull request number automaticlly when running **sdk-changelog --init** command.
+- description: Added support to query the pull request number automaticlly when running **sdk-changelog --init** command..
   type: internal
 pr_number: 4040

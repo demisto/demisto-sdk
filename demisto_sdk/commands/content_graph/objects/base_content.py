@@ -181,7 +181,7 @@ class BaseContent(BaseNode):
     git_status: Optional[GitStatuses]
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
-    related_content_dict: dict = {}
+    related_content_dict: dict = Field({}, exclude=True)
 
     def _save(
         self,

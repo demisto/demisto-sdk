@@ -10,7 +10,6 @@ def comment_changelog_on_pr(pr_num: int, latest_commit: str, github_token: str):
         Changelog(pr_num).comment(latest_commit, github_token)
         sys.exit(0)
     except Exception as error:
-        raise error
         logger.exception("Couldn't comment on the changelog.")
         sys.exit(1)
 

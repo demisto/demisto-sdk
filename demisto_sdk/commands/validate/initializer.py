@@ -443,7 +443,7 @@ class Initializer:
             path: Path = Path(file_path)
             try:
                 temp_obj = BaseContent.from_path(
-                    path, git_sha=None, raise_on_status=True
+                    path, git_sha=None, raise_on_exception=True
                 )
                 if temp_obj is None:
                     invalid_content_items.add(path)
@@ -478,13 +478,13 @@ class Initializer:
                 old_path = file_path
                 if isinstance(file_path, tuple):
                     file_path, old_path = file_path
-                obj = BaseContent.from_path(file_path, raise_on_status=True)
+                obj = BaseContent.from_path(file_path, raise_on_exception=True)
                 if obj:
                     obj.git_status = git_status
                     # Check if the file exists
                     if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
                         obj.old_base_content_object = BaseContent.from_path(
-                            old_path, git_sha=git_sha, raise_on_status=True
+                            old_path, git_sha=git_sha, raise_on_exception=True
                         )
                     else:
                         obj.old_base_content_object = obj.copy(deep=True)

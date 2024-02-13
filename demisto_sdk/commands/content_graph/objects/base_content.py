@@ -182,7 +182,6 @@ class BaseContent(BaseNode):
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = {}
-    file_type: RelatedFileType = RelatedFileType.JSON
 
     def _save(
         self,

@@ -6,7 +6,6 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
-    RelatedFileType,
 )
 from demisto_sdk.commands.common.tools import get_json, get_value
 from demisto_sdk.commands.content_graph.parsers.content_item import (
@@ -25,7 +24,6 @@ class JSONContentItemParser(ContentItemParser):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.path = self.get_path_with_suffix(".json") if not git_sha else self.path
-        self.file_type = RelatedFileType.JSON
         self.original_json_data: Dict[str, Any] = self.json_data
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(

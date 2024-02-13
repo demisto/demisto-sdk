@@ -32,7 +32,6 @@ class YAMLContentItemParser(ContentItemParser):
             if not self.path.suffix == ".yml"
             else self.path
         )
-        super().__init__(path, pack_marketplaces)
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(

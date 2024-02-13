@@ -25,7 +25,7 @@ from demisto_sdk.scripts.changelog.changelog_obj import (
     LogType,
 )
 
-DEMISTO_SDK_REPO = "demsito/demisto-sdk"
+DEMISTO_SDK_REPO = "demisto/demisto-sdk"
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
 CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
 RELEASE_VERSION_REGEX = re.compile(r"demisto-sdk release \d{1,2}\.\d{1,2}\.\d{1,2}")
@@ -82,8 +82,8 @@ class Changelog:
             current_changelogs = LogFileObject(
                 **YmlFile.read_from_local_path(changelog_path)
             ).get_log_entries()
-            github_client = Github(login_or_token=github_token, verify=False)
-            pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)
+            github_client = Github(login_or_token=github_token)
+            pr = github_client.get_repo(DEMISTO_SDK_REPO).get_pull(self.pr_number)
             markdown = "Changelog(s) in markdown:\n"
             markdown += "\n".join(
                 [changelog.to_string() for changelog in current_changelogs]
@@ -167,7 +167,7 @@ def get_pr_number_by_branch(branch_name: str):
         error_message = (
             "Failed to get PR number from Github, please add the PR number manually"
         )
-        repo = Github(verify=False).get_repo("demisto/demisto-sdk")
+        repo = Github().get_repo(DEMISTO_SDK_REPO)
         branch = GIT_UTIL.repo.active_branch.name
         for pr in repo.get_pulls(state="open", head=branch):
             if pr.head.ref == branch:

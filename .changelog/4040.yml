@@ -1,6 +1,6 @@
 changes:
 - description: just a test for markdown, its a new `feature` for argument **test**
   type: internal
-- description: just a test for markdown-2, its a new `feature` for argument **test**
+- description: just a test for markdown-2, its a new `feature` for argument ***test***
   type: internal
 pr_number: 4040

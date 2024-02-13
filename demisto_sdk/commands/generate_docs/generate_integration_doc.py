@@ -96,10 +96,8 @@ class IntegrationDocUpdateManager:
                 self.old_readme_path.read_text() if self.old_readme_path else ""
             )
 
-        self.example_dict = example_dict if not is_contribution else {}
-        self.command_permissions_dict = (
-            command_permissions_dict if not is_contribution else None
-        )
+        self.example_dict = example_dict
+        self.command_permissions_dict = command_permissions_dict
 
     def get_resource_path_from_source_control(self, remote: bool, type: str) -> Optional[Path]:
         """
@@ -258,8 +256,8 @@ class IntegrationDocUpdateManager:
             try:
                 old_command_section, _ = generate_commands_section(
                     self.integration_diff.old_yaml_data,
-                    self.example_dict,
-                    self.command_permissions_dict,
+                    {},
+                    {},
                     modified_command,
                 )
 

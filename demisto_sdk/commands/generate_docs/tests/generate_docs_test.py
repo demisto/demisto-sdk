@@ -17,6 +17,8 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json, get_yaml
+# from demisto_sdk.commands.run_cmd.runner import Runner
+from demisto_sdk.commands.generate_docs import common
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs,
     disable_md_autolinks,
@@ -27,6 +29,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_single_command_section,
     get_command_examples,
 )
+from demisto_sdk.commands.generate_docs import generate_integration_doc as generate_integration_doc_module
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
 )
@@ -2076,3 +2079,296 @@ class TestIntegrationDocUpdate:
             "| Splunk.Test.Date | Date | Some sample test output date | ",
             "",
         ]
+
+    def test_added_conf_cmd_modified_cmd_with_examples(self, git_repo: Repo, mocker: MockerFixture):
+        """
+        Test for a scenario where we:
+        - Add a new configuration option.
+        - Add a new command.
+        - Modify a command argument and output.
+
+        Given:
+        - A content repo with an existing integration.
+
+        When:
+        - A new configuration option was added.
+        - A new command was added.
+        - A command argument and output were modified.
+        - Command examples are provided.
+
+        Then:
+        - The configuration should be added to the setup section of the README.
+        - The added command should be appended to the README.
+        - The modified argument and output should be reflected in the README.
+        - Command examples should be added to each command section.
+        """
+
+        pack_name = integration_name = "Test"
+        existing_integration_yml = {
+            "description": "Test integration",
+            "name": integration_name,
+            "display": integration_name,
+            "category": "Analytics & SIEM", 
+            "script": {
+                "commands": [
+                    {
+                        "name": f"{integration_name.lower()}-get-log",
+                        "description": "Gets log",
+                        "arguments": [
+                            {
+                                "name": "log_name",
+                                "description": "The log name to retrieve",
+                                "required": False,
+                                "defaultValue": "all",
+                            },
+                            {
+                                "name": "log_ts",
+                                "description": "The log timestamp to retrieve",
+                                "required": False,
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "contextPath": "Test.Log.name",
+                                "description": "The log name",
+                                "type": "String"
+                            },
+                            {
+                                "contextPath": "Test.Log.id",
+                                "description": "The log ID.",
+                                "type": "String"
+                            }
+                        ]
+                    },
+                    {
+                        "name": f"{integration_name.lower()}-get-alert",
+                        "description": "Gets alert",
+                        "arguments": [
+                            {
+                                "name": "alert_name",
+                                "description": "The alert name to retrieve",
+                                "required": False,
+                                "defaultValue": "all",
+                            },
+                            {
+                                "name": "alert_ts",
+                                "description": "The alert timestamp to retrieve",
+                                "required": False,
+                            },
+                            {
+                                "name": "alert_max",
+                                "description": "The maximum amount of alerts to retrieve",
+                                "required": False,
+                                "defaultValue": 100
+                            }
+                        ]
+                    },
+                ]
+            },
+            "configuration": [
+                {
+                    "display": "Base URL",
+                    "name": "base_url",
+                    "required": True,
+                    "type": 0
+                },
+                {
+                    "display": "Port",
+                    "name": "port",
+                    "required": True,
+                    "type": 0
+                }
+            ],
+            "commonfields": {
+                "id": integration_name,
+                "version": -1
+            },
+            "fromversion": "6.0.0",
+        }
+
+        existing_readme = [f"# Integration Documentation for {integration_name}"]
+        existing_readme.extend(generate_setup_section(existing_integration_yml))
+        commands_section, _ = generate_commands_section(existing_integration_yml, example_dict={}, command_permissions_dict={})
+        existing_readme.extend(commands_section)
+        
+        updated_integration_yml = {
+            "description": "Test integration",
+            "name": integration_name,
+            "category": "Analytics & SIEM",
+            "display": integration_name,
+            "script": {
+                "commands": [
+                    {
+                        "name": f"{integration_name.lower()}-get-log",
+                        "description": "Gets log",
+                        "arguments": [
+                            {
+                                "name": "log_name",
+                                "description": "The log name to retrieve",
+                                "required": False,
+                                "defaultValue": "all",
+                            },
+                            {
+                                "name": "log_ts",
+                                "description": "The log timestamp to retrieve",
+                                "required": False,
+                            },
+                            {
+                                "name": "alert_max",
+                                "description": "The maximum amount of alerts to retrieve",
+                                "required": False,
+                                "defaultValue": 100
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "contextPath": "Test.Log.name",
+                                "description": "The log name",
+                                "type": "String"
+                            },
+                            {
+                                "contextPath": "Test.Log.id",
+                                "description": "The log ID.",
+                                "type": "String"
+                            }
+                        ]
+                    },
+                    {
+                        "name": f"{integration_name.lower()}-get-alert",
+                        "description": "Gets alert",
+                        "arguments": [
+                            {
+                                "name": "alert_name",
+                                "description": "The alert name to retrieve",
+                                "required": False                            },
+                            {
+                                "name": "alert_ts",
+                                "description": "The alert timestamp to retrieve",
+                                "required": False,
+                            },
+                            {
+                                "name": "alert_max",
+                                "description": "The maximum amount of alerts to retrieve",
+                                "required": False,
+                                "defaultValue": 100
+                            }
+                        ]
+                    },
+                    {
+                        "name": f"{integration_name.lower()}-get-audits",
+                        "description": "Gets audits",
+                        "arguments": [
+                            {
+                                "name": "audit_name",
+                                "description": "The audit name to retrieve",
+                                "required": False                            },
+                            {
+                                "name": "audit_ts",
+                                "description": "The audit timestamp to retrieve",
+                                "required": False,
+                            },
+                            {
+                                "name": "audit_max",
+                                "description": "The maximum amount of audits to retrieve",
+                                "required": False,
+                                "defaultValue": 100
+                            }
+                        ]
+                    },
+                ]
+            },
+            "configuration": [
+                {
+                    "display": "Base URL",
+                    "name": "base_url",
+                    "required": True,
+                    "type": 0
+                },
+                {
+                    "display": "Port",
+                    "name": "port",
+                    "required": False,
+                    "defaultValue": "443",
+                    "type": 0
+                },
+                {
+                    "display": "Authentication",
+                    "name": "authentication",
+                    "required": True,
+                    "type": 9
+                },
+            ],
+            "commonfields": {
+                "id": integration_name,
+                "version": -1
+            },
+            "fromversion": "6.0.0",
+        }
+
+        # commands = f"!{integration_name}-get-log\n!{integration_name}-get-alert\n"
+        commands = f"!{integration_name.lower()}-get-log"
+
+        # Create Pack and Integration
+        git_repo.create_pack(pack_name)
+        git_repo.packs[0].create_integration(
+            integration_name,
+            yml=existing_integration_yml,
+            readme="\n".join(existing_readme),
+            commands_txt=commands
+        )
+
+        mocker.patch.dict(
+            os.environ,
+            {
+                "DEMISTO_SDK_CONTENT_PATH": git_repo.path
+            }
+        )
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(
+            TextFile,
+            "read_from_git_path",
+            side_effect=[yaml.dumps(existing_integration_yml), "\n".join(existing_readme)],
+        )
+        mocker.patch.object(
+            common,
+            "execute_command",
+            return_value=(
+                f"{integration_name.lower()}-get-log",
+                """#### Command example
+```test-get-log```
+
+#### Context Example
+```json
+{
+    "name": "foo",
+    "id": 1
+}
+```""",
+                {
+                    "Test.Log.name": "foo",
+                    "Test.Log.id": 1
+                },
+                []
+            )
+        )
+
+        # Update the integration
+        git_repo.packs[0].integrations[0].yml.write_dict(updated_integration_yml)
+
+        generate_integration_doc(
+            input_path=git_repo.packs[0].integrations[0].yml.path,
+            examples=os.path.join(git_repo.packs[0].integrations[0].path, "commands.txt")
+        )
+
+        actual_readme = Path(os.path.join(git_repo.path, "Packs", integration_name, "Integrations", integration_name, INTEGRATIONS_README_FILE_NAME)).read_text()
+        
+        assert "Password | True" not in "\n".join(existing_readme)
+        assert "#### Command example" not in "\n".join(existing_readme)
+        assert "#### Context Example" not in "\n".join(existing_readme)
+        assert f"{integration_name.lower()}-get-audits" not in "\n".join(existing_readme)
+        
+        assert "Password | True" in actual_readme
+        assert "#### Command example" in actual_readme
+        assert "#### Context Example" in actual_readme
+        assert f"{integration_name.lower()}-get-audits" in actual_readme
+        

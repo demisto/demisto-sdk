@@ -522,7 +522,7 @@ def generate_integration_doc(
         # - An integration YAML.
         # - An integration README.
         elif update_mgr.can_update_docs():
-            logger.info("Updating the existing documentation...")
+            logger.info("Found existing integration, updating documentation...")
             doc_text, update_errors = update_mgr.update_docs()
 
             if update_errors:

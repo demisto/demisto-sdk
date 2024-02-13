@@ -4,6 +4,7 @@ from typing import Collection, Dict, List
 
 from github import Github, WorkflowRun
 from slack_sdk import WebClient
+
 from demisto_sdk.commands.common.logger import logger
 
 DEFAULT_SLACK_CHANNEL = "dmst-sdk-slack-notifier-test"

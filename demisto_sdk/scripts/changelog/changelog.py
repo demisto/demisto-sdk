@@ -66,30 +66,18 @@ class Changelog:
 
     """ Comment """
     def comment(self, latest_commit: str, github_token: str) -> None:
-        github_client = Github(login_or_token=github_token, verify=False)
         changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
 
         previous_commit = GIT_UTIL.get_previous_commit(latest_commit).hexsha
-
-        current_changelogs = LogFileObject(**YmlFile.read_from_local_path(changelog_path)).get_log_entries()
-        pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)
-
-        try:
-            previous_changelogs = LogFileObject(**YmlFile.read_from_git_path(changelog_path, tag=previous_commit, from_remote=False))
-        except (FileReadError, FileNotFoundError) as error:
-            # changelog was added in current commit, comment in the PR
-            print(f'{changelog_path} does not exist in previous commit {previous_commit}')
+        if GIT_UTIL.has_file_changed(changelog_path, latest_commit, previous_commit) or GIT_UTIL.has_file_added(changelog_path, latest_commit, previous_commit):
+            print(f'Changelog {changelog_path} has been added/modified')
+            current_changelogs = LogFileObject(**YmlFile.read_from_local_path(changelog_path)).get_log_entries()
+            github_client = Github(login_or_token=github_token, verify=False)
+            pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)
             markdown = "Changelog(s) in markdown:\n"
             markdown += "\n".join([changelog.to_string() for changelog in current_changelogs])
             pr.create_issue_comment(markdown)
-            return
-
-
-        if previous_changelogs.get("description") != current_changelogs.get("description"):
-            # comment in the PR only if the last changelog was changed from previous commit
-            markdown = "Changelog(s) in markdown:\n"
-            markdown += "\n".join([changelog.to_string() for changelog in current_changelogs])
-            pr.create_issue_comment(markdown)
+            print(f'Successfully commented on PR {self.pr_number} the changelog')
         else:
             print(f'{changelog_path} has not been changed, not commenting on PR {pr_number}')
 

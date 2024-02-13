@@ -217,6 +217,7 @@ def main(ctx, config, version, release_notes, **kwargs):
     a = GitUtil()
     b = a.get_previous_commit()
     c = a.has_file_changed(".changelog/4040.yml", a.repo.head.commit.hexsha, b.hexsha)
+    h = a.has_file_added(".changelog/4040.yml", a.repo.head.commit.hexsha, b.hexsha)
     YmlFile.read_from_git_path(Path(".changelog/4040.yml"), tag=b.hexsha, from_remote=False)
 
     if platform.system() == "Windows":

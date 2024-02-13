@@ -1,0 +1,6 @@
+changes:
+- description: Updated the path of the `neo4j` directory, generated & used by the `graph` commands, to project's directory (`$HOME/.demisto-sdk`).
+  type: internal
+- description: Added a `DEMISTO_SDK_NEO4J_VERSION` environment variable to set a custom Docker tag to pull for the `neo4j` image instead of the default one.
+  type: internal
+pr_number: 4010

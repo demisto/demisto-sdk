@@ -39,6 +39,7 @@ jobs:
       - name: Comment Changelog
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          LATEST_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git log -n 8
           echo "Commenting changelog for PR: $PR_NUMBER"

@@ -102,7 +102,9 @@ class GitUtil:
                     commit_or_branch, from_remote=from_remote, exception=e
                 )
 
-    def get_previous_commit(self) -> Commit:
+    def get_previous_commit(self, commit: Optional[str] = None) -> Commit:
+        if commit:
+            return self.get_commit(commit).parents[0]
         try:
             return self.repo.active_branch.commit.parents[0]
         except TypeError:

@@ -7,6 +7,7 @@ import click
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
+from demisto_sdk.commands.xsoar_linter.xsoar_linter import xsoar_linter_manager
 
 try:
     import git
@@ -3363,6 +3364,10 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
+    logger.warning(
+        "[WARNING] The 'create-content-graph' command is deprecated and will be removed "
+        "in upcoming versions. Use 'demisto-sdk graph create' instead."
+    )
     ctx.invoke(
         create,
         ctx,
@@ -3438,6 +3443,10 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
+    logger.warning(
+        "[WARNING] The 'update-content-graph' command is deprecated and will be removed "
+        "in upcoming versions. Use 'demisto-sdk graph update' instead."
+    )
     ctx.invoke(
         update,
         ctx,
@@ -3700,6 +3709,36 @@ graph_cmd_group.command("create", no_args_is_help=False)(create)
 graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
+
+
+# ====================== Xsoar-Lint ====================== #
+
+xsoar_linter_app = typer.Typer(name="Xsoar-Lint")
+
+
+@xsoar_linter_app.command(
+    no_args_is_help=True,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def xsoar_linter(
+    file_paths: Optional[List[Path]] = typer.Argument(
+        None,
+        exists=True,
+        dir_okay=True,
+        resolve_path=True,
+        show_default=False,
+        help=("The paths to run xsoar linter on. May pass multiple paths."),
+    )
+):
+
+    return_code = xsoar_linter_manager(
+        file_paths,
+    )
+    if return_code:
+        raise typer.Exit(1)
+
+
+main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-lint")
 
 
 if __name__ == "__main__":

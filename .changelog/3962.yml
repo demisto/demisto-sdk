@@ -1,0 +1,4 @@
+changes:
+- description: Added a new command **xsoar-lint** and added it as a hook to **pre-commit**.
+  type: feature
+pr_number: 3962

@@ -106,11 +106,24 @@ class Changelog:
             raise RuntimeError(
                 "This PR is a release (by its name), use the release command instead."
             )
+    
+        if not self.pr_number:
+            try:
+                repo = Github(verify=False).get_repo("demisto/demisto-sdk")
+                branch = GIT_UTIL.repo.active_branch.name
+                for pr in repo.get_pulls(head=branch):
+                    if pr.head.ref == branch:
+                        pr_num = pr.number
+                        break
+            except Exception:
+                logger.debug(f'Failed to get PR number from Github, please add the PR number manually')
+        else:
+            pr_num = self.pr_number
 
         log = INITIAL_LOG
-        log["pr_number"] = int(self.pr_number)
+        log["pr_number"] = int(pr_num)
 
-        with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
+        with (CHANGELOG_FOLDER / f"{pr_num}.yml").open("w") as f:
             yaml.dump(log, f)
 
         logger.info(f"Created changelog template at .changelog/{self.pr_number}.yml")
@@ -311,7 +324,7 @@ validate = typer.Option(
     is_flag=True,
 )
 
-pr_number = typer.Option(..., "--pr_number", "-n", help="Pull request number")
+pr_number = typer.Option("", "--pr_number", "-n", help="Pull request number")
 
 pr_title = typer.Option(
     "", "--pr_title", "-t", help="Pull request title (used for release)"

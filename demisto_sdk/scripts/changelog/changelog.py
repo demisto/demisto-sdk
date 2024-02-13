@@ -118,7 +118,7 @@ class Changelog:
         with (CHANGELOG_FOLDER / f"{pr_num}.yml").open("w") as f:
             yaml.dump(log, f)
 
-        logger.info(f"Created changelog template at .changelog/{self.pr_number}.yml")
+        logger.info(f"Created changelog template at .changelog/{pr_num}.yml")
 
     """ RELEASE """
 

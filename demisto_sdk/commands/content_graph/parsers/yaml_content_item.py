@@ -1,7 +1,7 @@
 import re
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -113,5 +113,5 @@ class YAMLContentItemParser(ContentItemParser):
                 )
 
     @cached_property
-    def yml_data(self) -> Dict[str, Union[str, List[str]]]:
+    def yml_data(self) -> dict:
         return get_yaml(str(self.path), git_sha=self.git_sha)

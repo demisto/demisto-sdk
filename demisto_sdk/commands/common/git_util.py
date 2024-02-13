@@ -104,14 +104,17 @@ class GitUtil:
 
     def get_previous_commit(self, commit: Optional[str] = None) -> Commit:
         """
-        Returns the previous commit of a specific commit or the head commit / branch.
+
+        Returns the previous commit of a specific commit.
+        If not provided returns previous commit of the head commit.
+
+        Args:
+            commit: any commit
         """
         if commit:
             return self.get_commit(commit, from_remote=False).parents[0]
-        try:
-            return self.repo.active_branch.commit.parents[0]
-        except TypeError:
-            return self.repo.head.commit.parents[0]
+
+        return self.repo.head.commit.parents[0]
 
     def has_file_changed(
         self, file_path: Union[Path, str], commit1: str, commit2: str

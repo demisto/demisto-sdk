@@ -106,8 +106,10 @@ class Changelog:
             raise RuntimeError(
                 "This PR is a release (by its name), use the release command instead."
             )
-    
-        if not self.pr_number:
+
+        if self.pr_number:
+            pr_number = self.pr_number
+        else:
             try:
                 repo = Github(verify=False).get_repo("demisto/demisto-sdk")
                 branch = GIT_UTIL.repo.active_branch.name
@@ -117,8 +119,6 @@ class Changelog:
                         break
             except Exception:
                 logger.debug(f'Failed to get PR number from Github, please add the PR number manually')
-        else:
-            pr_num = self.pr_number
 
         log = INITIAL_LOG
         log["pr_number"] = int(pr_num)

@@ -75,3 +75,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             }
         )
         return related_content_ls
+
+    @property
+    def readme(self) -> str:
+        return self.get_related_file(RelatedFileType.README)

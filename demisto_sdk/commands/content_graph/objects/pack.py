@@ -563,3 +563,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             }
         )
         return related_content_ls
+
+    @property
+    def readme(self) -> str:
+        return self.get_related_file(RelatedFileType.README)

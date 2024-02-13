@@ -210,3 +210,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             }
         )
         return related_content_ls
+
+    @property
+    def description_file(self) -> str:
+        return self.get_related_file(RelatedFileType.DESCRIPTION)

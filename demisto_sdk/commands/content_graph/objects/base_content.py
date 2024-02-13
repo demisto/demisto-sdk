@@ -323,10 +323,6 @@ class BaseContent(BaseNode):
                         )
         return self.related_content_dict
 
-    @property
-    def readme(self) -> str:
-        return self.get_related_file(RelatedFileType.README)
-
     def get_related_file(self, file_type) -> str:
         from demisto_sdk.commands.common.files import TextFile
 

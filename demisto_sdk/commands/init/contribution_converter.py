@@ -496,9 +496,8 @@ class ContributionConverter:
                     is_contribution=True
                 )
 
-            # If it's an existing Pack, we need to generate the map
-            # to check if the contributed content item is new or not
-            # and merge its README with the existing one if it is.
+            # If it's an existing Pack, we need to iterate over
+            # all content items that were added and create READMEs for them
             else:
                 # We get the path to contributed content item ymls
                 contributed_ymls = glob.glob(

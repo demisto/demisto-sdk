@@ -103,6 +103,9 @@ class GitUtil:
                 )
 
     def get_previous_commit(self, commit: Optional[str] = None) -> Commit:
+        """
+        Returns the previous commit of a specific commit or the head commit / branch.
+        """
         if commit:
             return self.get_commit(commit, from_remote=False).parents[0]
         try:
@@ -127,6 +130,17 @@ class GitUtil:
         return bool(self.repo.git.diff(commit1, commit2, str(file_path)))
 
     def has_file_added(self, file_path: Union[Path, str], commit1: str, commit2: str):
+        """
+        Checks if a file has been added between two commits.
+
+        Args:
+            file_path: file path
+            commit1: the first commit to compare
+            commit2: the second commit to compare
+
+        Returns:
+            True if file has been added between two commits, False if not.
+        """
         return (
             file_path
             in self.repo.git.diff(

@@ -108,17 +108,9 @@ class Changelog:
             )
 
         if self.pr_number:
-            pr_number = self.pr_number
+            pr_num = self.pr_number
         else:
-            try:
-                repo = Github(verify=False).get_repo("demisto/demisto-sdk")
-                branch = GIT_UTIL.repo.active_branch.name
-                for pr in repo.get_pulls(state="open", head=branch):
-                    if pr.head.ref == branch:
-                        pr_num = pr.number
-                        break
-            except Exception:
-                logger.debug(f'Failed to get PR number from Github, please add the PR number manually')
+            pr_num = get_pr_number_by_branch(GIT_UTIL.repo.active_branch)
 
         log = INITIAL_LOG
         log["pr_number"] = int(pr_num)
@@ -168,6 +160,21 @@ class Changelog:
         logger.info(f"Combined {len(logs)} changelog files into CHANGELOG.md")
 
     """ HELPER FUNCTIONS """
+
+
+def get_pr_number_by_branch(branch_name: str):
+    try:
+        error_message = (
+            "Failed to get PR number from Github, please add the PR number manually"
+        )
+        repo = Github(verify=False).get_repo("demisto/demisto-sdk")
+        branch = GIT_UTIL.repo.active_branch.name
+        for pr in repo.get_pulls(state="open", head=branch):
+            if pr.head.ref == branch:
+                return pr.number
+        raise Exception(error_message)
+    except Exception as e:
+        raise Exception(f"{error_message} error:\n{e}")
 
 
 def extract_errors(error: str, file_name: Path) -> str:

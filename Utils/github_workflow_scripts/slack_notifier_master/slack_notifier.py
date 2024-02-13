@@ -105,8 +105,7 @@ def main():
     workflow_id = options.workflow_id
     slack_channel = options.slack_channel
 
-    # TODO - remove Verify=False and TOKEN env var
-    gh_client = Github(login_or_token=github_token or os.getenv("TOKEN"), verify=False)
+    gh_client = Github(login_or_token=github_token)
     repo = gh_client.get_repo("demisto/demisto-sdk")
     workflow_run: WorkflowRun = repo.get_workflow_run(workflow_id)
 

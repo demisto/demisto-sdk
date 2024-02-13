@@ -1,4 +1,3 @@
-import copy
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
@@ -7,6 +6,7 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
     DOC_FILES_DIR,
     INTEGRATIONS_DIR,
@@ -22,7 +22,6 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
     GitStatuses,
     PathLevel,
-    RelatedFileType,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -177,6 +176,11 @@ class Initializer:
         if self.branch_name.startswith("21.") or self.branch_name.startswith("22."):
             self.prev_ver = os.environ.get("GIT_SHA1")
             self.committed_only = True
+
+        elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
+            raise Exception(
+                "Running on master branch while using git is ill advised.\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
+            )
 
     def print_git_config(self):
         """Printing the git configurations - all the relevant flags."""
@@ -366,16 +370,20 @@ class Initializer:
             file: GitStatuses.MODIFIED for file in modified_files
         }
         file_by_status_dict.update({file: GitStatuses.ADDED for file in added_files})
+        # Adding only the new path with the renamed status.
         file_by_status_dict.update(
             {new_path: GitStatuses.RENAMED for _, new_path in renamed_files}
         )
-        renamed_files = {new_path: old_path for old_path, new_path in renamed_files}
         file_by_status_dict.update(
             {file: GitStatuses.DELETED for file in deleted_files}
         )
+        # Keeping a mapping dictionary between the new and the old path.
+        renamed_files = {new_path: old_path for old_path, new_path in renamed_files}
+        # Calculating the main file for each of changed files and allocate a status for it.
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = self.get_items_status(
             file_by_status_dict
         )
+        # Updating the statuses dict with the paths tuple of the renamed files.
         statuses_dict_with_renamed_files_tuple: Dict[
             Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]
         ] = {}
@@ -386,6 +394,7 @@ class Initializer:
                 ] = status
             else:
                 statuses_dict_with_renamed_files_tuple[path] = status
+        # Parsing the files.
         basecontent_with_path_set: Set[BaseContent] = set()
         invalid_content_items: Set[Path] = set()
         (
@@ -393,9 +402,6 @@ class Initializer:
             invalid_content_items,
         ) = self.git_paths_to_basecontent_set(
             statuses_dict_with_renamed_files_tuple, git_sha=self.prev_ver
-        )
-        self.connect_related_files(
-            basecontent_with_path_set, file_by_status_dict, renamed_files
         )
         return basecontent_with_path_set, invalid_content_items
 
@@ -519,118 +525,6 @@ class Initializer:
 
         return statuses_dict
 
-    def connect_related_files(
-        self,
-        basecontent_with_path_set: Set[BaseContent],
-        statuses_dict: Dict[Path, GitStatuses],
-        renamed_files,
-    ):
-        paths_set = set(statuses_dict.keys())
-        for content_item in basecontent_with_path_set:
-            content_item_related_files: Dict[
-                RelatedFileType, dict
-            ] = content_item.get_related_content()
-            old_content_item_related_files = (
-                content_item.old_base_content_object.get_related_content()
-                if content_item.old_base_content_object
-                else copy.deepcopy(content_item_related_files)
-            )
-            if related_paths := (
-                self.get_paths_from_dict(content_item_related_files)
-            ).intersection(paths_set):
-                for related_path in related_paths:
-                    if file_type := self.get_type_by_path(related_path):
-                        if statuses_dict[related_path] == GitStatuses.RENAMED:
-                            content_item_related_files[file_type]["path"] = related_path
-                            content_item_related_files[file_type][
-                                "git_status"
-                            ] = statuses_dict[related_path]
-                            old_content_item_related_files[file_type][
-                                "path"
-                            ] = renamed_files[related_path]
-                        elif statuses_dict[related_path] == GitStatuses.ADDED:
-                            content_item_related_files[file_type]["path"] = related_path
-                            content_item_related_files[file_type][
-                                "git_status"
-                            ] = statuses_dict[related_path]
-                            old_content_item_related_files[file_type]["path"] = None
-                        elif statuses_dict[related_path] == GitStatuses.MODIFIED:
-                            content_item_related_files[file_type]["path"] = related_path
-                            content_item_related_files[file_type][
-                                "git_status"
-                            ] = statuses_dict[related_path]
-                            old_content_item_related_files[file_type][
-                                "path"
-                            ] = related_path
-                        else:
-                            content_item_related_files[file_type]["path"] = None
-                            content_item_related_files[file_type][
-                                "git_status"
-                            ] = statuses_dict[related_path]
-                            old_content_item_related_files[file_type][
-                                "path"
-                            ] = related_path
-            content_item.related_content = content_item_related_files
-            if content_item.old_base_content_object:
-                content_item.old_base_content_object.related_content = (
-                    old_content_item_related_files
-                )
-
-    def get_paths_from_dict(
-        self, content_item_related_files: Dict[RelatedFileType, dict]
-    ) -> Set[Path]:
-        """Return the set of paths obtained from the related_files_dict.
-
-        Args:
-            content_item_related_files (Dict[RelatedFileType, dict]): The dictionary of related files related to a certain object.
-
-        Returns:
-            Set[Path]: The obtained set of paths.
-        """
-        files_set = set()
-        for related_file in content_item_related_files.values():
-            if isinstance(related_file["path"], tuple):
-                for path in related_file["path"]:
-                    files_set.add(path)
-            else:
-                files_set.add(related_file["path"])
-        return files_set
-
-    def get_type_by_path(self, path: Path) -> Optional[RelatedFileType]:  # type: ignore[return]
-        """Retrieve the file type according to its type.
-
-        Args:
-            path (Path): The file path to determine its type.
-
-        Returns:
-            Optional[RelatedFileType]: The file type if found.
-        """
-        str_path = str(path)
-        if "description" in str_path:
-            return RelatedFileType.DESCRIPTION
-        elif PACKS_PACK_IGNORE_FILE_NAME in str_path:
-            return RelatedFileType.PACK_IGNORE
-        elif PACKS_WHITELIST_FILE_NAME in str_path:
-            return RelatedFileType.SECRETS_IGNORE
-        elif ".xif" in str_path:
-            return RelatedFileType.XIF
-        elif "_schema" in str_path:
-            return RelatedFileType.SCHEMA
-        elif "_dark.svg" in str_path:
-            return RelatedFileType.DARK_SVG
-        elif "_light.svg" in str_path:
-            return RelatedFileType.LIGHT_SVG
-        elif PACKS_README_FILE_NAME in str_path:
-            return RelatedFileType.README
-        elif "Author_image" in str_path:
-            return RelatedFileType.AUTHOR_IMAGE
-        elif ".png" in str_path:
-            return RelatedFileType.IMAGE
-        elif path.suffix in (".py", "js", "ps1"):
-            if "_test" in str_path:
-                return RelatedFileType.TEST_CODE
-            return RelatedFileType.CODE
-
     def load_files(self, paths: List[str]) -> Set[str]:
         """Recursively load all files from a given list of paths.
 
@@ -643,7 +537,7 @@ class Initializer:
         loaded_files: Set[str] = set()
         for path in paths:
             file_level = detect_file_level(path)
-            if file_level == PathLevel.FILE:
+            if file_level in [PathLevel.FILE, PathLevel.PACK]:
                 loaded_files.add(path)
             else:
                 if path.endswith("/"):

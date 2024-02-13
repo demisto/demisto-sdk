@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     RelatedFileType,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
@@ -20,7 +19,6 @@ from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
-from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.common import lazy_property
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
@@ -108,14 +106,6 @@ class IntegrationScript(ContentItem):
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
 
-    @property
-    def readme(self) -> str:
-        return get_file(
-            str(self.path.parent / PACKS_README_FILE_NAME),
-            return_content=True,
-            git_sha=self.git_sha,
-        )
-
     def get_related_content(self) -> Dict[RelatedFileType, dict]:
         related_content_ls = super().get_related_content()
         suffix = (
@@ -124,33 +114,23 @@ class IntegrationScript(ContentItem):
         related_content_ls.update(
             {
                 RelatedFileType.README: {
-                    "path": (
-                        (self.path.parent / PACKS_README_FILE_NAME).relative_to(
-                            CONTENT_PATH
-                        ),
-                        (
-                            Path(
-                                str(self.path).replace(
-                                    ".yml", f"_{PACKS_README_FILE_NAME}"
-                                )
-                            )
-                        ).relative_to(CONTENT_PATH),
-                    ),
+                    "path": [
+                        str(self.path.parent / PACKS_README_FILE_NAME),
+                        str(self.path).replace(".yml", f"_{PACKS_README_FILE_NAME}"),
+                    ],
                     "git_status": None,
                 },
                 RelatedFileType.TEST_CODE: {
-                    "path": (
-                        self.path.parent / f"{self.path.parts[-2]}_test{suffix}"
-                    ).relative_to(CONTENT_PATH),
+                    "path": [
+                        str(self.path.parent / f"{self.path.parts[-2]}_test{suffix}")
+                    ],
                     "git_status": None,
                 },
                 RelatedFileType.CODE: {
-                    "path": (
-                        (
-                            self.path.parent / f"{self.path.parts[-2]}{suffix}"
-                        ).relative_to(CONTENT_PATH),
-                        (self.path).relative_to(CONTENT_PATH),
-                    ),
+                    "path": [
+                        str(self.path.parent / f"{self.path.parts[-2]}{suffix}"),
+                        str(self.path),
+                    ],
                     "git_status": None,
                 },
             }

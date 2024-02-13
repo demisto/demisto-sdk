@@ -240,10 +240,11 @@ def should_run_according_to_file_type_and_status(
             or content_item.git_status in expected_git_statuses
         )
     elif related_content_types := [
-        related_content_type in content_item.related_content
+        related_content_type
         for related_content_type in expected_file_types
+        if related_content_type in content_item.related_content
     ]:
-        return any(
+        return not expected_git_statuses or any(
             content_item.related_content[related_content_type]["git_status"]
             == expected_git_statuses
             for related_content_type in related_content_types

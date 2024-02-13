@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import demisto_client
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
@@ -187,27 +186,25 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         related_content_ls.update(
             {
                 RelatedFileType.IMAGE: {
-                    "path": (
-                        self.path.parent / f"{self.path.parts[-2]}_image.png"
-                    ).relative_to(CONTENT_PATH),
+                    "path": [
+                        str(self.path.parent / f"{self.path.parts[-2]}_image.png")
+                    ],
                     "git_status": None,
                 },
                 RelatedFileType.DARK_SVG: {
-                    "path": (
-                        self.path.parent / f"{self.path.parts[-2]}_description.md"
-                    ).relative_to(CONTENT_PATH),
+                    "path": [
+                        str(self.path.parent / f"{self.path.parts[-2]}_description.md")
+                    ],
                     "git_status": None,
                 },
                 RelatedFileType.LIGHT_SVG: {
-                    "path": (
-                        self.path.parent / f"{self.path.parts[-2]}_light.svg"
-                    ).relative_to(CONTENT_PATH),
+                    "path": [
+                        str(self.path.parent / f"{self.path.parts[-2]}_light.svg")
+                    ],
                     "git_status": None,
                 },
                 RelatedFileType.DESCRIPTION: {
-                    "path": (
-                        self.path.parent / f"{self.path.parts[-2]}_dark.svg"
-                    ).relative_to(CONTENT_PATH),
+                    "path": [str(self.path.parent / f"{self.path.parts[-2]}_dark.svg")],
                     "git_status": None,
                 },
             }

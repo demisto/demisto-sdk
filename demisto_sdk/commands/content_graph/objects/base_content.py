@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import set_value, write_dict
@@ -180,7 +181,7 @@ class BaseContent(BaseNode):
     git_status: Optional[GitStatuses]
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
-    related_content: dict = {}
+    related_content_dict: dict = {}
     file_type: RelatedFileType = RelatedFileType.JSON
 
     def _save(
@@ -296,11 +297,24 @@ class BaseContent(BaseNode):
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         pass
-    
+
     @property
     def related_content(self) -> dict:
         if not self.related_content_dict:
             self.related_content_dict = self.get_related_content()
+            if self.old_base_content_object:
+                git_util = GitUtil()
+                remote, branch = git_util.handle_prev_ver(
+                    self.old_base_content_object.git_sha  # type: ignore[arg-type]
+                )
+                for file in self.related_content_dict.values():
+                    for path in file["path"]:
+                        status = git_util._check_file_status(path, remote, branch)
+                        file["git_status"] = (
+                            None
+                            if (not status and not file["git_status"])
+                            else GitStatuses(status)
+                        )
         return self.related_content_dict
 
     @property
@@ -309,15 +323,24 @@ class BaseContent(BaseNode):
 
     def get_related_file(self, file_type) -> str:
         from demisto_sdk.commands.common.files import TextFile
-        if self.git_sha:
-            return TextFile.read_from_git_path(
-                path=self.related_content[file_type]["path"],
-                tag=self.git_sha,
-            )
-        else:
-            return TextFile.read_from_local_path(
-                path=self.related_content[file_type]["path"]
-            )
+
+        for file_path in self.related_content[file_type]["path"]:
+            try:
+                if self.git_sha:
+                    file = TextFile.read_from_git_path(
+                        path=file_path,
+                        tag=self.git_sha,
+                    )
+                else:
+                    file = TextFile.read_from_local_path(path=file_path)
+                self.related_content[file_type]["path"] = [file_path]
+                return file
+            except Exception as e:
+                logger.error(str(e))
+                continue
+        raise NotAContentItemException(
+            f"The {file_type.value} file could not be found in the following paths: {', '.join(self.related_content[file_type]['path'])}"
+        )
 
 
 class UnknownContent(BaseNode):

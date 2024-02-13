@@ -79,7 +79,7 @@ class Changelog:
             pr.create_issue_comment(markdown)
             print(f'Successfully commented on PR {self.pr_number} the changelog')
         else:
-            print(f'{changelog_path} has not been changed, not commenting on PR {pr_number}')
+            print(f'{changelog_path} has not been changed, not commenting on PR {self.pr_number}')
 
 
     """ INIT """

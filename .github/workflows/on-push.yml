@@ -40,7 +40,7 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          git log
+          git log -n 8
           echo "Commenting changelog for PR: $PR_NUMBER"
           poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -ght ${{ secrets.GITHUB_TOKEN }}
 

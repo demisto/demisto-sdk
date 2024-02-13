@@ -4,7 +4,7 @@ from typing import Collection, Dict, List
 
 from github import Github, WorkflowRun
 from slack_sdk import WebClient
-
+from demisto_sdk.commands.common.logger import logger
 
 DEFAULT_SLACK_CHANNEL = "dmst-sdk-slack-notifier-test"
 
@@ -18,7 +18,7 @@ def options_handler():
         "--workflow_id",
         help="The workflow id triggered by the PR",
         required=True,
-        type=int
+        type=int,
     )
     parser.add_argument(
         "-st", "--slack_token", help="The token for slack", required=True
@@ -51,7 +51,7 @@ def get_failed_jobs(workflow_run: WorkflowRun):
             f'{job_name}[{", ".join(failed_steps)}]' if failed_steps else job_name
         )
 
-    print(f'{failed_jobs=}')
+    logger.info(f"{failed_jobs=}")
     return failed_jobs
 
 

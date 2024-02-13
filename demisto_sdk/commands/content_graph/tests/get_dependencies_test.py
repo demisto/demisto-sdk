@@ -1,5 +1,3 @@
-import pytest
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.commands.get_dependencies import (
     get_dependencies_by_pack_path,

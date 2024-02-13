@@ -1,14 +1,14 @@
 import re
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_value
+from demisto_sdk.commands.common.tools import get_value, get_yaml
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
@@ -32,7 +32,8 @@ class YAMLContentItemParser(ContentItemParser):
             if not self.path.suffix == ".yml"
             else self.path
         )
-        self.yml_data: Dict[str, Any] = self.get_yaml(git_sha=git_sha)
+        super().__init__(path, pack_marketplaces)
+        self.path = self.get_path_with_suffix(".yml")
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(
@@ -118,12 +119,6 @@ class YAMLContentItemParser(ContentItemParser):
                     target_type=ContentType.TEST_PLAYBOOK,
                 )
 
-    def get_yaml(
-        self, git_sha: Optional[str] = None
-    ) -> Dict[str, Union[str, List[str]]]:
-        from demisto_sdk.commands.common.files import YmlFile
-
-        if git_sha:
-            return YmlFile.read_from_git_path(path=self.path, tag=git_sha)
-        else:
-            return YmlFile.read_from_local_path(path=self.path)
+    @cached_property
+    def yml_data(self) -> dict:
+        return get_yaml(str(self.path), git_sha=self.git_sha)

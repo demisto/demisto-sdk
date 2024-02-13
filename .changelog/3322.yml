@@ -2,4 +2,3 @@ changes:
 - description: Code readability improvements in the **error-code** command.
   type: internal
 pr_number: 3322
-	

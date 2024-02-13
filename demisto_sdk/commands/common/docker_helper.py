@@ -69,8 +69,10 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
             msg = "Failed to init docker client. Please check that your docker daemon is running."
             logger.error(f"{log_prompt} - {msg}")
             raise DockerException(msg)
-        docker_user = os.getenv("DOCKERHUB_USER")
-        docker_pass = os.getenv("DOCKERHUB_PASSWORD")
+        docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
+        docker_pass = os.getenv(
+            "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
+        )
         if docker_user and docker_pass:
             logger.debug(f"{log_prompt} - logging in to docker registry")
             try:

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.tools import check_readme_content_contain_text
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -19,7 +18,6 @@ class IsContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
     error_message = "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines: {0}. Copyright section cannot be part of pack readme."
     related_field = "readme"
     is_auto_fixable = False
-    expected_file_types = [RelatedFileType.README]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

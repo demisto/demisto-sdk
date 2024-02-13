@@ -253,6 +253,7 @@ class BaseContent(BaseNode):
     def from_path(
         path: Path,
         git_sha: Optional[str] = None,
+        raise_on_exception: Optional[bool] = False,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
 
@@ -271,11 +272,15 @@ class BaseContent(BaseNode):
         try:
             content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
         except NotAContentItemException:
+            if raise_on_exception:
+                raise NotAContentItemException
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
             )
             return None
         except InvalidContentItemException:
+            if raise_on_exception:
+                raise InvalidContentItemException
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
             )

@@ -118,6 +118,11 @@ class ValidateManager:
         return validators
 
     def add_invalid_content_items(self, invalid_content_items: Set[Path]):
+        """Create results for all the invalid_content_items.
+
+        Args:
+            invalid_content_items (Set[Path]): The set of all the paths that were found invalid.
+        """
         self.validation_results.extend_non_content_item_results(
             [
                 NonContentItemResult(

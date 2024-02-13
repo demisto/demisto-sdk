@@ -3730,7 +3730,9 @@ def xsoar_linter(
         help=("The paths to run xsoar linter on. May pass multiple paths."),
     )
 ):
-
+    """
+        Runs the xsoar lint on the given paths.
+    """
     return_code = xsoar_linter_manager(
         file_paths,
     )

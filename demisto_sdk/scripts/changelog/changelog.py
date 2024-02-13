@@ -64,6 +64,14 @@ class Changelog:
     """ Comment """
 
     def comment(self, latest_commit: str, github_token: str) -> None:
+        """
+        Comment on the PR
+
+        Checks the following:
+            - If the changelog file has been added in latest commit OR If the changelog file has been
+                modified between the last two commits.
+
+        """
         changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
 
         previous_commit = GIT_UTIL.get_previous_commit(latest_commit).hexsha

@@ -79,16 +79,20 @@ class Changelog:
             changelog_path, latest_commit, previous_commit
         ) or GIT_UTIL.has_file_added(changelog_path, latest_commit, previous_commit):
             logger.info(f"Changelog {changelog_path} has been added/modified")
+
             current_changelogs = LogFileObject(
                 **YmlFile.read_from_local_path(changelog_path)
             ).get_log_entries()
+
             github_client = Github(login_or_token=github_token)
+
             pr = github_client.get_repo(DEMISTO_SDK_REPO).get_pull(self.pr_number)
             markdown = "Changelog(s) in markdown:\n"
             markdown += "\n".join(
                 [changelog.to_string() for changelog in current_changelogs]
             )
             pr.create_issue_comment(markdown)
+
             logger.info(f"Successfully commented on PR {self.pr_number} the changelog")
         else:
             logger.info(

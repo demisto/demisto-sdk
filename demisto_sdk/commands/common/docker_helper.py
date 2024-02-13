@@ -346,7 +346,7 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        if os.getenv("CONTENT_GITLAB_CI") and DOCKER_REGISTRY_URL not in image:
+        if DOCKER_REGISTRY_URL not in image:
             return f"{DOCKER_REGISTRY_URL}/{image}"
         return image
 
@@ -630,6 +630,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
     try:
+        image = DockerBase.get_image_registry(image)
         image_model = DockerBase.pull_image(image)
         image_env = image_model.attrs["Config"]["Env"]
         logger.debug(f"Got {image_env=} from {image=}")

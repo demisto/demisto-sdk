@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from pathlib import Path
 from typing import (
     ClassVar,
     Generic,
@@ -143,7 +144,7 @@ class BaseResult(BaseModel):
     @property
     def format_json_message(self):
         return {
-            "file path": str(self.content_object.path),
+            "file path": str(self.content_object.path.relative_to(CONTENT_PATH)),
             "error code": self.validator.error_code,
             "message": self.message,
         }
@@ -156,9 +157,25 @@ class ValidationResult(BaseResult, BaseModel):
 class FixResult(BaseResult, BaseModel):
     """This is a class for fix results."""
 
+
+class NonContentItemResult(BaseResult, BaseModel):
+    validator: Optional[BaseValidator] = None  # type: ignore[assignment]
+    message: str
+    content_object: Optional[BaseContent] = None  # type: ignore[assignment]
+    error_code: str
+    path: Path
+
     @property
     def format_readable_message(self):
-        return f"Fixing {str(self.content_object.path)}: [{self.validator.error_code}] - {self.message}"
+        return f"{str(self.path.relative_to(CONTENT_PATH))}: [{self.error_code}] - {self.message}"
+
+    @property
+    def format_json_message(self):
+        return {
+            "file path": str(self.path.relative_to(CONTENT_PATH)),
+            "error code": self.error_code,
+            "message": self.message,
+        }
 
 
 def is_error_ignored(

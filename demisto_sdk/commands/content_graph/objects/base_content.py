@@ -251,7 +251,6 @@ class BaseContent(BaseNode):
     @lru_cache
     def from_path(
         path: Path,
-        git_status: Optional[GitStatuses] = None,
         git_sha: Optional[str] = None,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
@@ -297,19 +296,27 @@ class BaseContent(BaseNode):
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         pass
+    
+    @property
+    def related_content(self) -> dict:
+        if not self.related_content_dict:
+            self.related_content_dict = self.get_related_content()
+        return self.related_content_dict
 
     @property
     def readme(self) -> str:
-        from demisto_sdk.commands.common.files import TextFile
+        return self.get_related_file(RelatedFileType.README)
 
+    def get_related_file(self, file_type) -> str:
+        from demisto_sdk.commands.common.files import TextFile
         if self.git_sha:
             return TextFile.read_from_git_path(
-                path=self.related_content[RelatedFileType.README]["path"],
+                path=self.related_content[file_type]["path"],
                 tag=self.git_sha,
             )
         else:
             return TextFile.read_from_local_path(
-                path=self.related_content[RelatedFileType.README]["path"]
+                path=self.related_content[file_type]["path"]
             )
 
 

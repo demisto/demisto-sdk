@@ -8,12 +8,18 @@ from git import InvalidGitRepositoryError
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     DEMISTO_GIT_UPSTREAM,
+    DOC_FILES_DIR,
+    INTEGRATIONS_DIR,
+    MODELING_RULES_DIR,
     PACKS_CONTRIBUTORS_FILE_NAME,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
+    PARSING_RULES_DIR,
+    PLAYBOOKS_DIR,
     RELEASE_NOTES_DIR,
+    SCRIPTS_DIR,
     GitStatuses,
     PathLevel,
     RelatedFileType,
@@ -287,7 +293,7 @@ class Initializer:
 
     def gather_objects_to_run_on(
         self,
-    ) -> Set[BaseContent]:
+    ) -> Tuple[Set[BaseContent], Set[Path]]:
         """
         Filter the file that should run according to the given flag (-i/-g/-a).
 
@@ -295,11 +301,15 @@ class Initializer:
             Set[BaseContent]: the set of files that should run.
         """
         content_objects_to_run: Set[BaseContent] = set()
+        invalid_content_items: Set[Path] = set()
         if self.use_git:
-            content_objects_to_run = self.get_files_using_git()
+            content_objects_to_run, invalid_content_items = self.get_files_using_git()
         elif self.file_path:
-            content_objects_to_run = self.paths_to_basecontent_set(
-                set(self.file_path.split(","))
+            (
+                content_objects_to_run,
+                invalid_content_items,
+            ) = self.paths_to_basecontent_set(
+                set(self.load_files(self.file_path.split(",")))
             )
         elif self.all_files:
             content_dto = ContentDTO.from_path(CONTENT_PATH)
@@ -309,11 +319,11 @@ class Initializer:
         else:
             self.use_git = (True,)
             self.committed_only = True
-            content_objects_to_run = self.get_files_using_git()
+            content_objects_to_run, invalid_content_items = self.get_files_using_git()
         content_objects_to_run_with_packs: Set[BaseContent] = self.get_items_from_packs(
             content_objects_to_run
         )
-        return content_objects_to_run_with_packs
+        return content_objects_to_run_with_packs, invalid_content_items
 
     def get_items_from_packs(
         self, content_objects_to_run: Set[BaseContent]
@@ -335,11 +345,11 @@ class Initializer:
             content_objects_to_run_with_packs.add(content_object)
         return content_objects_to_run_with_packs
 
-    def get_files_using_git(self) -> Set[BaseContent]:
+    def get_files_using_git(self) -> Tuple[Set[BaseContent], Set[Path]]:
         """Return all files added/changed/deleted.
 
         Returns:
-            Set[BaseContent]: The set of all the files from git successfully casted to BaseContent
+            Tuple[Set[BaseContent], Set[Path]]: The sets of all the successful and all failed casts to BaseContent from given set of files.
         """
         self.validate_git_installed()
         self.set_prev_ver()
@@ -376,45 +386,66 @@ class Initializer:
                 ] = status
             else:
                 statuses_dict_with_renamed_files_tuple[path] = status
-        basecontent_with_path_set: Set[BaseContent] = self.git_paths_to_basecontent_set(
+        basecontent_with_path_set: Set[BaseContent] = set()
+        invalid_content_items: Set[Path] = set()
+        (
+            basecontent_with_path_set,
+            invalid_content_items,
+        ) = self.git_paths_to_basecontent_set(
             statuses_dict_with_renamed_files_tuple, git_sha=self.prev_ver
         )
         self.connect_related_files(
             basecontent_with_path_set, file_by_status_dict, renamed_files
         )
-        return basecontent_with_path_set
+        return basecontent_with_path_set, invalid_content_items
 
-    def paths_to_basecontent_set(self, files_set: Set[str]) -> Set[BaseContent]:
-        """Return a set of all the successful casts to BaseContent from given set of files.
+    def paths_to_basecontent_set(
+        self, files_set: Set[str]
+    ) -> Tuple[Set[BaseContent], Set[Path]]:
+
+        """Attempting to convert the given paths to a set of BaseContent.
 
         Args:
             files_set (set): The set of file paths to case into BaseContent.
 
         Returns:
-            Set[BaseContent]: The set of all the successful casts to BaseContent from given set of files.
+            Tuple[Set[BaseContent], Set[Path]]: The sets of all the successful and all failed casts to BaseContent from given set of files.
         """
-        # To Do: implement unpacking system for paths.
         basecontent_with_path_set: Set[BaseContent] = set()
-        invalid_content_items: List[str] = []
-        for file_path in files_set:
+        invalid_content_items: Set[Path] = set()
+        related_files_main_items: Set[str] = self.collect_related_files_main_items(
+            files_set
+        )
+        for file_path in related_files_main_items:
+            path: Path = Path(file_path)
             try:
-                temp_obj = BaseContent.from_path(Path(file_path), git_sha=None)
+                temp_obj = BaseContent.from_path(path, git_sha=None)
                 if temp_obj is None:
-                    invalid_content_items.append(str(file_path))
+                    invalid_content_items.add(path)
                 else:
                     basecontent_with_path_set.add(temp_obj)
             except InvalidContentItemException:
-                invalid_content_items.append(str(file_path))
-        return basecontent_with_path_set
+                invalid_content_items.add(path)
+        return basecontent_with_path_set, invalid_content_items
 
     def git_paths_to_basecontent_set(
         self,
         statuses_dict: Dict[Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]],
         git_sha: Optional[str] = None,
-    ) -> Set[BaseContent]:
+    ) -> Tuple[Set[BaseContent], Set[Path]]:
+        """Attempting to convert the given paths to a set of BaseContent based on their git statuses.
+
+        Args:
+            files_set (set): The set of file paths to case into BaseContent.
+
+        Returns:
+            Tuple[Set[BaseContent], Set[Path]]: The sets of all the successful and all failed casts to BaseContent from given set of files.
+        """
         basecontent_with_path_set: Set[BaseContent] = set()
-        invalid_content_items: List[str] = []
+        invalid_content_items: Set[Path] = set()
         for file_path, git_status in statuses_dict.items():
+            if git_status == GitStatuses.DELETED:
+                continue
             try:
                 old_path = file_path
                 if isinstance(file_path, tuple):
@@ -433,10 +464,10 @@ class Initializer:
                         obj.old_base_content_object.git_sha = git_sha
                     basecontent_with_path_set.add(obj)
                 elif obj is None:
-                    invalid_content_items.append(str(file_path))
+                    invalid_content_items.add(file_path)
             except InvalidContentItemException:
-                invalid_content_items.append(str(file_path))
-        return basecontent_with_path_set
+                invalid_content_items.add(file_path)  # type: ignore[arg-type]
+        return basecontent_with_path_set, invalid_content_items
 
     def get_items_status(
         self, file_by_status_dict: Dict[Path, GitStatuses]
@@ -444,32 +475,13 @@ class Initializer:
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = {}
         for path, git_status in file_by_status_dict.items():
             path_str = str(path)
-            if any(
-                file in path_str.lower()
-                for file in (
-                    "commands_example.txt",
-                    "commands_examples.txt",
-                    "command_examples.txt",
-                    "test_data",
-                    "testdata",
-                )
-            ):
+            if self.is_unrelated_path(path_str):
                 continue
             if "Integrations" in path_str or "Scripts" in path_str:
                 if path_str.endswith(".yml"):
                     statuses_dict[path] = git_status
-                elif path.suffix in (".py", "js", "ps1") and not any(
-                    [
-                        path_str.endswith("_test.py"),
-                        path_str.endswith("_test.js"),
-                        path_str.endswith("_test.ps1"),
-                    ]
-                ):
-                    path = Path(
-                        path_str.replace(".py", ".yml")
-                        .replace(".js", ".yml")
-                        .replace(".ps1", ".yml")
-                    )
+                elif self.is_code_file(path, path_str):
+                    path = Path(self.obtain_yml_from_code(path_str))
                     if path not in statuses_dict:
                         statuses_dict[path] = git_status
                 elif f"_{PACKS_README_FILE_NAME}" in path_str:
@@ -484,30 +496,22 @@ class Initializer:
                 if path_str.endswith(".yml"):
                     statuses_dict[path] = git_status
                 else:
+                    path = self.obtain_playbook_path(path)
+                    if path not in statuses_dict:
+                        statuses_dict[path] = None
+            elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
+                if path.suffix in [".json", ".xif"]:
                     path = Path(
-                        path.parent
-                        / str(path.parts[-1]).replace(
-                            f"_{PACKS_README_FILE_NAME}", ".yml"
-                        )
+                        path_str.replace(".xif", ".yml").replace("_schema.json", ".yml")
                     )
                     if path not in statuses_dict:
                         statuses_dict[path] = None
+                else:
+                    statuses_dict[path] = git_status
             elif PACKS_PACK_META_FILE_NAME in path_str:
                 statuses_dict[path] = git_status
-            elif any(
-                file in path_str
-                for file in (
-                    PACKS_PACK_IGNORE_FILE_NAME,
-                    RELEASE_NOTES_DIR,
-                    PACKS_WHITELIST_FILE_NAME,
-                    PACKS_README_FILE_NAME,
-                    AUTHOR_IMAGE_FILE_NAME,
-                    PACKS_CONTRIBUTORS_FILE_NAME,
-                )
-            ):
-                metadata_path = Path(
-                    f"Packs/{path.parts[1]}/{PACKS_PACK_META_FILE_NAME}"
-                )
+            elif self.is_pack_item(path_str):
+                metadata_path = Path(self.obtain_metadata_path(path))
                 if metadata_path not in statuses_dict:
                     statuses_dict[metadata_path] = None
             else:
@@ -523,7 +527,9 @@ class Initializer:
     ):
         paths_set = set(statuses_dict.keys())
         for content_item in basecontent_with_path_set:
-            content_item_related_files = content_item.get_related_content()
+            content_item_related_files: Dict[
+                RelatedFileType, dict
+            ] = content_item.get_related_content()
             old_content_item_related_files = (
                 content_item.old_base_content_object.get_related_content()
                 if content_item.old_base_content_object
@@ -533,8 +539,7 @@ class Initializer:
                 self.get_paths_from_dict(content_item_related_files)
             ).intersection(paths_set):
                 for related_path in related_paths:
-                    file_type = self.get_type_by_path(related_path)
-                    if file_type:
+                    if file_type := self.get_type_by_path(related_path):
                         if statuses_dict[related_path] == GitStatuses.RENAMED:
                             content_item_related_files[file_type]["path"] = related_path
                             content_item_related_files[file_type][
@@ -571,7 +576,17 @@ class Initializer:
                     old_content_item_related_files
                 )
 
-    def get_paths_from_dict(self, content_item_related_files) -> set:
+    def get_paths_from_dict(
+        self, content_item_related_files: Dict[RelatedFileType, dict]
+    ) -> Set[Path]:
+        """Return the set of paths obtained from the related_files_dict.
+
+        Args:
+            content_item_related_files (Dict[RelatedFileType, dict]): The dictionary of related files related to a certain object.
+
+        Returns:
+            Set[Path]: The obtained set of paths.
+        """
         files_set = set()
         for related_file in content_item_related_files.values():
             if isinstance(related_file["path"], tuple):
@@ -581,7 +596,15 @@ class Initializer:
                 files_set.add(related_file["path"])
         return files_set
 
-    def get_type_by_path(self, path):
+    def get_type_by_path(self, path: Path) -> Optional[RelatedFileType]:  # type: ignore[return]
+        """Retrieve the file type according to its type.
+
+        Args:
+            path (Path): The file path to determine its type.
+
+        Returns:
+            Optional[RelatedFileType]: The file type if found.
+        """
         str_path = str(path)
         if "description" in str_path:
             return RelatedFileType.DESCRIPTION
@@ -607,3 +630,174 @@ class Initializer:
             if "_test" in str_path:
                 return RelatedFileType.TEST_CODE
             return RelatedFileType.CODE
+
+    def load_files(self, paths: List[str]) -> Set[str]:
+        """Recursively load all files from a given list of paths.
+
+        Args:
+            paths (List[str]): _description_
+
+        Returns:
+            Set[str]: The set of files obtained from the list of paths.
+        """
+        loaded_files: Set[str] = set()
+        for path in paths:
+            file_level = detect_file_level(path)
+            if file_level == PathLevel.FILE:
+                loaded_files.add(path)
+            else:
+                if path.endswith("/"):
+                    path = path[:-1]
+                loaded_files.update(
+                    self.load_files(
+                        [f"{path}/{sub_path}" for sub_path in os.listdir(path)]
+                    )
+                )
+        return loaded_files
+
+    def collect_related_files_main_items(self, file_paths: Set[str]) -> Set[str]:
+        """Convert the given file path to the main item its related to.
+
+        Args:
+            file_paths (Set[str]): The set of files to convert.
+
+        Returns:
+            Set[str]: The set of the main paths obtained from the given paths set.
+        """
+        paths_set: Set[str] = set()
+        for path in file_paths:
+            path_obj = Path(path)
+            if self.is_unrelated_path(path):
+                continue
+            if INTEGRATIONS_DIR in path or SCRIPTS_DIR in path:
+                if path.endswith(".yml"):
+                    paths_set.add(path)
+                elif self.is_code_file(path_obj, path):
+                    paths_set.add(self.obtain_yml_from_code(path))
+                elif f"_{PACKS_README_FILE_NAME}" in path:
+                    path = path.replace(f"_{PACKS_README_FILE_NAME}", ".yml")
+                    paths_set.add(path)
+                else:
+                    path = str(path_obj.parent / f"{path_obj.parts[-2]}.yml")
+                    paths_set.add(path)
+            elif PLAYBOOKS_DIR in path:
+                if path.endswith(".yml"):
+                    paths_set.add(path)
+                else:
+                    paths_set.add(str(self.obtain_playbook_path(path_obj)))
+            elif MODELING_RULES_DIR in path or PARSING_RULES_DIR in path:
+                path = path.replace(".xif", ".yml").replace("_schema.json", ".yml")
+                paths_set.add(path)
+            elif PACKS_PACK_META_FILE_NAME in path:
+                paths_set.add(path)
+            elif self.is_pack_item(path):
+                paths_set.add(self.obtain_metadata_path(path_obj))
+            else:
+                paths_set.add(path)
+
+        return paths_set
+
+    def is_unrelated_path(self, path: str) -> bool:
+        """Return whether the given path is an item that should be validated or not.
+
+        Args:
+            path (str): The path to check
+
+        Returns:
+            bool: True if the item is unrelated. Otherwise, return False.
+        """
+        return any(
+            file in path.lower()
+            for file in (
+                "commands_example.txt",
+                "commands_examples.txt",
+                "command_examples.txt",
+                "test_data",
+                "testdata",
+            )
+        )
+
+    def is_pack_item(self, path: str) -> bool:
+        """whether the given item is related to the pack level or not.
+
+        Args:
+            path (str): The path to test
+
+        Returns:
+            bool: True if the given path is related to the pack level. Otherwise, return False.
+        """
+        return any(
+            file in path
+            for file in (
+                PACKS_PACK_IGNORE_FILE_NAME,
+                RELEASE_NOTES_DIR,
+                PACKS_WHITELIST_FILE_NAME,
+                PACKS_README_FILE_NAME,
+                AUTHOR_IMAGE_FILE_NAME,
+                PACKS_CONTRIBUTORS_FILE_NAME,
+                DOC_FILES_DIR,
+            )
+        )
+
+    def is_code_file(self, path: Path, path_str: str) -> bool:
+        """Return whether the given path is a integration/script code path.
+
+        Args:
+            path (Path): The path as a Pathlib object.
+            path_str (str): The path as a string.
+
+        Returns:
+            bool: True if the given path is a integration/script code. Otherwise, return False.
+        """
+        return path.suffix in (".py", "js", "ps1") and not any(
+            [
+                path_str.endswith("_test.py"),
+                path_str.endswith("_test.js"),
+                path_str.endswith("_test.ps1"),
+            ]
+        )
+
+    def obtain_playbook_path(self, path: Path) -> Path:
+        """Generate playbook path
+
+        Args:
+            path (Path): the path to generate the playbook path from
+
+        Returns:
+            Path: the playbook path
+        """
+        return path.parent / str(path.parts[-1]).replace(
+            f"_{PACKS_README_FILE_NAME}", ".yml"
+        )
+
+    def obtain_yml_from_code(self, path: str) -> str:
+        """Generate a script / integration yml path from code path.
+
+        Args:
+            path (Path): the code path to generate the script / integration yml path from.
+
+        Returns:
+            Path: the yml path.
+        """
+        return (
+            path.replace(".py", ".yml").replace(".js", ".yml").replace(".ps1", ".yml")
+        )
+
+    def obtain_metadata_path(self, path: Path) -> str:
+        """Create a pack_metadata.json path from a given pack related item.
+
+        Args:
+            path (Path): The path to generate the pack_metadata.json path from.
+
+        Returns:
+            str: The pack_metadata.json path.
+        """
+        path_str = ""
+        for i, part in enumerate(path.parts):
+            path_str = f"{path_str}{part}/"
+            if part == "Packs":
+                path_str = (
+                    f"{path_str}{path.parts[i+1]}/{PACKS_PACK_META_FILE_NAME}"
+                ).replace("//", "/")
+                break
+        return path_str

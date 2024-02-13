@@ -1,4 +1,4 @@
 changes:
 - description: Added README to the **xsoar-lint** command
-  type: <breaking|feature|fix|internal>
+  type: fix
 pr_number: 4043

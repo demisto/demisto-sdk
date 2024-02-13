@@ -113,7 +113,7 @@ class Changelog:
             try:
                 repo = Github(verify=False).get_repo("demisto/demisto-sdk")
                 branch = GIT_UTIL.repo.active_branch.name
-                for pr in repo.get_pulls(head=branch):
+                for pr in repo.get_pulls(state="open", head=branch):
                     if pr.head.ref == branch:
                         pr_num = pr.number
                         break

@@ -221,7 +221,7 @@ For information regarding XSOAR CI/CD, please see [this article](https://xsoar.p
 ## Custom Container Registry
 
 By default, the `demisto-sdk` will use `dockerhub` as the container registry to pull the integrations and scripts docker image.
-It is possible to provide a different container registry. In order to configure it, the following environment variables must be set:
+In order configure a custom container registry, the following environment variables must be set:
 
 * `DEMISTO_SDK_CONTAINER_REGISTRY`: the url of the container registry.
 * `DEMISTO_SDK_CR_USER`: the username to use in the container registry.

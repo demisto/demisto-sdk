@@ -95,7 +95,9 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
     return docker_python_path
 
 
-def update_dotenv(file_path: Path, values: Dict[str, str], quote_mode="never"):
+def update_dotenv(
+    file_path: Path, values: Dict[str, Optional[str]], quote_mode="never"
+):
     """
     Configure the .env file with the given values. Generates the file if it doesn't exist.
 
@@ -243,21 +245,17 @@ def configure_module_discovery(ide_type: IDEType):
         ide_type (IDEType): The IDE type to configure
     """
     if ide_type == IDEType.VSCODE:
-        update_dotenv(
-            file_path=DOTENV_PATH,
-            values={
-                "PYTHONPATH": ":".join([str(path) for path in PYTHONPATH]),
-                "MYPYPATH": ":".join(
-                    [
-                        str(path)
-                        for path in PYTHONPATH
-                        if "site-packages" not in str(path)
-                    ]
-                ),
-            },
-        )
+        ide_folder = CONTENT_PATH / ".vscode"
+        ide_folder.mkdir(exist_ok=True, parents=True)
+        configure_vscode_settings(ide_folder=ide_folder)
+        # Delete PYTHONPATH and MYPYPATH from env file because they are not needed
+        env_file = CONTENT_PATH / ".env"
+        env_vars = dotenv.dotenv_values(env_file)
+        env_vars.pop("PYTHONPATH", None)
+        env_vars.pop("MYPYPATH", None)
+        update_dotenv(env_file, env_vars)
 
-    elif ide_type == IDEType.PYCHARM:
+    if ide_type == IDEType.PYCHARM:
         python_discovery_paths = PYTHONPATH.copy()
 
         # Remove 'CONTENT_PATH' from the python discovery paths as it is already configured by default,
@@ -298,7 +296,6 @@ def configure_vscode_tasks(
                         "env": {
                             "PYTHONPATH": ":".join(docker_python_path),
                         },
-                        "envFiles": [str(DOTENV_PATH)],
                     },
                 },
                 {

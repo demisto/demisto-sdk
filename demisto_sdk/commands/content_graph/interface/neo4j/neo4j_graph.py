@@ -108,12 +108,10 @@ class NoModelException(Exception):
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
-    # this is used to save cache of packs and integrations which queried
-    _import_handler = Neo4jImportHandler()
-
     def __init__(
         self,
     ) -> None:
+        self._import_handler = Neo4jImportHandler()
         self._id_to_obj: Dict[str, BaseNode] = {}
 
         if not self.is_alive():

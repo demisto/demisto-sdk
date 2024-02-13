@@ -15,10 +15,7 @@ from demisto_sdk.commands.common.tools import (
     is_external_repository,
 )
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
-from demisto_sdk.commands.content_graph.commands.create import (
-    create,
-    create_content_graph,
-)
+from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_PASSWORD,
@@ -75,6 +72,13 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
+        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
+        )
+        return
+
     if not imported_path and not use_git:
         logger.info("A path to import the graph from was not provided, using git")
         use_git = True
@@ -217,19 +221,6 @@ def update(
     and updates it with the changes in the given repository
     or by an argument of packs to update with.
     """
-    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
-        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
-        ctx.invoke(
-            create,
-            ctx,
-            marketplace=marketplace,
-            no_dependencies=no_dependencies,
-            output_path=output_path,
-            console_log_threshold=console_log_threshold,
-            file_log_threshold=file_log_threshold,
-            log_file_path=log_file_path,
-        )
-        return
     logging_setup(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,

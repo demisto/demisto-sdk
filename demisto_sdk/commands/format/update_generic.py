@@ -298,7 +298,7 @@ class BaseUpdate:
         else:
             user_answer = self.get_answer(
                 "Either no fromversion is specified in your file, "
-                "or it is lower than the minimal fromversion for this content type."
+                "or it is lower than the minimal fromversion for this content type. "
                 "Would you like to set it to the default? [Y/n]"
             )
         if not user_answer or user_answer.lower() in ["y", "yes"]:

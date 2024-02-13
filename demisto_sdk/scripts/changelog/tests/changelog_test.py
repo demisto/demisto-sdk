@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.files import YmlFile
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.scripts.changelog import changelog
 from demisto_sdk.scripts.changelog.changelog import (
@@ -13,6 +14,8 @@ from demisto_sdk.scripts.changelog.changelog import (
     read_log_files,
 )
 from demisto_sdk.scripts.changelog.changelog_obj import LogType
+from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
 
@@ -40,12 +43,12 @@ LOG_FILE_3 = {
 
 
 @pytest.fixture
-def changelog_mock():
+def changelog_mock() -> Changelog:
     return Changelog(pr_name="test", pr_number=DUMMY_PR_NUMBER)
 
 
 @pytest.fixture
-def changelog_folder_mock(tmpdir, mocker):
+def changelog_folder_mock(tmpdir, mocker) -> Path:
     folder_path = Path(tmpdir / ".changelog")
     folder_path.mkdir()
     mocker.patch.object(changelog, "CHANGELOG_FOLDER", folder_path)
@@ -161,3 +164,126 @@ def test_get_new_log_entries(changelog_folder_mock: Path):
     results = get_new_log_entries(logs)
     for type_ in (log_type for log_type in LogType):
         assert type_ in results
+
+
+def test_comment_newly_added_changelog(
+    mocker, git_repo: Repo, changelog_mock: Changelog
+):
+    """
+    Given:
+        - repo with newly created change-log
+    When:
+        - run `Changelog.comment` method
+    Then:
+        - Ensure that the log is commented out to the PR.
+    """
+    from demisto_sdk.commands.common.logger import logger
+
+    changelog_folder = Path(f"{git_repo.path}/.changelog")
+    changelog_folder.mkdir()
+    mocker.patch.object(changelog, "CHANGELOG_FOLDER", changelog_folder)
+
+    mocker.patch.object(changelog, "GIT_UTIL", git_repo.git_util)
+    github_mocker = mocker.patch("demisto_sdk.scripts.changelog.changelog.Github")
+    info_logger_mocker = mocker.patch.object(logger, "info")
+
+    changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
+    YmlFile.write_file(data=LOG_FILE_1, output_path=changelog_path)
+
+    git_util = git_repo.git_util
+    git_util.commit_files("Commit changelog file")
+
+    current_commit = git_util.get_current_commit_hash()
+    with ChangeCWD(git_repo.path):
+        Changelog(pr_number=DUMMY_PR_NUMBER).comment(
+            current_commit, github_token="1234"
+        )
+    assert github_mocker.called
+    assert (
+        info_logger_mocker.call_args_list[1].args[0]
+        == "Successfully commented on PR 12345 the changelog"
+    )
+
+
+def test_comment_modified_changelog(mocker, git_repo: Repo, changelog_mock: Changelog):
+    """
+    Given:
+        - repo with modified change-log
+    When:
+        - run `Changelog.comment` method
+    Then:
+        - Ensure that the log is commented out to the PR.
+    """
+    from demisto_sdk.commands.common.logger import logger
+
+    changelog_folder = Path(f"{git_repo.path}/.changelog")
+    changelog_folder.mkdir()
+    mocker.patch.object(changelog, "CHANGELOG_FOLDER", changelog_folder)
+
+    mocker.patch.object(changelog, "GIT_UTIL", git_repo.git_util)
+    github_mocker = mocker.patch("demisto_sdk.scripts.changelog.changelog.Github")
+    info_logger_mocker = mocker.patch.object(logger, "info")
+
+    changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
+    YmlFile.write_file(data=LOG_FILE_1, output_path=changelog_path)
+
+    git_util = git_repo.git_util
+    git_util.commit_files("Commit changelog file")
+
+    # modify the changelog
+    YmlFile.write_file(data=LOG_FILE_2, output_path=changelog_path)
+    git_util.commit_files("Commit changelog file")
+
+    current_commit = git_util.get_current_commit_hash()
+    with ChangeCWD(git_repo.path):
+        Changelog(pr_number=DUMMY_PR_NUMBER).comment(
+            current_commit, github_token="1234"
+        )
+    assert github_mocker.called
+    assert (
+        info_logger_mocker.call_args_list[1].args[0]
+        == "Successfully commented on PR 12345 the changelog"
+    )
+
+
+def test_comment_unmodified_changelog(
+    mocker, git_repo: Repo, changelog_mock: Changelog
+):
+    """
+    Given:
+        - repo with change-log that was not modified between the current and last commit
+    When:
+        - run `Changelog.comment` method
+    Then:
+        - Ensure that the log is NOT commented out to the PR.
+    """
+    from demisto_sdk.commands.common.logger import logger
+
+    changelog_folder = Path(f"{git_repo.path}/.changelog")
+    changelog_folder.mkdir()
+    mocker.patch.object(changelog, "CHANGELOG_FOLDER", changelog_folder)
+
+    mocker.patch.object(changelog, "GIT_UTIL", git_repo.git_util)
+    github_mocker = mocker.patch("demisto_sdk.scripts.changelog.changelog.Github")
+    info_logger_mocker = mocker.patch.object(logger, "info")
+
+    changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
+    YmlFile.write_file(data=LOG_FILE_1, output_path=changelog_path)
+
+    git_util = git_repo.git_util
+    git_util.commit_files("Commit changelog file")
+
+    # modify the changelog
+    YmlFile.write_file(data="text", output_path=Path(f"{git_repo.path}/test.txt"))
+    git_util.commit_files("Commit text file")
+
+    current_commit = git_util.get_current_commit_hash()
+    with ChangeCWD(git_repo.path):
+        Changelog(pr_number=DUMMY_PR_NUMBER).comment(
+            current_commit, github_token="1234"
+        )
+    assert not github_mocker.called
+    assert (
+        info_logger_mocker.call_args_list[0].args[0]
+        == f"{changelog_path} has not been changed, not commenting on PR 12345"
+    )

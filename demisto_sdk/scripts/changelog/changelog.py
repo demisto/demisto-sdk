@@ -84,6 +84,7 @@ class Changelog:
             pr.create_issue_comment(markdown)
             return
 
+
         if previous_changelogs.get("description") != current_changelogs.get("description"):
             # comment in the PR only if the last changelog was changed from previous commit
             markdown = "Changelog(s) in markdown:\n"

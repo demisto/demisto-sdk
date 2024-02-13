@@ -110,6 +110,10 @@ class GitUtil:
         except TypeError:
             return self.repo.head.commit.parents[0]
 
+    def has_file_changed(self, file_path: str, commit1, commit2) -> bool:
+        a = self.repo.git.diff(commit1, commit2, file_path)
+        print()
+
     def read_file_content(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
     ) -> bytes:

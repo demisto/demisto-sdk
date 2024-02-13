@@ -5,10 +5,12 @@ from typing import Dict, List
 
 import typer
 from git import Repo  # noqa: TID251
-from demisto_sdk.commands.common.git_util import GitUtil
+from github import Github
 from more_itertools import bucket
 from pydantic import ValidationError
 
+from demisto_sdk.commands.common.files.yml_file import YmlFile
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import (
     DEFAULT_JSON_HANDLER,
     DEFAULT_YAML_HANDLER,
@@ -22,11 +24,6 @@ from demisto_sdk.scripts.changelog.changelog_obj import (
     LogLine,
     LogType,
 )
-from demisto_sdk.commands.common.files.errors import FileReadError
-from demisto_sdk.commands.common.files.yml_file import YmlFile
-from github import Github
-import os
-
 
 DEMISTO_SDK_REPO = "demsito/demisto-sdk"
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
@@ -65,22 +62,30 @@ class Changelog:
             _validate_branch(self.pr_number)
 
     """ Comment """
+
     def comment(self, latest_commit: str, github_token: str) -> None:
         changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
 
         previous_commit = GIT_UTIL.get_previous_commit(latest_commit).hexsha
-        if GIT_UTIL.has_file_changed(changelog_path, latest_commit, previous_commit) or GIT_UTIL.has_file_added(changelog_path, latest_commit, previous_commit):
-            print(f'Changelog {changelog_path} has been added/modified')
-            current_changelogs = LogFileObject(**YmlFile.read_from_local_path(changelog_path)).get_log_entries()
+        if GIT_UTIL.has_file_changed(
+            changelog_path, latest_commit, previous_commit
+        ) or GIT_UTIL.has_file_added(changelog_path, latest_commit, previous_commit):
+            logger.info(f"Changelog {changelog_path} has been added/modified")
+            current_changelogs = LogFileObject(
+                **YmlFile.read_from_local_path(changelog_path)
+            ).get_log_entries()
             github_client = Github(login_or_token=github_token, verify=False)
             pr = github_client.get_repo("demisto/demisto-sdk").get_pull(self.pr_number)
             markdown = "Changelog(s) in markdown:\n"
-            markdown += "\n".join([changelog.to_string() for changelog in current_changelogs])
+            markdown += "\n".join(
+                [changelog.to_string() for changelog in current_changelogs]
+            )
             pr.create_issue_comment(markdown)
-            print(f'Successfully commented on PR {self.pr_number} the changelog')
+            logger.info(f"Successfully commented on PR {self.pr_number} the changelog")
         else:
-            print(f'{changelog_path} has not been changed, not commenting on PR {self.pr_number}')
-
+            logger.info(
+                f"{changelog_path} has not been changed, not commenting on PR {self.pr_number}"
+            )
 
     """ INIT """
 

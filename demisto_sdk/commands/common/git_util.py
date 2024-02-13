@@ -110,7 +110,9 @@ class GitUtil:
         except TypeError:
             return self.repo.head.commit.parents[0]
 
-    def has_file_changed(self, file_path: Union[Path, str], commit1: str, commit2: str) -> bool:
+    def has_file_changed(
+        self, file_path: Union[Path, str], commit1: str, commit2: str
+    ) -> bool:
         """
         Checks if file has been changed between two commits.
 
@@ -125,7 +127,12 @@ class GitUtil:
         return bool(self.repo.git.diff(commit1, commit2, str(file_path)))
 
     def has_file_added(self, file_path: Union[Path, str], commit1: str, commit2: str):
-        return file_path in self.repo.git.diff("--name-only","--diff-filter=A", commit1, commit2).splitlines()
+        return (
+            file_path
+            in self.repo.git.diff(
+                "--name-only", "--diff-filter=A", commit1, commit2
+            ).splitlines()
+        )
 
     def read_file_content(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True

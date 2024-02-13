@@ -23,8 +23,15 @@ def arguments_handler():
 
     """
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("-n", "--pr-number", help="The PR number.", required=True, type=int)
-    parser.add_argument("-lt", "--latest_commit", help="The commit number that triggered the workflow.", required=True)
+    parser.add_argument(
+        "-n", "--pr-number", help="The PR number.", required=True, type=int
+    )
+    parser.add_argument(
+        "-lt",
+        "--latest_commit",
+        help="The commit number that triggered the workflow.",
+        required=True,
+    )
     parser.add_argument(
         "-ght", "--github_token", help="The token for Github-Api", required=True
     )

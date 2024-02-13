@@ -68,6 +68,11 @@ class IntegrationDocUpdateManager:
         self.is_ui_contribution = is_contribution
         self.integration_name = self.new_yaml_path.stem
 
+
+        # We attempt to get the integration YAML from version control
+        # first from remote (`demisto/content` `origin/master`). 
+        # If we can't get it from remote, we get it from local `master`
+        # branch.
         self.old_yaml_path = self.get_integration_yml_path(
             remote=True
         ) or self.get_integration_yml_path(remote=False)
@@ -559,6 +564,11 @@ def generate_integration_doc(
                 if append_errors:
                     errors.extend(append_errors)
 
+        # We check whether the docs can be updated.
+        # We can update the docs when we have the following
+        # in source control:
+        # - An integration YAML.
+        # - An integration README.
         elif update_mgr.can_update_docs():
             logger.info("Updating the existing documentation...")
             doc_text, update_errors = update_mgr.update_docs()

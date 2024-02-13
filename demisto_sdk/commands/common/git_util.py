@@ -77,7 +77,7 @@ class GitUtil:
 
         """
         Given an absolute path, return the path to the file/directory from the
-        repo/git root. For example, `/Users/$USER/dev/demisto/content/Packs/HelloWorld/pack_metadata.json`
+        repo/git root. For example, `/<some_local_path>/Packs/HelloWorld/pack_metadata.json`
         will return `Packs/HelloWorld/pack_metadata.json`.
 
         Arguments:

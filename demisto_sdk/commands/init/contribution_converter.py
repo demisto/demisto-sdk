@@ -501,10 +501,10 @@ class ContributionConverter:
             # and merge its README with the existing one if it is.
             else:
                 # We get the path to contributed content item ymls
-                integration_ymls = glob.glob(
+                contributed_ymls = glob.glob(
                     f"{self.working_dir_path}/**/*.yml", recursive=True
                 )
-                for yml in integration_ymls:
+                for yml in contributed_ymls:
                     # We use the path to the yml to generate a README for the contributed content item
                     generated_readme = self.generate_readme_for_pack_content_item(
                         yml_path=yml, is_contribution=True

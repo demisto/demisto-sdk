@@ -428,8 +428,8 @@ my_email = "fooo@someorg.com"
             Ensure we are looking for secrets in this branch
         """
         mocker.patch(
-            "demisto_sdk.commands.secrets.secrets.SecretsValidator.get_branch_name",
-            return_value="pull/123",
+            "demisto_sdk.commands.secrets.secrets.SecretsValidator.get_current_commit",
+            return_value="1234567",
         )
         mocker.patch(
             "demisto_sdk.commands.secrets.secrets.SecretsValidator.get_secrets",

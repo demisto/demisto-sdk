@@ -1,0 +1,6 @@
+changes:
+- description: Sped up the way **validate** checks for deprecated content items.
+  type: internal
+- description: Sped up the way **validate** reads pack_metadata.json filed.
+  type: internal
+pr_number: 3578

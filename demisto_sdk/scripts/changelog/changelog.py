@@ -166,7 +166,16 @@ class Changelog:
     """ HELPER FUNCTIONS """
 
 
-def get_pr_number_by_branch(branch_name: str):
+def get_pr_number_by_branch(branch_name: str) -> int:
+    """
+    Get the PR number of the current branch from Github
+
+    Args:
+        branch_name: the branch name that is assosicated with the PR
+
+    Returns:
+        PR number associated with the local branch
+    """
     try:
         error_message = (
             "Failed to get PR number from Github, please add the PR number manually"

@@ -188,7 +188,7 @@ def test_comment_newly_added_changelog(
     info_logger_mocker = mocker.patch.object(logger, "info")
 
     changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
-    YmlFile.write_file(data=LOG_FILE_1, output_path=changelog_path)
+    YmlFile.write(data=LOG_FILE_1, output_path=changelog_path)
 
     git_util = git_repo.git_util
     git_util.commit_files("Commit changelog file")
@@ -225,13 +225,13 @@ def test_comment_modified_changelog(mocker, git_repo: Repo, changelog_mock: Chan
     info_logger_mocker = mocker.patch.object(logger, "info")
 
     changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
-    YmlFile.write_file(data=LOG_FILE_1, output_path=changelog_path)
+    YmlFile.write(data=LOG_FILE_1, output_path=changelog_path)
 
     git_util = git_repo.git_util
     git_util.commit_files("Commit changelog file")
 
     # modify the changelog
-    YmlFile.write_file(data=LOG_FILE_2, output_path=changelog_path)
+    YmlFile.write(data=LOG_FILE_2, output_path=changelog_path)
     git_util.commit_files("Commit changelog file")
 
     current_commit = git_util.get_current_commit_hash()
@@ -268,13 +268,13 @@ def test_comment_unmodified_changelog(
     info_logger_mocker = mocker.patch.object(logger, "info")
 
     changelog_path = changelog_folder / f"{DUMMY_PR_NUMBER}.yml"
-    YmlFile.write_file(data=LOG_FILE_1, output_path=changelog_path)
+    YmlFile.write(data=LOG_FILE_1, output_path=changelog_path)
 
     git_util = git_repo.git_util
     git_util.commit_files("Commit changelog file")
 
     # modify the changelog
-    YmlFile.write_file(data="text", output_path=Path(f"{git_repo.path}/test.txt"))
+    YmlFile.write(data="text", output_path=Path(f"{git_repo.path}/test.txt"))
     git_util.commit_files("Commit text file")
 
     current_commit = git_util.get_current_commit_hash()

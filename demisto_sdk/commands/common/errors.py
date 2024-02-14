@@ -2479,8 +2479,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def svg_image_not_valid():
-        return "SVG image file is not valid"
+    def svg_image_not_valid(error_message):
+        return f"SVG image file is not valid: {error_message}"
 
     @staticmethod
     @error_code_decorator

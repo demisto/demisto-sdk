@@ -142,7 +142,7 @@ class ImageValidator(BaseValidator):
                 logger.error(
                     f"Exception trying to parse {self.file_path} as XML, {pe.msg}."
                 )
-                error_message, error_code = Errors.svg_image_not_valid()
+                error_message, error_code = Errors.svg_image_not_valid(pe.msg)
                 if self.handle_error(
                     error_message, error_code, file_path=self.file_path
                 ):

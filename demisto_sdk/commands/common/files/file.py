@@ -35,11 +35,12 @@ class File(ABC):
 
     _git_util = GitUtil.from_content_path()
 
-    @property
-    def git_util(self) -> GitUtil:
-        if Path.cwd() != File._git_util.repo.working_dir:
-            return GitUtil()
-        return File._git_util
+    @classmethod
+    def git_util(cls) -> GitUtil:
+        current_path = Path.cwd()
+        if current_path != Path(cls._git_util.repo.working_dir):
+            cls._git_util = GitUtil(current_path)
+        return cls._git_util
 
     @property
     def path(self) -> Path:
@@ -214,9 +215,9 @@ class File(ABC):
 
         if not path.is_absolute():
             logger.debug(
-                f"path {path} is not absolute, trying to get full relative path from {cls._git_util.repo.working_dir}"
+                f"path {path} is not absolute, trying to get full relative path from {cls.git_util().repo.working_dir}"
             )
-            path = cls._git_util.repo.working_dir / path
+            path = cls.git_util().repo.working_dir / path
             if not path.exists():
                 raise FileNotFoundError(f"File {path} does not exist")
 
@@ -265,11 +266,11 @@ class File(ABC):
         if clear_cache:
             cls.read_from_git_path.cache_clear()
 
-        if cls._git_util.is_file_exist_in_commit_or_branch(
+        if cls.git_util().is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
             # when reading from git we need relative path from the repo root
-            path = cls._git_util.path_from_git_root(path)
+            path = cls.git_util().path_from_git_root(path)
         else:
             raise FileNotFoundError(
                 f"File {path} does not exist in commit/branch {tag}"
@@ -284,7 +285,7 @@ class File(ABC):
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
         try:
             return self.load(
-                self.git_util.read_file_content(
+                self._git_util.read_file_content(
                     self.path, commit_or_branch=tag, from_remote=from_remote
                 )
             )

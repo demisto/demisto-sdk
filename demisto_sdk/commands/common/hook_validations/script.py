@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator,
 )
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_file_version_suffix_if_exists,
@@ -91,7 +92,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_arg_changed(),
             self.is_there_duplicates_args(),
         ]
-
+        logger.info(f'[yellow]{is_breaking_backwards=}[/yellow]')
         return not any(is_breaking_backwards)
 
     def is_valid_file(self, validate_rn: bool = True) -> bool:

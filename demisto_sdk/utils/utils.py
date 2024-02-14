@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentUnifiedObject,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.logger import logger
 
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
 
@@ -38,7 +39,8 @@ def check_configuration_file(command, args):
         try:
             config = ConfigParser(allow_no_value=True)
             config.read(config_file_path)
-
+            config_sections = {section: dict(config[section]) for section in config.sections()}
+            logger.info(f'[yellow]Config sections={config_sections}[/yellow]')
             if command in config.sections():
                 for key in config[command]:
                     if key in args:

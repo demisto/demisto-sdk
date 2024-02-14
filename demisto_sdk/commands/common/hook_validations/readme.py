@@ -145,11 +145,15 @@ def mdx_server_is_up() -> bool:
     Returns: a boolean value indicating if the server is up
 
     """
+    logger.info("[yellow]In mdx_server_is_up[/yellow]")
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        return sock.connect_ex(("localhost", 6161)) == 0
+        sock.settimeout(60)
+        sock_connect = sock.connect_ex(("localhost", 6161))
+        logger.info(f"[yellow]{sock_connect=}[/yellow]")
+        return sock_connect == 0
     except Exception:
+        logger.info("[yellow]Returning False[/yellow]")
         return False
 
 
@@ -195,29 +199,31 @@ class ReadMeValidator(BaseValidator):
         Returns:
             bool: True if env configured else False.
         """
-        return all(
-            [
-                self.verify_readme_relative_urls(),
-                self.is_image_path_valid(),
-                self.verify_image_exist(),
-                self.verify_readme_image_paths(),
-                self.is_mdx_file(),
-                self.verify_no_empty_sections(),
-                self.verify_no_default_sections_left(),
-                self.verify_readme_is_not_too_short(),
-                self.is_context_different_in_yml(),
-                self.verify_demisto_in_readme_content(),
-                self.verify_template_not_in_readme(),
-                self.verify_copyright_section_in_readme_content(),
-                # self.has_no_markdown_lint_errors(),
-                self.validate_no_disallowed_terms_in_customer_facing_docs(
-                    file_content=self.readme_content, file_path=self.file_path_str
-                ),
-            ]
-        )
+        result = [
+            self.verify_readme_relative_urls(),
+            self.is_image_path_valid(),
+            self.verify_image_exist(),
+            self.verify_readme_image_paths(),
+            self.is_mdx_file(),  # <---- The error occurs here
+            self.verify_no_empty_sections(),
+            self.verify_no_default_sections_left(),
+            self.verify_readme_is_not_too_short(),
+            self.is_context_different_in_yml(),
+            self.verify_demisto_in_readme_content(),
+            self.verify_template_not_in_readme(),
+            self.verify_copyright_section_in_readme_content(),
+            # self.has_no_markdown_lint_errors(),
+            self.validate_no_disallowed_terms_in_customer_facing_docs(
+                file_content=self.readme_content, file_path=self.file_path_str
+            ),
+        ]
+        logger.info(f"[yellow]is_valid_file {result=}[/yellow]")
+        return all(result)
 
     def mdx_verify_server(self) -> bool:
+        logger.info("[yellow]In mdx_verify_server[/yellow]")
         server_started = mdx_server_is_up()
+        logger.info(f"[yellow]{server_started=}[/yellow]")
         if not server_started:
             return False
         for _ in range(RETRIES_VERIFY_MDX):
@@ -233,11 +239,17 @@ class ReadMeValidator(BaseValidator):
                     data=readme_content.encode("utf-8"),
                     timeout=20,
                 )
+                logger.info(f"[yellow]{response.status_code=}[/yellow]")
                 if response.status_code != 200:
+                    logger.info(f"[yellow]{response.text=}[/yellow]")
                     error_message, error_code = Errors.readme_error(response.text)
+                    logger.info(
+                        f"[yellow]{error_message=}, {error_code=}, {self.file_path=}[/yellow]"
+                    )
                     if self.handle_error(
                         error_message, error_code, file_path=self.file_path
                     ):
+                        logger.info("[yellow]Returning False[/yellow]")
                         return False
                 return True
             except Exception as e:
@@ -248,14 +260,16 @@ class ReadMeValidator(BaseValidator):
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = self.should_run_mdx_validation()
-
+        logger.info(f"[yellow]is_mdx_file {html=}, {valid=}[/yellow]")
         if valid and not html:
             # add to env var the directory of node modules
 
             os.environ["NODE_PATH"] = (
                 str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             )
+            logger.info("[yellow]is_mdx_file: will now call mdx_verify_server[/yellow]")
             return self.mdx_verify_server()
+        logger.info("[yellow]is_mdx_file: returning True[/yellow]")
         return True
 
     def should_run_mdx_validation(self):
@@ -341,8 +355,10 @@ class ReadMeValidator(BaseValidator):
         Returns:
             bool: True If there are no invalid relative urls.
         """
+        result = self.check_readme_relative_url_paths()
+        logger.info(f"[yellow]verify_readme_relative_urls result={result}[/yellow]")
         # If there are errors in one of the following validations return False
-        return not self.check_readme_relative_url_paths()
+        return not result
 
     @error_codes("RM112")
     def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
@@ -406,7 +422,9 @@ class ReadMeValidator(BaseValidator):
             bool: True if the daemon is accessible
         """
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="DockerPing")  # type: ignore
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="DockerPing"
+            )  # type: ignore
             docker_client.ping()
             return True
         except Exception:
@@ -538,9 +556,9 @@ class ReadMeValidator(BaseValidator):
         for link in absolute_links:
             error_message: str = ""
             error_code: str = ""
-            img_url = link[
-                1
-            ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+            img_url = (
+                link[1].strip()
+            )  # striping in case there are whitespaces at the beginning/ending of url.
             try:
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.
@@ -898,13 +916,16 @@ class ReadMeValidator(BaseValidator):
             yield bool
 
         with ReadMeValidator._MDX_SERVER_LOCK:
+            logger.info("[yellow]In ReadMeValidator._MDX_SERVER_LOCK[/yellow]")
             if mdx_server_is_up():  # this allows for this context to be reentrant
                 logger.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
             if ReadMeValidator.are_modules_installed_for_verify(CONTENT_PATH):  # type: ignore
                 ReadMeValidator.add_node_env_vars()
+                logger.info("[yellow]Added node env vars[/yellow]")
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
+                logger.info("[yellow]Docker is available[/yellow]")
                 return start_docker_MDX_server(handle_error, file_path)
         return empty_context_mgr(False)
 

@@ -402,7 +402,7 @@ class OldValidateManager:
 
     def run_validation_on_specific_files(self):
         """Run validations only on specific files"""
-        files_validation_result = set()
+        files_validation_result = []
         if self.use_git:
             self.setup_git_params()
         files_to_validate = self.file_path.split(",")
@@ -415,7 +415,7 @@ class OldValidateManager:
                 logger.info(
                     f"\n[cyan]================= Validating file {path} =================[/cyan]"
                 )
-                files_validation_result.add(
+                files_validation_result.append(
                     self.run_validations_on_file(path, error_ignore_list)
                 )
 
@@ -423,7 +423,7 @@ class OldValidateManager:
                 logger.info(
                     f"\n[cyan]================= Validating content directory {path} =================[/cyan]"
                 )
-                files_validation_result.add(
+                files_validation_result.append(
                     self.run_validation_on_content_entities(path, error_ignore_list)
                 )
 
@@ -431,7 +431,7 @@ class OldValidateManager:
                 logger.info(
                     f"\n[cyan]================= Validating content directory {path} =================[/cyan]"
                 )
-                files_validation_result.add(
+                files_validation_result.append(
                     self.run_validation_on_generic_entities(path, error_ignore_list)
                 )
 
@@ -439,13 +439,13 @@ class OldValidateManager:
                 logger.info(
                     f"\n[cyan]================= Validating pack {path} =================[/cyan]"
                 )
-                files_validation_result.add(self.run_validations_on_pack(path)[0])
+                files_validation_result.append(self.run_validations_on_pack(path)[0])
 
             else:
                 logger.info(
                     f"\n[cyan]================= Validating package {path} =================[/cyan]"
                 )
-                files_validation_result.add(
+                files_validation_result.append(
                     self.run_validation_on_package(path, error_ignore_list)
                 )
 
@@ -458,8 +458,8 @@ class OldValidateManager:
                 input_files=files_to_validate,
                 include_optional_deps=True,
             ) as graph_validator:
-                files_validation_result.add(graph_validator.is_valid_content_graph())
-
+                files_validation_result.append(graph_validator.is_valid_content_graph())
+        logger.info(f'[yellow]run_validation_on_specific_files {files_validation_result=}[/yellow]')
         return all(files_validation_result)
 
     def wait_futures_complete(self, futures_list: List[Future], done_fn: Callable):
@@ -900,23 +900,33 @@ class OldValidateManager:
         elif file_type == FileType.README:
             if not self.is_possible_validate_readme:
                 error_message, error_code = Errors.error_uninstall_node()
-                if self.handle_error(
+                logger.info(f'[yellow]{self.is_possible_validate_readme=}, {error_message=}, {error_code=}[/yellow]')
+                handle_error = self.handle_error(
                     error_message=error_message,
                     error_code=error_code,
                     file_path=file_path,
                     ignored_errors=pack_error_ignore_list,
-                ):
+                )
+                if handle_error:
+                    logger.info(f'[yellow]{self.is_possible_validate_readme=}, {handle_error=}[/yellow]')
                     return False
             if not self.validate_all:
+                logger.info(f'[yellow]{self.validate_all=}[/yellow]')
                 ReadMeValidator.add_node_env_vars()
-                if (
-                    not ReadMeValidator.are_modules_installed_for_verify(
+                logger.info('[yellow]Added node env vars[/yellow]')
+                are_modules_installed_for_verify = ReadMeValidator.are_modules_installed_for_verify(
                         CONTENT_PATH  # type: ignore
                     )
-                    and not ReadMeValidator.is_docker_available()
+                is_docker_available = ReadMeValidator.is_docker_available()
+                logger.info(f'[yellow]{are_modules_installed_for_verify=}, {is_docker_available=}[/yellow]')
+                if (
+                    not are_modules_installed_for_verify
+                    and not is_docker_available
                 ):  # shows warning message
+                    logger.info('[yellow]Returning True[/yellow]')
                     return True
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+                    logger.info('[yellow]Starting mdx server[/yellow]')
                     return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)
 
@@ -1200,18 +1210,18 @@ class OldValidateManager:
             include_untracked=self.include_untracked,
         )
 
-        validation_results = {valid_git_setup, valid_types}
+        validation_results = [valid_git_setup, valid_types]
 
-        validation_results.add(
+        validation_results.append(
             self.validate_modified_files(modified_files | old_format_files)
         )
-        validation_results.add(self.validate_added_files(added_files, modified_files))
-        validation_results.add(
+        validation_results.append(self.validate_added_files(added_files, modified_files))
+        validation_results.append(
             self.validate_changed_packs_unique_files(
                 modified_files, added_files, old_format_files, changed_meta_files
             )
         )
-        validation_results.add(self.validate_deleted_files(deleted_files, added_files))
+        validation_results.append(self.validate_deleted_files(deleted_files, added_files))
         logger.debug("*** after adding validate_deleted_files")
 
         logger.debug(
@@ -1221,12 +1231,12 @@ class OldValidateManager:
             logger.info(
                 "\n[cyan]================= Running validation on old format files =================[/cyan]"
             )
-            validation_results.add(self.validate_no_old_format(old_format_files))
+            validation_results.append(self.validate_no_old_format(old_format_files))
             logger.info("*** after adding validate_no_old_format")
 
         if not self.skip_pack_rn_validation:
             logger.info("*** adding validate_no_duplicated_release_notes")
-            validation_results.add(
+            validation_results.append(
                 self.validate_no_duplicated_release_notes(added_files)
             )
             logger.info("*** after adding validate_no_duplicated_release_notes")
@@ -1246,8 +1256,8 @@ class OldValidateManager:
                     git_files=all_files_set,
                     include_optional_deps=True,
                 ) as graph_validator:
-                    validation_results.add(graph_validator.is_valid_content_graph())
-                    validation_results.add(
+                    validation_results.append(graph_validator.is_valid_content_graph())
+                    validation_results.append(
                         self.validate_no_missing_release_notes(
                             modified_files,
                             old_format_files,
@@ -1266,14 +1276,14 @@ class OldValidateManager:
 
             for mp_changed_metadata_pack in self.packs_with_mp_change:
                 # Running validation on the whole pack, excluding files that were already checked.
-                validation_results.add(
+                validation_results.append(
                     self.run_validations_on_pack(
                         mp_changed_metadata_pack, skip_files=set(all_files_set)
                     )[0]
                 )
 
             logger.debug("Finished validating marketplace changed packs.")
-
+        logger.info(f'[yellow]run_validation_using_git {validation_results=} [/yellow]')
         return all(validation_results)
 
     """ ######################################## Unique Validations ####################################### """
@@ -1294,7 +1304,9 @@ class OldValidateManager:
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
-        return readme_validator.is_valid_file()
+        result = readme_validator.is_valid_file()
+        logger.info(f'[yellow]validate_readme {result=}[/yellow]')
+        return result
 
     def validate_python_file(self, file_path, pack_error_ignore_list):
         python_file_validator = PythonFileValidator(
@@ -1969,24 +1981,25 @@ class OldValidateManager:
         logger.info(
             "\n[cyan]================= Running validation on modified files =================[/cyan]"
         )
-        valid_files = set()
+        valid_files = []
         all_files_edited_in_pack_ignore = self.get_all_files_edited_in_pack_ignore(
             modified_files
         )
         for file_path in modified_files.union(all_files_edited_in_pack_ignore):
             # handle renamed files
             old_file_path, file_path = self.get_old_file_path(file_path)
-
             pack_name = get_pack_name(file_path)
-            valid_files.add(
-                self.run_validations_on_file(
+            result = self.run_validations_on_file(
                     file_path,
                     self.get_error_ignore_list(pack_name),
                     is_modified=file_path in modified_files,
                     old_file_path=old_file_path,
                 )
+            logger.info(f'[yellow]Validating {file_path=} is {result=}[/yellow]')
+            valid_files.append(
+                result
             )
-
+        logger.info(f'[yellow]validate_modified_files {valid_files=}[/yellow]')
         return all(valid_files)
 
     def validate_added_files(self, added_files, modified_files):
@@ -1994,18 +2007,21 @@ class OldValidateManager:
             "\n[cyan]================= Running validation on newly added files =================[/cyan]"
         )
 
-        valid_files = set()
+        valid_files = []
         for file_path in added_files:
             pack_name = get_pack_name(file_path)
-            valid_files.add(
-                self.run_validations_on_file(
+            result = self.run_validations_on_file(
                     file_path,
                     self.get_error_ignore_list(pack_name),
                     is_modified=False,
                     modified_files=modified_files,
                     added_files=added_files,
                 )
+            logger.info(f'[yellow]Validating {file_path=} is {result=}[/yellow]')
+            valid_files.append(
+                result
             )
+        logger.info(f'[yellow]validate_added_files {valid_files=}[/yellow]')
         return all(valid_files)
 
     @staticmethod
@@ -2107,7 +2123,7 @@ class OldValidateManager:
         logger.info(
             "\n[cyan]================= Running validation on changed pack unique files =================[/cyan]"
         )
-        valid_pack_files = set()
+        valid_pack_files = []
 
         added_packs = get_pack_names_from_files(added_files)
         modified_packs = get_pack_names_from_files(modified_files).union(
@@ -2128,14 +2144,16 @@ class OldValidateManager:
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
                 raise_version = self.should_raise_pack_version(pack)
-            valid_pack_files.add(
-                self.validate_pack_unique_files(
+            result = self.validate_pack_unique_files(
                     pack_path,
                     self.get_error_ignore_list(pack),
                     should_version_raise=raise_version,
                 )
+            logger.info(f'[yellow]Validating {pack_path=} is {result=}[/yellow]')
+            valid_pack_files.append(
+                result
             )
-
+        logger.info(f'[yellow]validate_changed_packs_unique_files {valid_pack_files=}[/yellow]')
         return all(valid_pack_files)
 
     @error_codes("ST106")

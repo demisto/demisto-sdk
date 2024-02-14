@@ -100,7 +100,8 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Ge
     from demisto_sdk.commands.common.files.file import File
 
     repo = get_repo(request, tmp_path_factory)
-    File.git_util = repo.git_util
+    if git_util := repo.git_util:
+        File.git_util = git_util
 
     bc.CONTENT_PATH = Path(repo.path)
     neo4j_path = bc.CONTENT_PATH.parent.parent / "neo4j"
@@ -114,11 +115,16 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Ge
 
 
 @pytest.fixture
-def git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory):
+def git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
     """
     Initializes a repo with git.
     """
-    return get_git_repo(request, tmp_path_factory)
+    from demisto_sdk.commands.common.files.file import File
+
+    repo = get_git_repo(request, tmp_path_factory)
+    if git_util := repo.git_util:
+        File.git_util = git_util
+    return repo
 
 
 @pytest.fixture(scope="module")

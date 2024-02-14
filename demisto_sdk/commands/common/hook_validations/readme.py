@@ -226,7 +226,7 @@ class ReadMeValidator(BaseValidator):
         logger.info(f"[yellow]{server_started=}[/yellow]")
         if not server_started:
             if self.handle_error(
-                "Could not start MDX server", file_path=self.file_path, error_code=111
+                "Could not start MDX server", error_code="111", file_path=self.file_path
             ):
                 return False
             return False

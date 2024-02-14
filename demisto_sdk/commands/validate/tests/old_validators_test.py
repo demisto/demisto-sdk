@@ -928,8 +928,10 @@ class TestValidators:
             return VALID_SCRIPT_PATH, ""
 
         with patch.object(IntegrationScriptUnifier, "__init__", lambda a, b: None):
-            IntegrationScriptUnifier.get_script_or_integration_package_data = (
-                get_script_or_integration_package_data_mock
+            patch.object(
+                IntegrationScriptUnifier,
+                "get_script_or_integration_package_data",
+                return_value=get_script_or_integration_package_data_mock,
             )
             return IntegrationScriptUnifier("")
 

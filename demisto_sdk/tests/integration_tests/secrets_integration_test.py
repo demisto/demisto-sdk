@@ -11,7 +11,7 @@ SECRETS_CMD = "secrets"
 
 
 def mock_git(mocker, is_merge: bool = False):
-    mocker.patch.object(SecretsValidator, "get_branch_name", return_value="branch name")
+    mocker.patch.object(SecretsValidator, "get_current_commit", return_value="12345678")
     mocker.patch(
         "demisto_sdk.commands.secrets.secrets.run_command", return_value=is_merge
     )

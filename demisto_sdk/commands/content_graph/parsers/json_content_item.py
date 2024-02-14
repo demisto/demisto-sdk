@@ -24,8 +24,7 @@ class JSONContentItemParser(ContentItemParser):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.path = self.get_path_with_suffix(".json")
-
-        self.json_data: Dict[str, Any] = self.get_json(git_sha=git_sha)
+        self.git_sha = git_sha
         self.original_json_data: Dict[str, Any] = self.json_data
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(
@@ -93,5 +92,6 @@ class JSONContentItemParser(ContentItemParser):
     def marketplaces(self) -> List[MarketplaceVersions]:
         return self.get_marketplaces(self.json_data)
 
-    def get_json(self, git_sha: Optional[str]) -> Dict[str, Any]:
-        return get_json(str(self.path), git_sha=git_sha)
+    @cached_property
+    def json_data(self) -> Dict[str, Any]:
+        return get_json(str(self.path), git_sha=self.git_sha)

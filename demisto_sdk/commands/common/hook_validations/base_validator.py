@@ -282,7 +282,7 @@ class BaseValidator:
 
     def check_deprecated(self, file_path):
         if file_path.endswith(".yml"):
-            yml_dict = get_yaml(file_path)
+            yml_dict = get_yaml(file_path, keep_order=False)
             if not isinstance(yml_dict, list) and yml_dict.get("deprecated"):
                 # yml files may be list or dict-like
                 self.add_flag_to_ignore_list(file_path, "deprecated")
@@ -291,11 +291,7 @@ class BaseValidator:
     def get_metadata_file_content(meta_file_path):
         if not Path(meta_file_path).exists():
             return {}
-
-        with open(meta_file_path, encoding="utf-8") as file:
-            metadata_file_content = file.read()
-
-        return json.loads(metadata_file_content)
+        return get_json(meta_file_path)
 
     def update_checked_flags_by_support_level(self, file_path):
         pack_name = get_pack_name(file_path)

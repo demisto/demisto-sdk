@@ -567,7 +567,7 @@ def upload_and_create_instance(
     assert isinstance(pack, Pack)
     with tempfile.TemporaryDirectory() as temp_dir:
         pack.upload(
-            client=client.client,
+            client=client.xsoar_client,
             marketplace=client.marketplace,
             target_demisto_version=client.version,
             zip=True,

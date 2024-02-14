@@ -27,6 +27,7 @@ class TestTextFile(FileTesting):
             version="1.1.1", content="\n#### Integrations\n##### test\n- added feature"
         )
         if git_util := git_repo.git_util:
+            TextFile.git_util = git_util
             git_util.commit_files("commit all text files")
 
         text_file_paths = [
@@ -212,6 +213,6 @@ class TestTextFile(FileTesting):
          - make sure writing text file is successful.
         """
         _path = Path(git_repo.path) / "file.txt"
-        TextFile.write_file("text", output_path=_path)
+        TextFile.write("text", output_path=_path)
         assert _path.exists()
         assert _path.read_text() == "text"

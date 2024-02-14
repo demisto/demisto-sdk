@@ -180,7 +180,7 @@ def get_pr_number_by_branch(branch_name: str) -> int:
         error_message = (
             "Failed to get PR number from Github, please add the PR number manually"
         )
-        repo = Github().get_repo(DEMISTO_SDK_REPO)
+        repo = Github(verify=False).get_repo(DEMISTO_SDK_REPO)
         branch = GIT_UTIL.repo.active_branch.name
         for pr in repo.get_pulls(state="open", head=branch):
             if pr.head.ref == branch:

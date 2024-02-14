@@ -2,6 +2,7 @@ import pytest
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
+    API_MODULES_PACK,
     MODULES,
     PACK_METADATA_AUTHOR,
     PACK_METADATA_CATEGORIES,
@@ -489,7 +490,13 @@ def test_IsVersionMatchRnValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
-        ([create_metadata_object()], 0),
+        (
+            [
+                create_metadata_object(),
+                create_metadata_object(["categories", "name"], [[], API_MODULES_PACK]),
+            ],
+            0,
+        ),
         ([create_metadata_object(["categories"], [[""]])], 1),
         (
             [
@@ -509,7 +516,7 @@ def test_IsValidCategoriesValidator_is_valid(
     """
     Given
     content_items.
-        - Case 1: One pack_metadata with an invalid category.
+        - Case 1: One pack_metadata with a valid category and one pack with empty APIModule pack with an empty categories field.
         - Case 2: One pack_metadata with an empty category field.
         - Case 3: Three pack_metadatas:
             - One pack_metadata with a valid category.
@@ -1189,7 +1196,7 @@ def test_IsValidTagsValidator_fix():
 @pytest.mark.parametrize(
     "content_items, approved_use_cases, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object([], [])], ["Identity And Access Management"], 0, []),
+        ([create_metadata_object([], [])], ["Identity and Access Management"], 0, []),
         ([create_metadata_object(["useCases"], [[]])], [], 0, []),
         (
             [
@@ -1210,8 +1217,8 @@ def test_IsValidTagsValidator_fix():
             ["Phishing", "Malware", "Case Management"],
             2,
             [
-                "The pack metadata contains non approved usecases: Invalid_use_Case.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
-                "The pack metadata contains non approved usecases: Invalid_use_Case_1.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
+                "The pack metadata contains non approved usecases: invalid_use_Case.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
+                "The pack metadata contains non approved usecases: invalid_use_Case_1.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories",
             ],
         ),
     ],

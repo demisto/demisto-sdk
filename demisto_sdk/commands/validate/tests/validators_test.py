@@ -219,7 +219,6 @@ def test_gather_validations_to_run(
                     validator=IDNameValidator(),
                     message="",
                     content_object=INTEGRATION,
-                    old_content_object=None,
                 )
             ],
             [],
@@ -241,7 +240,6 @@ def test_gather_validations_to_run(
                     validator=IDNameValidator(),
                     message="",
                     content_object=INTEGRATION,
-                    old_content_object=None,
                 )
             ],
             [

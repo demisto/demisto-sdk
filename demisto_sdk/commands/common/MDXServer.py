@@ -54,14 +54,14 @@ def start_docker_MDX_server(
         A context manager
 
     """
-    logger.info("Starting docker mdx server")
+    logger.debug("Starting docker mdx server")
     get_docker().pull_image(MDX_SERVER_DOCKER_IMAGE)
     iteration_num = 1
     while mdx_container := init_global_docker_client().containers.list(
         filters={"name": DEMISTO_DEPS_DOCKER_NAME}
     ):
-        logger.info(f"Found the following container(s): {mdx_container}")
-        logger.info(f"{iteration_num=} when trying to remove {mdx_container}")
+        logger.debug(f"Found the following container(s): {mdx_container}")
+        logger.debug(f"{iteration_num=} when trying to remove {mdx_container}")
         remove_container(mdx_container[0])
         iteration_num += 1
     try:
@@ -72,13 +72,13 @@ def start_docker_MDX_server(
             ports={"6161/tcp": 6161},
         )
     except Exception as error:
-        logger.info(
+        logger.error(
             f"Error occurred when trying to create {DEMISTO_DEPS_DOCKER_NAME} container, {error=}"
         )
-        logger.info(
+        logger.debug(
             f"all available containers: {[container.name for container in init_global_docker_client().containers.list(all=True)]}"
         )
-        raise error
+        raise
 
     container.start()
     try:
@@ -92,8 +92,8 @@ def start_docker_MDX_server(
     if not raised_successfully:
         try:
             remove_container(container)
-            logger.error("Docker for MDX server was not started correctly")
-            logger.error(f'docker logs:\n{container.logs().decode("utf-8")}')
+            logger.debug("Docker for MDX server was not started correctly")
+            logger.debug(f'docker logs:\n{container.logs().decode("utf-8")}')
         except docker.errors.NotFound:
             logger.exception(line)
 
@@ -115,10 +115,10 @@ def start_docker_MDX_server(
 
 def remove_container(container):
     if container:
-        logger.info("stopping and removing mdx server")
-        logger.info(f"Removing container {container.name}")
+        logger.debug("stopping and removing mdx server")
+        logger.debug(f"Removing container {container.name}")
         container.remove(force=True)
-        logger.info(f"Successfully removed container {container.name}")
+        logger.debug(f"Successfully removed container {container.name}")
 
 
 @contextmanager

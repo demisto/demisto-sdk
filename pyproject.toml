@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.25.3"
+version = "1.26.2"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -129,6 +129,8 @@ black = "^22.10.0"
 ipykernel = "^6.16.1"
 ruff = "^0.1.11"
 pytest-github-actions-annotate-failures = "^0.2.0"
+pytest-sugar = "^1.0.0"
+pygithub = "^2.2.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]

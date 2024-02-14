@@ -21,6 +21,7 @@ from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
+    MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
     GitStatuses,
@@ -37,6 +38,7 @@ from demisto_sdk.commands.content_graph.common import (
     LazyProperty,
     RelationshipType,
 )
+from demisto_sdk.commands.content_graph.parsers import content_item
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -270,7 +272,10 @@ class BaseContent(BaseNode):
                 logger.error(f"Could not parse content from {str(path)}")
                 return None
         try:
+            content_item.MARKETPLACE_MIN_VERSION = "0.0.0"
             content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
+            content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
+
         except NotAContentItemException:
             if raise_on_exception:
                 raise NotAContentItemException

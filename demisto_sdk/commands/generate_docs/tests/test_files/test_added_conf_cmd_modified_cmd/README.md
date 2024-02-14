@@ -59,7 +59,6 @@ This integration was integrated and tested with Splunk v7.2.
     | Incidents Fetch Interval |  | False |
     | Comment tag from Splunk | Add this tag to an entry to mirror it as a comment from Splunk. | False |
     | Comment tag to Splunk | Add this tag to an entry to mirror it as a comment to Splunk. | False |
-    | Debug logging enabled |  | False |
 
 4. Click **Test** to validate the URLs, token, and connection.
 
@@ -804,7 +803,6 @@ Lists all data within a specific KV store collection or collections.
 | app_name | The name of the Splunk application that contains the KV store collection. The default is "search". Default is search. | Required | 
 | kv_store_collection_name | A comma-separated list of KV store collections. | Required | 
 | limit | Maximum number of records to return. Default is 100. | Optional | 
-| new_arg | New argument for testing. | Optional | 
 
 #### Context Output
 

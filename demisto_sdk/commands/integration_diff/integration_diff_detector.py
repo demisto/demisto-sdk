@@ -591,11 +591,7 @@ class IntegrationDiffDetector:
             if cmd["name"]
         ]
 
-        # Check if any new commands were added
-        if new_cmds != old_cmds:
-            commands = list(set(new_cmds).difference(old_cmds))
-
-        return commands
+        return list(set(new_cmds).difference(old_cmds))
 
     def is_configuration_different(self) -> bool:
         """

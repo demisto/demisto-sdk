@@ -111,9 +111,7 @@ def test_custom_container_registry(mocker):
     """
     from demisto_sdk.commands.common import docker_helper
 
-    mocker.patch.object(
-        docker_helper.docker, "from_env", return_value=DockerClientMock()
-    )
+    docker_client_mock = DockerClientMock()
     mocker.patch.object(docker_helper, "DOCKER_REGISTRY_URL", "custom")
     mocker.patch.dict(
         os.environ,
@@ -124,10 +122,10 @@ def test_custom_container_registry(mocker):
         },
     )
     assert docker_helper.is_custom_registry()
-    docker_helper.init_global_docker_client()
-    assert docker_helper.DOCKER_CLIENT.login.called
-    assert docker_helper.DOCKER_CLIENT.login.call_count == 1
-    assert docker_helper.DOCKER_CLIENT.login.call_args[1] == {
+    docker_helper.docker_login(docker_client_mock)
+    assert docker_client_mock.login.called
+    assert docker_client_mock.login.call_count == 1
+    assert docker_client_mock.login.call_args[1] == {
         "username": "user",
         "password": "password",
         "registry": "custom",

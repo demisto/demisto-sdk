@@ -189,6 +189,6 @@ class TestYMLFile(FileTesting):
          - make sure writing yml file is successful.
         """
         _path = Path(git_repo.path) / "file.yml"
-        YmlFile.write_file({"test": "test"}, output_path=_path)
+        YmlFile.write({"test": "test"}, output_path=_path)
         assert _path.exists()
         assert yaml.load(Path(_path).read_text()) == {"test": "test"}

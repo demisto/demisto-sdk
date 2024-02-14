@@ -123,7 +123,7 @@ class ContentItem(BaseContent):
         if not pack:
             if pack_name := get_pack_name(self.path):
                 pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name
+                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         if pack:
             self.pack = pack

@@ -1296,6 +1296,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic field - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -1317,11 +1318,13 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
             [FORMAT_CMD, "-i", generic_field_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "Setting fromVersion field"
+        )
         assert all(
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_field_path}",
                 ]
@@ -1348,6 +1351,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
     - Ensure success message is printed.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1368,11 +1372,13 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
             [FORMAT_CMD, "-i", generic_type_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "Setting fromVersion field"
+        )
         assert all(
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_type_path}",
                 ]
@@ -1399,6 +1405,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
     - Ensure success message is printed.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1419,11 +1426,13 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
             [FORMAT_CMD, "-i", generic_type_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "Setting fromVersion field"
+        )
         assert all(
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_type_path}",
                 ]
@@ -1450,6 +1459,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
     - Ensure success message is printed.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1468,6 +1478,9 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
             main,
             [FORMAT_CMD, "-i", generic_module_path, "-y", "-ngr"],
             catch_exceptions=False,
+        )
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "Setting fromVersion field"
         )
         assert all(
             [
@@ -1500,6 +1513,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
     - Ensure success message is printed.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1520,11 +1534,13 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
             [FORMAT_CMD, "-i", generic_module_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "Setting fromVersion field"
+        )
         assert all(
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_module_path}",
                 ]
@@ -1550,6 +1566,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
     - Ensure Format fixed the invalid value of the given generic definition.
     - Ensure success message is printed.
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -1570,11 +1587,13 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
             [FORMAT_CMD, "-i", generic_definition_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "Setting fromVersion field"
+        )
         assert all(
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_definition_path}",
                 ]
@@ -1603,6 +1622,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic definition - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -1624,11 +1644,13 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
             [FORMAT_CMD, "-i", generic_definition_path, "-y", "-ngr"],
             catch_exceptions=False,
         )
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "Setting fromVersion field"
+        )
         assert all(
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_definition_path}",
                 ]

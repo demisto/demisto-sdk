@@ -132,12 +132,16 @@ class ImageValidator(BaseValidator):
                         self._is_valid = False
         elif re.match(SVG_IMAGE_REGEX, self.file_path, re.IGNORECASE):
             image_size = os.path.getsize(self.file_path)
-            logger.info(f'SVG image size: {image_size}. No size validation done for SVG images.')
+            logger.info(
+                f"SVG image size: {image_size}. No size validation done for SVG images."
+            )
 
             try:
                 ET.parse(self.file_path)
             except ParseError as pe:
-                logger.error(f'Exception trying to parse {self.file_path} as XML, {pe.msg}.')
+                logger.error(
+                    f"Exception trying to parse {self.file_path} as XML, {pe.msg}."
+                )
                 error_message, error_code = Errors.svg_image_not_valid()
                 if self.handle_error(
                     error_message, error_code, file_path=self.file_path
@@ -145,10 +149,11 @@ class ImageValidator(BaseValidator):
                     self._is_valid = False
                 return
 
-
             if should_validate_dimensions:
                 width, height = self.get_size_svg_image()
-                logger.info(f'SVG image dimensions: {width}, {height}. No dimensions validation done for SVG images.')
+                logger.info(
+                    f"SVG image dimensions: {width}, {height}. No dimensions validation done for SVG images."
+                )
         else:
             data_dictionary = get_yaml(self.file_path)
 
@@ -173,17 +178,17 @@ class ImageValidator(BaseValidator):
         tree = ET.parse(self.file_path)
         root = tree.getroot()
 
-        if 'width' in root.attrib and 'height' in root.attrib:
+        if "width" in root.attrib and "height" in root.attrib:
             try:
-                width = int(root.attrib['width'])
-                height = int(root.attrib['height'])
+                width = int(root.attrib["width"])
+                height = int(root.attrib["height"])
                 return width, height
             except Exception:
                 # these values can be hard to parse, e.g. 1280.000000pt. Try the viewBox
                 pass
 
-        if 'viewBox' in root.attrib:
-            viewBox = root.attrib['viewBox']
+        if "viewBox" in root.attrib:
+            viewBox = root.attrib["viewBox"]
             viewBox_splitted = viewBox.split()
             # The values can be float. e.g. 1280.000000
             return int(float(viewBox_splitted[2])), int(float(viewBox_splitted[3]))
@@ -258,7 +263,7 @@ class ImageValidator(BaseValidator):
         elif re.match(SVG_IMAGE_REGEX, self.file_path, re.IGNORECASE):
             # SVG is clear text (XML) already
             with open(self.file_path, "rb") as image_file:
-                image = image_file.read()
+                image = image_file.read()  # type: ignore
         else:
             image = self.load_image_from_yml()
 

@@ -8,6 +8,8 @@ import toml
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
@@ -426,3 +428,26 @@ def test_should_run(validator, expected_results):
         - Case 3: Should return False.
     """
     assert expected_results == validator.should_run(INTEGRATION, [], {})
+
+
+def test_object_collection_with_readme_path(repo):
+    """
+    Given:
+    - A path to integration readme
+    When:
+    - Calling the paths_to_basecontent_set.
+    Then:
+    - Make sure that an integration was parsed.
+    """
+
+    yml_content = load_yaml("integration.yml")
+    pack = repo.create_pack("pack_no_1")
+    integration = pack.create_integration(yml=yml_content)
+    integration.code.write("from MicrosoftApiModule import *")
+    integration.readme.write("test")
+    readme_path = integration.readme.path
+    initializer = Initializer()
+    obj_set, _, _ = initializer.paths_to_basecontent_set({Path(readme_path)})
+    obj = obj_set.pop()
+    assert obj is not None
+    assert obj.content_type == ContentType.INTEGRATION

@@ -26,6 +26,7 @@ class TestJsonFile(FileTesting):
         _list = pack.create_list("test", content=file_content)
 
         if git_util := git_repo.git_util:
+            JsonFile.git_util = git_util
             git_util.commit_files("commit all json files")
 
         json_file_paths = [
@@ -189,6 +190,6 @@ class TestJsonFile(FileTesting):
          - make sure writing json file is successful.
         """
         _path = Path(git_repo.path) / "file.json"
-        JsonFile.write_file({"test": "test"}, output_path=_path)
+        JsonFile.write({"test": "test"}, output_path=_path)
         assert _path.exists()
         assert json.loads(Path(_path).read_text()) == {"test": "test"}

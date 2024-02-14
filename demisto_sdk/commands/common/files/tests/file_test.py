@@ -47,7 +47,7 @@ class TestFile:
         ]
 
         for path in json_file_paths:
-            assert type(File._from_path(path)) == JsonFile
+            assert File._from_path(path) == JsonFile
 
     def test_from_path_valid_yml_based_content_items(self, repo: Repo):
         """
@@ -79,7 +79,7 @@ class TestFile:
         ]
 
         for path in yml_file_paths:
-            assert type(File._from_path(path)) == YmlFile
+            assert File._from_path(path) == YmlFile
 
     def test_from_path_valid_text_based_files(self, repo: Repo):
         """
@@ -114,7 +114,7 @@ class TestFile:
         ]
 
         for path in text_file_paths:
-            assert type(File._from_path(path)) == TextFile
+            assert File._from_path(path) == TextFile
 
     def test_from_path_valid_ini_based_files(self, repo: Repo):
         """
@@ -135,7 +135,7 @@ class TestFile:
         )
         _ini_file_path = str(Path(repo.path) / "file.ini")
 
-        IniFile.write_file(
+        IniFile.write(
             {
                 "test": {
                     "test": "1,2,3",
@@ -147,7 +147,7 @@ class TestFile:
 
         ini_file_paths = [pack.pack_ignore.path, _ini_file_path]
         for path in ini_file_paths:
-            assert type(File._from_path(path)) == IniFile
+            assert File._from_path(path) == IniFile
 
     def test_from_path_valid_binary_files(self, repo: Repo):
         """
@@ -163,11 +163,11 @@ class TestFile:
         pack = repo.create_pack("test")
         integration = pack.create_integration()
         _bin_file_path = str(Path(repo.path) / "file.bin")
-        BinaryFile.write_file("test".encode(), output_path=_bin_file_path)
+        BinaryFile.write("test".encode(), output_path=_bin_file_path)
 
         binary_file_paths = [integration.image.path, _bin_file_path]
         for path in binary_file_paths:
-            assert type(File._from_path(path)) == BinaryFile
+            assert File._from_path(path) == BinaryFile
 
     def test_from_path_unknown_file_error(self, repo: Repo):
         """
@@ -181,7 +181,7 @@ class TestFile:
          - make sure UnknownFileError exception is raised
         """
         _path = Path(repo.path) / "file.unknown-suffix"
-        TextFile.write_file("text", output_path=_path)
+        TextFile.write("text", output_path=_path)
         with pytest.raises(UnknownFileError):
             File._from_path(_path)
 
@@ -194,9 +194,9 @@ class TestFile:
          - Running read_from_local_path method from File object
 
         Then:
-         - make sure UnknownFileError is raised
+         - make sure FileNotFoundError is raised
         """
-        with pytest.raises(UnknownFileError):
+        with pytest.raises(FileNotFoundError):
             File.read_from_local_path("path_does_not_exist")
 
     def test_read_from_file_content_error(self):
@@ -226,20 +226,6 @@ class TestFile:
         """
         with pytest.raises(ValueError):
             File.read_from_http_request("not/valid/url")
-
-    def test_write_file_error(self):
-        """
-        Given:
-         - invalid path
-
-        When:
-         - Running write_file method from File object
-
-        Then:
-         - make sure ValueError is raised
-        """
-        with pytest.raises(ValueError):
-            File.write_file({}, output_path="some/path")
 
 
 class FileTesting(ABC):

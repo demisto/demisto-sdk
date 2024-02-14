@@ -23,7 +23,7 @@ class TestIniFile(FileTesting):
         )
         _ini_file_path = str(Path(git_repo.path) / "file.ini")
 
-        IniFile.write_file(
+        IniFile.write(
             {
                 "test": {
                     "test": "1,2,3",
@@ -34,6 +34,7 @@ class TestIniFile(FileTesting):
         )
 
         if git_util := git_repo.git_util:
+            IniFile.git_util = git_util
             git_util.commit_files("commit all INI files")
 
         ini_file_paths = [pack.pack_ignore.path, _ini_file_path]
@@ -181,7 +182,7 @@ class TestIniFile(FileTesting):
          - make sure writing ini file is successful.
         """
         _path = Path(git_repo.path) / "file.ini"
-        IniFile.write_file(
+        IniFile.write(
             {
                 "test": {
                     "test": "1,2,3",

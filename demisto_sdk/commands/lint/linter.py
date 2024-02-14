@@ -13,7 +13,7 @@ import docker.errors
 import docker.models.containers
 import git
 import requests.exceptions
-from packaging.version import parse
+from packaging.version import Version, parse
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
@@ -402,6 +402,14 @@ class Linter:
                         f"{self._pack_name} - Facts - {image[0]} - Python {python_version_string}"
                     )
                     if not self._facts["python_version"]:
+                        self._facts["python_version"] = python_version_string
+                    else:
+                        py_num_version = max(
+                            Version(self._facts["python_version"]), py_num_version
+                        )
+                        python_version_string = (
+                            f"{py_num_version.major}.{py_num_version.minor}"
+                        )
                         self._facts["python_version"] = python_version_string
 
                 # Checking whatever *test* exists in package

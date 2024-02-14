@@ -79,8 +79,11 @@ def start_docker_MDX_server(
             f"all available containers: {[container.name for container in init_global_docker_client().containers.list(all=True)]}"
         )
         raise error
-
+    logger.info(f"[yellow]{container.status=}[/yellow]")
     container.start()
+    logger.info(f"[yellow]{container.status=} after start[/yellow]")
+    exec_result = container.exec_run("echo hello world")
+    logger.info(f"[yellow]{exec_result.output=}[/yellow]")
     try:
         line = str(next(container.logs(stream=True)).decode("utf-8"))
 
@@ -148,10 +151,12 @@ def start_local_MDX_server(
         error_message, error_code = Errors.error_starting_mdx_server(line=line)
         if handle_error and file_path:
             if handle_error(error_message, error_code, file_path=file_path):
-                logger.info('[yellow]In start_local_MDX_server, under handle_error, returning False[/yellow]')
+                logger.info(
+                    "[yellow]In start_local_MDX_server, under handle_error, returning False[/yellow]"
+                )
                 return False
         else:
-            logger.info('[yellow]Raising exception[/yellow]')
+            logger.info("[yellow]Raising exception[/yellow]")
             raise Exception(error_message)
 
     try:

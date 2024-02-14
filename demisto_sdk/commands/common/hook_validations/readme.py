@@ -225,6 +225,10 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         logger.info(f"[yellow]{server_started=}[/yellow]")
         if not server_started:
+            if self.handle_error(
+                "Could not start MDX server", file_path=self.file_path, error_code=111
+            ):
+                return False
             return False
         for _ in range(RETRIES_VERIFY_MDX):
             try:

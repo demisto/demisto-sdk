@@ -102,6 +102,55 @@ class GitUtil:
                     commit_or_branch, from_remote=from_remote, exception=e
                 )
 
+    def get_previous_commit(self, commit: Optional[str] = None) -> Commit:
+        """
+
+        Returns the previous commit of a specific commit.
+        If not provided returns previous commit of the head commit.
+
+        Args:
+            commit: any commit
+        """
+        if commit:
+            return self.get_commit(commit, from_remote=False).parents[0]
+
+        return self.repo.head.commit.parents[0]
+
+    def has_file_changed(
+        self, file_path: Union[Path, str], commit1: str, commit2: str
+    ) -> bool:
+        """
+        Checks if file has been changed between two commits.
+
+        Args:
+            file_path: file path
+            commit1: the first commit to compare
+            commit2: the second commit to compare
+
+        Returns:
+            True if file has been changed between two commits, False if not.
+        """
+        return bool(self.repo.git.diff(commit1, commit2, str(file_path)))
+
+    def has_file_added(self, file_path: Union[Path, str], commit1: str, commit2: str):
+        """
+        Checks if a file has been added between two commits.
+
+        Args:
+            file_path: file path
+            commit1: the first commit to compare
+            commit2: the second commit to compare
+
+        Returns:
+            True if file has been added between two commits, False if not.
+        """
+        return (
+            file_path
+            in self.repo.git.diff(
+                "--name-only", "--diff-filter=A", commit1, commit2
+            ).splitlines()
+        )
+
     def read_file_content(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
     ) -> bytes:

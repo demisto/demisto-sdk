@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_value, get_yaml
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
@@ -119,4 +119,9 @@ class YAMLContentItemParser(ContentItemParser):
 
     @cached_property
     def yml_data(self) -> dict:
-        return get_yaml(str(self.path), git_sha=self.git_sha)
+        from demisto_sdk.commands.common.files import YmlFile
+
+        if self.git_sha:
+            return YmlFile.read_from_git_path(path=self.path, tag=self.git_sha)
+        else:
+            return YmlFile.read_from_local_path(path=self.path)

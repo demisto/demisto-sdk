@@ -481,6 +481,10 @@ ERROR_CODE: Dict = {
         "code": "IM111",
         "related_field": "image",
     },
+    "svg_image_not_valid": {
+        "code": "IM112",
+        "related_field": "image",
+    },
     # IN - Integrations
     "wrong_display_name": {
         "code": "IN100",
@@ -2472,6 +2476,11 @@ class Errors:
     @error_code_decorator
     def image_too_large():
         return "Too large logo, please update the logo to be under 10kB"
+
+    @staticmethod
+    @error_code_decorator
+    def svg_image_not_valid():
+        return "SVG image file is not valid"
 
     @staticmethod
     @error_code_decorator

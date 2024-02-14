@@ -257,7 +257,7 @@ class DockerBase:
             DockerException,
         ) as e:
             if container_name := kwargs.get("name"):
-                if container := docker_client.containers.get(container_name):
+                if container := docker_client.containers.get(container_id=container_name):
                     container.remove(force=True)
             raise e
 

@@ -2,7 +2,7 @@ import os
 from unittest import mock
 
 import pytest
-import requests_mock
+import requests
 from packaging.version import Version
 
 import demisto_sdk.commands.common.docker_helper as dhelper
@@ -89,14 +89,37 @@ def test_cache_of_get_python_version_from_image():
     assert cache_info.hits == cache_info_before.hits + 1
 
 
-def test_create_docker_container_successfully(mocker):
-    from demisto_sdk.commands.common.docker_helper import DockerBase, init_global_docker_client
+@pytest.mark.parametrize('image_name, container_name, exception, exception_text', [
+    ('demisto_test:1234', 'test', requests.exceptions.ConnectionError, 'Connection error'),
+    ('demisto_test:1234', 'test', requests.exceptions.Timeout, 'Timeout error'),
+    ('demisto_test:1234', 'test', dhelper.DockerException, 'Docker exception'),
+])
+def test_create_docker_container_successfully(mocker, image_name, container_name, exception, exception_text):
+    class MockContainer:
+        @staticmethod
+        def remove(**kwargs):
+            assert kwargs.get('force')
+            raise exception(exception_text)
 
-    docker_base = DockerBase()
-    # docker_base = init_global_docker_client()
-    with requests_mock.Mocker() as m:
-        m.get('http+docker://localhost/v1.44/containers/create?name=test', status_code=200)
-        m.get('http+docker://localhost/version', status_code=200)
-        docker_container = docker_base.create_container(image='demisto/python3', name='test')
+    class MockContainerCollection:
+        @staticmethod
+        def create(**kwargs):
+            assert kwargs.get('image') == image_name
+            assert kwargs.get('name') == container_name
+            raise exception(exception_text)
 
-    assert docker_container
+        @staticmethod
+        def get(**kwargs):
+            assert kwargs.get('container_id') == container_name
+            return MockContainer()
+
+    class MockedDockerClient:
+        containers = MockContainerCollection()
+
+    mocker.patch('demisto_sdk.commands.common.docker_helper.init_global_docker_client', return_value=MockedDockerClient)
+    log_result = mocker.patch('demisto_sdk.commands.common.tools.logger.debug')
+
+    with pytest.raises(exception):
+        dhelper.DockerBase().create_container(image=image_name, name=container_name)
+
+    assert f'error when executing func create_container, error: {exception_text}, time 3' in log_result.call_args.args

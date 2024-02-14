@@ -86,7 +86,7 @@ class Changelog:
 
             github_client = Github(login_or_token=github_token)
 
-            pr = github_client.get_repo(DEMISTO_SDK_REPO).get_pull(self.pr_number)
+            pr = github_client.get_repo(DEMISTO_SDK_REPO).get_pull(int(self.pr_number))
             markdown = "Changelog(s) in markdown:\n"
             markdown += "\n".join(
                 [changelog.to_string() for changelog in current_changelogs]
@@ -166,7 +166,7 @@ class Changelog:
     """ HELPER FUNCTIONS """
 
 
-def get_pr_number_by_branch(branch_name: str) -> int:
+def get_pr_number_by_branch(branch_name: str):
     """
     Get the PR number of the current branch from Github
 

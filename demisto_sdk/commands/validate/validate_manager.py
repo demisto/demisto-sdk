@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validation_results import (
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    NonContentItemResult,
+    InvalidContentItemResult,
     ValidationResult,
 )
 
@@ -123,9 +123,9 @@ class ValidateManager:
         Args:
             invalid_content_items (Set[Path]): The set of all the paths that were found invalid.
         """
-        self.validation_results.extend_non_content_item_results(
+        self.validation_results.extend_invalid_content_item_results(
             [
-                NonContentItemResult(
+                InvalidContentItemResult(
                     path=invalid_path,
                     message="The given file is not supported in the validate command.\n"
                     "The validate command supports: Integrations, Scripts, Playbooks, "

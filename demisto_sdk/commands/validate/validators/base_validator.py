@@ -153,7 +153,7 @@ class FixResult(BaseResult, BaseModel):
     """This is a class for fix results."""
 
 
-class NonContentItemResult(BaseResult, BaseModel):
+class InvalidContentItemResult(BaseResult, BaseModel):
     validator: Optional[BaseValidator] = None  # type: ignore[assignment]
     message: str
     content_object: Optional[BaseContent] = None  # type: ignore[assignment]

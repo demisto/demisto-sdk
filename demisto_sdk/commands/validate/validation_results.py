@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,
-    NonContentItemResult,
+    InvalidContentItemResult,
     ValidationResult,
 )
 
@@ -29,7 +29,7 @@ class ResultWriter:
         """
         self.validation_results: List[ValidationResult] = []
         self.fixing_results: List[FixResult] = []
-        self.non_content_item_results: List[NonContentItemResult] = []
+        self.invalid_content_item_results: List[InvalidContentItemResult] = []
         if json_file_path:
             self.json_file_path = (
                 os.path.join(json_file_path, "validate_outputs.json")
@@ -69,7 +69,7 @@ class ResultWriter:
             ):
                 exit_code = 1
             logger.warning(f"[yellow]{fixing_result.format_readable_message}[/yellow]")
-        for result in self.non_content_item_results:
+        for result in self.invalid_content_item_results:
             logger.error(f"[red]{result.format_readable_message}[/red]")
             exit_code = 1
         if not exit_code:
@@ -89,13 +89,13 @@ class ResultWriter:
         json_fixing_list = [
             fixing_result.format_json_message for fixing_result in self.fixing_results
         ]
-        non_content_items_list = [
-            result.format_json_message for result in self.non_content_item_results
+        invalid_content_item_list = [
+            result.format_json_message for result in self.invalid_content_item_results
         ]
         results = {
             "validations": json_validations_list,
             "fixed validations": json_fixing_list,
-            "non content items": non_content_items_list,
+            "invalid content items": invalid_content_item_list,
         }
 
         json_object = json.dumps(results, indent=4)
@@ -136,12 +136,12 @@ class ResultWriter:
         """
         self.fixing_results.extend(fixing_results)
 
-    def extend_non_content_item_results(
-        self, non_content_item_results: List[NonContentItemResult]
+    def extend_invalid_content_item_results(
+        self, invalid_content_item_results: List[InvalidContentItemResult]
     ):
-        """Extending the list of NonContentItemResult objects with a given list of NonContentItemResult objects.
+        """Extending the list of InvalidContentItemResult objects with a given list of InvalidContentItemResult objects.
 
         Args:
-            non_content_item_results (List[NonContentItemResult]): The NonContentItemResult of FixResult objects to add to the existing list.
+            non_content_item_results (List[InvalidContentItemResult]): The List of InvalidContentItemResult objects to add to the existing list.
         """
-        self.non_content_item_results.extend(non_content_item_results)
+        self.invalid_content_item_results.extend(invalid_content_item_results)

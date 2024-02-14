@@ -45,7 +45,7 @@ def get_validate_manager(mocker):
     validation_results = ResultWriter()
     config_reader = ConfigReader(category_to_run="test")
     initializer = Initializer()
-    mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value={})
+    mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value=({}, {}))
     return ValidateManager(
         validation_results=validation_results,
         config_reader=config_reader,
@@ -231,9 +231,18 @@ def test_gather_validations_to_run(
                     }
                 ],
                 "fixed validations": [],
+                "invalid content items": [],
             },
         ),
-        ([], [], {"validations": [], "fixed validations": []}),
+        (
+            [],
+            [],
+            {
+                "validations": [],
+                "fixed validations": [],
+                "invalid content items": [],
+            },
+        ),
         (
             [
                 ValidationResult(
@@ -264,6 +273,7 @@ def test_gather_validations_to_run(
                         "message": "Fixed this issue",
                     }
                 ],
+                "invalid content items": [],
             },
         ),
     ],

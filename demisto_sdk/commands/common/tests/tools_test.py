@@ -13,6 +13,7 @@ import requests
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     DOC_FILES_DIR,
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
@@ -138,6 +139,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_LIST_PATH,
     VALID_MD,
     VALID_PLAYBOOK_ID_PATH,
+    VALID_PRE_PROCESSING_RULE_PATH,
     VALID_REPUTATION_FILE,
     VALID_SCRIPT_PATH,
     VALID_WIDGET_PATH,
@@ -346,6 +348,7 @@ class TestGenericFunctions:
         (METADATA_FILE_NAME, FileType.METADATA),
         ("", None),
         (VULTURE_WHITELIST_PATH, FileType.VULTURE_WHITELIST),
+        (VALID_PRE_PROCESSING_RULE_PATH, FileType.PRE_PROCESS_RULES),
     ]
 
     @pytest.mark.parametrize("path, _type", data_test_find_type)
@@ -627,7 +630,7 @@ class TestGetRemoteFileLocally:
     FILE_CONTENT = '{"id": "some_file"}'
 
     git_util = Content.git_util()
-    main_branch = git_util.handle_prev_ver()[1]
+    main_branch = DEMISTO_GIT_PRIMARY_BRANCH
 
     def setup_method(self):
         # create local git repo

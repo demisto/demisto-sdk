@@ -7,8 +7,6 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
-logger = logging.getLogger("demisto-sdk")
-
 FIND_DEPENDENCIES_CMD = "find-dependencies"
 
 EMPTY_ID_SET = {

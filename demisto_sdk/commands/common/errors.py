@@ -1581,18 +1581,18 @@ ALLOWED_IGNORE_ERRORS = (
 
 
 def get_all_error_codes() -> List:
-    error_codes = []
-    for error in ERROR_CODE:
-        error_codes.append(ERROR_CODE[error].get("code"))
-
-    return error_codes
+    return [error.get("code") for error in ERROR_CODE.values()]
 
 
 def get_error_object(error_code: str) -> Dict:
-    for error in ERROR_CODE:
-        if error_code == ERROR_CODE[error].get("code"):
-            return ERROR_CODE[error]
-    return {}
+    return next(
+        (
+            error_value
+            for error_value in ERROR_CODE.values()
+            if error_code == error_value.get("code")
+        ),
+        {},
+    )
 
 
 @decorator.decorator

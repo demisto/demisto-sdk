@@ -1,5 +1,39 @@
 # Changelog
-## Unreleased
+## 1.26.2
+* Added support to check the health status when initialing a client for xsoar-on-prem/xsoar-saas by default, will throw exception if server is not healthy. [#3985](https://github.com/demisto/demisto-sdk/pull/3985)
+* The `create-content-graph` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph create` command instead. [#4027](https://github.com/demisto/demisto-sdk/pull/4027)
+* The `update-content-graph` command is now deprecated and will be removed in future releases. Use the `demisto-sdk graph update` command instead. [#4027](https://github.com/demisto/demisto-sdk/pull/4027)
+* Fixed an issue where downloading custom content items with special YAML characters (like `:`) in their names would cause an error during UUID ID replacement when using the **download** command. [#3990](https://github.com/demisto/demisto-sdk/pull/3990)
+* Fixed an issue where **validate** failed on _data.json, when saved in a folder under `Lists` (rather than directly under `Lists`). [#3997](https://github.com/demisto/demisto-sdk/pull/3997)
+* Fixed an issue where the **pre-commit** pycln hook failed when the repo name contained hypens. [#3998](https://github.com/demisto/demisto-sdk/pull/3998)
+* Fixed an issue with **prepare-content** where partner event collectors which are supported by PANW add irrelevant suffixes to their display names. [#4021](https://github.com/demisto/demisto-sdk/pull/4021)
+* Fixed an issue in **setup-environment** command where `.env` files were not loaded correctly. [#4029](https://github.com/demisto/demisto-sdk/pull/4029)
+* Fixed an issue where **upload** failed when trying to upload a content item that was missing a *description* or *type* fields. [#4020](https://github.com/demisto/demisto-sdk/pull/4020)
+* Update the lock_integrations in **test-content** command to check if the current job still running (and not the pipeline). [#4016](https://github.com/demisto/demisto-sdk/pull/4016)
+* Fixed an issue where some unit-tests failed in github-actions CI. [#4023](https://github.com/demisto/demisto-sdk/pull/4023)
+
+## 1.26.1
+* Added retry mechanism for create docker container. As default, will attempt three times. [#3988](https://github.com/demisto/demisto-sdk/pull/3988)
+* Fixed the init command to successfully create event collector integration [#3995](https://github.com/demisto/demisto-sdk/pull/3995)
+* Fixes an issue where running **pre-commit** with the `run-hook` argument didn't execute the hook in some cases. [#3999](https://github.com/demisto/demisto-sdk/pull/3999)
+* Fixed an issue where fetching from a git remote would cause a failure in cases where fetching is not necessary. [#3878](https://github.com/demisto/demisto-sdk/pull/3878)
+* Added support for DOCKER_REGISTRY_URL environment variable. [#3975](https://github.com/demisto/demisto-sdk/pull/3975)
+
+## 1.26.0
+* Log file path (can be set by the `--log-file-path` flag or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable) can now only accept directory values. Setting it to a file path is no longer supported (file name is now constantly `demisto_sdk_debug.log` and cannot be changed). The path will now be automatically generated if it doesn't exist. [#3912](https://github.com/demisto/demisto-sdk/pull/3912)
+* Log files will now be saved by default to `$HOME/.demisto-sdk/logs`. This behavior can be overridden by the `--log-file-path` flag, or the `DEMISTO_SDK_LOG_FILE_PATH` environment variable. [#3912](https://github.com/demisto/demisto-sdk/pull/3912)
+* Added warning when running on Windows (not supported) [#3950](https://github.com/demisto/demisto-sdk/pull/3950)
+* Fixed an issue where the ***validate*** command failed on pre-processing rules. [#3977](https://github.com/demisto/demisto-sdk/pull/3977)
+* Fixed an issue in **upload** where customFields with explicitly defined values (e.g., ${}) caused the command to fail. [#3970](https://github.com/demisto/demisto-sdk/pull/3970)
+* Fixed an issue where validate command failed with Lists folder containing a data json file. [#3971](https://github.com/demisto/demisto-sdk/pull/3971)
+* Added graph capabilities in **TestSuite**. [#3932](https://github.com/demisto/demisto-sdk/pull/3932)
+
+## 1.25.3
+* Fixed false positives in **validate** in `GR103` validations [#3873](https://github.com/demisto/demisto-sdk/pull/3873)
+* Add command `sdk-changelog` for creating a yml file to describe the development changes in the SDK [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+* Locking the `CHANGELOG.md` file for changes when the PR is not a release process [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+
+## 1.25.2
 * Fixed an issue in the **prepare-content** and the **upload** commands where the unified YAML/JSON file was parsed instead of the original file.
 * Fixed an issue where **lint** command didn't work on detached heads.
 * Added the *DockerHubClient* class to allow interaction with the dockerhub-api efficiency and easily.
@@ -20,7 +54,6 @@
 * **Breaking change**: The **download** command will no longer download the content-item `List` in a unified file but instead will split the content-item `List` into two files (metadata and data).
 * Fixed an issue in **generate-docs** where the description field was missing from an argument.
 * Changed the log level of some **pre-commit** `DockerHook` messages from `info` to `debug`.
-* Fixed false positives in **validate** in `GR103` validations
 
 ## 1.25.0
 * Added support to detect automatically the playground-id when running cli commands in xsoar-6.

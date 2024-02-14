@@ -832,12 +832,23 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
+        from demisto_sdk.commands.content_graph.objects import Layout
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 
         layout = pack.create_layout("TestLayout")
         layout_path = Path(layout.path)
-        with pytest.raises(NotAContentItemException):
-            LayoutParser(layout_path, list(MarketplaceVersions))
+        parser = LayoutParser(layout_path, list(MarketplaceVersions))
+        model = Layout.from_orm(parser)
+
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="TestLayout",
+            expected_name="TestLayout",
+            expected_path=layout_path,
+            expected_content_type=ContentType.LAYOUT,
+            expected_fromversion="6.8.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
 
     def test_layoutscontainer_parser(self, pack: Pack):
         """
@@ -1541,16 +1552,19 @@ class TestParsersAndModels:
         """
         from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 
+        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+
         pack = repo.create_pack("HelloWorld")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        pack.create_classifier("sample", load_json("classifier.json"))
         pack.create_incident_field("sample", load_json("incident_field.json"))
         pack.create_incident_type("sample", load_json("incident_type.json"))
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
-        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+
+        pack.create_classifier("sample", load_json("classifier.json"))
         with open(f"{pack.path}/.pack-ignore", "w") as f:
             f.write("[file:classifier-sample.json]\nignore=SC100")
+
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {
@@ -2817,3 +2831,27 @@ def test_updated_marketplaces_set(marketplace, expected_market_place_set):
         expected_market_place_set
         == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
     )
+
+
+def test_argument_object__default_description():
+    # validate that the 'description' attribute of the Argument object is set to an empty string by default
+    from demisto_sdk.commands.content_graph.objects.integration_script import Argument
+
+    arg = Argument(name="test")
+    assert arg.description == ""
+
+
+def test_output_object__default_description():
+    # validate that the 'description' attribute of the Output object is set to an empty string by default
+    from demisto_sdk.commands.content_graph.objects.integration import Output
+
+    output = Output()
+    assert output.description == ""
+
+
+def test_parameter_object__default_type():
+    # validate that the 'type' attribute of the Parameter object is set to 0 by default
+    from demisto_sdk.commands.content_graph.objects.integration import Parameter
+
+    param = Parameter(name="test")
+    assert param.type == 0

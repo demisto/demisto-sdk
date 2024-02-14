@@ -439,7 +439,11 @@ def pre_commit_manager(
         git_diff = True
 
     files_to_run = preprocess_files(
-        input_files, staged_only, commited_only, git_diff, all_files
+        input_files=input_files,
+        staged_only=staged_only,
+        commited_only=commited_only,
+        use_git=git_diff,
+        all_files=all_files,
     )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")

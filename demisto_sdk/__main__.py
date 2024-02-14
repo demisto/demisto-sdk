@@ -1,4 +1,5 @@
 # Site packages
+import platform
 import sys
 
 import click
@@ -6,6 +7,7 @@ import click
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.validation_results import ResultWriter
+from demisto_sdk.commands.xsoar_linter.xsoar_linter import xsoar_linter_manager
 
 try:
     import git
@@ -36,7 +38,11 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -46,6 +52,9 @@ from demisto_sdk.commands.common.tools import (
     parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.commands.create import create
+from demisto_sdk.commands.content_graph.commands.get_dependencies import (
+    get_dependencies,
+)
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,
 )
@@ -68,8 +77,6 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "[red]An internet connection is required for this command. If connected to the "
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 # Third party packages
@@ -157,16 +164,13 @@ def logging_setup_decorator(func, *args, **kwargs):
         help="Minimum logging threshold for the file logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
-    @click.option(
-        "--log-file-path",
-        help="Path to the log file. Default: Content root path.",
-    )
+    @click.option("--log-file-path", help="Path to save log files onto.")
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
             console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
             file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log_file_path") or None,
+            log_file_path=kwargs.get("log_file_path"),
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -204,15 +208,20 @@ def main(ctx, config, version, release_notes, **kwargs):
         console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
         file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
         log_file_path=kwargs.get("log_file_path"),
+        skip_log_file_creation=True,  # Log file creation is handled in the logger setup of the sub-command
     )
-    global logger
-    logger = logging.getLogger("demisto-sdk")
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
     import dotenv
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
+
+    if platform.system() == "Windows":
+        logger.warning(
+            "Using Demisto-SDK on Windows is not supported. Use WSL2 or run in a container."
+        )
+
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
     ) and not is_sdk_defined_working_offline():  # If the key exists/called to version
@@ -231,9 +240,9 @@ def main(ctx, config, version, release_notes, **kwargs):
                 last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
-                logger.info(
-                    f"[yellow]however version {last_release} is available.\n"
-                    f"To update, run pip3 install --upgrade demisto-sdk[/yellow]"
+                logger.warning(
+                    f"A newer version ({last_release}) is available. "
+                    f"To update, run 'pip3 install --upgrade demisto-sdk'"
                 )
             if release_notes:
                 rn_entries = get_release_note_entries(__version__)
@@ -1265,12 +1274,8 @@ def lint(ctx, **kwargs):
     type=str,
 )
 @click.pass_context
+@logging_setup_decorator
 def coverage_analyze(ctx, **kwargs):
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
     try:
@@ -2615,7 +2620,6 @@ def find_dependencies(ctx, **kwargs):
     output_path = kwargs.get("output_path", ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get("dependency", "")
     try:
-
         PackDependencies.find_dependencies_manager(
             id_set_path=str(id_set_path),
             update_pack_metadata=update_pack_metadata,
@@ -2678,6 +2682,7 @@ def find_dependencies(ctx, **kwargs):
 )
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def postman_codegen(
     ctx,
     config,
@@ -2691,11 +2696,6 @@ def postman_codegen(
     **kwargs,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
     )
@@ -3367,6 +3367,10 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
+    logger.warning(
+        "[WARNING] The 'create-content-graph' command is deprecated and will be removed "
+        "in upcoming versions. Use 'demisto-sdk graph create' instead."
+    )
     ctx.invoke(
         create,
         ctx,
@@ -3442,6 +3446,10 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
+    logger.warning(
+        "[WARNING] The 'update-content-graph' command is deprecated and will be removed "
+        "in upcoming versions. Use 'demisto-sdk graph update' instead."
+    )
     ctx.invoke(
         update,
         ctx,
@@ -3578,7 +3586,7 @@ def pre_commit(
         dir_okay=True,
         resolve_path=True,
         show_default=False,
-        help=("The paths to run pre-commit on. May pass multiple paths."),
+        help="The paths to run pre-commit on. May pass multiple paths.",
     ),
     staged_only: bool = typer.Option(
         False, "--staged-only", help="Whether to run only on staged files"
@@ -3625,7 +3633,28 @@ def pre_commit(
         True, "--docker/--no-docker", help="Whether to run docker based hooks or not."
     ),
     run_hook: Optional[str] = typer.Argument(None, help="A specific hook to run"),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "--console-log-threshold",
+        help="Minimum logging threshold for the console logger.",
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "--file-log-threshold",
+        help="Minimum logging threshold for the file logger.",
+    ),
+    log_file_path: Optional[str] = typer.Option(
+        None,
+        "--log-file-path",
+        help="Path to save log files onto.",
+    ),
 ):
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
+
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
     return_code = pre_commit_manager(
@@ -3682,7 +3711,38 @@ graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
 graph_cmd_group.command("create", no_args_is_help=False)(create)
 graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
+graph_cmd_group.command("get-dependencies", no_args_is_help=True)(get_dependencies)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
+
+
+# ====================== Xsoar-Lint ====================== #
+
+xsoar_linter_app = typer.Typer(name="Xsoar-Lint")
+
+
+@xsoar_linter_app.command(
+    no_args_is_help=True,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def xsoar_linter(
+    file_paths: Optional[List[Path]] = typer.Argument(
+        None,
+        exists=True,
+        dir_okay=True,
+        resolve_path=True,
+        show_default=False,
+        help=("The paths to run xsoar linter on. May pass multiple paths."),
+    )
+):
+
+    return_code = xsoar_linter_manager(
+        file_paths,
+    )
+    if return_code:
+        raise typer.Exit(1)
+
+
+main.add_command(typer.main.get_command(xsoar_linter_app), "xsoar-lint")
 
 
 if __name__ == "__main__":

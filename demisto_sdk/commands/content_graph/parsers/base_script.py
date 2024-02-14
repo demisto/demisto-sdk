@@ -1,7 +1,7 @@
 import re
 from functools import cached_property
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -55,6 +55,14 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
 
         for cmd in self.get_command_executions():
             self.add_command_or_script_dependency(cmd)
+
+    @property
+    def args(self) -> List[Dict]:
+        return self.yml_data.get("args", [])
+
+    @property
+    def runas(self) -> str:
+        return self.yml_data.get("runas") or ""
 
     @property
     def code(self) -> Optional[str]:

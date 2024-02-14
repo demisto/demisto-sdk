@@ -204,6 +204,8 @@ repos:
   rev: v4.4.0
   hooks:
   - id: trailing-whitespace
+    args:
+    - --markdown-linebreak-ext=md
   - id: end-of-file-fixer
   - id: check-docstring-first
     exclude: demisto_sdk/commands/init/templates/.*

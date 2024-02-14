@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_UPSTREAM,
     PACKS_FOLDER,
 )
+from demisto_sdk.commands.common.logger import logger
 
 
 class CommitOrBranchNotFoundError(GitError):
@@ -100,6 +101,55 @@ class GitUtil:
                 raise CommitOrBranchNotFoundError(
                     commit_or_branch, from_remote=from_remote, exception=e
                 )
+
+    def get_previous_commit(self, commit: Optional[str] = None) -> Commit:
+        """
+
+        Returns the previous commit of a specific commit.
+        If not provided returns previous commit of the head commit.
+
+        Args:
+            commit: any commit
+        """
+        if commit:
+            return self.get_commit(commit, from_remote=False).parents[0]
+
+        return self.repo.head.commit.parents[0]
+
+    def has_file_changed(
+        self, file_path: Union[Path, str], commit1: str, commit2: str
+    ) -> bool:
+        """
+        Checks if file has been changed between two commits.
+
+        Args:
+            file_path: file path
+            commit1: the first commit to compare
+            commit2: the second commit to compare
+
+        Returns:
+            True if file has been changed between two commits, False if not.
+        """
+        return bool(self.repo.git.diff(commit1, commit2, str(file_path)))
+
+    def has_file_added(self, file_path: Union[Path, str], commit1: str, commit2: str):
+        """
+        Checks if a file has been added between two commits.
+
+        Args:
+            file_path: file path
+            commit1: the first commit to compare
+            commit2: the second commit to compare
+
+        Returns:
+            True if file has been added between two commits, False if not.
+        """
+        return (
+            file_path
+            in self.repo.git.diff(
+                "--name-only", "--diff-filter=A", commit1, commit2
+            ).splitlines()
+        )
 
     def read_file_content(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
@@ -618,13 +668,25 @@ class GitUtil:
         }
 
     def _get_all_changed_files(self, prev_ver: str = "") -> Set[Path]:
-        """Get all the files changed in the current branch without status distinction.
+        """
+        Get all the files changed in the current branch without status distinction.
+
         Args:
             prev_ver (str): The base branch against which the comparison is made.
+
         Returns:
-            Set: of Paths to files changed in the current branch.
+            Set[Path]: of Paths to files changed in the current branch.
         """
-        self.fetch()
+        try:
+            self.fetch()
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to fetch branch '{self.get_current_working_branch()}' "
+                f"from remote '{self.repo.remote().name}' ({self.repo.remote().url}). Continuing without fetching."
+            )
+            logger.debug(f"Error: {e}")
+
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
@@ -899,7 +961,8 @@ class GitUtil:
         debug: bool = False,
         include_untracked: bool = False,
     ) -> Set[Path]:
-        """Get a set of all changed files in the branch (modified, added and renamed)
+        """
+        Get a set of all changed files in the branch (modified, added and renamed)
 
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -908,7 +971,7 @@ class GitUtil:
             debug (bool): Whether to print the debug logs.
             include_untracked (bool): Whether to include untracked files.
         Returns:
-            Set. A set of all the changed files in the given branch when comparing to prev_ver
+            Set[Path]: A set of all the changed files in the given branch when comparing to prev_ver
         """
         self.fetch()
         modified_files: Set[Path] = self.modified_files(
@@ -944,11 +1007,9 @@ class GitUtil:
         """
         return bool(self.repo.ignored(file_path))
 
-    @lru_cache
     def fetch(self):
         self.repo.remote().fetch()
 
-    @lru_cache
     def fetch_all(self):
         for remote in self.repo.remotes:
             remote.fetch()

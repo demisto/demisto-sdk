@@ -13,7 +13,7 @@ import docker.errors
 import docker.models.containers
 import git
 import requests.exceptions
-from packaging.version import Version, parse
+from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
@@ -385,6 +385,10 @@ class Linter:
         # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
             self._update_support_level()
+            original_image = yml_obj.get("dockerimage", "") or yml_obj.get(
+                "script", {}
+            ).get("dockerimage", "")
+
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
@@ -401,16 +405,11 @@ class Linter:
                     logger.info(
                         f"{self._pack_name} - Facts - {image[0]} - Python {python_version_string}"
                     )
-                    if not self._facts["python_version"]:
+                    if image[0] == original_image:
                         self._facts["python_version"] = python_version_string
-                    else:
-                        py_num_version = max(
-                            Version(self._facts["python_version"]), py_num_version
+                        logger.info(
+                            f"{log_prompt} - Using python version from docker image: {python_version_string}"
                         )
-                        python_version_string = (
-                            f"{py_num_version.major}.{py_num_version.minor}"
-                        )
-                        self._facts["python_version"] = python_version_string
 
                 # Checking whatever *test* exists in package
                 self._facts["test"] = (
@@ -585,12 +584,7 @@ class Linter:
                         lint_files=self._facts["lint_files"]
                     )
 
-                elif (
-                    lint_check == "mypy"
-                    and not no_mypy
-                    and parse(self._facts["python_version"]).major >= 3  # type: ignore[union-attr]
-                ):
-                    # mypy does not support python2 now
+                elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(
                         py_num=self._facts["python_version"],
                         lint_files=self._facts["lint_files"],

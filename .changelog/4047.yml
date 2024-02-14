@@ -1,0 +1,4 @@
+changes:
+- description: Added support for SVG image files in the **validate** command.
+  type: internal
+pr_number: 4047

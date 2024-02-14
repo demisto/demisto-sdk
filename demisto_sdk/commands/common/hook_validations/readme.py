@@ -149,7 +149,7 @@ def mdx_server_is_up() -> bool:
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock_connect = sock.connect_ex(("localhost", 6161))
+        sock_connect = sock.connect_ex(("127.0.0.1", 6161))
         logger.info(f"[yellow]{sock_connect=}[/yellow]")
         return sock_connect == 0
     except Exception:
@@ -235,7 +235,7 @@ class ReadMeValidator(BaseValidator):
                 session.mount("http://", adapter)
                 response = session.request(
                     "POST",
-                    "http://localhost:6161",
+                    "http://127.0.0.1:6161",
                     data=readme_content.encode("utf-8"),
                     timeout=20,
                 )

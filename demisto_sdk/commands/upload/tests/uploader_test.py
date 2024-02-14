@@ -647,9 +647,7 @@ class TestPrintSummary:
         uploader = Uploader(path)
         assert uploader.demisto_version == Version("6.6.0")
         assert uploader.upload() == ERROR_RETURN_CODE
-        assert uploader._failed_upload_version_mismatch == [
-            BaseContent.from_path(path, raise_on_exception=True)
-        ]
+        assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
         logged = flatten_call_args(logger_info.call_args_list)
         assert len(logged) == 3

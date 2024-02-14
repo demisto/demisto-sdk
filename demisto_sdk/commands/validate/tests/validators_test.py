@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 import toml
 
+from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -451,3 +452,67 @@ def test_object_collection_with_readme_path(repo):
     obj = obj_set.pop()
     assert obj is not None
     assert obj.content_type == ContentType.INTEGRATION
+
+
+def test_object_collection_with_pack_path(repo):
+    """
+    Given:
+    - A path to a pack that contain an integration.
+    When:
+    - Calling the gather_objects_to_run_on.
+    Then:
+    - Make sure that both the pack and the integration object were returned.
+    """
+
+    yml_content = load_yaml("integration.yml")
+    pack = repo.create_pack("pack_no_1")
+    integration = pack.create_integration(yml=yml_content)
+    integration.code.write("from MicrosoftApiModule import *")
+    integration.readme.write("test")
+    initializer = Initializer(file_path=pack.path)
+    obj_set, _ = initializer.gather_objects_to_run_on()
+    obj_types = {obj.content_type for obj in obj_set}
+    assert obj_types == {ContentType.INTEGRATION, ContentType.PACK}
+
+
+def test_load_files_with_pack_path(repo):
+    """
+    Given:
+    - A path to a pack that contain an integration.
+    When:
+    - Calling the load_files.
+    Then:
+    - Make sure that only the path to the pack was returned in PosixPath form.
+    """
+    pack = repo.create_pack("pack_no_1")
+    pack.create_integration()
+    initializer = Initializer()
+    loaded_files_set = initializer.load_files([pack.path])
+    assert len(loaded_files_set) == 1
+    assert loaded_files_set.pop() == Path(pack.path)
+
+
+def test_load_files_with_integration_dir(repo):
+    """
+    Given:
+    - A path to the integration dir of a pack.
+    When:
+    - Calling the load_files.
+    Then:
+    - Make sure that all the files from that dir was returned.
+    """
+    pack = repo.create_pack("pack_no_1")
+    integration = pack.create_integration()
+    initializer = Initializer()
+    integration_dir = f"{pack.path}/{INTEGRATIONS_DIR}"
+    loaded_files_set = initializer.load_files([integration_dir])
+    assert len(loaded_files_set) != 1
+    assert all(
+        Path(path) in loaded_files_set
+        for path in (
+            integration.yml.path,
+            integration.readme.path,
+            integration.code.path,
+            integration.description.path,
+        )
+    )

@@ -27,6 +27,7 @@ class TestYMLFile(FileTesting):
         )
 
         if git_util := git_repo.git_util:
+            YmlFile.git_util = git_util
             git_util.commit_files("commit all yml files")
 
         yml_file_paths = [
@@ -189,6 +190,6 @@ class TestYMLFile(FileTesting):
          - make sure writing yml file is successful.
         """
         _path = Path(git_repo.path) / "file.yml"
-        YmlFile.write_file({"test": "test"}, output_path=_path)
+        YmlFile.write({"test": "test"}, output_path=_path)
         assert _path.exists()
         assert yaml.load(Path(_path).read_text()) == {"test": "test"}

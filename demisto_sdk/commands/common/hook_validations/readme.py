@@ -145,11 +145,13 @@ def mdx_server_is_up() -> bool:
     Returns: a boolean value indicating if the server is up
 
     """
+    logger.info("[yellow]In mdx_server_is_up[/yellow]")
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         return sock.connect_ex(("localhost", 6161)) == 0
     except Exception:
+        logger.info("[yellow]Returning False[/yellow]")
         return False
 
 
@@ -217,7 +219,9 @@ class ReadMeValidator(BaseValidator):
         return all(result)
 
     def mdx_verify_server(self) -> bool:
+        logger.info("[yellow]In mdx_verify_server[/yellow]")
         server_started = mdx_server_is_up()
+        logger.info(f"[yellow]{server_started=}[/yellow]")
         if not server_started:
             return False
         for _ in range(RETRIES_VERIFY_MDX):
@@ -254,14 +258,16 @@ class ReadMeValidator(BaseValidator):
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = self.should_run_mdx_validation()
-
+        logger.info(f"[yellow]is_mdx_file {html=}, {valid=}[/yellow]")
         if valid and not html:
             # add to env var the directory of node modules
 
             os.environ["NODE_PATH"] = (
                 str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             )
+            logger.info("[yellow]is_mdx_file: will now call mdx_verify_server[/yellow]")
             return self.mdx_verify_server()
+        logger.info("[yellow]is_mdx_file: returning True[/yellow]")
         return True
 
     def should_run_mdx_validation(self):

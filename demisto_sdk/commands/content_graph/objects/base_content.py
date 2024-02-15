@@ -281,7 +281,7 @@ class BaseContent(BaseNode):
 
         except NotAContentItemException:
             if raise_on_exception:
-                raise NotAContentItemException
+                raise
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
             )

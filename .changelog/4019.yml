@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where **lint** created containers with the same name leading the command to crash.
+  type: feature
+pr_number: 4019

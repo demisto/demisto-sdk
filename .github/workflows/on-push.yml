@@ -462,6 +462,6 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Run Slack Notification
+      - name: Notify Failed Jobs
         run: |
           poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py -wd ${{ github.run_id }} -st "test" -ght ${{ secrets.GITHUB_TOKEN }}

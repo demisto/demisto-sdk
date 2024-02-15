@@ -93,7 +93,7 @@ class ValidateManager:
         if BaseValidator.graph_interface:
             logger.info("Closing graph.")
             BaseValidator.graph_interface.close()
-        self.add_invalid_content_items(self.invalid_items)
+        self.add_invalid_content_items()
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.only_throw_warnings
         )
@@ -117,11 +117,10 @@ class ValidateManager:
                 validators.append(validator())
         return validators
 
-    def add_invalid_content_items(self, invalid_content_items: Set[Path]):
+    def add_invalid_content_items(self):
         """Create results for all the invalid_content_items.
 
         Args:
-            invalid_content_items (Set[Path]): The set of all the paths that were found invalid.
         """
         self.validation_results.extend_invalid_content_item_results(
             [
@@ -133,6 +132,6 @@ class ValidateManager:
                     " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.",
                     error_code="BA102",
                 )
-                for invalid_path in invalid_content_items
+                for invalid_path in self.invalid_items
             ]
         )

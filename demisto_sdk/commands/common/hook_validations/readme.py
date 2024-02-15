@@ -220,7 +220,9 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         if not server_started:
             if self.handle_error(
-                "Could not start MDX server", error_code="111", file_path=self.file_path
+                "Could not start MDX server",
+                error_code="RM115",
+                file_path=self.file_path,
             ):
                 return False
             # In case this error_code should be skipped or ignored
@@ -545,9 +547,9 @@ class ReadMeValidator(BaseValidator):
         for link in absolute_links:
             error_message: str = ""
             error_code: str = ""
-            img_url = link[
-                1
-            ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+            img_url = (
+                link[1].strip()
+            )  # striping in case there are whitespaces at the beginning/ending of url.
             try:
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.

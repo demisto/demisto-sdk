@@ -1,5 +1,4 @@
 import argparse
-import os
 from typing import Collection, Dict, List
 
 from github import Github, WorkflowRun

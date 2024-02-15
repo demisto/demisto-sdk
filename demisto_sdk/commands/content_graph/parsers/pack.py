@@ -17,7 +17,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
-    get_file,
     get_json,
     get_pack_ignore_content,
     get_pack_latest_rn_version,
@@ -342,15 +341,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def get_rn_info(self):
         self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
-        if self.latest_rn_version:
-            self.latest_rn_content = get_file(
-                str(
-                    self.path
-                    / "ReleaseNotes"
-                    / f"{self.latest_rn_version.replace('.', '_')}.md"
-                ),
-                return_content=True,
-            )
 
     @cached_property
     def field_mapping(self):

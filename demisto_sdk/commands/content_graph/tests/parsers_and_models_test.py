@@ -2919,7 +2919,7 @@ def test_get_related_content():
         )
 
 
-def test_get_related_file():
+def test_get_related_text_file():
     """
     Given
     - a pack content object with a readme file.

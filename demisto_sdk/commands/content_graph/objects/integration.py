@@ -213,4 +213,4 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
 
     @property
     def description_file(self) -> str:
-        return self.get_related_file(RelatedFileType.DESCRIPTION)
+        return self.get_related_text_file(RelatedFileType.DESCRIPTION)

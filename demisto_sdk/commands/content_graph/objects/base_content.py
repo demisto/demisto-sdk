@@ -19,7 +19,7 @@ import demisto_client
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
-
+from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
@@ -330,8 +330,8 @@ class BaseContent(BaseNode):
                         )
         return self.related_content_dict
 
-    def get_related_file(self, file_type) -> str:
-        from demisto_sdk.commands.common.files import TextFile
+    def get_related_text_file(self, file_type) -> str:
+        
 
         for file_path in self.related_content[file_type]["path"]:
             try:

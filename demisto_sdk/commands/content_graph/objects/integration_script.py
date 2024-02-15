@@ -138,4 +138,4 @@ class IntegrationScript(ContentItem):
 
     @property
     def readme(self) -> str:
-        return self.get_related_file(RelatedFileType.README)
+        return self.get_related_text_file(RelatedFileType.README)

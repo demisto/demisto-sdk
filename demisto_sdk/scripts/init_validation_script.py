@@ -28,6 +28,7 @@ RELATED_FILES_DICT = {
     "12": "RelatedFileType.PACK_IGNORE",
     "13": "RelatedFileType.SECRETS_IGNORE",
     "14": "RelatedFileType.AUTHOR_IMAGE",
+    "15": "RelatedFileType.RELEASE_NOTES",
 }
 
 CONTENT_TYPES_DICT = {

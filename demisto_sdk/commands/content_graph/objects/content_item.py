@@ -84,24 +84,17 @@ class ContentItem(BaseContent):
 
     @property
     def ignored_errors(self) -> list:
-        try:
-            return (
-                list(
-                    self.in_pack.ignored_errors_dict.get(  # type: ignore
-                        f"file:{self.path.name}", []
-                    ).items()
-                )[0][1].split(",")
-                or []
-            )
-        except:  # noqa: E722
-            return []
+        return self.get_ignored_errors(self.path.name)
 
     def ignored_errors_related_files(self, file_path: str) -> list:
+        return self.get_ignored_errors((Path(file_path)).name)
+
+    def get_ignored_errors(self, path: str) -> list:
         try:
             return (
                 list(
                     self.in_pack.ignored_errors_dict.get(  # type: ignore
-                        f"file:{(Path(file_path)).name}", []
+                        f"file:{path}", []
                     ).items()
                 )[0][1].split(",")
                 or []

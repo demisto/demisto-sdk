@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
+    RELEASE_NOTES_DIR,
     ImagesFolderNames,
     MarketplaceVersions,
     RelatedFileType,
@@ -123,7 +124,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     ignored_errors_dict: dict = Field({}, exclude=True)
     pack_readme: str = Field("", exclude=True)
     latest_rn_version: str = Field("", exclude=True)
-    latest_rn_content: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
@@ -154,24 +154,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @property
     def ignored_errors(self) -> list:
-        try:
-            return (
-                list(
-                    self.ignored_errors_dict.get(  # type: ignore
-                        f"file:{PACK_METADATA_FILENAME}", []
-                    ).items()
-                )[0][1].split(",")
-                or []
-            )
-        except:  # noqa: E722
-            return []
+        return self.get_ignored_errors(PACK_METADATA_FILENAME)
 
     def ignored_errors_related_files(self, file_path: str) -> list:
+        return self.get_ignored_errors((Path(file_path)).name)
+
+    def get_ignored_errors(self, path: str) -> list:
         try:
             return (
                 list(
                     self.ignored_errors_dict.get(  # type: ignore
-                        f"file:{(Path(file_path)).name}", []
+                        f"file:{path}", []
                     ).items()
                 )[0][1].split(",")
                 or []
@@ -573,10 +566,20 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     "path": [str(self.path / PACKS_README_FILE_NAME)],
                     "git_status": None,
                 },
+                RelatedFileType.RELEASE_NOTES: {
+                    "path": [
+                        str(
+                            self.path
+                            / RELEASE_NOTES_DIR
+                            / f"{self.latest_rn_version.replace('.', '_')}.md"
+                        )
+                    ],
+                    "git_status": None,
+                },
             }
         )
         return related_content_ls
 
     @property
     def readme(self) -> str:
-        return self.get_related_file(RelatedFileType.README)
+        return self.get_related_text_file(RelatedFileType.README)

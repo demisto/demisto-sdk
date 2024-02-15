@@ -55,7 +55,8 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
                             / str(self.path.parts[-1])
                             .replace(".yml", ".png")
                             .replace("playbook-", "")
-                        )
+                        ),
+                        str(self.path).replace(".yml", ".png"),
                     ],
                     "git_status": None,
                 },
@@ -76,4 +77,4 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
 
     @property
     def readme(self) -> str:
-        return self.get_related_file(RelatedFileType.README)
+        return self.get_related_text_file(RelatedFileType.README)

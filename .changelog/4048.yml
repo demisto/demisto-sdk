@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where **validate** would fail from trying to connect to MDX server without stating the reason.
+  type: fix
+pr_number: 4048

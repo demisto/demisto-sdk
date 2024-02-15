@@ -151,16 +151,19 @@ def mdx_server_is_up() -> bool:
         sock.settimeout(5)
         sock_connect = sock.connect_ex(("localhost", 6161))
         logger.info(f"[yellow]{sock_connect=}[/yellow]")
+        # return sock_connect == 0
         try:
             # Another way to check if the server is already up
-            result = requests.get("http://localhost:6161", timeout=5)
-        except Exception as e:
-            logger.error(f"[red]Error when checking for mdx server with GET {e}[/red]")
             result = requests.post("http://localhost:6161", timeout=5)
+            if not result.ok:
+                raise Exception()
+        except Exception as e:
+            logger.error(f"[red]Error when checking for mdx server with POST {e}[/red]")
+            result = requests.get("http://localhost:6161", timeout=5)
         logger.info(f"[yellow]{result.ok=}[/yellow]")
         return result.ok
     except Exception as e:
-        logger.error(f"[red]Error when checking for mdx server with POST {e}[/red]")
+        logger.error(f"[red]Error when checking for mdx server with GET {e}[/red]")
         logger.info("[yellow]Returning False[/yellow]")
         return False
 

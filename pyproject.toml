@@ -28,11 +28,10 @@ validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
-autopep8 = "^1.6.0"
+autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
-pylint = "2.12.2"
-vulture = "^2.3"  # Used inside a Docker (which is a different separate environment), so we can remove?
+pylint = "^2.13.0"
 beautifulsoup4 = "^4.11.1"
 chardet = "^5.2.0"  # Used by bs4.dammit. Can be replaced with `charset-normalizer` which is 20x faster.
 click = "^8.0.0"

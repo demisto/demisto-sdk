@@ -153,17 +153,17 @@ def mdx_server_is_up() -> bool:
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock_connect = sock.connect_ex(("mdx_server", 6161))
+        sock_connect = sock.connect_ex(("0.0.0.0", 6161))
         logger.info(f"[yellow]{sock_connect=}[/yellow]")
         # return sock_connect == 0
         try:
             # Another way to check if the server is already up
-            result = requests.post("http://mdx_server:6161", timeout=5)
+            result = requests.post("http://0.0.0.0:6161", timeout=5)
             if not result.ok:
                 raise Exception()
         except Exception as e:
             logger.error(f"[red]Error when checking for mdx server with POST {e}[/red]")
-            result = requests.get("http://mdx_server:6161", timeout=5)
+            result = requests.get("http://0.0.0.0:6161", timeout=5)
         logger.info(f"[yellow]{result.ok=}[/yellow]")
         return result.ok
     except Exception as e:
@@ -254,7 +254,7 @@ class ReadMeValidator(BaseValidator):
                 session.mount("http://", adapter)
                 response = session.request(
                     "POST",
-                    "http://mdx_server:6161",
+                    "http:/0.0.0.0:6161",
                     data=readme_content.encode("utf-8"),
                     timeout=20,
                 )

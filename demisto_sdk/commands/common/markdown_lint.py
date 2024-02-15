@@ -34,7 +34,7 @@ def run_markdownlint(file_content: str, file_path="file", fix=False) -> Markdown
     return MarkdownResult(
         session.request(
             "POST",
-            f"http://mdx_server:6161/markdownlint?filename={file_path}&fix={fix}",
+            f"http://0.0.0.0:6161/markdownlint?filename={file_path}&fix={fix}",
             data=file_content.encode("utf-8"),
             timeout=20,
         ).json()

@@ -39,8 +39,12 @@ def check_configuration_file(command, args):
         try:
             config = ConfigParser(allow_no_value=True)
             config.read(config_file_path)
-            config_sections = {section: dict(config[section]) for section in config.sections()}
-            logger.info(f'[yellow].demisto-sdk-conf sections={config_sections}[/yellow]')
+            config_sections = {
+                section: dict(config[section]) for section in config.sections()
+            }
+            logger.info(
+                f"[yellow].demisto-sdk-conf sections={config_sections}[/yellow]"
+            )
             if command in config.sections():
                 for key in config[command]:
                     if key in args:

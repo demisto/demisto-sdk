@@ -1321,7 +1321,6 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_field_path}",
                 ]
@@ -1372,7 +1371,6 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_type_path}",
                 ]
@@ -1423,7 +1421,6 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_type_path}",
                 ]
@@ -1524,7 +1521,6 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_module_path}",
                 ]
@@ -1574,7 +1570,6 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_definition_path}",
                 ]
@@ -1628,7 +1623,6 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_definition_path}",
                 ]

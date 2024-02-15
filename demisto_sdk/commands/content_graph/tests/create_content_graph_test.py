@@ -880,6 +880,8 @@ class TestCreateContentGraph:
         """
         from packaging.version import Version
 
+        from demisto_sdk.commands.common.files.file import File
+
         dockerhub_api_mocker = mocker.patch(
             "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
             return_value=Version(expected_python_version),
@@ -888,13 +890,14 @@ class TestCreateContentGraph:
             "demisto_sdk.commands.common.docker_images_metadata.DockerImagesMetadata._instance",
             None,
         )
-        mocker.patch(
-            "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        mocker.patch.object(
+            File,
+            "read_from_github_api",
             return_value={
                 "docker_images": {
                     "python3": {
                         "3.10.11.54799": {"python_version": "3.10.11"},
-                        "3.10.12.63474": {"python_version": "3.10.12"},
+                        "3.10.12.63474": {"python_version": "3.10.11"},
                     }
                 }
             },

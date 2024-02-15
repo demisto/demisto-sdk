@@ -1,14 +1,18 @@
 import base64
 import glob
+import logging
+import xml.etree.ElementTree as ET
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
 
 import imagesize
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64,
     DEFAULT_IMAGE_BASE64,
-    IMAGE_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -16,6 +20,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     error_codes,
 )
 from demisto_sdk.commands.common.tools import get_yaml, os, re
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class ImageValidator(BaseValidator):
@@ -44,7 +50,7 @@ class ImageValidator(BaseValidator):
         )
         self._is_valid = True
         self.file_path = ""
-        if file_path.endswith(".png"):
+        if file_path.endswith(".png") or file_path.endswith(".svg"):
             self.file_path = file_path
         # For integrations that are not in a package format, the image is within the yml
         else:
@@ -106,7 +112,7 @@ class ImageValidator(BaseValidator):
             allowed_height (int): the allowed height of the image
             allowed_width (int): the allowed weight of the image
         """
-        if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
+        if re.match(PNG_IMAGE_REGEX, self.file_path, re.IGNORECASE):
             image_size = os.path.getsize(self.file_path)
             if image_size > maximum_size:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
@@ -124,6 +130,30 @@ class ImageValidator(BaseValidator):
                         error_message, error_code, file_path=self.file_path
                     ):
                         self._is_valid = False
+        elif re.match(SVG_IMAGE_REGEX, self.file_path, re.IGNORECASE):
+            image_size = os.path.getsize(self.file_path)
+            logger.info(
+                f"SVG image size: {image_size}. No size validation done for SVG images."
+            )
+
+            try:
+                ET.parse(self.file_path)
+            except ParseError as pe:
+                logger.error(
+                    f"Exception trying to parse {self.file_path} as XML, {pe.msg}."
+                )
+                error_message, error_code = Errors.svg_image_not_valid(pe.msg)
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
+                    self._is_valid = False
+                return
+
+            if should_validate_dimensions:
+                width, height = self.get_size_svg_image()
+                logger.info(
+                    f"SVG image dimensions: {width}, {height}. No dimensions validation done for SVG images."
+                )
         else:
             data_dictionary = get_yaml(self.file_path)
 
@@ -143,6 +173,25 @@ class ImageValidator(BaseValidator):
             error_message, error_code = Errors.image_is_empty(self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
+
+    def get_size_svg_image(self):
+        tree = ET.parse(self.file_path)
+        root = tree.getroot()
+
+        if "width" in root.attrib and "height" in root.attrib:
+            try:
+                width = int(root.attrib["width"])
+                height = int(root.attrib["height"])
+                return width, height
+            except Exception:
+                # these values can be hard to parse, e.g. 1280.000000pt. Try the viewBox
+                pass
+
+        if "viewBox" in root.attrib:
+            viewBox = root.attrib["viewBox"]
+            viewBox_splitted = viewBox.split()
+            # The values can be float. e.g. 1280.000000
+            return int(float(viewBox_splitted[2])), int(float(viewBox_splitted[3]))
 
     @error_codes("IM102,IM100")
     def is_existing_image(self):
@@ -204,13 +253,17 @@ class ImageValidator(BaseValidator):
                 self._is_valid = False
 
     def load_image(self):
-        if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
+        if re.match(PNG_IMAGE_REGEX, self.file_path, re.IGNORECASE):
             with open(self.file_path, "rb") as image:
                 image_data = image.read()
                 image = base64.b64encode(image_data)  # type: ignore
                 if isinstance(image, bytes):
                     image = image.decode("utf-8")
 
+        elif re.match(SVG_IMAGE_REGEX, self.file_path, re.IGNORECASE):
+            # SVG is clear text (XML) already
+            with open(self.file_path, "rb") as image_file:
+                image = image_file.read()  # type: ignore
         else:
             image = self.load_image_from_yml()
 

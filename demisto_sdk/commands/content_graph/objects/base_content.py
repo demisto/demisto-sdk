@@ -312,7 +312,7 @@ class BaseContent(BaseNode):
         pass
 
     @property
-    def related_content(self) -> dict:
+    def related_content(self) -> Dict:
         if not self.related_content_dict:
             self.related_content_dict = self.get_related_content()
             if self.old_base_content_object:

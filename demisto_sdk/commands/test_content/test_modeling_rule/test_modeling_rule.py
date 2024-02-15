@@ -322,7 +322,7 @@ def verify_results_against_test_data(
 
     result_test_case_system_out = []
     result_test_case_system_err = []
-    result_test_case_results = []
+    result_test_case_results: List[Result] = []
     tenant_timezone: str = ""
     expected_values = None
     # Find the expected values for the given test data event ID.
@@ -506,7 +506,7 @@ def validate_schema_aligned_with_test_data(
     }
 
     errors_occurred = False
-    results = []
+    results: List[Result] = []
 
     for dataset, event_logs in schema_dataset_to_events.items():
         all_schema_dataset_mappings = schema[dataset]

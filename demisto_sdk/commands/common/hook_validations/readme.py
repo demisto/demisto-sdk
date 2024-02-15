@@ -8,8 +8,9 @@ from pathlib import Path
 from threading import Lock
 from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
-
+from subprocess import Popen, PIPE
 import docker
+from isort import stream
 import requests
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
@@ -146,6 +147,9 @@ def mdx_server_is_up() -> bool:
 
     """
     logger.info("[yellow]In mdx_server_is_up[/yellow]")
+    process = Popen("docker ps -all", stdout=PIPE, stderr=PIPE, shell=True)
+    stdout, stderr = process.communicate()
+    logger.info(f"[yellow]process {stdout=}[/yellow]")
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)

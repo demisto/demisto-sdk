@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json, get_yaml
+
 # from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.generate_docs import common
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -29,7 +30,6 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_single_command_section,
     get_command_examples,
 )
-from demisto_sdk.commands.generate_docs import generate_integration_doc as generate_integration_doc_module
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
 )
@@ -2080,7 +2080,9 @@ class TestIntegrationDocUpdate:
             "",
         ]
 
-    def test_added_conf_cmd_modified_cmd_with_examples(self, git_repo: Repo, mocker: MockerFixture):
+    def test_added_conf_cmd_modified_cmd_with_examples(
+        self, git_repo: Repo, mocker: MockerFixture
+    ):
         """
         Test for a scenario where we:
         - Add a new configuration option.
@@ -2108,7 +2110,7 @@ class TestIntegrationDocUpdate:
             "description": "Test integration",
             "name": integration_name,
             "display": integration_name,
-            "category": "Analytics & SIEM", 
+            "category": "Analytics & SIEM",
             "script": {
                 "commands": [
                     {
@@ -2125,20 +2127,20 @@ class TestIntegrationDocUpdate:
                                 "name": "log_ts",
                                 "description": "The log timestamp to retrieve",
                                 "required": False,
-                            }
+                            },
                         ],
                         "outputs": [
                             {
                                 "contextPath": "Test.Log.name",
                                 "description": "The log name",
-                                "type": "String"
+                                "type": "String",
                             },
                             {
                                 "contextPath": "Test.Log.id",
                                 "description": "The log ID.",
-                                "type": "String"
-                            }
-                        ]
+                                "type": "String",
+                            },
+                        ],
                     },
                     {
                         "name": f"{integration_name.lower()}-get-alert",
@@ -2159,9 +2161,9 @@ class TestIntegrationDocUpdate:
                                 "name": "alert_max",
                                 "description": "The maximum amount of alerts to retrieve",
                                 "required": False,
-                                "defaultValue": 100
-                            }
-                        ]
+                                "defaultValue": 100,
+                            },
+                        ],
                     },
                 ]
             },
@@ -2170,27 +2172,21 @@ class TestIntegrationDocUpdate:
                     "display": "Base URL",
                     "name": "base_url",
                     "required": True,
-                    "type": 0
+                    "type": 0,
                 },
-                {
-                    "display": "Port",
-                    "name": "port",
-                    "required": True,
-                    "type": 0
-                }
+                {"display": "Port", "name": "port", "required": True, "type": 0},
             ],
-            "commonfields": {
-                "id": integration_name,
-                "version": -1
-            },
+            "commonfields": {"id": integration_name, "version": -1},
             "fromversion": "6.0.0",
         }
 
         existing_readme = [f"# Integration Documentation for {integration_name}"]
         existing_readme.extend(generate_setup_section(existing_integration_yml))
-        commands_section, _ = generate_commands_section(existing_integration_yml, example_dict={}, command_permissions_dict={})
+        commands_section, _ = generate_commands_section(
+            existing_integration_yml, example_dict={}, command_permissions_dict={}
+        )
         existing_readme.extend(commands_section)
-        
+
         updated_integration_yml = {
             "description": "Test integration",
             "name": integration_name,
@@ -2217,21 +2213,21 @@ class TestIntegrationDocUpdate:
                                 "name": "alert_max",
                                 "description": "The maximum amount of alerts to retrieve",
                                 "required": False,
-                                "defaultValue": 100
-                            }
+                                "defaultValue": 100,
+                            },
                         ],
                         "outputs": [
                             {
                                 "contextPath": "Test.Log.name",
                                 "description": "The log name",
-                                "type": "String"
+                                "type": "String",
                             },
                             {
                                 "contextPath": "Test.Log.id",
                                 "description": "The log ID.",
-                                "type": "String"
-                            }
-                        ]
+                                "type": "String",
+                            },
+                        ],
                     },
                     {
                         "name": f"{integration_name.lower()}-get-alert",
@@ -2240,7 +2236,8 @@ class TestIntegrationDocUpdate:
                             {
                                 "name": "alert_name",
                                 "description": "The alert name to retrieve",
-                                "required": False                            },
+                                "required": False,
+                            },
                             {
                                 "name": "alert_ts",
                                 "description": "The alert timestamp to retrieve",
@@ -2250,9 +2247,9 @@ class TestIntegrationDocUpdate:
                                 "name": "alert_max",
                                 "description": "The maximum amount of alerts to retrieve",
                                 "required": False,
-                                "defaultValue": 100
-                            }
-                        ]
+                                "defaultValue": 100,
+                            },
+                        ],
                     },
                     {
                         "name": f"{integration_name.lower()}-get-audits",
@@ -2261,7 +2258,8 @@ class TestIntegrationDocUpdate:
                             {
                                 "name": "audit_name",
                                 "description": "The audit name to retrieve",
-                                "required": False                            },
+                                "required": False,
+                            },
                             {
                                 "name": "audit_ts",
                                 "description": "The audit timestamp to retrieve",
@@ -2271,9 +2269,9 @@ class TestIntegrationDocUpdate:
                                 "name": "audit_max",
                                 "description": "The maximum amount of audits to retrieve",
                                 "required": False,
-                                "defaultValue": 100
-                            }
-                        ]
+                                "defaultValue": 100,
+                            },
+                        ],
                     },
                 ]
             },
@@ -2282,26 +2280,23 @@ class TestIntegrationDocUpdate:
                     "display": "Base URL",
                     "name": "base_url",
                     "required": True,
-                    "type": 0
+                    "type": 0,
                 },
                 {
                     "display": "Port",
                     "name": "port",
                     "required": False,
                     "defaultValue": "443",
-                    "type": 0
+                    "type": 0,
                 },
                 {
                     "display": "Authentication",
                     "name": "authentication",
                     "required": True,
-                    "type": 9
+                    "type": 9,
                 },
             ],
-            "commonfields": {
-                "id": integration_name,
-                "version": -1
-            },
+            "commonfields": {"id": integration_name, "version": -1},
             "fromversion": "6.0.0",
         }
 
@@ -2314,20 +2309,18 @@ class TestIntegrationDocUpdate:
             integration_name,
             yml=existing_integration_yml,
             readme="\n".join(existing_readme),
-            commands_txt=commands
+            commands_txt=commands,
         )
 
-        mocker.patch.dict(
-            os.environ,
-            {
-                "DEMISTO_SDK_CONTENT_PATH": git_repo.path
-            }
-        )
+        mocker.patch.dict(os.environ, {"DEMISTO_SDK_CONTENT_PATH": git_repo.path})
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
-            side_effect=[yaml.dumps(existing_integration_yml), "\n".join(existing_readme)],
+            side_effect=[
+                yaml.dumps(existing_integration_yml),
+                "\n".join(existing_readme),
+            ],
         )
         mocker.patch.object(
             common,
@@ -2344,12 +2337,9 @@ class TestIntegrationDocUpdate:
     "id": 1
 }
 ```""",
-                {
-                    "Test.Log.name": "foo",
-                    "Test.Log.id": 1
-                },
-                []
-            )
+                {"Test.Log.name": "foo", "Test.Log.id": 1},
+                [],
+            ),
         )
 
         # Update the integration
@@ -2357,18 +2347,30 @@ class TestIntegrationDocUpdate:
 
         generate_integration_doc(
             input_path=git_repo.packs[0].integrations[0].yml.path,
-            examples=os.path.join(git_repo.packs[0].integrations[0].path, "commands.txt")
+            examples=os.path.join(
+                git_repo.packs[0].integrations[0].path, "commands.txt"
+            ),
         )
 
-        actual_readme = Path(os.path.join(git_repo.path, "Packs", integration_name, "Integrations", integration_name, INTEGRATIONS_README_FILE_NAME)).read_text()
-        
+        actual_readme = Path(
+            os.path.join(
+                git_repo.path,
+                "Packs",
+                integration_name,
+                "Integrations",
+                integration_name,
+                INTEGRATIONS_README_FILE_NAME,
+            )
+        ).read_text()
+
         assert "Password | True" not in "\n".join(existing_readme)
         assert "#### Command example" not in "\n".join(existing_readme)
         assert "#### Context Example" not in "\n".join(existing_readme)
-        assert f"{integration_name.lower()}-get-audits" not in "\n".join(existing_readme)
-        
+        assert f"{integration_name.lower()}-get-audits" not in "\n".join(
+            existing_readme
+        )
+
         assert "Password | True" in actual_readme
         assert "#### Command example" in actual_readme
         assert "#### Context Example" in actual_readme
         assert f"{integration_name.lower()}-get-audits" in actual_readme
-        

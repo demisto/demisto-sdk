@@ -36,7 +36,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_child_directories, get_content_path
+from demisto_sdk.commands.common.tools import get_child_directories
 from demisto_sdk.commands.content_graph.common import PACK_METADATA_FILENAME
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_script,
@@ -1244,6 +1244,7 @@ class TestReleaseNotes:
         rn_per_content_item = contrib_converter.format_user_input()
         assert expected_rn_per_content_item == rn_per_content_item
 
+
 class TestReadmes:
     repo_dir_name = "content_repo"
     existing_pack_name = "HelloWorld"
@@ -1279,6 +1280,7 @@ class TestReadmes:
         """
 
         import demisto_sdk.commands.init.contribution_converter as cc
+
         cc.CONTENT_PATH = git_repo.path
 
         # Read integration python, yml code and README to create mock integration
@@ -1330,12 +1332,11 @@ class TestReadmes:
             create_new=False,
             pack_dir_name=self.existing_pack_name,
             update_type="revision",
-            release_notes='',
+            release_notes="",
             detected_content_items=contributed_content_items,
-            working_dir_path=str(contribution_temp_dir)
+            working_dir_path=str(contribution_temp_dir),
         )
 
-        
         mocker.patch.object(
             TextFile,
             "read_from_git_path",
@@ -1348,11 +1349,14 @@ class TestReadmes:
         # Copy generated README
         # TODO
         shutil.copyfile(
-            src=contribution_temp_dir / INTEGRATIONS_DIR / self.existing_integration_name / INTEGRATIONS_README_FILE_NAME,
+            src=contribution_temp_dir
+            / INTEGRATIONS_DIR
+            / self.existing_integration_name
+            / INTEGRATIONS_README_FILE_NAME,
             dst=git_repo.packs[0].integrations[0].readme.path,
         )
         modified_readme = Path(contrib_converter.readme_files[0])
-        
+
         # Ensure that the modified README path is in the content repo
         assert Path(git_repo.path) in modified_readme.parents
 
@@ -1408,6 +1412,7 @@ class TestReadmes:
         """
 
         import demisto_sdk.commands.init.contribution_converter as cc
+
         cc.CONTENT_PATH = git_repo.path
 
         git_repo.create_pack(self.existing_pack_name)
@@ -1428,7 +1433,7 @@ class TestReadmes:
             create_new=False,
             pack_dir_name=self.existing_pack_name,
             update_type="revision",
-            release_notes='',
+            release_notes="",
             working_dir_path=str(contribution_temp_dir),
         )
 

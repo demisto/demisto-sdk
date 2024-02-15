@@ -510,14 +510,20 @@ class ContributionConverter:
                     # Construct the path to the README from the content path
                     # e.g. 'Integrations/HelloWorld/README.md"
                     try:
-                        relative_readme_path = "/".join(Path(generated_readme).parts[-3:])
+                        relative_readme_path = "/".join(
+                            Path(generated_readme).parts[-3:]
+                        )
 
                         # Find the relative path in content path
-                        generated_readme_path = list(self.pack_dir_path.glob(relative_readme_path))[0]
-                    except IndexError as e:
-                        logger.warn(f"Failed find the generated README '{generated_readme}' in the content path '{self.pack_dir_path}'. Defaulting to use '{generated_readme}'")
+                        generated_readme_path = str(
+                            list(self.pack_dir_path.glob(relative_readme_path))[0]
+                        )
+                    except IndexError:
+                        logger.warn(
+                            f"Failed find the generated README '{relative_readme_path}' in the content path '{self.pack_dir_path}'. Defaulting to use '{generated_readme}'"
+                        )
                         generated_readme_path = generated_readme
-                    
+
                     generated_readmes.append(str(generated_readme_path))
 
             self.readme_files = generated_readmes

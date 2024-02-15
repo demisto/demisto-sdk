@@ -219,7 +219,12 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         server_started = mdx_server_is_up()
         if not server_started:
-            return False
+            if self.handle_error(
+                "Could not start MDX server", error_code="111", file_path=self.file_path
+            ):
+                return False
+            # In case this error_code should be skipped or ignored
+            return True
         for _ in range(RETRIES_VERIFY_MDX):
             try:
                 readme_content = self.fix_mdx()
@@ -406,7 +411,9 @@ class ReadMeValidator(BaseValidator):
             bool: True if the daemon is accessible
         """
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="DockerPing")  # type: ignore
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="DockerPing"
+            )  # type: ignore
             docker_client.ping()
             return True
         except Exception:
@@ -538,9 +545,9 @@ class ReadMeValidator(BaseValidator):
         for link in absolute_links:
             error_message: str = ""
             error_code: str = ""
-            img_url = link[
-                1
-            ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+            img_url = (
+                link[1].strip()
+            )  # striping in case there are whitespaces at the beginning/ending of url.
             try:
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.

@@ -170,7 +170,9 @@ def is_error_ignored(
         return False
     if related_file_type:
         for related_file in related_file_type:
-            for path in content_item.related_content[related_file]["path"]:
+            for path in content_item.related_content.get(related_file, {}).get(
+                "path", ""
+            ):
                 if err_code in content_item.ignored_errors_related_files(path):
                     content_item.related_content[related_file]["path"] = [path]
                     return True

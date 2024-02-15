@@ -335,7 +335,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             return True
         return False
 
-    def parse_ignored_errors(self, git_sha):
+    def parse_ignored_errors(self, git_sha: str):
         """Sets the pack's ignored_errors field."""
         self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {}) if not git_sha else {}  # type: ignore
 

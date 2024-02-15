@@ -31,7 +31,7 @@ class YAMLContentItemParser(ContentItemParser):
             else self.path / f"{self.path.name}.yml"
             if not self.path.suffix == ".yml"
             else self.path
-        )
+        )  # If git_sha is given then we know we're running on the old_content_object copy and we can assume that the file_path is either the actual item path or the path to the item's dir.
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(

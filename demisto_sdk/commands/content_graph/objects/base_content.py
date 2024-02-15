@@ -19,7 +19,7 @@ import demisto_client
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
-from demisto_sdk.commands.common.files import TextFile
+
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
     RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -226,6 +227,14 @@ class BaseContent(BaseNode):
         raise NotImplementedError
 
     def ignored_errors_related_files(self, file_path: str) -> list:
+        """Return the errors that should be ignored for the given related file path.
+
+        Args:
+            file_path (str): The path of the file we want to get list of ignored errors for.
+
+        Returns:
+            list: The list of the ignored error codes.
+        """
         raise NotImplementedError
 
     @property
@@ -250,6 +259,11 @@ class BaseContent(BaseNode):
         raise NotImplementedError()
 
     def get_related_content(self) -> Dict[RelatedFileType, dict]:
+        """Return a dict of the content item's related items with the list of possible paths, and the status of each related file.
+
+        Returns:
+            Dict[RelatedFileType, dict]: The dict of the content item's related items with the list of possible paths, and the status of each related file.
+        """
         return {}
 
     @staticmethod
@@ -257,7 +271,7 @@ class BaseContent(BaseNode):
     def from_path(
         path: Path,
         git_sha: Optional[str] = None,
-        raise_on_exception: Optional[bool] = False,
+        raise_on_exception: bool = False,
         metadata_only: bool = False,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
@@ -331,7 +345,6 @@ class BaseContent(BaseNode):
         return self.related_content_dict
 
     def get_related_text_file(self, file_type) -> str:
-        
 
         for file_path in self.related_content[file_type]["path"]:
             try:

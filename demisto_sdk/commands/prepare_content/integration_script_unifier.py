@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     ImagesFolderNames,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -403,7 +404,6 @@ class IntegrationScriptUnifier(Unifier):
         else:
             code_type = yml_data.get("script", {}).get("type")
         code_path = str(yml_path).replace(".yml", TYPE_TO_EXTENSION[code_type])  # type: ignore[index]
-        from demisto_sdk.commands.common.files import TextFile
 
         code = TextFile.read_from_git_path(code_path, tag=git_sha)
 

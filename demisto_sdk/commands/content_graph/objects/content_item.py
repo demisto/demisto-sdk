@@ -100,6 +100,9 @@ class ContentItem(BaseContent):
                 or []
             )
         except:  # noqa: E722
+            logger.info(
+                f"got an exception when attempting to extract {path} ignored errors list."
+            )
             return []
 
     @property

@@ -169,15 +169,18 @@ def is_error_ignored(
     if err_code not in ignorable_errors:
         return False
     if related_file_type:
+        # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
             for path in content_item.related_content.get(related_file, {}).get(
                 "path", ""
             ):
                 if err_code in content_item.ignored_errors_related_files(path):
+                    # If the error code is found in one of the paths, will set the path in the related_content and return True.
                     content_item.related_content[related_file]["path"] = [path]
                     return True
         return False
     else:
+        # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
         return err_code in content_item.ignored_errors
 
 

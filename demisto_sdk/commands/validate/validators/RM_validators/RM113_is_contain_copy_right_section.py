@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import RelatedFileType
+from demisto_sdk.commands.common.tools import check_text_content_contain_sub_text
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.validate.tools import check_readme_content_contain_text
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -30,10 +30,10 @@ class IsContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                invalid_lines := check_readme_content_contain_text(
-                    text_list=["BSD", "MIT", "Copyright", "proprietary"],
+                invalid_lines := check_text_content_contain_sub_text(
+                    sub_text_list=["BSD", "MIT", "Copyright", "proprietary"],
                     to_split=True,
-                    readme_content=content_item.readme,
+                    text=content_item.readme,
                 )
             )
         ]

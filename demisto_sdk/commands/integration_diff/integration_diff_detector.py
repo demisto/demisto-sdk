@@ -578,8 +578,6 @@ class IntegrationDiffDetector:
         - `List[str]` with the names of the commands.
         """
 
-        commands: List[str] = []
-
         new_cmds: List[str] = [
             cmd["name"]
             for cmd in self.new_yaml_data["script"]["commands"]

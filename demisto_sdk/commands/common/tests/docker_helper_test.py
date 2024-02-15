@@ -67,7 +67,7 @@ def test_get_python_version_from_image(image: str, output: str, expected: str, m
 def test_cache_of_get_python_version_from_image():
     """
     Given -
-        docker image that should be alrady cached
+        docker image that should be already cached
 
     When -
         Try to get python version from am docker image
@@ -95,6 +95,19 @@ def test_cache_of_get_python_version_from_image():
     ('demisto_test:1234', 'test', dhelper.DockerException, 'Docker exception'),
 ])
 def test_create_docker_container_successfully(mocker, image_name, container_name, exception, exception_text):
+    """
+    Given -
+        Docker client and docker image name
+
+    When -
+        Try to create docker container
+
+    Then -
+        Validate the re-run works as expected
+            1. Getting ConnectionError
+            2. Getting Timeout error
+            3. Getting Docker error
+    """
     class MockContainer:
         @staticmethod
         def remove(**kwargs):

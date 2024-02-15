@@ -2893,12 +2893,13 @@ def test_get_related_content():
             "expected_files": [RelatedFileType.IMAGE, RelatedFileType.README],
         },
         ContentType.PACK: {
-            "expected_len": 4,
+            "expected_len": 5,
             "expected_files": [
                 RelatedFileType.README,
                 RelatedFileType.AUTHOR_IMAGE,
                 RelatedFileType.PACK_IGNORE,
                 RelatedFileType.SECRETS_IGNORE,
+                RelatedFileType.RELEASE_NOTES,
             ],
         },
         ContentType.INCIDENT_TYPE: {"expected_len": 0, "expected_files": []},

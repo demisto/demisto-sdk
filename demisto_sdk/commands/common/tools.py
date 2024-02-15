@@ -9,6 +9,7 @@ import sys
 import time
 import traceback
 import urllib.parse
+import xml.etree.ElementTree as ET
 from abc import ABC
 from collections import OrderedDict
 from concurrent.futures import as_completed
@@ -883,6 +884,8 @@ def get_file(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
+        elif type_of_file.lstrip(".") in {"svg"}:
+            return ET.fromstring(file_content)
         else:
             result = json.load(StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
@@ -2809,7 +2812,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     readme_content += (
         "### "  # mark end of file so last pattern of regex will be recognized.
     )
-    commands = yml_dict.get("script", {})
+    commands = yml_dict.get("script") or {}
 
     # handles scripts
     if not commands:

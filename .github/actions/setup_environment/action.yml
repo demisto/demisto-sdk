@@ -32,14 +32,15 @@ runs:
         poetry check --lock
       shell: bash
 
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: poetry
+        cache-dependency-path: poetry.lock
+
     - name: Install dependencies with poetry
       run: |
         cd ${{ inputs.working-dir }}
         poetry install ${{ inputs.poetry-install-arguments }}
       shell: bash
-
-    - name: Set up Python ${{ inputs.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ inputs.python-version }}
-        # cache: poetry

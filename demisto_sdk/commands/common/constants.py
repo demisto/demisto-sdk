@@ -11,8 +11,13 @@ from packaging.version import Version
 
 
 PROJECT_DATA_DIR = Path.home() / ".demisto-sdk"
+CACHE_DIR = PROJECT_DATA_DIR / "cache"
 LOGS_DIR = PROJECT_DATA_DIR / "logs"
+NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"
+
 LOG_FILE_NAME = "demisto_sdk_debug.log"
+
+NEO4J_DEFAULT_VERSION = "5.13.0"
 
 # --- Environment Variables ---
 # General
@@ -43,6 +48,13 @@ DEMISTO_SDK_LOG_NOTIFY_PATH = "DEMISTO_SDK_LOG_NOTIFY_PATH"
 DEMISTO_SDK_LOG_FILE_SIZE = "DEMISTO_SDK_LOG_FILE_SIZE"
 DEMISTO_SDK_LOG_FILE_COUNT = "DEMISTO_SDK_LOG_FILE_COUNT"
 DEMISTO_SDK_LOG_NO_COLORS = "DEMISTO_SDK_LOG_NO_COLORS"
+
+# Neo4j
+DEMISTO_SDK_NEO4J_VERSION = "DEMISTO_SDK_NEO4J_VERSION"
+DEMISTO_SDK_NEO4J_DATABASE_HTTP = "DEMISTO_SDK_NEO4J_DATABASE_HTTP"
+DEMISTO_SDK_NEO4J_DATABASE_URL = "DEMISTO_SDK_NEO4J_DATABASE_URL"
+DEMISTO_SDK_NEO4J_USERNAME = "DEMISTO_SDK_NEO4J_USERNAME"
+DEMISTO_SDK_NEO4J_PASSWORD = "DEMISTO_SDK_NEO4J_PASSWORD"
 # --- Environment Variables ---
 
 
@@ -566,12 +578,25 @@ PIPFILE_REGEX = r".*/Pipfile(\.lock)?"
 TEST_DATA_REGEX = r".*test_data.*"
 TEST_FILES_REGEX = r".*test_files.*"
 DOCS_REGEX = r".*docs.*"
-IMAGE_REGEX = r".*\.png$"
+PNG_IMAGE_REGEX = r".*\.png$"
+SVG_IMAGE_REGEX = r".*\.svg$"
 DESCRIPTION_REGEX = r".*\.md"
 SCHEMA_REGEX = "Tests/schemas/.*.yml"
 
 # regex pattern used to convert incident/indicator fields to their CLI names
 NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r"[^a-zA-Z0-9]")
+INCORRECT_PACK_NAME_PATTERN = (
+    "[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK["
+    "^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook["
+    "^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK["
+    "^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook["
+    "^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration["
+    "^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION["
+    "^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration["
+    "^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script["
+    "^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT["
+    "^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ "
+)
 
 PACKS_DIR_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}"
 PACK_DIR_REGEX = rf"{PACKS_DIR_REGEX}\/([^\\\/]+)"
@@ -895,6 +920,10 @@ PYTHON_ALL_REGEXES: List[str] = sum(
 
 INTEGRATION_REGXES: List[str] = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]
 
+IMAGE_ALL_REGEXES: List[str] = [
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
+]
 YML_INTEGRATION_REGEXES: List[str] = [
     PACKS_INTEGRATION_YML_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
@@ -1082,7 +1111,13 @@ PACKAGE_SUPPORTING_DIRECTORIES = [
     PARSING_RULES_DIR,
 ]
 
-IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
+IGNORED_TYPES_REGEXES = [
+    DESCRIPTION_REGEX,
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
+    PIPFILE_REGEX,
+    SCHEMA_REGEX,
+]
 
 IGNORED_PACK_NAMES = ["Legacy", "NonSupported", "ApiModules"]
 
@@ -1315,7 +1350,7 @@ SCHEMA_TO_REGEX = {
     "incidentfield": JSON_ALL_INCIDENT_FIELD_REGEXES
     + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     "incidenttype": JSON_ALL_INCIDENT_TYPES_REGEXES,
-    "image": [IMAGE_REGEX],
+    "image": IMAGE_ALL_REGEXES,
     "reputation": JSON_ALL_INDICATOR_TYPES_REGEXES,
     "reputations": JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES,
     "readme": [
@@ -1411,6 +1446,8 @@ COMMON_PARAMS_DISPLAY_NAME = {
     "unsecure": "Trust any certificate (not secure)",
     "proxy": "Use system proxy settings",
 }
+
+REQUIRED_ALLOWED_PARAMS = ("insecure", "unsecure", "proxy", "isFetch")
 
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 

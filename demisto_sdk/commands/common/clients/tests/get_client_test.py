@@ -12,14 +12,15 @@ from demisto_sdk.commands.common.clients import (
     XsoarSaasClient,
     XsoarSaasClientConfig,
 )
-from demisto_sdk.commands.common.clients.errors import UnAuthorized
+from demisto_sdk.commands.common.clients.errors import UnAuthorized, UnHealthyServer
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
 @pytest.fixture()
-def api_requests_mocker(mocker):
-    mocker.patch.object(XsoarClient, "get_xsoar_about", return_value={})
-    mocker.patch.object(XsiamClient, "is_xsiam_server_healthy", return_value=True)
+def base_mocker(mocker):
+    mocker.patch.object(XsoarClient, "about", return_value={})
+    mocker.patch.object(XsoarClient, "is_healthy", return_value=True)
+    mocker.patch.object(XsoarSaasClient, "is_healthy", return_value=True)
     return mocker
 
 
@@ -45,7 +46,8 @@ def api_requests_mocker(mocker):
     ],
 )
 def test_get_client_from_config(
-    api_requests_mocker,
+    mocker,
+    requests_mock,
     config: XsoarClientConfig,
     expected_client_type: Type[XsoarClient],
 ):
@@ -65,6 +67,24 @@ def test_get_client_from_config(
     """
     from demisto_sdk.commands.common.clients import get_client_from_config
 
+    def _xsoar_generic_request_side_effect(
+        path: str, method: str, response_type: str = ""
+    ):
+        if path == "/about" and method == "GET":
+            return {}, 200, {"Content-Type": "application/json"}
+        elif path == "/health/server" and method == "GET":
+            return "", 200, {}
+
+    requests_mock.get(
+        f"{config.base_api_url}/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
+    )
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
+    )
+
     assert type(get_client_from_config(config)) == expected_client_type
 
 
@@ -78,7 +98,8 @@ def test_get_client_from_config(
     ],
 )
 def test_get_client_from_marketplace(
-    api_requests_mocker,
+    mocker,
+    requests_mock,
     base_api_url: str,
     marketplace: MarketplaceVersions,
     expected_client_type: Type[XsoarClient],
@@ -99,6 +120,24 @@ def test_get_client_from_marketplace(
     """
     from demisto_sdk.commands.common.clients import get_client_from_marketplace
 
+    def _xsoar_generic_request_side_effect(
+        path: str, method: str, response_type: str = ""
+    ):
+        if path == "/about" and method == "GET":
+            return {}, 200, {"Content-Type": "application/json"}
+        elif path == "/health/server" and method == "GET":
+            return "", 200, {}
+
+    requests_mock.get(
+        f"{base_api_url}/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
+    )
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
+    )
+
     assert (
         type(
             get_client_from_marketplace(
@@ -117,7 +156,8 @@ def test_get_client_from_marketplace(
     ],
 )
 def test_get_xsoar_client_from_server_type_no_product_deployment_mode(
-    api_requests_mocker,
+    mocker,
+    requests_mock,
     base_api_url: str,
     xsoar_version: str,
     expected_client_type: Type[XsoarClient],
@@ -137,16 +177,29 @@ def test_get_xsoar_client_from_server_type_no_product_deployment_mode(
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 
-    def _generic_request_side_effect(path: str, method: str):
+    def _xsoar_generic_request_side_effect(
+        path: str, method: str, response_type: str = ""
+    ):
         if path == "/ioc-rules" and method == "GET":
             raise ApiException(status=500, reason="error")
+        elif path == "/about" and method == "GET":
+            return (
+                {"demistoVersion": xsoar_version},
+                200,
+                {"Content-Type": "application/json"},
+            )
+        elif path == "/health/server" and method == "GET":
+            return "", 200, {}
 
-    api_requests_mocker.patch.object(
-        XsoarClient, "get_xsoar_about", return_value={"demistoVersion": xsoar_version}
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
     )
-    api_requests_mocker.patch.object(
-        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    requests_mock.get(
+        f"{base_api_url}/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
     )
+
     assert (
         type(
             get_client_from_server_type(
@@ -158,7 +211,7 @@ def test_get_xsoar_client_from_server_type_no_product_deployment_mode(
 
 
 def test_get_xsiam_client_from_server_type_no_product_deployment_mode(
-    api_requests_mocker,
+    mocker, requests_mock
 ):
     """
     Given:
@@ -173,13 +226,23 @@ def test_get_xsiam_client_from_server_type_no_product_deployment_mode(
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 
-    def _generic_request_side_effect(path: str, method: str):
+    def _xsoar_request_side_effect(path: str, method: str, response_type: str = ""):
         if path == "/ioc-rules" and method == "GET":
             return None, 200, {"Content-Type": "application/json"}
+        elif path == "/about" and method == "GET":
+            return {}, 200, {"Content-Type": "application/json"}
+        elif path == "/health/server" and method == "GET":
+            return "", 200, {}
 
-    api_requests_mocker.patch.object(
-        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_xsoar_request_side_effect
     )
+    requests_mock.get(
+        "https://test3.com/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
+    )
+
     assert (
         type(
             get_client_from_server_type(
@@ -190,10 +253,9 @@ def test_get_xsiam_client_from_server_type_no_product_deployment_mode(
     )
 
 
-def test_get_client_from_server_type_unauthorized_exception(api_requests_mocker):
+def test_get_client_from_server_type_unauthorized_exception(mocker):
     """
     Given:
-     - /ioc-rules endpoint that is not valid
      - unauthorized exception when querying /about
 
     When:
@@ -204,15 +266,14 @@ def test_get_client_from_server_type_unauthorized_exception(api_requests_mocker)
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 
-    def _generic_request_side_effect(path: str, method: str):
-        if path == "/ioc-rules" and method == "GET":
-            raise ApiException(status=500, reason="error")
+    def _xsoar_generic_request_side_effect(
+        path: str, method: str, response_type: str = ""
+    ):
+        if path == "/health/server" and method == "GET":
+            raise ApiException(status=401, reason="error")
 
-    api_requests_mocker.patch.object(
-        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
-    )
-    api_requests_mocker.patch.object(
-        XsoarClient, "get_xsoar_about", side_effect=UnAuthorized("error")
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
     )
     with pytest.raises(UnAuthorized):
         get_client_from_server_type(
@@ -234,16 +295,18 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 
-    def _generic_request_side_effect(
+    def _xsoar_generic_request_side_effect(
         path: str, method: str, response_type: str = "object"
     ):
+        if path == "/health/server":
+            return "", 200, ""
         if path == "/ioc-rules" and method == "GET":
             raise ApiException(status=500, reason="error")
         if path == "/about" and method == "GET" and response_type == "object":
             return {}, 200, {"Content-Type": "text/html"}
 
     mocker.patch.object(
-        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
     )
 
     with pytest.raises(ValueError):
@@ -255,21 +318,34 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
 @pytest.mark.parametrize(
     "base_api_url, product_deployment_modes, expected_client_type",
     [
-        ("https://test6.com", {"productMode": "xsiam"}, XsiamClient),
+        (
+            "https://test6.com",
+            {"productMode": "xsiam", "demistoVersion": "8.6.0"},
+            XsiamClient,
+        ),
         (
             "https://test7.com",
-            {"productMode": "xsoar", "deploymentMode": "saas"},
+            {
+                "productMode": "xsoar",
+                "deploymentMode": "saas",
+                "demistoVersion": "8.6.0",
+            },
             XsoarSaasClient,
         ),
         (
             "https://test8.com",
-            {"productMode": "xsoar", "deploymentMode": "opp"},
+            {
+                "productMode": "xsoar",
+                "deploymentMode": "opp",
+                "demistoVersion": "6.13.0",
+            },
             XsoarClient,
         ),
     ],
 )
 def test_get_client_from_server_type_with_product_deployment_mode(
-    api_requests_mocker,
+    mocker,
+    requests_mock,
     base_api_url: str,
     product_deployment_modes: dict,
     expected_client_type: Type[XsoarClient],
@@ -290,17 +366,21 @@ def test_get_client_from_server_type_with_product_deployment_mode(
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 
-    def _generic_request_side_effect(
-        path: str, method: str, response_type: str = "object"
-    ):
-        raise ApiException(status=500, reason="error")
+    def _xsoar_request_side_effect(path: str, method: str, response_type: str = ""):
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException(status=500, reason="error")
+        elif path == "/about" and method == "GET":
+            return product_deployment_modes, 200, {"Content-Type": "application/json"}
+        elif path == "/health/server" and method == "GET":
+            return "", 200, {}
 
-    api_requests_mocker.patch.object(
-        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_xsoar_request_side_effect
     )
-
-    api_requests_mocker.patch.object(
-        XsoarClient, "get_xsoar_about", return_value=product_deployment_modes
+    requests_mock.get(
+        f"{base_api_url}/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
     )
 
     assert (
@@ -314,7 +394,7 @@ def test_get_client_from_server_type_with_product_deployment_mode(
 
 
 def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_with_from_version_larger_than_8(
-    mocker,
+    mocker, requests_mock
 ):
     """
     Given:
@@ -329,9 +409,11 @@ def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_wi
     """
     from demisto_sdk.commands.common.clients import get_client_from_server_type
 
-    def _generic_request_side_effect(
+    def _xsoar_generic_request_side_effect(
         path: str, method: str, response_type: str = "object"
     ):
+        if path == "/health/server":
+            return "", 200, ""
         if path == "/ioc-rules" and method == "GET":
             raise ApiException(status=500, reason="error")
         if path == "/about" and method == "GET" and response_type == "object":
@@ -342,10 +424,132 @@ def test_get_client_from_server_type_no_product_deployment_mode_xsoar_on_prem_wi
             )
 
     mocker.patch.object(
-        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
+    )
+    requests_mock.get(
+        "https://test9.com/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
     )
 
     assert (
         type(get_client_from_server_type(base_url="https://test9.com", api_key="test"))
+        == XsoarClient
+    )
+
+
+def test_get_client_from_server_type_unhealthy_xsoar_server(mocker, requests_mock):
+    """
+    Given:
+     - server which its xsoar part is not healthy
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure the UnHealthyServer is raised
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/health/server":
+            return "", 434, ""
+        if path == "/about":
+            raise ApiException(status=500, reason="error")
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    mocker.patch("demisto_sdk.commands.common.tools.time.sleep")
+
+    with pytest.raises(UnHealthyServer):
+        get_client_from_server_type(
+            base_url="https://test10.com", api_key="test", auth_id="1"
+        )
+
+
+def test_get_client_from_server_type_unhealthy_xdr_server(mocker, requests_mock):
+    """
+    Given:
+     - server which its xdr part is not healthy
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure the UnHealthyServer is raised
+    """
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/health/server":
+            return "", 200, ""
+        if path == "/about":
+            raise ApiException(status=500, reason="error")
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_generic_request_side_effect
+    )
+    mocker.patch("demisto_sdk.commands.common.tools.time.sleep")
+    requests_mock.get(
+        "https://test11.com/public_api/v1/healthcheck",
+        json={"status": "not-available"},
+        status_code=200,
+    )
+
+    with pytest.raises(UnHealthyServer):
+        get_client_from_server_type(
+            base_url="https://test11.com", api_key="test", auth_id="1"
+        )
+
+
+def test_get_xsoar_on_prem_client_from_server_type_with_auth_id(mocker, requests_mock):
+    """
+    Given:
+     - xsoar 6.13.0 version
+     - base url + auth-id + api-key provided
+
+    When:
+     - running get_client_from_server_type function
+
+    Then:
+     - make sure the XsoarClient is returned even when auth_id is defined (which is not needed)
+    """
+
+    from demisto_sdk.commands.common.clients import get_client_from_server_type
+
+    def _xsoar_generic_request_side_effect(
+        path: str, method: str, response_type: str = "object"
+    ):
+        if path == "/health/server":
+            return "", 200, ""
+        if path == "/ioc-rules" and method == "GET":
+            raise ApiException(status=500, reason="error")
+        if path == "/about" and method == "GET" and response_type == "object":
+            return (
+                {"demistoVersion": "6.13.0"},
+                200,
+                {"Content-Type": "application/json"},
+            )
+
+    mocker.patch.object(
+        DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
+    )
+    requests_mock.get(
+        "https://test12.com/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
+    )
+
+    assert (
+        type(
+            get_client_from_server_type(
+                base_url="https://test12.com", api_key="test", auth_id="1"
+            )
+        )
         == XsoarClient
     )

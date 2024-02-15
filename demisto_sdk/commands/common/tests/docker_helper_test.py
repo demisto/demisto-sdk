@@ -89,12 +89,22 @@ def test_cache_of_get_python_version_from_image():
     assert cache_info.hits == cache_info_before.hits + 1
 
 
-@pytest.mark.parametrize('image_name, container_name, exception, exception_text', [
-    ('demisto_test:1234', 'test', requests.exceptions.ConnectionError, 'Connection error'),
-    ('demisto_test:1234', 'test', requests.exceptions.Timeout, 'Timeout error'),
-    ('demisto_test:1234', 'test', dhelper.DockerException, 'Docker exception'),
-])
-def test_create_docker_container_successfully(mocker, image_name, container_name, exception, exception_text):
+@pytest.mark.parametrize(
+    "image_name, container_name, exception, exception_text",
+    [
+        (
+            "demisto_test:1234",
+            "test",
+            requests.exceptions.ConnectionError,
+            "Connection error",
+        ),
+        ("demisto_test:1234", "test", requests.exceptions.Timeout, "Timeout error"),
+        ("demisto_test:1234", "test", dhelper.DockerException, "Docker exception"),
+    ],
+)
+def test_create_docker_container_successfully(
+    mocker, image_name, container_name, exception, exception_text
+):
     """
     Given -
         Docker client and docker image name
@@ -108,31 +118,38 @@ def test_create_docker_container_successfully(mocker, image_name, container_name
             2. Getting Timeout error
             3. Getting Docker error
     """
+
     class MockContainer:
         @staticmethod
         def remove(**kwargs):
-            assert kwargs.get('force')
+            assert kwargs.get("force")
             raise exception(exception_text)
 
     class MockContainerCollection:
         @staticmethod
         def create(**kwargs):
-            assert kwargs.get('image') == image_name
-            assert kwargs.get('name') == container_name
+            assert kwargs.get("image") == image_name
+            assert kwargs.get("name") == container_name
             raise exception(exception_text)
 
         @staticmethod
         def get(**kwargs):
-            assert kwargs.get('container_id') == container_name
+            assert kwargs.get("container_id") == container_name
             return MockContainer()
 
     class MockedDockerClient:
         containers = MockContainerCollection()
 
-    mocker.patch('demisto_sdk.commands.common.docker_helper.init_global_docker_client', return_value=MockedDockerClient)
-    log_result = mocker.patch('demisto_sdk.commands.common.tools.logger.debug')
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_helper.init_global_docker_client",
+        return_value=MockedDockerClient,
+    )
+    log_result = mocker.patch("demisto_sdk.commands.common.tools.logger.debug")
 
     with pytest.raises(exception):
         dhelper.DockerBase().create_container(image=image_name, name=container_name)
 
-    assert f'error when executing func create_container, error: {exception_text}, time 3' in log_result.call_args.args
+    assert (
+        f"error when executing func create_container, error: {exception_text}, time 3"
+        in log_result.call_args.args
+    )

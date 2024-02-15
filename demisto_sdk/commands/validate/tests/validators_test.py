@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 import toml
 
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR
+from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -515,4 +515,80 @@ def test_load_files_with_integration_dir(repo):
             integration.code.path,
             integration.description.path,
         )
+    )
+
+
+def test_collect_related_files_main_items(repo):
+    """
+    Given:
+    - A path to integration code, modeling_rule schema, and pack readme.
+    When:
+    - Calling the collect_related_files_main_items.
+    Then:
+    - Make sure that the right main passes were returned:
+        - integration code should return the integration yml path.
+        - modeling_rule schema should return the modeling_rule yml path.
+        - pack readme should return the pack_metadata.json pack..
+    """
+    pack = repo.create_pack("pack_no_1")
+    initializer = Initializer()
+    integration = pack.create_integration()
+    modeling_rule = pack.create_modeling_rule({})
+    results = initializer.collect_related_files_main_items(
+        {
+            Path(integration.code.path),
+            Path(modeling_rule.schema.path),
+            Path(pack.readme.path),
+        }
+    )
+    assert results == {
+        Path(integration.yml.path),
+        Path(modeling_rule.yml.path),
+        Path(pack.pack_metadata.path),
+    }
+
+
+def test_get_items_status(repo):
+    """
+    Given:
+    - A dictionary with:
+        - A path to integration code with ADDED git status.
+        - A path to script code with ADDED git status.
+        - A path to integration yml with MODIFIED git status.
+        - A path to modeling_rule schema with MODIFIED git status.
+        - A path to pack readme with ADDED git status.
+        - A path to pack metadata with MODIFIED git status.
+    When:
+    - Calling the collect_related_files_main_items.
+    Then:
+    - Make sure that the right amount of paths are returned and that the right statuses were given:
+        - The integration code and yml should return the integration yml path with the yml status (MODIFIED).
+        - The modeling_rule schema should return the modeling_rule yml path with no status.
+        - The pack readme and pack_metadata.json should return the pack_metadata.json path with the pack_metadata.json status (MODIFIED).
+        - The script code should return the script yml path with script code status (ADDED).
+    """
+    pack = repo.create_pack("pack_no_1")
+    initializer = Initializer()
+    integration = pack.create_integration()
+    modeling_rule = pack.create_modeling_rule({})
+    script = pack.create_script()
+    statuses_dict = {
+        Path(integration.code.path): GitStatuses.ADDED,
+        Path(script.code.path): GitStatuses.ADDED,
+        Path(integration.yml.path): GitStatuses.MODIFIED,
+        Path(modeling_rule.schema.path): GitStatuses.MODIFIED,
+        Path(pack.readme.path): GitStatuses.ADDED,
+        Path(pack.pack_metadata.path): GitStatuses.MODIFIED,
+    }
+    results = initializer.get_items_status(statuses_dict)
+    expected_results = {
+        Path(integration.yml.path): GitStatuses.MODIFIED,
+        Path(modeling_rule.yml.path): None,
+        Path(pack.pack_metadata.path): GitStatuses.MODIFIED,
+        Path(script.yml.path): GitStatuses.ADDED,
+    }
+    assert len(results.keys()) == 4
+    assert all(
+        expected_results[item_path] == git_status
+        for item_path, git_status in results.items()
     )

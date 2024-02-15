@@ -14,7 +14,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
@@ -53,6 +53,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
+    related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -84,7 +85,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     content_item.git_status, self.expected_git_statuses
                 ),
                 not is_error_ignored(
-                    self.error_code, content_item.ignored_errors, ignorable_errors
+                    self.error_code,
+                    ignorable_errors,
+                    content_item,
+                    self.related_file_type,
                 ),
                 not is_support_level_support_validation(
                     self.error_code, support_level_dict, content_item.support_level
@@ -145,6 +149,36 @@ class BaseResult(BaseModel):
         }
 
 
+def is_error_ignored(
+    err_code: str,
+    ignorable_errors: List[str],
+    content_item: ContentTypes,
+    related_file_type: Optional[List[RelatedFileType]] = None,
+) -> bool:
+    """
+    Check if the given validation error code is ignored by the current item ignored error list.
+
+    Args:
+        err_code (str): The validation's error code.
+        ignored_errors (list): The list of the content item ignored errors.
+        ignorable_errors (list): The list of the ignorable errors.
+
+    Returns:
+        bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
+    """
+    if err_code not in ignorable_errors:
+        return False
+    if related_file_type:
+        for related_file in related_file_type:
+            for path in content_item.related_content[related_file]["path"]:
+                if err_code in content_item.ignored_errors_related_files(path):
+                    content_item.related_content[related_file]["path"] = [path]
+                    return True
+        return False
+    else:
+        return err_code in content_item.ignored_errors
+
+
 class ValidationResult(BaseResult, BaseModel):
     """This is a class for validation results."""
 
@@ -171,23 +205,6 @@ class InvalidContentItemResult(BaseResult, BaseModel):
             "error code": self.error_code,
             "message": self.message,
         }
-
-
-def is_error_ignored(
-    err_code: str, ignored_errors: List[str], ignorable_errors: List[str]
-) -> bool:
-    """
-    Check if the given validation error code is ignored by the current item ignored error list.
-
-    Args:
-        err_code (str): The validation's error code.
-        ignored_errors (list): The list of the content item ignored errors.
-        ignorable_errors (list): The list of the ignorable errors.
-
-    Returns:
-        bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
-    """
-    return err_code in ignored_errors and err_code in ignorable_errors
 
 
 def is_support_level_support_validation(

@@ -166,6 +166,19 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         except:  # noqa: E722
             return []
 
+    def ignored_errors_related_files(self, file_path: str) -> list:
+        try:
+            return (
+                list(
+                    self.ignored_errors_dict.get(  # type: ignore
+                        f"file:{(Path(file_path)).name}", []
+                    ).items()
+                )[0][1].split(",")
+                or []
+            )
+        except:  # noqa: E722
+            return []
+
     @property
     def pack_name(self) -> str:
         return self.name

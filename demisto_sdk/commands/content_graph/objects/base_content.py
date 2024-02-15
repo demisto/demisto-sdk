@@ -225,6 +225,9 @@ class BaseContent(BaseNode):
     def ignored_errors(self) -> list:
         raise NotImplementedError
 
+    def ignored_errors_related_files(self, file_path: str) -> list:
+        raise NotImplementedError
+
     @property
     def support_level(self) -> str:
         raise NotImplementedError

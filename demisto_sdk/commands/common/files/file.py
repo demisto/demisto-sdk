@@ -430,7 +430,7 @@ class File(ABC):
         Reads a file from any api via http request.
 
         Args:
-            url: the utl to the file
+            url: the url to the file
             headers: request headers
             params: request params
             verify: whether SSL should be verified
@@ -462,10 +462,12 @@ class File(ABC):
             logger.exception(f"Could not retrieve file from {url}")
             raise HttpFileReadError(url, exc=e)
 
+        _cls = cls._from_path(url) if cls is File else cls
+
         try:
-            return cls.read_from_file_content(
+            return _cls.read_from_file_content(
                 response.content, encoding=encoding, handler=handler
             )
         except FileContentReadError as e:
-            logger.error(f"Could not read file from {url} as {cls.__name__} file")
+            logger.error(f"Could not read file from {url} as {_cls.__name__} file")
             raise HttpFileReadError(url, exc=e)

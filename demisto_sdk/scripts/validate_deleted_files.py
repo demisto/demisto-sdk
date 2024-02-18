@@ -16,14 +16,14 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type
 
 
-def is_file_allowed_allowed_to_be_deleted_(file_path: Path) -> bool:
+def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
     file_path = str(file_path)
 
     try:
         file_content = File.read_from_git_path(file_path)
     except FileNotFoundError:
         logger.warning(
-            f"Could not find {file_path} in branch {DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
+            f"Could not find {file_path} in remote branch {DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
         )
         logger.debug(
             f"Retrieving {file_path} content from local branch {DEMISTO_GIT_PRIMARY_BRANCH}"
@@ -57,7 +57,7 @@ def is_file_allowed_to_be_deleted(file_path: Path) -> bool:
         # if the file is not under Packs/Tests/Utils folder, allow to delete it
         return True
 
-    return is_file_allowed_allowed_to_be_deleted_(file_path)
+    return is_file_allowed_to_be_deleted_by_file_type(file_path)
 
 
 def validate_deleted_files():

@@ -2,7 +2,7 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -10,13 +10,19 @@ from packaging.version import Version, parse
 from pydantic import DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
+    AUTHOR_IMAGE_FILE_NAME,
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
+    PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_README_FILE_NAME,
+    PACKS_WHITELIST_FILE_NAME,
+    RELEASE_NOTES_DIR,
     ImagesFolderNames,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -118,7 +124,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     ignored_errors_dict: dict = Field({}, exclude=True)
     pack_readme: str = Field("", exclude=True)
     latest_rn_version: str = Field("", exclude=True)
-    latest_rn_content: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
@@ -144,25 +149,30 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.premium or False
 
     @property
-    def readme(self) -> str:
-        return get_file(str(self.path / "README.md"), return_content=True)
-
-    @property
     def pack_id(self) -> str:
         return self.object_id
 
     @property
-    def ignored_errors(self) -> list:
+    def ignored_errors(self) -> List[str]:
+        return self.get_ignored_errors(PACK_METADATA_FILENAME)
+
+    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+        return self.get_ignored_errors((Path(file_path)).name)
+
+    def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:
             return (
                 list(
                     self.ignored_errors_dict.get(  # type: ignore
-                        f"file:{PACK_METADATA_FILENAME}", []
+                        f"file:{path}", []
                     ).items()
                 )[0][1].split(",")
                 or []
             )
         except:  # noqa: E722
+            logger.error(
+                f"error when attempting to extract ignored errors list from path {path}"
+            )
             return []
 
     @property
@@ -538,3 +548,41 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
         super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
+
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        related_content_files = super().get_related_content()
+        related_content_files.update(
+            {
+                RelatedFileType.PACK_IGNORE: {
+                    "path": [str(self.path / PACKS_PACK_IGNORE_FILE_NAME)],
+                    "git_status": None,
+                },
+                RelatedFileType.SECRETS_IGNORE: {
+                    "path": [str(self.path / PACKS_WHITELIST_FILE_NAME)],
+                    "git_status": None,
+                },
+                RelatedFileType.AUTHOR_IMAGE: {
+                    "path": [str(self.path / AUTHOR_IMAGE_FILE_NAME)],
+                    "git_status": None,
+                },
+                RelatedFileType.README: {
+                    "path": [str(self.path / PACKS_README_FILE_NAME)],
+                    "git_status": None,
+                },
+                RelatedFileType.RELEASE_NOTES: {
+                    "path": [
+                        str(
+                            self.path
+                            / RELEASE_NOTES_DIR
+                            / f"{self.latest_rn_version.replace('.', '_')}.md"
+                        )
+                    ],
+                    "git_status": None,
+                },
+            }
+        )
+        return related_content_files
+
+    @property
+    def readme(self) -> str:
+        return self.get_related_text_file(RelatedFileType.README)

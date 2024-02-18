@@ -35,7 +35,7 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n".join(
                         [
-                            f"The {key} param display name should be '{val['display']}', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8."
+                            f"The {key} param display name should be '{val['display']}', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be false."
                             for key, val in self.fixed_params[content_item.name].items()
                         ]
                     )

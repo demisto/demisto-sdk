@@ -34,7 +34,7 @@ class CommitOrBranchNotFoundError(GitError):
             commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
         error_message = f"Commit/Branch {commit_or_branch} could not be found"
         if exception:
-            error_message += f", error: {exception}"
+            error_message = f"{error_message}, error: {exception}"
         super().__init__(error_message)
 
 

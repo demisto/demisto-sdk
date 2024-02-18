@@ -86,20 +86,28 @@ class GitUtil:
     def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> Commit:
 
         if from_remote:
-            if self.is_valid_local_commit(commit_or_branch):
-                # cannot get commit from remote ref
-                raise CommitOrBranchNotFoundError(commit_or_branch, from_remote=False)
-            branch = commit_or_branch
-            if DEMISTO_GIT_UPSTREAM not in branch:
-                branch = f"{DEMISTO_GIT_UPSTREAM}/{branch}"
+            if self.is_valid_remote_branch(commit_or_branch):
+                branch = commit_or_branch
 
-            if not self.is_valid_remote_branch(branch):
-                raise CommitOrBranchNotFoundError(branch, from_remote=True)
+                if DEMISTO_GIT_UPSTREAM not in branch:
+                    branch = f"{DEMISTO_GIT_UPSTREAM}/{branch}"
 
-            remote_branch = self.repo.refs[branch]  # type: ignore[index]
-            return remote_branch.commit
+                remote_branch = self.repo.refs[branch]  # type: ignore[index]
+                return remote_branch.commit
+
+            commit = commit_or_branch
+            if not self.is_valid_commit(commit):
+                # if commit does not exist locally, it might exist in remotes, hence run git fetch
+                self.fetch()
+                if not self.is_valid_commit(commit):
+                    raise CommitOrBranchNotFoundError(
+                        commit_or_branch, from_remote=False
+                    )
+
+            return self.repo.commit(commit)
+
         else:
-            if not self.is_valid_local_commit(
+            if not self.is_valid_commit(
                 commit_or_branch
             ) and not self.is_valid_local_branch(commit_or_branch):
                 raise CommitOrBranchNotFoundError(commit_or_branch, from_remote=False)
@@ -821,7 +829,7 @@ class GitUtil:
             branch_name = f"{DEMISTO_GIT_UPSTREAM}/{branch_name}"
         return branch_name in self.repo.refs  # type: ignore[operator]
 
-    def is_valid_local_commit(self, commit_hash: str) -> bool:
+    def is_valid_commit(self, commit_hash: str) -> bool:
         """
         Returns True if the commit hash provided is indeed a valid commit (and not a branch!)
 
@@ -1030,7 +1038,7 @@ class GitUtil:
         return bool(self.repo.ignored(file_path))
 
     def fetch(self):
-        self.repo.remote().fetch()
+        self.repo.remote(DEMISTO_GIT_UPSTREAM).fetch()
 
     def fetch_all(self):
         for remote in self.repo.remotes:

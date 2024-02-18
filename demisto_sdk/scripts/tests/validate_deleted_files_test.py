@@ -104,3 +104,25 @@ def test_validate_deleted_files_when_adding_integration(git_repo: Repo):
 
     with ChangeCWD(git_repo.path):
         assert main() == 0
+
+
+def test_validate_deleted_files_when_renaming_file_name(git_repo: Repo):
+    """
+    Given:
+        - conf.json file which was renamed
+
+    When:
+        - running the validate-deleted-files script
+
+    Then:
+        - make sure that the script returns error code 0, which means it didn't identify any deleted files
+    """
+    from demisto_sdk.scripts.validate_deleted_files import main
+
+    git_repo.git_util.repo.git.checkout("-b", "rename_conf_json_file")
+    conf_json_path = Path(git_repo.path) / "Tests/conf.json"
+    conf_json_path.rename(Path(git_repo.path) / "Tests/rename_conf_json_file.json")
+    git_repo.git_util.commit_files("rename conf.json")
+
+    with ChangeCWD(git_repo.path):
+        assert main() == 0

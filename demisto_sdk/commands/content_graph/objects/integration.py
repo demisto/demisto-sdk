@@ -181,9 +181,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data["script"]["commands"] = yml_commands
         write_dict(self.path, data, indent=4)
 
-    def get_related_content(self) -> Dict[RelatedFileType, dict]:
-        related_content_ls = super().get_related_content()
-        related_content_ls.update(
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        related_content_files = super().get_related_content()
+        related_content_files.update(
             {
                 RelatedFileType.IMAGE: {
                     "path": [
@@ -209,7 +209,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 },
             }
         )
-        return related_content_ls
+        return related_content_files
 
     @property
     def description_file(self) -> str:

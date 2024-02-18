@@ -29,9 +29,9 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
                 return True
         return False
 
-    def get_related_content(self) -> Dict[RelatedFileType, dict]:
-        related_content_ls = super().get_related_content()
-        related_content_ls.update(
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        related_content_files = super().get_related_content()
+        related_content_files.update(
             {
                 RelatedFileType.SCHEMA: {
                     "path": [str(self.path).replace(".yml", "_Schema.json")],
@@ -43,4 +43,4 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
                 },
             }
         )
-        return related_content_ls
+        return related_content_files

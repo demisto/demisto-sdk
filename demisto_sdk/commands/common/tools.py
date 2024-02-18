@@ -4372,7 +4372,7 @@ def check_text_content_contain_sub_text(
     is_lower: bool = False,
     to_split: bool = False,
     text: str = "",
-):
+) -> List[str]:
     """
     Args:
         sub_text_list (List[str]): list of words/sentences to search in line content.

@@ -12,6 +12,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    Union,
     cast,
 )
 
@@ -223,10 +224,10 @@ class BaseContent(BaseNode):
         raise NotImplementedError
 
     @property
-    def ignored_errors(self) -> list:
+    def ignored_errors(self) -> List[str]:
         raise NotImplementedError
 
-    def ignored_errors_related_files(self, file_path: str) -> list:
+    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
         """Return the errors that should be ignored for the given related file path.
 
         Args:
@@ -258,7 +259,7 @@ class BaseContent(BaseNode):
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
 
-    def get_related_content(self) -> Dict[RelatedFileType, dict]:
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
         """Return a dict of the content item's related items with the list of possible paths, and the status of each related file.
 
         Returns:

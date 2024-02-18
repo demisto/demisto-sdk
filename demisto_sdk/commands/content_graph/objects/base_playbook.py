@@ -43,9 +43,9 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_playbook
 
-    def get_related_content(self) -> Dict[RelatedFileType, dict]:
-        related_content_ls = super().get_related_content()
-        related_content_ls.update(
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        related_content_files = super().get_related_content()
+        related_content_files.update(
             {
                 RelatedFileType.IMAGE: {
                     "path": [
@@ -73,7 +73,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
                 },
             }
         )
-        return related_content_ls
+        return related_content_files
 
     @property
     def readme(self) -> str:

@@ -105,12 +105,12 @@ class IntegrationScript(ContentItem):
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
 
-    def get_related_content(self) -> Dict[RelatedFileType, dict]:
-        related_content_ls = super().get_related_content()
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        related_content_files = super().get_related_content()
         suffix = (
             ".ps1" if self.is_powershell else ".js" if self.is_javascript else ".py"
         )
-        related_content_ls.update(
+        related_content_files.update(
             {
                 RelatedFileType.README: {
                     "path": [
@@ -134,7 +134,7 @@ class IntegrationScript(ContentItem):
                 },
             }
         )
-        return related_content_ls
+        return related_content_files
 
     @property
     def readme(self) -> str:

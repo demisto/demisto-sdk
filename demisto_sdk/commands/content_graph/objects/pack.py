@@ -2,7 +2,7 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -153,13 +153,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.object_id
 
     @property
-    def ignored_errors(self) -> list:
+    def ignored_errors(self) -> List[str]:
         return self.get_ignored_errors(PACK_METADATA_FILENAME)
 
-    def ignored_errors_related_files(self, file_path: str) -> list:
+    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
         return self.get_ignored_errors((Path(file_path)).name)
 
-    def get_ignored_errors(self, path: str) -> list:
+    def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:
             return (
                 list(
@@ -549,9 +549,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         data = get_file(file_path)
         super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
 
-    def get_related_content(self) -> Dict[RelatedFileType, dict]:
-        related_content_ls = super().get_related_content()
-        related_content_ls.update(
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        related_content_files = super().get_related_content()
+        related_content_files.update(
             {
                 RelatedFileType.PACK_IGNORE: {
                     "path": [str(self.path / PACKS_PACK_IGNORE_FILE_NAME)],
@@ -581,7 +581,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 },
             }
         )
-        return related_content_ls
+        return related_content_files
 
     @property
     def readme(self) -> str:

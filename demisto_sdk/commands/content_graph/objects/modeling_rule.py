@@ -55,9 +55,9 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
                 return True
         return False
 
-    def get_related_content(self) -> Dict[RelatedFileType, dict]:
-        related_content_ls = super().get_related_content()
-        related_content_ls.update(
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        related_content_files = super().get_related_content()
+        related_content_files.update(
             {
                 RelatedFileType.SCHEMA: {
                     "path": [str(self.path).replace(".yml", "_Schema.json")],
@@ -69,4 +69,4 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
                 },
             }
         )
-        return related_content_ls
+        return related_content_files

@@ -22,16 +22,22 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 
+COMMIT_PATTERN = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
+
 
 class CommitOrBranchNotFoundError(GitError):
     def __init__(
-        self, commit_or_branch: str, exception: Exception, from_remote: bool = True
+        self,
+        commit_or_branch: str,
+        exception: Optional[Exception] = None,
+        from_remote: bool = True,
     ):
-        if from_remote:
+        if from_remote and DEMISTO_GIT_UPSTREAM not in commit_or_branch:
             commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
-        super().__init__(
-            f"Commit/Branch {commit_or_branch} could not be found, error: {exception}"
-        )
+        error_message = f"Commit/Branch {commit_or_branch} could not be found"
+        if exception:
+            error_message += f", error: {exception}"
+        super().__init__(error_message)
 
 
 class GitFileNotFoundError(NoSuchPathError):
@@ -80,31 +86,30 @@ class GitUtil:
             return Path(os.path.relpath(str(path), self.git_path()))
 
     def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> Commit:
+
         if from_remote:
-            # check if file exist in remote branch
-            try:
-                if DEMISTO_GIT_UPSTREAM not in commit_or_branch:
-                    commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
-                remote_branch = self.repo.refs[commit_or_branch]  # type: ignore[index]
-                return remote_branch.commit
-            except IndexError as e:
-                # there isn't remote branch like this
-                raise CommitOrBranchNotFoundError(
-                    commit_or_branch, from_remote=from_remote, exception=e
-                )
+            if self.is_valid_local_commit(commit_or_branch):
+                # cannot get commit from remote ref
+                raise CommitOrBranchNotFoundError(commit_or_branch, from_remote=False)
+            branch = commit_or_branch
+            if DEMISTO_GIT_UPSTREAM not in branch:
+                branch = f"{DEMISTO_GIT_UPSTREAM}/{branch}"
+
+            if not self.is_valid_remote_branch(branch):
+                raise CommitOrBranchNotFoundError(branch, from_remote=True)
+
+            remote_branch = self.repo.refs[branch]
+            return remote_branch.commit
         else:
-            # check if file exist in a local branch/commit
-            try:
-                return self.repo.commit(commit_or_branch)
-            except ValueError as e:
-                # commit/branch does not exist
-                raise CommitOrBranchNotFoundError(
-                    commit_or_branch, from_remote=from_remote, exception=e
-                )
+            if not self.is_valid_local_commit(
+                commit_or_branch
+            ) and not self.is_valid_local_branch(commit_or_branch):
+                raise CommitOrBranchNotFoundError(commit_or_branch, from_remote=False)
+
+            return self.repo.commit(commit_or_branch)
 
     def get_previous_commit(self, commit: Optional[str] = None) -> Commit:
         """
-
         Returns the previous commit of a specific commit.
         If not provided returns previous commit of the head commit.
 
@@ -746,7 +751,7 @@ class GitUtil:
 
         return set()
 
-    def check_if_remote_exists(self, remote):
+    def check_if_remote_exists(self, remote: str) -> bool:
         if "/" in remote:
             remote = remote.split("/")[0]
 
@@ -778,10 +783,9 @@ class GitUtil:
                     return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
-    def handle_prev_ver(self, prev_ver: str = ""):
+    def handle_prev_ver(self, prev_ver: str = "") -> Tuple[Optional[str], str]:
         # check for sha1 in regex
-        sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
-        if prev_ver and sha1_pattern.match(prev_ver):
+        if prev_ver and COMMIT_PATTERN.match(prev_ver):
             return None, prev_ver
 
         if prev_ver and "/" in prev_ver:
@@ -794,7 +798,6 @@ class GitUtil:
 
         else:
             remote = str(self.repo.remote())
-            branch = ""
             if prev_ver:
                 branch = prev_ver
             else:
@@ -811,11 +814,31 @@ class GitUtil:
         except TypeError:
             return self.get_current_commit_hash()
 
+    def is_valid_local_branch(self, branch_name: str) -> bool:
+        return branch_name in self.repo.heads
+
+    def is_valid_remote_branch(self, branch_name: str) -> bool:
+        if DEMISTO_GIT_UPSTREAM not in branch_name:
+            branch_name = f"{DEMISTO_GIT_UPSTREAM}/{branch_name}"
+        return branch_name in self.repo.refs
+
+    def is_valid_local_commit(self, commit_hash: str) -> bool:
+        """
+        Returns True if the commit hash provided is indeed a valid commit (and not a branch!)
+
+        if commit_hash is a branch / commit is invalid, will return False
+        """
+        try:
+            commit = self.repo.commit(commit_hash)
+            return commit.hexsha == commit_hash
+        except ValueError:
+            return False
+
     def get_current_working_branch(self) -> str:
         return str(self.repo.active_branch)
 
     def get_current_commit_hash(self) -> str:
-        return str(self.repo.head.object.hexsha)
+        return self.repo.head.object.hexsha
 
     def git_path(self) -> str:
         git_path = self.repo.git.rev_parse("--show-toplevel")

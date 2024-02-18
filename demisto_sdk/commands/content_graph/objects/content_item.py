@@ -100,8 +100,8 @@ class ContentItem(BaseContent):
                 or []
             )
         except:  # noqa: E722
-            logger.info(
-                f"got an exception when attempting to extract {path} ignored errors list."
+            logger.error(
+                f"error when attempting to extract ignored errors list from {path} for {self.id}"
             )
             return []
 

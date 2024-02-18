@@ -22,8 +22,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 
-COMMIT_PATTERN = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
-
 
 class CommitOrBranchNotFoundError(GitError):
     def __init__(
@@ -98,7 +96,7 @@ class GitUtil:
             if not self.is_valid_remote_branch(branch):
                 raise CommitOrBranchNotFoundError(branch, from_remote=True)
 
-            remote_branch = self.repo.refs[branch]
+            remote_branch = self.repo.refs[branch]  # type: ignore[index]
             return remote_branch.commit
         else:
             if not self.is_valid_local_commit(
@@ -783,9 +781,10 @@ class GitUtil:
                     return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
-    def handle_prev_ver(self, prev_ver: str = "") -> Tuple[Optional[str], str]:
+    def handle_prev_ver(self, prev_ver: str = ""):
         # check for sha1 in regex
-        if prev_ver and COMMIT_PATTERN.match(prev_ver):
+        sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
+        if prev_ver and sha1_pattern.match(prev_ver):
             return None, prev_ver
 
         if prev_ver and "/" in prev_ver:
@@ -820,7 +819,7 @@ class GitUtil:
     def is_valid_remote_branch(self, branch_name: str) -> bool:
         if DEMISTO_GIT_UPSTREAM not in branch_name:
             branch_name = f"{DEMISTO_GIT_UPSTREAM}/{branch_name}"
-        return branch_name in self.repo.refs
+        return branch_name in self.repo.refs  # type: ignore[operator]
 
     def is_valid_local_commit(self, commit_hash: str) -> bool:
         """

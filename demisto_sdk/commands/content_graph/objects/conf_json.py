@@ -131,5 +131,12 @@ class ConfJSON(StrictBaseModel):
             ),
         ):
             for id_source in id_sources:
-                result[content_type].update(filter(None, always_iterable(id_source)))
+                print(content_type)
+                print(type(id_source))
+                value = list(filter(None, always_iterable(id_source)))
+                print(value)
+                try:
+                    result[content_type].update(value)
+                except TypeError:
+                    print("ERROR")
         return dict(result)

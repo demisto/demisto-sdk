@@ -62,9 +62,13 @@ class ConfJsonValidator:
         )
 
 
-if __name__ == "__main__":
+def main():
     logging_setup()
     if not ConfJsonValidator().validate():
         logger.error("conf.json is not valid")
         exit(1)
     logger.info("[green]conf.json is valid[/green]")
+
+
+if __name__ == "__main__":
+    main()

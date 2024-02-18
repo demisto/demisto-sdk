@@ -358,7 +358,7 @@ class BaseContent(BaseNode):
                 self.related_content[file_type]["path"] = [file_path]
                 return file
             except Exception as e:
-                logger.error(str(e))
+                logger.error(f'Failed to get related text file, error: {e}')
                 continue
         raise NotAContentItemException(
             f"The {file_type.value} file could not be found in the following paths: {', '.join(self.related_content[file_type]['path'])}"

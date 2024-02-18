@@ -344,7 +344,7 @@ class BaseContent(BaseNode):
                         )
         return self.related_content_dict
 
-    def get_related_text_file(self, file_type) -> str:
+    def get_related_text_file(self, file_type: RelatedFileType) -> str:
 
         for file_path in self.related_content[file_type]["path"]:
             try:

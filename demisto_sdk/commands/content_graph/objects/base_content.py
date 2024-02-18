@@ -258,7 +258,7 @@ class BaseContent(BaseNode):
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
 
-    def get_related_content(self) -> Dict[RelatedFileType, dict]:
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
         """Return a dict of the content item's related items with the list of possible paths, and the status of each related file.
 
         Returns:

@@ -156,7 +156,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def ignored_errors(self) -> List[str]:
         return self.get_ignored_errors(PACK_METADATA_FILENAME)
 
-    def ignored_errors_related_files(self, file_path: str) -> list:
+    def ignored_errors_related_files(self, file_path: str) -> List[str]:
         return self.get_ignored_errors((Path(file_path)).name)
 
     def get_ignored_errors(self, path: str) -> list:

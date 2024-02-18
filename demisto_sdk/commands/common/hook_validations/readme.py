@@ -219,14 +219,9 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         server_started = mdx_server_is_up()
         if not server_started:
-            if self.handle_error(
-                "Could not start MDX server",
-                error_code="RM115",
-                file_path=self.file_path,
-            ):
-                return False
-            # In case this error_code should be skipped or ignored
-            return True
+            raise Exception(
+                "Cannot validate MDX file since node server is not responsive. You can skip this validation by using the validation code RM115"
+            )
         for _ in range(RETRIES_VERIFY_MDX):
             try:
                 readme_content = self.fix_mdx()
@@ -251,7 +246,7 @@ class ReadMeValidator(BaseValidator):
                 logger.info(f"Starting MDX local server due to exception. Error: {e}")
                 start_local_MDX_server()
         return True
-
+    @error_codes("RM115")
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = self.should_run_mdx_validation()
@@ -547,9 +542,9 @@ class ReadMeValidator(BaseValidator):
         for link in absolute_links:
             error_message: str = ""
             error_code: str = ""
-            img_url = link[
-                1
-            ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+            img_url = (
+                link[1].strip()
+            )  # striping in case there are whitespaces at the beginning/ending of url.
             try:
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.

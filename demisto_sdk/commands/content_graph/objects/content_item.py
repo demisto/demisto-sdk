@@ -83,7 +83,7 @@ class ContentItem(BaseContent):
         )
 
     @property
-    def ignored_errors(self) -> list:
+    def ignored_errors(self) ->List[str]:
         return self.get_ignored_errors(self.path.name)
 
     def ignored_errors_related_files(self, file_path: str) -> list:

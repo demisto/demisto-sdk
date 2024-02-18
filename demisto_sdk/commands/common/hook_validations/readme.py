@@ -246,6 +246,7 @@ class ReadMeValidator(BaseValidator):
                 logger.info(f"Starting MDX local server due to exception. Error: {e}")
                 start_local_MDX_server()
         return True
+
     @error_codes("RM115")
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
@@ -542,9 +543,9 @@ class ReadMeValidator(BaseValidator):
         for link in absolute_links:
             error_message: str = ""
             error_code: str = ""
-            img_url = (
-                link[1].strip()
-            )  # striping in case there are whitespaces at the beginning/ending of url.
+            img_url = link[
+                1
+            ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
             try:
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.

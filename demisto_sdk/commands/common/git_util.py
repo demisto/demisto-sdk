@@ -27,15 +27,11 @@ class CommitOrBranchNotFoundError(GitError):
     def __init__(
         self,
         commit_or_branch: str,
-        exception: Optional[Exception] = None,
         from_remote: bool = True,
     ):
         if from_remote and DEMISTO_GIT_UPSTREAM not in commit_or_branch:
             commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
-        error_message = f"Commit/Branch {commit_or_branch} could not be found"
-        if exception:
-            error_message = f"{error_message}, error: {exception}"
-        super().__init__(error_message)
+        super().__init__(f"Commit/Branch {commit_or_branch} could not be found")
 
 
 class GitFileNotFoundError(NoSuchPathError):
@@ -84,7 +80,17 @@ class GitUtil:
             return Path(os.path.relpath(str(path), self.git_path()))
 
     def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> Commit:
+        """
+        Retrieves a commit object from a commit-hash or a branch.
 
+        Args:
+            commit_or_branch: commit sha or branch name
+            from_remote: whether to retrieve the branch from a remote ref / whether to fetch commit which does not
+                exist locally.
+
+        Returns:
+
+        """
         if from_remote:
             if self.is_valid_remote_branch(commit_or_branch):
                 branch = commit_or_branch
@@ -99,6 +105,7 @@ class GitUtil:
             if not self.is_valid_commit(commit):
                 # if commit does not exist locally, it might exist in remotes, hence run git fetch
                 self.fetch()
+                # if after git fetch, commit doesn't exist locally, it means the commit is invalid/does not exist
                 if not self.is_valid_commit(commit):
                     raise CommitOrBranchNotFoundError(
                         commit_or_branch, from_remote=False
@@ -184,6 +191,7 @@ class GitUtil:
         try:
             commit = self.get_commit(commit_or_branch, from_remote=from_remote)
         except CommitOrBranchNotFoundError:
+            logger.exception(f"Could not get commit {commit_or_branch}")
             return False
 
         path = str(self.path_from_git_root(path))

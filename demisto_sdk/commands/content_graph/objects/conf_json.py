@@ -99,11 +99,11 @@ class ConfJSON(StrictBaseModel):
                 ContentType.INTEGRATION,
                 (
                     (test.integrations for test in self.tests),
-                    self.unmockable_integrations,
+                    self.unmockable_integrations.keys(),
                     self.parallel_integrations,
                     (
                         v
-                        for v in self.skipped_integrations
+                        for v in self.skipped_integrations.keys()
                         if not v.startswith("_comment")
                     ),
                 ),
@@ -111,7 +111,7 @@ class ConfJSON(StrictBaseModel):
             (ContentType.PLAYBOOK, ((test.playbookID for test in self.tests),)),
             (
                 ContentType.SCRIPT,
-                ((test.scripts for test in self.tests),),
+                (test.scripts for test in self.tests),
             ),
             (
                 ContentType.TEST_PLAYBOOK,
@@ -131,12 +131,5 @@ class ConfJSON(StrictBaseModel):
             ),
         ):
             for id_source in id_sources:
-                print(content_type)
-                print(type(id_source))
-                value = list(filter(None, always_iterable(id_source)))
-                print(value)
-                try:
-                    result[content_type].update(value)
-                except TypeError:
-                    print("ERROR")
+                result[content_type].update(filter(None, always_iterable(id_source)))
         return dict(result)

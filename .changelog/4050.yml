@@ -1,0 +1,6 @@
+changes:
+- description: Added support to load the correct file content when reading remote files according to its URL.
+  type: feature
+- description: Added to the **pre-commit** command a new hook which validates it is not possible to delete certain files.
+  type: feature
+pr_number: 4050

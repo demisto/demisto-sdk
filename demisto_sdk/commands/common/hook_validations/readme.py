@@ -220,7 +220,10 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         if not server_started:
             if self.handle_error(
-                "Could not start MDX server",
+                (
+                    "Validation of MDX file failed due to incapability of starting node server. You can skip this by adding RM103"
+                    " to the list of skipped validations under the '.demisto-sdk-conf' file."
+                ),
                 error_code="RM103",
                 file_path=self.file_path,
             ):
@@ -251,7 +254,7 @@ class ReadMeValidator(BaseValidator):
                 start_local_MDX_server()
         return True
 
-    @error_codes("RM115")
+    @error_codes("RM103")
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = self.should_run_mdx_validation()
@@ -547,9 +550,9 @@ class ReadMeValidator(BaseValidator):
         for link in absolute_links:
             error_message: str = ""
             error_code: str = ""
-            img_url = link[
-                1
-            ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+            img_url = (
+                link[1].strip()
+            )  # striping in case there are whitespaces at the beginning/ending of url.
             try:
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.

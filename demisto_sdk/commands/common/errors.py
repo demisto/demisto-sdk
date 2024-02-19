@@ -1154,10 +1154,6 @@ ERROR_CODE: Dict = {
         "code": "RM114",
         "related_field": "",
     },
-    "cannot_connect_to_mdx_server": {
-        "code": "RM115",
-        "related_field": "",
-    },
     # RN - Release Notes
     "missing_release_notes": {
         "code": "RN100",

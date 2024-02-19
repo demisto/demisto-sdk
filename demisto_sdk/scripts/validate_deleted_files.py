@@ -85,7 +85,7 @@ def main():
     try:
         if forbidden_deleted_files := get_forbidden_deleted_files():
             logger.error(
-                f'The following files cannot be deleted: {", ".join(forbidden_deleted_files)}, restore them'
+                f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
             )
             return 1
         return 0

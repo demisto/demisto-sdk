@@ -1,38 +1,12 @@
-import argparse
 from typing import Collection, Dict, List
 
+import typer
 from github import Github, WorkflowRun
 from slack_sdk import WebClient
 
 from demisto_sdk.commands.common.logger import logger
 
 DEFAULT_SLACK_CHANNEL = "dmst-sdk-slack-notifier-test"
-
-
-def options_handler():
-    parser = argparse.ArgumentParser(
-        description="Parser for circle-ci_utils-slack-notifier args"
-    )
-    parser.add_argument(
-        "-wd",
-        "--workflow_id",
-        help="The workflow id triggered by the PR",
-        required=True,
-        type=int,
-    )
-    parser.add_argument(
-        "-st", "--slack_token", help="The token for slack", required=True
-    )
-    parser.add_argument(
-        "-ght", "--github_token", help="The token for Github-Api", required=True
-    )
-    parser.add_argument(
-        "-ch",
-        "--slack_channel",
-        help="The slack channel in which to send the notification",
-        default=DEFAULT_SLACK_CHANNEL,
-    )
-    return parser.parse_args()
 
 
 def get_failed_jobs(workflow_run: WorkflowRun):
@@ -97,13 +71,31 @@ def construct_slack_message(summary_url: str, failed_jobs: List[str]) -> List[Di
     return []
 
 
-def main():
-    options = options_handler()
-    slack_token = options.slack_token
-    github_token = options.github_token
-    workflow_id = options.workflow_id
-    slack_channel = options.slack_channel
+main = typer.Typer(pretty_exceptions_enable=False)
 
+
+@main.command()
+def slack_notifier(
+    ctx: typer.Context,
+    workflow_id: str = typer.Option(
+        "",
+        "--workflow-id",
+        help="The workflow id triggered by the PR",
+    ),
+    slack_token: str = typer.Option(
+        "",
+        "--slack-token",
+        help="The token for slack api",
+    ),
+    github_token: str = typer.Option(
+        "", "--github-token", "-n", help="The token for Github-Api"
+    ),
+    slack_channel: str = typer.Option(
+        DEFAULT_SLACK_CHANNEL,
+        "--slack-channel",
+        help="The slack channel to send the summary",
+    ),
+):
     gh_client = Github(login_or_token=github_token)
     repo = gh_client.get_repo("demisto/demisto-sdk")
     workflow_run: WorkflowRun = repo.get_workflow_run(workflow_id)

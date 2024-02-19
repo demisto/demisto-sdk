@@ -33,6 +33,7 @@ def test_validate_deleted_files_when_deleting_integration_folder(git_repo: Repo)
     integration = pack.create_integration("Test")
     git_repo.git_util.commit_files("create pack and integration")
     git_repo.git_util.repo.git.checkout("-b", "delete_integration")
+
     shutil.rmtree(integration.path)
     git_repo.git_util.commit_files("delete integration")
 
@@ -53,7 +54,7 @@ def test_validate_deleted_files_when_deleting_from_tests_folder(git_repo: Repo):
     """
     from demisto_sdk.scripts.validate_deleted_files import main
 
-    git_repo.git_util.repo.git.checkout("-b", "delete_conf.json")
+    git_repo.git_util.repo.git.checkout("-b", "delete_conf_json")
     Path.unlink(Path(git_repo.path) / "Tests/conf.json")
     git_repo.git_util.commit_files("delete conf.json")
 

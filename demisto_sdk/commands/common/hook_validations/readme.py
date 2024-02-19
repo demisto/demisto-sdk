@@ -219,9 +219,13 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         server_started = mdx_server_is_up()
         if not server_started:
-            raise Exception(
-                "Cannot validate MDX file since node server is not responsive. You can skip this validation by using the validation code RM115"
-            )
+            if self.handle_error(
+                "Could not start MDX server",
+                error_code="RM103",
+                file_path=self.file_path,
+            ):
+                return False
+            return False
         for _ in range(RETRIES_VERIFY_MDX):
             try:
                 readme_content = self.fix_mdx()

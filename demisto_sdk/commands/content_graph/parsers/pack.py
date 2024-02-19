@@ -225,12 +225,19 @@ class PackParser(BaseContentParser, PackMetadataParser):
     content_type = ContentType.PACK
 
     def __init__(
-        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False
+        self,
+        path: Path,
+        git_sha: Optional[str] = None,
+        metadata_only: bool = False,
+        strict: bool = False,
     ) -> None:
         """Parses a pack and its content items.
 
         Args:
             path (Path): The pack path.
+            git_sha (Optional[str], optional): The git sha to use for parsing. Defaults to None.
+            metadata_only (bool, optional): Whether to parse only the metadata. Defaults to False.
+            strict (bool, optional): Whether to fail when content items are not in the correct path. Defaults to False.
         """
         if path.name == PACK_METADATA_FILENAME:
             path = path.parent
@@ -265,7 +272,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         logger.debug(f"Parsing {self.node_id}")
         self.parse_ignored_errors(git_sha)
         if not metadata_only:
-            self.parse_pack_folders()
+            self.parse_pack_folders(git_sha, strict)
         self.get_rn_info()
 
         logger.debug(f"Successfully parsed {self.node_id}")
@@ -299,15 +306,22 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 mandatorily=True,
             )
 
-    def parse_pack_folders(self) -> None:
+    def parse_pack_folders(
+        self, git_sha: Optional[str] = None, strict: bool = False
+    ) -> None:
         """Parses all pack content items by iterating its folders."""
         for folder_path in ContentType.pack_folders(self.path):
             for (
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing
-                self.parse_content_item(content_item_path)
+                self.parse_content_item(content_item_path, git_sha, strict)
 
-    def parse_content_item(self, content_item_path: Path) -> None:
+    def parse_content_item(
+        self,
+        content_item_path: Path,
+        git_sha: Optional[str] = None,
+        strict: bool = False,
+    ) -> None:
         """Potentially parses a single content item.
 
         Args:
@@ -315,7 +329,10 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, [MarketplaceVersions(mp) for mp in self.marketplaces]
+                content_item_path,
+                [MarketplaceVersions(mp) for mp in self.marketplaces],
+                git_sha=git_sha,
+                strict=strict,
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)

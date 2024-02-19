@@ -1,4 +1,4 @@
-from typing import Collection, Dict, List
+from typing import Collection, Dict, List, Optional
 
 import typer
 from github import Github, WorkflowRun
@@ -77,18 +77,18 @@ main = typer.Typer(pretty_exceptions_enable=False)
 @main.command()
 def slack_notifier(
     ctx: typer.Context,
-    workflow_id: str = typer.Option(
+    workflow_id: int = typer.Option(
         "",
         "--workflow-id",
         help="The workflow id triggered by the PR",
     ),
-    slack_token: str = typer.Option(
-        "",
+    slack_token: Optional[str] = typer.Option(
+        None,
         "--slack-token",
         help="The token for slack api",
     ),
-    github_token: str = typer.Option(
-        "", "--github-token", "-n", help="The token for Github-Api"
+    github_token: Optional[str] = typer.Option(
+        None, "--github-token", "-n", help="The token for Github-Api"
     ),
     slack_channel: str = typer.Option(
         DEFAULT_SLACK_CHANNEL,

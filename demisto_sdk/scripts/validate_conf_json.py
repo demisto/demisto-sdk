@@ -29,8 +29,8 @@ class ConfJsonValidator:
         is_valid = True
 
         for content_type, ids in self.conf.linked_content_items.items():
-            logger.info(f"{content_type=}, {len(ids)=}")
-            logger.info(f"{ids=}")
+            print(f"{content_type=}, {len(ids)=}")
+            print(f"{ids=}")
             if found_missing := ids.difference(
                 {
                     item.object_id

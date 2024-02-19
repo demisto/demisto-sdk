@@ -172,13 +172,6 @@ class GitUtil:
     def read_file_content(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
     ) -> bytes:
-        # logger.info(f'{self.repo.working_dir=}')
-        # logger.info(f'{self.get_current_git_branch_or_hash()=}')
-        # logger.info(f'{self.repo.head.is_detached=}')
-        # logger.info(f'{self.repo.heads=}')
-        # latest_commits = list(self.repo.iter_commits(max_count=5))
-        # logger.info(f'latest commits: {[commit.message for commit in latest_commits]}')
-        # logger.info(f'{self.repo.active_branch=}')
         commit = self.get_commit(commit_or_branch, from_remote=from_remote)
         path = (
             str(self.path_from_git_root(path))

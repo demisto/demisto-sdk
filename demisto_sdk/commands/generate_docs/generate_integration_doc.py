@@ -122,13 +122,13 @@ class IntegrationDocUpdateManager:
             logger.debug(
                 f"Reading {self.integration_name} YAML from {'remote' if remote else 'local'} git path..."
             )
-            resource_path = self.new_yaml_path.resolve()
+            resource_path = self.new_yaml_path
 
         else:
             logger.debug(
                 f"Reading {self.integration_name} README from {'remote' if remote else 'local'} git path..."
             )
-            resource_path = self.new_readme_path.resolve()
+            resource_path = self.new_readme_path
 
         try:
             # In case we're attempting to get the yml/md in a contrib flow
@@ -141,9 +141,10 @@ class IntegrationDocUpdateManager:
                     INTEGRATIONS_DIR, self.integration_name, resource_path.name
                 )
                 path = list(get_content_path().glob(relative_resource_path))[0]
-            else:
+            elif remote:
+                absolute_resource_path = str(resource_path.absolute())
                 remote_file_content = TextFile.read_from_git_path(
-                    resource_path, from_remote=remote
+                    absolute_resource_path, from_remote=remote
                 )
 
                 tmp_file = tempfile.NamedTemporaryFile(

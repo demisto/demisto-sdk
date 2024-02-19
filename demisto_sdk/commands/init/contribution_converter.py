@@ -523,7 +523,7 @@ class ContributionConverter:
                         )
                     except IndexError:
                         logger.warn(
-                            f"Failed find the generated README '{relative_readme_path}' in the content path '{self.pack_dir_path}'. Defaulting to use '{generated_readme}'"
+                            f"Failed to find the generated README '{relative_readme_path}' in the content path '{self.pack_dir_path}'. Defaulting to use '{generated_readme}'"
                         )
                         generated_readme_path = generated_readme
 

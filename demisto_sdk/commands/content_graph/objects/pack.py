@@ -170,9 +170,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 or []
             )
         except:  # noqa: E722
-            logger.error(
-                f"error when attempting to extract ignored errors list from path {path}"
-            )
+            logger.debug(f"Failed to extract ignored errors list from path {path}")
             return []
 
     @property

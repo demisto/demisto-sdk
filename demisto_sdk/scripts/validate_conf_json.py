@@ -5,6 +5,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
@@ -23,7 +24,15 @@ class ConfJsonValidator:
         self.graph_ids_by_type = {
             content_type: cast(
                 List[ContentItem],
-                graph.search(content_type=content_type, object_id=conf_ids),
+                [
+                    item
+                    for item in graph.search(
+                        content_type=content_type, object_id=conf_ids
+                    )
+                    if not isinstance(
+                        item, UnknownContent
+                    )  # UnknownContent items are artificially generated in relationships, are not part of the repo
+                ],
             )
             for content_type, conf_ids in self.conf.linked_content_items.items()
         }
@@ -49,17 +58,10 @@ class ConfJsonValidator:
         is_valid = True
 
         for content_type, linked_ids in self.conf.linked_content_items.items():
-            if no_deprecated := {  # TODO remove no_deprecated
-                v.object_id
-                for v in self.graph_ids_by_type.get(content_type, ())
-                if not hasattr(v, "deprecated")
-            }:
-                logger.error(f"{no_deprecated=}")
             graph_deprecated_ids = {
                 item.object_id
                 for item in self.graph_ids_by_type.get(content_type, ())
-                if item.object_id in no_deprecated
-                or item.deprecated  # TODO remove no_deprecated
+                if item.deprecated
             }
             if linked_deprecated_ids := linked_ids.intersection(graph_deprecated_ids):
                 logger.error(

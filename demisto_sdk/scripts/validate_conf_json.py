@@ -49,10 +49,17 @@ class ConfJsonValidator:
         is_valid = True
 
         for content_type, linked_ids in self.conf.linked_content_items.items():
+            if no_deprecated := {  # TODO remove no_deprecated
+                v.object_id
+                for v in self.graph_ids_by_type.get(content_type, ())
+                if not hasattr(v, "deprecated")
+            }:
+                logger.error(f"{no_deprecated=}")
             graph_deprecated_ids = {
                 item.object_id
                 for item in self.graph_ids_by_type.get(content_type, ())
-                if item.deprecated
+                if item.object_id in no_deprecated
+                or item.deprecated  # TODO remove no_deprecated
             }
             if linked_deprecated_ids := linked_ids.intersection(graph_deprecated_ids):
                 logger.error(

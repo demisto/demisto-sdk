@@ -2,7 +2,6 @@ import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import create_metadata_object
 from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme_not_equal_pack_description import (
-    ContentTypes,
     IsPackReadmeNotEqualPackDescriptionValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_copy_right_section import (
@@ -81,7 +80,7 @@ def test_IsContainCopyRightSectionValidator_is_valid(
     ],
 )
 def test_IsPackReadmeNotEqualPackDescriptionValidator(
-    content_items: list[ContentTypes],
+    content_items,
     expected_number_of_failures: int,
     expected_msg: str,
 ):

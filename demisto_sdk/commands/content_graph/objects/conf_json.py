@@ -2,6 +2,7 @@
 NOTE: This is not a standard Content item. There's no model for it.
 I's only used (at least at the time of writing these lines) in the validate_conf_json.py script
 """
+import itertools
 from collections import defaultdict
 from pathlib import Path
 from typing import DefaultDict, Dict, List, Optional, Set, Union
@@ -96,7 +97,9 @@ class ConfJSON(StrictBaseModel):
             (
                 ContentType.INTEGRATION,
                 (
-                    (always_iterable(test.integrations) for test in self.tests),
+                    itertools.chain.from_iterable(
+                        always_iterable(test.integrations) for test in self.tests
+                    ),
                     self.unmockable_integrations.keys(),
                     self.parallel_integrations,
                     (
@@ -129,5 +132,5 @@ class ConfJSON(StrictBaseModel):
             ),
         ):
             for id_source in id_sources:
-                result[content_type].update(filter(None, always_iterable(id_source)))
+                result[content_type].update(filter(None, (always_iterable(id_source))))
         return dict(result)

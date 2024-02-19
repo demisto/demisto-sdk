@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where reading files from git failed when sending file paths as absolute.
+  type: fix
+pr_number: 4060

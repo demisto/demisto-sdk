@@ -53,3 +53,39 @@ def test_IsContainCopyRightSectionValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_metadata_object(
+                    readme_text="This readme text and pack_metadata description are equal",
+                    paths=["description"],
+                    values=["This readme text and pack_metadata description are equal"]
+                ),
+                create_metadata_object(
+                    readme_text="Readme text",
+                    paths=["description"],
+                    values=["Pack_metadata description"]
+                ),
+            ],
+            1,
+            "README.md content is equal to pack description. Please remove the duplicate description from README.md file."
+        )
+    ]
+)
+def test_IsPackReadmeNotEqualPackDescriptionValidator(
+    content_items: list[PackMetadata],
+    expected_number_of_failures: int,
+    expected_msg: str,
+):
+    results = IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result in results
+        ]
+    )

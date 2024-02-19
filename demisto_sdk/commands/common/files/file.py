@@ -39,7 +39,7 @@ class File(ABC):
     def git_util(cls) -> GitUtil:
         current_path = Path.cwd()
         if current_path != Path(cls._git_util.repo.working_dir):
-            cls._git_util = GitUtil(current_path)
+            cls._git_util = GitUtil.from_content_path(current_path)
         return cls._git_util
 
     @property
@@ -266,12 +266,9 @@ class File(ABC):
         if clear_cache:
             cls.read_from_git_path.cache_clear()
 
-        if cls.git_util().is_file_exist_in_commit_or_branch(
+        if not cls.git_util().is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
-            # when reading from git we need relative path from the repo root
-            path = cls.git_util().path_from_git_root(path)
-        else:
             raise FileNotFoundError(
                 f"File {path} does not exist in commit/branch {tag}"
             )

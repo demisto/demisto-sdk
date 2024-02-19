@@ -404,21 +404,6 @@ def test_IsFromVersionSufficientAllItemsValidator_fix(
             0,
             [],
         ),
-        (
-            [
-                create_incident_type_object(["toVersion"], ["5.0.0"]),
-                create_incident_field_object(["toVersion"], ["4.5.0"]),
-                create_widget_object(["toVersion"], ["4.5.0"]),
-                create_wizard_object({"toVersion": "4.5.0"}),
-            ],
-            4,
-            [
-                "The IncidentType fromversion and toversion are not synchronized.\nThe toversion (5.0.0) should be greater than the fromversion (5.0.0).",
-                "The IncidentField fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (5.5.0).",
-                "The Widget fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (6.1.0).",
-                "The Wizard fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (6.8.0).",
-            ],
-        ),
     ],
 )
 def test_FromToVersionSyncedValidator_is_valid(

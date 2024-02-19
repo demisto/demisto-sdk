@@ -36,7 +36,7 @@ class ConfJsonValidator:
                 }
             ):
                 logger.error(
-                    f"Found {len(found_missing)} {content_type.value} IDs missing from the content graph: {sorted(found_missing)}"
+                    f"{len(found_missing)} {content_type.value}s are not found in the graph: {','.join(sorted(found_missing))}"
                 )
                 is_valid = False
         return is_valid
@@ -45,20 +45,20 @@ class ConfJsonValidator:
         is_valid = True
 
         for content_type, ids in self.conf.linked_content_items.items():
-            graph_ids = {
+            deprecated_ids = {
                 item.object_id
                 for item in self.graph_ids_by_type.get(content_type, ())
                 if getattr(item, "deprecated", False)
             }
-            if found_deprecated := ids.intersection(graph_ids):
+            if found_deprecated := ids.intersection(deprecated_ids):
                 logger.error(
-                    f"Found {len(found_deprecated)} deprecated {content_type.value} items: {sorted(found_deprecated)}"
+                    f"{len(found_deprecated)} {content_type.value}s are deprecated: {','.join(sorted(found_deprecated))}"
                 )
                 is_valid = False
 
         return is_valid
 
-    def validate(self):
+    def validate(self) -> bool:
         return all(
             (
                 self._validate_content_exists(),

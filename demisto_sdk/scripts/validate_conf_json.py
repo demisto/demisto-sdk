@@ -11,7 +11,7 @@ class ConfJsonValidator:
     def __init__(self, conf_json_path: Path = CONF_PATH) -> None:
         self.conf = ConfJSON.from_path(conf_json_path)
 
-        # Instantiate and query relevant data from the graph
+        logger.info("Creating content graph - this may take a few minutes")
         update_content_graph(graph := ContentGraphInterface())
         self.graph_ids_by_type = {
             content_type: graph.search(content_type=content_type, object_id=conf_ids)

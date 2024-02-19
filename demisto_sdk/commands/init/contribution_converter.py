@@ -343,7 +343,7 @@ class ContributionConverter:
             assume_answer=True,
             include_untracked=True,
             interactive=False,
-            use_git=False,
+            use_git=True,
             use_graph=False,
         )
 

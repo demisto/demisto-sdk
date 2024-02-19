@@ -64,18 +64,18 @@ class IntegrationDocUpdateManager:
         self.new_yaml_path = Path(input_path)
         self.new_readme_path = self.new_yaml_path.parent / INTEGRATIONS_README_FILE_NAME
         self.update_errors: List[str] = []
-        self.output_doc = ""
+        self.output_doc: str = ""
 
-        self.is_ui_contribution = is_contribution
-        self.integration_name = self.new_yaml_path.stem
+        self.is_ui_contribution: bool = is_contribution
+        self.integration_name: str = self.new_yaml_path.stem
 
         # We attempt to get the integration YAML from version control
         # first from remote (`demisto/content` `origin/master`).
         # If we can't get it from remote, we get it from local `master`
         # branch.
-        self.old_yaml_path = self.get_resource_path_from_source_control(
+        self.old_yaml_path = self._get_resource_path_from_source_control(
             remote=True, type=CONTENT_FILE_ENDINGS[1]
-        ) or self.get_resource_path_from_source_control(
+        ) or self._get_resource_path_from_source_control(
             remote=False, type=CONTENT_FILE_ENDINGS[1]
         )
 
@@ -83,9 +83,9 @@ class IntegrationDocUpdateManager:
             self.integration_diff = IntegrationDiffDetector(
                 new=str(self.new_yaml_path), old=str(self.old_yaml_path)
             )
-            self.old_readme_path = self.get_resource_path_from_source_control(
+            self.old_readme_path = self._get_resource_path_from_source_control(
                 remote=True, type=CONTENT_FILE_ENDINGS[4]
-            ) or self.get_resource_path_from_source_control(
+            ) or self._get_resource_path_from_source_control(
                 remote=False, type=CONTENT_FILE_ENDINGS[4]
             )
             self.output_doc = (
@@ -95,7 +95,7 @@ class IntegrationDocUpdateManager:
         self.example_dict = example_dict
         self.command_permissions_dict = command_permissions_dict
 
-    def get_resource_path_from_source_control(
+    def _get_resource_path_from_source_control(
         self, remote: bool, type: str
     ) -> Optional[Path]:
         """
@@ -140,30 +140,25 @@ class IntegrationDocUpdateManager:
                 relative_resource_path = os.path.join(
                     INTEGRATIONS_DIR, self.integration_name, resource_path.name
                 )
-                path = list(get_content_path().glob(relative_resource_path))[0]
+                path = list(get_content_path().glob(f"**/{relative_resource_path}"))[0]
             elif remote:
-                absolute_resource_path = str(resource_path.absolute())
+
+                if not resource_path.is_absolute():
+                    resource_path = resource_path.absolute()
+
                 remote_file_content = TextFile.read_from_git_path(
-                    absolute_resource_path, from_remote=remote
+                    resource_path, from_remote=remote
                 )
 
-                tmp_file = tempfile.NamedTemporaryFile(
-                    "w", suffix=resource_path.name, delete=False
-                )
-                logger.debug(
-                    f"Writing {len(remote_file_content)}B into temp file '{tmp_file.name}'..."
-                )
-                tmp_file.write(remote_file_content)
-                logger.debug(f"Finished writing to temp file '{tmp_file.name}'")
-                path = Path(tmp_file.name)
+                path = self._write_resource_to_tmp(resource_path, remote_file_content)
         except (
             FileNotFoundError,
             git_util.GitFileNotFoundError,
             GitFileReadError,
             KeyError,
             IndexError,
-        ):
-            msg = f"Could not find file '{str(resource_path)}' in {'remote' if remote else 'local'}. Please specify the full path to the integration YAML file, e.g. `demisto-sdk generate-docs -i $(realpath {resource_path})`"
+        ) as e:
+            msg = f"{e.__class__.__name__}: Could not find file '{str(resource_path)}' in {'remote' if remote else 'local'}. Please specify the full path to the integration YAML file, e.g. `demisto-sdk generate-docs -i $(realpath {resource_path})`"
             logger.error(msg)
             self.update_errors.append(msg)
             path = None
@@ -322,6 +317,25 @@ class IntegrationDocUpdateManager:
             self.integration_diff.get_modified_commands(),
             self.integration_diff.get_added_commands(),
         )
+
+    def _get_resource_path(self) -> str:
+        """
+        Helper function to resolve the resource path.
+        """
+
+    def _write_resource_to_tmp(self, resource_path: Path, content: str) -> Path:
+        """
+        Helper function to write
+        """
+
+        tmp_file = tempfile.NamedTemporaryFile(
+            "w", suffix=resource_path.name, delete=False
+        )
+        logger.debug(f"Writing {len(content)}B into temp file '{tmp_file.name}'...")
+        tmp_file.write(content)
+        logger.debug(f"Finished writing to temp file '{tmp_file.name}'")
+
+        return Path(tmp_file.name)
 
     def update_docs(self) -> Tuple[str, List[str]]:
         """

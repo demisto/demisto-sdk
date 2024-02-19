@@ -39,7 +39,7 @@ class File(ABC):
     def git_util(cls) -> GitUtil:
         current_path = Path.cwd()
         if current_path != Path(cls._git_util.repo.working_dir):
-            cls._git_util = GitUtil(current_path)
+            cls._git_util = GitUtil.from_content_path(current_path)
         return cls._git_util
 
     @property

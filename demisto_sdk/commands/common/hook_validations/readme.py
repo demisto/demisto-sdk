@@ -219,15 +219,17 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         server_started = mdx_server_is_up()
         if not server_started:
-            if self.handle_error(
-                (
+            error_message = (
                     "Validation of MDX file failed due to incapability of starting node server. You can skip this by adding RM103"
                     " to the list of skipped validations under the '.demisto-sdk-conf' file."
-                ),
+                )
+            if self.handle_error(
+                error_message,
                 error_code="RM103",
                 file_path=self.file_path,
             ):
                 return False
+            logger.info(f"[yellow]{error_message}[/yellow]")
             return False
         for _ in range(RETRIES_VERIFY_MDX):
             try:

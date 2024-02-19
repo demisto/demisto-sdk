@@ -16,6 +16,12 @@ ContentTypes = Integration
 class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "IN149"
     description = "Validate that a contextPath has a description if it belongs to a predefined list of contextPaths that should have a description."
+    rationale = (  # TODO i'm not sure about the rationale
+        "Common outputs in integrations, such as `DBotScore.Score` and `Demisto.File`, are often used in multiple places across different integrations and playbooks. "
+        "Having a description for these common outputs is crucial for understanding their purpose and usage. "
+        "Without a description, users may not fully understand the significance of these outputs or how to use them effectively in their workflows. "
+        "This validation ensures that all common outputs have appropriate descriptions, enhancing usability and understanding across different integrations and playbooks."
+    )
     error_message = "The following commands are missing description for the following contextPath: {0}"
     fix_message = "Added description for the following outputs: {0}"
     related_field = "output.description, output.contextPath"

@@ -22,6 +22,12 @@ ContentTypes = Integration
 class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
     error_code = "IN100"
     description = "Validate that the proxy & insecure params are configured correctly."
+    rationale = (
+        "The 'proxy' and 'insecure' parameters in an integration should be configured correctly. "
+        "They should have the correct display name, default value, required status, and type. "
+        "Incorrect configuration of these parameters can lead to confusion for users and potential issues with the integration's functionality. "
+        "This validator ensures that these parameters are configured according to the standard."
+    )
     error_message = "The following params are invalid:\n{0}"
     fix_message = "Corrected the following params: {0}."
     related_field = "configuration"
@@ -35,7 +41,7 @@ class IsValidProxyAndInsecureValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n".join(
                         [
-                            f"The {key} param display name should be '{val['display']}', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8."
+                            f"The {key} param display name should be '{val['display']}', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'type' field should be 8."
                             for key, val in self.fixed_params[content_item.name].items()
                         ]
                     )

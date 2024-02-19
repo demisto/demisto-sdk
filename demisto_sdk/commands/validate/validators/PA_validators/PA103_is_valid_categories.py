@@ -17,6 +17,13 @@ ContentTypes = Pack
 class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
     error_code = "PA103"
     description = "Validate that the pack categories are valid."
+    rationale = (
+        "The 'categories' field in the pack metadata should contain only one approved category. "
+        "This standardization allows for efficient filtering and discovery of packs in the marketplace. "
+        "Adherence to this standard ensures that users can easily find and understand the functionality "
+        "of each pack. For more info, refer to the pack documentation: "
+        "https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories."
+    )
     error_message = "The pack metadata categories field doesn't match the standard,\nplease make sure the field contain only one category from the following options: {0}."
     related_field = "categories"
     is_auto_fixable = False

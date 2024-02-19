@@ -21,6 +21,10 @@ class IsValidDescriptionForNonDeprecatedIntegrationValidator(
 ):
     error_code = "IN158"
     description = "Validate that the description for non-deprecated integrations is not in the deprecation format"
+    rationale = (
+        "Non-deprecated integrations should not contain deprecation message in their description. "
+        "This avoids confusion and ensures that users are correctly informed about the integration's status."
+    )
     error_message = "All integrations whose description states are deprecated, must have `deprecated:true`.\nPlease run demisto-sdk format --deprecate -i {0}"
     related_field = "deprecated, description"
     is_auto_fixable = False

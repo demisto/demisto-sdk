@@ -18,6 +18,10 @@ class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
     description = (
         "validate that the CLI name and the id match for incident and indicators field"
     )
+    rationale = (
+        "Because of platform standard The CLI name and the ID of incident and indicator fields should match. "
+        "Maintaining this match helps keep the system's naming conventions consistent and predictable."
+    )  # TODO i'm not sure, see https://github.com/demisto/etc/issues/46706
     error_message = (
         "The cli name {0} doesn't match the standards. the cliName should be: {1}."
     )

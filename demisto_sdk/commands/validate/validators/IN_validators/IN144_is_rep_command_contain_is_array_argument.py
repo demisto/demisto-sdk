@@ -18,6 +18,12 @@ ContentTypes = Integration
 class IsRepCommandContainIsArrayArgumentValidator(BaseValidator[ContentTypes]):
     error_code = "IN144"
     description = "Validate that a reputation command has isArray field set to True for its default argument."
+    rationale = (
+        "In Cortex XSOAR/XSIAM, reputation commands should have the 'isArray' field set to True for their default arguments. "
+        "This allows the command to accept multiple inputs at once, improving efficiency and flexibility. "
+        "This is particularly important for reputation commands, which are used to gather information about indicators from various integrations. "
+        "If 'isArray' is not set to True, the command may not function as expected when multiple inputs are provided, limiting the ability to gather comprehensive information about an indicator."
+    )
     error_message = "The following reputation commands contain default arguments without 'isArray: True':\n{0}"
     related_field = "script.commands"
     is_auto_fixable = False

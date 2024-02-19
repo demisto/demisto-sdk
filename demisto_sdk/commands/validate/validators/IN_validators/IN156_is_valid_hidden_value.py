@@ -18,6 +18,12 @@ ContentTypes = Integration
 class IsValidHiddenValueValidator(BaseValidator[ContentTypes]):
     error_code = "IN156"
     description = "Validate that the hidden field value contain only valid values."
+    rationale = (
+        "The 'hidden' field in an integration's parameters should be either a boolean "
+        "or a list of valid marketplace versions. This ensures correct functionality "
+        "and compatibility with different marketplace versions. Incorrect values could "
+        "lead to unexpected behavior or compatibility issues."
+    )
     error_message = "The following params contain invalid hidden field values:\n{0}\nThe valid values must be either a boolean, or a list of marketplace values.\n(Possible marketplace values: {1}). Note that this param is not required, and may be omitted."
     related_field = "configuration, hidden"
     is_auto_fixable = False

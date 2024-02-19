@@ -17,6 +17,15 @@ class IsValidContextPathValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the contextPath field of each output is in the right format."
     )
+    rationale = (
+        "The 'contextPath' field in an integration's output should follow the correct format to ensure that the data returned "
+        "by the integration can be properly used in subsequent steps of a playbook or script. "
+        "The Context is a map (dictionary) / JSON object that is created for each incident and is used to store structured results "
+        "from the integration commands and automation scripts. The main use of the Context is to pass data between playbook tasks, "
+        "one task stores its output in the Context and the other task reads that output from the Context and uses it. "
+        "Incorrect 'contextPath' formats can lead to errors or unexpected behavior. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/context-and-outputs"
+    )
     error_message = "The following commands include outputs with missing contextPath, please make sure to add: {0}."
     related_field = "contextPath"
     is_auto_fixable = False

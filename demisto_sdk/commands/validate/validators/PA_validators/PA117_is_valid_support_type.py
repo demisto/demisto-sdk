@@ -15,6 +15,13 @@ ContentTypes = Pack
 class IsValidSupportTypeValidator(BaseValidator[ContentTypes]):
     error_code = "PA117"
     description = "Validate that the pack's support type is a valid support type."
+    rationale = (
+        "The 'support' field in the pack metadata should be one of the predefined support types. "
+        "This ensures that the pack is correctly categorized and handled by the system. "
+        "Using an invalid or unrecognized support type can lead to issues during the pack's ingestion or usage. "
+        "For more information on the valid support types, refer to the pack format documentation: "
+        "https://xsoar.pan.dev/docs/packs/packs-format#pack_metadatajson."
+    )
     error_message = "The pack's support type ({0}) is invalid.\nThe pack support type can only be one of the following {1}."
     related_field = "support"
     is_auto_fixable = False

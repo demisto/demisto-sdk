@@ -24,6 +24,16 @@ ContentTypes = Integration
 class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN124"
     description = "Validate that a param is not hidden if it can not be hidden."
+    rationale = (
+        "Certain parameters in an integration are essential for its functionality and should not be hidden from the user. "
+        "Hiding these parameters can lead to confusion during configuration and may prevent the integration from working as expected. "
+        "However, there are cases where a parameter may be hidden from the XSOAR UI using the optional 'hidden' field. "
+        "To hide the parameter in all marketplaces (XSOAR, XSIAM), a boolean 'true' can be used. "
+        "To hide the parameter in specific content marketplace versions, a list of marketplace version names can be provided (e.g., 'xsoar' or 'marketplacev2' for XSIAM). "
+        "This validator ensures that parameters are hidden appropriately, maintaining the usability and functionality of the integration. "
+        "The following parameters are allowed to be hidden: "
+        f"{ALLOWED_HIDDEN_PARAMS}"
+    )
     error_message = (
         "The following fields are hidden and cannot be hidden, please unhide them: {0}."
     )

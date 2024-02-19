@@ -18,6 +18,15 @@ ContentTypes = Integration
 class IsMissingDisplayFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IN118"
     description = "Validate that the integration parameter has a display field if it's not of type 17."
+    rationale = (
+        "Each parameter in an integration should have a 'display' field unless it's of type 17. "
+        "The 'display' field is used to present the parameter in the user interface, "
+        "providing a human-readable label that helps users understand the purpose of each parameter. "
+        "Without a 'display' field, the parameter's purpose might not be clear to the user, "
+        "which could lead to confusion or incorrect configuration of the integration. "
+        "This validator ensures that each parameter (except those of type 17) has a 'display' field, "
+        "contributing to a better user experience and correct configuration of the integration."
+    )
     error_message = "The following params doesn't have a display field, please make sure to add one: {0}."
     related_field = "display, displaypassowrd"
     is_auto_fixable = False

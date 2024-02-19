@@ -15,6 +15,7 @@ ContentTypes = Integration
 class IsNoneCommandArgsValidator(BaseValidator[ContentTypes]):
     error_code = "IN151"
     description = "Validate that all commands has at least one argument"
+    rationale = "Commands should have at least one argument or an explicitly defined empty list to avoid potential errors."
     error_message = "The following commands arguments are None: {0}.\nIf the command has no arguments, use `arguments: []` or remove the `arguments` field."
     related_field = "script.commands"
     is_auto_fixable = True

@@ -29,6 +29,12 @@ class IsFromVersionSufficientIndicatorFieldValidator(
     description = (
         "Validate that the indicator fromversion is sufficient according to its type"
     )
+    rationale = (
+        "The 'fromversion' field in an indicator field indicates the server version that is compatible with the field. "
+        "Different types of indicator fields may have different minimum server versions for compatibility. "
+        "Ensuring the 'fromversion' is high enough according to the indicator field type "
+        "helps maintain compatibility and proper functioning of the indicator fields within the system."
+    )
     error_message = "The fromversion of IndicatorField with type {0} must be at least {1}, current is {2}."
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

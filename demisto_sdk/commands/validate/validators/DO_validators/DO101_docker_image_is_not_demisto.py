@@ -15,6 +15,12 @@ ContentTypes = Union[Integration, Script]
 class DockerImageIsNotDemistoValidator(BaseValidator[ContentTypes]):
     error_code = "DO101"
     description = "Validate that the given content-item uses demisto docker image"
+    rationale = (
+        "The Docker image used in a content item should originate from Demisto's Docker repository. "
+        "This ensures that the Docker image is trusted, maintained, and compatible with the Demisto platform. "
+        "Using a Docker image from an unapproved source can lead to potential security risks, "
+        "unpredictable behavior, and maintenance issues."
+    )
     error_message = "docker image {0} is not a valid docker-image, docker-image should start with demisto/"
     related_field = "Docker image"
     is_auto_fixable = False

@@ -16,6 +16,11 @@ ContentTypes = Integration
 class IsSiemIntegrationValidMarketplaceValidator(BaseValidator[ContentTypes]):
     error_code = "IN161"
     description = "Validate that the marketplacev2 tag appear in the marketplaces list of a siem integration."
+    rationale = (
+        "SIEM integrations should include the 'marketplacev2' tag in their marketplaces list. "
+        "This ensures they are discoverable in the marketplacev2, enhancing user experience "
+        "and integration usability. For more info see https://xsoar.pan.dev/docs/integrations/event-collectors#required-keys."
+    )
     error_message = "The marketplaces field of this XSIAM integration is incorrect.\nThis field should have only the 'marketplacev2' value."
     fix_message = (
         "Added the 'marketplacev2' entry to the integration's marketplaces list."

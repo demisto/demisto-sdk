@@ -16,6 +16,7 @@ class IsContainingMultipleDefaultArgsValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that there're no more than 1 default argument for a command."
     )
+    rationale = "A command in an integration should have at most one default argument to prevent ambiguity during execution. Having multiple default arguments could lead to unexpected behavior, as it's unclear which argument should be used if no value is provided by the user."
     error_message = "The following commands have more than 1 default arg, please make sure they have at most one: {0}."
     related_field = "default"
     is_auto_fixable = False

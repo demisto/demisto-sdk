@@ -16,6 +16,11 @@ ContentTypes = Pack
 class MissingFieldInPackMetadataValidator(BaseValidator[ContentTypes]):
     error_code = "PA107"
     description = "Ensure that mandatory fields exist in the pack_metadata."
+    rationale = (
+        "Certain fields in the pack metadata are mandatory as per the pack specification. "
+        "These fields are crucial for the pack and its proper functioning. "
+        "Missing these fields may lead to issues during ingestion or unexpected behavior in the system."
+    )
     fix_message = "The following fields were added to the file as empty fields: {0}."
     error_message = "The following fields are missing from the file: {0}."
     related_field = "name, desc, support, currentVersion, author, url, categories, tags, useCases, keywords"

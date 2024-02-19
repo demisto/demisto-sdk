@@ -18,6 +18,13 @@ ContentTypes = Integration
 class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
     error_code = "IN106"
     description = "Validate that the command is valid as a reputation command."
+    rationale = (
+        "Reputation commands in an integration should adhere to predefined standards, "
+        "including specific argument configurations. This ensures consistency across different integrations "
+        "and contributes to the proper functioning of the commands. "
+        "Non-standard configurations can lead to unexpected behavior and compatibility issues with other parts of the system. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/generic-commands-reputation"
+    )
     error_message = "The following reputation commands are invalid:\n{0}\nMake sure to fix the issue both in the yml and the code."
     related_field = "script.commands"
 

@@ -17,6 +17,14 @@ ContentTypes = Integration
 class IsValidMaxFetchParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN125"
     description = "Validate that the max_fetch param has a defaultvalue"
+    rationale = (
+        "The 'max_fetch' parameter in a fetch integration sets the maximum number of incidents to retrieve per fetch command. "
+        "To maintain an optimal load on Cortex XSOAR, it's recommended to set a limit of 200 incidents per fetch. "
+        "This validator ensures that the 'max_fetch' parameter exists in the integration YAML file and that it has a default value. "
+        "If a larger number is entered or the 'max_fetch' parameter is left blank, the Test button will fail, "  # ?
+        "potentially leading to confusion or incorrect configuration of the integration. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/fetching-incidents#fetch-limit"
+    )  # #TODO  what about fetch_limit param? https://github.com/demisto/demisto-sdk/pull/734, https://github.com/demisto/content-docs/pull/361/files
     error_message = "The integration is a fetch integration with max_fetch param, please make sure the max_fetch param has a default value."
     fix_message = (
         f"Added a 'defaultvalue = {DEFAULT_MAX_FETCH}' to the max_fetch param."

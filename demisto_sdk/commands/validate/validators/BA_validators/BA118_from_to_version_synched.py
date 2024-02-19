@@ -78,6 +78,11 @@ class FromToVersionSyncedValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the item's toversion is greater/equal then its fromversion."
     )
+    rationale = (
+        "The 'toversion' field in a content item should be greater than or equal to the 'fromversion'. "
+        "This ensures that the version range of the content item is valid and logical. "
+        "If the server version is below the 'fromversion', the integration will not display in the Settings area."
+    )
     error_message = "The {0} fromversion and toversion are not synchronized.\nThe toversion ({1}) should be greater than the fromversion ({2})."
     related_field = "fromversion, toversion"
     is_auto_fixable = True

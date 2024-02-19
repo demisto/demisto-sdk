@@ -18,6 +18,8 @@ VERSION_NAME_REGEX = re.compile(r"V([0-9]+)$", re.IGNORECASE)
 class IntegrationDisplayNameVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     error_code = "IN123"
     description = "Checks if integration display name is versioned correctly, e.g.: ends with v<number>."
+    rationale = ""  # TODO this validate check if it capital V or not i don't think it copied from invalid_version_integration_name see
+    # https://github.com/demisto/demisto-sdk/commit/65d1a902685413c61c3e201194c8292b https://github.com/demisto/demisto-sdk/pull/901/files
     error_message = (
         "The display {0} for the integration is incorrect, it should be {1}."
     )

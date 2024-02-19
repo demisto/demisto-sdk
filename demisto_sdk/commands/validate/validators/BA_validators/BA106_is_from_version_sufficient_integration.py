@@ -26,6 +26,12 @@ class IsFromVersionSufficientIntegrationValidator(
     IsFromVersionSufficientValidator, BaseValidator[ContentTypes]
 ):
     description = "Validate that an integration has a high enough fromversion field according to whether it's a powershell/feed/regular."
+    rationale = (
+        "The 'fromversion' field in an integration indicates the server version that is compatible with the integration. "
+        "If the server version is below the 'fromversion', the integration will not display in the Settings area. "
+        "Ensuring the 'fromversion' is high enough according to whether the integration is a powershell, feed, or regular type "
+        "helps maintain compatibility and proper functioning of the integration within the system."
+    )
     error_message = "The integration is a {0} integration and therefore require a fromversion field of at least {1}, current version is: {2}."
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

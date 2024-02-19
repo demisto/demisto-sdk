@@ -15,6 +15,7 @@ ContentTypes = Integration
 class IsValidParamDisplayValidator(BaseValidator[ContentTypes]):
     error_code = "IN135"
     description = "Validate that the parameter display name starts with a capital letter and doesn't contain '_'."
+    rationale = "The parameter display name in an integration should start with a capital letter and not contain underscores. This follows common naming conventions, ensuring consistency across all integrations. It also improves readability, making it easier for users to understand the purpose of each parameter."
     error_message = "The following params are invalid. Integration parameters display field must start with capital letters and can't contain underscores ('_'): {0}."
     fix_message = "The following param displays has been modified: {0}."
     related_field = "display"
@@ -46,11 +47,16 @@ class IsValidParamDisplayValidator(BaseValidator[ContentTypes]):
     def get_invalid_params(
         self, params_display: List[str], integration_name: str
     ) -> List[str]:
-        """_summary_
+        """
+        This function checks the provided parameters' display names for any that start with a lowercase letter or contain an underscore.
+        These are considered invalid as per the naming conventions.
 
         Args:
-            params_display (List[str]): _description_
-            integration_name (str): _description_
+            params_display (List[str]): A list of parameter display names to check.
+            integration_name (str): The name of the integration the parameters belong to.
+
+        Returns:
+            List[str]: A list of invalid parameter display names.
         """
         self.invalid_params[integration_name] = [
             param_display

@@ -16,6 +16,7 @@ ContentTypes = Union[Integration, Script]
 class ValidSubtypeValidator(BaseValidator[ContentTypes]):
     error_code = "IN108"
     description = "Validate wether the subtype is valid or not."
+    rationale = "Cortex XSOAR currently supports Python and JavaScript. When using Python specifying subtype field is required (either: python2 or python3). This is to ensure compatibility with the execution environments."
     error_message = "The subtype {0} is invalid, please change to python2 or python3."
     fix_message = ""
     related_field = "subtype"

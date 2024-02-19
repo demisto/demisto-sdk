@@ -21,6 +21,9 @@ class ShouldHaveDisplayFieldValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that type 17 configuration params doesn't include the display field."
     )
+    rationale = ""  # TODO: This validator checks if type 17 configuration parameters include the 'display' field.
+    # However, for type 17 parameters, the display name and the option list cannot be changed by the user. So why we need this validator?
+    # and also the user must to provide option list even its not effect the system at all, should we open a ticket?
     error_message = "The following params are expiration fields and therefore can't have a 'display' field. Make sure to remove the field for the following: {0}."
     fix_message = "Removed display field for the following params: {0}."
     related_field = "display, type"

@@ -24,6 +24,7 @@ ContentTypes = Integration
 class IsValidFetchIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN126"
     description = "Validate that a fetch integration is not missing the first_fetch & max_fetch params."
+    rationale = "Fetch integrations in Cortex XSOAR/XSIAM should have the 'first_fetch' and 'max_fetch' parameters correctly defined. 'first_fetch' determines the date from which to start fetching incidents, and 'max_fetch' limits the number of incidents fetched per execution. Ensuring these parameters are present and correctly formatted ensures the fetch functionality works as expected, retrieving incidents or alerts from external systems without errors or inconsistencies."
     error_message = (
         "The integration is a fetch integration and missing the following params: {0}."
     )

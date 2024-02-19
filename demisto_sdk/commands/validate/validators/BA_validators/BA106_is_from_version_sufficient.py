@@ -11,10 +11,7 @@ class IsFromVersionSufficientValidator(BaseValidator, ABC):
     error_code = "BA106"
     fix_message = "Raised the fromversion field to {0}"
     rationale = (
-        "The 'fromversion' field in an integration indicates the server version that is compatible with the integration. "
-        "If the server version is below the 'fromversion', the integration will not display in the Settings area. "
-        "Ensuring the 'fromversion' is high enough according to whether the integration is a powershell, feed, or regular type "
-        "helps maintain compatibility and proper functioning of the integration within the system."
+        "This field makes sure content can use the latest and greatest features of the platform. The minimal value is the third-last platform release version."
     )
     related_field = "fromversion"
     is_auto_fixable = True

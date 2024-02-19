@@ -15,10 +15,7 @@ class IDNameValidator(BaseValidator, ABC):
     error_code = "BA101"
     description = "Validate that the file id and name fields are identical."
     rationale = (
-        "In Cortex XSOAR content items, the 'id' attribute serves as the unique identifier of the file. "
-        "To maintain consistency and avoid confusion, it's a platform standard that the 'id' attribute should also be used as the 'name' attribute. "
-        "This validator checks that the 'id' and 'name' attributes of each content item are identical, "
-        "helping to enforce this platform standard and prevent potential issues."
+        "The id attribute serves as the unique identifier of files across the platform"
     )  # TODO but why? see https://github.com/demisto/etc/issues/19275
     error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
     fix_message = "Changing name to be equal to id ({0})."

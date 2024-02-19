@@ -187,7 +187,7 @@ def create_metadata_object(
     values: Optional[List[Any]] = None,
     fields_to_delete: Optional[List[str]] = None,
     readme_text: str = "",
-    image:  Optional[str] = None
+    image: Optional[str] = None,
 ) -> PackMetadata:
     """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
 

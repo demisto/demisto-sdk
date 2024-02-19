@@ -43,6 +43,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
+    IsContentItemNameContainTrailingSpacesValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
     CliNameMatchIdValidator,
 )
@@ -930,3 +933,113 @@ def test_IsDeprecatedCorrectlyValidator_is_valid():
     for result in results:
         assert result.content_object.deprecated
         assert result.content_object.description == "Some description"
+
+
+@pytest.mark.parametrize(
+    "content_items",
+    [
+        pytest.param(
+            [
+                create_integration_object(
+                    paths=["name"], values=["name_with_space_should_fail "]
+                )
+            ],
+            id="case integration with trailing spaces in name",
+        ),
+        pytest.param(
+            [
+                create_classifier_object(
+                    paths=["name"], values=["name_with_space_should_fail "]
+                )
+            ],
+            id="case classifier with trailing spaces in name",
+        ),
+        pytest.param(
+            [
+                create_dashboard_object(
+                    paths=["name"], values=["name_with_space_should_fail "]
+                )
+            ],
+            id="case dashboard with trailing spaces in name",
+        ),
+        pytest.param(
+            [
+                create_incident_type_object(
+                    paths=["name"], values=["name_with_space_should_fail "]
+                )
+            ],
+            id="case incident type with trailing spaces in name",
+        ),
+        pytest.param(
+            [create_wizard_object({"name": "name_with_space_should_fail "})],
+            id="case wizard with trailing spaces in name",
+        ),
+    ],
+)
+def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(content_items):
+    """Test validate BA113 - Trailing spaces in content item name
+    Given:
+        A list of content items with names that have trailing spaces.
+    When:
+        The IsContentItemNameContainTrailingSpacesValidator's is_valid method is called.
+    Then:
+        The validator should return a list of ValidationResult objects, each with a message indicating that the content item's name should not have trailing spaces.
+    """
+    assert all(
+        [
+            result.message
+            == "Content item name 'name_with_space_should_fail ' should not have trailing spaces. Please remove."
+            for result in IsContentItemNameContainTrailingSpacesValidator().is_valid(
+                content_items
+            )
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_item",
+    [
+        pytest.param(
+            create_integration_object(
+                paths=["name"], values=["name_with_space_should_fix "]
+            ),
+            id="case integration with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_classifier_object(
+                paths=["name"], values=["name_with_space_should_fix "]
+            ),
+            id="case classifier with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_dashboard_object(
+                paths=["name"], values=["name_with_space_should_fix "]
+            ),
+            id="case dashboard with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_incident_type_object(
+                paths=["name"], values=["name_with_space_should_fix "]
+            ),
+            id="case incident type with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_wizard_object({"name": "name_with_space_should_fix "}),
+            id="case wizard with trailing spaces in name with fix",
+        ),
+    ],
+)
+def test_IsContentItemNameContainTrailingSpacesValidator_fix(content_item):
+    """Test validate BA113 - Trailing spaces in content item name
+    Given:
+        A content item with a name that has trailing spaces.
+    When:
+        The IsContentItemNameContainTrailingSpacesValidator's fix method is called.
+    Then:
+        The trailing spaces should be removed from the content item's name, and the fix message should indicate that the trailing spaces have been removed.
+    """
+    assert (
+        IsContentItemNameContainTrailingSpacesValidator().fix(content_item).message
+        == "Trailing spaces in the content item name 'name_with_space_should_fix' have been removed."
+    )
+    assert content_item.name == "name_with_space_should_fix"

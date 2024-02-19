@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import List
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -17,6 +18,12 @@ from demisto_sdk.commands.common.tools import find_type
 
 
 def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
+    """
+    Validate if a file is allowed to be deleted by its type.
+
+    Args:
+        file_path: the path of the file
+    """
     file_path = str(file_path)
 
     try:
@@ -60,26 +67,28 @@ def is_file_allowed_to_be_deleted(file_path: Path) -> bool:
     return is_file_allowed_to_be_deleted_by_file_type(file_path)
 
 
-def validate_deleted_files():
+def get_forbidden_deleted_files() -> List[str]:
+    """
+    Returns all the file paths which cannot be deleted
+    """
     git_util = GitUtil.from_content_path()
     deleted_files = git_util.deleted_files(DEMISTO_GIT_PRIMARY_BRANCH)
 
-    invalid_deleted_files = [
+    return [
         str(file_path)
         for file_path in deleted_files
         if not is_file_allowed_to_be_deleted(file_path)
     ]
-    if invalid_deleted_files:
-        logger.error(
-            f'The following files cannot be deleted: {", ".join(invalid_deleted_files)}, restore them'
-        )
-        return 1
-    return 0
 
 
 def main():
     try:
-        return validate_deleted_files()
+        if forbidden_deleted_files := get_forbidden_deleted_files():
+            logger.error(
+                f'The following files cannot be deleted: {", ".join(forbidden_deleted_files)}, restore them'
+            )
+            return 1
+        return 0
     except Exception as error:
         logger.error(
             f"Unexpected error occurred while validating deleted files {error}"

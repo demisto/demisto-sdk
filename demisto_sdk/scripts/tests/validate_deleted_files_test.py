@@ -25,7 +25,7 @@ def test_validate_deleted_files_when_deleting_integration_folder(git_repo: Repo)
         - running the validate-deleted-files script
 
     Then:
-        - TODO
+        - make sure the script finds deleted files and fails with error code 1
     """
     from demisto_sdk.scripts.validate_deleted_files import main
 
@@ -50,7 +50,7 @@ def test_validate_deleted_files_when_deleting_from_tests_folder(git_repo: Repo):
         - running the validate-deleted-files script
 
     Then:
-        - TODO
+        - make sure the script finds deleted files and fails with error code 1
     """
     from demisto_sdk.scripts.validate_deleted_files import main
 
@@ -60,6 +60,95 @@ def test_validate_deleted_files_when_deleting_from_tests_folder(git_repo: Repo):
 
     with ChangeCWD(git_repo.path):
         assert main() == 1
+
+
+def test_get_forbidden_deleted_files_deleting_script(git_repo: Repo):
+    """
+    Given:
+        - a script folder which was deleted
+
+    When:
+        - running the get_forbidden_deleted_files function
+
+    Then:
+        - make sure the script finds all the forbidden files
+          which were deleted which is all files within the script folder
+    """
+    from demisto_sdk.scripts.validate_deleted_files import get_forbidden_deleted_files
+
+    pack = git_repo.create_pack("Test")
+    script = pack.create_script("Test")
+
+    expected_forbidden_deleted_files = [
+        str(git_repo.git_util.path_from_git_root(file_path))
+        for file_path in Path(script.path).rglob("*")
+    ]
+
+    git_repo.git_util.commit_files("create pack and script")
+    git_repo.git_util.repo.git.checkout("-b", "delete_script")
+
+    shutil.rmtree(script.path)
+    git_repo.git_util.commit_files("delete script")
+
+    with ChangeCWD(git_repo.path):
+        assert sorted(get_forbidden_deleted_files()) == sorted(
+            expected_forbidden_deleted_files
+        )
+
+
+def test_get_forbidden_deleted_files_deleting_test_playbook(git_repo: Repo):
+    """
+    Given:
+        - a test playbook which was deleted
+
+    When:
+        - running the get_forbidden_deleted_files function
+
+    Then:
+        - make sure the script does not find any forbidden deleted files as test-playbook can be deleted
+    """
+    from demisto_sdk.scripts.validate_deleted_files import get_forbidden_deleted_files
+
+    pack = git_repo.create_pack("Test")
+    test_playbook = pack.create_test_playbook("name")
+
+    git_repo.git_util.commit_files("create pack and test playbook")
+    git_repo.git_util.repo.git.checkout("-b", "delete_test_playbook")
+
+    Path.unlink(Path(test_playbook.path))
+
+    git_repo.git_util.commit_files("delete test-playbook")
+
+    with ChangeCWD(git_repo.path):
+        assert not get_forbidden_deleted_files()
+
+
+def test_get_forbidden_deleted_files_renaming_test_playbook(git_repo: Repo):
+    """
+    Given:
+        - a test playbook which was renamed
+
+    When:
+        - running the get_forbidden_deleted_files function
+
+    Then:
+        - make sure the script does not find any forbidden deleted files as test-playbook can be renamed
+    """
+    from demisto_sdk.scripts.validate_deleted_files import get_forbidden_deleted_files
+
+    pack = git_repo.create_pack("Test")
+    test_playbook = pack.create_test_playbook("name")
+
+    git_repo.git_util.commit_files("create pack and test playbook")
+    git_repo.git_util.repo.git.checkout("-b", "rename_test_playbook")
+
+    test_playbook_path = Path(test_playbook.path)
+    test_playbook_path.rename(test_playbook_path.parent / "test-playbook-1.yml")
+
+    git_repo.git_util.commit_files("rename test-playbook")
+
+    with ChangeCWD(git_repo.path):
+        assert not get_forbidden_deleted_files()
 
 
 def test_validate_deleted_files_when_modifying_pack_metadata(git_repo: Repo):

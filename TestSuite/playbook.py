@@ -11,15 +11,22 @@ yaml = YAML_Handler()
 
 
 class Playbook(YAML):
-
     default_assets_dir = "assets"
 
-    def __init__(self, tmpdir: Path, name, repo, is_test_playbook: bool = False):
+    def __init__(
+        self,
+        tmpdir: Path,
+        name,
+        repo,
+        is_test_playbook: bool = False,
+        deprecated: bool = False,
+    ):
         # Save entities
         self.name = name
         self._repo = repo
         self.repo_path = repo.path
         self.is_test_playbook = is_test_playbook
+        self.deprecated = deprecated
 
         self.path = str(tmpdir)
 
@@ -46,6 +53,8 @@ class Playbook(YAML):
     ):
         """Writes not None objects to files."""
         if yml is not None:
+            yml["id"] = yml["name"] = self.name
+            yml["deprecated"] = self.deprecated
             self.write_dict(yml)
         if not self.is_test_playbook and readme is not None:
             self.readme.write(readme)
@@ -63,6 +72,7 @@ class Playbook(YAML):
         ) as yml_file:
             yml = yaml.load(yml_file)
             yml["id"] = yml["name"] = name
+            yml["deprecated"] = self.deprecated
             self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = "SamplePlaybookTest"):

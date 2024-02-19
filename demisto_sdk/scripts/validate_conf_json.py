@@ -1,11 +1,12 @@
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, cast
 
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class ConfJsonValidator:
@@ -20,7 +21,10 @@ class ConfJsonValidator:
         if graph is None:
             update_content_graph(graph := ContentGraphInterface())
         self.graph_ids_by_type = {
-            content_type: graph.search(content_type=content_type, object_id=conf_ids)
+            content_type: cast(
+                List[ContentItem],
+                graph.search(content_type=content_type, object_id=conf_ids),
+            )
             for content_type, conf_ids in self.conf.linked_content_items.items()
         }
         logger.info(f"{self.graph_ids_by_type.keys()=}")
@@ -28,15 +32,15 @@ class ConfJsonValidator:
     def _validate_content_exists(self) -> bool:
         is_valid = True
 
-        for content_type, ids in self.conf.linked_content_items.items():
-            if found_missing := ids.difference(
+        for content_type, linked_ids in self.conf.linked_content_items.items():
+            if linked_ids_missing_in_graph := linked_ids.difference(
                 {
                     item.object_id
                     for item in self.graph_ids_by_type.get(content_type, ())
                 }
             ):
                 logger.error(
-                    f"{len(found_missing)} {content_type.value}s are not found in the graph: {','.join(sorted(found_missing))}"
+                    f"{len(linked_ids_missing_in_graph)} {content_type.value}s are not found in the graph: {','.join(sorted(linked_ids_missing_in_graph))}"
                 )
                 is_valid = False
         return is_valid
@@ -44,15 +48,15 @@ class ConfJsonValidator:
     def _validate_content_not_deprecated(self) -> bool:
         is_valid = True
 
-        for content_type, ids in self.conf.linked_content_items.items():
-            deprecated_ids = {
+        for content_type, linked_ids in self.conf.linked_content_items.items():
+            graph_deprecated_ids = {
                 item.object_id
                 for item in self.graph_ids_by_type.get(content_type, ())
-                if getattr(item, "deprecated", False)
+                if item.deprecated
             }
-            if found_deprecated := ids.intersection(deprecated_ids):
+            if linked_deprecated_ids := linked_ids.intersection(graph_deprecated_ids):
                 logger.error(
-                    f"{len(found_deprecated)} {content_type.value}s are deprecated: {','.join(sorted(found_deprecated))}"
+                    f"{len(linked_deprecated_ids)} {content_type.value}s are deprecated: {','.join(sorted(linked_deprecated_ids))}"
                 )
                 is_valid = False
 

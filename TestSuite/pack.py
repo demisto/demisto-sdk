@@ -247,6 +247,7 @@ class Pack(TestSuiteBase):
         create_unified=False,
         commands_txt: Optional[str] = None,
         test: Optional[str] = None,
+        deprecated: bool = False,
     ) -> Integration:
         if name is None:
             name = f"integration_{len(self.integrations)}"
@@ -257,6 +258,7 @@ class Pack(TestSuiteBase):
                 "display": name,
                 "description": description or f"this is an integration {name}",
                 "category": "category",
+                "deprecated": deprecated,
                 "script": {
                     "type": "python",
                     "subtype": "python3",

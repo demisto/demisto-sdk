@@ -109,7 +109,7 @@ class ConfJSON(StrictBaseModel):
                     ),
                 ),
             ),
-            (ContentType.PLAYBOOK, ((test.playbookID for test in self.tests),)),
+            (ContentType.TEST_PLAYBOOK, ((test.playbookID for test in self.tests),)),
             (
                 ContentType.SCRIPT,
                 (test.scripts for test in self.tests),

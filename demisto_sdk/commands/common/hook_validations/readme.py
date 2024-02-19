@@ -220,9 +220,9 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         if not server_started:
             error_message = (
-                    "Validation of MDX file failed due to unable to start the mdx server. You can skip this by adding RM103"
-                    " to the list of skipped validations under '.demisto-sdk-conf', or '.pack-ignore'"
-                )
+                "Validation of MDX file failed due to unable to start the mdx server. You can skip this by adding RM103"
+                " to the list of skipped validations under '.demisto-sdk-conf', or '.pack-ignore'"
+            )
             if self.handle_error(
                 error_message,
                 error_code="RM103",

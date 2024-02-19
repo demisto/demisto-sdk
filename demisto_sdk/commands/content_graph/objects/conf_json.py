@@ -13,9 +13,7 @@ from pydantic import BaseModel, Extra, Field, validator
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.common import (
-    ContentType,
-)
+from demisto_sdk.commands.content_graph.common import ContentType
 
 
 class StrictBaseModel(BaseModel):
@@ -98,7 +96,7 @@ class ConfJSON(StrictBaseModel):
             (
                 ContentType.INTEGRATION,
                 (
-                    (test.integrations for test in self.tests),
+                    (always_iterable(test.integrations) for test in self.tests),
                     self.unmockable_integrations.keys(),
                     self.parallel_integrations,
                     (

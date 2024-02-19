@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Poetry
-        uses: Gr1N/setup-poetry@v8
+        uses: Gr1N/setup-poetry@v9
 
       - name: Checkout
         uses: actions/checkout@v4

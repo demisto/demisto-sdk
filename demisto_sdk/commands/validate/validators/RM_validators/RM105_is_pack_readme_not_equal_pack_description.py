@@ -5,8 +5,8 @@ from typing import Iterable, List
 from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Pack
@@ -20,7 +20,6 @@ class IsPackReadmeNotEqualPackDescriptionValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.JSON, RelatedFileType.README]
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -32,8 +31,7 @@ class IsPackReadmeNotEqualPackDescriptionValidator(BaseValidator[ContentTypes]):
             if (
                 content_item.readme
                 and content_item.description
-                and content_item.description.lower().strip() ==
-                content_item.readme.lower().strip()
+                and content_item.description.lower().strip()
+                == content_item.readme.lower().strip()
             )
         ]
-    

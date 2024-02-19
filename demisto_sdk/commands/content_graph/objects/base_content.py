@@ -274,6 +274,7 @@ class BaseContent(BaseNode):
         git_sha: Optional[str] = None,
         raise_on_exception: bool = False,
         metadata_only: bool = False,
+        strict: bool = False,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
 
@@ -291,7 +292,9 @@ class BaseContent(BaseNode):
                 return None
         try:
             content_item.MARKETPLACE_MIN_VERSION = "0.0.0"
-            content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
+            content_item_parser = ContentItemParser.from_path(
+                path, git_sha=git_sha, strict=strict
+            )
             content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
 
         except NotAContentItemException:

@@ -336,7 +336,6 @@ class ContributionConverter:
         )
         from_version = "6.0.0" if self.create_new else ""
         format_manager(
-            input=str(self.pack_dir_path),
             from_version=from_version,
             no_validate=True,
             update_docker=True,

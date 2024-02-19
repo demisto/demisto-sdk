@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup
@@ -8,11 +9,16 @@ from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 
 
 class ConfJsonValidator:
-    def __init__(self, conf_json_path: Path = CONF_PATH) -> None:
+    def __init__(
+        self,
+        conf_json_path: Path = CONF_PATH,
+        graph: Optional[ContentGraphInterface] = None,  # Pass None to generate
+    ) -> None:
         self.conf = ConfJSON.from_path(conf_json_path)
 
         logger.info("Creating content graph - this may take a few minutes")
-        update_content_graph(graph := ContentGraphInterface())
+        if graph is None:
+            update_content_graph(graph := ContentGraphInterface())
         self.graph_ids_by_type = {
             content_type: graph.search(content_type=content_type, object_id=conf_ids)
             for content_type, conf_ids in self.conf.linked_content_items.items()
@@ -23,6 +29,8 @@ class ConfJsonValidator:
         is_valid = True
 
         for content_type, ids in self.conf.linked_content_items.items():
+            logger.info(f"{content_type=}, {len(ids)=}")
+            logger.info(f"{ids=}")
             if found_missing := ids.difference(
                 {
                     item.object_id

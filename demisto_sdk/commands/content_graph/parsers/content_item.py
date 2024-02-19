@@ -87,6 +87,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
         self.relationships: Relationships = Relationships()
+        self.git_sha: Optional[str] = git_sha
 
     @staticmethod
     def from_path(
@@ -122,7 +123,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(
-                    e.correct_parser, path, pack_marketplaces, **e.kwargs
+                    e.correct_parser, path, pack_marketplaces, git_sha, **e.kwargs
                 )
             except NotAContentItemException:
                 logger.debug(f"{path} is not a content item, skipping")

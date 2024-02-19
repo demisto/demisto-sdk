@@ -174,7 +174,8 @@ class GitUtil:
     ) -> bytes:
 
         commit = self.get_commit(commit_or_branch, from_remote=from_remote)
-        path = str(self.path_from_git_root(path))
+        if path.is_absolute():
+            path = str(self.path_from_git_root(path))
 
         try:
             blob: Blob = commit.tree / path

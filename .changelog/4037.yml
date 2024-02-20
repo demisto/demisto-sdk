@@ -1,0 +1,4 @@
+changes:
+- description: Update `update_content_graph` function to create the graph from scratch if `DEMISTO_SDK_GRAPH_FORCE_CREATE` env is set to true.
+  type: internal
+pr_number: 4037

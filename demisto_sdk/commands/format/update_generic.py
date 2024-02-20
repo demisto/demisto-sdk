@@ -395,7 +395,7 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        logger.info("Removing _dev and _copy suffixes from name, id and display tags")
+        logger.debug("Removing _dev and _copy suffixes from name, id and display tags")
         if self.data["name"]:
             self.data["name"] = (
                 self.data.get("name", "").replace("_copy", "").replace("_dev", "")

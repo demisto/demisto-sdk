@@ -1,4 +1,5 @@
 import os
+import traceback
 from multiprocessing import Pool
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -619,8 +620,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                         Path(temp_file.name),
                     )
                     self.move_to_import_dir(official_content_graph)
-            except Exception:
-                logger.error("Failed to download content graph from bucket")
+            except Exception as e:
+                logger.error(f"Failed to download content graph from bucket: {str(e)}")
+                logger.error(traceback.format_exc())
                 if fail_on_error:
                     raise
                 return False

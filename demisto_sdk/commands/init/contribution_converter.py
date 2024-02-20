@@ -340,7 +340,6 @@ class ContributionConverter:
             no_validate=True,
             update_docker=True,
             assume_answer=True,
-            include_untracked=True,
             interactive=False,
         )
 

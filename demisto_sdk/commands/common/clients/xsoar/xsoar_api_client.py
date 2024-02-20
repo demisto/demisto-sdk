@@ -1283,7 +1283,7 @@ class XsoarClient:
 
         while elapsed_time < timeout:
             playbook_state_raw_response = self.get_playbook_state(incident_id)
-            logger.debug(f"playbook state: {playbook_state_raw_response}")
+            logger.debug(f"playbook state raw-response: {playbook_state_raw_response}")
             playbook_state = playbook_state_raw_response.get("state")
             playbook_id = playbook_state_raw_response.get("playbookId")
             logger.debug(

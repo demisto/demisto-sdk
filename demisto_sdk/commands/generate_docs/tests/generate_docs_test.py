@@ -1747,7 +1747,6 @@ def test_missing_data_sections_when_generating_table_section(
     assert section == expected_result
 
 
-@pytest.mark.ciac_8757
 class TestIntegrationDocUpdate:
 
     repo_dir_name = "content"

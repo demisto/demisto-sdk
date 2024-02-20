@@ -2,8 +2,6 @@ import copy
 import logging
 import os
 
-import pytest
-
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
@@ -720,7 +718,6 @@ class TestIntegrationDiffDetector:
             ]
         )
 
-    @pytest.mark.ciac_8757
     def test_get_added_commands(self, pack: Pack):
         """
         Test whether the added commands is expected.
@@ -752,7 +749,6 @@ class TestIntegrationDiffDetector:
         assert len(actual) == 1
         assert actual == ["command_3"]
 
-    @pytest.mark.ciac_8757
     def test_is_configuration_different(self, pack: Pack):
         """
         Test whether the configuration sections is different
@@ -783,7 +779,6 @@ class TestIntegrationDiffDetector:
 
         assert actual
 
-    @pytest.mark.ciac_8757
     def test_is_configuration_different_same(self, pack: Pack):
         """
         Test whether the configuration sections is different
@@ -815,7 +810,6 @@ class TestIntegrationDiffDetector:
 
         assert not actual
 
-    @pytest.mark.ciac_8757
     def test_get_modified_commands_modified(self, pack: Pack):
         """
         Test whether the modified commands method works as expected when
@@ -856,7 +850,6 @@ class TestIntegrationDiffDetector:
         expected = ["command_1", "command_2"]
         assert actual == expected
 
-    @pytest.mark.ciac_8757
     def test_get_modified_commands_identical(self, pack: Pack):
         """
         FIXME check why when using:

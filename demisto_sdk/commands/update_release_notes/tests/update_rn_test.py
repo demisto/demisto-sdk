@@ -412,7 +412,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Integrations\n\n##### HelloWorld\n\n- Documentation and metadata improvements.\n"
+        expected_result = '\n##### HelloWorld\n\n- %%UPDATE_RN%%\n'
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -425,7 +425,7 @@ class TestRNUpdate:
         )
         changed_items = {}
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert release_notes == expected_result
 
     @mock.patch.object(UpdateRN, "get_master_version")
     def test_only_docs_changed(self, mock_master):

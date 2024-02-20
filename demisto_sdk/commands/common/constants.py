@@ -213,7 +213,6 @@ class FileType(str, Enum):
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: "Playbooks",
-    FileType.METADATA: "Integrations",
     FileType.INTEGRATION: "Integrations",
     FileType.BETA_INTEGRATION: "Integrations",
     FileType.SCRIPT: "Scripts",

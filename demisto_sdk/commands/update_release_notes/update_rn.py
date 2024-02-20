@@ -269,15 +269,16 @@ class UpdateRN:
                 )
             else:
                 docker_image_name = None
+            if file_type == FileType.METADATA:
+                continue
             changed_files[(file_name, file_type)] = {
                 "description": get_file_description(packfile, file_type),
                 "is_new_file": packfile in self.added_files,
-                "fromversion": get_from_version_at_update_rn(packfile)
-                if file_type != FileType.METADATA
-                else None,
+                "fromversion": get_from_version_at_update_rn(packfile),
                 "dockerimage": docker_image_name,
                 "path": packfile,
             }
+        self.pack_metadata_only = not changed_files
         return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
 
     def create_pack_rn(
@@ -674,7 +675,7 @@ class UpdateRN:
         rn_string = ""
 
         if self.pack_metadata_only:
-            rn_string += f"\n#### Integrations\n\n##### {self.pack}\n\n- Documentation and metadata improvements.\n"
+            rn_string += f"\n##### {self.pack}\n\n- %%UPDATE_RN%%\n"
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:

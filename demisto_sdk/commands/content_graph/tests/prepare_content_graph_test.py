@@ -35,14 +35,16 @@ GIT_ROOT = git_path()
 def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
+    from demisto_sdk.commands.common.files.file import File
 
     bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(
         neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
     )
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+    mocker.patch.object(
+        File,
+        "read_from_github_api",
         return_value={
             "docker_images": {
                 "python3": {

@@ -33,7 +33,14 @@ from demisto_sdk.commands.common.tools import retry
 
 class File(ABC):
 
-    git_util = GitUtil.from_content_path()
+    _git_util = GitUtil.from_content_path()
+
+    @classmethod
+    def git_util(cls) -> GitUtil:
+        current_path = Path.cwd()
+        if current_path != Path(cls._git_util.repo.working_dir):
+            cls._git_util = GitUtil.from_content_path(current_path)
+        return cls._git_util
 
     @property
     def path(self) -> Path:
@@ -208,9 +215,9 @@ class File(ABC):
 
         if not path.is_absolute():
             logger.debug(
-                f"path {path} is not absolute, trying to get full relative path from {cls.git_util.repo.working_dir}"
+                f"path {path} is not absolute, trying to get full relative path from {cls.git_util().repo.working_dir}"
             )
-            path = cls.git_util.repo.working_dir / path
+            path = cls.git_util().repo.working_dir / path
             if not path.exists():
                 raise FileNotFoundError(f"File {path} does not exist")
 
@@ -259,12 +266,9 @@ class File(ABC):
         if clear_cache:
             cls.read_from_git_path.cache_clear()
 
-        if cls.git_util.is_file_exist_in_commit_or_branch(
+        if not cls.git_util().is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
-            # when reading from git we need relative path from the repo root
-            path = cls.git_util.path_from_git_root(path)
-        else:
             raise FileNotFoundError(
                 f"File {path} does not exist in commit/branch {tag}"
             )
@@ -278,7 +282,7 @@ class File(ABC):
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
         try:
             return self.load(
-                self.git_util.read_file_content(
+                self.git_util().read_file_content(
                     self.path, commit_or_branch=tag, from_remote=from_remote
                 )
             )

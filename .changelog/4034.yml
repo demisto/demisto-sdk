@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the **upload** command fail when the env variable `DEMISTO_SDK_OFFLINE_ENV` is set to True. 
+  type: fix
+pr_number: 4034

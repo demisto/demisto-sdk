@@ -109,26 +109,24 @@ class ConfJSON(StrictBaseModel):
                     ),
                 ),
             ),
-            (ContentType.TEST_PLAYBOOK, ((test.playbookID for test in self.tests),)),
+            (
+                ContentType.TEST_PLAYBOOK,
+                (
+                    (test.playbookID for test in self.tests),
+                    # self.skipped_tests.keys(),
+                    # not collecting skipped tests as this section preserves for skip reasons.
+                    self.private_tests,
+                    self.reputation_tests,
+                    self.test_marketplacev2,
+                ),
+            ),
             (
                 ContentType.SCRIPT,
                 (test.scripts for test in self.tests),
             ),
             (
-                ContentType.TEST_PLAYBOOK,
-                (self.skipped_tests.keys(),),
-            ),
-            (
                 ContentType.PACK,
                 (self.nightly_packs,),
-            ),
-            (
-                ContentType.TEST_PLAYBOOK,
-                (
-                    self.private_tests,
-                    self.reputation_tests,
-                    self.test_marketplacev2,
-                ),
             ),
         ):
             for id_source in id_sources:

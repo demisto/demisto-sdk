@@ -54,30 +54,26 @@ class ConfJsonValidator:
                 is_valid = False
         return is_valid
 
-    def _validate_content_not_deprecated(self) -> bool:
-        is_valid = True
-
-        for content_type, linked_ids in self.conf.linked_content_items.items():
-            graph_deprecated_ids = {
-                item.object_id
-                for item in self.graph_ids_by_type.get(content_type, ())
-                if item.deprecated
-            }
-            if linked_deprecated_ids := linked_ids.intersection(graph_deprecated_ids):
-                logger.error(
-                    f"{len(linked_deprecated_ids)} {content_type.value}s are deprecated: {','.join(sorted(linked_deprecated_ids))}"
-                )
-                is_valid = False
-
-        return is_valid
+    # def _validate_content_not_deprecated(self) -> bool:
+    #
+    #     This is commented out as we decided to not treat deprecated content as errorneous.
+    #
+    #     is_valid = True
+    #     for content_type, linked_ids in self.conf.linked_content_items.items():
+    #         graph_deprecated_ids = {
+    #             item.object_id
+    #             for item in self.graph_ids_by_type.get(content_type, ())
+    #             if item.deprecated
+    #         }
+    #         if linked_deprecated_ids := linked_ids.intersection(graph_deprecated_ids):
+    #             logger.error(
+    #                 f"{len(linked_deprecated_ids)} {content_type.value}s are deprecated: {','.join(sorted(linked_deprecated_ids))}"
+    #             )
+    #             is_valid = False
+    #     return is_valid
 
     def validate(self) -> bool:
-        return all(
-            (
-                self._validate_content_exists(),
-                self._validate_content_not_deprecated(),
-            )
-        )
+        return self._validate_content_exists()
 
 
 def main():

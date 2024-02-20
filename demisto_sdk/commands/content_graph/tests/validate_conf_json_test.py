@@ -41,7 +41,6 @@ def test_integration_playbook_positive(
     graph = graph_repo.create_graph()
     validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
     assert validator._validate_content_exists()
-    assert validator._validate_content_not_deprecated()
     assert not validator.validate()
 
 
@@ -68,53 +67,6 @@ def test_integration_mistyped(graph_repo: Repo) -> None:
     assert not validator.validate()
 
 
-def test_integration_deprecated(graph_repo: Repo) -> None:
-    """
-    Given   a repo with one integration, which is deprecated
-    When    calling validate
-    Then    make sure it fails
-    """
-    pack = graph_repo.create_pack()
-    pack.create_test_playbook("playbook")
-    pack.create_integration(name="foo", deprecated=True)
-    graph_repo.conf.write_json(
-        tests=[
-            {
-                "playbookID": "playbook",
-                "integrations": "foo",
-            }
-        ]
-    )
-    graph = graph_repo.create_graph()
-    validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
-    assert validator._validate_content_exists()
-    assert not validator._validate_content_not_deprecated()
-    assert not validator.validate()
-
-
-def test_playbook_deprecated(graph_repo: Repo) -> None:
-    """
-    Given   a repo with one integration, whose Test playbook is deprecated
-    When    calling validate
-    Then    make sure it fails
-    """
-    pack = graph_repo.create_pack()
-    pack.create_test_playbook("playbook", deprecated=True)
-    pack.create_integration(name="foo", deprecated=False)
-    graph_repo.conf.write_json(
-        tests=[
-            {
-                "playbookID": "playbook",
-                "integrations": "foo",
-            }
-        ]
-    )
-    graph = graph_repo.create_graph()
-    validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
-    assert not validator._validate_content_not_deprecated()
-    assert not validator.validate()
-
-
 def test_invalid_skipped_integration(graph_repo: Repo) -> None:
     """
     Given   a repo with one skipped integration configured, but doesn't exist in the repo
@@ -126,7 +78,6 @@ def test_invalid_skipped_integration(graph_repo: Repo) -> None:
     graph_repo.conf.write_json(skipped_integrations={"hello": "world"})
     graph = graph_repo.create_graph()
     validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
-    assert validator._validate_content_not_deprecated()
     assert not validator.validate()
 
 
@@ -141,20 +92,4 @@ def test_invalid_skipped_test(graph_repo: Repo) -> None:
     graph_repo.conf.write_json(skipped_tests={"hello": "world"})
     graph = graph_repo.create_graph()
     validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
-    assert validator._validate_content_not_deprecated()
-    assert not validator.validate()
-
-
-def test_deprecated_skipped_test(graph_repo: Repo) -> None:
-    """
-    Given   a repo with one deprecated skipped test configured
-    When    calling validate
-    Then    make sure it fails
-    """
-    pack = graph_repo.create_pack()
-    pack.create_test_playbook("playbook", deprecated=True)
-    graph_repo.conf.write_json(skipped_tests={"playbook": "some reason"})
-    graph = graph_repo.create_graph()
-    validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
-    assert not validator._validate_content_not_deprecated()
     assert not validator.validate()

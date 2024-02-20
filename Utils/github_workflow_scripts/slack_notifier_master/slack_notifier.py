@@ -4,6 +4,8 @@ import typer
 from github import Github, WorkflowRun
 from slack_sdk import WebClient
 
+from demisto_sdk.commands.common.logger import logger
+
 DEFAULT_SLACK_CHANNEL = "dmst-build-test"
 
 
@@ -108,6 +110,9 @@ def slack_notifier(
             attachments=slack_message,
             username="Demisto-SDK Github-Actions",
         )
+        logger.info('Successfully reported failed jobs to slack')
+    else:
+        logger.info(f'There are not any failed jobs to report to slack')
 
 
 if __name__ == "__main__":

@@ -442,9 +442,13 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
     if marketplaces is None:
         marketplaces = list(MarketplaceVersions)
 
-    for mp, core_packs in get_marketplace_to_core_packs().items():
-        if mp in marketplaces:
-            result.update(core_packs)
+    try:
+        for mp, core_packs in get_marketplace_to_core_packs().items():
+            if mp in marketplaces:
+                result.update(core_packs)
+    except NoInternetConnectionException:
+        logger.debug("SDK running in offline mode")
+        return []
     return list(result)
 
 

@@ -313,7 +313,7 @@ def get_files_to_format_from_git(
     Returns:
         list. a list of all the files that should be formatted.
     """
-    git_util = GitUtil()
+    git_util = GitUtil().from_content_path()
     all_changed_files = git_util.get_all_changed_files(
         prev_ver=prev_ver, include_untracked=include_untracked
     )

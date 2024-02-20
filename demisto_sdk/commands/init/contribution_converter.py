@@ -341,6 +341,7 @@ class ContributionConverter:
             update_docker=True,
             assume_answer=True,
             interactive=False,
+            use_git=True,
         )
 
     def generate_readme_for_pack_content_item(

@@ -103,6 +103,7 @@ def test_get_all_logs(changelog_folder_mock: Path):
         - Ensure that if there are two entries in the log file
           it is returned as two entries within an `LogFileObject` object
     """
+    assert False
     with (changelog_folder_mock / "12345.yml").open("w") as f:
         yaml.dump(LOG_FILE_1, f)
     with (changelog_folder_mock / "43524.yml").open("w") as f:

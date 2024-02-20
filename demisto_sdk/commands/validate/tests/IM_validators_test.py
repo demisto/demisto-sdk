@@ -1,70 +1,45 @@
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
-    create_integration_object,
     create_metadata_object,
 )
-from demisto_sdk.commands.validate.validators.IM_validators.IM100_no_image_validation import (
-    ImageNotExistValidator,
-)
-from demisto_sdk.commands.validate.validators.IM_validators.IM109_no_author_image_validation import (
-    AuthorImageNotExistValidator,
+from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_is_empty import (
+    AuthorImageIsEmptyValidator,
 )
 
 
 @pytest.mark.parametrize(
-
-
-    "content_item, expected_result",
+    "content_items, expected_number_of_failures, expected_msgs",
     [
-        (create_integration_object(), "no_image_exists"),
-    ]
+        ([create_metadata_object()], 0, []),
+        (
+            [create_metadata_object(image="")],
+            1,
+            ["The author image should not be empty. Please provide a relevant image."],
+        ),
+    ],
 )
-def test_is_valid_no_image_path(content_item, expected_result):
-    result = ImageNotExistValidator().is_valid([content_item])
-    if isinstance(expected_result, list):
-        assert result == expected_result
-    else:
-        assert result[0].message == expected_result
-    
-@pytest.mark.parametrize(
-    "content_item, expected_result",
-    [
-        (create_integration_object(), []),
-    ]
-)
-def test_is_valid_image_path(content_item, expected_result):
-    result = ImageNotExistValidator().is_valid([content_item])
+def test_AuthorImageIsEmptyValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items.
+        - Case 1: Author image not empty.
+        - Case 2: Author image is empty.
 
-    assert (
-        result == expected_result
-        if isinstance(expected_result, list)
-        else result[0].message == expected_result)
-    
-@pytest.mark.parametrize(
-    "content_item, expected_result",
-    [
-        (create_metadata_object(), "no_image_exists"),
-    ]
-)
-def test_is_valid_no_author_image_path(content_item, expected_result):
-    result = ImageNotExistValidator().is_valid([content_item])
-
-    assert (
-        result == expected_result
-        if isinstance(expected_result, list)
-        else result[0].message == expected_result)
-    
-@pytest.mark.parametrize(
-    "content_item, expected_result",
-    [
-        (create_integration_object, []),
-    ]
-)
-def test_is_valid_author_image_path(content_item, expected_result):
-    result = ImageNotExistValidator().is_valid([content_item])
-
-    assert (
-        result == expected_result
-        if isinstance(expected_result, list)
-        else result[0].message == expected_result)
+    When
+    - Calling the AuthorImageIsEmptyValidator is_valid function.
+    Then
+        - Make sure the right amount of pack author image failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+    """
+    results = AuthorImageIsEmptyValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

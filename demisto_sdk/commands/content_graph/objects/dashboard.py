@@ -8,6 +8,8 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignore[call-arg]
+    version: int
+
     def metadata_fields(self) -> Set[str]:
         return {"object_id", "name", "fromversion", "toversion", "deprecated"}
 

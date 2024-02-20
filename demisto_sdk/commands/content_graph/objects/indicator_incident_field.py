@@ -13,6 +13,7 @@ class IndicatorIncidentField(ContentItem):
     cli_name: str = Field(alias="cliName")
     object_id: str = Field(alias="id")
     field_type: str = Field(alias="type")
+    version: int
 
     def _upload(
         self,

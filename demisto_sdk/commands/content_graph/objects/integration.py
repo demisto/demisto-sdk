@@ -88,7 +88,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     category: str
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
-    has_unittests: bool = False
 
     @property
     def imports(self) -> List["Script"]:

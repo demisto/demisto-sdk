@@ -15,6 +15,7 @@ json = JSON_Handler()
 class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg]
     type: str
     is_unified: bool
+    version: int
 
     def _upload(
         self,

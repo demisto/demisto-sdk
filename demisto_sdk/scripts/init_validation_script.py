@@ -57,8 +57,8 @@ CONTENT_TYPES_DICT = {
         "content_type": "Classifier",
     },
     "7": {
-        "import": "from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType",
-        "content_type": "IncidentType",
+        "import": "from demisto_sdk.commands.content_graph.objects.job import Job",
+        "content_type": "Job",
     },
     "8": {
         "import": "from demisto_sdk.commands.content_graph.objects.layout import Layout",
@@ -533,7 +533,11 @@ Fill the content types as the numbers they appear as: """
         if self.support_fix:
             self.fix_method = """def fix(self, content_item: ContentTypes) -> FixResult:
         # Add your fix right here
-        pass
+        return FixResult(
+            validator=self,
+            message=self.fix_message,
+            content_object=content_item,
+        )
             """
 
     def generate_file_info(self):

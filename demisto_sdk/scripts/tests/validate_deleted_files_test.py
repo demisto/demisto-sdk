@@ -47,19 +47,23 @@ def test_validate_deleted_files_when_deleting_from_tests_folder(git_repo: Repo):
         - conf.json that was deleted
 
     When:
-        - running the validate-deleted-files script
+        - running the validate-get_forbidden_deleted_files-files function
 
     Then:
-        - make sure the script finds deleted files and fails with error code 1
+        - make sure the script finds all the forbidden files which is the conf.json
     """
-    from demisto_sdk.scripts.validate_deleted_files import main
+    from demisto_sdk.scripts.validate_deleted_files import get_forbidden_deleted_files
 
     git_repo.git_util.repo.git.checkout("-b", "delete_conf_json")
     Path.unlink(Path(git_repo.path) / "Tests/conf.json")
     git_repo.git_util.commit_files("delete conf.json")
 
+    expected_forbidden_conf_json_path = str(
+        git_repo.git_util.path_from_git_root(Path(git_repo.path) / "Tests/conf.json")
+    )
+
     with ChangeCWD(git_repo.path):
-        assert main() == 1
+        assert get_forbidden_deleted_files() == [expected_forbidden_conf_json_path]
 
 
 def test_get_forbidden_deleted_files_deleting_script(git_repo: Repo):

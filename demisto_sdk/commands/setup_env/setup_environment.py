@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import venv
 from enum import Enum
@@ -491,23 +492,56 @@ def install_virtualenv(
     logger.info(f"Creating virtualenv for {integration_script.name}")
     shutil.rmtree(venv_path, ignore_errors=True)
     venv.create(venv_path, with_pip=True)
-    for req in requirements:
-        if not req:
-            continue
-        try:
-            subprocess.run(
-                [
-                    f"{venv_path / 'bin' / 'pip'}",
-                    "-q",
-                    "--disable-pip-version-check",
-                    "install",
-                    req,
-                ],
-                check=True,
-            )
-            logger.info(f"Installed {req}")
-        except subprocess.CalledProcessError:
-            logger.warning(f"Could not install {req}, skipping...")
+    env = os.environ.copy()
+    env.update({"VIRTUAL_ENV": str(venv_path)})
+    requirements = [req for req in requirements if req]
+    try:
+        subprocess.run(
+            [
+                str(Path(sys.executable).parent / "uv"),
+                "pip",
+                "-q",
+                "install",
+            ]
+            + requirements,
+            check=True,
+            env=env,
+        )
+    except subprocess.CalledProcessError:
+        logger.warning("Failed to install all requirements, trying one by one...")
+
+        for req in requirements:
+            try:
+                subprocess.run(
+                    [
+                        str(Path(sys.executable).parent / "uv"),
+                        "pip",
+                        "-q",
+                        "install",
+                        req,
+                    ],
+                    check=True,
+                    env=env,
+                )
+                logger.info(f"Installed {req}")
+            except subprocess.CalledProcessError:
+                logger.warning(f"Could not install {req} with uv, trying with pip")
+                try:
+                    subprocess.run(
+                        [
+                            f"{venv_path / 'bin' / 'pip'}",
+                            "-q",
+                            "install",
+                            req,
+                        ],
+                        check=True,
+                    )
+                    logger.info(f"Installed {req}")
+                except subprocess.CalledProcessError:
+                    logger.error(
+                        f"Failed to install {req}, skipping. Install manually if needed."
+                    )
+    logger.info(f"Installed all requirements to {venv_path}")
     return interpreter_path
 
 

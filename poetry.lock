@@ -4910,6 +4910,31 @@ files = [
 ]
 
 [[package]]
+name = "uv"
+version = "0.1.5"
+description = "An extremely fast Python package installer and resolver, written in Rust."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "uv-0.1.5-py3-none-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:0b5bbfee88ad5d2251c34ee1db5fb2b0c833e5f4d1ba175dab39491baec32232"},
+    {file = "uv-0.1.5-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:6a3f76f3918b5289a85c3a4d392a3fea7a188d7a40bcdc6b0869320d2e87e9f6"},
+    {file = "uv-0.1.5-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:a1292b140eb4ae88ba26299a3db39d4ec04acf41c464fa4b0bf86f734161d80b"},
+    {file = "uv-0.1.5-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:9fb3d7db8bd2d078fc81e2309046ec75a3639b4c5b008e55ecfba1c95aac27e1"},
+    {file = "uv-0.1.5-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:eda6f315c18b3a3c9acd97fdebefb6889ba0c1653c57c1f6831bc9beda7a2c90"},
+    {file = "uv-0.1.5-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:b8572b2dc4fa02356bbbd3197bb329fea2cacf3fdc225e0558596edb532d39ce"},
+    {file = "uv-0.1.5-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8ddb06f93bdfcbfdf0f74e9f2d182b8184f4ea17e56b347def3bb029ceefbdcf"},
+    {file = "uv-0.1.5-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:6c2a6d4e5a3cd8327f372c1916c04f12d6cca5b6c95532bea517a03ab9a83b5f"},
+    {file = "uv-0.1.5-py3-none-manylinux_2_28_armv7l.whl", hash = "sha256:c73059081ead7df515d1f5bb9582d8e005f33a0c256880bcda8382ef11762e81"},
+    {file = "uv-0.1.5-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:d8115806ef3224faa47dacd46f11cbe60e6fa01f73c1615ef06a65646b126646"},
+    {file = "uv-0.1.5-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:a682c95b1d108309bad385b2253d136fee7f2afe023306e28b4bdcaca8943969"},
+    {file = "uv-0.1.5-py3-none-musllinux_1_2_i686.whl", hash = "sha256:f453bd92d58ffc832d14239648fe372b13943d4636b03a94f84f4964b75b598e"},
+    {file = "uv-0.1.5-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:abcefdae5442c93ff2a8dd02edb5409af1a539df833bc76f6912148bd6d70262"},
+    {file = "uv-0.1.5-py3-none-win32.whl", hash = "sha256:477658f96a9686d5d890e6d7f892c550143c77d7ee44ff6f5eaea631f3f40df8"},
+    {file = "uv-0.1.5-py3-none-win_amd64.whl", hash = "sha256:a2b937c0f9f8322a2c7934e1efa9f708c2bedc03a9c242be7344c3350306450d"},
+    {file = "uv-0.1.5.tar.gz", hash = "sha256:5a49bdba000644f132b4cb0daaca7acdaf7c2233871dfa534394350d9fac7138"},
+]
+
+[[package]]
 name = "virtualenv"
 version = "20.23.0"
 description = "Virtual Python Environment builder"
@@ -5271,4 +5296,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "967c75e350a15ba81e1c6578f1e779dddf1b8aa704cb42cb4028e29c141209bf"
+content-hash = "b153d993a9b92a0fc76b3aea84533e807db53a963eedcffda55f88c341641512"

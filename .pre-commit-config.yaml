@@ -188,6 +188,7 @@ repos:
     - tzlocal==4.3 ; python_version >= "3.8" and python_version < "3.11"
     - ujson==5.7.0 ; python_version >= "3.8" and python_version < "3.11"
     - urllib3==1.26.15 ; python_version >= "3.8" and python_version < "3.11"
+    - uv==0.1.5 ; python_version >= "3.8" and python_version < "3.11"
     - virtualenv==20.23.0 ; python_version >= "3.8" and python_version < "3.11"
     - vulture==2.7 ; python_version >= "3.8" and python_version < "3.11"
     - wcmatch==8.4.1 ; python_version >= "3.8" and python_version < "3.11"

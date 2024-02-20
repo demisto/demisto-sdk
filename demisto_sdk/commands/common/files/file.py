@@ -282,7 +282,7 @@ class File(ABC):
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
         try:
             return self.load(
-                File.git_util().read_file_content(
+                self.git_util().read_file_content(
                     self.path, commit_or_branch=tag, from_remote=from_remote
                 )
             )

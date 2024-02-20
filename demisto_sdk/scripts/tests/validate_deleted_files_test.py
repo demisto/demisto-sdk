@@ -2,7 +2,9 @@ import shutil
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
 
+from demisto_sdk.commands.common.constants import PACKS_DIR, TESTS_DIR
 from demisto_sdk.commands.common.git_util import Repo as GitRepo
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -14,31 +16,6 @@ def setup(mocker):
 
     mocker.patch.object(GitRepo, "remote", return_value="")
     mocker.patch.object(GitUtil, "fetch", return_value=None)
-
-
-def test_validate_deleted_files_when_deleting_integration_folder(git_repo: Repo):
-    """
-    Given:
-        - an integration folder which was deleted
-
-    When:
-        - running the validate-deleted-files script
-
-    Then:
-        - make sure the script finds deleted files and fails with error code 1
-    """
-    from demisto_sdk.scripts.validate_deleted_files import main
-
-    pack = git_repo.create_pack("Test")
-    integration = pack.create_integration("Test")
-    git_repo.git_util.commit_files("create pack and integration")
-    git_repo.git_util.repo.git.checkout("-b", "delete_integration")
-
-    shutil.rmtree(integration.path)
-    git_repo.git_util.commit_files("delete integration")
-
-    with ChangeCWD(git_repo.path):
-        assert main() == 1
 
 
 def test_validate_deleted_files_when_deleting_from_tests_folder(git_repo: Repo):
@@ -63,7 +40,9 @@ def test_validate_deleted_files_when_deleting_from_tests_folder(git_repo: Repo):
     )
 
     with ChangeCWD(git_repo.path):
-        assert get_forbidden_deleted_files() == [expected_forbidden_conf_json_path]
+        assert get_forbidden_deleted_files({TESTS_DIR}) == [
+            expected_forbidden_conf_json_path
+        ]
 
 
 def test_get_forbidden_deleted_files_deleting_script(git_repo: Repo):
@@ -95,7 +74,7 @@ def test_get_forbidden_deleted_files_deleting_script(git_repo: Repo):
     git_repo.git_util.commit_files("delete script")
 
     with ChangeCWD(git_repo.path):
-        assert sorted(get_forbidden_deleted_files()) == sorted(
+        assert sorted(get_forbidden_deleted_files({PACKS_DIR})) == sorted(
             expected_forbidden_deleted_files
         )
 
@@ -124,13 +103,14 @@ def test_get_forbidden_deleted_files_deleting_test_playbook(git_repo: Repo):
     git_repo.git_util.commit_files("delete test-playbook")
 
     with ChangeCWD(git_repo.path):
-        assert not get_forbidden_deleted_files()
+        assert not get_forbidden_deleted_files({PACKS_DIR})
 
 
 def test_get_forbidden_deleted_files_renaming_test_playbook(git_repo: Repo):
     """
     Given:
         - a test playbook which was renamed
+        - Packs DIR that no files cannot be deleted from it
 
     When:
         - running the get_forbidden_deleted_files function
@@ -152,13 +132,14 @@ def test_get_forbidden_deleted_files_renaming_test_playbook(git_repo: Repo):
     git_repo.git_util.commit_files("rename test-playbook")
 
     with ChangeCWD(git_repo.path):
-        assert not get_forbidden_deleted_files()
+        assert not get_forbidden_deleted_files({PACKS_DIR})
 
 
 def test_validate_deleted_files_when_modifying_pack_metadata(git_repo: Repo):
     """
     Given:
         - pack metadata that was updated
+        - Packs DIR that no files cannot be deleted from it
 
     When:
         - running the validate-deleted-files script
@@ -173,14 +154,27 @@ def test_validate_deleted_files_when_modifying_pack_metadata(git_repo: Repo):
     pack.pack_metadata.update({"support": "community"})
     git_repo.git_util.commit_files("update packmetadata.json")
 
+    runner = CliRunner()
+
     with ChangeCWD(git_repo.path):
-        assert main() == 0
+        result = runner.invoke(
+            main,
+            [
+                "--protected-dirs",
+                PACKS_DIR,
+            ],
+            catch_exceptions=False,
+        )
+
+    assert result.exit_code == 0
+    assert not result.exception
 
 
 def test_validate_deleted_files_when_adding_integration(git_repo: Repo):
     """
     Given:
         - adding a new integration
+        - Packs DIR that no files cannot be deleted from it
 
     When:
         - running the validate-deleted-files script
@@ -196,14 +190,27 @@ def test_validate_deleted_files_when_adding_integration(git_repo: Repo):
     pack.create_integration("Test")
     git_repo.git_util.commit_files("add integration")
 
+    runner = CliRunner()
+
     with ChangeCWD(git_repo.path):
-        assert main() == 0
+        result = runner.invoke(
+            main,
+            [
+                "--protected-dirs",
+                PACKS_DIR,
+            ],
+            catch_exceptions=False,
+        )
+
+    assert result.exit_code == 0
+    assert not result.exception
 
 
 def test_validate_deleted_files_when_renaming_file_name(git_repo: Repo):
     """
     Given:
         - conf.json file which was renamed
+        - Tests DIR that no files cannot be deleted from it
 
     When:
         - running the validate-deleted-files script
@@ -218,5 +225,55 @@ def test_validate_deleted_files_when_renaming_file_name(git_repo: Repo):
     conf_json_path.rename(Path(git_repo.path) / "Tests/rename_conf_json_file.json")
     git_repo.git_util.commit_files("rename conf.json")
 
+    runner = CliRunner()
+
     with ChangeCWD(git_repo.path):
-        assert main() == 0
+        result = runner.invoke(
+            main,
+            [
+                "--protected-dirs",
+                TESTS_DIR,
+            ],
+            catch_exceptions=False,
+        )
+
+    assert result.exit_code == 0
+    assert not result.exception
+
+
+def test_validate_deleted_files_when_deleting_integration_folder(git_repo: Repo):
+    """
+    Given:
+        - an integration folder which was deleted
+        - Packs DIR that no files cannot be deleted from it
+
+    When:
+        - running the validate-deleted-files script
+
+    Then:
+        - make sure the script finds deleted files and fails with error code 1
+    """
+    from demisto_sdk.scripts.validate_deleted_files import main
+
+    pack = git_repo.create_pack("Test")
+    integration = pack.create_integration("Test")
+    git_repo.git_util.commit_files("create pack and integration")
+    git_repo.git_util.repo.git.checkout("-b", "delete_integration")
+
+    shutil.rmtree(integration.path)
+    git_repo.git_util.commit_files("delete integration")
+
+    runner = CliRunner()
+
+    with ChangeCWD(git_repo.path):
+        result = runner.invoke(
+            main,
+            [
+                "--protected-dirs",
+                PACKS_DIR,
+            ],
+            catch_exceptions=False,
+        )
+
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit)

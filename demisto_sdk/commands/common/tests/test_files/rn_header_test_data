@@ -1,60 +1,60 @@
 #### Integrations
-##### integration-test
+##### test
 - Added x y z
 
 #### Scripts
-##### New: script-test
+##### New: test
 - Added x y z
 
 #### Playbooks
-##### playbook-test.yml
+##### test
 - Added x y z
 - Ignore the yml suffix, it is not a real playbook.
 
 #### Dashboards
-##### dashboard-test.json
+##### test
 - Added x y z
 - Ignore the json suffix, it is not a real dashboard.
 
 #### Incident Fields
-- **incidentfield-test1.json**
-- New: **incidentfield-test2.json**
+- **test1**
+- New: **test2**
 
 #### Incident Types
-- **incidenttype-test.json**
+- **test**
 
 #### Indicator Fields
-- **incidentfield-test.json**
+- **test**
 
 #### Indicator Types
-- **reputation-test.json**
+- **test**
 
 #### Layouts
-- **layout-test.json**
+- **test**
 
 #### Mappers
-##### New: classifier-mapper-test.json
+##### New: test
 - Added x y z
 - Ignore the json suffix, it is not a real mapper.
 
 #### Classifiers
-##### classifier-test.json
+##### test
 - Added x y z
 - Ignore the json suffix, it is not a real classifier.
 
 #### Widgets
-##### New: widget-test.json
+##### New: test
 - Added x y z
 - Ignore the json suffix, it is not a real widget.
 
 #### Correlation Rules
-##### New: correlation-rule-test
+##### New: test
 - Added x y z
 
 #### XSIAM Dashboards
-##### New: xsiam-dashboard-test.json
+##### New: test
 - Added x y z
 - Ignore the json suffix, it is not a real dashboard.
 
 #### Triggers Recommendations
-- **trigger-test.json**
+- **test**

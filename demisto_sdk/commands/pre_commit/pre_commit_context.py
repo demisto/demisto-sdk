@@ -7,6 +7,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+from demisto_sdk.commands.common.constants import CACHE_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -23,9 +24,9 @@ IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
 PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
-PRECOMMIT_FOLDER = CONTENT_PATH / ".pre-commit"
+PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"
 PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
-PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / ".pre-commit-config-main.yaml"
+PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
 PRECOMMIT_DOCKER_CONFIGS = PRECOMMIT_CONFIG / "docker"
 
 

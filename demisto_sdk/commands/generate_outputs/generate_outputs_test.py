@@ -8,7 +8,7 @@ from TestSuite.test_tools import str_in_call_args_list
 
 
 @pytest.mark.parametrize(
-    "args, excpected_stdout",
+    "args, expected_stdout",
     [
         (["-j", "123"], "please include a `command` argument."),
         (["-j", "123", "-c", "ttt"], "please include a `prefix` argument."),
@@ -16,7 +16,7 @@ from TestSuite.test_tools import str_in_call_args_list
     ],
 )
 def test_generate_outputs_json_to_outputs_flow(
-    mocker, monkeypatch, args, excpected_stdout
+    mocker, monkeypatch, args, expected_stdout
 ):
     """
     Given
@@ -28,7 +28,7 @@ def test_generate_outputs_json_to_outputs_flow(
     Then
         - Ensure that the outputs are valid
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     import demisto_sdk.commands.generate_outputs.generate_outputs as go
@@ -37,14 +37,14 @@ def test_generate_outputs_json_to_outputs_flow(
 
     runner = CliRunner()
     runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
-    if excpected_stdout:
-        assert str_in_call_args_list(logger_info.call_args_list, excpected_stdout)
+    if expected_stdout:
+        assert str_in_call_args_list(logger_error.call_args_list, expected_stdout)
     else:
-        assert len(logger_info.call_args_list) == 0
+        assert len(logger_error.call_args_list) == 0
 
 
 @pytest.mark.parametrize(
-    "args, excpected_stdout, expected_exit_code",
+    "args, expected_stdout, expected_exit_code",
     [
         ("-e", "requires an argument", 2),
         (["-e", "<example>"], "command please include an `input` argument", 0),
@@ -52,7 +52,7 @@ def test_generate_outputs_json_to_outputs_flow(
     ],
 )
 def test_generate_outputs_generate_integration_context_flow(
-    mocker, monkeypatch, args, excpected_stdout, expected_exit_code
+    mocker, monkeypatch, args, expected_stdout, expected_exit_code
 ):
     """
     Given
@@ -75,4 +75,4 @@ def test_generate_outputs_generate_integration_context_flow(
     result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
     assert result.exit_code == expected_exit_code
     if expected_exit_code == 0:
-        assert str_in_call_args_list(logger_info.call_args_list, excpected_stdout)
+        assert str_in_call_args_list(logger_info.call_args_list, expected_stdout)

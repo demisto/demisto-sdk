@@ -6,8 +6,11 @@ from unittest.mock import patch
 import pytest
 import toml
 
+from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
@@ -45,7 +48,7 @@ def get_validate_manager(mocker):
     validation_results = ResultWriter()
     config_reader = ConfigReader(category_to_run="test")
     initializer = Initializer()
-    mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value={})
+    mocker.patch.object(Initializer, "gather_objects_to_run_on", return_value=({}, {}))
     return ValidateManager(
         validation_results=validation_results,
         config_reader=config_reader,
@@ -219,7 +222,6 @@ def test_gather_validations_to_run(
                     validator=IDNameValidator(),
                     message="",
                     content_object=INTEGRATION,
-                    old_content_object=None,
                 )
             ],
             [],
@@ -232,16 +234,24 @@ def test_gather_validations_to_run(
                     }
                 ],
                 "fixed validations": [],
+                "invalid content items": [],
             },
         ),
-        ([], [], {"validations": [], "fixed validations": []}),
+        (
+            [],
+            [],
+            {
+                "validations": [],
+                "fixed validations": [],
+                "invalid content items": [],
+            },
+        ),
         (
             [
                 ValidationResult(
                     validator=IDNameValidator(),
                     message="",
                     content_object=INTEGRATION,
-                    old_content_object=None,
                 )
             ],
             [
@@ -266,6 +276,7 @@ def test_gather_validations_to_run(
                         "message": "Fixed this issue",
                     }
                 ],
+                "invalid content items": [],
             },
         ),
     ],
@@ -418,3 +429,166 @@ def test_should_run(validator, expected_results):
         - Case 3: Should return False.
     """
     assert expected_results == validator.should_run(INTEGRATION, [], {})
+
+
+def test_object_collection_with_readme_path(repo):
+    """
+    Given:
+    - A path to integration readme
+    When:
+    - Calling the paths_to_basecontent_set.
+    Then:
+    - Make sure that an integration was parsed.
+    """
+
+    yml_content = load_yaml("integration.yml")
+    pack = repo.create_pack("pack_no_1")
+    integration = pack.create_integration(yml=yml_content)
+    integration.code.write("from MicrosoftApiModule import *")
+    integration.readme.write("test")
+    readme_path = integration.readme.path
+    initializer = Initializer()
+    obj_set, _, _ = initializer.paths_to_basecontent_set({Path(readme_path)})
+    obj = obj_set.pop()
+    assert obj is not None
+    assert obj.content_type == ContentType.INTEGRATION
+
+
+def test_object_collection_with_pack_path(repo):
+    """
+    Given:
+    - A path to a pack that contain an integration.
+    When:
+    - Calling the gather_objects_to_run_on.
+    Then:
+    - Make sure that both the pack and the integration object were returned.
+    """
+
+    yml_content = load_yaml("integration.yml")
+    pack = repo.create_pack("pack_no_1")
+    integration = pack.create_integration(yml=yml_content)
+    integration.code.write("from MicrosoftApiModule import *")
+    integration.readme.write("test")
+    initializer = Initializer(file_path=pack.path)
+    obj_set, _ = initializer.gather_objects_to_run_on()
+    obj_types = {obj.content_type for obj in obj_set}
+    assert obj_types == {ContentType.INTEGRATION, ContentType.PACK}
+
+
+def test_load_files_with_pack_path(repo):
+    """
+    Given:
+    - A path to a pack that contain an integration.
+    When:
+    - Calling the load_files.
+    Then:
+    - Make sure that only the path to the pack was returned in PosixPath form.
+    """
+    pack = repo.create_pack("pack_no_1")
+    pack.create_integration()
+    initializer = Initializer()
+    loaded_files_set = initializer.load_files([pack.path])
+    assert len(loaded_files_set) == 1
+    assert loaded_files_set.pop() == Path(pack.path)
+
+
+def test_load_files_with_integration_dir(repo):
+    """
+    Given:
+    - A path to the integration dir of a pack.
+    When:
+    - Calling the load_files.
+    Then:
+    - Make sure that all the files from that dir was returned.
+    """
+    pack = repo.create_pack("pack_no_1")
+    integration = pack.create_integration()
+    initializer = Initializer()
+    integration_dir = f"{pack.path}/{INTEGRATIONS_DIR}"
+    loaded_files_set = initializer.load_files([integration_dir])
+    assert len(loaded_files_set) != 1
+    assert all(
+        Path(path) in loaded_files_set
+        for path in (
+            integration.yml.path,
+            integration.readme.path,
+            integration.code.path,
+            integration.description.path,
+        )
+    )
+
+
+def test_collect_related_files_main_items(repo):
+    """
+    Given:
+    - A path to integration code, modeling_rule schema, and pack readme.
+    When:
+    - Calling the collect_related_files_main_items.
+    Then:
+    - Make sure that the right main passes were returned:
+        - integration code should return the integration yml path.
+        - modeling_rule schema should return the modeling_rule yml path.
+        - pack readme should return the pack_metadata.json pack..
+    """
+    pack = repo.create_pack("pack_no_1")
+    initializer = Initializer()
+    integration = pack.create_integration()
+    modeling_rule = pack.create_modeling_rule({})
+    results = initializer.collect_related_files_main_items(
+        {
+            Path(integration.code.path),
+            Path(modeling_rule.schema.path),
+            Path(pack.readme.path),
+        }
+    )
+    assert results == {
+        Path(integration.yml.path),
+        Path(modeling_rule.yml.path),
+        Path(pack.pack_metadata.path),
+    }
+
+
+def test_get_items_status(repo):
+    """
+    Given:
+    - A dictionary with:
+        - A path to integration code with ADDED git status.
+        - A path to script code with ADDED git status.
+        - A path to integration yml with MODIFIED git status.
+        - A path to modeling_rule schema with MODIFIED git status.
+        - A path to pack readme with ADDED git status.
+        - A path to pack metadata with MODIFIED git status.
+    When:
+    - Calling the collect_related_files_main_items.
+    Then:
+    - Make sure that the right amount of paths are returned and that the right statuses were given:
+        - The integration code and yml should return the integration yml path with the yml status (MODIFIED).
+        - The modeling_rule schema should return the modeling_rule yml path with no status.
+        - The pack readme and pack_metadata.json should return the pack_metadata.json path with the pack_metadata.json status (MODIFIED).
+        - The script code should return the script yml path with script code status (ADDED).
+    """
+    pack = repo.create_pack("pack_no_1")
+    initializer = Initializer()
+    integration = pack.create_integration()
+    modeling_rule = pack.create_modeling_rule({})
+    script = pack.create_script()
+    statuses_dict = {
+        Path(integration.code.path): GitStatuses.ADDED,
+        Path(script.code.path): GitStatuses.ADDED,
+        Path(integration.yml.path): GitStatuses.MODIFIED,
+        Path(modeling_rule.schema.path): GitStatuses.MODIFIED,
+        Path(pack.readme.path): GitStatuses.ADDED,
+        Path(pack.pack_metadata.path): GitStatuses.MODIFIED,
+    }
+    results = initializer.get_items_status(statuses_dict)
+    expected_results = {
+        Path(integration.yml.path): GitStatuses.MODIFIED,
+        Path(modeling_rule.yml.path): None,
+        Path(pack.pack_metadata.path): GitStatuses.MODIFIED,
+        Path(script.yml.path): GitStatuses.ADDED,
+    }
+    assert len(results.keys()) == 4
+    assert all(
+        expected_results[item_path] == git_status
+        for item_path, git_status in results.items()
+    )

@@ -212,6 +212,6 @@ class TestTextFile(FileTesting):
          - make sure writing text file is successful.
         """
         _path = Path(git_repo.path) / "file.txt"
-        TextFile.write_file("text", output_path=_path)
+        TextFile.write("text", output_path=_path)
         assert _path.exists()
         assert _path.read_text() == "text"

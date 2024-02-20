@@ -19,9 +19,9 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
     MARKETPLACE_TO_CORE_PACKS_FILE,
-    METADATA_FILE_NAME,
     PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_PACK_META_FILE_NAME,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -139,6 +139,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_LIST_PATH,
     VALID_MD,
     VALID_PLAYBOOK_ID_PATH,
+    VALID_PRE_PROCESSING_RULE_PATH,
     VALID_REPUTATION_FILE,
     VALID_SCRIPT_PATH,
     VALID_WIDGET_PATH,
@@ -344,9 +345,10 @@ class TestGenericFunctions:
         (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
         (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
         (Path(DOC_FILES_DIR) / "foo", FileType.DOC_FILE),
-        (METADATA_FILE_NAME, FileType.METADATA),
+        (PACKS_PACK_META_FILE_NAME, FileType.METADATA),
         ("", None),
         (VULTURE_WHITELIST_PATH, FileType.VULTURE_WHITELIST),
+        (VALID_PRE_PROCESSING_RULE_PATH, FileType.PRE_PROCESS_RULES),
     ]
 
     @pytest.mark.parametrize("path, _type", data_test_find_type)

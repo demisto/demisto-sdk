@@ -134,7 +134,7 @@ def test_handle_error_github_annotation(
     assert captured.out == expected_result
 
 
-def test_handle_error(mocker, caplog):
+def test_handle_error(mocker):
     """
     Given
     - An ignore errors list associated with a file.
@@ -149,6 +149,8 @@ def test_handle_error(mocker, caplog):
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
     base_validator = BaseValidator(
         ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True
     )
@@ -172,8 +174,10 @@ def test_handle_error(mocker, caplog):
     assert formatted_error is None
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
-    assert "path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
-
+    assert str_in_call_args_list(
+        logger_warning.call_args_list,
+        "path/to/file_name: [BA101] - ignore-file-specific\n",
+    )
     formatted_error = base_validator.handle_error(
         "Error-message", "ST109", "path/to/file_name"
     )

@@ -7,6 +7,7 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
+    PACK_DEFAULT_MARKETPLACES,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
@@ -80,12 +81,13 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def __init__(
         self,
         path: Path,
-        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        pack_marketplaces: List[MarketplaceVersions] = PACK_DEFAULT_MARKETPLACES,
         git_sha: Optional[str] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
         self.relationships: Relationships = Relationships()
+        self.git_sha: Optional[str] = git_sha
 
     @staticmethod
     def from_path(
@@ -121,7 +123,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(
-                    e.correct_parser, path, pack_marketplaces, **e.kwargs
+                    e.correct_parser, path, pack_marketplaces, git_sha, **e.kwargs
                 )
             except NotAContentItemException:
                 logger.debug(f"{path} is not a content item, skipping")

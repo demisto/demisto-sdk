@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
     MarketplaceVersions,
 )
@@ -16,7 +17,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
-    get_file,
     get_json,
     get_pack_ignore_content,
     get_pack_latest_rn_version,
@@ -37,11 +37,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
 )
-
-DEFAULT_MARKETPLACES = [
-    MarketplaceVersions.XSOAR.value,
-    MarketplaceVersions.MarketplaceV2.value,
-]
 
 
 class PackContentItems:
@@ -150,7 +145,7 @@ class PackMetadataParser:
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
         self.marketplaces: List[str] = (
-            metadata.get("marketplaces") or DEFAULT_MARKETPLACES
+            metadata.get("marketplaces") or PACK_DEFAULT_MARKETPLACES
         )
         if MarketplaceVersions.XSOAR.value in self.marketplaces:
             # Since we want xsoar-saas and xsoar to contain the same content items.
@@ -268,7 +263,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")
-        self.parse_ignored_errors()
+        self.parse_ignored_errors(git_sha)
+        if not metadata_only:
+            self.parse_pack_folders()
         self.get_rn_info()
         if not metadata_only:
             self.parse_pack_folders()
@@ -339,21 +336,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
             return True
         return False
 
-    def parse_ignored_errors(self):
+    def parse_ignored_errors(self, git_sha: Optional[str]):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {})  # type: ignore
+        self.ignored_errors_dict = dict(get_pack_ignore_content(self.path.name) or {}) if not git_sha else {}  # type: ignore
 
     def get_rn_info(self):
         self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
-        if self.latest_rn_version:
-            self.latest_rn_content = get_file(
-                str(
-                    self.path
-                    / "ReleaseNotes"
-                    / f"{self.latest_rn_version.replace('.', '_')}.md"
-                ),
-                return_content=True,
-            )
 
     @cached_property
     def field_mapping(self):

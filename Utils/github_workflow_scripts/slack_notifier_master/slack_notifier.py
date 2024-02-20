@@ -110,9 +110,9 @@ def slack_notifier(
             attachments=slack_message,
             username="Demisto-SDK Github-Actions",
         )
-        logger.info('Successfully reported failed jobs to slack')
+        logger.info("Successfully reported failed jobs to slack")
     else:
-        logger.info(f'There are not any failed jobs to report to slack')
+        logger.info("There are not any failed jobs to report to slack")
 
 
 if __name__ == "__main__":

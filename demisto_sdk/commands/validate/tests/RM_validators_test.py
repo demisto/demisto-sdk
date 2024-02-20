@@ -58,32 +58,7 @@ def test_IsContainCopyRightSectionValidator_is_valid(
     )
 
 
-@pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msg",
-    [
-        (
-            [
-                create_metadata_object(
-                    readme_text="This readme text and pack_metadata description are equal",
-                    paths=["description"],
-                    values=["This readme text and pack_metadata description are equal"],
-                ),
-                create_metadata_object(
-                    readme_text="Readme text",
-                    paths=["description"],
-                    values=["Pack_metadata description"],
-                ),
-            ],
-            1,
-            "README.md content is equal to pack description. Please remove the duplicate description from README.md file.",
-        )
-    ],
-)
-def test_IsPackReadmeNotEqualPackDescriptionValidator(
-    content_items,
-    expected_number_of_failures: int,
-    expected_msg: str,
-):
+def test_IsPackReadmeNotEqualPackDescriptionValidator():
     """
     Given:
         - Two packs, one with a readme pack equal to the description
@@ -94,6 +69,23 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator(
         - Ensure that the error msg returned is as expected
         - Ensure that the number of validation errors returned is as expected
     """
-    results = IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
-    assert len(results) == expected_number_of_failures
+
+    content_items = [
+        create_metadata_object(
+            readme_text="This readme text and pack_metadata description are equal",
+            paths=["description"],
+            values=["This readme text and pack_metadata description are equal"],
+        ),
+        create_metadata_object(
+            readme_text="Readme text",
+            paths=["description"],
+            values=["Pack_metadata description"],
+        ),
+    ]
+    expected_msg = (
+        "README.md content is equal to pack description."
+        "Please remove the duplicate description from README.md file."
+    )
+    results = IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)  # type: ignore
+    assert len(results) == 1
     assert all([result.message == expected_msg for result in results])

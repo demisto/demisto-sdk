@@ -345,7 +345,7 @@ def group_by_language(
             infra_files.append(file)
 
     language_to_files: Dict[str, Set] = defaultdict(set)
-    with multiprocessing.Pool() as pool:
+    with multiprocessing.Pool(processes=cpu_count()) as pool:
         integrations_scripts = pool.map(
             BaseContent.from_path, integrations_scripts_mapping.keys()
         )

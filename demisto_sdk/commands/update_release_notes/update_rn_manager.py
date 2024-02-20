@@ -115,7 +115,12 @@ class UpdateReleaseNotesManager:
             )
         )
 
-        filtered_set -= set(map(PosixPath, changed_meta_files - changed_meta_that_should_have_version_raised))
+        filtered_set -= set(
+            map(
+                PosixPath,
+                changed_meta_files - changed_meta_that_should_have_version_raised,
+            )
+        )
         return validate_manager.filter_to_relevant_files(
             filtered_set,
             check_metadata_files=bool(changed_meta_that_should_have_version_raised),

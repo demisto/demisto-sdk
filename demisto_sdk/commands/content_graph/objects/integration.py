@@ -89,6 +89,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
     has_unittests: bool = False
+    # image_file = Path(self.related_content[RelatedFileType.IMAGE]["path"][0])
 
     @property
     def imports(self) -> List["Script"]:
@@ -214,3 +215,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @property
     def description_file(self) -> str:
         return self.get_related_text_file(RelatedFileType.DESCRIPTION)
+    
+    @property
+    def image_file(self) -> Path | None:
+        return Path(self.related_content[RelatedFileType.IMAGE]["path"][0])

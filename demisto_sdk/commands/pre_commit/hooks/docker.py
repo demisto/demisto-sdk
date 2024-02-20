@@ -160,6 +160,8 @@ def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
     isolate_container: bool = False,
+    support_require_isolated: bool = False,
+    support_require_network: bool = False,
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
@@ -168,6 +170,8 @@ def _split_by_objects(
         files: the files to split
         config_arg: a tuple, argument_name, file_name
         isolate_container: a boolean. If true it will split all the objects into separate hooks.
+        support_require_isolated: a boolean. If true it will support the `require_isolated` field in pack ignore.
+        support_require_network: a boolean. If true it will support the `require_network` field in pack ignore.
 
     Returns:
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
@@ -177,16 +181,22 @@ def _split_by_objects(
     ] = defaultdict(set)
 
     for file, obj in files_with_objects:
-        if isolate_container or (
-            config_arg and (obj.path.parent / config_arg[1]).exists()
+        if (
+            isolate_container
+            or (config_arg and (obj.path.parent / config_arg[1]).exists())
+            or support_require_isolated
+            and should_isolate_container(obj)
+            or (support_require_network and should_enable_network(obj))
         ):
             object_to_files[obj].add((file, obj))
+
         else:
             object_to_files[NO_SPLIT].add((file, obj))
 
     return object_to_files
 
 
+@lru_cache
 def should_enable_network(integration_script: IntegrationScript) -> bool:
     pack = integration_script.in_pack
     if pack and (ignored_errors_dict := pack.ignored_errors_dict):
@@ -199,6 +209,7 @@ def should_enable_network(integration_script: IntegrationScript) -> bool:
     return False
 
 
+@lru_cache
 def should_isolate_container(integration_script: IntegrationScript) -> bool:
     pack = integration_script.in_pack
     if pack and (ignored_errors_dict := pack.ignored_errors_dict):
@@ -215,6 +226,20 @@ class DockerHook(Hook):
     """
     This class will make common manipulations on commands that need to run in docker
     """
+
+    def clean_args_from_hook(self, hooks: List[Dict]):
+        """This clean unsupported args from the generated hooks
+
+        Args:
+            hooks (List[Dict]): The hooks generated
+        """
+        for hook in hooks:
+            hook.pop("docker_image", None)
+            hook.pop("config_file_arg", None)
+            hook.pop("copy_files", None)
+            hook.pop("isolate_container", None)
+            hook.pop("support_require_isolated", None)
+            hook.pop("support_require_network", None)
 
     def prepare_hook(
         self,
@@ -259,6 +284,8 @@ class DockerHook(Hook):
                             CONTENT_PATH / file, obj.path.parent / Path(file).name
                         )
         isolate_container = self._get_property("isolate_container", False)
+        support_require_isolated = self._get_property("support_require_isolated", False)
+        support_require_network = self._get_property("support_require_network", False)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
@@ -270,6 +297,8 @@ class DockerHook(Hook):
                 files_with_objects,
                 config_arg,
                 isolate_container,
+                support_require_isolated,
+                support_require_network,
             )
             image_is_powershell = any(
                 obj.is_powershell for _, obj in files_with_objects
@@ -322,14 +351,12 @@ class DockerHook(Hook):
             remove_container = False
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u 4000:4000 {"--rm=false" if not remove_container else ""} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} --network none {get_environment_flag(env)} {"--quiet" if quiet else ""} -u 4000:4000 {"--rm=false" if not remove_container else ""} {dev_image}'
         ret_hooks = []
         for (
             integration_script,
             files_with_objects,
         ) in object_to_files_with_objects.items():
-            if "test" in new_hook["id"]:
-                pass
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
             if integration_script is not None:
@@ -356,6 +383,13 @@ class DockerHook(Hook):
                     hook[
                         "entry"
                     ] = f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
+
+            if should_enable_network(integration_script):
+                hook["entry"] = hook["entry"].replace("--network none", "")
+            if should_isolate_container(integration_script):
+                change_working_directory = True
+                # if we should isolate, we can't use the `script_runner.py`
+                hook["args"] = ["-m"] + hook["args"][1:-1]
             if self._set_files_on_hook(
                 hook,
                 files,
@@ -366,11 +400,7 @@ class DockerHook(Hook):
                 # disable multiprocessing on hook
                 hook["require_serial"] = True
                 ret_hooks.append(hook)
-        for hook in ret_hooks:
-            hook.pop("docker_image", None)
-            hook.pop("config_file_arg", None)
-            hook.pop("copy_files", None)
-            hook.pop("isolate_container", None)
+        self.clean_args_from_hook(ret_hooks)
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

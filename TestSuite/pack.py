@@ -552,7 +552,10 @@ class Pack(TestSuiteBase):
         readme: Optional[str] = None,
     ) -> Playbook:
         if name is None:
-            name = f"playbook-{len(self.playbooks)}"
+            if yml_name := (yml or {}).get("name"):
+                name = yml_name
+            else:
+                name = f"playbook-{len(self.playbooks)}"
         playbook = Playbook(self._playbooks_path, name, self._repo)
         playbook.build(
             yml,

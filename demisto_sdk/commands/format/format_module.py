@@ -316,8 +316,10 @@ def get_files_to_format_from_git(
         list. a list of all the files that should be formatted.
     """
     git_util = GitUtil().from_content_path()
+    logger.info(f"get_files_to_format_from_git {git_util.repo.working_dir=}")
+    logger.info(f"get_files_to_format_from_git {prev_ver=}")
     all_changed_files = git_util.get_all_changed_files(
-        prev_ver=prev_ver, include_untracked=include_untracked
+        prev_ver=prev_ver, include_untracked=include_untracked, staged_only=True
     )
 
     filtered_files = []

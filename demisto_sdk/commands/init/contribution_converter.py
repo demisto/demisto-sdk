@@ -329,20 +329,19 @@ class ContributionConverter:
                 # replace dst folder with src folder
                 shutil.move(src_path, dst_path)
 
-    def format_converted_pack(self, changed_files: str) -> None:
+    def format_converted_pack(self) -> None:
         """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""
         logger.info(
             f"Executing 'format' on the restructured contribution zip new/modified files at {self.pack_dir_path}"
         )
         from_version = "6.0.0" if self.create_new else ""
         format_manager(
-            input=changed_files,
             from_version=from_version,
             no_validate=True,
             update_docker=True,
             assume_answer=True,
+            include_untracked=False,
             interactive=False,
-            use_graph=False,
         )
 
     def generate_readme_for_pack_content_item(

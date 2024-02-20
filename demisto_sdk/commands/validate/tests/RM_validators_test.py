@@ -84,6 +84,16 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator(
     expected_number_of_failures: int,
     expected_msg: str,
 ):
+    """
+    Given:
+        - Two packs, one with a readme pack equal to the description
+          and the second when they are different from each other
+    When:
+        - run IsPackReadmeNotEqualPackDescriptionValidator is_valid function
+    Then:
+        - Ensure that the error msg returned is as expected
+        - Ensure that the number of validation errors returned is as expected
+    """
     results = IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all([result.message == expected_msg for result in results])

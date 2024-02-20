@@ -477,6 +477,10 @@ ERROR_CODE: Dict = {
         "code": "IM111",
         "related_field": "image",
     },
+    "svg_image_not_valid": {
+        "code": "IM112",
+        "related_field": "image",
+    },
     # IN - Integrations
     "wrong_display_name": {
         "code": "IN100",
@@ -1573,18 +1577,18 @@ ALLOWED_IGNORE_ERRORS = (
 
 
 def get_all_error_codes() -> List:
-    error_codes = []
-    for error in ERROR_CODE:
-        error_codes.append(ERROR_CODE[error].get("code"))
-
-    return error_codes
+    return [error.get("code") for error in ERROR_CODE.values()]
 
 
 def get_error_object(error_code: str) -> Dict:
-    for error in ERROR_CODE:
-        if error_code == ERROR_CODE[error].get("code"):
-            return ERROR_CODE[error]
-    return {}
+    return next(
+        (
+            error_value
+            for error_value in ERROR_CODE.values()
+            if error_code == error_value.get("code")
+        ),
+        {},
+    )
 
 
 @decorator.decorator
@@ -2468,6 +2472,11 @@ class Errors:
     @error_code_decorator
     def image_too_large():
         return "Too large logo, please update the logo to be under 10kB"
+
+    @staticmethod
+    @error_code_decorator
+    def svg_image_not_valid(error_message):
+        return f"SVG image file is not valid: {error_message}"
 
     @staticmethod
     @error_code_decorator

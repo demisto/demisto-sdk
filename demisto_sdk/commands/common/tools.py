@@ -9,6 +9,7 @@ import sys
 import time
 import traceback
 import urllib.parse
+import xml.etree.ElementTree as ET
 from abc import ABC
 from collections import OrderedDict
 from concurrent.futures import as_completed
@@ -83,7 +84,6 @@ from demisto_sdk.commands.common.constants import (
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
     MARKETPLACE_TO_CORE_PACKS_FILE,
-    METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
     OFFICIAL_CONTENT_GRAPH_PATH,
@@ -883,6 +883,8 @@ def get_file(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
+        elif type_of_file.lstrip(".") in {"svg"}:
+            return ET.fromstring(file_content)
         else:
             result = json.load(StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
@@ -1650,7 +1652,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
-        elif path.name == METADATA_FILE_NAME:
+        elif path.name == PACKS_PACK_META_FILE_NAME:
             return FileType.METADATA
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
@@ -2809,7 +2811,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     readme_content += (
         "### "  # mark end of file so last pattern of regex will be recognized.
     )
-    commands = yml_dict.get("script", {})
+    commands = yml_dict.get("script") or {}
 
     # handles scripts
     if not commands:
@@ -3296,12 +3298,12 @@ def get_mp_types_from_metadata_by_item(file_path):
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
     if (
-        METADATA_FILE_NAME in Path(file_path).parts
+        PACKS_PACK_META_FILE_NAME in Path(file_path).parts
     ):  # for when the type is pack, the item we get is the metadata path
         metadata_path = file_path
     else:
         metadata_path_parts = get_pack_dir(file_path)
-        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+        metadata_path = Path(*metadata_path_parts) / PACKS_PACK_META_FILE_NAME
 
     try:
         if not (
@@ -4366,3 +4368,33 @@ def is_str_bool(input_: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+def check_text_content_contain_sub_text(
+    sub_text_list: List[str],
+    is_lower: bool = False,
+    to_split: bool = False,
+    text: str = "",
+) -> List[str]:
+    """
+    Args:
+        sub_text_list (List[str]): list of words/sentences to search in line content.
+        is_lower (bool): True to check when line is lower cased.
+        to_split (bool): True to split the line in order to search specific word
+        text (str): The readme content to search.
+
+    Returns:
+        list of lines which contains the given text.
+    """
+    invalid_lines = []
+
+    for line_num, line in enumerate(text.split("\n")):
+        if is_lower:
+            line = line.lower()
+        if to_split:
+            line = line.split()  # type: ignore
+        for text in sub_text_list:
+            if text in line:
+                invalid_lines.append(str(line_num + 1))
+
+    return invalid_lines

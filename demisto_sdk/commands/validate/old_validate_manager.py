@@ -1222,14 +1222,14 @@ class OldValidateManager:
                 "\n[cyan]================= Running validation on old format files =================[/cyan]"
             )
             validation_results.add(self.validate_no_old_format(old_format_files))
-            logger.info("*** after adding validate_no_old_format")
+            logger.debug("added validate_no_old_format")
 
         if not self.skip_pack_rn_validation:
-            logger.info("*** adding validate_no_duplicated_release_notes")
+            logger.debug("adding validate_no_duplicated_release_notes")
             validation_results.add(
                 self.validate_no_duplicated_release_notes(added_files)
             )
-            logger.info("*** after adding validate_no_duplicated_release_notes")
+            logger.debug("added validate_no_duplicated_release_notes")
 
         all_files_set = list(
             set().union(

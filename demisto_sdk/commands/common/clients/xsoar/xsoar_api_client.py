@@ -78,6 +78,10 @@ class XsoarClient:
         if should_validate_server_type and not self.is_server_type:
             raise InvalidServerType(str(self), server_type=self.server_type)
 
+    @property
+    def xsoar_client(self) -> DefaultApi:
+        return self._xsoar_client
+
     def __str__(self) -> str:
         try:
             about: Union[ServerAbout, None] = self.about

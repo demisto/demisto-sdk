@@ -23,6 +23,7 @@ from demisto_sdk.commands.content_graph.tests.update_content_graph_test import (
 )
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.generate_docs.tests.generate_docs_test import handle_example
+from TestSuite.repo import Repo
 
 INPUT_SCRIPT = "SampleScript"
 USES_SCRIPT = "UsesScript"
@@ -32,12 +33,14 @@ USED_BY_PLAYBOOK = "SamplePlaybook"
 
 
 @pytest.fixture(autouse=True)
-def setup_method(mocker, repo):
+def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
     bc.CONTENT_PATH = Path(repo.path)
-    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    mocker.patch.object(
+        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    )
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
 
 

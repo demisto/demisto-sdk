@@ -66,6 +66,7 @@ def test_get_client_from_config(
      - Case C: make sure XsiamClient is returned
     """
     from demisto_sdk.commands.common.clients import get_client_from_config
+    assert False
 
     def _xsoar_generic_request_side_effect(
         path: str, method: str, response_type: str = ""

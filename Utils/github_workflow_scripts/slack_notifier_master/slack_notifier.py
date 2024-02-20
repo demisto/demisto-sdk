@@ -4,12 +4,10 @@ import typer
 from github import Github, WorkflowRun
 from slack_sdk import WebClient
 
-from demisto_sdk.commands.common.logger import logger
-
-DEFAULT_SLACK_CHANNEL = "dmst-sdk-slack-notifier-test"
+DEFAULT_SLACK_CHANNEL = "dmst-build-test"
 
 
-def get_failed_jobs(workflow_run: WorkflowRun):
+def get_failed_jobs(workflow_run: WorkflowRun) -> List[str]:
     jobs = [job for job in workflow_run.jobs() if job.conclusion == "failure"]
 
     failed_jobs = []
@@ -25,7 +23,6 @@ def get_failed_jobs(workflow_run: WorkflowRun):
             f'{job_name}[{", ".join(failed_steps)}]' if failed_steps else job_name
         )
 
-    logger.info(f"{failed_jobs=}")
     return failed_jobs
 
 

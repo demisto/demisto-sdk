@@ -411,7 +411,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n## HelloWorld\n\n- %%UPDATE_RN%%\n"
+        expected_result = "## HelloWorld\n\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mocker.patch.object(

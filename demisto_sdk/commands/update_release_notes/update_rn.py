@@ -270,6 +270,7 @@ class UpdateRN:
             else:
                 docker_image_name = None
             if file_type == FileType.METADATA:
+                self.pack_metadata_only = True
                 continue
             changed_files[(file_name, file_type)] = {
                 "description": get_file_description(packfile, file_type),
@@ -278,7 +279,7 @@ class UpdateRN:
                 "dockerimage": docker_image_name,
                 "path": packfile,
             }
-        self.pack_metadata_only = not changed_files
+        self.pack_metadata_only = (not changed_files) and self.pack_metadata_only
         return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
 
     def create_pack_rn(
@@ -676,7 +677,7 @@ class UpdateRN:
 
         if self.pack_metadata_only:
             pack_display_name = self.get_pack_metadata().get("name", self.pack)
-            rn_string += f"\n## {pack_display_name}\n\n- %%UPDATE_RN%%\n"
+            rn_string += f"## {pack_display_name}\n\n- %%UPDATE_RN%%\n"
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:

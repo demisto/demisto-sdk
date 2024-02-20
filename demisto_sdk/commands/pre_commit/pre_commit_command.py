@@ -9,6 +9,7 @@ from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import more_itertools
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
@@ -345,10 +346,14 @@ def group_by_language(
             infra_files.append(file)
 
     language_to_files: Dict[str, Set] = defaultdict(set)
-    with multiprocessing.Pool(processes=cpu_count()) as pool:
-        integrations_scripts = pool.map(
-            BaseContent.from_path, integrations_scripts_mapping.keys()
-        )
+    integrations_scripts = []
+    for integration_script_paths in more_itertools.chunked_even(
+        integrations_scripts_mapping.keys(), 500
+    ):
+        with multiprocessing.Pool(processes=cpu_count()) as pool:
+            integrations_scripts.extend(
+                pool.map(BaseContent.from_path, integration_script_paths)
+            )
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
         if not integration_script or not isinstance(

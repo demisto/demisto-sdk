@@ -14,7 +14,9 @@ ContentTypes = Pack
 
 class IsPackReadmeNotEqualPackDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "RM105"
-    description = "Validates that README.md file is not the same as the pack description."
+    description = (
+        "Validates that README.md file is not the same as the pack description."
+    )
     error_message = "README.md content is equal to pack description. Please remove the duplicate description from README.md file."
     related_field = "readme, description"
     is_auto_fixable = False

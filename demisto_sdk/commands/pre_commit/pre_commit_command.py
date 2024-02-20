@@ -354,6 +354,7 @@ def group_by_language(
             integrations_scripts.extend(
                 pool.map(BaseContent.from_path, integration_script_paths)
             )
+    integrations_scripts = list(filter(None, integrations_scripts))
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
         if not integration_script or not isinstance(

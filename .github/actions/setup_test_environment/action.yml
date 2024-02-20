@@ -10,7 +10,7 @@ inputs:
   node-version:
     required: false
     type: string
-    default: "16"
+    default: "20"
     description: "The node version to install"
   artifacts-dir:
     required: false
@@ -32,7 +32,6 @@ runs:
       uses: ./.github/actions/setup_environment
       with:
         python-version: ${{ inputs.python-version }}
-        artifacts-dir: ${{ inputs.artifacts-dir }}
 
     - name: Set up Node.js
       uses: actions/setup-node@v3

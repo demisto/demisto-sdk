@@ -49,6 +49,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_shoul
 from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_version_synched import (
     FromToVersionSyncedValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
+    IsDeprecatedCorrectlyValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -902,3 +905,43 @@ def test_IDContainSlashesValidator_fix(
     assert content_item.object_id == current_id
     assert IDContainSlashesValidator().fix(content_item).message == expected_fix_msg
     assert content_item.object_id == expected_id
+
+
+def test_IsDeprecatedCorrectlyValidator_is_valid():
+    """
+    Given:
+     - 1 integration and 1 script which are deprecated incorrectly
+     - 1 integration and 1 script which are deprecated correctly
+     - 1 integration and 1 script which are not deprecated
+
+    When:
+     - Running the IsDeprecatedCorrectlyValidator validator
+
+    Then:
+     - make sure the script and integration which are deprecated incorrectly fails the validation
+
+    """
+    content_items = [
+        create_integration_object(
+            paths=["deprecated", "description"], values=[True, "Some description"]
+        ),
+        create_script_object(
+            paths=["deprecated", "comment"], values=[True, "Some description"]
+        ),
+        create_integration_object(
+            paths=["deprecated", "description"],
+            values=[True, "Deprecated. Use OtherIntegrationName instead."],
+        ),
+        create_script_object(
+            paths=["deprecated", "comment"],
+            values=[True, "Deprecated. No available replacement."],
+        ),
+        create_integration_object(paths=["description"], values=["Some description"]),
+        create_script_object(paths=["comment"], values=["Some description"]),
+    ]
+
+    results = IsDeprecatedCorrectlyValidator().is_valid(content_items)
+    assert len(results) == 2
+    for result in results:
+        assert result.content_object.deprecated
+        assert result.content_object.description == "Some description"

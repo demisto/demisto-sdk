@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.constants import (
@@ -22,12 +22,13 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_
 from TestSuite.file import File
 from TestSuite.repo import Repo
 
-REPO = Repo(tmpdir=Path(tempfile.mkdtemp()))
+REPO = Repo(tmpdir=Path(tempfile.mkdtemp()), init_git=True)
 
 
 def create_integration_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -41,6 +42,8 @@ def create_integration_object(
     yml_content = load_yaml("integration.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
     integration = pack.create_integration(yml=yml_content)
     integration.code.write("from MicrosoftApiModule import *")
     return BaseContent.from_path(Path(integration.path))  # type:ignore
@@ -155,13 +158,16 @@ def create_ps_integration_object(
 
 
 def create_script_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
 ):
     """Creating an script object with altered fields from a default script yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
+        pack_name (str): The name of the pack that the script will be inside of
 
     Returns:
         The script object.
@@ -169,6 +175,8 @@ def create_script_object(
     yml_content = load_yaml("script.yml")
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
     script = pack.create_script(yml=yml_content)
     script.code.write("from MicrosoftApiModule import *")
     return BaseContent.from_path(Path(script.path))

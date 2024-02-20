@@ -587,14 +587,17 @@ class IntegrationScriptUnifier(Unifier):
         Returns:
             The unified yaml file (dict).
         """
-        if " Contribution)" not in unified_yml["display"]:
+        if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
+            contributor_type = support_level_header
+
+        if (
+            " Contribution)" not in unified_yml["display"]
+            and contributor_type != "xsoar"
+        ):
             unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(
                 contributor_type.capitalize()
             )
         existing_detailed_description = unified_yml.get("detaileddescription", "")
-
-        if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
-            contributor_type = support_level_header
 
         if contributor_type == COMMUNITY_SUPPORT:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)

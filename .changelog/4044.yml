@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where **setup-env** crashed when trying to upload an instance of an integration into xsoar.
+  type: fix
+pr_number: 4044

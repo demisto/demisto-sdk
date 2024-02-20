@@ -5,15 +5,18 @@ from typing import Dict, List
 
 import typer
 from git import Repo  # noqa: TID251
+from github import Github
 from more_itertools import bucket
 from pydantic import ValidationError
 
+from demisto_sdk.commands.common.files.yml_file import YmlFile
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import (
     DEFAULT_JSON_HANDLER,
     DEFAULT_YAML_HANDLER,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.scripts.changelog.changelog_obj import (
     INITIAL_LOG,
@@ -22,10 +25,11 @@ from demisto_sdk.scripts.changelog.changelog_obj import (
     LogType,
 )
 
+DEMISTO_SDK_REPO = "demisto/demisto-sdk"
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
 CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
 RELEASE_VERSION_REGEX = re.compile(r"demisto-sdk release \d{1,2}\.\d{1,2}\.\d{1,2}")
-
+GIT_UTIL = GitUtil(".")
 yaml = DEFAULT_YAML_HANDLER
 json = DEFAULT_JSON_HANDLER
 sys.tracebacklimit = 0
@@ -48,11 +52,52 @@ class Changelog:
                 - checks that the `CHANGELOG.md` file has not changed
                 - checks that a log file has been added and its name is the same as the PR name
                 - ensure that the added log file is valid according to the `LogFileObject` model convention
+
+        Prints out a comment on how the PR would look like with the rn
+
         """
         if is_release(self.pr_name):
             return
         else:
             _validate_branch(self.pr_number)
+
+    """ Comment """
+
+    def comment(self, latest_commit: str, github_token: str) -> None:
+        """
+        Comment on the PR
+
+        Checks the following:
+            - If the changelog file has been added in latest commit OR If the changelog file has been
+                modified between the last two commits.
+
+        """
+        changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
+
+        previous_commit = GIT_UTIL.get_previous_commit(latest_commit).hexsha
+        if GIT_UTIL.has_file_changed(
+            changelog_path, latest_commit, previous_commit
+        ) or GIT_UTIL.has_file_added(changelog_path, latest_commit, previous_commit):
+            logger.info(f"Changelog {changelog_path} has been added/modified")
+
+            current_changelogs = LogFileObject(
+                **YmlFile.read_from_local_path(changelog_path)
+            ).get_log_entries()
+
+            github_client = Github(login_or_token=github_token)
+
+            pr = github_client.get_repo(DEMISTO_SDK_REPO).get_pull(int(self.pr_number))
+            markdown = "Changelog(s) in markdown:\n"
+            markdown += "\n".join(
+                [changelog.to_string() for changelog in current_changelogs]
+            )
+            pr.create_issue_comment(markdown)
+
+            logger.info(f"Successfully commented on PR {self.pr_number} the changelog")
+        else:
+            logger.info(
+                f"{changelog_path} has not been changed, not commenting on PR {self.pr_number}"
+            )
 
     """ INIT """
 
@@ -66,13 +111,18 @@ class Changelog:
                 "This PR is a release (by its name), use the release command instead."
             )
 
-        log = INITIAL_LOG
-        log["pr_number"] = int(self.pr_number)
+        if self.pr_number:
+            pr_num = self.pr_number
+        else:
+            pr_num = get_pr_number_by_branch(GIT_UTIL.repo.active_branch)
 
-        with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
+        log = INITIAL_LOG
+        log["pr_number"] = int(pr_num)
+
+        with (CHANGELOG_FOLDER / f"{pr_num}.yml").open("w") as f:
             yaml.dump(log, f)
 
-        logger.info(f"Created changelog template at .changelog/{self.pr_number}.yml")
+        logger.info(f"Created changelog template at .changelog/{pr_num}.yml")
 
     """ RELEASE """
 
@@ -116,6 +166,30 @@ class Changelog:
     """ HELPER FUNCTIONS """
 
 
+def get_pr_number_by_branch(branch_name: str):
+    """
+    Get the PR number of the current branch from Github
+
+    Args:
+        branch_name: the branch name that is assosicated with the PR
+
+    Returns:
+        PR number associated with the local branch
+    """
+    try:
+        error_message = (
+            "Failed to get PR number from Github, please add the PR number manually"
+        )
+        repo = Github(verify=False).get_repo(DEMISTO_SDK_REPO)
+        branch = GIT_UTIL.repo.active_branch.name
+        for pr in repo.get_pulls(state="open", head=branch):
+            if pr.head.ref == branch:
+                return pr.number
+        raise Exception(error_message)
+    except Exception as e:
+        raise Exception(f"{error_message} error:\n{e}")
+
+
 def extract_errors(error: str, file_name: Path) -> str:
     """
     Extracts the error messages from the json_errors string.
@@ -128,7 +202,7 @@ def extract_errors(error: str, file_name: Path) -> str:
 def is_changelog_modified() -> bool:
     return (
         "CHANGELOG.md"
-        in Repo(".").git.diff("HEAD..origin/master", name_only=True).split()
+        in GIT_UTIL.repo.git.diff("HEAD..origin/master", name_only=True).split()
     )
 
 
@@ -237,13 +311,13 @@ def _validate_branch(pr_number: str) -> None:
     if is_changelog_modified():
         raise ValueError(
             "Do not modify changelog.md\n"
-            "Run `demisto-sdk changelog --init -n <pr number>`"
+            "Run `sdk-changelog  --init -n <pr number>`"
             " to create a changelog file instead."
         )
     if not is_log_yml_exist(pr_number):
         raise ValueError(
             "Missing changelog file.\n"
-            "Run `demisto-sdk changelog --init -n <pr number>` and fill it."
+            "Run `sdk-changelog  --init -n <pr number>` and fill it."
         )
     validate_log_yml(pr_number)
 
@@ -257,6 +331,7 @@ def commit_and_push(branch_name: str):
 
 
 main = typer.Typer(pretty_exceptions_enable=False)
+logging_setup(skip_log_file_creation=True)
 
 release = typer.Option(False, "--release", help="releasing", is_flag=True)
 init = typer.Option(
@@ -269,7 +344,7 @@ validate = typer.Option(
     is_flag=True,
 )
 
-pr_number = typer.Option(..., "--pr_number", "-n", help="Pull request number")
+pr_number = typer.Option("", "--pr_number", "-n", help="Pull request number")
 
 pr_title = typer.Option(
     "", "--pr_title", "-t", help="Pull request title (used for release)"

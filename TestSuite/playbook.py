@@ -53,7 +53,9 @@ class Playbook(YAML):
     ):
         """Writes not None objects to files."""
         if yml is not None:
-            yml["id"] = yml["name"] = self.name
+            for key in ("id", "name"):
+                if key not in yml:
+                    yml[key] = self.name
             yml["deprecated"] = self.deprecated
             self.write_dict(yml)
         if not self.is_test_playbook and readme is not None:

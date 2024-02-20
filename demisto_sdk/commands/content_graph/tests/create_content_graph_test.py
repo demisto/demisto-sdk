@@ -98,6 +98,7 @@ def mock_integration(
         docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         category="blabla",
         commands=[Command(name="test-command", description="")],
+        version=-1,
     )
     if pack is not None:
         pack.content_items.integration.append(integration)
@@ -131,6 +132,7 @@ def mock_script(
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,
+        version=-1,
     )
     if pack:
         pack.content_items.script.append(script)
@@ -230,6 +232,7 @@ def mock_test_playbook(
         marketplaces=[MarketplaceVersions.XSOAR],
         deprecated=False,
         is_test=True,
+        version=-1,
     )
     if pack:
         pack.content_items.test_playbook.append(test_playbook)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import RelatedFileType
@@ -13,9 +14,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-class ImageNotExistValidator(BaseValidator[ContentTypes]):
+class ImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM100"
-    description = "Checks if the image exist."
+    description = "Checks if the image exists."
     error_message = "no_image_exists"
     related_field = "image"
     is_auto_fixable = False
@@ -30,4 +31,4 @@ class ImageNotExistValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not (hasattr(content_item, 'image_file') and content_item.image_file and content_item.image_file.exists())]
+            if content_item.image_file and not Path(content_item.image_file).is_file() or not content_item.image_file]

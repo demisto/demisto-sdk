@@ -171,6 +171,8 @@ def format_manager(
     supported_file_types = ["json", "yml", "py", "md"]
     use_git = use_git or not input
 
+    logger.info(f"Running format on {input=}, {use_git=}...")
+
     if input:
         files = []
         for i in input.split(","):

@@ -342,7 +342,6 @@ class ContributionConverter:
             update_docker=True,
             assume_answer=True,
             interactive=False,
-            use_git=False,
             use_graph=False,
         )
 

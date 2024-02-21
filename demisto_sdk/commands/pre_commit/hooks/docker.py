@@ -225,7 +225,7 @@ class DockerHook(Hook):
             hook.pop("config_file_arg", None)
             hook.pop("copy_files", None)
             hook.pop("isolate_container", None)
-            hook.pop("support_require_network", None)
+            hook.pop("support_pack_ignore_config", None)
 
     def process_image(
         self,

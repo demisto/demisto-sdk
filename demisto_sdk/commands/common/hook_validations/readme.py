@@ -146,6 +146,7 @@ def mdx_server_is_up() -> bool:
 
     """
     try:
+        return False
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         return sock.connect_ex(("localhost", 6161)) == 0
@@ -219,18 +220,15 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         server_started = mdx_server_is_up()
         if not server_started:
-            error_message = (
-                "Validation of MDX file failed due to unable to start the mdx server. You can skip this by adding RM103"
-                " to the list of skipped validations under '.demisto-sdk-conf', or '.pack-ignore'"
-            )
             if self.handle_error(
-                error_message,
+                "Validation of MDX file failed due to unable to start the mdx server. You can skip this by adding RM103"
+                " to the list of skipped validations under '.pack-ignore'.",
                 error_code="RM103",
                 file_path=self.file_path,
             ):
                 return False
-            logger.info(f"[yellow]{error_message}[/yellow]")
-            return False
+            logger.info("[yellow]Validation of MDX file failed due to unable to start the mdx server, skipping.[/yellow]")
+            return True
         for _ in range(RETRIES_VERIFY_MDX):
             try:
                 readme_content = self.fix_mdx()

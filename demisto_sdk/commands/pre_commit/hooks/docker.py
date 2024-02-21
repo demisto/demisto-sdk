@@ -4,13 +4,12 @@ import shutil
 import subprocess
 import time
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
-from functools import lru_cache, partial
-from multiprocessing import Pool
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-import more_itertools
 from docker.errors import DockerException
 from packaging.version import Version
 
@@ -229,12 +228,12 @@ class DockerHook(Hook):
 
     def process_image(
         self,
-        image_files_with_objects: Tuple[str, List[Tuple[Path, IntegrationScript]]],
+        image: str,
+        files_with_objects: List[Tuple[Path, IntegrationScript]],
         config_arg: Optional[Tuple],
         isolate_container: bool,
         support_pack_ignore_config: bool,
     ) -> List[Dict]:
-        image, files_with_objects = image_files_with_objects
         object_to_files = _split_by_objects(
             files_with_objects,
             config_arg,
@@ -299,18 +298,25 @@ class DockerHook(Hook):
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
         logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
+        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+            results = []
+            for image, files_objs in sorted(
+                tag_to_files_objs.items(), key=lambda item: item[0]
+            ):
+                results.append(
+                    executor.submit(
+                        self.process_image,
+                        image,
+                        files_objs,
+                        config_arg,
+                        isolate_container,
+                        support_pack_ignore_config,
+                    )
+                )
+        for result in results:
+            hooks = result.result()
+            self.hooks.extend(hooks)
 
-        with Pool(processes=cpu_count()) as pool:
-            hooks = pool.map(
-                partial(
-                    self.process_image,
-                    config_arg=config_arg,
-                    isolate_container=isolate_container,
-                    support_pack_ignore_config=support_pack_ignore_config,
-                ),
-                sorted(tag_to_files_objs.items(), key=lambda item: item[0]),
-            )
-            self.hooks = list(more_itertools.flatten(hooks))
         end_time = time.time()
         logger.debug(
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"

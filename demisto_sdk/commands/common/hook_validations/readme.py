@@ -227,7 +227,9 @@ class ReadMeValidator(BaseValidator):
                 file_path=self.file_path,
             ):
                 return False
-            logger.info("[yellow]Validation of MDX file failed due to unable to start the mdx server, skipping.[/yellow]")
+            logger.info(
+                "[yellow]Validation of MDX file failed due to unable to start the mdx server, skipping.[/yellow]"
+            )
             return True
         for _ in range(RETRIES_VERIFY_MDX):
             try:

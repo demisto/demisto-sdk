@@ -448,3 +448,20 @@ jobs:
         with:
           artifacts-path-dir: content/test-lint
           artifact-name: test-lint-artifacts
+
+  slack-notify-master-failure:
+    needs: [ pre-commit-checks, unit-tests, integration-tests, graph-tests, test-content-infrastructure, test-pre-commit-command, test-graph-commands, validate-files-old-validate, validate-files-new-validate, test-lint]
+    if: failure() && github.ref_name == 'master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: '3.10'
+
+      - name: Notify Failed Jobs
+        run: |
+          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}

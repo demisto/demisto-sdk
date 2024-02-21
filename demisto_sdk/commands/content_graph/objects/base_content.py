@@ -268,7 +268,7 @@ class BaseContent(BaseNode):
         return {}
 
     @staticmethod
-    @lru_cache()
+    @lru_cache
     def from_path(
         path: Path,
         git_sha: Optional[str] = None,

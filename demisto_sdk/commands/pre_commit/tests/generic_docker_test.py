@@ -197,7 +197,7 @@ def test__set_properties():
 
 
 def test_isolate_container(mocker):
-    hook = create_hook({"isolate_container": True})
+    hook = create_hook({"run_isolated": True})
     file_path = Path("SomeFile.py")
     file = (file_path, Obj(object_id="id1"))
 

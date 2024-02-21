@@ -267,8 +267,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         if not metadata_only:
             self.parse_pack_folders()
         self.get_rn_info()
-        if not metadata_only:
-            self.parse_pack_folders()
+
         logger.debug(f"Successfully parsed {self.node_id}")
 
     @property

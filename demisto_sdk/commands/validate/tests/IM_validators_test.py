@@ -1,7 +1,7 @@
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
-    create_metadata_object,
+    create_pack_object,
 )
 from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_is_empty import (
     AuthorImageIsEmptyValidator,
@@ -11,9 +11,9 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM108_author_image_i
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], 0, []),
+        ([create_pack_object()], 0, []),
         (
-            [create_metadata_object(image="")],
+            [create_pack_object(image="")],
             1,
             ["The author image should not be empty. Please provide a relevant image."],
         ),

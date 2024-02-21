@@ -30,7 +30,7 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_incident_type_object,
     create_integration_object,
-    create_metadata_object,
+    create_pack_object,
     create_playbook_object,
 )
 from TestSuite.pack import Pack
@@ -2908,7 +2908,7 @@ def test_get_related_content():
         create_integration_object(),
         create_incident_type_object(),
         create_playbook_object(),
-        create_metadata_object(),
+        create_pack_object(),
     ]
     for object in objects:
         assert related_files[object.content_type]["expected_len"] == len(
@@ -2931,5 +2931,5 @@ def test_get_related_text_file():
     Then
     - Ensure that the readme content was returned.
     """
-    pack = create_metadata_object(readme_text="This is a test")
+    pack = create_pack_object(readme_text="This is a test")
     assert pack.readme == "This is a test"

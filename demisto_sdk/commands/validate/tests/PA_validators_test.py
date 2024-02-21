@@ -15,8 +15,8 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_USE_CASES,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
-    create_metadata_object,
     create_old_file_pointers,
+    create_pack_object,
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA100_valid_tags_prefixes import (
     ValidTagsPrefixesValidator,
@@ -80,23 +80,23 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA130_is_current_ver
 @pytest.mark.parametrize(
     "expected_number_of_failures, packmetadatas_objects_list",
     [
-        (1, [create_metadata_object(["name"], [" "])]),
-        (1, [create_metadata_object(["name"], [""])]),
-        (0, [create_metadata_object(["name"], ["Working pack name"])]),
-        (1, [create_metadata_object(["name"], ["fill mandatory field"])]),
+        (1, [create_pack_object(["name"], [" "])]),
+        (1, [create_pack_object(["name"], [""])]),
+        (0, [create_pack_object(["name"], ["Working pack name"])]),
+        (1, [create_pack_object(["name"], ["fill mandatory field"])]),
         (
             2,
             [
-                create_metadata_object(["name"], ["fill mandatory field"]),
-                create_metadata_object(["name"], [""]),
+                create_pack_object(["name"], ["fill mandatory field"]),
+                create_pack_object(["name"], [""]),
             ],
         ),
         (
             2,
             [
-                create_metadata_object(["name"], ["fill mandatory field"]),
-                create_metadata_object(["name"], [" "]),
-                create_metadata_object(["name"], ["Working pack name"]),
+                create_pack_object(["name"], ["fill mandatory field"]),
+                create_pack_object(["name"], [" "]),
+                create_pack_object(["name"], ["Working pack name"]),
             ],
         ),
     ],
@@ -136,9 +136,9 @@ def test_PackMetadataNameValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object(["created"], ["2020-04-14T00:00:00Z"])], 0, []),
+        ([create_pack_object(["created"], ["2020-04-14T00:00:00Z"])], 0, []),
         (
-            [create_metadata_object(["created"], ["2020-04-14T00:00:001Z"])],
+            [create_pack_object(["created"], ["2020-04-14T00:00:001Z"])],
             1,
             [
                 "The pack_metadata's 'created' field 2020-04-14T00:00:001Z is not in ISO format."
@@ -146,8 +146,8 @@ def test_PackMetadataNameValidator_is_valid(
         ),
         (
             [
-                create_metadata_object(["created"], ["2020-04-14T00:00:00Z"]),
-                create_metadata_object(["created"], ["2020-04-14T00:00:001Z"]),
+                create_pack_object(["created"], ["2020-04-14T00:00:00Z"]),
+                create_pack_object(["created"], ["2020-04-14T00:00:001Z"]),
             ],
             1,
             [
@@ -192,7 +192,7 @@ def test_IsCreatedFieldInISOFormatValidator_fix():
     Then
         - Make sure that the created field was parsed and changed correctly and that the right msg was returned.
     """
-    content_item = create_metadata_object(["created"], ["2020-04-14T00:00:001Z"])
+    content_item = create_pack_object(["created"], ["2020-04-14T00:00:001Z"])
     assert content_item.created == "2020-04-14T00:00:001Z"
     assert (
         IsCreatedFieldInISOFormatValidator().fix(content_item).message  # type: ignore
@@ -204,20 +204,20 @@ def test_IsCreatedFieldInISOFormatValidator_fix():
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
-        ([create_metadata_object()], 0),
+        ([create_pack_object()], 0),
         (
-            [create_metadata_object(["currentVersion"], ["2.0.5a"])],
+            [create_pack_object(["currentVersion"], ["2.0.5a"])],
             1,
         ),
         (
             [
-                create_metadata_object(),
-                create_metadata_object(["currentVersion"], ["2.0.531"]),
-                create_metadata_object(["currentVersion"], ["12.0.53"]),
-                create_metadata_object(["currentVersion"], ["112.0.53"]),
-                create_metadata_object(["currentVersion"], ["a12.0.53"]),
-                create_metadata_object(["currentVersion"], ["12.01.53"]),
-                create_metadata_object(["currentVersion"], ["12.011.53"]),
+                create_pack_object(),
+                create_pack_object(["currentVersion"], ["2.0.531"]),
+                create_pack_object(["currentVersion"], ["12.0.53"]),
+                create_pack_object(["currentVersion"], ["112.0.53"]),
+                create_pack_object(["currentVersion"], ["a12.0.53"]),
+                create_pack_object(["currentVersion"], ["12.01.53"]),
+                create_pack_object(["currentVersion"], ["12.011.53"]),
             ],
             4,
         ),
@@ -259,10 +259,10 @@ def test_IsCurrentVersionCorrectFormatValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], 0, []),
+        ([create_pack_object()], 0, []),
         (
             [
-                create_metadata_object(
+                create_pack_object(
                     fields_to_delete=[
                         PACK_METADATA_NAME,
                         PACK_METADATA_DESC,
@@ -311,19 +311,17 @@ def test_MissingFieldInPackMetadataValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], 0, []),
+        ([create_pack_object()], 0, []),
         (
-            [create_metadata_object(paths=["categories"], values=[[]])],
+            [create_pack_object(paths=["categories"], values=[[]])],
             0,
             [],
         ),
         (
             [
-                create_metadata_object(paths=["name", "tags"], values=["", [""]]),
-                create_metadata_object(paths=["useCases"], values=[[""]]),
-                create_metadata_object(
-                    paths=["keywords", "useCases"], values=[[], [""]]
-                ),
+                create_pack_object(paths=["name", "tags"], values=["", [""]]),
+                create_pack_object(paths=["useCases"], values=[[""]]),
+                create_pack_object(paths=["keywords", "useCases"], values=[[], [""]]),
             ],
             3,
             [
@@ -370,10 +368,10 @@ def test_EmptyMetadataFieldsValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_sub_msg",
     [
-        ([create_metadata_object()], 0, []),
+        ([create_pack_object()], 0, []),
         (
             [
-                create_metadata_object(
+                create_pack_object(
                     paths=["tags"], values=[["marketplacev2,xpanse:Data Source"]]
                 )
             ],
@@ -382,7 +380,7 @@ def test_EmptyMetadataFieldsValidator_is_valid(
         ),
         (
             [
-                create_metadata_object(
+                create_pack_object(
                     paths=["tags"], values=[["xsoar,NonApprovedTagPrefix:tag"]]
                 ),
             ],
@@ -422,7 +420,7 @@ def test_ValidTagsPrefixesValidator_fix():
     Then
         - Make sure that the invalid tags were removed and that the right msg was returned.
     """
-    content_item = create_metadata_object(
+    content_item = create_pack_object(
         paths=["tags"], values=[["xsoar,NonApprovedTagPrefix:tag", "some_valid_tag"]]
     )
     assert content_item.tags == ["xsoar,NonApprovedTagPrefix:tag", "some_valid_tag"]
@@ -440,13 +438,13 @@ def test_ValidTagsPrefixesValidator_fix():
 @pytest.mark.parametrize(
     "content_items, rn_versions, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], ["1.2.12"], 0, []),
-        ([create_metadata_object(["currentVersion"], ["1.0.0"])], [""], 0, []),
+        ([create_pack_object()], ["1.2.12"], 0, []),
+        ([create_pack_object(["currentVersion"], ["1.0.0"])], [""], 0, []),
         (
             [
-                create_metadata_object(),
-                create_metadata_object(),
-                create_metadata_object(["currentVersion"], ["1.0.0"]),
+                create_pack_object(),
+                create_pack_object(),
+                create_pack_object(["currentVersion"], ["1.0.0"]),
             ],
             ["1.2.13", "", "1.2.14"],
             3,
@@ -492,19 +490,17 @@ def test_IsVersionMatchRnValidator_is_valid(
     [
         (
             [
-                create_metadata_object(),
-                create_metadata_object(["categories", "name"], [[], API_MODULES_PACK]),
+                create_pack_object(),
+                create_pack_object(["categories", "name"], [[], API_MODULES_PACK]),
             ],
             0,
         ),
-        ([create_metadata_object(["categories"], [[""]])], 1),
+        ([create_pack_object(["categories"], [[""]])], 1),
         (
             [
-                create_metadata_object(["categories"], [["Utilities"]]),
-                create_metadata_object(["categories"], [["Random Category..."]]),
-                create_metadata_object(
-                    ["categories"], [["Network Security", "Utilities"]]
-                ),
+                create_pack_object(["categories"], [["Utilities"]]),
+                create_pack_object(["categories"], [["Random Category..."]]),
+                create_pack_object(["categories"], [["Network Security", "Utilities"]]),
             ],
             2,
         ),
@@ -551,14 +547,12 @@ def test_IsValidCategoriesValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
-        ([create_metadata_object()], 0),
-        ([create_metadata_object(["modules"], [["compliance"]])], 0),
+        ([create_pack_object()], 0),
+        ([create_pack_object(["modules"], [["compliance"]])], 0),
         (
             [
-                create_metadata_object(
-                    ["modules"], [["Random module...", "compliance"]]
-                ),
-                create_metadata_object(["modules"], [["Random module..."]]),
+                create_pack_object(["modules"], [["Random module...", "compliance"]]),
+                create_pack_object(["modules"], [["Random module..."]]),
             ],
             2,
         ),
@@ -603,7 +597,7 @@ def test_IsValidModulesValidator_fix():
     Then
         - Make sure the right modules were removed and the right message was returned.
     """
-    content_item = create_metadata_object(
+    content_item = create_pack_object(
         paths=["modules"], values=[["Random module...", "compliance"]]
     )
     assert content_item.modules == ["Random module...", "compliance"]
@@ -619,11 +613,11 @@ def test_IsValidModulesValidator_fix():
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
-        ([create_metadata_object()], 0),
-        ([create_metadata_object(["modules"], [["compliance"]])], 0),
+        ([create_pack_object()], 0),
+        ([create_pack_object(["modules"], [["compliance"]])], 0),
         (
             [
-                create_metadata_object(
+                create_pack_object(
                     ["modules", "marketplaces"], [["compliance"], ["xsoar"]]
                 ),
             ],
@@ -670,7 +664,7 @@ def test_ShouldIncludeModulesValidator_fix():
     Then
         - Make sure the field was emptied and the right message was returned.
     """
-    content_item = create_metadata_object(paths=["modules"], values=[["compliance"]])
+    content_item = create_pack_object(paths=["modules"], values=[["compliance"]])
     assert content_item.modules == ["compliance"]
     assert (
         ShouldIncludeModulesValidator().fix(content_item).message
@@ -682,11 +676,11 @@ def test_ShouldIncludeModulesValidator_fix():
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
-        ([create_metadata_object()], 0),
+        ([create_pack_object()], 0),
         (
             [
-                create_metadata_object(["description"], [""]),
-                create_metadata_object(["description"], ["fill mandatory field"]),
+                create_pack_object(["description"], [""]),
+                create_pack_object(["description"], ["fill mandatory field"]),
             ],
             2,
         ),
@@ -725,16 +719,12 @@ def test_IsValidDescriptionFieldValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
-        ([create_metadata_object()], 0),
+        ([create_pack_object()], 0),
         (
             [
-                create_metadata_object(["url", "email"], ["", ""]),
-                create_metadata_object(
-                    ["url", "email", "support"], ["", "", "partner"]
-                ),
-                create_metadata_object(
-                    ["url", "email", "support"], ["", "", "developer"]
-                ),
+                create_pack_object(["url", "email"], ["", ""]),
+                create_pack_object(["url", "email", "support"], ["", "", "partner"]),
+                create_pack_object(["url", "email", "support"], ["", "", "developer"]),
             ],
             2,
         ),
@@ -774,15 +764,15 @@ def test_IsURLOrEmailExistsValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], 0, []),
-        ([create_metadata_object(["support"], ["xsoar"])], 0, []),
-        ([create_metadata_object(["support"], ["partner"])], 0, []),
-        ([create_metadata_object(["support"], ["developer"])], 0, []),
+        ([create_pack_object()], 0, []),
+        ([create_pack_object(["support"], ["xsoar"])], 0, []),
+        ([create_pack_object(["support"], ["partner"])], 0, []),
+        ([create_pack_object(["support"], ["developer"])], 0, []),
         (
             [
-                create_metadata_object(["support"], ["Developer"]),
-                create_metadata_object(["support"], ["developerr"]),
-                create_metadata_object(["support"], ["someone"]),
+                create_pack_object(["support"], ["Developer"]),
+                create_pack_object(["support"], ["developerr"]),
+                create_pack_object(["support"], ["someone"]),
             ],
             3,
             [
@@ -830,12 +820,12 @@ def test_IsValidSupportTypeValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], 0, []),
-        ([create_metadata_object(["certification"], [""])], 0, []),
+        ([create_pack_object()], 0, []),
+        ([create_pack_object(["certification"], [""])], 0, []),
         (
             [
-                create_metadata_object(["certification"], ["certified"]),
-                create_metadata_object(["certification"], ["non-certified"]),
+                create_pack_object(["certification"], ["certified"]),
+                create_pack_object(["certification"], ["non-certified"]),
             ],
             1,
             [
@@ -876,21 +866,21 @@ def test_IsValidCertificateValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, old_content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], [create_metadata_object()], 0, []),
+        ([create_pack_object()], [create_pack_object()], 0, []),
         (
-            [create_metadata_object(["price"], [10])],
-            [create_metadata_object(["price"], [10])],
+            [create_pack_object(["price"], [10])],
+            [create_pack_object(["price"], [10])],
             0,
             [],
         ),
         (
             [
-                create_metadata_object(["price"], [10]),
-                create_metadata_object(["price"], [10]),
+                create_pack_object(["price"], [10]),
+                create_pack_object(["price"], [10]),
             ],
             [
-                create_metadata_object(["price"], [15]),
-                create_metadata_object(["price"], [5]),
+                create_pack_object(["price"], [15]),
+                create_pack_object(["price"], [5]),
             ],
             2,
             [
@@ -899,8 +889,8 @@ def test_IsValidCertificateValidator_is_valid(
             ],
         ),
         (
-            [create_metadata_object(["price"], [10]), create_metadata_object()],
-            [create_metadata_object(), create_metadata_object(["price"], [10])],
+            [create_pack_object(["price"], [10]), create_pack_object()],
+            [create_pack_object(), create_pack_object(["price"], [10])],
             2,
             [
                 "The pack price was changed from not included to 10 - revert the change.",
@@ -946,15 +936,15 @@ def test_IsPriceChangedValidator_is_valid(
 @pytest.mark.parametrize(
     "content_item, current_price, new_price, expected_msg",
     [
-        (create_metadata_object(), 0, 10, "Reverted the price back to 10."),
+        (create_pack_object(), 0, 10, "Reverted the price back to 10."),
         (
-            create_metadata_object(["price"], [10]),
+            create_pack_object(["price"], [10]),
             10,
             0,
             "Reverted the price back to 0.",
         ),
         (
-            create_metadata_object(["price"], [5]),
+            create_pack_object(["price"], [5]),
             5,
             15,
             "Reverted the price back to 15.",
@@ -984,16 +974,16 @@ def test_IsPriceChangedValidator_fix(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures",
     [
-        ([create_metadata_object()], 0),
-        ([create_metadata_object(["url"], ["github.com"])], 0),
-        ([create_metadata_object(["url", "support"], ["github.com", "developer"])], 1),
-        ([create_metadata_object(["url", "support"], ["github.com", "partner"])], 1),
+        ([create_pack_object()], 0),
+        ([create_pack_object(["url"], ["github.com"])], 0),
+        ([create_pack_object(["url", "support"], ["github.com", "developer"])], 1),
+        ([create_pack_object(["url", "support"], ["github.com", "partner"])], 1),
         (
             [
-                create_metadata_object(
+                create_pack_object(
                     ["url", "support"], ["github.com/issues", "developer"]
                 ),
-                create_metadata_object(
+                create_pack_object(
                     ["url", "support"], ["github.com/issues", "partner"]
                 ),
             ],
@@ -1051,9 +1041,7 @@ def test_IsValidURLFieldValidator_fix():
     Then
         - Make sure that the URL was fixed correctly and that the right msg was returned.
     """
-    content_item = create_metadata_object(
-        ["url", "support"], ["github.com", "developer"]
-    )
+    content_item = create_pack_object(["url", "support"], ["github.com", "developer"])
     assert content_item.url == "github.com"
     assert (
         IsValidURLFieldValidator().fix(content_item).message  # type: ignore
@@ -1065,14 +1053,14 @@ def test_IsValidURLFieldValidator_fix():
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], 0, []),
+        ([create_pack_object()], 0, []),
         (
             [
-                create_metadata_object(["name"], ["Valid_name"]),
-                create_metadata_object(["name"], ["Va"]),
-                create_metadata_object(["name"], ["name_with_lower_letter"]),
-                create_metadata_object(["name"], ["Name_with_Pack"]),
-                create_metadata_object(["name"], ["Name_with_partner"]),
+                create_pack_object(["name"], ["Valid_name"]),
+                create_pack_object(["name"], ["Va"]),
+                create_pack_object(["name"], ["name_with_lower_letter"]),
+                create_pack_object(["name"], ["Name_with_Pack"]),
+                create_pack_object(["name"], ["Name_with_partner"]),
             ],
             4,
             [
@@ -1117,14 +1105,14 @@ def test_IsValidPackNameValidator_is_valid(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object(["tags"], [["Spam"]])], 0, []),
+        ([create_pack_object(["tags"], [["Spam"]])], 0, []),
         (
             [
-                create_metadata_object(["tags"], [[]]),
-                create_metadata_object(["tags"], [["Machine Learning", "Spam"]]),
-                create_metadata_object(["tags"], [["NonApprovedTag", "GDPR"]]),
-                create_metadata_object(["tags"], [["marketplacev2:Data Source"]]),
-                create_metadata_object(
+                create_pack_object(["tags"], [[]]),
+                create_pack_object(["tags"], [["Machine Learning", "Spam"]]),
+                create_pack_object(["tags"], [["NonApprovedTag", "GDPR"]]),
+                create_pack_object(["tags"], [["marketplacev2:Data Source"]]),
+                create_pack_object(
                     ["tags"], [["marketplacev2:NonApprovedTag", "Spam"]]
                 ),
             ],
@@ -1185,7 +1173,7 @@ def test_IsValidTagsValidator_fix():
     Then
         - Make sure that the invalid tags were removed and that the right msg was returned.
     """
-    content_item = create_metadata_object(paths=["tags"], values=[["tag_1", "tag_2"]])
+    content_item = create_pack_object(paths=["tags"], values=[["tag_1", "tag_2"]])
     assert content_item.tags == ["tag_1", "tag_2"]
     validator = IsValidTagsValidator()
     validator.non_approved_tags_dict[content_item.name] = ["tag_1"]
@@ -1196,14 +1184,14 @@ def test_IsValidTagsValidator_fix():
 @pytest.mark.parametrize(
     "content_items, approved_use_cases, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object([], [])], ["Identity and Access Management"], 0, []),
-        ([create_metadata_object(["useCases"], [[]])], [], 0, []),
+        ([create_pack_object([], [])], ["Identity and Access Management"], 0, []),
+        ([create_pack_object(["useCases"], [[]])], [], 0, []),
         (
             [
-                create_metadata_object(["useCases"], [["Phishing"]]),
-                create_metadata_object(["useCases"], [["Malware", "Case Management"]]),
-                create_metadata_object(["useCases"], [["invalid_use_Case"]]),
-                create_metadata_object(
+                create_pack_object(["useCases"], [["Phishing"]]),
+                create_pack_object(["useCases"], [["Malware", "Case Management"]]),
+                create_pack_object(["useCases"], [["invalid_use_Case"]]),
+                create_pack_object(
                     ["useCases"],
                     [
                         [
@@ -1271,7 +1259,7 @@ def test_IsValidUseCasesValidator_fix():
     Then
         - Make sure that the invalid useCases were removed and that the right msg was returned.
     """
-    content_item = create_metadata_object(
+    content_item = create_pack_object(
         ["useCases"],
         [["Malware", "Case Management", "invalid_use_Case_1", "invalid_use_Case_2"]],
     )

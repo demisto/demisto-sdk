@@ -385,7 +385,7 @@ def logging_setup(
 
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
-    console_handler.setLevel(console_log_threshold or logging.INFO)
+    console_handler.setLevel(console_log_threshold or logging.DEBUG)
 
     if environment_variable_to_bool(DEMISTO_SDK_LOG_NO_COLORS):
         console_handler.setFormatter(fmt=NoColorFileFormatter())

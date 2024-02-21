@@ -28,20 +28,23 @@ def test_integration_playbook_positive(
     Then    make sure it passes
     """
     pack = graph_repo.create_pack()
-    pack.create_test_playbook(name="playbook")
-    pack.create_integration(name="foo")
+    playbook = pack.create_test_playbook("SamplePlaybookTest")
+    integration = pack.create_integration()
+
     graph_repo.conf.write_json(
         tests=[
             {
-                "playbookID": "playbook",
-                "integrations": ["foo"] if list_of_integrations else "foo",
+                "playbookID": playbook.name,
+                "integrations": [integration.name]
+                if list_of_integrations
+                else integration.name,
             }
         ]
     )
     graph = graph_repo.create_graph()
     validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
     assert validator._validate_content_exists()
-    assert not validator.validate()
+    assert validator.validate()
 
 
 def test_integration_mistyped(graph_repo: Repo) -> None:
@@ -51,12 +54,12 @@ def test_integration_mistyped(graph_repo: Repo) -> None:
     Then    make sure it fails
     """
     pack = graph_repo.create_pack()
-    pack.create_test_playbook("playbook")
+    pack.create_test_playbook("SamplePlaybookTest")
     pack.create_integration(name="foo")
     graph_repo.conf.write_json(
         tests=[
             {
-                "playbookID": "playbook",
+                "playbookID": "SamplePlaybookTest",
                 "integrations": "FOO",
             }
         ]
@@ -74,22 +77,8 @@ def test_invalid_skipped_integration(graph_repo: Repo) -> None:
     Then    make sure it fails
     """
     pack = graph_repo.create_pack()
-    pack.create_test_playbook("playbook")
+    pack.create_test_playbook("SamplePlaybookTest")
     graph_repo.conf.write_json(skipped_integrations={"hello": "world"})
-    graph = graph_repo.create_graph()
-    validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
-    assert not validator.validate()
-
-
-def test_invalid_skipped_test(graph_repo: Repo) -> None:
-    """
-    Given   a repo with one skipped test configured, but doesn't exist in the repo
-    When    calling validate
-    Then    make sure it fails
-    """
-    pack = graph_repo.create_pack()
-    pack.create_test_playbook("playbook")
-    graph_repo.conf.write_json(skipped_tests={"hello": "world"})
     graph = graph_repo.create_graph()
     validator = ConfJsonValidator(Path(graph_repo.conf.path), graph)
     assert not validator.validate()

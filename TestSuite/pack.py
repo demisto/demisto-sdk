@@ -247,7 +247,6 @@ class Pack(TestSuiteBase):
         create_unified=False,
         commands_txt: Optional[str] = None,
         test: Optional[str] = None,
-        deprecated: bool = False,
     ) -> Integration:
         if name is None:
             name = f"integration_{len(self.integrations)}"
@@ -258,7 +257,6 @@ class Pack(TestSuiteBase):
                 "display": name,
                 "description": description or f"this is an integration {name}",
                 "category": "category",
-                "deprecated": deprecated,
                 "script": {
                     "type": "python",
                     "subtype": "python3",
@@ -493,6 +491,7 @@ class Pack(TestSuiteBase):
         return layoutcontainer
 
     def create_report(self, name: str = None, content: dict = None) -> Report:
+
         if not name:
             name = f"report{len(self.reports)}"
         report = Report(name, self._report_path, content)
@@ -539,6 +538,7 @@ class Pack(TestSuiteBase):
         return wizard
 
     def create_list(self, name: str = None, content: dict = None) -> ContentList:
+
         if not name:
             name = f"list{len(self.lists)}"
         content_list = ContentList(name, self._lists_path, content)
@@ -552,10 +552,7 @@ class Pack(TestSuiteBase):
         readme: Optional[str] = None,
     ) -> Playbook:
         if name is None:
-            if yml_name := (yml or {}).get("name"):
-                name = yml_name
-            else:
-                name = f"playbook-{len(self.playbooks)}"
+            name = f"playbook-{len(self.playbooks)}"
         playbook = Playbook(self._playbooks_path, name, self._repo)
         playbook.build(
             yml,
@@ -570,16 +567,11 @@ class Pack(TestSuiteBase):
         yml: Optional[dict] = None,
         readme: Optional[str] = None,
         changelog: Optional[str] = None,
-        deprecated: bool = False,
     ) -> Playbook:
         if name is None:
             name = f"playbook-{len(self.test_playbooks)}"
         playbook = Playbook(
-            self._test_playbooks_path,
-            name,
-            self._repo,
-            is_test_playbook=True,
-            deprecated=deprecated,
+            self._test_playbooks_path, name, self._repo, is_test_playbook=True
         )
         playbook.build(
             yml,

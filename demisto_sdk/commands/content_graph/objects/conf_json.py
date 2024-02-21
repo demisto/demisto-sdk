@@ -113,8 +113,7 @@ class ConfJSON(StrictBaseModel):
                 ContentType.TEST_PLAYBOOK,
                 (
                     (test.playbookID for test in self.tests),
-                    # self.skipped_tests.keys(),
-                    # not collecting skipped tests as this section preserves for skip reasons.
+                    # self.skipped_tests.keys(), # not collecting skipped tests as this section preserves for skip reasons.
                     self.private_tests,
                     self.reputation_tests,
                     self.test_marketplacev2,

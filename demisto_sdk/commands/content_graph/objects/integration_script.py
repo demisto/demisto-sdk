@@ -41,15 +41,6 @@ class Argument(BaseModel):
     auto: Optional[Auto] = None
 
 
-class Output(BaseModel):
-    description: str = ""
-    contentPath: Optional[str] = None
-    contextPath: Optional[str] = None
-    important: Optional[bool] = None
-    importantDescription: Optional[str] = None
-    type: Optional[str] = None
-
-
 class IntegrationScript(ContentItem):
     type: str
     subtype: Optional[str]
@@ -179,20 +170,3 @@ class IntegrationScript(ContentItem):
                 yml_arg["required"] = arg.required
             yml_args.append(yml_arg)
         return yml_args
-
-    def get_yml_outputs(self, outputs: List[Output]) -> List[Dict]:
-        yml_outputs = []
-        for output in outputs:
-            yml_output: Dict[str, Any] = {"description": output.description}
-            if output.contentPath is not None:
-                yml_output["contentPath"] = output.contentPath
-            if output.contextPath is not None:
-                yml_output["contextPath"] = output.contextPath
-            if output.importantDescription is not None:
-                yml_output["importantDescription"] = output.importantDescription
-            if output.type is not None:
-                yml_output["type"] = output.type
-            if output.important is not None:
-                yml_output["important"] = output.important
-            yml_outputs.append(yml_output)
-        return yml_outputs

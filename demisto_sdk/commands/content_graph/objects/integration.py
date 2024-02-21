@@ -20,7 +20,6 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
-    Output,
 )
 
 
@@ -39,6 +38,15 @@ class Parameter(BaseModel):
     hiddenusername: Optional[bool] = False
     hiddenpassword: Optional[bool] = False
     fromlicense: Optional[str] = None
+
+
+class Output(BaseModel):
+    description: str = ""
+    contentPath: Optional[str] = None
+    contextPath: Optional[str] = None
+    important: Optional[bool] = False
+    importantDescription: Optional[str] = None
+    type: Optional[str] = None
 
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -174,6 +182,23 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 }
             )
         return yml_commands
+
+    def get_yml_outputs(self, outputs: List[Output]) -> List[Dict]:
+        yml_outputs = []
+        for output in outputs:
+            yml_output: Dict[str, Any] = {"description": output.description}
+            if output.contentPath is not None:
+                yml_output["contentPath"] = output.contentPath
+            if output.contextPath is not None:
+                yml_output["contextPath"] = output.contextPath
+            if output.importantDescription is not None:
+                yml_output["importantDescription"] = output.importantDescription
+            if output.type is not None:
+                yml_output["type"] = output.type
+            if output.important is not None:
+                yml_output["important"] = output.important
+            yml_outputs.append(yml_output)
+        return yml_outputs
 
     def get_related_content(self) -> Dict[RelatedFileType, Dict]:
         related_content_files = super().get_related_content()

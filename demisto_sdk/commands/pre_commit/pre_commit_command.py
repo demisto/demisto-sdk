@@ -348,7 +348,7 @@ def group_by_language(
     language_to_files: Dict[str, Set] = defaultdict(set)
     integrations_scripts = []
     for integration_script_paths in more_itertools.chunked_even(
-        integrations_scripts_mapping.keys(), 500
+        integrations_scripts_mapping.keys(), 300
     ):
         with multiprocessing.Pool(processes=cpu_count()) as pool:
             integrations_scripts.extend(

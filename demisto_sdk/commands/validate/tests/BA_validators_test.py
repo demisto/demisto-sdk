@@ -1,3 +1,6 @@
+from collections.abc import Iterable
+from typing import List
+
 import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -17,6 +20,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_job_object,
     create_layout_object,
     create_list_object,
+    create_modeling_rule_object,
     create_outgoing_mapper_object,
     create_parsing_rule_object,
     create_playbook_object,
@@ -44,6 +48,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
     IsFromVersionSufficientIntegrationValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
+    ContentTypes as ContentTypes113,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
     IsContentItemNameContainTrailingSpacesValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
@@ -55,6 +62,8 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA118_from_to_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
 )
+
+FIELD_WITH_WHITESPACES = "field_with_space_should_fail "
 
 
 @pytest.mark.parametrize(
@@ -936,47 +945,108 @@ def test_IsDeprecatedCorrectlyValidator_is_valid():
 
 
 @pytest.mark.parametrize(
-    "content_items",
+    "content_items, expected_number_of_failures, expected_filed_error_messages",
     [
         pytest.param(
             [
-                create_integration_object(
-                    paths=["name"], values=["name_with_space_should_fail "]
-                )
+                create_incident_field_object(),
+                create_widget_object(),
+                create_wizard_object(),
+                create_report_object(),
+                create_xsiam_report_object(),
+                create_script_object(),
+                create_dashboard_object(),
+                create_incident_type_object(),
+                create_generic_module_object(),
+                create_generic_type_object(),
+                create_incoming_mapper_object(),
+                create_outgoing_mapper_object(),
+                create_generic_definition_object(),
+                create_classifier_object(),
+                create_xsiam_dashboard_object(),
+                create_job_object(),
+                create_list_object(),
+                create_parsing_rule_object(),
+                create_playbook_object(),
+                create_generic_field_object(),
+                create_correlation_rule_object(),
+                create_assets_modeling_rule_object(),
+                create_layout_object(),
             ],
-            id="case integration with trailing spaces in name",
+            0,
+            [],
+            id="All the content items, no failure expected",
         ),
         pytest.param(
             [
                 create_classifier_object(
-                    paths=["name"], values=["name_with_space_should_fail "]
-                )
+                    paths=["name", "id"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_integration_object(
+                    paths=["name", "commonfields.id"],
+                    values=[FIELD_WITH_WHITESPACES, FIELD_WITH_WHITESPACES],
+                ),
             ],
-            id="case classifier with trailing spaces in name",
+            2,
+            ["name, id" for _ in range(2)],
+            id="classifier and integration with trailing spaces",
         ),
         pytest.param(
             [
-                create_dashboard_object(
-                    paths=["name"], values=["name_with_space_should_fail "]
-                )
-            ],
-            id="case dashboard with trailing spaces in name",
-        ),
-        pytest.param(
-            [
+                create_indicator_field_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_wizard_object({"name": FIELD_WITH_WHITESPACES}),
+                create_correlation_rule_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
                 create_incident_type_object(
-                    paths=["name"], values=["name_with_space_should_fail "]
-                )
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_dashboard_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_generic_definition_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_generic_type_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_incident_type_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_generic_module_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_generic_field_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_layout_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+                create_incoming_mapper_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_modeling_rule_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_incoming_mapper_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_parsing_rule_object(
+                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                ),
+                create_playbook_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
             ],
-            id="case incident type with trailing spaces in name",
-        ),
-        pytest.param(
-            [create_wizard_object({"name": "name_with_space_should_fail "})],
-            id="case wizard with trailing spaces in name",
+            16,
+            ["name" for _ in range(16)],
+            id="multiple content items with trailing spaces in name",
         ),
     ],
 )
-def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(content_items):
+def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
+    content_items: Iterable[ContentTypes113],
+    expected_number_of_failures: int,
+    expected_filed_error_messages: List[str],
+):
     """Test validate BA113 - Trailing spaces in content item name
     Given:
         A list of content items with names that have trailing spaces.
@@ -984,62 +1054,91 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(content_items)
         The IsContentItemNameContainTrailingSpacesValidator's is_valid method is called.
     Then:
         The validator should return a list of ValidationResult objects, each with a message indicating that the content item's name should not have trailing spaces.
+    Test cases:
+        - Case 1: All content items are created without trailing spaces in their names. The validator should not return any failures.
+        - Case 2: A classifier and an integration are created with trailing spaces in their names. The validator should return two failures, one for each content item.
+        - Case 3: Multiple content items are created with trailing spaces in their names. The validator should return a failure for each content item.
     """
+    results = IsContentItemNameContainTrailingSpacesValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+
     assert all(
         [
             result.message
-            == "Content item name 'name_with_space_should_fail ' should not have trailing spaces. Please remove."
-            for result in IsContentItemNameContainTrailingSpacesValidator().is_valid(
-                content_items
+            == f"The following fields have a trailing spaces: {expected_field_msg} \nContent item fields can not have trailing spaces."
+            for result, expected_field_msg in zip(
+                results, expected_filed_error_messages
             )
         ]
     )
 
 
 @pytest.mark.parametrize(
-    "content_item",
+    "content_item, invalid_fields",
     [
         pytest.param(
-            create_integration_object(
-                paths=["name"], values=["name_with_space_should_fix "]
-            ),
+            create_integration_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+            {"name": "name"},
             id="case integration with trailing spaces in name with fix",
         ),
         pytest.param(
-            create_classifier_object(
-                paths=["name"], values=["name_with_space_should_fix "]
-            ),
+            create_classifier_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+            {"name": "name"},
             id="case classifier with trailing spaces in name with fix",
         ),
         pytest.param(
-            create_dashboard_object(
-                paths=["name"], values=["name_with_space_should_fix "]
-            ),
+            create_dashboard_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+            {"name": "name"},
             id="case dashboard with trailing spaces in name with fix",
         ),
         pytest.param(
             create_incident_type_object(
-                paths=["name"], values=["name_with_space_should_fix "]
+                paths=["name"], values=[FIELD_WITH_WHITESPACES]
             ),
+            {"name": "name"},
             id="case incident type with trailing spaces in name with fix",
         ),
         pytest.param(
-            create_wizard_object({"name": "name_with_space_should_fix "}),
+            create_wizard_object({"name": FIELD_WITH_WHITESPACES}),
+            {"name": "name"},
             id="case wizard with trailing spaces in name with fix",
+        ),
+        pytest.param(
+            create_classifier_object(
+                paths=["name", "id"],
+                values=[FIELD_WITH_WHITESPACES, FIELD_WITH_WHITESPACES],
+            ),
+            {"object_id": "id", "name": "name"},
+            id="classifier and integration with trailing spaces",
         ),
     ],
 )
-def test_IsContentItemNameContainTrailingSpacesValidator_fix(content_item):
-    """Test validate BA113 - Trailing spaces in content item name
-    Given:
-        A content item with a name that has trailing spaces.
-    When:
-        The IsContentItemNameContainTrailingSpacesValidator's fix method is called.
-    Then:
-        The trailing spaces should be removed from the content item's name, and the fix message should indicate that the trailing spaces have been removed.
+def test_IsContentItemNameContainTrailingSpacesValidator_fix(
+    content_item: ContentTypes113, invalid_fields: dict
+):
     """
+    Test validate BA113 - Trailing spaces in content item name
+
+    Given:
+        - A content item with a name that has trailing spaces.
+    When:
+        - The IsContentItemNameContainTrailingSpacesValidator's fix method is called.
+    Then:
+        - The trailing spaces should be removed from the content item's name, and the fix message should indicate that the trailing spaces have been removed.
+
+    Test cases:
+        - Case 1: An integration is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
+        - Case 2: A classifier is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
+        - Case 3: A dashboard is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
+        - Case 4: An incident type is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
+        - Case 5: A wizard is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
+        - Case 6: A classifier and an integration are created with trailing spaces in their names. The validator should remove the trailing spaces and return a fix message.
+    """
+    validator = IsContentItemNameContainTrailingSpacesValidator()
+    validator.invalid_fields[content_item.name] = list(invalid_fields.keys())
+    results = validator.fix(content_item)
     assert (
-        IsContentItemNameContainTrailingSpacesValidator().fix(content_item).message
-        == "Trailing spaces in the content item name 'name_with_space_should_fix' have been removed."
+        results.message
+        == f"Removed trailing spaces from the following content item {FIELD_WITH_WHITESPACES.rstrip()} fields: '{', '.join(list(invalid_fields.values()))}'."
     )
-    assert content_item.name == "name_with_space_should_fix"
+    assert content_item.name == FIELD_WITH_WHITESPACES.rstrip()

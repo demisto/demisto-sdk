@@ -192,9 +192,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "git_status": None,
                 },
                 RelatedFileType.DARK_SVG: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_description.md")
-                    ],
+                    "path": [str(self.path.parent / f"{self.path.parts[-2]}_dark.svg")],
                     "git_status": None,
                 },
                 RelatedFileType.LIGHT_SVG: {
@@ -204,7 +202,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "git_status": None,
                 },
                 RelatedFileType.DESCRIPTION: {
-                    "path": [str(self.path.parent / f"{self.path.parts[-2]}_dark.svg")],
+                    "path": [
+                        str(self.path.parent / f"{self.path.parts[-2]}_description.md")
+                    ],
                     "git_status": None,
                 },
             }

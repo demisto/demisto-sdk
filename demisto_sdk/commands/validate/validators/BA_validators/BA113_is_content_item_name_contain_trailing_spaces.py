@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import ClassVar, Dict, Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -66,30 +65,49 @@ ContentTypes = Union[
 class IsContentItemNameContainTrailingSpacesValidator(BaseValidator[ContentTypes]):
     error_code = "BA113"
     description = "Validator to check if content item names contain trailing spaces."
-    error_message = (
-        "Content item name '{0}' should not have trailing spaces. Please remove."
+    error_message = "The following fields have a trailing spaces: {0} \nContent item fields can not have trailing spaces."
+    fix_message = (
+        "Removed trailing spaces from the following content item {0} fields: '{1}'."
     )
-    fix_message = "Trailing spaces in the content item name '{0}' have been removed."
-    related_field = "name"
+    related_field = "name, commonfields.id"
     is_auto_fixable = True
-    expected_git_statuses = [GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.YML]
+    invalid_fields: ClassVar[Dict[str, List[str]]] = {}
+    fields_to_check = {"object_id": "id", "name": "name"}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.name),
+                message=self.error_message.format(", ".join(invalid_fields)),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (content_item.name != content_item.name.strip())
+            if bool(invalid_fields := self.get_invalid_fields(content_item))
         ]
 
+    def get_invalid_fields(self, content_item: ContentTypes) -> List[str]:
+        self.invalid_fields[content_item.name] = [
+            self.fields_to_check[field_name]
+            for field_name, field_value in (
+                (field, getattr(content_item, field))
+                for field in self.fields_to_check.keys()
+            )
+            if field_value != field_value.rstrip()
+        ]
+        return self.invalid_fields[content_item.name]
+
     def fix(self, content_item: ContentTypes) -> FixResult:
-        content_item.name = content_item.name.strip()
+        changed_fields = []
+        for field in self.fields_to_check:
+            field_value = getattr(content_item, field)
+            if field in self.invalid_fields[content_item.name]:
+                setattr(content_item, field, field_value.rstrip())
+                changed_fields.append(self.fields_to_check[field])
         return FixResult(
             validator=self,
             content_object=content_item,
-            message=self.fix_message.format(content_item.name),
+            message=self.fix_message.format(
+                content_item.name, ", ".join(changed_fields)
+            ),
         )

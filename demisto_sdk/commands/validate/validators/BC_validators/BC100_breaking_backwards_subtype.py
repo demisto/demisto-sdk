@@ -18,11 +18,9 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         "Validate that the pack name subtype of the new file matches the old one."
     )
     rationale = (
-        "The 'subtype' of a file indicates the language version (Python 2 or Python 3) your integration is written in. "
-        "Changing the 'subtype' can break backward compatibility as it might cause issues in systems that rely on the previous subtype for processing or categorization. "
-        "Maintaining the same 'subtype' ensures that existing systems can continue to function correctly with the updated file. "
-        "For more information on 'subtype', refer to the following documentation: "
-        "https://xsoar.pan.dev/docs/integrations/yaml-file#script"
+        "Changing 'subtype' can break backward compatibility. "
+        "Maintaining the same 'subtype' ensures system functionality. "
+        "For 'subtype' info, see: https://xsoar.pan.dev/docs/integrations/yaml-file#script"
     )
     error_message = "Possible backwards compatibility break, You've changed the {0} subtype from {1} to {2}, please undo."
     related_field = "subtype"

@@ -19,9 +19,8 @@ class ShouldIncludeModulesValidator(BaseValidator[ContentTypes]):
         "Validate that the pack has the marketplacev2 label if it include modules."
     )
     rationale = (
-        "The 'modules' field should only be used for packs distributed on the XSIAM marketplace. "
-        "This is because the 'modules' field is specific to the features and requirements of the XSIAM marketplace. "
-        "Packs that are not intended for this marketplace should not include this field."
+        "'modules' field is specific to XSIAM marketplace requirements. "
+        "Non-XSIAM packs should not include this field."
     )
     error_message = "Module field can be added only for XSIAM packs (marketplacev2)."
     fix_message = "Emptied the modules field."

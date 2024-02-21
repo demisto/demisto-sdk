@@ -18,12 +18,8 @@ ContentTypes = Integration
 
 class IsValidCheckboxDefaultFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IN102"
-    description = "Validate that th a checkbox param is configured correctly with required argument set to true."
-    rationale = (
-        "Checkbox parameters in an integration should not be set as required. "
-        "This is because checkboxes are typically used for optional settings that modify the behavior of an integration. "
-        "Making a checkbox required can lead to confusion for users and force them to enable settings that are not necessary for their use case."
-    )
+    description = "Validate that th a checkbox param is configured correctly with required argument set to false."
+    rationale = "Making a checkbox required force the use to enable settings that are not necessary for their use case."
     error_message = "The following checkbox params required field is set to True: {0}.\nMake sure to change it to False/remove the field."
     fix_message = "Set required field of the following params was set to False: {0}."
     related_field = "configuration"

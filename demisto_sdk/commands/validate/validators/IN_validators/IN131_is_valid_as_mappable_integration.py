@@ -18,9 +18,8 @@ class IsValidAsMappableIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN131"
     description = "Validate that the integration is valid as a mappable integration."
     rationale = (
-        f"An integration in Cortex XSOAR/XSIAM that is marked as mappable should include the {GET_MAPPING_FIELDS_COMMAND_NAME} command. "
-        "This command is essential for the mapping process as it retrieves the fields from the external system that can be mapped to Cortex XSOAR/XSIAM fields. "
-        "Without this command, the integration cannot be used effectively for field mapping, which is a key functionality for incident synchronization and mirroring. "  # TODO i'm not sure about the rationale
+        "For easy debugging and troubleshooting, integrations supporting schema mapping (ismappable: true) should include the 'get-mapping-fields' command. "
+        "This validator ensures the command is present in the integration YAML, enhancing maintainability and user experience."
         "For more info, visit https://xsoar.pan.dev/docs/integrations/mirroring_integration#get-mapping-fields"
     )
     error_message = f"The integration is a mappable integration and is missing the {GET_MAPPING_FIELDS_COMMAND_NAME} command. Please add the command."

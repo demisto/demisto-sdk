@@ -22,10 +22,8 @@ class IsMissingReliabilityParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN154"
     description = "Validate that feed integration and integrations with reputation commands have a reliability param."
     rationale = (
-        "Feed integrations and integrations with reputation commands should implement a 'Source Reliability' parameter. "
-        "This allows users to manually configure the default reliability for the generated indicator's DBotScore, "
-        "impacting the reputation of an indicator and the values assigned to indicator fields. "
-        "The absence of this parameter could lead to less accurate indicator reputation assessment."
+        "A reliability parameter lets users define reliability, influencing reputation calculation. "
+        "For more info see, https://xsoar.pan.dev/docs/integrations/feeds#required-parameters"
     )
     rationale = "Feed integrations and integrations with reputation commands should implement a reliability parameter to track data quality."
     error_message = "Feed integrations and integrations with reputation commands must implement a reliability parameter, make sure to add one."

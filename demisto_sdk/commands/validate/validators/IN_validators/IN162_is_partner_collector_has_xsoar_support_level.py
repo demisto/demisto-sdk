@@ -21,9 +21,8 @@ class IsPartnerCollectorHasXsoarSupportLevelValidator(BaseValidator[ContentTypes
     error_code = "IN162"
     description = "Validate that the support level header for a collector integration in a Partner pack is set to Xsoar."
     rationale = (
-        "Collector integrations in Partner packs should specify that they have {XSOAR_SUPPORT} level support "
-        "as defined by {SUPPORT_LEVEL_HEADER} in the yml file. This ensures users are accurately informed about the level of "
-        "support provided by Cortex XSOAR for these integrations, promoting transparency and trust. "
+        "Collector integrations in Partner packs should specify {XSOAR_SUPPORT} level support "
+        "to accurately inform users about the support level provided by Cortex XSOAR. "
         "For more information about 'support level header' see https://xsoar.pan.dev/docs/documentation/integration-description#support-level-header-yml-metadata-key."
     )
     error_message = f"The integration is a fetch events/assets integration in a partner supported pack.\nTherefore, it should have the key {SUPPORT_LEVEL_HEADER} = {XSOAR_SUPPORT} in its yml."

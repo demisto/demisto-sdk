@@ -14,7 +14,10 @@ ContentTypes = Integration
 class IsIntegrationRunnableValidator(BaseValidator[ContentTypes]):
     error_code = "IN130"
     description = "validate that the integration is runable"
-    rationale = "An integration in Cortex XSOAR/XSIAM should have at least one of the following: a command under the `commands` section, `isFetch: true`, `feed: true`, or `longRunning: true`. This ensures that the integration has a functional purpose within the platform, whether it's executing commands, fetching incidents, fetching indicators from a feed, or running a long-running process."
+    rationale = (
+        "Integrations in Cortex XSOAR/XSIAM must have a functional purpose, such as executing commands, fetching incidents, "
+        "fetching indicators from a feed, or running a long-running process. "
+    )
     error_message = "Could not find any runnable command in the integration.\nMust have at least one of: a command under the `commands` section, `isFetch: true`, `feed: true`, or `longRunning: true`."
     related_field = "commands, isfetch, feed, longRunning."
     is_auto_fixable = False

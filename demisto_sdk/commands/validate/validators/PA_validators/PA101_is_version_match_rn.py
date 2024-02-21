@@ -17,9 +17,9 @@ class IsVersionMatchRnValidator(BaseValidator[ContentTypes]):
     error_code = "PA101"
     description = "Validate that the version mentioned in the Pack metadata matches the latest RN version."
     rationale = (
-        "The version in the Pack metadata should match the latest Release Notes (RN) version to ensure "
-        "consistency and integrity. This alignment avoids confusion for users and developers, and "
+        "This alignment avoids confusion for users and developers, and "
         "guarantees that the versioning accurately reflects the most recent changes."
+        "For more about the pack version see https://xsoar.pan.dev/docs/packs/packs-format#content-packs-versioning"
     )
     error_message = "The currentVersion in the metadata ({0}) doesn't match the latest rn version ({1})."
     related_field = "currentVersion"

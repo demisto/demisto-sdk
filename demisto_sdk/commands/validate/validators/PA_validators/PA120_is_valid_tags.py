@@ -21,10 +21,8 @@ class IsValidTagsValidator(BaseValidator[ContentTypes]):
     error_code = "PA120"
     description = "Validate that metadata's tag section include only approved tags."
     rationale = (
-        "Tags play a crucial role in enhancing the discoverability of packs in the marketplace. "
-        "They help users find relevant packs based on their specific needs. "
-        "To maintain consistency and improve searchability, only approved tags should be used in the pack metadata. "
-        "Using non-approved tags can lead to confusion and make it harder for users to find the packs they need."
+        "Using non-approved tags can lead to confusion and make it harder for users to find the packs they need. "
+        "For more info, see https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
     error_message = "The pack metadata contains non approved tags: {0}. The list of approved tags for each marketplace can be found on https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     fix_message = "Removed the following tags: {0}."

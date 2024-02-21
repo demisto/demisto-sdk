@@ -23,7 +23,8 @@ class IsAPITokenInCredentialTypeValidator(BaseValidator[ContentTypes]):
     rationale = (
         "Parameters that contain API tokens or credentials should be of type 'Credentials' (type 9) instead of 'Encrypted' (type 4) to allow fetching credentials from an external vault. "
         "This ensures secure and efficient handling of sensitive data. Using the 'Encrypted' type could prevent the integration from fetching the credentials from an external vault, "
-        "which could lead to operational issues."
+        "which could lead to operational issues. "
+        "For more info see https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
     )
     error_message = "In order to allow fetching the following params: {0} from an external vault, the type of the parameters should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'.\nFor more details, check the convention for credentials - https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
     related_field = "configuration"

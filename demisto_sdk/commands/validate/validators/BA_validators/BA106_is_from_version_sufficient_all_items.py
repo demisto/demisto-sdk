@@ -107,12 +107,6 @@ class IsFromVersionSufficientAllItemsValidator(
     """
 
     description = "Validate that the item's fromversion field is sufficient."
-    rationale = (
-        "The 'fromversion' field in an integration indicates the server version that is compatible with the integration. "
-        "If the server version is below the 'fromversion', the integration will not display in the Settings area. "
-        "Ensuring the 'fromversion' is high enough according to whether the integration is a powershell, feed, or regular type "
-        "helps maintain compatibility and proper functioning of the integration within the system."
-    )
     error_message = "The {0} from version field is either missing or insufficient, need at least {1}, current is {2}."
 
     def is_valid(self, content_items: Iterable[ContentItem]) -> List[ValidationResult]:

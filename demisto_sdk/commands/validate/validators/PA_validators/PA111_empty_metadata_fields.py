@@ -16,10 +16,8 @@ class EmptyMetadataFieldsValidator(BaseValidator[ContentTypes]):
     error_code = "PA111"
     description = "Validate that certain metadata fields are not empty."
     rationale = (
-        "The 'keywords', 'tags', 'categories', and 'useCases' fields are mandatory metadata fields in the pack. "
-        "These fields provide important information about the pack and its contents. "
-        "Leaving these fields empty can lead to issues with pack identification, searchability, and usability. "
-        "Therefore, they should always be filled with relevant information."
+        "'keywords', 'tags', 'categories', and 'useCases' fields in the pack metadata are mandatory for pack identification and searchability. "
+        "For more info, see: https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
     error_message = "The following fields contains empty values: {0}."
     related_field = "keywords, tags, categories, useCases"

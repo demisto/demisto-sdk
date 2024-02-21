@@ -22,10 +22,7 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
         "Validate that all existing params are in the right format for feed params."
     )
     rationale = (
-        "Feed integrations in Cortex XSOAR/XSIAM should have the required parameters correctly formatted. "
-        "This ensures that the integration can fetch and process data from the feed without errors or inconsistencies. "
-        "Incorrectly formatted parameters can lead to issues in data retrieval or processing, impacting the effectiveness of the integration. "
-        "This validator checks for any incorrectly formatted parameters in the feed integrations to prevent these potential issues. "
+        "Feed integrations must have correctly formatted parameters for reliable data fetching and processing. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/feeds"
     )
     error_message = "The integration is a feed integration with malformed params: {0}"

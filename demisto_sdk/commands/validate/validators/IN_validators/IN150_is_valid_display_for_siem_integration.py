@@ -18,9 +18,8 @@ class IsValidDisplayForSiemIntegrationValidator(BaseValidator[ContentTypes]):
         "Validate that a siem integration display name ends with 'Event Collector'"
     )
     rationale = (
-        "The display name of a SIEM (Security Information and Event Management) integration should end with 'Event Collector' to clearly indicate its purpose. "
-        "This naming convention helps users quickly understand that the integration is used for collecting events from a SIEM system. "
-        "It also promotes consistency across all SIEM integrations, making it easier for users to identify and work with these integrations."
+        "This consistent naming convention ensures that users can easily understand what the integration is used for. "
+        "For more info see https://xsoar-pan-dev--pull-request-1503-8bvdsez5.web.app/docs/integrations/event-collectors#naming-convention"
     )
     error_message = "The integration is a siem integration with invalid display name ({0}). Please make sure the display name ends with 'Event Collector'"
     fix_message = "Added the 'Event Collector' suffix to the display name, the new display name is {0}."

@@ -17,9 +17,8 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
     error_code = "PA102"
     description = "Validate that the pack is deprecated if it needs to."
     rationale = (
-        "If all the content items within a pack (integrations, scripts, playbooks) are deprecated, "
-        "the pack itself should also be marked as deprecated. This ensures clarity for users and "
-        "prevents potential confusion of deprecated content."
+        "This ensures clarity for users and prevents potential confusion of deprecated content. "
+        "For more about deprecation see: https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs"
     )
     error_message = f"The Pack {0} should be deprecated, as all its integrations, playbooks and scripts are deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated).\nThe description of the pack in the pack_metadata.json should be one of the following formats:\n1. 'Deprecated. Use <PACK_NAME> instead.'\n2. 'Deprecated. <REASON> No available replacement.'"
     fix_message = "Deprecated the pack {0}.\nPlease make sure to edit the description of the pack in the pack_metadata.json file if there's an existing pack to use instead or add the deprecation reason."

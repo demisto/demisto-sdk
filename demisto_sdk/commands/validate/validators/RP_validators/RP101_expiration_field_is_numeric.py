@@ -19,8 +19,6 @@ class ExpirationFieldIsNumericValidator(BaseValidator[ContentTypes]):
         "Validate that the 'expiration' field has a non-negative integer value."
     )
     rationale = (
-        "The 'expiration' field in an indicator type represents the number of days until the indicator expires. "
-        "It must be a non-negative integer to be properly interpreted by the system. "
         "Having a non-integer or negative value can lead to errors in indicator expiration calculation, "
         "which can affect the accuracy and effectiveness of threat intelligence."
     )

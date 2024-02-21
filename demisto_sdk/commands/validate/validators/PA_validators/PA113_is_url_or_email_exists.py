@@ -15,11 +15,7 @@ ContentTypes = Pack
 class IsURLOrEmailExistsValidator(BaseValidator[ContentTypes]):
     error_code = "PA113"
     description = "Validate that a partner/developer pack has at least an email or a url address fields filled."
-    rationale = (
-        "Partner/developer packs should provide a way to contact the vendor/developer for support or more information. "
-        "This is crucial for resolving any issues or queries that users might have regarding the pack. "
-        "Therefore, at least one of the contact fields - either an email or a URL - is required to be filled."
-    )
+    rationale = "Partner/developer packs need a contact method (email or URL) for user support and information."
     error_message = "The pack must include either an email or an URL addresses."
     related_field = "url, email."
     is_auto_fixable = False

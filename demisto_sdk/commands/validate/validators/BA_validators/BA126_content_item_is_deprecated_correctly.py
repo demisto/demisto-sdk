@@ -21,11 +21,8 @@ class IsDeprecatedCorrectlyValidator(BaseValidator[ContentTypes]):
     error_code = "BA126"
     description = "Checks if script/integration is deprecated correctly"
     rationale = (
-        "Deprecated scripts and integrations should have a description that explains why they are deprecated "
-        "or what to use instead. This helps users understand the reason for deprecation and guides them "
-        "towards the appropriate alternative. Proper deprecation messages contribute to the maintainability "
-        "and usability of the system. For more information on the deprecation process and how to hide a pack, "
-        "please refer to the following documentation: "
+        "Deprecated scripts/integrations need clear descriptions for user guidance. "
+        "For deprecation process, see: "
         "https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs#how-to-deprecate-and-hide-a-pack"
     )
     error_message = (

@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Pack
-# TODO need to check if the APPROVED_PREFIXES is correct because in `Tests/Marketplace/approved_tags.json` we see only xsoar, xsiam and xpanse and not all the `MarketplaceVersions` values
+
 APPROVED_PREFIXES = {x.value for x in list(MarketplaceVersions)}
 
 
@@ -19,11 +19,9 @@ class ValidTagsPrefixesValidator(BaseValidator[ContentTypes]):
     error_code = "PA100"
     description = "Validate that all the tags in tags field have a valid prefix."
     rationale = (
-        "Tags in the 'tags' field that belong to specific marketplaces like XSOAR and XSIAM should "
-        "follow a standard prefix format (marketplace:TagName). This standardization allows for "
-        "efficient filtering and grouping in the marketplace, enhancing user experience and "
-        "ensuring consistency across different packs. The validator checks if the marketplace name "
-        "is one of the valid marketplace names."
+        "This standardization allows for efficient filtering and grouping in the marketplace, "
+        "enhancing user experience and ensuring consistency across different packs. "
+        "For more info about the valid tags see https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
     error_message = "The pack metadata contains tag(s) with an invalid prefix: {0}.\nThe approved prefixes are: {1}."
     related_field = "tags"

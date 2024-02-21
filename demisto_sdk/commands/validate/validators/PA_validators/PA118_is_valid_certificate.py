@@ -16,10 +16,8 @@ class IsValidCertificateValidator(BaseValidator[ContentTypes]):
     error_code = "PA118"
     description = "Validate that the metadata's certification field is valid."
     rationale = (
-        "The 'certification' field in the pack metadata indicates the certification status of the pack. "
-        "It signifies whether the pack has passed certain quality checks and is officially certified. "
-        "To maintain the integrity of the certification process and ensure consistency across packs, "
-        f"this field should only contain values from a predefined set: {ALLOWED_CERTIFICATION_VALUES}."
+        "The 'certification' field in pack metadata should be from a predefined set for consistency. "  # TODO ?
+        "For valid values, see: https://xsoar.pan.dev/docs/packs/packs-format#pack_metadatajson."  # need to add the valid values to the docs
     )
     error_message = (
         "The certification field ({0}) is invalid. It can be one of the following: {1}."

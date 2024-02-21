@@ -24,7 +24,7 @@ ContentTypes = Integration
 class IsContainingDefaultAdditionalInfoValidator(BaseValidator[ContentTypes]):
     error_code = "IN142"
     description = "Validate that the integration contain the right additionalinfo fields for the list of params with predefined additionalinfo."
-    rationale = "Certain parameters in an integration may have predefined 'additionalinfo' fields. These fields provide extra context or information about the parameter to the user. It's important that these fields are correctly set to ensure users understand the parameter's purpose and usage. This validation checks if the 'additionalinfo' fields for these parameters are correctly set as per the predefined values."
+    rationale = "Ensuring the 'additionalinfo' fields are correctly set in an integration's parameters promotes consistency and enhances user understanding of each parameter's purpose and usage."
     error_message = "The integration contains params with missing/malformed additionalinfo fields:\n{0}"
     fix_message = "Fixed the following params additionalinfo fields:ֿ\n{0}"
     related_field = "configuration"

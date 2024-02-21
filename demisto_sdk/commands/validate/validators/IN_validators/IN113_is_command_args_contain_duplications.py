@@ -15,9 +15,8 @@ class IsCommandArgsContainDuplicationsValidator(BaseValidator[ContentTypes]):
     error_code = "IN113"
     description = "Validate that there're no duplicated arguments for the integration."
     rationale = (
-        "Duplicate arguments in the commands section of an integration can lead to confusion and unexpected behavior. "
-        "Each argument in a command should be unique to ensure clear understanding and correct execution of the command. "
-        "Having duplicate arguments might cause the command to behave unpredictably."
+        "Duplicate arguments in commands can cause confusion and unpredictable behavior. "
+        "Each argument should be unique for clear understanding and correct execution."
     )
     error_message = "The following commands contain duplicated arguments:\n{0}\nPlease make sure to remove the duplications."
     related_field = "script.commands"

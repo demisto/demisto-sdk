@@ -14,12 +14,7 @@ ContentTypes = Script
 class ScriptRunAsIsNotDBotRoleValidator(BaseValidator[ContentTypes]):
     error_code = "SC106"
     description = "Checks that the script runas is not equal to DBotRole"
-    rationale = (
-        "When using the DBotRole as default permission, one might give place for privilege escalation by mistake. "
-        "Meaning, an analyst might see incidents he should not be able to see by running an automation with these permissions. "
-        "Therefore, we only allow this role as default when no sensitive data can be returned. "
-        "This helps maintain the security and integrity of the system by preventing unauthorized access to sensitive data."
-    )
+    rationale = "Using DBotRole as default permission can risk privilege escalation and unauthorized access to sensitive data."
     error_message = "The script {0} runas field = DBotRole, it may cause access and exposure of sensitive data."
     related_field = "runas"
 

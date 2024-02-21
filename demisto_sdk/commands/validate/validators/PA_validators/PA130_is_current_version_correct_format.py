@@ -16,10 +16,7 @@ ContentTypes = Pack
 class IsCurrentVersionCorrectFormatValidator(BaseValidator[ContentTypes]):
     error_code = "PA130"
     description = "Validate that the pack_metadata version field is in valid format."
-    rationale = (
-        "The 'version' field in the pack metadata should follow the semver format (major.minor.patch). "
-        "This standardization ensures consistency across different packs and allows for easy comparison of versions."
-    )
+    rationale = "This standardization ensures consistency across different packs and allows for easy comparison of versions."
     error_message = "Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)"
     related_field = "currentVersion"
     is_auto_fixable = False

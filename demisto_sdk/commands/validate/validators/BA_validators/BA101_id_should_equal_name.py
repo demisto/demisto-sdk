@@ -16,7 +16,7 @@ class IDNameValidator(BaseValidator, ABC):
     description = "Validate that the file id and name fields are identical."
     rationale = (
         "The id attribute serves as the unique identifier of files across the platform"
-    )  # TODO but why? see https://github.com/demisto/etc/issues/19275
+    )
     error_message = "The name attribute (currently {0}) should be identical to its `id` attribute ({1})"
     fix_message = "Changing name to be equal to id ({0})."
     related_field = "name"

@@ -26,11 +26,8 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
         "Validate that fetch integration has the required params in the right format."
     )
     rationale = (
-        "Fetch integrations in Cortex XSOAR/XSIAM should have the required parameters correctly formatted. "
-        "This ensures that the fetch functionality works as expected, retrieving incidents or alerts from external systems "
-        "without errors or inconsistencies. Correctly formatted parameters are crucial for the integration to communicate "
-        "effectively with the external system and fetch the necessary data. Malformed or missing parameters can lead to "
-        "errors, incomplete data retrieval, or even failure of the fetch operation. "
+        "Fetch integrations must have correctly formatted parameters to ensure reliable data retrieval from external systems. "
+        "Malformed or missing parameters can lead to errors or incomplete data. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/fetching-incidents"
     )
     error_message = "The integration is a fetch integration and is missing/containing malformed required params:\n{0}"

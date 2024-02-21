@@ -19,11 +19,7 @@ class IsMissingReputationOutputValidator(BaseValidator[ContentTypes]):
     error_code = "IN107"
     description = "Validate that the reputation commands include the list of required contextPaths."
     rationale = (
-        "Reputation commands in an integration should include the required contextPaths. "
-        "This ensures that the command outputs are consistent across different integrations "
-        "and can be reliably used in playbooks or scripts without causing errors or unexpected behavior. "
-        "The main use of the Context is to pass data between playbook tasks, "
-        "one task stores its output in the Context and the other task reads that output from the Context and uses it. "
+        "Reputation commands must include required contextPaths for consistency and reliable use in playbooks or scripts. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/context-standards-mandatory"
     )
     error_message = "The integration contains invalid reputation command(s):\n\t{0}"

@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
@@ -42,8 +41,6 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
                 "type": "type",
                 "subtype": "subtype",
                 "alt_docker_images": "alt_dockerimages",
-                "args": "args",
-                "outputs": "outputs",
             }
         )
         return super().field_mapping
@@ -60,11 +57,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
 
     @property
     def args(self) -> List[Dict]:
-        return get_value(self.yml_data, self.field_mapping.get("args", ""))
-
-    @property
-    def outputs(self) -> List[Dict]:
-        return get_value(self.yml_data, self.field_mapping.get("outputs", ""))
+        return self.yml_data.get("args", [])
 
     @property
     def runas(self) -> str:

@@ -28,15 +28,15 @@ class Parameter(BaseModel):
     type: int = 0
     additionalinfo: Optional[str] = None
     defaultvalue: Optional[Any] = None
-    required: Optional[bool] = False
+    required: Optional[bool] = None
     display: Optional[str] = None
     section: Optional[str] = None
-    advanced: Optional[bool] = False
-    hidden: Optional[Any] = False
+    advanced: Optional[bool] = None
+    hidden: Optional[Any] = None
     options: Optional[List[str]] = None
     displaypassword: Optional[str] = None
-    hiddenusername: Optional[bool] = False
-    hiddenpassword: Optional[bool] = False
+    hiddenusername: Optional[bool] = None
+    hiddenpassword: Optional[bool] = None
     fromlicense: Optional[str] = None
 
 
@@ -167,6 +167,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         super().save()
         data = self.data
         data["script"]["commands"] = self.get_yml_commands()
+        data["configuration"] = self.get_yml_configurations(self.params)
         write_dict(self.path, data, indent=4)
 
     def get_yml_commands(self) -> List[Dict]:
@@ -199,6 +200,39 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 yml_output["important"] = output.important
             yml_outputs.append(yml_output)
         return yml_outputs
+
+    def get_yml_configurations(self, configurations: List[Parameter]) -> List[Dict]:
+        optional_param_fields: List[str] = [
+            "additionalinfo",
+            "defaultvalue",
+            "required",
+            "display",
+            "section",
+            "advanced",
+            "hidden",
+            "options",
+            "displaypassword",
+            "hiddenusername",
+            "hiddenpassword",
+            "fromlicense",
+        ]
+        yml_configurations: List[Dict] = []
+        for configuration in configurations:
+            yml_configuration: Dict[str, Any] = {
+                "name": configuration.name,
+                "type": configuration.type,
+            }
+            dict_configuration = configuration.dict()
+            for optional_param_field in optional_param_fields:
+                if (
+                    optional_param_field in dict_configuration
+                    and dict_configuration[optional_param_field] is not None
+                ):
+                    yml_configuration[optional_param_field] = dict_configuration[
+                        optional_param_field
+                    ]
+            yml_configurations.append(yml_configuration)
+        return yml_configurations
 
     def get_related_content(self) -> Dict[RelatedFileType, Dict]:
         related_content_files = super().get_related_content()

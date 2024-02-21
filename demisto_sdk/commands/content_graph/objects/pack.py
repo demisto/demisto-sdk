@@ -584,3 +584,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @property
     def readme(self) -> str:
         return self.get_related_text_file(RelatedFileType.README)
+
+    @property
+    def author_image_path(self) -> Path:
+        return Path(self.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0])

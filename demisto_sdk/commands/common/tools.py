@@ -4260,11 +4260,11 @@ def retry(
         @wraps(func)
         def wrapper(*args, **kwargs):
             for i in range(1, times + 1):
-                logger.debug(f"trying to run func {func_name} for the {i} time")
+                logger.info(f"trying to run func {func_name} for the {i} time")
                 try:
                     return func(*args, **kwargs)
                 except exceptions as error:
-                    logger.debug(
+                    logger.info(
                         f"error when executing func {func_name}, error: {error}, time {i}"
                     )
                     if i == times:

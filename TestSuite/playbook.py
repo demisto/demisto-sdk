@@ -56,7 +56,7 @@ class Playbook(YAML):
             for key in ("id", "name"):
                 if key not in yml:
                     yml[key] = self.name
-            yml["deprecated"] = self.deprecated
+            yml["deprecated"] = yml.get("deprecated", self.deprecated)
             self.write_dict(yml)
         if not self.is_test_playbook and readme is not None:
             self.readme.write(readme)

@@ -247,7 +247,7 @@ class DockerHook(Hook):
         hooks = self.get_new_hooks(
             dev_image, image, object_to_files, config_arg, support_pack_ignore_config
         )
-        logger.info(f"Generated {len(hooks)} hooks for image {image}")
+        logger.debug(f"Generated {len(hooks)} hooks for image {image}")
         return hooks
 
     def prepare_hook(

@@ -1155,6 +1155,7 @@ class LintManager:
         if failed:
             logger.info("Failed packages:")
         for fail_pack in failed:
+            logger.info(f"CIAC-9671: {fail_pack=}")
             logger.info(f"[red]{wrapper_fail_pack.fill(fail_pack)}[/red]")
 
     @staticmethod

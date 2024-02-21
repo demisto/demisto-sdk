@@ -146,7 +146,6 @@ def mdx_server_is_up() -> bool:
 
     """
     try:
-        return False
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         return sock.connect_ex(("localhost", 6161)) == 0

@@ -1,0 +1,28 @@
+name: Deploy SDK to PyPi
+
+on:
+  pull_request:
+    types: [labeled]
+    branches:
+      - '/^v\d+\.\d+\.\d+$/'  # trigger only on release branches
+
+jobs:
+  deploy-to-pypi:
+    runs-on: ubuntu-latest
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'release-sdk-to-pypi') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python ${{ matrix.python-version }} - Setup Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: '3.10'
+
+      - name: Publish SDK to PyPi
+        run: |
+          poetry build
+
+#      - name: Publish SDK to PyPi
+#        run: |
+#          poetry publish -u __token__ -p ${PYPI_TOKEN}

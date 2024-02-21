@@ -13,7 +13,6 @@ from docker.errors import DockerException
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
-    TESTS_REQUIRE_ISOLATED_PACK_IGNORE,
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -160,7 +159,6 @@ def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
     isolate_container: bool = False,
-    support_require_isolated: bool = False,
     support_require_network: bool = False,
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
@@ -170,7 +168,6 @@ def _split_by_objects(
         files: the files to split
         config_arg: a tuple, argument_name, file_name
         isolate_container: a boolean. If true it will split all the objects into separate hooks.
-        support_require_isolated: a boolean. If true it will support the `require_isolated` field in pack ignore.
         support_require_network: a boolean. If true it will support the `require_network` field in pack ignore.
 
     Returns:
@@ -184,8 +181,6 @@ def _split_by_objects(
         if (
             isolate_container
             or (config_arg and (obj.path.parent / config_arg[1]).exists())
-            or support_require_isolated
-            and should_isolate_container(obj)
             or (support_require_network and should_enable_network(obj))
         ):
             object_to_files[obj].add((file, obj))
@@ -197,25 +192,14 @@ def _split_by_objects(
 
 
 @lru_cache
-def should_enable_network(integration_script: IntegrationScript) -> bool:
+def should_enable_network(integration_script: Optional[IntegrationScript]) -> bool:
+    if not integration_script:
+        return False
     pack = integration_script.in_pack
     if pack and (ignored_errors_dict := pack.ignored_errors_dict):
         if TESTS_REQUIRE_NETWORK_PACK_IGNORE in ignored_errors_dict:
             ignored_integrations_scripts_ids = ignored_errors_dict[
                 TESTS_REQUIRE_NETWORK_PACK_IGNORE
-            ]
-            if integration_script.object_id in ignored_integrations_scripts_ids:
-                return True
-    return False
-
-
-@lru_cache
-def should_isolate_container(integration_script: IntegrationScript) -> bool:
-    pack = integration_script.in_pack
-    if pack and (ignored_errors_dict := pack.ignored_errors_dict):
-        if TESTS_REQUIRE_ISOLATED_PACK_IGNORE in ignored_errors_dict:
-            ignored_integrations_scripts_ids = ignored_errors_dict[
-                TESTS_REQUIRE_ISOLATED_PACK_IGNORE
             ]
             if integration_script.object_id in ignored_integrations_scripts_ids:
                 return True
@@ -238,7 +222,6 @@ class DockerHook(Hook):
             hook.pop("config_file_arg", None)
             hook.pop("copy_files", None)
             hook.pop("isolate_container", None)
-            hook.pop("support_require_isolated", None)
             hook.pop("support_require_network", None)
 
     def prepare_hook(
@@ -284,7 +267,6 @@ class DockerHook(Hook):
                             CONTENT_PATH / file, obj.path.parent / Path(file).name
                         )
         isolate_container = self._get_property("isolate_container", False)
-        support_require_isolated = self._get_property("support_require_isolated", False)
         support_require_network = self._get_property("support_require_network", False)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
@@ -297,7 +279,6 @@ class DockerHook(Hook):
                 files_with_objects,
                 config_arg,
                 isolate_container,
-                support_require_isolated,
                 support_require_network,
             )
             image_is_powershell = any(
@@ -386,9 +367,8 @@ class DockerHook(Hook):
 
             if should_enable_network(integration_script):
                 hook["entry"] = hook["entry"].replace("--network none", "")
-            if should_isolate_container(integration_script):
+                # We should isolate, so we can't use the `script_runner.py`
                 change_working_directory = True
-                # if we should isolate, we can't use the `script_runner.py`
                 hook["args"] = ["-m"] + hook["args"][1:-1]
             if self._set_files_on_hook(
                 hook,

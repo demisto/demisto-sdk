@@ -20,6 +20,7 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
+    Output,
 )
 
 
@@ -38,15 +39,6 @@ class Parameter(BaseModel):
     hiddenusername: Optional[bool] = False
     hiddenpassword: Optional[bool] = False
     fromlicense: Optional[str] = None
-
-
-class Output(BaseModel):
-    description: str = ""
-    contentPath: Optional[str] = None
-    contextPath: Optional[str] = None
-    important: Optional[bool] = False
-    importantDescription: Optional[str] = None
-    type: Optional[str] = None
 
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -166,7 +158,10 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     def save(self):
         super().save()
         data = self.data
-        data["script"]["commands"] = []
+        data["script"]["commands"] = self.get_yml_commands()
+        write_dict(self.path, data, indent=4)
+
+    def get_yml_commands(self) -> List[Dict]:
         yml_commands = []
         for command in self.commands:
             yml_commands.append(
@@ -174,11 +169,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "name": command.name,
                     "deprecated": command.deprecated,
                     "description": command.description,
+                    "arguments": self.get_yml_args(command.args),
+                    "outputs": self.get_yml_outputs(command.outputs),
                 }
             )
-
-        data["script"]["commands"] = yml_commands
-        write_dict(self.path, data, indent=4)
+        return yml_commands
 
     def get_related_content(self) -> Dict[RelatedFileType, Dict]:
         related_content_files = super().get_related_content()

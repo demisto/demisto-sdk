@@ -201,20 +201,27 @@ class BaseContent(BaseNode):
             predefined_keys_to_keep (Optional[Tuple[str]], optional): keys to keep even if they're not defined.
         """
         for key, val in self.field_mapping.items():
-            attr = getattr(self, key)
-            if key == "marketplaces":
-                if (
-                    MarketplaceVersions.XSOAR_SAAS in attr
-                    and MarketplaceVersions.XSOAR in attr
-                ):
-                    attr.remove(MarketplaceVersions.XSOAR_SAAS)
-                if (
-                    MarketplaceVersions.XSOAR_ON_PREM in attr
-                    and MarketplaceVersions.XSOAR in attr
-                ):
-                    attr.remove(MarketplaceVersions.XSOAR_ON_PREM)
-            if attr or (predefined_keys_to_keep and val in predefined_keys_to_keep):
-                set_value(data, val, attr)
+            try:
+                attr = getattr(self, key)
+                if key == "docker_image":
+                    attr = str(attr)
+                if key == "marketplaces":
+                    if (
+                        MarketplaceVersions.XSOAR_SAAS in attr
+                        and MarketplaceVersions.XSOAR in attr
+                    ):
+                        attr.remove(MarketplaceVersions.XSOAR_SAAS)
+                    if (
+                        MarketplaceVersions.XSOAR_ON_PREM in attr
+                        and MarketplaceVersions.XSOAR in attr
+                    ):
+                        attr.remove(MarketplaceVersions.XSOAR_ON_PREM)
+                if attr or (predefined_keys_to_keep and val in predefined_keys_to_keep):
+                    set_value(data, val, attr)
+            except Exception:
+                if key in ["configuration"]:
+                    continue
+                raise
         write_dict(path, data, indent=4)
 
     def __hash__(self):

@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call-arg]
     data_type: Optional[str] = Field(alias="dataType")
     widget_type: str = Field(alias="widgetType")
-    version: int
+    version: Optional[int] = Field(0)
 
     def metadata_fields(self) -> Set[str]:
         return (

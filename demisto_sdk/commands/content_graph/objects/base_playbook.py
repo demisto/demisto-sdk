@@ -1,6 +1,7 @@
 from typing import Callable, Dict, Optional
 
 import demisto_client
+from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME,
@@ -15,7 +16,7 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 
 
 class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
-    version: int
+    version: Optional[int] = Field(0)
 
     def summary(
         self,

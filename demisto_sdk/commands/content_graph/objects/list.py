@@ -1,7 +1,9 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Optional
 
 import demisto_client
+from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -15,7 +17,7 @@ json = JSON_Handler()
 class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg]
     type: str
     is_unified: bool
-    version: int
+    version: Optional[int] = Field(0)
 
     def _upload(
         self,

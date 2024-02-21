@@ -21,7 +21,7 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
     enhancement_script_names: Optional[List[str]] = Field(
         alias="enhancementScriptNames"
     )
-    version: int
+    version: Optional[int] = Field(0)
 
     def metadata_fields(self) -> Set[str]:
         return (

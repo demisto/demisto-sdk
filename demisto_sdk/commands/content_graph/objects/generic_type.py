@@ -10,7 +10,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: ignore[call-arg]
     definition_id: Optional[str] = Field(alias="definitionId")
-    version: int
+    version: Optional[int] = Field(0)
 
     def dump(
         self,

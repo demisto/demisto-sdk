@@ -29,16 +29,25 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class Argument(BaseModel):
     name: str
     description: str = ""
-    required: Optional[bool] = False
+    required: Optional[bool] = None
     default: Optional[bool] = None
     predefined: Optional[List[str]] = None
-    isArray: Optional[bool] = False
+    isArray: Optional[bool] = None
     defaultvalue: Optional[Any] = None
-    secret: Optional[bool] = False
+    secret: Optional[bool] = None
     deprecated: Optional[bool] = False
     type: Optional[str] = None
     hidden: Optional[bool] = False
     auto: Optional[Auto] = None
+
+
+class Output(BaseModel):
+    description: str = ""
+    contentPath: Optional[str] = None
+    contextPath: Optional[str] = None
+    important: Optional[bool] = None
+    importantDescription: Optional[str] = None
+    type: Optional[str] = None
 
 
 class IntegrationScript(ContentItem):
@@ -50,7 +59,7 @@ class IntegrationScript(ContentItem):
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
-    version: int
+    version: Optional[int] = Field(0)
 
     @lazy_property
     def python_version(self) -> Optional[str]:
@@ -140,3 +149,50 @@ class IntegrationScript(ContentItem):
     @property
     def readme(self) -> str:
         return self.get_related_text_file(RelatedFileType.README)
+
+    def get_yml_args(self, args: List[Argument]) -> List[Dict]:
+        yml_args = []
+        for arg in args:
+            yml_arg: Dict[str, Any] = {
+                "description": arg.description or "",
+                "name": arg.name,
+            }
+            if arg.default is not None:
+                yml_arg["default"] = arg.default
+            if arg.predefined is not None:
+                yml_arg["predefined"] = arg.predefined
+            if arg.defaultvalue is not None:
+                yml_arg["defaultvalue"] = arg.defaultvalue
+            if arg.hidden is not None:
+                yml_arg["hidden"] = arg.hidden
+            if arg.auto is not None:
+                yml_arg["auto"] = arg.auto
+            if arg.type is not None:
+                yml_arg["type"] = arg.type
+            if arg.isArray is not None:
+                yml_arg["isArray"] = arg.isArray
+            if arg.deprecated:
+                yml_arg["deprecated"] = arg.deprecated
+            if arg.secret is not None:
+                yml_arg["secret"] = arg.secret
+            if arg.required is not None:
+                yml_arg["required"] = arg.required
+            yml_args.append(yml_arg)
+        return yml_args
+
+    def get_yml_outputs(self, outputs: List[Output]) -> List[Dict]:
+        yml_outputs = []
+        for output in outputs:
+            yml_output: Dict[str, Any] = {"description": output.description}
+            if output.contentPath is not None:
+                yml_output["contentPath"] = output.contentPath
+            if output.contextPath is not None:
+                yml_output["contextPath"] = output.contextPath
+            if output.importantDescription is not None:
+                yml_output["importantDescription"] = output.importantDescription
+            if output.type is not None:
+                yml_output["type"] = output.type
+            if output.important is not None:
+                yml_output["important"] = output.important
+            yml_outputs.append(yml_output)
+        return yml_outputs

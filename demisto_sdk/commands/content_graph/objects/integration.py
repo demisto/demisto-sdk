@@ -185,23 +185,45 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         return yml_commands
 
     def get_yml_outputs(self, outputs: List[Output]) -> List[Dict]:
+        """Generate a list of Output dict objects.
+
+        Args:
+            outputs (List[Output]): The list of Output objects to turn to dict.
+
+        Returns:
+            List[Dict]: The List of the Output objects as dict objects.
+        """
         yml_outputs = []
+        optional_output_fields = [
+            "contentPath",
+            "contextPath",
+            "importantDescription",
+            "type",
+            "important",
+        ]
         for output in outputs:
             yml_output: Dict[str, Any] = {"description": output.description}
-            if output.contentPath is not None:
-                yml_output["contentPath"] = output.contentPath
-            if output.contextPath is not None:
-                yml_output["contextPath"] = output.contextPath
-            if output.importantDescription is not None:
-                yml_output["importantDescription"] = output.importantDescription
-            if output.type is not None:
-                yml_output["type"] = output.type
-            if output.important is not None:
-                yml_output["important"] = output.important
+            dictified_output = output.dict()
+            for optional_output_field in optional_output_fields:
+                if (
+                    optional_output_field in dictified_output
+                    and dictified_output[optional_output_field] is not None
+                ):
+                    yml_output[optional_output_field] = dictified_output[
+                        optional_output_field
+                    ]
             yml_outputs.append(yml_output)
         return yml_outputs
 
-    def get_yml_configurations(self, configurations: List[Parameter]) -> List[Dict]:
+    def get_yml_configurations(self, params: List[Parameter]) -> List[Dict]:
+        """Generate a list of Parameter dict objects.
+
+        Args:
+            params (List[Parameter]): The list of Parameter objects to turn to dict.
+
+        Returns:
+            List[Dict]: The List of the Parameter objects as dict objects.
+        """
         optional_param_fields: List[str] = [
             "additionalinfo",
             "defaultvalue",
@@ -216,23 +238,21 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             "hiddenpassword",
             "fromlicense",
         ]
-        yml_configurations: List[Dict] = []
-        for configuration in configurations:
-            yml_configuration: Dict[str, Any] = {
-                "name": configuration.name,
-                "type": configuration.type,
+        yml_params: List[Dict] = []
+        for param in params:
+            yml_param: Dict[str, Any] = {
+                "name": param.name,
+                "type": param.type,
             }
-            dict_configuration = configuration.dict()
+            dict_param = param.dict()
             for optional_param_field in optional_param_fields:
                 if (
-                    optional_param_field in dict_configuration
-                    and dict_configuration[optional_param_field] is not None
+                    optional_param_field in dict_param
+                    and dict_param[optional_param_field] is not None
                 ):
-                    yml_configuration[optional_param_field] = dict_configuration[
-                        optional_param_field
-                    ]
-            yml_configurations.append(yml_configuration)
-        return yml_configurations
+                    yml_param[optional_param_field] = dict_param[optional_param_field]
+            yml_params.append(yml_param)
+        return yml_params
 
     def get_related_content(self) -> Dict[RelatedFileType, Dict]:
         related_content_files = super().get_related_content()

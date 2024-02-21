@@ -142,31 +142,38 @@ class IntegrationScript(ContentItem):
         return self.get_related_text_file(RelatedFileType.README)
 
     def get_yml_args(self, args: List[Argument]) -> List[Dict]:
+        """Generate a list of Argument dict objects.
+
+        Args:
+            args (List[Argument]): The list of Argument objects to turn to dict.
+
+        Returns:
+            List[Dict]: The List of the Argument objects as dict objects.
+        """
         yml_args = []
+        optional_arg_fields = [
+            "default",
+            "predefined",
+            "defaultvalue",
+            "hidden",
+            "auto",
+            "type",
+            "isArray",
+            "deprecated",
+            "secret",
+            "required",
+        ]
         for arg in args:
             yml_arg: Dict[str, Any] = {
                 "description": arg.description or "",
                 "name": arg.name,
             }
-            if arg.default is not None:
-                yml_arg["default"] = arg.default
-            if arg.predefined is not None:
-                yml_arg["predefined"] = arg.predefined
-            if arg.defaultvalue is not None:
-                yml_arg["defaultvalue"] = arg.defaultvalue
-            if arg.hidden is not None:
-                yml_arg["hidden"] = arg.hidden
-            if arg.auto is not None:
-                yml_arg["auto"] = arg.auto
-            if arg.type is not None:
-                yml_arg["type"] = arg.type
-            if arg.isArray is not None:
-                yml_arg["isArray"] = arg.isArray
-            if arg.deprecated:
-                yml_arg["deprecated"] = arg.deprecated
-            if arg.secret is not None:
-                yml_arg["secret"] = arg.secret
-            if arg.required is not None:
-                yml_arg["required"] = arg.required
+            dictified_arg = arg.dict()
+            for optional_arg_field in optional_arg_fields:
+                if (
+                    optional_arg_field in dictified_arg
+                    and dictified_arg[optional_arg_field] is not None
+                ):
+                    yml_arg[optional_arg_field] = dictified_arg[optional_arg_field]
             yml_args.append(yml_arg)
         return yml_args

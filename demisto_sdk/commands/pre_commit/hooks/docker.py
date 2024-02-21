@@ -14,7 +14,6 @@ from docker.errors import DockerException
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
-    TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
 )
@@ -161,8 +160,7 @@ def get_environment_flag(env: dict) -> str:
 def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
     config_arg: Optional[Tuple],
-    isolate_container: bool = False,
-    support_pack_ignore_config: bool = False,
+    run_isolated: bool = False,
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
@@ -170,7 +168,7 @@ def _split_by_objects(
     Args:
         files: the files to split
         config_arg: a tuple, argument_name, file_name
-        isolate_container: a boolean. If true it will split all the objects into separate hooks.
+        run_isolated: a boolean. If true it will split all the objects into separate hooks.
         support_pack_ignore_config: a boolean. If true it will read the support the config in pack ignore, for example networking.
 
     Returns:
@@ -181,32 +179,13 @@ def _split_by_objects(
     ] = defaultdict(set)
 
     for file, obj in files_with_objects:
-        if (
-            isolate_container
-            or (config_arg and (obj.path.parent / config_arg[1]).exists())
-            or (support_pack_ignore_config and should_enable_network(obj))
-        ):
+        if run_isolated or (config_arg and (obj.path.parent / config_arg[1]).exists()):
             object_to_files[obj].add((file, obj))
 
         else:
             object_to_files[NO_SPLIT].add((file, obj))
 
     return object_to_files
-
-
-@lru_cache
-def should_enable_network(integration_script: Optional[IntegrationScript]) -> bool:
-    if not integration_script:
-        return False
-    pack = integration_script.in_pack
-    if pack and (ignored_errors_dict := pack.ignored_errors_dict):
-        if TESTS_REQUIRE_NETWORK_PACK_IGNORE in ignored_errors_dict:
-            ignored_integrations_scripts_ids = ignored_errors_dict[
-                TESTS_REQUIRE_NETWORK_PACK_IGNORE
-            ]
-            if integration_script.object_id in ignored_integrations_scripts_ids:
-                return True
-    return False
 
 
 class DockerHook(Hook):
@@ -224,29 +203,25 @@ class DockerHook(Hook):
             hook.pop("docker_image", None)
             hook.pop("config_file_arg", None)
             hook.pop("copy_files", None)
-            hook.pop("isolate_container", None)
-            hook.pop("support_pack_ignore_config", None)
+            hook.pop("run_isolated", None)
+            hook.pop("pass_docker_extra_args", None)
 
     def process_image(
         self,
         image: str,
         files_with_objects: List[Tuple[Path, IntegrationScript]],
         config_arg: Optional[Tuple],
-        isolate_container: bool,
-        support_pack_ignore_config: bool,
+        run_isolated: bool,
     ) -> List[Dict]:
         object_to_files = _split_by_objects(
             files_with_objects,
             config_arg,
-            isolate_container,
-            support_pack_ignore_config,
+            run_isolated,
         )
         image_is_powershell = any(obj.is_powershell for _, obj in files_with_objects)
 
         dev_image = devtest_image(image, image_is_powershell, self.context.dry_run)
-        hooks = self.get_new_hooks(
-            dev_image, image, object_to_files, config_arg, support_pack_ignore_config
-        )
+        hooks = self.generate_hooks(dev_image, image, object_to_files, config_arg)
         logger.debug(f"Generated {len(hooks)} hooks for image {image}")
         return hooks
 
@@ -292,10 +267,7 @@ class DockerHook(Hook):
                         shutil.copy(
                             CONTENT_PATH / file, obj.path.parent / Path(file).name
                         )
-        isolate_container = self._get_property("isolate_container", False)
-        support_pack_ignore_config = self._get_property(
-            "support_pack_ignore_config", False
-        )
+        run_isolated = self._get_property("run_isolated", False)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
@@ -311,8 +283,7 @@ class DockerHook(Hook):
                         image,
                         files_objs,
                         config_arg,
-                        isolate_container,
-                        support_pack_ignore_config,
+                        run_isolated,
                     )
                 )
         for result in results:
@@ -324,7 +295,7 @@ class DockerHook(Hook):
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
 
-    def get_new_hooks(
+    def generate_hooks(
         self,
         dev_image,
         image,
@@ -332,7 +303,6 @@ class DockerHook(Hook):
             Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
         ],
         config_arg: Optional[Tuple],
-        support_pack_ignore_config,
     ):
         """
         Given the docker image and files to run on it, create new hooks to insert
@@ -341,7 +311,6 @@ class DockerHook(Hook):
             image: name of the base image (for naming)
             object_to_files_with_objects: A dict where the key is the object (or None) and value is the set of files to run together.
             config_arg: The config arg to set where relevant. This will be appended to the end of "args"
-            support_pack_ignore_config: a boolean. If true it will read the support the config in pack ignore, for example networking.
 
         Returns:
             All the hooks to be appended for this image
@@ -351,25 +320,26 @@ class DockerHook(Hook):
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
-        change_working_directory = new_hook.pop("change_working_directory", False)
         docker_version = DockerBase.version()
         quiet = True
         if Version(docker_version) < Version("19.03"):
             quiet = False
-        remove_container = True
-        if os.getenv("CONTENT_GITLAB_CI"):
-            remove_container = False
+        docker_extra_args = self._get_property("pass_docker_extra_args", "")
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} --network none {get_environment_flag(env)} {"--quiet" if quiet else ""} -u 4000:4000 {"--rm=false" if not remove_container else ""} {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u 4000:4000 {dev_image}'
         ret_hooks = []
         for (
             integration_script,
             files_with_objects,
         ) in object_to_files_with_objects.items():
+            change_working_directory = False
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
             if integration_script is not None:
+                change_working_directory = (
+                    True  # isolate container, so run in the same directory
+                )
                 if config_arg:
                     args = deepcopy(self._get_property("args", []))
                     args.extend(
@@ -390,19 +360,9 @@ class DockerHook(Hook):
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
 
-                if support_pack_ignore_config and should_enable_network(
-                    integration_script
-                ):
-                    hook["entry"] = hook["entry"].replace("--network none", "")
-                    # We should isolate. We can run in the working directory of the integration/script and we can't use the `script_runner.py`
-                    change_working_directory = True
-                    if "script_runner" in hook["args"][0]:
-                        hook["args"] = ["-m"] + hook["args"][1:-1]
-
-                if change_working_directory:
-                    hook[
-                        "entry"
-                    ] = f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
+                hook[
+                    "entry"
+                ] = f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
 
             if self._set_files_on_hook(
                 hook,

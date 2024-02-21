@@ -159,6 +159,11 @@ class DockerBase:
     def __del__(self):
         del self.tmp_dir_name
 
+    @functools.lru_cache
+    @staticmethod
+    def version():
+        return init_global_docker_client().version()["Version"]
+
     def installation_files(self, container_type: str) -> FILES_SRC_TARGET:
         files = self._files_to_push_on_installation.copy()
         files.append((self.installation_scripts[container_type], "/install.sh"))

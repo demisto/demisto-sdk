@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.docker_helper import (
+    DockerBase,
     docker_login,
     get_docker,
     init_global_docker_client,
@@ -246,6 +247,7 @@ class DockerHook(Hook):
         hooks = self.get_new_hooks(
             dev_image, image, object_to_files, config_arg, support_pack_ignore_config
         )
+        logger.info(f"Generated {len(hooks)} hooks for image {image}")
         return hooks
 
     def prepare_hook(
@@ -350,7 +352,7 @@ class DockerHook(Hook):
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
         change_working_directory = new_hook.pop("change_working_directory", False)
-        docker_version = init_global_docker_client().version()["Version"]
+        docker_version = DockerBase.version()
         quiet = True
         if Version(docker_version) < Version("19.03"):
             quiet = False

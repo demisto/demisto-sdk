@@ -346,7 +346,8 @@ class DockerHook(Hook):
                         [
                             config_arg[0],
                             str(
-                                (
+                                Path("/src")
+                                / (
                                     integration_script.path.parent / config_arg[1]
                                 ).relative_to(CONTENT_PATH)
                             ),

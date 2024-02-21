@@ -205,6 +205,7 @@ def mock_playbook(
         marketplaces=marketplaces,
         deprecated=False,
         is_test=False,
+        version=-1,
     )
     if pack:
         pack.content_items.playbook.append(playbook)

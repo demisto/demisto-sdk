@@ -15,7 +15,7 @@ ContentTypes = Pack
 
 class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM109"
-    description = "Checks if the author image exists."
+    description = "Checks if the pack has an author image path."
     error_message = "author_image_doesn't_exists"
     related_field = "image"
     is_auto_fixable = False

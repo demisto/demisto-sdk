@@ -22,7 +22,17 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
         (create_integration_object(), "no_image_exists"),
     ]
 )
-def test_is_valid_no_image_path(content_item, expected_result):
+def test_ImageExistsValidator_is_valid_no_image_path(content_item, expected_result):
+    """
+    Given
+    content_item with a not valid image path.
+    
+    When
+    - Calling the ImageExistsValidator is_valid function.
+    
+    Then
+        - Make sure the expected result matches the function result.
+    """
     content_item.related_content[RelatedFileType.IMAGE]["path"][0] = ''
     result = ImageExistsValidator().is_valid([content_item])
     if isinstance(expected_result, list):
@@ -36,7 +46,17 @@ def test_is_valid_no_image_path(content_item, expected_result):
         (create_integration_object(), []),
     ]
 )
-def test_is_valid_image_path(content_item, expected_result):
+def test_ImageExistsValidator_is_valid_image_path(content_item, expected_result):
+    """
+    Given
+    content_item with a valid image path.
+    
+    When
+    - Calling the ImageExistsValidator is_valid function.
+    
+    Then
+    - Make sure the expected result matches the function result.
+    """
     result = ImageExistsValidator().is_valid([content_item])
 
     assert (
@@ -51,7 +71,17 @@ def test_is_valid_image_path(content_item, expected_result):
     ]
 )
 
-def test_is_valid_no_author_image_path(content_item, expected_result):
+def test_AuthorImageExistsValidator_is_valid_no_image_path(content_item, expected_result):
+    """
+    Given
+    content_item with a not valid author image path.
+    
+    When
+    - Calling the AuthorImageExistsValidator is_valid function.
+    
+    Then
+    - Make sure the expected result matches the function result.
+    """
     content_item.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ''
     result = AuthorImageExistsValidator().is_valid([content_item])
     assert (
@@ -65,9 +95,18 @@ def test_is_valid_no_author_image_path(content_item, expected_result):
         (create_metadata_object(), []),
     ]
 )
-def test_is_valid_author_image_path(content_item, expected_result):
+def test_AuthorImageExistsValidator_is_valid_image_path(content_item, expected_result):
+    """
+    Given
+    content_item with a valid author image path.
+    
+    When
+    - Calling the AuthorImageExistsValidator is_valid function.
+    
+    Then
+    - Make sure the expected result matches the function result.
+    """
     result = AuthorImageExistsValidator().is_valid([content_item])
-
     assert (
         result == expected_result
         if isinstance(expected_result, list)

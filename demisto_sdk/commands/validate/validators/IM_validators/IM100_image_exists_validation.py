@@ -16,7 +16,7 @@ ContentTypes = Integration
 
 class ImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM100"
-    description = "Checks if the image exists."
+    description = "Check if the integration has an image path."
     error_message = "no_image_exists"
     related_field = "image"
     is_auto_fixable = False

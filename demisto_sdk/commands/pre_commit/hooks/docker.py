@@ -204,7 +204,7 @@ class DockerHook(Hook):
             hook.pop("config_file_arg", None)
             hook.pop("copy_files", None)
             hook.pop("run_isolated", None)
-            hook.pop("pass_docker_extra_args", None)
+            hook.pop("pass_extra_docker_args", None)
 
     def process_image(
         self,
@@ -324,7 +324,7 @@ class DockerHook(Hook):
         quiet = True
         if Version(docker_version) < Version("19.03"):
             quiet = False
-        docker_extra_args = self._get_property("pass_docker_extra_args", "")
+        docker_extra_args = self._get_property("pass_extra_docker_args", "")
         new_hook[
             "entry"
         ] = f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u 4000:4000 {dev_image}'

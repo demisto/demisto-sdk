@@ -28,7 +28,7 @@ mapping:
     type: seq
     sequence:
     - type: str
-  comment:xsoar:
+  comment:
     type: str
   comment:marketplacev2:
     type: str

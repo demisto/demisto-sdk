@@ -22,7 +22,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     details: bool
     details_v2: bool
     mobile: bool
-    version: Optional[int] = Field(0)
+    version: Optional[int] = 0
 
     def prepare_for_upload(
         self,

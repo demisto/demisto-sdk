@@ -2,14 +2,13 @@ from pathlib import Path
 from typing import Callable, Optional, Set
 
 import demisto_client
-from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class Dashboard(ContentItem, content_type=ContentType.DASHBOARD):  # type: ignore[call-arg]
-    version: Optional[int] = Field(0)
+    version: Optional[int] = 0
 
     def metadata_fields(self) -> Set[str]:
         return {"object_id", "name", "fromversion", "toversion", "deprecated"}

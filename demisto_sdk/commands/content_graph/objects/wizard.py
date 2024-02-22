@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import List, Optional, Set
 
-from pydantic import Field
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -16,7 +14,7 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
     packs: List[str]
     integrations: List[str]
     playbooks: List[str]
-    version: Optional[int] = Field(0)
+    version: Optional[int] = 0
 
     def metadata_fields(self) -> Set[str]:
         return (

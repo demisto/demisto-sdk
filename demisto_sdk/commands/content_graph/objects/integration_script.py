@@ -41,6 +41,19 @@ class Argument(BaseModel):
     hidden: Optional[bool] = False
     auto: Optional[Auto] = None
 
+    @property
+    def to_yml(self) -> Dict:
+        """Generate a Dict representation of the Argument object.
+
+        Returns:
+            Dict: The Dict representation of the Argument object.
+        """
+        dictified_arg = self.dict()
+        remove_nulls_from_dictionary(dictified_arg)
+        if "auto" in dictified_arg:
+            dictified_arg["auto"] = str(dictified_arg["auto"])
+        return dictified_arg
+
 
 class IntegrationScript(ContentItem):
     type: str
@@ -51,7 +64,7 @@ class IntegrationScript(ContentItem):
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
-    version: Optional[int] = Field(0)
+    version: Optional[int] = 0
 
     @lazy_property
     def python_version(self) -> Optional[str]:
@@ -141,21 +154,3 @@ class IntegrationScript(ContentItem):
     @property
     def readme(self) -> str:
         return self.get_related_text_file(RelatedFileType.README)
-
-    def get_yml_args(self, args: List[Argument]) -> List[Dict]:
-        """Generate a list of Argument dict objects.
-
-        Args:
-            args (List[Argument]): The list of Argument objects to turn to dict.
-
-        Returns:
-            List[Dict]: The List of the Argument objects as dict objects.
-        """
-        yml_args = []
-        for arg in args:
-            dictified_arg = arg.dict()
-            remove_nulls_from_dictionary(dictified_arg)
-            if "auto" in dictified_arg:
-                dictified_arg["auto"] = str(dictified_arg["auto"])
-            yml_args.append(dictified_arg)
-        return yml_args

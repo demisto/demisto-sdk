@@ -39,6 +39,17 @@ class Parameter(BaseModel):
     hiddenpassword: Optional[bool] = None
     fromlicense: Optional[str] = None
 
+    @property
+    def to_yml(self) -> Dict:
+        """Generate a dict representation of the Parameter object.
+
+        Returns:
+            Dict: The dict representation of the Parameter object.
+        """
+        dictified_param = self.dict()
+        remove_nulls_from_dictionary(dictified_param)
+        return dictified_param
+
 
 class Output(BaseModel):
     description: str = ""
@@ -47,6 +58,17 @@ class Output(BaseModel):
     important: Optional[bool] = False
     importantDescription: Optional[str] = None
     type: Optional[str] = None
+
+    @property
+    def to_yml(self) -> Dict:
+        """Generate a dict representation of the Output object.
+
+        Returns:
+            Dict: The dict representation of the Output object.
+        """
+        dictified_output = self.dict()
+        remove_nulls_from_dictionary(dictified_output)
+        return dictified_output
 
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -74,6 +96,23 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
 
     def dump(self, *args) -> None:
         raise NotImplementedError()
+
+    @property
+    def to_yml(self) -> Dict:
+        """Generate a dict representation of the Command object.
+
+        Returns:
+            Dict: The dict representation of the Command object.
+        """
+        command = {
+            "name": self.name,
+            "deprecated": self.deprecated,
+            "description": self.description,
+            "arguments": [arg.to_yml for arg in self.args],
+            "outputs": [output.to_yml for output in self.outputs],
+        }
+        remove_nulls_from_dictionary(command)
+        return command
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
@@ -166,60 +205,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     def save(self):
         super().save()
         data = self.data
-        data["script"]["commands"] = self.get_yml_commands()
-        data["configuration"] = self.get_yml_configurations(self.params)
+        data["script"]["commands"] = [command.to_yml for command in self.commands]
+        data["configuration"] = [param.to_yml for param in self.params]
         write_dict(self.path, data, indent=4)
-
-    def get_yml_commands(self) -> List[Dict]:
-        """Generate a list of Commands dict objects.
-
-        Returns:
-            List[Dict]: The List of the Command objects as dict objects.
-        """
-        yml_commands = []
-        for command in self.commands:
-            yml_commands.append(
-                {
-                    "name": command.name,
-                    "deprecated": command.deprecated,
-                    "description": command.description,
-                    "arguments": self.get_yml_args(command.args),
-                    "outputs": self.get_yml_outputs(command.outputs),
-                }
-            )
-        return yml_commands
-
-    def get_yml_outputs(self, outputs: List[Output]) -> List[Dict]:
-        """Generate a list of Output dict objects.
-
-        Args:
-            outputs (List[Output]): The list of Output objects to turn to dict.
-
-        Returns:
-            List[Dict]: The List of the Output objects as dict objects.
-        """
-        yml_outputs = []
-        for output in outputs:
-            dictified_output = output.dict()
-            remove_nulls_from_dictionary(dictified_output)
-            yml_outputs.append(dictified_output)
-        return yml_outputs
-
-    def get_yml_configurations(self, params: List[Parameter]) -> List[Dict]:
-        """Generate a list of Parameter dict objects.
-
-        Args:
-            params (List[Parameter]): The list of Parameter objects to turn to dict.
-
-        Returns:
-            List[Dict]: The List of the Parameter objects as dict objects.
-        """
-        yml_params: List[Dict] = []
-        for param in params:
-            dictified_param = param.dict()
-            remove_nulls_from_dictionary(dictified_param)
-            yml_params.append(dictified_param)
-        return yml_params
 
     def get_related_content(self) -> Dict[RelatedFileType, Dict]:
         related_content_files = super().get_related_content()

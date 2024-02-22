@@ -30,10 +30,8 @@ mapping:
     - type: str
   comment:xsoar:
     type: str
-    required: true
   comment:marketplacev2:
     type: str
-    required: true
   enabled:
     type: bool
   system:

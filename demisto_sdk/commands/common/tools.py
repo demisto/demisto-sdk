@@ -4402,3 +4402,19 @@ def check_text_content_contain_sub_text(
                 invalid_lines.append(str(line_num + 1))
 
     return invalid_lines
+
+
+def remove_nulls_from_dictionary(data):
+    """
+    Remove Null values from a dictionary. (updating the given dictionary)
+
+    :type data: ``dict``
+    :param data: The data to be added to the context (required)
+
+    :return: No data returned
+    :rtype: ``None``
+    """
+    list_of_keys = list(data.keys())[:]
+    for key in list_of_keys:
+        if data[key] in ("", None, [], {}, ()):
+            del data[key]

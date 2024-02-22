@@ -123,7 +123,7 @@ def test_BreakingBackwardsSubtypeValidator_fix(
 
 
 @pytest.mark.parametrize(
-    "content_items, old_content_items, expected_number_of_failures, expected_msgs",
+    "content_items, old_content_items, expected_number_of_failures, old_id, expected_msgs",
     [
         (
             [
@@ -135,6 +135,7 @@ def test_BreakingBackwardsSubtypeValidator_fix(
                 create_integration_object(),
             ],
             1,
+            {"TestIntegration": "id_1"},
             [
                 "ID of content item was changed from id_1 to id_2, please undo.",
             ],
@@ -149,6 +150,7 @@ def test_BreakingBackwardsSubtypeValidator_fix(
                 create_integration_object(),
             ],
             1,
+            {"myScript": "id_1"},
             [
                 "ID of content item was changed from id_1 to id_2, please undo.",
             ],
@@ -163,6 +165,7 @@ def test_BreakingBackwardsSubtypeValidator_fix(
                 create_script_object(paths=["commonfields.id"], values=["id_3"]),
             ],
             2,
+            {"TestIntegration": "id_1", "myScript": "id_3"},
             [
                 "ID of content item was changed from id_1 to id_2, please undo.",
                 "ID of content item was changed from id_3 to id_4, please undo.",
@@ -178,31 +181,34 @@ def test_BreakingBackwardsSubtypeValidator_fix(
                 create_script_object(),
             ],
             0,
+            {},
             [],
         ),
     ],
 )
 def test_IdChangedValidator(
-    content_items, old_content_items, expected_number_of_failures, expected_msgs
+    content_items, old_content_items, expected_number_of_failures, old_id, expected_msgs
 ):
     """
     Given
     content_items and old_content_items iterables.
-        - Case 1: content_items with 2 integrations where the first one has its id, and second integration with no changes in old_content_items.
-        - Case 2: content_items with 1 integration where the first one has id altered, and one script with no id changed, and old_content_items with one script and integration with no changes.
-        - Case 3: content_items with 1 integration where the first one has its subtype altered and 1 script where that has its subtype altered, and old_content_items with one script and integration with no changes.
-        - Case 4: content_items and old_content_items with 1 integration and 1 script both with no changes
+        - Case 1: content_items with 2 integrations where the first one has its id changed.
+        - Case 2: content_items with 1 integration that has its id changed, and one script with no id changed.
+        - Case 3: content_items with 1 integration that has its id changed, and one script that has its id changed.
+        - Case 4: content_items with 1 integration and 1 script, both with no changes.
     When
     - Calling the IdChangedValidator is valid function.
     Then
-        - Make sure the right amount of failures return and that the right message is returned.
+        - Make sure the right amount of failures and messages are returned, and that we construct the "old_id" object correctly.
         - Case 1: Should fail 1 integration.
         - Case 2: Should fail 1 script.
         - Case 3: Should fail both the integration and the script
         - Case 4: Shouldn't fail any content item.
     """
     create_old_file_pointers(content_items, old_content_items)
-    results = IdChangedValidator().is_valid(content_items)
+    validator = IdChangedValidator()
+    results = validator.is_valid(content_items)
+    assert validator.old_id == old_id
     assert len(results) == expected_number_of_failures
     assert all(
         [
@@ -210,6 +216,7 @@ def test_IdChangedValidator(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
 
 @pytest.mark.parametrize(
     "content_item, expected_id, expected_fix_msg",
@@ -220,26 +227,24 @@ def test_IdChangedValidator(
             "Changing ID back to id_1.",
         ),
         (
-            create_script_object(paths=["subtype"], values=["id_2"]),
+            create_script_object(paths=["commonfields.id"], values=["id_2"]),
             "id_1",
             "Changing ID back to id_1.",
         ),
     ],
 )
-def test_IdChangedValidator_fix(
-    content_item, expected_id, expected_fix_msg
-):
+def test_IdChangedValidator_fix(content_item, expected_id, expected_fix_msg):
     """
     Given
         - content_item.
-        - Case 1: an Integration content item where the subtype is different from the subtype of the old_content_item.
-        - Case 2: a Script content item where the subtype is different from the subtype of the old_content_item.
+        - Case 1: an Integration content item where its id has changed.
+        - Case 2: a Script content item where its id has changed.
     When
-    - Calling the BreakingBackwardsSubtypeValidator fix function.
+    - Calling the IdChangedValidator fix function.
     Then
-        - Make sure the the object subtype was changed to match the old_content_item subtype, and that the right fix msg is returned.
+        - Make sure the the id was changed to match the old_content_item id, and that the right fix message is returned.
     """
     validator = IdChangedValidator()
-    validator.old_id[content_item.name] = "python3"
+    validator.old_id[content_item.name] = expected_id
     assert validator.fix(content_item).message == expected_fix_msg
     assert content_item.object_id == expected_id

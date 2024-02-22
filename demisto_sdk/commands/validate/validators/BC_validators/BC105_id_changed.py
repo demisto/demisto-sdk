@@ -77,11 +77,11 @@ class IdChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC105"
     description = "Validate that the ID of the content item was not changed."
     error_message = "ID of content item was changed from {0} to {1}, please undo."
-    fix_message = "Changing ID back to {0}"
+    fix_message = "Changing ID back to {0}."
     related_field = "id"
     expected_git_statuses = [GitStatuses.MODIFIED]
     is_auto_fixable = True
-    old_id: ClassVar[dict] = {}
+    old_id: dict[str, str] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

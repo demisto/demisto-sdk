@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where the **upload** command failed when using the `DEMISTO_SDK_OFFLINE_ENV` environment variable. 
+- description: Fixed an issue where the **upload** command failed when using the `DEMISTO_SDK_OFFLINE_ENV` environment variable.
   type: fix
 pr_number: 4034

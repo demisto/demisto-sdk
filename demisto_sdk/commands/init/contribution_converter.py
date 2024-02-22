@@ -538,11 +538,11 @@ class ContributionConverter:
                             PACKS_DIR, self.name, relative_readme_path
                         )
                         logger.warn(
-                            f"Failed to find the generated README '{generated_readme}' in the content path '{self.pack_dir_path}'. Defaulting to use '{relative_readme_path}'"
+                            f"Failed to find the generated README '{generated_readme}' in the content path '{self.pack_dir_path}'. Defaulting to use '{generated_readme_path}'"
                         )
                     finally:
                         logger.debug(
-                            f"Adding '{generated_readme}' to list of READMEs..."
+                            f"Adding '{generated_readme_path}' to list of READMEs..."
                         )
                         generated_readmes.append(generated_readme_path)
 

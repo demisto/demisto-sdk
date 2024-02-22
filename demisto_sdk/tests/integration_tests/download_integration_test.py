@@ -154,6 +154,7 @@ def test_integration_download_fail(demisto_client, tmp_path, mocker):
     Then
     - Ensure that the exit code is 1, since the playbook was not downloaded.
     """
+    assert False
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     env = Environment(tmp_path)

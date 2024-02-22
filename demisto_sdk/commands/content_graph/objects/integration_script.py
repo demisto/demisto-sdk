@@ -41,7 +41,7 @@ class Argument(BaseModel):
     auto: Optional[Auto] = None
 
     @property
-    def to_yml(self) -> Dict:
+    def to_raw_dict(self) -> Dict:
         """Generate a Dict representation of the Argument object.
 
         Returns:

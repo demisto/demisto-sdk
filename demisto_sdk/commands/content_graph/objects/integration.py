@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import demisto_client
 
-from demisto_sdk.commands.common.tools import write_dict
+from demisto_sdk.commands.common.tools import remove_nulls_from_dictionary, write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
@@ -199,25 +199,10 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             List[Dict]: The List of the Output objects as dict objects.
         """
         yml_outputs = []
-        optional_output_fields = [
-            "contentPath",
-            "contextPath",
-            "importantDescription",
-            "type",
-            "important",
-        ]
         for output in outputs:
-            yml_output: Dict[str, Any] = {"description": output.description}
             dictified_output = output.dict()
-            for optional_output_field in optional_output_fields:
-                if (
-                    optional_output_field in dictified_output
-                    and dictified_output[optional_output_field] is not None
-                ):
-                    yml_output[optional_output_field] = dictified_output[
-                        optional_output_field
-                    ]
-            yml_outputs.append(yml_output)
+            remove_nulls_from_dictionary(dictified_output)
+            yml_outputs.append(dictified_output)
         return yml_outputs
 
     def get_yml_configurations(self, params: List[Parameter]) -> List[Dict]:
@@ -229,34 +214,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         Returns:
             List[Dict]: The List of the Parameter objects as dict objects.
         """
-        optional_param_fields: List[str] = [
-            "additionalinfo",
-            "defaultvalue",
-            "required",
-            "display",
-            "section",
-            "advanced",
-            "hidden",
-            "options",
-            "displaypassword",
-            "hiddenusername",
-            "hiddenpassword",
-            "fromlicense",
-        ]
         yml_params: List[Dict] = []
         for param in params:
-            yml_param: Dict[str, Any] = {
-                "name": param.name,
-                "type": param.type,
-            }
-            dict_param = param.dict()
-            for optional_param_field in optional_param_fields:
-                if (
-                    optional_param_field in dict_param
-                    and dict_param[optional_param_field] is not None
-                ):
-                    yml_param[optional_param_field] = dict_param[optional_param_field]
-            yml_params.append(yml_param)
+            dictified_param = param.dict()
+            remove_nulls_from_dictionary(dictified_param)
+            yml_params.append(dictified_param)
         return yml_params
 
     def get_related_content(self) -> Dict[RelatedFileType, Dict]:

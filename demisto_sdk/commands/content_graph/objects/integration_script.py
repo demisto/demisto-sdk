@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
+from demisto_sdk.commands.common.tools import remove_nulls_from_dictionary
 from demisto_sdk.commands.content_graph.common import lazy_property
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
@@ -151,31 +152,10 @@ class IntegrationScript(ContentItem):
             List[Dict]: The List of the Argument objects as dict objects.
         """
         yml_args = []
-        optional_arg_fields = [
-            "default",
-            "predefined",
-            "defaultvalue",
-            "hidden",
-            "auto",
-            "type",
-            "isArray",
-            "deprecated",
-            "secret",
-            "required",
-        ]
         for arg in args:
-            yml_arg: Dict[str, Any] = {
-                "description": arg.description or "",
-                "name": arg.name,
-            }
             dictified_arg = arg.dict()
-            for optional_arg_field in optional_arg_fields:
-                if (
-                    optional_arg_field in dictified_arg
-                    and dictified_arg[optional_arg_field] is not None
-                ):
-                    yml_arg[optional_arg_field] = dictified_arg[optional_arg_field]
-            if arg.auto is not None:
-                yml_arg["auto"] = str(arg.auto)
-            yml_args.append(yml_arg)
+            remove_nulls_from_dictionary(dictified_arg)
+            if "auto" in dictified_arg:
+                dictified_arg["auto"] = str(dictified_arg["auto"])
+            yml_args.append(dictified_arg)
         return yml_args

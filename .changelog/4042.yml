@@ -1,4 +1,4 @@
 changes:
-- description: Fix an issue where *validate* to *pre-processing rule* failed when validation the id-set file.
+- description: Fixed an issue where *validate* failed *pre-processing rule* id-set file validation.
   type: fix
 pr_number: 4042

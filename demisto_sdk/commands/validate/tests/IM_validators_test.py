@@ -67,7 +67,8 @@ def test_ImageExistsValidator_is_valid_image_path(content_item, expected_result)
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_metadata_object(), "author_image_doesn't_exists"),
+        (create_metadata_object(paths=['support'],values=['community']), "author_image_doesn't_exists."),
+        (create_metadata_object(paths=['support'],values=['partner']), "Partners must provide a non-empty author image.")
     ]
 )
 
@@ -92,7 +93,8 @@ def test_AuthorImageExistsValidator_is_valid_no_image_path(content_item, expecte
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_metadata_object(), []),
+        (create_metadata_object(paths=['support'],values=['community']), []),
+        (create_metadata_object(paths=['support'],values=['partner']), []),
     ]
 )
 def test_AuthorImageExistsValidator_is_valid_image_path(content_item, expected_result):

@@ -4402,15 +4402,15 @@ def check_text_content_contain_sub_text(
 
 def remove_nulls_from_dictionary(data):
     """
-        Remove Null values from a dictionary. (updating the given dictionary)
+    Remove Null values from a dictionary. (updating the given dictionary)
 
-        :type data: ``dict``
-        :param data: The data to be added to the context (required)
+    :type data: ``dict``
+    :param data: The data to be added to the context (required)
 
-        :return: No data returned
-        :rtype: ``None``
+    :return: No data returned
+    :rtype: ``None``
     """
     list_of_keys = list(data.keys())[:]
     for key in list_of_keys:
-        if data[key] in ('', None, [], {}, ()):
+        if data[key] in ("", None, [], {}, ()):
             del data[key]

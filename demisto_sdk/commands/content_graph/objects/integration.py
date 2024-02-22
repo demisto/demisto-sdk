@@ -39,16 +39,6 @@ class Parameter(BaseModel):
     hiddenpassword: Optional[bool] = None
     fromlicense: Optional[str] = None
 
-    @property
-    def to_raw_dict(self) -> Dict:
-        """Generate a dict representation of the Parameter object.
-
-        Returns:
-            Dict: The dict representation of the Parameter object.
-        """
-        dictified_param = self.dict(exclude_none=True)
-        return dictified_param
-
 
 class Output(BaseModel):
     description: str = ""
@@ -57,16 +47,6 @@ class Output(BaseModel):
     important: Optional[bool] = False
     importantDescription: Optional[str] = None
     type: Optional[str] = None
-
-    @property
-    def to_raw_dict(self) -> Dict:
-        """Generate a dict representation of the Output object.
-
-        Returns:
-            Dict: The dict representation of the Output object.
-        """
-        dictified_output = self.dict(exclude_none=True)
-        return dictified_output
 
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -107,7 +87,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
             "deprecated": self.deprecated,
             "description": self.description,
             "arguments": [arg.to_raw_dict for arg in self.args],
-            "outputs": [output.to_raw_dict for output in self.outputs],
+            "outputs": [output.dict(exclude_none=True) for output in self.outputs],
         }
         remove_nulls_from_dictionary(command)
         return command
@@ -204,7 +184,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         super().save()
         data = self.data
         data["script"]["commands"] = [command.to_raw_dict for command in self.commands]
-        data["configuration"] = [param.to_raw_dict for param in self.params]
+        data["configuration"] = [param.dict(exclude_none=True) for param in self.params]
         write_dict(self.path, data, indent=4)
 
     def get_related_content(self) -> Dict[RelatedFileType, Dict]:

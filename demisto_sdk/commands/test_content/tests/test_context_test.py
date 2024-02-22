@@ -846,7 +846,9 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
     mocker.patch.object(
         demisto_client, "generic_request_func", side_effect=generic_request_func
     )
-    test_context.replace_external_playbook_configuration(new_configuration, Version("6.5.0"))
+    test_context.replace_external_playbook_configuration(
+        new_configuration, Version("6.5.0")
+    )
 
 
 BAD_CASES = [
@@ -988,7 +990,9 @@ def test_replacing_pb_inputs_fails_with_build_pass(
         server_context=mocker.MagicMock(),
     )
 
-    test_context.replace_external_playbook_configuration(new_configuration, Version(version))
+    test_context.replace_external_playbook_configuration(
+        new_configuration, Version(version)
+    )
 
 
 BAD_CASES_BUILD_FAIL = [
@@ -1110,5 +1114,7 @@ def test_replacing_pb_inputs_fails_with_build_fail(
         server_context=mocker.MagicMock(),
     )
     with pytest.raises(Exception) as e:
-        test_context.replace_external_playbook_configuration(new_configuration, Version(version))
+        test_context.replace_external_playbook_configuration(
+            new_configuration, Version(version)
+        )
     assert expected_error in str(e)

@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
     PACK_INITIAL_VERSION,
+    PACKS_DIR,
     PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR,
     SCRIPT,
@@ -492,7 +493,7 @@ class ContributionConverter:
 
             # If it's a new Pack, we recursively create READMEs for all content items
             if self.create_new:
-                logger.info("Creating documentation for the new Pack...")
+                logger.info("Creating documentation for a new Pack...")
                 generated_readmes = self.generate_readmes_for_new_content_pack(
                     is_contribution=True
                 )
@@ -500,7 +501,7 @@ class ContributionConverter:
             # If it's an existing Pack, we need to iterate over
             # all content items that were added and create READMEs for them
             else:
-                logger.info("Creating documentation existing Pack...")
+                logger.info("Creating documentation for existing Pack...")
                 contributed_ymls = glob.glob(
                     f"{self.working_dir_path}/**/*.yml", recursive=True
                 )
@@ -533,8 +534,8 @@ class ContributionConverter:
                     # So we will use the relative path from Packs to content item instead.
                     except IndexError:
                         # e.g. 'Packs/HelloWorld/Integrations/HelloWorld/README.md'
-                        generated_readme_path = "/".join(
-                            Path(generated_readme).parts[-5:]
+                        generated_readme_path = os.path.join(
+                            PACKS_DIR, self.name, relative_readme_path
                         )
                         logger.warn(
                             f"Failed to find the generated README '{generated_readme}' in the content path '{self.pack_dir_path}'. Defaulting to use '{relative_readme_path}'"

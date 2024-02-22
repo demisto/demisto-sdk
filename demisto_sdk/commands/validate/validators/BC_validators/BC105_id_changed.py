@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar, Iterable, List, Union, cast
+from typing import Iterable, List, Union, cast
 
-from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )

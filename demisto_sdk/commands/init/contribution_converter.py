@@ -514,21 +514,47 @@ class ContributionConverter:
                     # Construct the path to the README from the content path
                     try:
 
-                        # e.g. Integrations | Playbooks | Scripts
-                        content_item_type = Path(generated_readme).parts[-3]
+                        # If it's a README for a playbook
+                        # e.g. 'Playbooks/playbook-New-PB_README.md'
+                        if PLAYBOOKS_DIR in generated_readme:
+                            # e.g. 'playbook-New-PB_README.md'
+                            playbook_readme_filename = Path(generated_readme).name
+                            relative_path = os.path.join(
+                                PLAYBOOKS_DIR, playbook_readme_filename
+                            )
 
-                        # e.g. 'HelloWorld'
-                        content_item_name = Path(generated_readme).parts[-2]
+                            # TODO move to debug
+                            logger.info(
+                                f"Generated README for Playbook with '{relative_path}'"
+                            )
+                        # If it's either a script or integration, the absolute path will be:
+                        # e.g. 'Integrations/HelloWorld/README.md'
+                        else:
+                            # e.g. 'Integrations'
+                            content_item_type = Path(generated_readme).parts[-3]
+                            # e.g. 'HelloWorld'
+                            content_item_name = Path(generated_readme).parts[-2]
+                            relative_path = os.path.join(
+                                content_item_type,
+                                content_item_name,
+                                PACKS_README_FILE_NAME,
+                            )
 
-                        # e.g. 'Packs/HelloWorld/Integrations/HelloWorld/README.md'
-                        relative_readme_path = os.path.join(
-                            self.packs_dir_path,
-                            content_item_type,
-                            content_item_name,
-                            PACKS_README_FILE_NAME,
+                            # TODO move to debug
+                            logger.info(
+                                f"Generated README for {content_item_type} with '{relative_path}'"
+                            )
+
+                        # e.g. 'tmp_path/to/content/Packs/HelloWorld/Playbooks/playbook-New-PB_README.md'
+                        relative_path_from_content = os.path.join(
+                            self.pack_dir_path, self.name, relative_path
                         )
 
-                        generated_readmes.append(relative_readme_path)
+                        # TODO move to debug
+                        logger.info(
+                            f"Adding '{relative_path_from_content}' to list of generated READMEs..."
+                        )
+                        generated_readmes.append(relative_path_from_content)
 
                     except IndexError:
                         logger.warn(

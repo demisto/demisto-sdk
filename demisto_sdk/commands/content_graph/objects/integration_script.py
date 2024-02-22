@@ -19,7 +19,6 @@ from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
-from demisto_sdk.commands.common.tools import remove_nulls_from_dictionary
 from demisto_sdk.commands.content_graph.common import lazy_property
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
@@ -48,8 +47,7 @@ class Argument(BaseModel):
         Returns:
             Dict: The Dict representation of the Argument object.
         """
-        dictified_arg = self.dict()
-        remove_nulls_from_dictionary(dictified_arg)
+        dictified_arg = self.dict(exclude_none=True)
         if "auto" in dictified_arg:
             dictified_arg["auto"] = str(dictified_arg["auto"])
         return dictified_arg

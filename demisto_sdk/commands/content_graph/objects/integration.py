@@ -66,8 +66,7 @@ class Output(BaseModel):
         Returns:
             Dict: The dict representation of the Output object.
         """
-        dictified_output = self.dict()
-        remove_nulls_from_dictionary(dictified_output)
+        dictified_output = self.dict(exclude_none=True)
         return dictified_output
 
 

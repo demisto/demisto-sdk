@@ -2146,6 +2146,7 @@ class TestContext:
         try:
             if changed_keys:
                 if Version(server_version.base_version) >= Version("8.5.0"):
+                    self.playbook.log_info("Sending request to server with version >= 8.5.0")
                     demisto_client.generic_request_func(
                         self.client,
 +                       method="POST",
@@ -2153,6 +2154,7 @@ class TestContext:
 +                       body={"inputs": inputs},
                     )
                 else:
+                    self.playbook.log_info("Sending request to server with version < 8.5.0")
                     demisto_client.generic_request_func(
                         self.client, method="POST", path=saving_inputs_path, body=inputs
                     )

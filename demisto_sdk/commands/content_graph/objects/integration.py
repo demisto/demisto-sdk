@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import demisto_client
 
@@ -216,5 +216,5 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         return self.get_related_text_file(RelatedFileType.DESCRIPTION)
     
     @property
-    def image_file(self) -> str | None:
+    def image_file(self) -> Union[str, None]:
         return self.related_content[RelatedFileType.IMAGE]["path"][0]

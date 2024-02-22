@@ -2149,9 +2149,9 @@ class TestContext:
                     self.playbook.log_info("Sending request to server with version >= 8.5.0")
                     demisto_client.generic_request_func(
                         self.client,
-+                       method="POST",
-+                       path=saving_inputs_path,
-+                       body={"inputs": inputs},
+                        method="POST",
+                        path=saving_inputs_path,
+                        body={"inputs": inputs},
                     )
                 else:
                     self.playbook.log_info("Sending request to server with version < 8.5.0")

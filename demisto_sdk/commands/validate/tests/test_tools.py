@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -47,6 +48,25 @@ def create_integration_object(
     integration = pack.create_integration(yml=yml_content)
     integration.code.write("from MicrosoftApiModule import *")
     return BaseContent.from_path(Path(integration.path))  # type:ignore
+
+
+def create_pack_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+) -> Pack:
+    """Creating an pack object with altered fields from a default pack structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+
+    Returns:
+        The integration object.
+    """
+    yml_content = load_yaml("integration.yml")
+    update_keys(yml_content, paths, values)
+    pack = REPO.create_pack()
+    return BaseContent.from_path(Path(pack.path))  # type:ignore
 
 
 def create_parsing_rule_object(

@@ -171,8 +171,6 @@ def format_manager(
     supported_file_types = ["json", "yml", "py", "md"]
     use_git = use_git or not input
 
-    logger.info(f"Running format on {input=}, {use_git=}...")
-
     if input:
         files = []
         for i in input.split(","):
@@ -315,9 +313,7 @@ def get_files_to_format_from_git(
     Returns:
         list. a list of all the files that should be formatted.
     """
-    git_util = GitUtil().from_content_path()
-    logger.info(f"get_files_to_format_from_git {git_util.repo.working_dir=}")
-    logger.info(f"get_files_to_format_from_git {prev_ver=}")
+    git_util = GitUtil()
     all_changed_files = git_util.get_all_changed_files(
         prev_ver=prev_ver, include_untracked=include_untracked, staged_only=True
     )

@@ -426,6 +426,7 @@ def append_or_replace_command_in_docs(
     errs = list()
     if re.findall(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_doc_section, old_docs, flags=re.DOTALL)
+        logger.info("[green]New command docs has been replaced in README.md.[/green]")
     else:
         if command_name in old_docs:
             errs.append(
@@ -437,6 +438,7 @@ def append_or_replace_command_in_docs(
             # Remove trailing '\n'
             old_docs = old_docs[:-1]
         new_docs = f"{old_docs}\n{new_doc_section}"
+        logger.info("[green]New command docs has been added to the README.md.[/green]")
     return new_docs, errs
 
 

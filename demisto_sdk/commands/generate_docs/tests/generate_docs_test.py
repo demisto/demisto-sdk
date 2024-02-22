@@ -1059,7 +1059,6 @@ class TestGenerateIntegrationDoc:
         Then: The generated readme will have no markdown errors
 
         """
-        # TODO add mock for readme/yaml
         generate_integration_doc(
             TEST_INTEGRATION_PATH, is_contribution=False, output=str(tmp_path)
         )
@@ -1083,7 +1082,6 @@ class TestGenerateIntegrationDoc:
             - Test that the predefined values and default values are added to the README.
             - Test that credentials parameter name shown in README is using display password field.
         """
-        # TODO add mock for readme/yaml
         readme = os.path.join(
             os.path.dirname(TEST_INTEGRATION_2_PATH), INTEGRATIONS_README_FILE_NAME
         )

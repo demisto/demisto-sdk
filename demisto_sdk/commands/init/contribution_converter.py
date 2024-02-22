@@ -492,6 +492,7 @@ class ContributionConverter:
 
             # If it's a new Pack, we recursively create READMEs for all content items
             if self.create_new:
+                logger.info("Creating documentation for the new Pack...")
                 generated_readmes = self.generate_readmes_for_new_content_pack(
                     is_contribution=True
                 )
@@ -499,6 +500,7 @@ class ContributionConverter:
             # If it's an existing Pack, we need to iterate over
             # all content items that were added and create READMEs for them
             else:
+                logger.info("Creating documentation existing Pack...")
                 contributed_ymls = glob.glob(
                     f"{self.working_dir_path}/**/*.yml", recursive=True
                 )
@@ -507,24 +509,41 @@ class ContributionConverter:
                         yml_path=yml, is_contribution=True
                     )
 
+                    logger.debug(f"{generated_readme=}")
+
                     # Construct the path to the README from the content path
-                    # e.g. 'Integrations/HelloWorld/README.md"
+                    # e.g. 'Integrations/HelloWorld/README.md'
                     try:
                         relative_readme_path = "/".join(
                             Path(generated_readme).parts[-3:]
                         )
 
+                        logger.debug(f"{relative_readme_path=}")
+
                         # Find the relative path in content path
                         generated_readme_path = str(
                             list(self.pack_dir_path.glob(relative_readme_path))[0]
                         )
-                    except IndexError:
-                        logger.warn(
-                            f"Failed to find the generated README '{relative_readme_path}' in the content path '{self.pack_dir_path}'. Defaulting to use '{generated_readme}'"
-                        )
-                        generated_readme_path = generated_readme
 
-                    generated_readmes.append(str(generated_readme_path))
+                    # In case we can't find the generated README in content path
+                    # it means that this content item doesn't exist in the Pack.
+                    # Since we're working in a tmp directory, the content item doesn't exist yet
+                    # at this point. It will be copied to the relevant Pack when processing it
+                    # in contrib-management flow.
+                    # So we will use the relative path from Packs to content item instead.
+                    except IndexError:
+                        # e.g. 'Packs/HelloWorld/Integrations/HelloWorld/README.md'
+                        generated_readme_path = "/".join(
+                            Path(generated_readme).parts[-5:]
+                        )
+                        logger.warn(
+                            f"Failed to find the generated README '{generated_readme}' in the content path '{self.pack_dir_path}'. Defaulting to use '{relative_readme_path}'"
+                        )
+                    finally:
+                        logger.debug(
+                            f"Adding '{generated_readme}' to list of READMEs..."
+                        )
+                        generated_readmes.append(generated_readme_path)
 
             self.readme_files = generated_readmes
 

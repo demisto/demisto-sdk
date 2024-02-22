@@ -1,4 +1,4 @@
 changes:
-- description: Added comment marketplacev2 support in script schema.
+- description: Added `comment:marketplacev2` to the script schema.
   type: internal
 pr_number: 4077

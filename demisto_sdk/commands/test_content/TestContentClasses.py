@@ -2145,9 +2145,14 @@ class TestContext:
 
         try:
             if changed_keys:
-                demisto_client.generic_request_func(
-                    self.client, method="POST", path=saving_inputs_path, body=inputs
-                )
+                if Version(server_version.base_version) >= Version("8.5.0"):
+                    demisto_client.generic_request_func(
+                        self.client, method="POST", path=saving_inputs_path, body={"inputs": inputs}
+                    )
+                else:
+                    demisto_client.generic_request_func(
+                        self.client, method="POST", path=saving_inputs_path, body=inputs
+                    )
 
         except Exception as e:
             raise Exception(

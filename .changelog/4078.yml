@@ -1,0 +1,4 @@
+changes:
+- description: Added support for specific `deprecated` field for marketplace.
+  type: <breaking|feature|fix|internal>
+pr_number: 4078

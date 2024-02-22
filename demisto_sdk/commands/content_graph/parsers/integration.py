@@ -58,7 +58,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 "type": "script.type",
                 "subtype": "script.subtype",
                 "alt_docker_images": "script.alt_dockerimages",
-                "configuration": "configuration",
+                "params": "configuration",
             }
         )
         return super().field_mapping
@@ -69,7 +69,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     @property
     def params(self) -> Optional[List]:
-        return get_value(self.yml_data, self.field_mapping.get("configuration", ""), [])
+        return get_value(self.yml_data, self.field_mapping.get("params", ""), [])
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

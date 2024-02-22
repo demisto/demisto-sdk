@@ -175,5 +175,7 @@ class IntegrationScript(ContentItem):
                     and dictified_arg[optional_arg_field] is not None
                 ):
                     yml_arg[optional_arg_field] = dictified_arg[optional_arg_field]
+            if arg.auto is not None:
+                yml_arg["auto"] = str(arg.auto)
             yml_args.append(yml_arg)
         return yml_args

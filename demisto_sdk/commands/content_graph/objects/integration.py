@@ -171,6 +171,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         write_dict(self.path, data, indent=4)
 
     def get_yml_commands(self) -> List[Dict]:
+        """Generate a list of Commands dict objects.
+
+        Returns:
+            List[Dict]: The List of the Command objects as dict objects.
+        """
         yml_commands = []
         for command in self.commands:
             yml_commands.append(
@@ -265,9 +270,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "git_status": None,
                 },
                 RelatedFileType.DARK_SVG: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_description.md")
-                    ],
+                    "path": [str(self.path.parent / f"{self.path.parts[-2]}_dark.svg")],
                     "git_status": None,
                 },
                 RelatedFileType.LIGHT_SVG: {
@@ -277,7 +280,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "git_status": None,
                 },
                 RelatedFileType.DESCRIPTION: {
-                    "path": [str(self.path.parent / f"{self.path.parts[-2]}_dark.svg")],
+                    "path": [
+                        str(self.path.parent / f"{self.path.parts[-2]}_description.md")
+                    ],
                     "git_status": None,
                 },
             }

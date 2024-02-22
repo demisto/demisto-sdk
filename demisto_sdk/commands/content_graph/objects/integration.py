@@ -46,8 +46,7 @@ class Parameter(BaseModel):
         Returns:
             Dict: The dict representation of the Parameter object.
         """
-        dictified_param = self.dict()
-        remove_nulls_from_dictionary(dictified_param)
+        dictified_param = self.dict(exclude_none=True)
         return dictified_param
 
 

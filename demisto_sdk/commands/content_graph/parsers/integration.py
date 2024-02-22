@@ -140,6 +140,13 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(
-            self.path.parent
-        )[1]
+        if not self.git_sha:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data(
+                self.path.parent
+            )[1]
+        else:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
+                self.path, self.git_sha, self.yml_data
+            )[
+                1
+            ]

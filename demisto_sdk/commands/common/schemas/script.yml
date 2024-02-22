@@ -28,11 +28,12 @@ mapping:
     type: seq
     sequence:
     - type: str
-  comment:
+  comment:xsoar:
     type: str
     required: true
-  comment_x2:
+  comment:marketplacev2:
     type: str
+    required: true
   enabled:
     type: bool
   system:

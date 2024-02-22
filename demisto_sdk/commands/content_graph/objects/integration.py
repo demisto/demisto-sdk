@@ -40,7 +40,7 @@ class Parameter(BaseModel):
     fromlicense: Optional[str] = None
 
     @property
-    def to_yml(self) -> Dict:
+    def to_raw_dict(self) -> Dict:
         """Generate a dict representation of the Parameter object.
 
         Returns:
@@ -59,7 +59,7 @@ class Output(BaseModel):
     type: Optional[str] = None
 
     @property
-    def to_yml(self) -> Dict:
+    def to_raw_dict(self) -> Dict:
         """Generate a dict representation of the Output object.
 
         Returns:
@@ -96,7 +96,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
         raise NotImplementedError()
 
     @property
-    def to_yml(self) -> Dict:
+    def to_raw_dict(self) -> Dict:
         """Generate a dict representation of the Command object.
 
         Returns:
@@ -106,8 +106,8 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
             "name": self.name,
             "deprecated": self.deprecated,
             "description": self.description,
-            "arguments": [arg.to_yml for arg in self.args],
-            "outputs": [output.to_yml for output in self.outputs],
+            "arguments": [arg.to_raw_dict for arg in self.args],
+            "outputs": [output.to_raw_dict for output in self.outputs],
         }
         remove_nulls_from_dictionary(command)
         return command
@@ -203,8 +203,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     def save(self):
         super().save()
         data = self.data
-        data["script"]["commands"] = [command.to_yml for command in self.commands]
-        data["configuration"] = [param.to_yml for param in self.params]
+        data["script"]["commands"] = [command.to_raw_dict for command in self.commands]
+        data["configuration"] = [param.to_raw_dict for param in self.params]
         write_dict(self.path, data, indent=4)
 
     def get_related_content(self) -> Dict[RelatedFileType, Dict]:

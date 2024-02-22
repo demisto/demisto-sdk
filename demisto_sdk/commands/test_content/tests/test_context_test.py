@@ -1,6 +1,7 @@
 from functools import partial
 
 import pytest
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import PB_Status
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -822,9 +823,10 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
     playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
 
     class clientMock(DefaultApi):
-        def generic_request(self, path, method, body=None, **kwargs):
-            if path == "/about" and method == "GET":
-                return "{'demistoVersion': '6.5.0'}", None, None
+        # def generic_request(self, path, method, body=None, **kwargs):
+        #     if path == "/about" and method == "GET":
+        #         return "{'demistoVersion': '6.5.0'}", None, None
+        ...
 
     test_context = TestContext(
         build_context=mocker.MagicMock(),
@@ -844,7 +846,7 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
     mocker.patch.object(
         demisto_client, "generic_request_func", side_effect=generic_request_func
     )
-    test_context.replace_external_playbook_configuration(new_configuration)
+    test_context.replace_external_playbook_configuration(new_configuration, Version("6.5.0"))
 
 
 BAD_CASES = [
@@ -953,9 +955,10 @@ def test_replacing_pb_inputs_fails_with_build_pass(
     )
 
     class ClientMock(DefaultApi):
-        def generic_request(self, path, method, body=None, **kwargs):
-            if path == "/about" and method == "GET":
-                return str({"demistoVersion": version}), None, None
+        # def generic_request(self, path, method, body=None, **kwargs):
+        #     if path == "/about" and method == "GET":
+        #         return str({"demistoVersion": version}), None, None
+        ...
 
     def generic_request_func(self, path, method, body=None, **kwargs):
         if path == "/playbook/inputs/pb_test" and method == "POST":
@@ -985,7 +988,7 @@ def test_replacing_pb_inputs_fails_with_build_pass(
         server_context=mocker.MagicMock(),
     )
 
-    test_context.replace_external_playbook_configuration(new_configuration)
+    test_context.replace_external_playbook_configuration(new_configuration, Version(version))
 
 
 BAD_CASES_BUILD_FAIL = [
@@ -1075,9 +1078,10 @@ def test_replacing_pb_inputs_fails_with_build_fail(
     )
 
     class clientMock(DefaultApi):
-        def generic_request(self, path, method, body=None, **kwargs):
-            if path == "/about" and method == "GET":
-                return str({"demistoVersion": version}), None, None
+        # def generic_request(self, path, method, body=None, **kwargs):
+        #     if path == "/about" and method == "GET":
+        #         return str({"demistoVersion": version}), None, None
+        ...
 
     def generic_request_func(self, path, method, body=None, **kwargs):
         if path == "/playbook/inputs/pb_test" and method == "POST":
@@ -1106,5 +1110,5 @@ def test_replacing_pb_inputs_fails_with_build_fail(
         server_context=mocker.MagicMock(),
     )
     with pytest.raises(Exception) as e:
-        test_context.replace_external_playbook_configuration(new_configuration)
+        test_context.replace_external_playbook_configuration(new_configuration, Version(version))
     assert expected_error in str(e)

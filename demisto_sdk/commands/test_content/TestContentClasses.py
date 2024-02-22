@@ -2173,10 +2173,7 @@ class TestContext:
         return True, inputs_default, saving_inputs_path
 
     def restore_external_playbook_configuration(
-        self,
-        restore_path: str,
-        restore_values: dict,
-        server_version: Version
+        self, restore_path: str, restore_values: dict, server_version: Version
     ):
         self.playbook.log_info("Restoring External Playbook parameters.")
 
@@ -2185,7 +2182,10 @@ class TestContext:
                 "Sending request restore playbook configuration to server with version >= 8.5.0"
             )
             demisto_client.generic_request_func(
-                self.client, method="POST", path=restore_path, body={"inputs": restore_values}
+                self.client,
+                method="POST",
+                path=restore_path,
+                body={"inputs": restore_values},
             )
         else:
             self.playbook.log_info(
@@ -2278,7 +2278,7 @@ class TestContext:
                 self.restore_external_playbook_configuration(
                     restore_path=restore_path,
                     restore_values=default_vals,
-                    server_version=server_version
+                    server_version=server_version,
                 )
 
             self.playbook.disable_integrations(self.client, self.server_context)

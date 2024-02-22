@@ -19,7 +19,7 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_integration_object(), "no_image_exists"),
+        (create_integration_object(), "You've created/modified a yml or package without providing an image as a .png file , please add an image in order to proceed."),
     ]
 )
 def test_ImageExistsValidator_is_valid_no_image_path(content_item, expected_result):
@@ -67,7 +67,7 @@ def test_ImageExistsValidator_is_valid_image_path(content_item, expected_result)
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_metadata_object(paths=['support'],values=['community']), "author_image_doesn't_exists."),
+        (create_metadata_object(paths=['support'],values=['community']), "You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed."),
         (create_metadata_object(paths=['support'],values=['partner']), "Partners must provide a non-empty author image.")
     ]
 )

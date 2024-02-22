@@ -16,8 +16,8 @@ ContentTypes = Integration
 
 class ImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM100"
-    description = "Check if the integration has an image path."
-    error_message = "no_image_exists"
+    description = "Checks if the integration has an image path."
+    error_message = "You've created/modified a yml or package without providing an image as a .png file , please add an image in order to proceed."
     related_field = "image"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.IMAGE]

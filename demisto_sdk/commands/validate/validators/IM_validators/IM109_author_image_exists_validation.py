@@ -16,7 +16,7 @@ PARTNER_ERROR_MESSAGE = "Partners must provide a non-empty author image."
 class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM109"
     description = "Checks if the pack has an author image path."
-    error_message = "author_image_doesn't_exists."
+    error_message = "You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed."
     related_field = "image"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.AUTHOR_IMAGE]

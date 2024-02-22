@@ -547,7 +547,7 @@ class ContributionConverter:
 
                         # e.g. 'tmp_path/to/content/Packs/HelloWorld/Playbooks/playbook-New-PB_README.md'
                         relative_path_from_content = os.path.join(
-                            self.pack_dir_path, self.name, relative_path
+                            str(self.pack_dir_path), relative_path
                         )
 
                         # TODO move to debug

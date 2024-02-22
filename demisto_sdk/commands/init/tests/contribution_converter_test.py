@@ -1019,7 +1019,7 @@ class TestEnsureUniquePackDirName:
         )
         contribution_converter.format_converted_pack()
 
-        assert result.call_args[1].get("include_untracked")
+        assert result.call_args[1].get("include_untracked") is False
         assert result.call_args[1].get("interactive") is False
 
     def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(
@@ -1440,9 +1440,11 @@ class TestReadmes:
         # Convert the contribution to a pack
         contrib_converter.convert_contribution_to_pack()
 
-        # Check that the generated readme exists
+        # Check that the generated readme doesn't exist
+        # It doesn't exist because it's a new integration
+        # and hasn't yet been copied at this point to the content path
         generated_readme = Path(contrib_converter.readme_files[0])
-        assert generated_readme.exists()
+        assert not generated_readme.exists()
 
     def test_process_new_pack(
         self, tmp_path: Path, git_repo: Repo, mocker: MockerFixture

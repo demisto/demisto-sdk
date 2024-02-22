@@ -24,7 +24,6 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
     PACK_INITIAL_VERSION,
-    PACKS_DIR,
     PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR,
     SCRIPT,
@@ -170,7 +169,7 @@ class ContributionConverter:
         self.contribution_items_version: Dict[str, Dict[str, str]] = {}
         self.contribution_items_version_note = ""
         base_dir = base_dir or CONTENT_PATH  # type: ignore
-        self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
+        self.packs_dir_path: str = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)
 
@@ -513,38 +512,29 @@ class ContributionConverter:
                     logger.debug(f"{generated_readme=}")
 
                     # Construct the path to the README from the content path
-                    # e.g. 'Integrations/HelloWorld/README.md'
                     try:
-                        relative_readme_path = "/".join(
-                            Path(generated_readme).parts[-3:]
-                        )
 
-                        logger.debug(f"{relative_readme_path=}")
+                        # e.g. Integrations | Playbooks | Scripts
+                        content_item_type = Path(generated_readme).parts[-3]
 
-                        # Find the relative path in content path
-                        generated_readme_path = str(
-                            list(self.pack_dir_path.glob(relative_readme_path))[0]
-                        )
+                        # e.g. 'HelloWorld'
+                        content_item_name = Path(generated_readme).parts[-2]
 
-                    # In case we can't find the generated README in content path
-                    # it means that this content item doesn't exist in the Pack.
-                    # Since we're working in a tmp directory, the content item doesn't exist yet
-                    # at this point. It will be copied to the relevant Pack when processing it
-                    # in contrib-management flow.
-                    # So we will use the relative path from Packs to content item instead.
-                    except IndexError:
                         # e.g. 'Packs/HelloWorld/Integrations/HelloWorld/README.md'
-                        generated_readme_path = os.path.join(
-                            PACKS_DIR, self.name, relative_readme_path
+                        relative_readme_path = os.path.join(
+                            self.packs_dir_path,
+                            content_item_type,
+                            content_item_name,
+                            PACKS_README_FILE_NAME,
                         )
+
+                        generated_readmes.append(relative_readme_path)
+
+                    except IndexError:
                         logger.warn(
-                            f"Failed to find the generated README '{generated_readme}' in the content path '{self.pack_dir_path}'. Defaulting to use '{generated_readme_path}'"
+                            f"Failed to construct relative path of the generated README '{generated_readme}'. Skipping addition of README to list of generated READMEs..."
                         )
-                    finally:
-                        logger.debug(
-                            f"Adding '{generated_readme_path}' to list of READMEs..."
-                        )
-                        generated_readmes.append(generated_readme_path)
+                        continue
 
             self.readme_files = generated_readmes
 

@@ -174,9 +174,9 @@ class File(ABC):
 
         try:
             return cls.as_default(encoding=encoding, handler=handler).load(file_content)
-        except LocalFileReadError as e:
+        except MemoryFileReadError:
             logger.error(f"Could not read file content as {cls.__name__} file")
-            raise MemoryFileReadError(exc=e.original_exc)
+            raise
 
     @classmethod
     def as_path(cls, path: Path, **kwargs):

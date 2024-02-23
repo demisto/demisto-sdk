@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.constants import (
     urljoin,
 )
 from demisto_sdk.commands.common.files.errors import (
-    FileContentReadError,
+    MemoryFileReadError,
     FileReadError,
     GitFileReadError,
     HttpFileReadError,
@@ -176,7 +176,7 @@ class File(ABC):
             return cls.as_default(encoding=encoding, handler=handler).load(file_content)
         except LocalFileReadError as e:
             logger.error(f"Could not read file content as {cls.__name__} file")
-            raise FileContentReadError(exc=e.original_exc)
+            raise MemoryFileReadError(exc=e.original_exc)
 
     @classmethod
     def as_path(cls, path: Path, **kwargs):
@@ -463,6 +463,6 @@ class File(ABC):
             return _cls.read_from_file_content(
                 response.content, encoding=encoding, handler=handler
             )
-        except FileContentReadError as e:
+        except MemoryFileReadError as e:
             logger.error(f"Could not read file from {url} as {_cls.__name__} file")
             raise HttpFileReadError(url, exc=e)

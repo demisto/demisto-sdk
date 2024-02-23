@@ -18,7 +18,7 @@ class LocalFileReadError(FileReadError):
         super().__init__(f"file {path} could not be read, error:\n{exc}", exc=exc)
 
 
-class FileContentReadError(FileReadError):
+class MemoryFileReadError(FileReadError):
     def __init__(self, exc: Exception):
         super().__init__(f"file could not be read, error:\n{exc}", exc=exc)
 

@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import PACKS_WHITELIST_FILE_NAME
 from demisto_sdk.commands.common.files.errors import (
     FileWriteError,
     LocalFileReadError,
+    MemoryFileReadError
 )
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.logger import logger
@@ -44,21 +45,34 @@ class TextFile(File):
         } or path.suffix.lower() in {".md", ".py", ".txt", ".xif"}
 
     def load(self, file_content: bytes) -> Any:
+        path = self.path if hasattr(self, "path") else None
         try:
             return file_content.decode(self.encoding)
         except UnicodeDecodeError:
             original_file_encoding = UnicodeDammit(file_content).original_encoding
-            logger.debug(
-                f"Error when decoding file {self.path} with {self.encoding}, "
-                f"trying to decode the file with original encoding {original_file_encoding}"
-            )
+            if path:
+                logger.debug(
+                    f"Error when decoding file {self.path} with {self.encoding}, "
+                    f"trying to decode the file with original encoding {original_file_encoding}"
+                )
+            else:
+                logger.debug(
+                    f'Error when decoding file when reading it directly from memory with {self.encoding}, '
+                    f'trying to decode the file with original encoding {original_file_encoding}'
+                )
             try:
                 return UnicodeDammit(file_content).unicode_markup
             except UnicodeDecodeError as e:
-                logger.error(f"Could not auto detect encoding for file {self.path}")
-                raise LocalFileReadError(self.path, exc=e)
+                if path:
+                    logger.error(f"Could not auto detect encoding for file {self.path}")
+                    raise LocalFileReadError(self.path, exc=e)
+                else:
+                    logger.error(f"Could not auto detect encoding for file when reading it directly from memory")
+                    raise MemoryFileReadError(e)
         except Exception as e:
-            raise LocalFileReadError(self.path, exc=e)
+            if path:
+                raise LocalFileReadError(self.path, exc=e)
+            raise MemoryFileReadError(e)
 
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=self.__read_local_file())

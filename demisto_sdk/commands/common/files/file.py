@@ -17,11 +17,10 @@ from demisto_sdk.commands.common.constants import (
     urljoin,
 )
 from demisto_sdk.commands.common.files.errors import (
-    MemoryFileReadError,
     FileReadError,
     GitFileReadError,
     HttpFileReadError,
-    LocalFileReadError,
+    MemoryFileReadError,
     UnknownFileError,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
@@ -45,6 +44,13 @@ class File(ABC):
     @property
     def path(self) -> Path:
         return getattr(self, "_path")
+
+    @property
+    def _safe_path(self) -> Union[Path, None]:
+        try:
+            return self.path
+        except AttributeError:
+            return None
 
     @cached_property
     def file_content(self) -> bytes:
@@ -174,7 +180,7 @@ class File(ABC):
 
         try:
             return cls.as_default(encoding=encoding, handler=handler).load(file_content)
-        except MemoryFileReadError:
+        except FileReadError:
             logger.error(f"Could not read file content as {cls.__name__} file")
             raise
 

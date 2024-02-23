@@ -127,7 +127,7 @@ class TestTextFile(FileTesting):
         assert TextFile.read_from_file_content(_path.read_bytes()) == "ÿ"
         assert str_in_call_args_list(
             debug_logger_mocker.call_args_list,
-            required_str=f"Error when decoding file when reading it directly from memory",
+            required_str="Error when decoding file when reading it directly from memory",
         )
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):

@@ -3,7 +3,7 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, Optional, Type, Union
 
-from demisto_sdk.commands.common.files.errors import FileWriteError
+from demisto_sdk.commands.common.files.errors import FileLoadError, FileWriteError
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -30,7 +30,13 @@ class StructuredFile(TextFile, ABC):
         return instance
 
     def load(self, file_content: bytes) -> Any:
-        return self.handler.load(StringIO(super().load(file_content)))
+        file_content_as_text = super().load(file_content)
+        try:
+            return self.handler.load(StringIO(file_content_as_text))
+        except Exception as error:
+            raise FileLoadError(
+                error, class_name=self.__class__.__name__, path=self._safe_path
+            )
 
     @classmethod
     def write(

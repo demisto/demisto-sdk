@@ -823,9 +823,6 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
     playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
 
     class clientMock(DefaultApi):
-        # def generic_request(self, path, method, body=None, **kwargs):
-        #     if path == "/about" and method == "GET":
-        #         return "{'demistoVersion': '6.5.0'}", None, None
         ...
 
     test_context = TestContext(
@@ -957,9 +954,6 @@ def test_replacing_pb_inputs_fails_with_build_pass(
     )
 
     class ClientMock(DefaultApi):
-        # def generic_request(self, path, method, body=None, **kwargs):
-        #     if path == "/about" and method == "GET":
-        #         return str({"demistoVersion": version}), None, None
         ...
 
     def generic_request_func(self, path, method, body=None, **kwargs):
@@ -1082,9 +1076,6 @@ def test_replacing_pb_inputs_fails_with_build_fail(
     )
 
     class clientMock(DefaultApi):
-        # def generic_request(self, path, method, body=None, **kwargs):
-        #     if path == "/about" and method == "GET":
-        #         return str({"demistoVersion": version}), None, None
         ...
 
     def generic_request_func(self, path, method, body=None, **kwargs):

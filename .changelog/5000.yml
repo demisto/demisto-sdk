@@ -1,0 +1,8 @@
+changes:
+- description: Fixed an issue where an error occurred when trying to read `.xif` file suffixes.
+  type: fix
+- description: Added support to automatically detect the type of the file when reading it via http-request.
+  type: feature
+- description: Fixed an issue where SDK would crash when trying to read a file from memory which is not encoded with utf-8.
+  type: fix
+pr_number: 5000

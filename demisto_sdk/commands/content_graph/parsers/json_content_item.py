@@ -43,6 +43,7 @@ class JSONContentItemParser(ContentItemParser):
                 "description": "description",
                 "fromversion": "fromVersion",
                 "toversion": "toVersion",
+                "version": "version",
             }
         )
         return super().field_mapping
@@ -94,3 +95,7 @@ class JSONContentItemParser(ContentItemParser):
     @cached_property
     def json_data(self) -> Dict[str, Any]:
         return get_json(str(self.path), git_sha=self.git_sha)
+
+    @property
+    def version(self) -> int:
+        return get_value(self.json_data, self.field_mapping.get("version", ""), 0)

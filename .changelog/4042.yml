@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where *validate* failed *pre-processing rule* id-set file validation.
+  type: fix
+pr_number: 4042

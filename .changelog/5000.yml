@@ -3,6 +3,6 @@ changes:
   type: fix
 - description: Added support to automatically detect the type of the file when reading it via http-request.
   type: feature
-- description: Fixed an issue where SDK would crash when trying to read a file from memory which is not encoded with utf-8.
+- description: Fixed an issue where SDK would crash when trying to read files which are not encoded with utf-8 directly from memory.
   type: fix
 pr_number: 5000

@@ -288,19 +288,22 @@ class File(ABC):
         )
 
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
-        file_content = self.git_util().read_file_content(
-            self.path, commit_or_branch=tag, from_remote=from_remote
-        )
         try:
-            return self.load(file_content)
-        except FileLoadError as error:
+            return self.load(
+                self.git_util().read_file_content(
+                    self.path, commit_or_branch=tag, from_remote=from_remote
+                )
+            )
+        except Exception as error:
             if from_remote:
                 tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
             logger.error(
                 f"Could not read git file {self.path} from branch/commit {tag} as {self.__class__.__name__} file"
             )
             raise GitFileReadError(
-                self.path, tag=tag, exc=error.original_exc
+                self.path,
+                tag=tag,
+                exc=error.original_exc if isinstance(error, FileReadError) else error,
             ) from error
 
     @classmethod

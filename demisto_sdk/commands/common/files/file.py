@@ -22,6 +22,8 @@ from demisto_sdk.commands.common.files.errors import (
     HttpFileReadError,
     MemoryFileReadError,
     UnknownFileError,
+    FileLoadError,
+    LocalFileReadError
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -180,9 +182,9 @@ class File(ABC):
 
         try:
             return cls.as_default(encoding=encoding, handler=handler).load(file_content)
-        except FileReadError:
+        except FileLoadError as error:
             logger.error(f"Could not read file content as {cls.__name__} file")
-            raise
+            raise MemoryFileReadError(error.original_exc) from error
 
     @classmethod
     def as_path(cls, path: Path, **kwargs):
@@ -236,11 +238,11 @@ class File(ABC):
     def __read_local_file(self):
         try:
             return self.load(self.file_content)
-        except FileReadError:
+        except FileLoadError as error:
             logger.error(
                 f"Could not read file {self.path} as {self.__class__.__name__} file"
             )
-            raise
+            raise LocalFileReadError(self.path, exc=error.original_exc) from error
 
     @classmethod
     @lru_cache
@@ -286,23 +288,18 @@ class File(ABC):
         )
 
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
-        try:
-            return self.load(
-                self.git_util().read_file_content(
+        file_content = self.git_util().read_file_content(
                     self.path, commit_or_branch=tag, from_remote=from_remote
                 )
-            )
-        except Exception as e:
+        try:
+            return self.load(file_content)
+        except FileLoadError as error:
             if from_remote:
                 tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
             logger.error(
-                f"Could not read git file {self.path} from {tag} as {self.__class__.__name__} file"
+                f"Could not read git file {self.path} from branch/commit {tag} as {self.__class__.__name__} file"
             )
-            raise GitFileReadError(
-                self.path,
-                tag=tag,
-                exc=e,
-            )
+            raise GitFileReadError(self.path, tag=tag, exc=error.original_exc) from error
 
     @classmethod
     def read_from_github_api(
@@ -475,5 +472,5 @@ class File(ABC):
                 response.content, encoding=encoding, handler=handler
             )
         except MemoryFileReadError as e:
-            logger.error(f"Could not read file from {url} as {_cls.__name__} file")
-            raise HttpFileReadError(url, exc=e)
+            logger.error(f"Could not read file from URL {url} as {_cls.__name__} file")
+            raise HttpFileReadError(url, exc=e.original_exc) from e

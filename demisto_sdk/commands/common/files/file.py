@@ -460,6 +460,11 @@ class File(ABC):
                 raise FileNotFoundError(f"file in {url} does not exist")
             response.raise_for_status()
         except RequestException as e:
+            if isinstance(e, (ConnectionError, Timeout)):
+                logger.debug(
+                    f"Could not retrieve file from {url} due to a connection issue"
+                )
+                raise
             logger.exception(f"Could not retrieve file from {url}")
             raise HttpFileReadError(url, exc=e)
 

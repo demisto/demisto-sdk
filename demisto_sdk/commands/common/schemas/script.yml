@@ -30,8 +30,7 @@ mapping:
     - type: str
   comment:
     type: str
-    required: true
-  comment_x2:
+  comment:marketplacev2:
     type: str
   enabled:
     type: bool

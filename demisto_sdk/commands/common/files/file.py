@@ -17,13 +17,13 @@ from demisto_sdk.commands.common.constants import (
     urljoin,
 )
 from demisto_sdk.commands.common.files.errors import (
+    FileLoadError,
     FileReadError,
     GitFileReadError,
     HttpFileReadError,
+    LocalFileReadError,
     MemoryFileReadError,
     UnknownFileError,
-    FileLoadError,
-    LocalFileReadError
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -289,8 +289,8 @@ class File(ABC):
 
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
         file_content = self.git_util().read_file_content(
-                    self.path, commit_or_branch=tag, from_remote=from_remote
-                )
+            self.path, commit_or_branch=tag, from_remote=from_remote
+        )
         try:
             return self.load(file_content)
         except FileLoadError as error:
@@ -299,7 +299,9 @@ class File(ABC):
             logger.error(
                 f"Could not read git file {self.path} from branch/commit {tag} as {self.__class__.__name__} file"
             )
-            raise GitFileReadError(self.path, tag=tag, exc=error.original_exc) from error
+            raise GitFileReadError(
+                self.path, tag=tag, exc=error.original_exc
+            ) from error
 
     @classmethod
     def read_from_github_api(

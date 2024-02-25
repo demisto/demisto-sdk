@@ -177,7 +177,7 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
 
     if old_marketplaces == ALL_MARKETPLACES and in_pack_marketplaces ==ALL_MARKETPLACES_FOR_IN_PACK or \
         old_marketplaces == XSOAR_MARKETPLACE:
-        assert results[0].message == "You are not permitted to add (in a manner that directly removes) or delete the 'marketplaces' field from current content. Either revert the action or request a force merge."
+        assert results[0].message == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
         assert len(results) == 2
     else:
        assert results == []
@@ -222,7 +222,7 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace(modi
         results = WasMarketplaceModifiedValidator().is_valid(modified_content_items)
 
     if modified_marketplaces == XSOAR_MARKETPLACE:
-        assert results[0].message == "You are not permitted to add (in a manner that directly removes) or delete the 'marketplaces' field from current content. Either revert the action or request a force merge."
+        assert results[0].message == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
         assert len(results) == 2
     else:
        assert results == []
@@ -302,6 +302,6 @@ def test_WasMarketplaceModifiedValidator__a_pack_is_modified(modified_pack, old_
     
     if modified_pack == XSIAM_MARKETPLACE and old_pack == ALL_MARKETPLACES or \
         modified_pack == XSIAM_MARKETPLACE and old_pack == XSOAR_MARKETPLACE:
-        assert results[0].message == "You are not permitted to add (in a manner that directly removes) or delete the 'marketplaces' field from current content. Either revert the action or request a force merge."
+        assert results[0].message == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
     else:
         assert results == []

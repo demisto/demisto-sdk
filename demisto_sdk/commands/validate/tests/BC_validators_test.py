@@ -58,7 +58,7 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed imp
         ),
     ],
 )
-def test_BreakingBackwardsSubtypeValidator(
+def test_BreakingBackwardsSubtypeValidator_is_valid(
     content_items, old_content_items, expected_number_of_failures, expected_msgs
 ):
     """

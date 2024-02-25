@@ -157,6 +157,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         pass
 
     @property
+    def version(self) -> int:
+        pass
+
+    @property
     @abstractmethod
     def deprecated(self) -> bool:
         pass

@@ -15,6 +15,8 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 
 
 class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
+    version: Optional[int] = 0
+
     def summary(
         self,
         marketplace: Optional[MarketplaceVersions] = None,

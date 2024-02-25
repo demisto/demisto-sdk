@@ -1,4 +1,0 @@
-changes:
-- description: Added the **graph get-dependencies** command.
-  type: feature
-pr_number: 3992

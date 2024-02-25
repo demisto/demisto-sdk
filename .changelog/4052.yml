@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where reading files from git could not be read when a commit did not exist locally.
-  type: fix
-pr_number: 4052

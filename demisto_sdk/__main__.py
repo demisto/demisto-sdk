@@ -3735,7 +3735,7 @@ def xsoar_linter(
     )
 ):
     """
-        Runs the xsoar lint on the given paths.
+    Runs the xsoar lint on the given paths.
     """
     return_code = xsoar_linter_manager(
         file_paths,

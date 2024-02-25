@@ -143,3 +143,55 @@ def test_is_no_rolename_fix():
         == "Removed the 'rolename' from the following playbook 'Detonate File - JoeSecurity V2'."
     )
     assert "rolename" not in content_item.data
+
+
+@pytest.mark.parametrize(
+    "content_item, expected_result",
+    [
+        (
+                create_playbook_object(
+                    paths=["deprecated", "description"],
+                    values=[True, "Deprecated. Use <PLAYBOOK_NAME> instead."],
+                ),
+                [],
+        ),
+        (
+                create_playbook_object(
+                    paths=["deprecated", "description"],
+                    values=[True, "Deprecated. <REASON> No available replacement."],
+                ),
+                [],
+        ),
+        (
+                create_playbook_object(
+                    paths=["deprecated", "description"],
+                    values=[True, "Not a valid description"],
+                ),
+                [],
+        ),
+    ],
+)
+def test_is_no_rolename(content_item, expected_result):
+    """
+    Given:
+    - A playbook with id
+        Case 1: The playbook has only id and no rolename.
+        Case 2: The playbook has id and an empty rolename.
+        Case 3: The playbook has id and rolename.
+
+    When:
+    - Validating the playbook
+
+    Then:
+    - The results should be as expected:
+        Case 1: The playbook is valid
+        Case 2: The playbook is valid
+        Case 3: The playbook is invalid
+    """
+    result = IsNoRolenameValidator().is_valid([content_item])
+
+    assert (
+        result == expected_result
+        if isinstance(expected_result, list)
+        else result[0].message == expected_result
+    )

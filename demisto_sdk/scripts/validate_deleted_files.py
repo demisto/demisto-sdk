@@ -79,17 +79,17 @@ main = typer.Typer(pretty_exceptions_enable=False)
 @main.command()
 def validate_forbidden_deleted_files(
     ctx: typer.Context,
-    protected_dirs: str = typer.Option(
-        "",
-        "--protected-dirs",
-        help="a comma separated list of protected directories that files cannot be deleted from them",
+    protected_dirs: Set[str] = typer.Option(
+        ...,
+        "--protected-dir",
+        help="a protected dir to to disallow deleting files from it or from it sub-directories",
     ),
 ):
     if not protected_dirs:
-        raise ValueError("--protected-dirs must be provided")
+        raise ValueError("--protected-dir must be provided")
     try:
         if forbidden_deleted_files := get_forbidden_deleted_files(
-            set(protected_dirs.split(","))
+            protected_dirs
         ):
             logger.error(
                 f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
@@ -101,6 +101,3 @@ def validate_forbidden_deleted_files(
         )
         raise
 
-
-# if __name__ == "__main__":
-#     SystemExit(main())

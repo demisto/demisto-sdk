@@ -160,7 +160,7 @@ def test_validate_deleted_files_when_modifying_pack_metadata(git_repo: Repo):
         result = runner.invoke(
             main,
             [
-                "--protected-dirs",
+                "--protected-dir",
                 PACKS_DIR,
             ],
             catch_exceptions=False,
@@ -196,7 +196,7 @@ def test_validate_deleted_files_when_adding_integration(git_repo: Repo):
         result = runner.invoke(
             main,
             [
-                "--protected-dirs",
+                "--protected-dir",
                 PACKS_DIR,
             ],
             catch_exceptions=False,
@@ -231,7 +231,7 @@ def test_validate_deleted_files_when_renaming_file_name(git_repo: Repo):
         result = runner.invoke(
             main,
             [
-                "--protected-dirs",
+                "--protected-dir",
                 TESTS_DIR,
             ],
             catch_exceptions=False,
@@ -269,8 +269,10 @@ def test_validate_deleted_files_when_deleting_integration_folder(git_repo: Repo)
         result = runner.invoke(
             main,
             [
-                "--protected-dirs",
+                "--protected-dir",
                 PACKS_DIR,
+                "--protected-dir",
+                TESTS_DIR,
             ],
             catch_exceptions=False,
         )

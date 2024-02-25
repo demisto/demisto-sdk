@@ -168,22 +168,3 @@ def mock_update_id_set_cpu_count() -> Generator:
 @pytest.fixture(autouse=True)
 def clear_cache():
     tools.get_file.cache_clear()
-
-
-# import platform
-# import xml.etree.ElementTree as ET
-#
-# @pytest.fixture(scope='session', autouse=True)
-# def add_python_version_to_junit(request):
-#     def pytest_sessionfinish(session, exitstatus):
-#         junit_file = getattr(request.config.option, 'junitxml', None)
-#         print(f'{junit_file=}')
-#         if junit_file:
-#             tree = ET.parse(junit_file)
-#             root = tree.getroot()
-#             python_version = platform.python_version()
-#             for testsuite in root.iter("testsuite"):
-#                 testsuite.set("python_version", python_version)
-#             tree.write(junit_file, encoding="UTF-8", xml_declaration=True)
-#
-#     pytest_sessionfinish(request.session, None)

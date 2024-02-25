@@ -169,7 +169,6 @@ def _split_by_objects(
         files: the files to split
         config_arg: a tuple, argument_name, file_name
         run_isolated: a boolean. If true it will split all the objects into separate hooks.
-        support_pack_ignore_config: a boolean. If true it will read the support the config in pack ignore, for example networking.
 
     Returns:
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
@@ -360,7 +359,7 @@ class DockerHook(Hook):
                 hook[
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
-
+                # change the working directory to the integration script, as it runs in an isolated container
                 hook[
                     "entry"
                 ] = f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"

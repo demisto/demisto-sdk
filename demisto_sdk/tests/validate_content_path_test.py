@@ -7,8 +7,8 @@ from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     ZERO_DEPTH_FILES,
+    InvalidDepthOneFile,
     InvalidDepthOneFolder,
-    InvalidDepthTwoFile,
     InvalidDepthZeroFile,
     PathIsFolder,
     PathUnderDeprecatedContent,
@@ -37,7 +37,7 @@ def test_content_entities_dir_length():
 
 
 folders_not_allowed_to_contain_files = (
-    set(CONTENT_ENTITIES_DIRS) | (DEPTH_ONE_FOLDERS)
+    set(CONTENT_ENTITIES_DIRS) | DEPTH_ONE_FOLDERS
 ).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
 
 DUMMY_PACK_PATH = Path("content", "Packs", "myPack")
@@ -75,7 +75,7 @@ def test_depth_one_folder_fail(nested: bool):
 def test_depth_one_folder_pass(folder: str, nested: bool):
     """
     Given
-            A name of a folder, which is not allowed as a first-level folder
+            A name of a folder, which is NOT allowed as a first-level folder
     When
             Running validate_path on a file created directly under the folder
     Then
@@ -109,16 +109,13 @@ def test_depth_two_fail(folder: str):
     Then
             Make sure InvalidDepthTwoFile is raised
     """
-    with pytest.raises(InvalidDepthTwoFile):
+    with pytest.raises(InvalidDepthOneFile):
         validate_path(DUMMY_PACK_PATH / folder / "file")
 
 
 @pytest.mark.parametrize(
     "folder",
-    [
-        (sorted(folders_not_allowed_to_contain_files)[0]),
-        tuple(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)[0],
-    ],
+    folders_not_allowed_to_contain_files | DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
 )
 def test_third_level_pass(folder: str):
     """

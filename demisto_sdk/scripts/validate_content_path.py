@@ -60,7 +60,9 @@ ZERO_DEPTH_FILES = frozenset(
     )
 )
 
-DEPTH_ONE_FOLDERS = frozenset(ContentType.folders()) | {
+DEPTH_ONE_FOLDERS = set(ContentType.folders()).difference(
+    ("Packs", "BaseContents", "BaseNodes", "BasePlaybooks", "BaseScripts")
+) | {
     RELEASE_NOTES_DIR,
     DOC_FILES_DIR,
 }
@@ -124,7 +126,7 @@ class InvalidDepthOneFolder(InvalidPathException):
     message = "The first folder under the pack is not allowed."
 
 
-class InvalidDepthTwoFile(InvalidPathException):
+class InvalidDepthOneFile(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
@@ -154,27 +156,25 @@ def validate_path(path: Path) -> None:
     if (first_level_folder := parts_after_pack[0]) not in DEPTH_ONE_FOLDERS:
         raise InvalidDepthOneFolder
 
-    if depth == 1:  # Packs/some_pack/Scripts/script-foo.yml
+    if depth == 1:  # Packs/myPack/Scripts/script-foo.yml
         for prefix, folder in (
             ("script", ContentType.SCRIPT),
             ("integration", ContentType.INTEGRATION),
         ):
             if (
-                path.name.startswith(prefix)
-                and first_level_folder == folder.as_folder
+                first_level_folder == folder.as_folder
+                and path.name.startswith(f"{prefix}-")
                 and (path.suffix in {".md", ".yml"})  # these fail validate-all
             ):
-                # old, unified format, e.g. Packs/some_pack/Scripts/script-foo.yml
+                # old, unified format, e.g. Packs/myPack/Scripts/script-foo.yml
                 logger.warning(
                     "Unified files (while discouraged), are exempt from path validation, skipping them"
                 )
                 return
-    if (
-        depth == 2
-        and first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES
-    ):
-        # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<modified file>
-        raise InvalidDepthTwoFile
+
+        if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
+            # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
+            raise InvalidDepthOneFile
 
 
 def main(

@@ -3,8 +3,8 @@ name: Deploy SDK to PyPi
 on:
   pull_request:
     types: [labeled]
-#    branches:
-#      - '/^v\d+\.\d+\.\d+$/'  # trigger only on release branches
+    branches:
+      - '^v\d+\.\d+\.\d+$'  # trigger only on release branches
 
 jobs:
   deploy-to-pypi:

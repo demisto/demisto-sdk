@@ -11,6 +11,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidDepthTwoFile,
     InvalidDepthZeroFile,
     PathIsFolder,
+    PathUnderDeprecatedContent,
     validate_path,
 )
 
@@ -148,8 +149,6 @@ def test_third_level_pass(folder: str):
             Path("Packs/myPack/Integrations/integration-foo.md"),
             id="Unified integration (md)",
         ),
-        pytest.param(Path("Packs/DeprecatedContent/foo"), id="DeprecatedContent"),
-        pytest.param(Path("foo/bar"), id="not under Packs"),
     ),
 )
 def test_excempt_paths(path: Path):
@@ -162,6 +161,22 @@ def test_excempt_paths(path: Path):
             Make sure the validation passes (without raising)
     """
     validate_path(path)
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "foo",
+        "foo/bar",
+        "foo/bar.py",
+        "Integrations/myIntegration.yml",
+        "Integrations/myIntegration/myIntegration.py",
+        "Integrations/myIntegration/myIntegration.yml",
+    ),
+)
+def test_deprecatedcontent(path: str):
+    with pytest.raises(PathUnderDeprecatedContent):
+        validate_path(Path("Packs/DeprecatedContent", path))
 
 
 def test_first_level_folders_subset():

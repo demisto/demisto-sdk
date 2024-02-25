@@ -112,6 +112,10 @@ class PathIsFolder(Exception):
     ...
 
 
+class PathUnderDeprecatedContent(Exception):
+    ...
+
+
 class InvalidDepthZeroFile(InvalidPathException):
     message = "The file cannot be saved direclty under the pack folder."
 
@@ -131,6 +135,9 @@ def validate_path(path: Path) -> None:
 
     if PACKS_FOLDER not in path.parts:
         raise PathOutsidePacks  # TODO
+
+    if "DeprecatedContent" in path.parts:
+        raise PathUnderDeprecatedContent
 
     parts_before_packs, parts_after_packs = tuple(
         split_at(path.parts, lambda v: v == PACKS_FOLDER, maxsplit=1)
@@ -180,6 +187,9 @@ def main(
 
     except PathIsFolder:
         logger.warning(f"{path!s} is a folder, skipping")
+
+    except PathUnderDeprecatedContent:
+        logger.warning(f"{path!s} is under the DeprecatedContent folder, skipping")
 
     except InvalidPathException as e:
         if github_action:

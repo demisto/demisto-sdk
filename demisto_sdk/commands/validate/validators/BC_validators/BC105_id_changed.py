@@ -79,7 +79,7 @@ class IdChangedValidator(BaseValidator[ContentTypes]):
     error_message = "ID of content item was changed from {0} to {1}, please undo."
     fix_message = "Changing ID back to {0}."
     related_field = "id"
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     is_auto_fixable = True
     old_id: dict[str, str] = {}
 

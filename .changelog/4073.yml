@@ -1,4 +1,0 @@
-changes:
-- description: Added support for validation BC105 to the new validation manager.
-  type: internal
-pr_number: 4073

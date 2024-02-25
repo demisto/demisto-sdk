@@ -461,7 +461,7 @@ jobs:
         validate-files-new-validate,
         test-lint,
       ]
-    if: failure() && github.ref_name == 'master'
+    if: failure()
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

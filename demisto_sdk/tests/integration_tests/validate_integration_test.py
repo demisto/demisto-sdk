@@ -144,6 +144,7 @@ class TestGenericFieldValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
+        assert False
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")

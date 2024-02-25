@@ -46,6 +46,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_context import (
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
+INTEGRATIONS_BATCH = 300
 
 
 class PreCommitRunner:
@@ -348,7 +349,7 @@ def group_by_language(
     language_to_files: Dict[str, Set] = defaultdict(set)
     integrations_scripts = []
     for integration_script_paths in more_itertools.chunked_even(
-        integrations_scripts_mapping.keys(), 300
+        integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
         with multiprocessing.Pool(processes=cpu_count()) as pool:
             integrations_scripts.extend(

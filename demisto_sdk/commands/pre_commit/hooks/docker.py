@@ -321,7 +321,8 @@ class DockerHook(Hook):
         env = new_hook.pop("env", {})
         docker_version = DockerBase.version()
         quiet = True
-        if Version(docker_version) < Version("19.03"):
+        # quiet mode is silently pull the image, and it is supported only above 19.03
+        if docker_version < Version("19.03"):
             quiet = False
         docker_extra_args = self._get_property("pass_docker_extra_args", "")
         new_hook[

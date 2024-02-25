@@ -162,7 +162,7 @@ class DockerBase:
     @functools.lru_cache
     @staticmethod
     def version() -> Version:
-        Version(return init_global_docker_client().version()["Version"])
+        return Version(init_global_docker_client().version()["Version"])
 
     def installation_files(self, container_type: str) -> FILES_SRC_TARGET:
         files = self._files_to_push_on_installation.copy()

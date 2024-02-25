@@ -27,25 +27,26 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
         file_content = File.read_from_git_path(
             file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH
         )
-    except FileNotFoundError:
+    except (FileReadError, FileNotFoundError):
         logger.warning(
-            f"Could not find {file_path} in remote branch {DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
+            f"Could not retrieve {file_path} in remote branch {DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
         )
         logger.debug(
             f"Retrieving {file_path} content from local branch {DEMISTO_GIT_PRIMARY_BRANCH}"
         )
-        file_content = File.read_from_git_path(
-            file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH, from_remote=False
-        )
-    except FileReadError as error:
-        logger.warning(
-            f"Could not read file {file_path} from git, error: {error}\ntrying to read {file_path} from github"
-        )
-        file_content = File.read_from_github_api(
-            str(file_path),
-            tag=DEMISTO_GIT_PRIMARY_BRANCH,
-            verify_ssl=True if os.getenv("CI") else False,
-        )
+        try:
+            file_content = File.read_from_git_path(
+                file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH, from_remote=False
+            )
+        except (FileReadError, FileNotFoundError) as error:
+            logger.warning(
+                f"Could not read file {file_path} from git, error: {error}\ntrying to read {file_path} from github"
+            )
+            file_content = File.read_from_github_api(
+                str(file_path),
+                tag=DEMISTO_GIT_PRIMARY_BRANCH,
+                verify_ssl=True if os.getenv("CI") else False,
+            )
 
     if file_type := find_type(str(file_path), file_content):
         return file_type in FileType_ALLOWED_TO_DELETE

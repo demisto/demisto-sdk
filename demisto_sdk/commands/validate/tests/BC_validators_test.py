@@ -68,7 +68,7 @@ XSOAR_MARKETPLACE_FOR_IN_PACK = [ALL_MARKETPLACES_FOR_IN_PACK[0]]
         ),
     ],
 )
-def test_BreakingBackwardsSubtypeValidator(
+def test_BreakingBackwardsSubtypeValidator_is_valid(
     content_items, old_content_items, expected_number_of_failures, expected_msgs
 ):
     """

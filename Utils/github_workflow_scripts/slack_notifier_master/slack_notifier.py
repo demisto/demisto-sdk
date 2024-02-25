@@ -33,7 +33,15 @@ def get_failed_jobs(workflow_run: WorkflowRun) -> List[str]:
 def get_failed_tests(
     junit_file_paths: List[Path],
 ) -> Tuple[List[str], List[str], List[str]]:
+    """
+    Get all the failed tests from the workflow.
 
+    Args:
+        junit_file_paths: paths to all the junit files
+
+    Returns:
+        a list of failed unit-tests, a list of failed integration-tests, a list of failed graph-tests.
+    """
     failed_tests: Set[TestResult] = set()
     for path in junit_file_paths:
         failed_tests = failed_tests.union(

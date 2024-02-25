@@ -31,4 +31,4 @@ class ImageExistsValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.image_file and not Path(content_item.image_file).is_file() or not content_item.image_file]
+            if not Path(content_item.image_file).is_file() or not Path(content_item.image_file).exists()]

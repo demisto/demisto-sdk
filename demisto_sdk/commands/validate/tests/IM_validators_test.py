@@ -67,8 +67,8 @@ def test_ImageExistsValidator_is_valid_image_path(content_item, expected_result)
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_metadata_object(paths=['support'],values=['community']), "You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed."),
-        (create_metadata_object(paths=['support'],values=['partner']), "Partners must provide a non-empty author image.")
+        (create_metadata_object(paths=['support'],values=['community']), []),
+        (create_metadata_object(paths=['support'],values=['partner']), "Partner, You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed.")
     ]
 )
 

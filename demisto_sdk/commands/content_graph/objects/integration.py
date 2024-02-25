@@ -216,5 +216,5 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         return self.get_related_text_file(RelatedFileType.DESCRIPTION)
     
     @property
-    def image_file(self) -> Union[str, None]:
+    def image_file(self) -> str:
         return self.related_content[RelatedFileType.IMAGE]["path"][0]

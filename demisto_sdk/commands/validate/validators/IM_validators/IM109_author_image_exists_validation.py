@@ -12,11 +12,10 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Pack
 
-PARTNER_ERROR_MESSAGE = "Partners must provide a non-empty author image."
 class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM109"
     description = "Checks if the pack has an author image path."
-    error_message = "You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed."
+    error_message = "Partner, You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed."
     related_field = "image"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.AUTHOR_IMAGE]
@@ -26,10 +25,10 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
             validator=self,
-            message=PARTNER_ERROR_MESSAGE if content_item.support == "partner" else self.error_message,
+            message= self.error_message,
             content_object=content_item)
             
             for content_item in content_items
-            if content_item.author_image_path and not Path(content_item.author_image_path).is_file() or not content_item.author_image_path
+            if content_item.support == "partner" and (not Path(content_item.author_image_path).is_file() or not Path(content_item.author_image_path).exists())
         ]
 

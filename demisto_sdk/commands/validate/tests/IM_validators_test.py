@@ -19,8 +19,9 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_integration_object(),
-        "You've created/modified a yml or package without providing an image as a .png file , please add an image in order to proceed."
+        (
+            create_integration_object(),
+            "You've created/modified a yml or package without providing an image as a .png file , please add an image in order to proceed."
         ),
     ],
 )
@@ -71,12 +72,16 @@ def test_ImageExistsValidator_is_valid_image_path(content_item, expected_result)
     "content_item, expected_result",
     [
         (create_metadata_object(paths=['support'],values=['community']), []),
-        (create_metadata_object(paths=['support'],values=['partner']),
-        "Partner, You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed.")
+        (
+            create_metadata_object(paths=['support'],values=['partner']),
+            "Partner, You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed.",
+        )
     ],
 )
 
-def test_AuthorImageExistsValidator_is_valid_no_image_path(content_item, expected_result):
+def test_AuthorImageExistsValidator_is_valid_no_image_path(
+    content_item, expected_result
+):
     """
     Given
     content_item with a not valid author image path.
@@ -87,7 +92,7 @@ def test_AuthorImageExistsValidator_is_valid_no_image_path(content_item, expecte
     Then
     - Make sure the expected result matches the function result.
     """
-    content_item.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ''
+    content_item.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
     result = AuthorImageExistsValidator().is_valid([content_item])
     assert (
         result == expected_result
@@ -98,8 +103,8 @@ def test_AuthorImageExistsValidator_is_valid_no_image_path(content_item, expecte
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
-        (create_metadata_object(paths=['support'],values=['community']), []),
-        (create_metadata_object(paths=['support'],values=['partner']), []),
+        (create_metadata_object(paths=['support'], values=['community']), []),
+        (create_metadata_object(paths=['support'], values=['partner']), []),
     ],
 )
 def test_AuthorImageExistsValidator_is_valid_image_path(content_item, expected_result):
@@ -118,7 +123,7 @@ def test_AuthorImageExistsValidator_is_valid_image_path(content_item, expected_r
         result == expected_result
         if isinstance(expected_result, list)
         else result[0].message == expected_result
-        )
+    )
     
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",

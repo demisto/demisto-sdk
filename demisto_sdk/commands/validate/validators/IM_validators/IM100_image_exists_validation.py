@@ -24,11 +24,12 @@ class ImageExistsValidator(BaseValidator[ContentTypes]):
     
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
-             ValidationResult(
+            ValidationResult(
                 validator=self,
                 message=self.error_message,
                 content_object=content_item,
             )
             for content_item in content_items
             if not Path(content_item.image_file).is_file()
-            or not Path(content_item.image_file).exists()]
+            or not Path(content_item.image_file).exists()
+        ]

@@ -24,9 +24,8 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     def is_valid(self, content_items: Iterable[ContentTypes])->List[ValidationResult]:
         return [
             ValidationResult(
-            validator=self,
-            message= self.error_message,
-            content_object=content_item)
+                validator=self, message= self.error_message, content_object=content_item
+            )
             
             for content_item in content_items
             if content_item.support == "partner"

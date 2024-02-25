@@ -1,6 +1,10 @@
+from abc import ABC
 from pathlib import Path
+from typing import ClassVar
 
+import typer
 from more_itertools import split_at
+from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
@@ -44,7 +48,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 
-ZERO_DEPTH_ALLOWED_FILES = frozenset(
+ZERO_DEPTH_FILES = frozenset(
     (
         GIT_IGNORE_FILE_NAME,
         PACKS_PACK_IGNORE_FILE_NAME,
@@ -56,12 +60,12 @@ ZERO_DEPTH_ALLOWED_FILES = frozenset(
     )
 )
 
-FIRST_DEPTH_ALLOWED_FOLDERS = frozenset(ContentType.folders()) | {
+DEPTH_ONE_FOLDERS = frozenset(ContentType.folders()) | {
     RELEASE_NOTES_DIR,
     DOC_FILES_DIR,
 }
 
-FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
+DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     (
         PLAYBOOKS_DIR,
         TEST_PLAYBOOKS_DIR,
@@ -96,36 +100,54 @@ FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
 )
 
 
-def validate_path(path: Path) -> bool:
+class InvalidPathException(Exception, ABC):
+    message: ClassVar[str]
+
+
+class PathOutsidePacks(InvalidPathException):
+    message = "Path is not under Packs"
+
+
+class PathIsFolder(Exception):
+    ...
+
+
+class InvalidDepthZeroFile(InvalidPathException):
+    message = "The file cannot be saved direclty under the pack folder."
+
+
+class InvalidDepthOneFolder(InvalidPathException):
+    message = "The first folder under the pack is not allowed."
+
+
+class InvalidDepthTwoFile(InvalidPathException):
+    message = "The folder containing this file cannot directly contain files. Add another folder under it."
+
+
+def validate_path(path: Path) -> None:
     logger.debug(f"checking {path=}")
     if path.is_dir():
-        logger.debug(f"{path!s} is a folder, skipping")
-        return True
+        raise PathIsFolder
 
     if PACKS_FOLDER not in path.parts:
-        return False  # TODO
+        raise PathOutsidePacks  # TODO
 
-    _before_packs_dir, after_packs_dir = tuple(
+    parts_before_packs, parts_after_packs = tuple(
         split_at(path.parts, lambda v: v == PACKS_FOLDER, maxsplit=1)
     )
 
-    parts_after_pack = after_packs_dir[1:]  # everything after Packs/<pack name>
-    depth = len(parts_after_pack)
+    parts_after_pack = parts_after_packs[1:]  # everything after Packs/<pack name>
+    depth = len(parts_after_pack) - 1
 
-    if depth == 1:  # file is directly under pack
-        if path.name not in ZERO_DEPTH_ALLOWED_FILES:
-            logger.error(
-                f"{path.name} is not a valid file directly under the pack folder."
-            )
-            return False
+    if depth == 0:  # file is directly under pack
+        if path.name not in ZERO_DEPTH_FILES:
+            raise InvalidDepthZeroFile
+        return
 
-    if (first_level_folder := parts_after_pack[0]) not in FIRST_DEPTH_ALLOWED_FOLDERS:
-        logger.error(
-            f"{first_level_folder} is not a valid first level folder under a pack."
-        )
-        return False
+    if (first_level_folder := parts_after_pack[0]) not in DEPTH_ONE_FOLDERS:
+        raise InvalidDepthOneFolder
 
-    if depth == 2:
+    if depth == 1:  # Packs/some_pack/Scripts/script-foo.yml
         for prefix, folder in (
             ("script", ContentType.SCRIPT),
             ("integration", ContentType.INTEGRATION),
@@ -133,22 +155,47 @@ def validate_path(path: Path) -> bool:
             if (
                 path.name.startswith(prefix)
                 and first_level_folder == folder.as_folder
-                and path.suffix
-                in {".md", ".yml"}  # these suffixes fail validate-all as of today
+                and (
+                    path.suffix in {".md", ".yml"}  # these fail validate-all
+                )
             ):
                 # old, unified format, e.g. Packs/some_pack/Scripts/script-foo.yml
                 logger.warning(
                     "Unified files (while discouraged), are exempt from path validation, skipping them"
                 )
-                return True
+                return
     if (
-        depth == 3
-        and first_level_folder not in FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
+        depth == 2
+        and first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES
     ):
         # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<modified file>
-        logger.error(
-            f"the {first_level_folder} cannot directly contain files. Add another folder under it."
-        )
-        return False
-    
-    raise NotImplementedError
+        raise InvalidDepthTwoFile
+
+
+def main(
+    path: Annotated[Path, typer.Argument(exists=True, file_okay=True, dir_okay=True)],
+    github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
+) -> None:
+    try:
+        validate_path(path)
+        logger.debug(f"[green]{path=} is valid[/green]")
+
+    except PathIsFolder:
+        logger.warning(f"{path!s} is a folder, skipping")
+
+    except InvalidPathException as e:
+        if github_action:
+            print(  # noqa: T201
+                f"::error file={path},line=1,endLine=1,title=Invalid Path::{e.message}"
+            )
+        else:
+            logger.error(f"Path {path} is invalid: {e.message}")
+            raise typer.Exit(1)
+
+    except Exception:
+        logger.exception(f"Failed checking path {path}")
+        raise typer.Exit(1)
+
+
+if __name__ == "__main__":
+    typer.run(main)

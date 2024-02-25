@@ -1,8 +1,10 @@
+import os
 from pathlib import Path
 from typing import List, Optional, cast
 
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup
+from demisto_sdk.commands.common.tools import string_to_bool
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
@@ -16,6 +18,7 @@ class ConfJsonValidator:
         conf_json_path: Path = CONF_PATH,
         graph: Optional[ContentGraphInterface] = None,  # Pass None to generate
     ) -> None:
+        self._conf_path = conf_json_path
         self.conf = ConfJSON.from_path(conf_json_path)
 
         logger.info("Creating content graph - this may take a few minutes")
@@ -36,7 +39,6 @@ class ConfJsonValidator:
             )
             for content_type, conf_ids in self.conf.linked_content_items.items()
         }
-        logger.info(f"{self.graph_ids_by_type.keys()=}")
 
     def _validate_content_exists(self) -> bool:
         is_valid = True
@@ -48,9 +50,13 @@ class ConfJsonValidator:
                     for item in self.graph_ids_by_type.get(content_type, ())
                 }
             ):
-                logger.error(
-                    f"{len(linked_ids_missing_in_graph)} {content_type.value}s are not found in the graph: {','.join(sorted(linked_ids_missing_in_graph))}"
-                )
+                message = f"{len(linked_ids_missing_in_graph)} {content_type.value}s are not found in the graph: {','.join(sorted(linked_ids_missing_in_graph))}"
+                logger.error(message)
+                if string_to_bool(os.getenv("GITHUB_ACTIONS")):
+                    print(  # noqa: T201
+                        f"::error file={self._conf_path},line=1,endLine=1,title=Conf.JSON Error::{message}"
+                    )
+
                 is_valid = False
         return is_valid
 

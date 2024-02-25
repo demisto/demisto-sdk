@@ -28,6 +28,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_version import (
+    IsValidVersionValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
@@ -174,7 +177,7 @@ def test_IDNameValidator_fix(content_item, expected_name, expected_fix_msg):
     When
     - Calling the IDNameValidator_fix fix function.
     Then
-        - Make sure the the object name was changed to match the id, and that the right fix msg is returned.
+        - Make sure that the object name was changed to match the id, and that the right fix msg is returned.
     """
     assert IDNameValidator().fix(content_item).message == expected_fix_msg
     assert content_item.name == expected_name
@@ -249,7 +252,7 @@ def test_CliNameMatchIdValidator_fix(content_item, expected_name, expected_fix_m
     When
     - Calling the CliNameMatchIdValidator fix function.
     Then
-        - Make sure the the object cli name was changed to match the id, and that the right fix msg is returned.
+        - Make sure that the object cli name was changed to match the id, and that the right fix msg is returned.
     """
     assert CliNameMatchIdValidator().fix(content_item).message == expected_fix_msg
     assert content_item.cli_name == expected_name
@@ -403,21 +406,6 @@ def test_IsFromVersionSufficientAllItemsValidator_fix(
             ],
             0,
             [],
-        ),
-        (
-            [
-                create_incident_type_object(["toVersion"], ["5.0.0"]),
-                create_incident_field_object(["toVersion"], ["4.5.0"]),
-                create_widget_object(["toVersion"], ["4.5.0"]),
-                create_wizard_object({"toVersion": "4.5.0"}),
-            ],
-            4,
-            [
-                "The IncidentType fromversion and toversion are not synchronized.\nThe toversion (5.0.0) should be greater than the fromversion (5.0.0).",
-                "The IncidentField fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (5.5.0).",
-                "The Widget fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (6.1.0).",
-                "The Wizard fromversion and toversion are not synchronized.\nThe toversion (4.5.0) should be greater than the fromversion (6.8.0).",
-            ],
         ),
     ],
 )
@@ -587,7 +575,7 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_fix(
     When
     - Calling the IsFromVersionSufficientIndicatorFieldValidator fix function.
     Then
-        - Make sure the the integration fromversion was raised and that the right message was returned.
+        - Make sure that the integration fromversion was raised and that the right message was returned.
         - Case 1: Should raise the version to 6.1.0.
         - Case 2: Should raise the version to 5.5.0.
         - Case 3: Should raise the version to 5.0.0.
@@ -769,7 +757,7 @@ def test_IsFromVersionSufficientIntegrationValidator_fix(
     When
     - Calling the IsFromVersionSufficientIntegrationValidator fix function.
     Then
-        - Make sure the the integration fromversion was raised and that the right message was returned.
+        - Make sure that the integration fromversion was raised and that the right message was returned.
         - Case 1: Should raise the version to 5.5.0.
         - Case 2: Should raise the version to 5.5.0.
         - Case 3: Should raise the version to 5.0.0.
@@ -945,3 +933,88 @@ def test_IsDeprecatedCorrectlyValidator_is_valid():
     for result in results:
         assert result.content_object.deprecated
         assert result.content_object.description == "Some description"
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_indicator_field_object(),
+                create_incident_field_object(),
+                create_widget_object(),
+                create_wizard_object(dict_to_update={"version": -1}),
+                create_integration_object(),
+                create_script_object(),
+                create_dashboard_object(),
+                create_incident_type_object(),
+                create_generic_module_object(),
+                create_generic_type_object(),
+                create_incoming_mapper_object(),
+                create_outgoing_mapper_object(),
+                create_generic_definition_object(),
+                create_classifier_object(),
+                create_list_object(["version"], [-1]),
+                create_playbook_object(),
+                create_generic_field_object(),
+                create_layout_object(),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_incident_field_object(["version"], [-2]),
+                create_list_object(["version"], [1]),
+                create_integration_object(["commonfields.version"], [0]),
+            ],
+            3,
+            [
+                "The version for our files should always be -1, please update the file.",
+                "The version for our files should always be -1, please update the file.",
+                "The version for our files should always be -1, please update the file.",
+            ],
+        ),
+    ],
+)
+def test_IsValidVersionValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items list.
+        - Case 1: A list of one of each content_item supported by the validation with a valid ID.
+        - Case 2: A list of one IncidentField, List, and Integration, all with invalid versions.
+    When
+    - Calling the IsValidVersionValidator is_valid function.
+    Then
+        - Make sure the right amount of failures return and that the error msg is correct.
+        - Case 1: Shouldn't fail anything.
+        - Case 2: Should fail all 3 content items.
+    """
+    results = IsValidVersionValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsValidVersionValidator_fix():
+    """
+    Given
+    - An integration with an invalid version.
+    When
+    - Calling the IsValidVersionValidator fix function.
+    Then
+    - Make sure that the object version was changed to -1, and that the right fix msg was returned.
+    """
+    content_item = create_integration_object(["commonfields.version"], [0])
+    assert content_item.version != -1
+    assert (
+        IsValidVersionValidator().fix(content_item).message
+        == "Updated the content item version to -1."
+    )
+    assert content_item.version == -1

@@ -44,9 +44,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_beta = self.script_info.get("beta", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.is_long_running = self.script_info.get("longRunning", False)
-        self.has_unittests: bool = (
-            self.path.parent / self.path.parts[-1].replace(".yml", "_test.py")
-        ).exists()
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
@@ -61,7 +58,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 "type": "script.type",
                 "subtype": "script.subtype",
                 "alt_docker_images": "script.alt_dockerimages",
-                "configuration": "configuration",
+                "params": "configuration",
             }
         )
         return super().field_mapping
@@ -72,7 +69,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     @property
     def params(self) -> Optional[List]:
-        return get_value(self.yml_data, self.field_mapping.get("configuration", ""), [])
+        return get_value(self.yml_data, self.field_mapping.get("params", ""), [])
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.
@@ -140,6 +137,13 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(
-            self.path.parent
-        )[1]
+        if not self.git_sha:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data(
+                self.path.parent
+            )[1]
+        else:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
+                self.path, self.git_sha, self.yml_data
+            )[
+                1
+            ]

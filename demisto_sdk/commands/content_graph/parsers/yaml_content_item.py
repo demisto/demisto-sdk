@@ -24,9 +24,14 @@ class YAMLContentItemParser(ContentItemParser):
         pack_marketplaces: List[MarketplaceVersions],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
-        self.path = self.get_path_with_suffix(".yml")
-        self.git_sha = git_sha
+        super().__init__(path, pack_marketplaces, git_sha)
+        self.path = (
+            self.get_path_with_suffix(".yml")
+            if not git_sha
+            else self.path / f"{self.path.name}.yml"
+            if not self.path.suffix == ".yml"
+            else self.path
+        )  # If git_sha is given then we know we're running on the old_content_object copy and we can assume that the file_path is either the actual item path or the path to the item's dir.
 
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(
@@ -45,6 +50,7 @@ class YAMLContentItemParser(ContentItemParser):
                 "description": "description",
                 "fromversion": "fromversion",
                 "toversion": "toversion",
+                "version": "version",
             }
         )
         return super().field_mapping
@@ -115,3 +121,7 @@ class YAMLContentItemParser(ContentItemParser):
     @cached_property
     def yml_data(self) -> dict:
         return get_yaml(str(self.path), git_sha=self.git_sha)
+
+    @property
+    def version(self) -> int:
+        return get_value(self.yml_data, self.field_mapping.get("version", ""), 0)

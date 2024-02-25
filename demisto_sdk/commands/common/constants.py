@@ -578,7 +578,8 @@ PIPFILE_REGEX = r".*/Pipfile(\.lock)?"
 TEST_DATA_REGEX = r".*test_data.*"
 TEST_FILES_REGEX = r".*test_files.*"
 DOCS_REGEX = r".*docs.*"
-IMAGE_REGEX = r".*\.png$"
+PNG_IMAGE_REGEX = r".*\.png$"
+SVG_IMAGE_REGEX = r".*\.svg$"
 DESCRIPTION_REGEX = r".*\.md"
 SCHEMA_REGEX = "Tests/schemas/.*.yml"
 
@@ -900,7 +901,6 @@ PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
-METADATA_FILE_NAME = "pack_metadata.json"
 PACKS_FOLDER = "Packs"
 
 CONF_JSON_FILE_NAME = "conf.json"
@@ -919,6 +919,10 @@ PYTHON_ALL_REGEXES: List[str] = sum(
 
 INTEGRATION_REGXES: List[str] = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]
 
+IMAGE_ALL_REGEXES: List[str] = [
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
+]
 YML_INTEGRATION_REGEXES: List[str] = [
     PACKS_INTEGRATION_YML_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
@@ -1106,7 +1110,13 @@ PACKAGE_SUPPORTING_DIRECTORIES = [
     PARSING_RULES_DIR,
 ]
 
-IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
+IGNORED_TYPES_REGEXES = [
+    DESCRIPTION_REGEX,
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
+    PIPFILE_REGEX,
+    SCHEMA_REGEX,
+]
 
 IGNORED_PACK_NAMES = ["Legacy", "NonSupported", "ApiModules"]
 
@@ -1339,7 +1349,7 @@ SCHEMA_TO_REGEX = {
     "incidentfield": JSON_ALL_INCIDENT_FIELD_REGEXES
     + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     "incidenttype": JSON_ALL_INCIDENT_TYPES_REGEXES,
-    "image": [IMAGE_REGEX],
+    "image": IMAGE_ALL_REGEXES,
     "reputation": JSON_ALL_INDICATOR_TYPES_REGEXES,
     "reputations": JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES,
     "readme": [
@@ -1518,6 +1528,7 @@ INCORRECT_PACK_NAME_WORDS = [
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
 SUPPORT_LEVEL_HEADER = "supportlevelheader"
+CLASSIFICATION_TYPE = "classification"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
@@ -2102,3 +2113,21 @@ PACK_DEFAULT_MARKETPLACES: List = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
+
+
+class RelatedFileType(Enum):
+    YML = "YML"
+    JSON = "JSON"
+    README = "README"
+    DESCRIPTION = "DESCRIPTION"
+    IMAGE = "IMAGE"
+    DARK_SVG = "DARK_SVG"
+    LIGHT_SVG = "LIGHT_SVG"
+    CODE = "CODE"
+    TEST_CODE = "TEST_CODE"
+    SCHEMA = "SCHEMA"
+    XIF = "XIF"
+    PACK_IGNORE = "PACK_IGNORE"
+    SECRETS_IGNORE = "SECRETS_IGNORE"
+    AUTHOR_IMAGE = "AUTHOR_IMAGE"
+    RELEASE_NOTES = "RELEASE_NOTES"

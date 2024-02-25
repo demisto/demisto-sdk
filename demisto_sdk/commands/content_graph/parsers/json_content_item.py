@@ -23,8 +23,7 @@ class JSONContentItemParser(ContentItemParser):
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.path = self.get_path_with_suffix(".json")
-        self.git_sha = git_sha
+        self.path = self.get_path_with_suffix(".json") if not git_sha else self.path
         self.original_json_data: Dict[str, Any] = self.json_data
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(
@@ -44,6 +43,7 @@ class JSONContentItemParser(ContentItemParser):
                 "description": "description",
                 "fromversion": "fromVersion",
                 "toversion": "toVersion",
+                "version": "version",
             }
         )
         return super().field_mapping
@@ -95,3 +95,7 @@ class JSONContentItemParser(ContentItemParser):
     @cached_property
     def json_data(self) -> Dict[str, Any]:
         return get_json(str(self.path), git_sha=self.git_sha)
+
+    @property
+    def version(self) -> int:
+        return get_value(self.json_data, self.field_mapping.get("version", ""), 0)

@@ -52,6 +52,9 @@ from demisto_sdk.commands.common.tools import (
     parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.commands.create import create
+from demisto_sdk.commands.content_graph.commands.get_dependencies import (
+    get_dependencies,
+)
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,
 )
@@ -3708,6 +3711,7 @@ graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
 graph_cmd_group.command("create", no_args_is_help=False)(create)
 graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
+graph_cmd_group.command("get-dependencies", no_args_is_help=True)(get_dependencies)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 
 

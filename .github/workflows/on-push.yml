@@ -442,7 +442,7 @@ jobs:
 
       - name: Upload artifacts
         if: always()
-        uses: ./.github/actions/upload_ar tifacts
+        uses: ./.github/actions/upload_artifacts
         with:
           artifacts-path-dir: content/test-lint
           artifact-name: test-lint-artifacts
@@ -481,4 +481,6 @@ jobs:
           find . -type f -name 'junit.xml' | while read -r file; do
             junit_file_paths+=" --junit-file-paths $file"
           done
-          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}} $junit_file_paths
+          ls
+          echo "$junit_file_paths"
+          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}} "$junit_file_paths"

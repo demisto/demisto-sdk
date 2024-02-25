@@ -26,9 +26,10 @@ ContentTypes = Union[
     IndicatorType,
     IncidentField,
     Pack,
-    Playbook
+    Playbook,
 ]
 ALL_MARKETPLACES = list(MarketplaceVersions)
+
 
 class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
     error_code = "BC108"
@@ -39,18 +40,17 @@ class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
 
             new_marketplaces = content_item.marketplaces
-            old_marketplaces = content_item.old_base_content_object.marketplaces    #type: ignore
+            old_marketplaces = content_item.old_base_content_object.marketplaces  # type: ignore
 
             # if the content is not a pack, we may want to compare to the pack marketplaces as well, since the item inherits the pack marketplaces, if not specified
             if not isinstance(content_item, Pack):
-                pack_marketplaces = content_item.in_pack.marketplaces   #type: ignore
-                
+                pack_marketplaces = content_item.in_pack.marketplaces  # type: ignore
+
                 # If all marketplaces are included, it might be due to the field not appearing. However, in reality, it is available only in a specific marketplace inherited from the pack marketplace.
                 # In this scenario, we will compare the pack's marketplaces as it serves as the source of truth.
                 if set(old_marketplaces) == set(ALL_MARKETPLACES):
@@ -58,11 +58,11 @@ class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
 
             if not (set(old_marketplaces).issubset(set(new_marketplaces))):
                 results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message,
-                            content_object=content_item,
-                        )
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message,
+                        content_object=content_item,
                     )
+                )
 
         return results

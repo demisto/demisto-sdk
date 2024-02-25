@@ -1,14 +1,12 @@
 from pathlib import Path
-from typing import Collection, Dict, List, Optional, Tuple
+from typing import Collection, Dict, List, Optional, Set, Tuple
 
 import typer
 from github import Github, WorkflowRun
 from slack_sdk import WebClient
-from demisto_sdk.scripts.pytest_junit_parser import TestResult, JunitParser, PyTestSuite
-from typing_extensions import Annotated
-
 
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.scripts.pytest_junit_parser import JunitParser, TestResult
 
 DEFAULT_SLACK_CHANNEL = "dmst-sdk-slack-notifier-test"
 
@@ -32,18 +30,34 @@ def get_failed_jobs(workflow_run: WorkflowRun) -> List[str]:
     return failed_jobs
 
 
-def get_failed_tests(junit_file_paths: List[Path]):
+def get_failed_tests(
+    junit_file_paths: List[Path],
+) -> Tuple[List[str], List[str], List[str]]:
 
-    failed_tests = set()
+    failed_tests: Set[TestResult] = set()
     for path in junit_file_paths:
         failed_tests = failed_tests.union(
-            test_result for test_suite in JunitParser(path).test_suites for test_result in test_suite.failed_tests
+            test_result
+            for test_suite in JunitParser(path).test_suites
+            for test_result in test_suite.failed_tests
         )
 
-    return [str(test_result) for test_result in failed_tests if test_result.is_unit_test], [str(test_result) for test_result in failed_tests if test_result.is_integration_test], [str(test_result) for test_result in failed_tests if test_result.is_graph_test]
+    return (
+        [str(test_result) for test_result in failed_tests if test_result.is_unit_test],
+        [
+            str(test_result)
+            for test_result in failed_tests
+            if test_result.is_integration_test
+        ],
+        [str(test_result) for test_result in failed_tests if test_result.is_graph_test],
+    )
 
 
-def construct_slack_message(summary_url: str, failed_jobs: List[str], failed_tests: Tuple[List[str], List[str], List[str]]) -> List[Dict]:
+def construct_slack_message(
+    summary_url: str,
+    failed_jobs: List[str],
+    failed_tests: Tuple[List[str], List[str], List[str]],
+) -> List[Dict]:
     def construct_slack_section(_section_title: str, _failed_entities: Collection[str]):
         """
         Construct a single section in the slack body message.
@@ -133,10 +147,8 @@ def slack_notifier(
         help="The slack channel to send the summary",
     ),
     junit_file_paths: List[Path] = typer.Option(
-        ...,
-        "--junit-file-paths",
-        help="The junit file paths to get failed tests"
-    )
+        ..., "--junit-file-paths", help="The junit file paths to get failed tests"
+    ),
 ):
     gh_client = Github(login_or_token=github_token, verify=False)
     repo = gh_client.get_repo("demisto/demisto-sdk")
@@ -146,7 +158,9 @@ def slack_notifier(
     failed_tests = get_failed_tests(junit_file_paths)
     summary_url = workflow_run.html_url
 
-    slack_message = construct_slack_message(summary_url, failed_jobs=failed_jobs, failed_tests=failed_tests)
+    slack_message = construct_slack_message(
+        summary_url, failed_jobs=failed_jobs, failed_tests=failed_tests
+    )
     if slack_message:
         slack_client = WebClient(token=slack_token)
         slack_client.chat_postMessage(

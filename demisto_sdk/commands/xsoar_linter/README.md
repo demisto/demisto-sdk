@@ -1,4 +1,4 @@
-## split
+## xsoar-lint
 Run the xsoar lint on the given paths.
 
 **Arguments**:

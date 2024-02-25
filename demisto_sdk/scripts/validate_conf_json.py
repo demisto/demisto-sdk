@@ -52,7 +52,7 @@ class ConfJsonValidator:
             ):
                 message = f"{len(linked_ids_missing_in_graph)} {content_type.value}s are not found in the graph: {','.join(sorted(linked_ids_missing_in_graph))}"
                 logger.error(message)
-                if string_to_bool(os.getenv("GITHUB_ACTIONS")):
+                if string_to_bool(os.getenv("GITHUB_ACTIONS", False)):
                     print(  # noqa: T201
                         f"::error file={self._conf_path},line=1,endLine=1,title=Conf.JSON Error::{message}"
                     )

@@ -29,6 +29,10 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
             content_object=content_item)
             
             for content_item in content_items
-            if content_item.support == "partner" and (not Path(content_item.author_image_path).is_file() or not Path(content_item.author_image_path).exists())
+            if content_item.support == "partner" 
+            and (
+                not Path(content_item.author_image_path).is_file()
+                or not Path(content_item.author_image_path).exists()
+            )
         ]
 

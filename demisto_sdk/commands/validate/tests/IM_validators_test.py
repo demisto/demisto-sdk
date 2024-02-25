@@ -117,7 +117,8 @@ def test_AuthorImageExistsValidator_is_valid_image_path(content_item, expected_r
     assert (
         result == expected_result
         if isinstance(expected_result, list)
-        else result[0].message == expected_result)
+        else result[0].message == expected_result
+        )
     
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",

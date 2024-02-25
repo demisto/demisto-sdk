@@ -35,7 +35,7 @@ class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
     description = "Ensuring that the 'marketplaces' property hasn't been removed or added in a manner that effectively removes all others."
     error_message = "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
     fix_message = ""
-    related_field = ""
+    related_field = "marketplaces"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
 

@@ -4,7 +4,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
     create_old_file_pointers,
-    create_pack_object,
+    create_metadata_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
@@ -137,11 +137,9 @@ def test_BreakingBackwardsSubtypeValidator_fix(
     [
         (ALL_MARKETPLACES, XSIAM_MARKETPLACE_FOR_IN_PACK),
         (XSIAM_MARKETPLACE, ALL_MARKETPLACES_FOR_IN_PACK),
-        (XSIAM_MARKETPLACE, XSIAM_MARKETPLACE_FOR_IN_PACK),
-        (ALL_MARKETPLACES, ALL_MARKETPLACES_FOR_IN_PACK),
-        (XSOAR_MARKETPLACE, ALL_MARKETPLACES_FOR_IN_PACK)
+        (XSIAM_MARKETPLACE, XSIAM_MARKETPLACE_FOR_IN_PACK)
     ])
-def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace(old_marketplaces, in_pack_marketplaces):
+def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace__passes(old_marketplaces, in_pack_marketplaces):
     """
     Given:
         - Modified `Integration` and `Script` and Old `Integration` and `Script` iterables, each within a pack.
@@ -149,8 +147,6 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
         - Case 1: Old `Integration` and `Script` have all marketplaces in their level, and the pack has only `XSIAM`.
         - Case 2: Old `Integration` and `Script` have only `XSIAM`, and the pack has all marketplaces.
         - Case 3: Old `Integration` and `Script` have only `XSIAM`, and the pack has only one marketplace (`XSIAM`).
-        - Case 4: Old `Integration` and `Script` have all marketplaces in their level, and the pack has all marketplaces.
-        - Case 5: Old `Integration` and `Script` have only `XSOAR`, and the pack has all marketplaces.
 
     When:
         - Calling the `WasMarketplaceModifiedValidator` function.
@@ -160,8 +156,41 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
         - Case 1: Should pass the validation since although the user defined only `XSIAM`, the content item will be used only in the `XSIAM` marketplace as defined in the pack level.
         - Case 2: Should pass the validation since the user did not remove any marketplace.
         - Case 3: Should pass the validation since the user did not remove any marketplace.
-        - Case 4: Should fail the validation since the user removed marketplaces.
-        - Case 5: Should fail the validation since the user replaced one marketplace with a different one.
+    """
+    modified_content_items =[create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
+            create_script_object(pack_info={"marketplaces": in_pack_marketplaces})]
+    old_content_items = [create_integration_object(),
+             create_script_object()]
+    
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = XSIAM_MARKETPLACE
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = old_marketplaces
+    create_old_file_pointers(modified_content_items, old_content_items)
+    
+    with ChangeCWD(REPO.path):
+        assert WasMarketplaceModifiedValidator().is_valid(modified_content_items) == []
+
+
+@pytest.mark.parametrize(
+    "old_marketplaces, in_pack_marketplaces",
+    [
+        (ALL_MARKETPLACES, ALL_MARKETPLACES_FOR_IN_PACK),
+        (XSOAR_MARKETPLACE, ALL_MARKETPLACES_FOR_IN_PACK)
+    ])
+def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace__fails(old_marketplaces, in_pack_marketplaces):
+    """
+    Given:
+        - Modified `Integration` and `Script` and Old `Integration` and `Script` iterables, each within a pack.
+        - Modified `Integration` and `Script` have only `XSIAM` in their level.
+        - Case 1: Old `Integration` and `Script` have all marketplaces in their level, and the pack has all marketplaces.
+        - Case 2: Old `Integration` and `Script` have only `XSOAR`, and the pack has all marketplaces.
+
+    When:
+        - Calling the `WasMarketplaceModifiedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Case 1: Should fail the validation since the user removed marketplaces.
+        - Case 2: Should fail the validation since the user replaced one marketplace with a different one.
     """
     modified_content_items =[create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
             create_script_object(pack_info={"marketplaces": in_pack_marketplaces})]
@@ -174,30 +203,23 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
     
     with ChangeCWD(REPO.path):
         results = WasMarketplaceModifiedValidator().is_valid(modified_content_items)
-
-    if old_marketplaces == ALL_MARKETPLACES and in_pack_marketplaces ==ALL_MARKETPLACES_FOR_IN_PACK or \
-        old_marketplaces == XSOAR_MARKETPLACE:
         assert results[0].message == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
         assert len(results) == 2
-    else:
-       assert results == []
 
 
 @pytest.mark.parametrize(
     "modified_marketplaces, in_pack_marketplaces",
     [
         (ALL_MARKETPLACES, XSIAM_MARKETPLACE_FOR_IN_PACK),
-        (ALL_MARKETPLACES, ALL_MARKETPLACES_FOR_IN_PACK),
-        (XSOAR_MARKETPLACE, ALL_MARKETPLACES_FOR_IN_PACK)
+        (ALL_MARKETPLACES, ALL_MARKETPLACES_FOR_IN_PACK)
     ])
-def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace(modified_marketplaces, in_pack_marketplaces):
+def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__passes(modified_marketplaces, in_pack_marketplaces):
     """
     Given:
         - Modified `Integration` and `Script` and Old `Integration` and `Script` iterables, each within a pack.
         - Old `Integration` and `Script` have only `XSIAM` in their level.
         - Case 1: Modified `Integration` and `Script` have all marketplaces in their level, and the pack has only `XSIAM`.
         - Case 2: Modified `Integration` and `Script` have all marketplaces in their level, and the pack has all marketplaces.
-        - Case 3: Modified `Integration` and `Script` have only `XSOAR`, and the pack has all marketplaces.
 
     When:
         - Calling the `WasMarketplaceModifiedValidator` function.
@@ -206,8 +228,6 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace(modi
         - The results should be as expected.
         - Case 1: Should pass the validation since the user added marketplaces or removed all marketplaces which is equal to adding all marketplaces.
         - Case 2: Should pass the validation since the user added marketplaces or removed all marketplaces which is equal to adding all marketplaces.
-        - Case 3: Should fail the validation since the user replaced one marketplace with a different one.
-     
     """
     modified_content_items =[create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
             create_script_object(pack_info={"marketplaces": in_pack_marketplaces})]
@@ -219,13 +239,40 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace(modi
     create_old_file_pointers(modified_content_items, old_content_items)
     
     with ChangeCWD(REPO.path):
-        results = WasMarketplaceModifiedValidator().is_valid(modified_content_items)
+        assert WasMarketplaceModifiedValidator().is_valid(modified_content_items) == []
 
-    if modified_marketplaces == XSOAR_MARKETPLACE:
+
+def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__fails():
+    """
+    Given:
+        - Modified `Integration` and `Script` and Old `Integration` and `Script` iterables, each within a pack.
+        - Old `Integration` and `Script` have only `XSIAM` in their level.
+        - Modified `Integration` and `Script` have only `XSOAR`, and the pack has all marketplaces.
+
+    When:
+        - Calling the `WasMarketplaceModifiedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should fail the validation since the user replaced one marketplace with a different one.
+     
+    """
+    modified_marketplaces = XSOAR_MARKETPLACE
+    in_pack_marketplaces= ALL_MARKETPLACES_FOR_IN_PACK
+    
+    modified_content_items =[create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
+            create_script_object(pack_info={"marketplaces": in_pack_marketplaces})]
+    old_content_items = [create_integration_object(),
+             create_script_object()]
+    
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = modified_marketplaces
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = XSIAM_MARKETPLACE
+    create_old_file_pointers(modified_content_items, old_content_items)
+    
+    with ChangeCWD(REPO.path):
+        results = WasMarketplaceModifiedValidator().is_valid(modified_content_items)
         assert results[0].message == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
         assert len(results) == 2
-    else:
-       assert results == []
 
 
 @pytest.mark.parametrize(
@@ -267,19 +314,15 @@ def test_WasMarketplaceModifiedValidator__old_and_modified_items_have_all_market
     [
         (ALL_MARKETPLACES, ALL_MARKETPLACES),
         (ALL_MARKETPLACES, XSIAM_MARKETPLACE),
-        (XSIAM_MARKETPLACE, ALL_MARKETPLACES),
         (XSIAM_MARKETPLACE, XSIAM_MARKETPLACE),
-        (XSIAM_MARKETPLACE, XSOAR_MARKETPLACE)
     ])
-def test_WasMarketplaceModifiedValidator__a_pack_is_modified(modified_pack, old_pack):
+def test_WasMarketplaceModifiedValidator__a_pack_is_modified__passes(modified_pack, old_pack):
     """
     Given:
         - Modified `Pack` and Old `Pack` iterables.
         - Case 1: Modified `Pack` and Old `Pack` have all marketplaces.
         - Case 2: Modified `Pack` has all marketplaces and Old `Pack` has only `XSIAM`.
-        - Case 3: Modified `Pack` has only `XSIAM` and Old `Pack` has all marketplaces.
-        - Case 4: Modified `Pack` and Old `Pack` have only `XSIAM`.
-        - Case 5: Modified `Pack` has only `XSIAM` and Old `Pack` has only `XSOAR`.
+        - Case 3: Modified `Pack` and Old `Pack` have only `XSIAM`.
 
     When:
         - Calling the `WasMarketplaceModifiedValidator` function.
@@ -288,20 +331,45 @@ def test_WasMarketplaceModifiedValidator__a_pack_is_modified(modified_pack, old_
         - The results should be as expected.
         - Case 1: Should pass the validation since the user didn't change anything or removed all marketplaces which is equal to adding all marketplaces.
         - Case 2: Should pass the validation since the user added marketplaces or removed all marketplaces which is equal to adding all marketplaces.
-        - Case 3: Should fail the validation since the user removed marketplaces.
-        - Case 4: Should pass the validation since the user didn't change anything or removed all marketplaces which is equal to adding all marketplaces.
-        - Case 5: Should fail the validation since the user replaced one marketplace with a different one.
+        - Case 3: Should pass the validation since the user didn't change anything or removed all marketplaces which is equal to adding all marketplaces.
     """
-    modified_content_item =[create_pack_object()]
-    old_content_item = [create_pack_object()]
+    modified_content_item =[create_metadata_object()]
+    old_content_item = [create_metadata_object()]
+    modified_content_item[0].marketplaces = modified_pack
+    old_content_item[0].marketplaces = old_pack
+    
+    create_old_file_pointers(modified_content_item, old_content_item)
+    assert WasMarketplaceModifiedValidator().is_valid(modified_content_item) == []
+
+
+
+@pytest.mark.parametrize(
+    "modified_pack, old_pack",
+    [
+        (XSIAM_MARKETPLACE, ALL_MARKETPLACES),
+        (XSIAM_MARKETPLACE, XSOAR_MARKETPLACE)
+    ])
+def test_WasMarketplaceModifiedValidator__a_pack_is_modified__fails(modified_pack, old_pack):
+    """
+    Given:
+        - Modified `Pack` and Old `Pack` iterables.
+        - Case 1: Modified `Pack` has only `XSIAM` and Old `Pack` has all marketplaces.
+        - Case 2: Modified `Pack` has only `XSIAM` and Old `Pack` has only `XSOAR`.
+
+    When:
+        - Calling the `WasMarketplaceModifiedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Case 1: Should fail the validation since the user removed marketplaces.
+        - Case 2: Should fail the validation since the user replaced one marketplace with a different one.
+    """
+    modified_content_item =[create_metadata_object()]
+    old_content_item = [create_metadata_object()]
     modified_content_item[0].marketplaces = modified_pack
     old_content_item[0].marketplaces = old_pack
     
     create_old_file_pointers(modified_content_item, old_content_item)
     results = WasMarketplaceModifiedValidator().is_valid(modified_content_item)
-    
-    if modified_pack == XSIAM_MARKETPLACE and old_pack == ALL_MARKETPLACES or \
-        modified_pack == XSIAM_MARKETPLACE and old_pack == XSOAR_MARKETPLACE:
-        assert results[0].message == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
-    else:
-        assert results == []
+    assert results[0].message == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
+  

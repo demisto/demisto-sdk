@@ -50,25 +50,6 @@ def create_integration_object(
     return BaseContent.from_path(Path(integration.path))  # type:ignore
 
 
-def create_pack_object(
-    paths: Optional[List[str]] = None,
-    values: Optional[List[Any]] = None,
-) -> Pack:
-    """Creating an pack object with altered fields from a default pack structure.
-
-    Args:
-        paths (Optional[List[str]]): The keys to update.
-        values (Optional[List[Any]]): The values to update.
-
-    Returns:
-        The integration object.
-    """
-    yml_content = load_yaml("integration.yml")
-    update_keys(yml_content, paths, values)
-    pack = REPO.create_pack()
-    return BaseContent.from_path(Path(pack.path))  # type:ignore
-
-
 def create_parsing_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,

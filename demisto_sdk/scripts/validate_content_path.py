@@ -155,9 +155,7 @@ def validate_path(path: Path) -> None:
             if (
                 path.name.startswith(prefix)
                 and first_level_folder == folder.as_folder
-                and (
-                    path.suffix in {".md", ".yml"}  # these fail validate-all
-                )
+                and (path.suffix in {".md", ".yml"})  # these fail validate-all
             ):
                 # old, unified format, e.g. Packs/some_pack/Scripts/script-foo.yml
                 logger.warning(

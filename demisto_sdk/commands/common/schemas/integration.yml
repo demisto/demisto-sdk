@@ -179,6 +179,16 @@ mapping:
     type: str
   description:xsoar_on_prem:
     type: str
+  deprecated:xsoar:
+    type: bool
+  deprecated:marketplacev2:
+    type: bool
+  deprecated:xpanse:
+    type: bool
+  deprecated:xsoar_saas:
+    type: bool
+  deprecated:xsoar_on_prem:
+    type: bool
 schema;configuration_schema:
   type: map
   required: true
@@ -306,6 +316,16 @@ schema;command_schema:
       type: str
     description:xsoar_on_prem:
       type: str
+    deprecated:xsoar:
+      type: bool
+    deprecated:marketplacev2:
+      type: bool
+    deprecated:xpanse:
+      type: bool
+    deprecated:xsoar_saas:
+      type: bool
+    deprecated:xsoar_on_prem:
+      type: bool
 schema;argument_schema:
   type: map
   mapping:
@@ -381,6 +401,16 @@ schema;argument_schema:
       type: any
     defaultValue:xsoar_on_prem:
       type: any
+    deprecated:xsoar:
+      type: bool
+    deprecated:marketplacev2:
+      type: bool
+    deprecated:xpanse:
+      type: bool
+    deprecated:xsoar_saas:
+      type: bool
+    deprecated:xsoar_on_prem:
+      type: bool
 schema;output_schema:
   type: map
   mapping:

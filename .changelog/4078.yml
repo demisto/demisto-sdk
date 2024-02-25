@@ -1,0 +1,4 @@
+changes:
+- description: Added support to set `deprecated` field for specific marketplaces in content items.
+  type: internal
+pr_number: 4078

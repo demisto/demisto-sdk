@@ -159,8 +159,8 @@ class DockerBase:
     def __del__(self):
         del self.tmp_dir_name
 
-    @functools.lru_cache
     @staticmethod
+    @functools.lru_cache
     def version() -> Version:
         return Version(init_global_docker_client().version()["Version"])
 

@@ -88,9 +88,7 @@ def validate_forbidden_deleted_files(
     if not protected_dirs:
         raise ValueError("--protected-dir must be provided")
     try:
-        if forbidden_deleted_files := get_forbidden_deleted_files(
-            set(protected_dirs)
-        ):
+        if forbidden_deleted_files := get_forbidden_deleted_files(set(protected_dirs)):
             logger.error(
                 f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
             )
@@ -100,4 +98,3 @@ def validate_forbidden_deleted_files(
             f"Unexpected error occurred while validating deleted files {error}"
         )
         raise
-

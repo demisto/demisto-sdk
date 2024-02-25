@@ -22,7 +22,7 @@ class IniFile(TextFile):
             config_parser.read_string(file_content_as_text)
         except Exception as error:
             raise FileLoadError(
-                error, class_name=self.__class__.__name__, path=self._safe_path
+                error, class_name=self.__class__.__name__, path=self.safe_path
             )
 
         return config_parser

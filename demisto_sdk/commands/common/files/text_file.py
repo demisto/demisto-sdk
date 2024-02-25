@@ -44,7 +44,7 @@ class TextFile(File):
         } or path.suffix.lower() in {".md", ".py", ".txt", ".xif"}
 
     def load(self, file_content: bytes) -> Any:
-        path = self._safe_path
+        path = self.safe_path
         try:
             return file_content.decode(self.encoding)
         except UnicodeDecodeError:

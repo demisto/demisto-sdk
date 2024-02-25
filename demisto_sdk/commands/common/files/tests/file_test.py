@@ -13,15 +13,10 @@ from demisto_sdk.commands.common.files import (
 )
 from demisto_sdk.commands.common.files.errors import UnknownFileError
 from demisto_sdk.commands.common.files.file import File
-from demisto_sdk.commands.common.handlers import (
-    DEFAULT_JSON_HANDLER,
-    DEFAULT_YAML_HANDLER,
-)
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
-
-json = DEFAULT_JSON_HANDLER
-yaml = DEFAULT_YAML_HANDLER
 
 
 class TestFile:

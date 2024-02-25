@@ -48,7 +48,10 @@ class File(ABC):
         return getattr(self, "_path")
 
     @property
-    def _safe_path(self) -> Union[Path, None]:
+    def safe_path(self) -> Union[Path, None]:
+        """
+        Returns the path of the file if exists, otherwise returns None
+        """
         try:
             return self.path
         except AttributeError:
@@ -477,5 +480,5 @@ class File(ABC):
                 response.content, encoding=encoding, handler=handler
             )
         except MemoryFileReadError as e:
-            logger.error(f"Could not read file from URL {url} as {_cls.__name__} file")
+            logger.error(f"Could not load file from URL {url} as {_cls.__name__} file")
             raise HttpFileReadError(url, exc=e.original_exc) from e

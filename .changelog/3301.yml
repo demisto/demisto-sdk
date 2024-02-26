@@ -1,4 +1,0 @@
-changes:
-- description: Modified the logging level of a few messages accross the SDK.
-  type: internal
-pr_number: 3301

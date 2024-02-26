@@ -13,6 +13,10 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  test-env:
+    runs-on: ubuntu-latest
+    steps:
+    - run: python --version
   validate-changelog:
     runs-on: ubuntu-latest
     if: github.ref_name != 'master'

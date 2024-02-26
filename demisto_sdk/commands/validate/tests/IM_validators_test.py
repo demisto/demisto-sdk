@@ -1,6 +1,10 @@
+from typing import List
+
 import pytest
 
 from demisto_sdk.commands.common.constants import RelatedFileType
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_metadata_object,
@@ -17,114 +21,85 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
 
 
 @pytest.mark.parametrize(
-    "content_item, expected_result",
+    "content_items, empty_image_path_flag, expected_number_of_failures, expected_msgs",
     [
         (
-            create_integration_object(),
-            "You've created/modified a yml or package without providing an image as a .png file , please add an image in order to proceed."
+            [create_integration_object()],
+            True,
+            1,
+            ["You've created/modified a yml or package without providing an image as a .png file, please add an image in order to proceed."]
+        ),
+        (
+            [create_integration_object()],
+            False,
+            0,
+            []
         ),
     ],
 )
-def test_ImageExistsValidator_is_valid_no_image_path(content_item, expected_result):
+def test_ImageExistsValidator_is_valid_image_path(content_items: List[Integration], empty_image_path_flag: bool, expected_number_of_failures: int, expected_msgs: List[str]):
     """
-    Given
-    content_item with a not valid image path.
-    
-    When
-    - Calling the ImageExistsValidator is_valid function.
-    
-    Then
-        - Make sure the expected result matches the function result.
-    """
-    content_item.related_content[RelatedFileType.IMAGE]["path"][0] = ""
-    result = ImageExistsValidator().is_valid([content_item])
-    if isinstance(expected_result, list):
-        assert result == expected_result
-    else:
-        assert result[0].message == expected_result
-    
-@pytest.mark.parametrize(
-    "content_item, expected_result",
-    [
-        (create_integration_object(), []),
-    ],
-)
-def test_ImageExistsValidator_is_valid_image_path(content_item, expected_result):
-    """
-    Given
-    content_item with a valid image path.
-    
-    When
-    - Calling the ImageExistsValidator is_valid function.
-    
-    Then
-    - Make sure the expected result matches the function result.
-    """
-    result = ImageExistsValidator().is_valid([content_item])
+    Given:
+    - content_item (Integration) with either a valid or not valid image path.
 
-    assert (
-        result == expected_result
-        if isinstance(expected_result, list)
-        else result[0].message == expected_result
-        )
-    
-@pytest.mark.parametrize(
-    "content_item, expected_result",
-    [
-        (create_metadata_object(paths=['support'],values=['community']), []),
-        (
-            create_metadata_object(paths=['support'],values=['partner']),
-            "Partner, You've created/modified a yml or package without providing an author image as a .png file , please add an image in order to proceed.",
-        )
-    ],
-)
+    When:
+    - Calling the ImageExistsValidator is_valid function.
 
-def test_AuthorImageExistsValidator_is_valid_no_image_path(
-    content_item, expected_result
-):
-    """
-    Given
-    content_item with a not valid author image path.
-    
-    When
-    - Calling the AuthorImageExistsValidator is_valid function.
-    
-    Then
+    Then:
     - Make sure the expected result matches the function result.
     """
-    content_item.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
-    result = AuthorImageExistsValidator().is_valid([content_item])
-    assert (
-        result == expected_result
-        if isinstance(expected_result, list)
-        else result[0].message == expected_result
-        )
-    
-@pytest.mark.parametrize(
-    "content_item, expected_result",
-    [
-        (create_metadata_object(paths=['support'], values=['community']), []),
-        (create_metadata_object(paths=['support'], values=['partner']), []),
-    ],
-)
-def test_AuthorImageExistsValidator_is_valid_image_path(content_item, expected_result):
-    """
-    Given
-    content_item with a valid author image path.
-    
-    When
-    - Calling the AuthorImageExistsValidator is_valid function.
-    
-    Then
-    - Make sure the expected result matches the function result.
-    """
-    result = AuthorImageExistsValidator().is_valid([content_item])
-    assert (
-        result == expected_result
-        if isinstance(expected_result, list)
-        else result[0].message == expected_result
+    for content_item in content_items:
+        if empty_image_path_flag:
+            content_item.related_content[RelatedFileType.IMAGE]["path"][0] = ""
+    result = ImageExistsValidator().is_valid(content_items)
+    assert len(result) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(result, expected_msgs)
+        ]
     )
-    
+ 
+
+@pytest.mark.parametrize(
+    "content_items, empty_image_path_flag, expected_number_of_failures, expected_msgs",
+    [
+        ([create_metadata_object(paths=['support'], values=['community'])], False, 0, []),
+        ([create_metadata_object(paths=['support'], values=['partner'])], False, 0, []),
+        ([create_metadata_object(paths=['support'], values=['partner'])],
+        True,
+        1,
+        ["Partner, You've created/modified a yml or package without providing an author image as a .png file, please add an image with the following path Author_image.png in order to proceed."]),
+        ([create_metadata_object(paths=['support'], values=['partner'])],
+        True,
+        0,
+        [])
+    ],
+)
+def test_AuthorImageExistsValidator_is_valid_image_path(content_items: List[Pack], empty_image_path_flag: bool , expected_number_of_failures: int, expected_msgs: List[str]):
+    """
+    Given:
+    - content_item (Pack) with either a valid or not valid author image path.
+
+    When:
+    - Calling the AuthorImageExistsValidator is_valid function.
+
+    Then:
+    - Make sure the expected result matches the function result.
+    """
+    for content_item in content_items:
+        if empty_image_path_flag:
+            content_item.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
+    result = AuthorImageExistsValidator().is_valid(content_items)
+    assert len(result) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(result, expected_msgs)
+        ]
+    )
+
+
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [

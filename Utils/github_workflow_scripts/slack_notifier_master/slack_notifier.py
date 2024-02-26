@@ -48,6 +48,7 @@ def get_failed_tests() -> Tuple[List[str], List[str], List[str]]:
             failed_unit_tests = failed_unit_tests.union({str(failed_test) for failed_test in test_suite.failed_unit_tests})
             failed_integration_tests = failed_integration_tests.union({str(failed_test) for failed_test in test_suite.failed_integration_tests})
             failed_graph_tests = failed_graph_tests.union({str(failed_test) for failed_test in test_suite.failed_graph_tests})
+        logger.info(f'Finished processing junit-file {path}')
 
     return failed_unit_tests, failed_integration_tests, failed_graph_tests
 

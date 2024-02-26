@@ -138,19 +138,19 @@ class DepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
-class ExcempdPath(Exception, ABC):
+class ExemptPath(Exception, ABC):
     message: ClassVar[str]
 
 
-class PathIsFolder(ExcempdPath):
+class PathIsFolder(ExemptPath):
     message = "Path is to a folder, these are not validated."
 
 
-class PathUnderDeprecatedContent(ExcempdPath):
+class PathUnderDeprecatedContent(ExemptPath):
     message = "Path under DeprecatedContent, these are not validated."
 
 
-class PathIsUnified(ExcempdPath):
+class PathIsUnified(ExemptPath):
     message = "Path is of a unified content item, these are not validated."
 
 
@@ -222,7 +222,7 @@ def main(
             logger.error(f"Path {path} is invalid: {e.message}")
             raise typer.Exit(1)
 
-    except ExcempdPath as e:
+    except ExemptPath as e:
         logger.warning(e.message)
 
     except Exception:

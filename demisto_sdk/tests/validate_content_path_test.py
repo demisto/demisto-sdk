@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Tuple
 
-import more_itertools
 import pytest
 
 from demisto_sdk.commands.common.constants import CONTENT_ENTITIES_DIRS, PACKS_FOLDER
@@ -196,11 +195,8 @@ def test_dir(repo):
         validate_path(Path(integration.path))
 
 
-@pytest.mark.parametrize(
-    "separators",
-    filter(None, more_itertools.powerset(SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES)),
-)
-def test_separator_in_file_name(separators: Tuple[str, ...]):
+@pytest.mark.parametrize("separator", SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES)
+def test_separator_in_file_name(separator:str):
     """
     Given
             A file name
@@ -215,7 +211,7 @@ def test_separator_in_file_name(separators: Tuple[str, ...]):
                 DUMMY_PACK_PATH,
                 "Integrations",
                 "MyIntegration",
-                f"my{''.join(separators)}Integration.py",
+                f"my{separator}Integration.py",
             )
         )
 

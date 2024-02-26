@@ -12,7 +12,7 @@ import docker
 import requests
 import urllib3
 from docker.types import Mount
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 from requests import JSONDecodeError
 from requests.exceptions import RequestException
 
@@ -162,7 +162,12 @@ class DockerBase:
     @staticmethod
     @functools.lru_cache
     def version() -> Version:
-        return Version(init_global_docker_client().version()["Version"])
+        version = init_global_docker_client().version()["Version"]
+        try:
+            return Version(version)
+        except InvalidVersion:
+            # we don't care about the build number
+            return Version(version.split("-")[0])
 
     def installation_files(self, container_type: str) -> FILES_SRC_TARGET:
         files = self._files_to_push_on_installation.copy()

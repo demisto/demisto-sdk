@@ -42,23 +42,16 @@ def get_failed_tests(
     Returns:
         a list of failed unit-tests, a list of failed integration-tests, a list of failed graph-tests.
     """
-    failed_tests: Set[TestResult] = set()
+    failed_unit_tests: Set[str] = set()
+    failed_integration_tests: Set[str] = set()
+    failed_graph_tests: Set[str] = set()
     for path in junit_file_paths:
-        failed_tests = failed_tests.union(
-            test_result
-            for test_suite in JunitParser(path).test_suites
-            for test_result in test_suite.failed_tests
-        )
+        for test_suite in JunitParser(path).test_suites:
+            failed_unit_tests = failed_unit_tests.union({str(failed_test) for failed_test in test_suite.failed_unit_tests})
+            failed_integration_tests = failed_integration_tests.union({str(failed_test) for failed_test in test_suite.failed_integration_tests})
+            failed_graph_tests = failed_graph_tests.union({str(failed_test) for failed_test in test_suite.failed_graph_tests})
 
-    return (
-        [str(test_result) for test_result in failed_tests if test_result.is_unit_test],
-        [
-            str(test_result)
-            for test_result in failed_tests
-            if test_result.is_integration_test
-        ],
-        [str(test_result) for test_result in failed_tests if test_result.is_graph_test],
-    )
+    return failed_unit_tests, failed_integration_tests, failed_graph_tests
 
 
 def construct_slack_message(

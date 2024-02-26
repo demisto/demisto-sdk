@@ -149,6 +149,18 @@ class PyTestSuite:
             ]
         return []
 
+    @property
+    def failed_unit_tests(self) -> List[TestResult]:
+        return [test_result for test_result in self.failed_tests if test_result.is_unit_test]
+
+    @property
+    def failed_integration_tests(self) -> List[TestResult]:
+        return [test_result for test_result in self.failed_tests if test_result.is_integration_test]
+
+    @property
+    def failed_graph_tests(self) -> List[TestResult]:
+        return [test_result for test_result in self.failed_tests if test_result.is_graph_test]
+
 
 class JunitParser:
     def __init__(self, junit_file_path: Path):

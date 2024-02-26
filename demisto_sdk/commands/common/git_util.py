@@ -849,7 +849,7 @@ class GitUtil:
         try:
             commit = self.repo.commit(commit_hash)
             return commit.hexsha == commit_hash
-        except ValueError:
+        except (ValueError, gitdb.exc.BadName):
             return False
 
     def get_current_working_branch(self) -> str:

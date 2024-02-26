@@ -269,6 +269,8 @@ class File(ABC):
         if not cls.git_util().is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
+            print(f'{cls.git_util().repo.working_dir=}')
+            print(f'{list(cls.git_util().repo.iter_commits())=}')
             raise FileNotFoundError(
                 f"File {path} does not exist in commit/branch {tag}"
             )

@@ -4398,3 +4398,21 @@ def check_text_content_contain_sub_text(
                 invalid_lines.append(str(line_num + 1))
 
     return invalid_lines
+
+def extract_image_paths_from_str(
+    text: str,
+    regex_str: str = r"!\[.*\]\((.*/doc_files/[a-zA-Z0-9_-]+\.png)"
+) -> List[Path]:
+    """
+    Args:
+        local_paths (List[str]): list of file paths
+        is_lower (bool): True to check when line is lower cased.
+        to_split (bool): True to split the line in order to search specific word
+        text (str): The readme content to search.
+
+    Returns:
+        list of lines which contains the given text.
+    """
+    
+    return [Path(image_path) for image_path in re.findall(regex_str, text)]
+

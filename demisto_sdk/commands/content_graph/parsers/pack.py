@@ -138,7 +138,10 @@ class PackMetadataParser:
         self.server_min_version: str = metadata.get("serverMinVersion", "")
         self.current_version: str = metadata.get("currentVersion", "")
         self.version_info: str = ""
-        self.commit: str = GitUtil().get_current_commit_hash() or ""
+        try:
+            self.commit: str = GitUtil().get_current_commit_hash() or ""
+        except ValueError:
+            self.commit = ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
         self.keywords: List[str] = metadata.get("keywords", [])

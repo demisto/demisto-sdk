@@ -21,9 +21,29 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Setup uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      shell: bash
 
-    - name: Setup Poetry
-      uses: Gr1N/setup-poetry@v9
+    - uses: actions/cache/restore@v4
+      name: Restore uv cache
+      with:
+        path: ~/.cache/uv
+        key: python-${{ inputs.python-version }}-uv
+
+    - name: Create venv with uv
+      run: uv venv --python=${{ inputs.python-version }} 
+      shell: bash
+
+    - name: Install Poetry with uv
+      run: uv pip install poetry
+      shell: bash
+
+    - name: Activate venv
+      run: |
+        . .venv/bin/activate
+        echo PATH=$PATH >> $GITHUB_ENV
+      shell: bash
 
     - name: Check pyproject.toml Consistency
       run: |
@@ -41,21 +61,6 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Setup uv
-      run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      shell: bash
-
-    - uses: actions/cache/restore@v4
-      name: Restore uv cache
-      with:
-        path: ~/.cache/uv
-        key: python-${{ inputs.python-version }}-uv
-
-
-    - name: Create venv with uv
-      run: uv venv --python=${{ inputs.python-version }} 
-      shell: bash
-
     - name: Install dependencies with uv
       run: uv pip install -r requirements.txt
       shell: bash
@@ -70,8 +75,3 @@ runs:
         path: ~/.cache/uv
         key: python-${{ inputs.python-version }}-uv
 
-    - name: Activate venv
-      run: |
-        . .venv/bin/activate
-        echo PATH=$PATH >> $GITHUB_ENV
-      shell: bash

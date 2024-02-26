@@ -38,7 +38,7 @@ def test_ImageExistsValidator_is_valid_image_path(
     content_items: List[Integration],
     empty_image_path_flag: bool,
     expected_number_of_failures: int,
-    expected_msgs: List[str]
+    expected_msgs: List[str],
 ):
     """
     Given:
@@ -65,20 +65,20 @@ def test_ImageExistsValidator_is_valid_image_path(
             for result, expected_msg in zip(result, expected_msgs)
         ]
     )
- 
+
 
 @pytest.mark.parametrize(
     "content_items, empty_image_path_flag, expected_number_of_failures, expected_msgs",
     [
         (
-            [create_metadata_object(paths=['support'], values=['community'])],
+            [create_metadata_object(paths=["support"], values=["community"])],
             False,
             0,
-            []
+            [],
         ),
-        ([create_metadata_object(paths=['support'], values=['partner'])], False, 0, []),
+        ([create_metadata_object(paths=["support"], values=["partner"])], False, 0, []),
         (
-            [create_metadata_object(paths=['support'], values=['partner'])],
+            [create_metadata_object(paths=["support"], values=["partner"])],
             True,
             1,
             [
@@ -86,7 +86,7 @@ def test_ImageExistsValidator_is_valid_image_path(
             ],
         ),
         (
-            [create_metadata_object(paths=['support'], values=['community'])],
+            [create_metadata_object(paths=["support"], values=["community"])],
             True,
             0,
             [],
@@ -97,7 +97,7 @@ def test_AuthorImageExistsValidator_is_valid_image_path(
     content_items: List[Pack],
     empty_image_path_flag: bool,
     expected_number_of_failures: int,
-    expected_msgs: List[str]
+    expected_msgs: List[str],
 ):
     """
     Given:

@@ -12,6 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Pack
 
+
 class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM109"
     description = "Checks if the pack has an author image path."
@@ -20,13 +21,13 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.AUTHOR_IMAGE]
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
-                validator=self, message=f'{self.error_message} {content_item.name}_image.png.', content_object=content_item
+                validator=self,
+                message=f"{self.error_message} {content_item.name}_image.png.",
+                content_object=content_item,
             )
-            
             for content_item in content_items
             if content_item.support == "partner"
             and (
@@ -34,4 +35,3 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
                 or not Path(content_item.author_image_path).exists()
             )
         ]
-

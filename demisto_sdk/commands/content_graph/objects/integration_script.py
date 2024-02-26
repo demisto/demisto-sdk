@@ -29,16 +29,28 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class Argument(BaseModel):
     name: str
     description: str = ""
-    required: Optional[bool] = False
+    required: Optional[bool] = None
     default: Optional[bool] = None
     predefined: Optional[List[str]] = None
-    isArray: Optional[bool] = False
+    isArray: Optional[bool] = None
     defaultvalue: Optional[Any] = None
-    secret: Optional[bool] = False
+    secret: Optional[bool] = None
     deprecated: Optional[bool] = False
     type: Optional[str] = None
     hidden: Optional[bool] = False
     auto: Optional[Auto] = None
+
+    @property
+    def to_raw_dict(self) -> Dict:
+        """Generate a Dict representation of the Argument object.
+
+        Returns:
+            Dict: The Dict representation of the Argument object.
+        """
+        dictified_arg = self.dict(exclude_none=True)
+        if "auto" in dictified_arg:
+            dictified_arg["auto"] = str(dictified_arg["auto"])
+        return dictified_arg
 
 
 class IntegrationScript(ContentItem):
@@ -50,6 +62,7 @@ class IntegrationScript(ContentItem):
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
+    version: Optional[int] = 0
 
     @lazy_property
     def python_version(self) -> Optional[str]:

@@ -202,7 +202,11 @@ class BaseContent(BaseNode):
         """
         for key, val in self.field_mapping.items():
             attr = getattr(self, key)
-            if key == "marketplaces":
+            if key == "docker_image":
+                attr = str(attr)
+            elif key in ["params"]:
+                continue
+            elif key == "marketplaces":
                 if (
                     MarketplaceVersions.XSOAR_SAAS in attr
                     and MarketplaceVersions.XSOAR in attr

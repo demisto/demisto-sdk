@@ -73,7 +73,7 @@ class TestResult:
         return hash((self.name, self.status, self.time, self.message))
 
 
-class PyTestSuite:
+class PytestTestSuite:
     def __init__(
         self,
         failures: int,
@@ -153,15 +153,25 @@ class PyTestSuite:
 
     @property
     def failed_unit_tests(self) -> List[TestResult]:
-        return [test_result for test_result in self.failed_tests if test_result.is_unit_test]
+        return [
+            test_result for test_result in self.failed_tests if test_result.is_unit_test
+        ]
 
     @property
     def failed_integration_tests(self) -> List[TestResult]:
-        return [test_result for test_result in self.failed_tests if test_result.is_integration_test]
+        return [
+            test_result
+            for test_result in self.failed_tests
+            if test_result.is_integration_test
+        ]
 
     @property
     def failed_graph_tests(self) -> List[TestResult]:
-        return [test_result for test_result in self.failed_tests if test_result.is_graph_test]
+        return [
+            test_result
+            for test_result in self.failed_tests
+            if test_result.is_graph_test
+        ]
 
 
 class JunitParser:
@@ -170,6 +180,9 @@ class JunitParser:
 
     @property
     def test_type(self):
+        """
+        Get the test-type based on junit file path.
+        """
         junit_abs_path = str(self.junit_file_path.absolute())
         if TestType.UNIT_TESTS in junit_abs_path:
             _type = TestType.UNIT_TESTS
@@ -181,10 +194,10 @@ class JunitParser:
         return _type
 
     @property
-    def test_suites(self) -> List[PyTestSuite]:
+    def test_suites(self) -> List[PytestTestSuite]:
         test_suites = JUnitXml.fromfile(str(self.junit_file_path))
         return [
-            PyTestSuite(
+            PytestTestSuite(
                 failures=int(test_suite.failures),
                 skipped=int(test_suite.skipped),
                 num_of_tests=int(test_suite.tests),

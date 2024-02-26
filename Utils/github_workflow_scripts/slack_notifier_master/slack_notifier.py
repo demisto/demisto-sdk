@@ -8,7 +8,7 @@ from slack_sdk import WebClient
 from demisto_sdk.commands.common.logger import logger
 from Utils.pytest_junit_parser import JunitParser
 
-DEFAULT_SLACK_CHANNEL = "dmst-sdk-slack-notifier-test"
+DEFAULT_SLACK_CHANNEL = "dmst-build-test"
 
 
 def get_failed_jobs(workflow_run: WorkflowRun) -> List[str]:
@@ -49,14 +49,29 @@ def get_failed_tests() -> Tuple[List[str], List[str], List[str]]:
     failed_unit_tests: Set[str] = set()
     failed_integration_tests: Set[str] = set()
     failed_graph_tests: Set[str] = set()
+
     for path in Path(".").glob("*/junit.xml"):
         for test_suite in JunitParser(path).test_suites:
-            failed_unit_tests = failed_unit_tests.union({str(failed_test) for failed_test in test_suite.failed_unit_tests})
-            failed_integration_tests = failed_integration_tests.union({str(failed_test) for failed_test in test_suite.failed_integration_tests})
-            failed_graph_tests = failed_graph_tests.union({str(failed_test) for failed_test in test_suite.failed_graph_tests})
-        logger.info(f'Finished processing junit-file {path}')
+            failed_unit_tests = failed_unit_tests.union(
+                {str(failed_test) for failed_test in test_suite.failed_unit_tests}
+            )
+            failed_integration_tests = failed_integration_tests.union(
+                {
+                    str(failed_test)
+                    for failed_test in test_suite.failed_integration_tests
+                }
+            )
+            failed_graph_tests = failed_graph_tests.union(
+                {str(failed_test) for failed_test in test_suite.failed_graph_tests}
+            )
 
-    return failed_unit_tests, failed_integration_tests, failed_graph_tests
+        logger.info(f"Finished processing junit-file {path}")
+
+    return (
+        list(failed_unit_tests),
+        list(failed_integration_tests),
+        list(failed_graph_tests),
+    )
 
 
 def construct_slack_message(
@@ -151,10 +166,9 @@ def slack_notifier(
         DEFAULT_SLACK_CHANNEL,
         "--slack-channel",
         help="The slack channel to send the summary",
-    )
+    ),
 ):
-    slack_channel = DEFAULT_SLACK_CHANNEL
-    gh_client = Github(login_or_token=github_token, verify=False)
+    gh_client = Github(login_or_token=github_token)
     repo = gh_client.get_repo("demisto/demisto-sdk")
     workflow_run: WorkflowRun = repo.get_workflow_run(workflow_id)
 

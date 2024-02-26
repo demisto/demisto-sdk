@@ -33,7 +33,7 @@ runs:
       shell: bash
 
     - name: Export Poetry dependencies
-      run: poetry export -o ${{ inputs.working-dir }}/requirements.txt
+      run: poetry export -o requirements.txt
       shell: bash
 
     - name: Set up Python ${{ inputs.python-version }}
@@ -53,9 +53,8 @@ runs:
 
     - name: Install dependencies with uv
       run: |
-        cd ${{ inputs.working-dir }}
         uv venv --python=${{ inputs.python-version }} 
-        uv pip install -r 
+        uv pip install -r requirements.txt
       shell: bash
 
     - uses: actions/cache/save@v4

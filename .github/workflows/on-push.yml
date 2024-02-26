@@ -323,6 +323,28 @@ jobs:
           artifacts-path-dir: content/test-pre-commit-command
           artifact-name: test-demisto-sdk-pre-commit-command-artifacts
 
+  test-validate-contnt-paths:
+    runs-on: ubuntu-latest
+    name: Test Demisto-SDK Pre-Commit Command
+    steps:
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.10"
+
+      - name: Checkout Content
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: demisto/content
+          path: content
+
+      - name: Validate content master paths
+        run: |
+          source $(poetry env info --path)/bin/activate
+          cd content
+          demisto-sdk pre-commit -a validate-content-paths
+
   test-graph-commands:
     runs-on: ubuntu-latest
     name: Test Graph Commands

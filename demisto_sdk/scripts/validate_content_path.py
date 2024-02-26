@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR,
     REPORTS_DIR,
     TEST_PLAYBOOKS_DIR,
+    TESTS_AND_DOC_DIRECTORIES,
     TRIGGER_DIR,
     WIDGETS_DIR,
     WIZARDS_DIR,
@@ -109,24 +110,31 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     )
 )
 
+FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS = frozenset(TESTS_AND_DOC_DIRECTORIES)
+SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES = ("_", " ", "-")
+
 
 class InvalidPathException(Exception, ABC):
     message: ClassVar[str]
 
 
-class PathOutsidePacks(InvalidPathException):
+class PathOutsidePacksError(InvalidPathException):
     message = "Path is not under Packs"
+
+
+class SeparatorsInFileNameError(InvalidPathException):
+    message = "file name has a separator (space, hypen, underscore)"
 
 
 class InvalidDepthZeroFile(InvalidPathException):
     message = "The file cannot be saved direclty under the pack folder."
 
 
-class InvalidDepthOneFolder(InvalidPathException):
+class DepthOneFolderError(InvalidPathException):
     message = "The first folder under the pack is not allowed."
 
 
-class InvalidDepthOneFile(InvalidPathException):
+class DepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
@@ -152,7 +160,7 @@ def validate_path(path: Path) -> None:
         raise PathIsFolder
 
     if PACKS_FOLDER not in path.parts:
-        raise PathOutsidePacks  # TODO
+        raise PathOutsidePacksError  # TODO
 
     if "DeprecatedContent" in path.parts:
         raise PathUnderDeprecatedContent
@@ -170,7 +178,7 @@ def validate_path(path: Path) -> None:
         return
 
     if (first_level_folder := parts_after_pack[0]) not in DEPTH_ONE_FOLDERS:
-        raise InvalidDepthOneFolder
+        raise DepthOneFolderError
 
     if depth == 1:  # Packs/myPack/Scripts/script-foo.yml
         for prefix, folder in (
@@ -187,7 +195,14 @@ def validate_path(path: Path) -> None:
 
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
-            raise InvalidDepthOneFile
+            raise DepthOneFileError
+
+    if any(
+        separator in path.name for separator in SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES
+    ) and not (
+        (FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS).intersection(parts_after_pack)
+    ):
+        raise SeparatorsInFileNameError
 
 
 def main(

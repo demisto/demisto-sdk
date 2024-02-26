@@ -1,18 +1,23 @@
 from pathlib import Path
+from typing import Tuple
 
+import more_itertools
 import pytest
 
 from demisto_sdk.commands.common.constants import CONTENT_ENTITIES_DIRS, PACKS_FOLDER
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
+    FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS,
+    SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES,
     ZERO_DEPTH_FILES,
-    InvalidDepthOneFile,
-    InvalidDepthOneFolder,
+    DepthOneFileError,
+    DepthOneFolderError,
     InvalidDepthZeroFile,
     PathIsFolder,
     PathIsUnified,
     PathUnderDeprecatedContent,
+    SeparatorsInFileNameError,
     validate_path,
 )
 
@@ -82,9 +87,9 @@ def test_first_level_folder_fail():
             Make sure the validation raises InvalidDepthOneFolder
     """
     assert (folder_name := "folder_name") not in DEPTH_ONE_FOLDERS
-    with pytest.raises(InvalidDepthOneFolder):
+    with pytest.raises(DepthOneFolderError):
         validate_path(Path(DUMMY_PACK_PATH, folder_name, "file"))
-    with pytest.raises(InvalidDepthOneFolder):
+    with pytest.raises(DepthOneFolderError):
         validate_path(
             Path(DUMMY_PACK_PATH, folder_name, "nested", "very nested", "file")
         )
@@ -115,7 +120,7 @@ def test_depth_one_fail(folder: str):
     Then
             Make sure InvalidDepthTwoFile is raised
     """
-    with pytest.raises(InvalidDepthOneFile):
+    with pytest.raises(DepthOneFileError):
         validate_path(DUMMY_PACK_PATH / folder / "file")
 
 
@@ -178,12 +183,65 @@ def test_dir(repo):
     Given
             A repo
     When
-            Calling validate_path on a folder
+            Calling validate_path on a folder path
     Then
             Make sure it raises the apporpiate exception
     """
     pack = repo.create_pack("myPack")
     integration = pack.create_integration()
-    for folder in (pack.path, integration.path):
-        with pytest.raises(PathIsFolder):
-            validate_path(Path(folder))
+    with pytest.raises(PathIsFolder):
+        validate_path(Path(pack.path))
+
+    with pytest.raises(PathIsFolder):
+        validate_path(Path(integration.path))
+
+
+@pytest.mark.parametrize(
+    "separators",
+    filter(None, more_itertools.powerset(SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES)),
+)
+def test_separator_in_file_name(separators: Tuple[str, ...]):
+    """
+    Given
+            A file name
+    When
+            Calling validate_path
+    Then
+            Make sure it raises the apporpiate exception
+    """
+    with pytest.raises(SeparatorsInFileNameError):
+        validate_path(
+            Path(
+                DUMMY_PACK_PATH,
+                "Integrations",
+                "MyIntegration",
+                f"my{''.join(separators)}Integration.py",
+            )
+        )
+
+
+@pytest.mark.parametrize("separator", SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES)
+@pytest.mark.parametrize("allowed_folder", FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS)
+@pytest.mark.parametrize("content_folder", ("Scripts", "Integrations", "Playbooks"))
+def test_separator_in_file_name_allowed_folder(
+    separator: Tuple[str, ...], allowed_folder: str, content_folder: str
+):
+    """
+    Given
+            A separator
+            A parent folder name which is allowed to contain filenames with separators
+            A content (first level) folder name
+    When
+            Calling validate_path
+    Then
+            Make sure the validation passes
+    """
+    validate_path(
+        Path(
+            DUMMY_PACK_PATH,
+            "Integrations",
+            "MyIntegration",
+            allowed_folder,
+            f"my{separator}Integration.py",
+        )
+    )

@@ -171,9 +171,9 @@ class JunitParser:
     @property
     def test_type(self):
         junit_abs_path = str(self.junit_file_path.absolute())
-        if "unit-tests" in junit_abs_path:
+        if TestType.UNIT_TESTS in junit_abs_path:
             _type = TestType.UNIT_TESTS
-        elif "integration-tests" in junit_abs_path:
+        elif TestType.INTEGRATION_TESTS in junit_abs_path:
             _type = TestType.INTEGRATION_TESTS
         else:
             _type = TestType.GRAPH_TESTS

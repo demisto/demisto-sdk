@@ -6,12 +6,18 @@ from github import Github, WorkflowRun
 from slack_sdk import WebClient
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.scripts.pytest_junit_parser import JunitParser, TestResult
+from Utils.pytest_junit_parser import JunitParser
 
 DEFAULT_SLACK_CHANNEL = "dmst-sdk-slack-notifier-test"
 
 
 def get_failed_jobs(workflow_run: WorkflowRun) -> List[str]:
+    """
+    Get a list of failed jobs.
+
+    Args:
+        workflow_run: the workflow run object.
+    """
     jobs = [job for job in workflow_run.jobs() if job.conclusion == "failure"]
 
     failed_jobs = []
@@ -147,6 +153,7 @@ def slack_notifier(
         help="The slack channel to send the summary",
     )
 ):
+    slack_channel = DEFAULT_SLACK_CHANNEL
     gh_client = Github(login_or_token=github_token, verify=False)
     repo = gh_client.get_repo("demisto/demisto-sdk")
     workflow_run: WorkflowRun = repo.get_workflow_run(workflow_id)

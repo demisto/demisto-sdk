@@ -331,11 +331,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Python Environment
-        uses: ./.github/actions/setup_environment
-        with:
-          python-version: "3.10"
     
       - name: Checkout Content
         uses: actions/checkout@v4
@@ -343,6 +338,11 @@ jobs:
           fetch-depth: 0
           repository: demisto/content
           path: content
+
+      - name: Setup Python Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.10"
 
       - name: Validate content master paths
         run: |

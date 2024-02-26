@@ -138,19 +138,19 @@ class DepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
-class ExemptPath(Exception, ABC):
+class ExcempdPath(Exception, ABC):
     message: ClassVar[str]
 
 
-class PathIsFolder(ExemptPath):
+class PathIsFolder(ExcempdPath):
     message = "Path is to a folder, these are not validated."
 
 
-class PathUnderDeprecatedContent(ExemptPath):
+class PathUnderDeprecatedContent(ExcempdPath):
     message = "Path under DeprecatedContent, these are not validated."
 
 
-class PathIsUnified(ExemptPath):
+class PathIsUnified(ExcempdPath):
     message = "Path is of a unified content item, these are not validated."
 
 
@@ -205,7 +205,7 @@ def validate_path(path: Path) -> None:
         raise SeparatorsInFileNameError
 
 
-def main(
+def cli(
     path: Annotated[Path, typer.Argument(exists=True, file_okay=True, dir_okay=True)],
     github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
 ) -> None:
@@ -222,7 +222,7 @@ def main(
             logger.error(f"Path {path} is invalid: {e.message}")
             raise typer.Exit(1)
 
-    except ExemptPath as e:
+    except ExcempdPath as e:
         logger.warning(e.message)
 
     except Exception:
@@ -230,5 +230,9 @@ def main(
         raise typer.Exit(1)
 
 
+def main():
+    typer.run(cli)
+
+
 if __name__ == "__main__":
-    typer.run(main)
+    main()

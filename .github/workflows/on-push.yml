@@ -478,9 +478,11 @@ jobs:
       - name: Notify Failed Jobs
         run: |
           junit_file_paths=""
+          echo $(find . -type f -name 'junit.xml')
           find . -type f -name 'junit.xml' | while read -r file; do
             junit_file_paths+=" --junit-file-paths $file"
           done
           ls
-          echo "$junit_file_paths"
+          ls unit-tests-python-3.10-artifacts
+          echo "junit_file_paths: $junit_file_paths"
           poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}} "$junit_file_paths"

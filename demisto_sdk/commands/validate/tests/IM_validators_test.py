@@ -27,7 +27,7 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
             [create_integration_object()],
             True,
             1,
-            ["You've created/modified a yml or package without providing an image as a .png file, please add an image in order to proceed."]
+            ["You've created/modified a yml or package without providing an image as a .png file, please add an image with the following path TestIntegration_image.png in order to proceed."]
         ),
         (
             [create_integration_object()],
@@ -40,13 +40,17 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
 def test_ImageExistsValidator_is_valid_image_path(content_items: List[Integration], empty_image_path_flag: bool, expected_number_of_failures: int, expected_msgs: List[str]):
     """
     Given:
-    - content_item (Integration) with either a valid or not valid image path.
+    content_items (Integrations).
+        - Case 1: Image path doesn't exist.
+        - Case 2: Image path exists.
 
     When:
-    - Calling the ImageExistsValidator is_valid function.
+        - Calling the ImageExistsValidator is_valid function.
 
     Then:
-    - Make sure the expected result matches the function result.
+        - Make sure the right amount of integration image path failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
     """
     for content_item in content_items:
         if empty_image_path_flag:
@@ -70,7 +74,7 @@ def test_ImageExistsValidator_is_valid_image_path(content_items: List[Integratio
         True,
         1,
         ["Partner, You've created/modified a yml or package without providing an author image as a .png file, please add an image with the following path Author_image.png in order to proceed."]),
-        ([create_metadata_object(paths=['support'], values=['partner'])],
+        ([create_metadata_object(paths=['support'], values=['community'])],
         True,
         0,
         [])
@@ -79,13 +83,21 @@ def test_ImageExistsValidator_is_valid_image_path(content_items: List[Integratio
 def test_AuthorImageExistsValidator_is_valid_image_path(content_items: List[Pack], empty_image_path_flag: bool , expected_number_of_failures: int, expected_msgs: List[str]):
     """
     Given:
-    - content_item (Pack) with either a valid or not valid author image path.
+    content_items (Pack).
+        - Case 1: Author image path exists for community support pack.
+        - Case 2: Author image path exists for partner support pack.
+        - Case 3: Author image path doesn't exist for partner support pack.
+        - Case 4: Author image path doesn't exist for community support pack.
 
     When:
-    - Calling the AuthorImageExistsValidator is_valid function.
+        - Calling the AuthorImageExistsValidator is_valid function.
 
     Then:
-    - Make sure the expected result matches the function result.
+        - Make sure the right amount of pack author image path failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Shouldn't fail.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
     """
     for content_item in content_items:
         if empty_image_path_flag:

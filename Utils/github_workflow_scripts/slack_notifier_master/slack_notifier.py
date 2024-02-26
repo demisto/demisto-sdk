@@ -155,7 +155,7 @@ def slack_notifier(
         help="The slack channel to send the summary",
     ),
     junit_file_paths: List[Path] = typer.Option(
-        ..., "--junit-file-paths", help="The junit file paths to get failed tests"
+        ..., "--junit-file-path", help="The junit file paths to get failed tests"
     ),
 ):
     gh_client = Github(login_or_token=github_token, verify=False)

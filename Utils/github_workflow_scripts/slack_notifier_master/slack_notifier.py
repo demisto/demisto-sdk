@@ -30,9 +30,7 @@ def get_failed_jobs(workflow_run: WorkflowRun) -> List[str]:
     return failed_jobs
 
 
-def get_failed_tests(
-    junit_file_paths: List[Path],
-) -> Tuple[List[str], List[str], List[str]]:
+def get_failed_tests() -> Tuple[List[str], List[str], List[str]]:
     """
     Get all the failed tests from the workflow.
 
@@ -45,7 +43,7 @@ def get_failed_tests(
     failed_unit_tests: Set[str] = set()
     failed_integration_tests: Set[str] = set()
     failed_graph_tests: Set[str] = set()
-    for path in junit_file_paths:
+    for path in Path(".").glob("*/junit.xml"):
         for test_suite in JunitParser(path).test_suites:
             failed_unit_tests = failed_unit_tests.union({str(failed_test) for failed_test in test_suite.failed_unit_tests})
             failed_integration_tests = failed_integration_tests.union({str(failed_test) for failed_test in test_suite.failed_integration_tests})
@@ -146,17 +144,14 @@ def slack_notifier(
         DEFAULT_SLACK_CHANNEL,
         "--slack-channel",
         help="The slack channel to send the summary",
-    ),
-    junit_file_paths: List[Path] = typer.Option(
-        ..., "--junit-file-path", help="The junit file paths to get failed tests"
-    ),
+    )
 ):
     gh_client = Github(login_or_token=github_token, verify=False)
     repo = gh_client.get_repo("demisto/demisto-sdk")
     workflow_run: WorkflowRun = repo.get_workflow_run(workflow_id)
 
     failed_jobs = get_failed_jobs(workflow_run)
-    failed_tests = get_failed_tests(junit_file_paths)
+    failed_tests = get_failed_tests()
     summary_url = workflow_run.html_url
 
     slack_message = construct_slack_message(

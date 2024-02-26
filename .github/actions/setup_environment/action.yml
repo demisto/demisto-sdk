@@ -25,6 +25,12 @@ runs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
       shell: bash
 
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+
     - uses: actions/cache/restore@v4
       name: Restore uv cache
       with:
@@ -55,11 +61,6 @@ runs:
     - name: Export Poetry dependencies
       run: poetry export -o requirements.txt --with dev ${{ inputs.poetry-export-arguments }}
       shell: bash
-
-    - name: Set up Python ${{ inputs.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ inputs.python-version }}
 
     - name: Install dependencies with uv
       run: uv pip install -r requirements.txt

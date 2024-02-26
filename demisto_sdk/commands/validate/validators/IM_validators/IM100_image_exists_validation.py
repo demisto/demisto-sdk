@@ -26,7 +26,7 @@ class ImageExistsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=f'{self.error_message} with the following path {content_item.name}_image.png in order to proceed.',
+                message=f"{self.error_message} with the following path {content_item.name}_image.png in order to proceed.",
                 content_object=content_item,
             )
             for content_item in content_items

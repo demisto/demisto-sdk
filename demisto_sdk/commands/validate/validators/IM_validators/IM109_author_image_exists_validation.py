@@ -21,11 +21,11 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     related_file_type = [RelatedFileType.AUTHOR_IMAGE]
 
     
-    def is_valid(self, content_items: Iterable[ContentTypes])->List[ValidationResult]:
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self, message= self.error_message, content_object=content_item
-                )
+            )
             
             for content_item in content_items
             if content_item.support == "partner"

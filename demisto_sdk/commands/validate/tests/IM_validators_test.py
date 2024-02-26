@@ -27,17 +27,19 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
             [create_integration_object()],
             True,
             1,
-            ["You've created/modified a yml or package without providing an image as a .png file, please add an image with the following path TestIntegration_image.png in order to proceed."]
+            [
+                "You've created/modified a yml or package without providing an image as a .png file, please add an image with the following path TestIntegration_image.png in order to proceed."
+            ],
         ),
-        (
-            [create_integration_object()],
-            False,
-            0,
-            []
-        ),
+        ([create_integration_object()], False, 0, []),
     ],
 )
-def test_ImageExistsValidator_is_valid_image_path(content_items: List[Integration], empty_image_path_flag: bool, expected_number_of_failures: int, expected_msgs: List[str]):
+def test_ImageExistsValidator_is_valid_image_path(
+    content_items: List[Integration],
+    empty_image_path_flag: bool,
+    expected_number_of_failures: int,
+    expected_msgs: List[str]
+):
     """
     Given:
     content_items (Integrations).
@@ -68,19 +70,35 @@ def test_ImageExistsValidator_is_valid_image_path(content_items: List[Integratio
 @pytest.mark.parametrize(
     "content_items, empty_image_path_flag, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object(paths=['support'], values=['community'])], False, 0, []),
+        (
+            [create_metadata_object(paths=['support'], values=['community'])],
+            False,
+            0,
+            []
+        ),
         ([create_metadata_object(paths=['support'], values=['partner'])], False, 0, []),
-        ([create_metadata_object(paths=['support'], values=['partner'])],
-        True,
-        1,
-        ["Partner, You've created/modified a yml or package without providing an author image as a .png file, please add an image with the following path Author_image.png in order to proceed."]),
-        ([create_metadata_object(paths=['support'], values=['community'])],
-        True,
-        0,
-        [])
+        (
+            [create_metadata_object(paths=['support'], values=['partner'])],
+            True,
+            1,
+            [
+                "Partner, You've created/modified a yml or package without providing an author image as a .png file, please add an image with the following path Author_image.png in order to proceed."
+            ],
+        ),
+        (
+            [create_metadata_object(paths=['support'], values=['community'])],
+            True,
+            0,
+            [],
+        ),
     ],
 )
-def test_AuthorImageExistsValidator_is_valid_image_path(content_items: List[Pack], empty_image_path_flag: bool , expected_number_of_failures: int, expected_msgs: List[str]):
+def test_AuthorImageExistsValidator_is_valid_image_path(
+    content_items: List[Pack],
+    empty_image_path_flag: bool,
+    expected_number_of_failures: int,
+    expected_msgs: List[str]
+):
     """
     Given:
     content_items (Pack).

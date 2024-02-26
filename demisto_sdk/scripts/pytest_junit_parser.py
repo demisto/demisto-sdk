@@ -10,6 +10,7 @@ class TestStatus(str, Enum):
     PASSED = "PASSED"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
+    UNKNOWN = "UNKNOWN"
 
 
 class TestType(str, Enum):
@@ -58,7 +59,7 @@ class TestResult:
         return self.status == TestStatus.PASSED
 
     def __str__(self) -> str:
-        return f"{self.name}(status={self.status})"
+        return f"{self.name}(status={self.status}, time={self.time} seconds)"
 
     def __eq__(self, other):
         return (
@@ -97,6 +98,7 @@ class PyTestSuite:
             name = f"{tc.classname}.{tc.name}"
             time = tc.time
             message = None
+            status = TestStatus.UNKNOWN
             if not tc.result:
                 status = TestStatus.PASSED
             else:

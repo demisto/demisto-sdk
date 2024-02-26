@@ -16,7 +16,7 @@ ContentTypes = Integration
 class ImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM100"
     description = "Checks if the integration has an image path."
-    error_message = "You've created/modified a yml or package without providing an image as a .png file, please add an image"
+    error_message = "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at"
     related_field = "image"
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.IMAGE]
@@ -26,7 +26,7 @@ class ImageExistsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=f"{self.error_message} with the following path {content_item.name}_image.png in order to proceed.",
+                message=f'{self.error_message} {content_item.name}_image.png.',
                 content_object=content_item,
             )
             for content_item in content_items

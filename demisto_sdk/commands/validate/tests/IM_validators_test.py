@@ -28,7 +28,7 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
             True,
             1,
             [
-                "You've created/modified a yml or package without providing an image as a .png file, please add an image with the following path TestIntegration_image.png in order to proceed."
+                "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at TestIntegration_image.png."
             ],
         ),
         ([create_integration_object()], False, 0, []),
@@ -82,7 +82,7 @@ def test_ImageExistsValidator_is_valid_image_path(
             True,
             1,
             [
-                "Partner, You've created/modified a yml or package without providing an author image as a .png file, please add an image with the following path Author_image.png in order to proceed."
+                "You've created/modified a yml or package in a partner supported pack without providing an author image as a .png file. Please make sure to add an image at HelloWorld_image.png."
             ],
         ),
         (

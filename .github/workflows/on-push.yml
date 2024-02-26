@@ -323,7 +323,7 @@ jobs:
           artifacts-path-dir: content/test-pre-commit-command
           artifact-name: test-demisto-sdk-pre-commit-command-artifacts
 
-  test-validate-contnt-path:
+  test-validate-content-path:
     runs-on: ubuntu-latest
     name: Test validate-content-path
     steps:
@@ -331,7 +331,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-    
+
       - name: Checkout Content
         uses: actions/checkout@v4
         with:
@@ -349,6 +349,13 @@ jobs:
           source $(poetry env info --path)/bin/activate
           cd content
           demisto-sdk pre-commit -a validate-content-path
+
+      - name: Upload artifacts
+        if: always()
+        uses: ./.github/actions/upload_artifacts
+        with:
+          artifacts-path-dir: /.demisto-sdk/logs/demisto_sdk_debug.log
+          artifact-name: test-validate-content-path-log
 
   test-graph-commands:
     runs-on: ubuntu-latest

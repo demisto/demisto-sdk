@@ -43,11 +43,13 @@ class File(ABC):
         _git_util = None
 
     @classmethod
-    def git_util(cls) -> GitUtil:
-        current_path = Path.cwd()
-        if current_path != Path(cls._git_util.repo.working_dir):
-            cls._git_util = GitUtil.from_content_path(current_path)
-        return cls._git_util
+    def git_util(cls) -> Union[GitUtil, None]:
+        if cls._git_util:
+            current_path = Path.cwd()
+            if current_path != Path(cls._git_util.repo.working_dir):
+                cls._git_util = GitUtil.from_content_path(current_path)
+            return cls._git_util
+        return None
 
     @property
     def path(self) -> Path:
@@ -221,10 +223,14 @@ class File(ABC):
             cls.read_from_local_path.cache_clear()
 
         if not path.is_absolute():
-            logger.debug(
-                f"path {path} is not absolute, trying to get full relative path from {cls.git_util().repo.working_dir}"
-            )
-            path = cls.git_util().repo.working_dir / path
+            if git_util := cls.git_util():
+                working_dir = git_util.repo.working_dir
+                logger.debug(
+                    f"path {path} is not absolute, trying to get full relative path from {working_dir}"
+                )
+                path = working_dir / path
+            else:
+                path = path.absolute()
             if not path.exists():
                 raise FileNotFoundError(f"File {path} does not exist")
 
@@ -273,7 +279,14 @@ class File(ABC):
         if clear_cache:
             cls.read_from_git_path.cache_clear()
 
-        if not cls.git_util().is_file_exist_in_commit_or_branch(
+        git_util = cls.git_util()
+
+        if not git_util:
+            raise ValueError(
+                f'Cannot retrieve file from git as the repository {Path(".")} is not a git repository'
+            )
+
+        if not git_util.is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
             raise FileNotFoundError(
@@ -288,11 +301,16 @@ class File(ABC):
 
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
         try:
-            return self.load(
-                self.git_util().read_file_content(
-                    self.path, commit_or_branch=tag, from_remote=from_remote
+            if git_util := self.git_util():
+                return self.load(
+                    git_util.read_file_content(
+                        self.path, commit_or_branch=tag, from_remote=from_remote
+                    )
                 )
+            raise ValueError(
+                f'Cannot retrieve file from git as the repository {Path(".")} is not a git repository'
             )
+
         except Exception as e:
             if from_remote:
                 tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"

@@ -10,7 +10,7 @@ from typing import Any, Optional, Type, Union
 import requests
 from bs4.dammit import UnicodeDammit
 from requests.exceptions import ConnectionError, RequestException, Timeout
-
+from git import InvalidGitRepositoryError
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
@@ -33,7 +33,13 @@ from demisto_sdk.commands.common.tools import retry
 
 class File(ABC):
 
-    _git_util = GitUtil.from_content_path()
+    try:
+        _git_util = GitUtil.from_content_path()
+    except InvalidGitRepositoryError:
+        logger.debug(
+            f'Could not load _git_util as the path {Path(".")} is not a valid git repository'
+        )
+        _git_util = None
 
     @classmethod
     def git_util(cls) -> GitUtil:

@@ -36,11 +36,6 @@ runs:
       run: poetry export -o ${{ inputs.working-dir }}/requirements.txt
       shell: bash
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: poetry export ${{ inputs.poetry-export-arguments }}
-        path: ${{ inputs.working-dir }}/requirements.txt
-
     - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v5
       with:

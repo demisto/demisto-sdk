@@ -43,4 +43,4 @@ jobs:
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: |
           echo "run releasing for PR: $PR_NUMBER with Name: $PR_TITLE"
-          poetry run python ./demisto_sdk/scripts/changelog/changelog.py --release -n "$PR_NUMBER" -t "$PR_TITLE" -bn "$BRANCH_NAME"
+          python ./demisto_sdk/scripts/changelog/changelog.py --release -n "$PR_NUMBER" -t "$PR_TITLE" -bn "$BRANCH_NAME"

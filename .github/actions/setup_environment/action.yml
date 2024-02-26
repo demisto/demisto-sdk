@@ -67,7 +67,7 @@ runs:
       shell: bash
 
     - name: Install Demisto-SDK with uv
-      run: uv pip install "demisto-sdk @ ."
+      run: uv pip install -e .
       shell: bash
 
     - uses: actions/cache/save@v4

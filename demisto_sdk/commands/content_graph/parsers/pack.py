@@ -2,7 +2,7 @@ from datetime import datetime
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
-
+from git import InvalidGitRepositoryError
 import regex
 
 from demisto_sdk.commands.common.constants import (
@@ -140,7 +140,7 @@ class PackMetadataParser:
         self.version_info: str = ""
         try:
             self.commit: str = GitUtil().get_current_commit_hash() or ""
-        except ValueError:
+        except InvalidGitRepositoryError:
             self.commit = ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []

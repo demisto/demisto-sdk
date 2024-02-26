@@ -33,7 +33,7 @@ runs:
       shell: bash
 
     - name: Export Poetry dependencies
-      run: poetry export -o requirements.txt
+      run: poetry export -o requirements.txt --with dev ${{ poetry-export-arguments }}
       shell: bash
 
     - name: Set up Python ${{ inputs.python-version }}

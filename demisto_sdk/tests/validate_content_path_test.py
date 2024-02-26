@@ -11,6 +11,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidDepthOneFolder,
     InvalidDepthZeroFile,
     PathIsFolder,
+    PathIsUnified,
     PathUnderDeprecatedContent,
     validate_path,
 )
@@ -44,66 +45,71 @@ DUMMY_PACK_PATH = Path("content", "Packs", "myPack")
 
 
 @pytest.mark.parametrize("file_name", ZERO_DEPTH_FILES)
-def test_depth_zero_valid(file_name: str):
+def test_depth_zero_pass(file_name: str):
+    """
+    Given
+            A file name which is allowed directly under the pack
+    When
+            Running validate_path
+    Then
+            Make sure the validation passes
+    """
     validate_path(Path(PACKS_FOLDER, "MyPack", file_name))
 
 
 @pytest.mark.parametrize("file_name", ("foo.py", "bar.md"))
-def test_depth_zero_invalid(file_name: str):
+def test_depth_zero_fail(file_name: str):
+    """
+    Given
+            A file name which is NOT allowed directly under the pack
+    When
+            Running validate_path
+    Then
+            Make sure the validation raises InvalidDepthZeroFile
+    """
+    assert file_name not in ZERO_DEPTH_FILES  # sanity
     with pytest.raises(InvalidDepthZeroFile):
         validate_path(Path(PACKS_FOLDER, "MyPack", file_name))
 
 
-@pytest.mark.parametrize("nested", (True, False))
-def test_depth_one_folder_fail(nested: bool):
-    """
-    Given
-            A name of a folder, which is not allowed as a first-level folder
-    When
-            Running validate_path on a file created directly under the folder
-    Then
-            Make sure the validation raises InvalidDepthOneFolder
-    """
-    assert (folder_name := "folder_name") not in DEPTH_ONE_FOLDERS
-    mid_path = (folder_name, "foo", "bar") if nested else (folder_name)
-    with pytest.raises(InvalidDepthOneFolder):
-        validate_path(Path(DUMMY_PACK_PATH, *mid_path, "file"))
-
-
-@pytest.mark.parametrize("folder", DEPTH_ONE_FOLDERS)
-@pytest.mark.parametrize("nested", (True, False))
-def test_depth_one_folder_pass(folder: str, nested: bool):
+def test_first_level_folder_fail():
     """
     Given
             A name of a folder, which is NOT allowed as a first-level folder
     When
             Running validate_path on a file created directly under the folder
     Then
-            Make sure the validation passes (without raising)
+            Make sure the validation raises InvalidDepthOneFolder
     """
-    assert folder in DEPTH_ONE_FOLDERS
-    mid_path = (folder, "foo", "bar") if nested else (folder,)
-    validate_path(Path(DUMMY_PACK_PATH, *mid_path, "file"))
+    assert (folder_name := "folder_name") not in DEPTH_ONE_FOLDERS
+    with pytest.raises(InvalidDepthOneFolder):
+        validate_path(Path(DUMMY_PACK_PATH, folder_name, "file"))
+    with pytest.raises(InvalidDepthOneFolder):
+        validate_path(
+            Path(DUMMY_PACK_PATH, folder_name, "nested", "very nested", "file")
+        )
 
 
-@pytest.mark.parametrize("folder", DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
-def test_depth_two_pass(folder: str):
+@pytest.mark.parametrize("folder", DEPTH_ONE_FOLDERS)
+def test_depth_one_pass(folder: str):
     """
     Given
-            A name of a folder, which may not contain files directly
+            A name of a folder, which IS allowed as a first-level folder
     When
-            Running validate_path on a file created directly under the folder
+            Running validate_path on a file created indirectly under it
     Then
             Make sure the validation passes (without raising)
     """
-    validate_path(DUMMY_PACK_PATH / folder / "file")
+    assert folder in DEPTH_ONE_FOLDERS
+    validate_path(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
+    validate_path(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
 
 
 @pytest.mark.parametrize("folder", folders_not_allowed_to_contain_files)
-def test_depth_two_fail(folder: str):
+def test_depth_one_fail(folder: str):
     """
     Given
-            A name of a folder, which may not contain files directly
+            A name of a folder, which may NOT contain files directly
     When
             Running validate_path on a file created directly under the folder
     Then
@@ -114,29 +120,15 @@ def test_depth_two_fail(folder: str):
 
 
 @pytest.mark.parametrize(
-    "folder",
-    folders_not_allowed_to_contain_files | DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
-)
-def test_third_level_pass(folder: str):
-    """
-    Given
-            A name of a folder
-    When
-            Running validate on a file created in a folder under that folder second-level
-    Then
-            Make sure the validation passes
-    """
-    validate_path(Path(f"content/Packs/myPack/{folder}/subfolder/file"))
-
-
-@pytest.mark.parametrize(
     "path",
     (
         pytest.param(
-            Path("Packs/myPack/Scripts/script-foo.yml"), id="Unified script (yml)"
+            Path("Packs/myPack/Scripts/script-foo.yml"),
+            id="Unified script (yml)",
         ),
         pytest.param(
-            Path("Packs/myPack/Scripts/script-foo.md"), id="Unified script (md)"
+            Path("Packs/myPack/Scripts/script-foo.md"),
+            id="Unified script (md)",
         ),
         pytest.param(
             Path("Packs/myPack/Integrations/integration-foo.yml"),
@@ -148,16 +140,17 @@ def test_third_level_pass(folder: str):
         ),
     ),
 )
-def test_excempt_paths(path: Path):
+def test_unified_conten(path: Path):
     """
     Given
-            A file under a path exempt
+            A file under a path under UnifiedContent
     When
             Running validate_path on the path
     Then
-            Make sure the validation passes (without raising)
+            Make sure the validation raises PathIsUnified
     """
-    validate_path(path)
+    with pytest.raises(PathIsUnified):
+        validate_path(path)
 
 
 @pytest.mark.parametrize(
@@ -193,4 +186,4 @@ def test_dir(repo):
     integration = pack.create_integration()
     for folder in (pack.path, integration.path):
         with pytest.raises(PathIsFolder):
-            validate_path(folder)
+            validate_path(Path(folder))

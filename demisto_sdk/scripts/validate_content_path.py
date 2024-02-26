@@ -61,7 +61,15 @@ ZERO_DEPTH_FILES = frozenset(
 )
 
 DEPTH_ONE_FOLDERS = set(ContentType.folders()).difference(
-    ("Packs", "BaseContents", "BaseNodes", "BasePlaybooks", "BaseScripts")
+    (
+        "Packs",
+        "BaseContents",
+        "BaseNodes",
+        "BasePlaybooks",
+        "BaseScripts",
+        "TestScripts",
+        "CommandOrScripts",
+    )
 ) | {
     RELEASE_NOTES_DIR,
     DOC_FILES_DIR,
@@ -110,14 +118,6 @@ class PathOutsidePacks(InvalidPathException):
     message = "Path is not under Packs"
 
 
-class PathIsFolder(Exception):
-    ...
-
-
-class PathUnderDeprecatedContent(Exception):
-    ...
-
-
 class InvalidDepthZeroFile(InvalidPathException):
     message = "The file cannot be saved direclty under the pack folder."
 
@@ -128,6 +128,22 @@ class InvalidDepthOneFolder(InvalidPathException):
 
 class InvalidDepthOneFile(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
+
+
+class ExcempdPath(Exception, ABC):
+    message: ClassVar[str]
+
+
+class PathIsFolder(ExcempdPath):
+    message = "Path is to a folder, these are not validated."
+
+
+class PathUnderDeprecatedContent(ExcempdPath):
+    message = "Path under DeprecatedContent, these are not validated."
+
+
+class PathIsUnified(ExcempdPath):
+    message = "Path is of a unified content item, these are not validated."
 
 
 def validate_path(path: Path) -> None:
@@ -167,10 +183,7 @@ def validate_path(path: Path) -> None:
                 and (path.suffix in {".md", ".yml"})  # these fail validate-all
             ):
                 # old, unified format, e.g. Packs/myPack/Scripts/script-foo.yml
-                logger.warning(
-                    "Unified files (while discouraged), are exempt from path validation, skipping them"
-                )
-                return
+                raise PathIsUnified
 
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
@@ -185,12 +198,6 @@ def main(
         validate_path(path)
         logger.debug(f"[green]{path=} is valid[/green]")
 
-    except PathIsFolder:
-        logger.warning(f"{path!s} is a folder, skipping")
-
-    except PathUnderDeprecatedContent:
-        logger.warning(f"{path!s} is under the DeprecatedContent folder, skipping")
-
     except InvalidPathException as e:
         if github_action:
             print(  # noqa: T201
@@ -199,6 +206,9 @@ def main(
         else:
             logger.error(f"Path {path} is invalid: {e.message}")
             raise typer.Exit(1)
+
+    except ExcempdPath as e:
+        logger.warning(e.message)
 
     except Exception:
         logger.exception(f"Failed checking path {path}")

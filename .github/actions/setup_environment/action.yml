@@ -33,13 +33,13 @@ runs:
       shell: bash
 
     - name: Export Poetry dependencies
-      run: poetry export -o requirements.txt
+      run: poetry export -o ${{ inputs.working-dir }}/requirements.txt
       shell: bash
 
     - uses: actions/upload-artifact@v4
       with:
         name: poetry export ${{ inputs.poetry-export-arguments }}
-        path: requirements.txt
+        path: ${{ inputs.working-dir }}/requirements.txt
 
     - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v5

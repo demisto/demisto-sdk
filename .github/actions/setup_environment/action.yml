@@ -51,10 +51,17 @@ runs:
         path: ~/.cache/uv
         key: python-${{ inputs.python-version }}-uv
 
+
+    - name: Create venv with uv
+      run: uv venv --python=${{ inputs.python-version }} 
+      shell: bash
+
     - name: Install dependencies with uv
-      run: |
-        uv venv --python=${{ inputs.python-version }} 
-        uv pip install -r requirements.txt
+      run: uv pip install -r requirements.txt
+      shell: bash
+
+    - name: Install Demisto-SDK with uv
+      run: uv pip install "demisto-sdk @ ."
       shell: bash
 
     - uses: actions/cache/save@v4

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where SDK would crash when running on repoitories which do not git configured.
+  type: fix
+pr_number: 4088

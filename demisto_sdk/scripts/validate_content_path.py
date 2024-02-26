@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, List
 
 import typer
 from more_itertools import split_at
@@ -138,23 +138,24 @@ class DepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
-class ExcempdPath(Exception, ABC):
+class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
 
-class PathIsFolder(ExcempdPath):
+class PathIsFolder(ExemptedPath):
     message = "Path is to a folder, these are not validated."
 
 
-class PathUnderDeprecatedContent(ExcempdPath):
+class PathUnderDeprecatedContent(ExemptedPath):
     message = "Path under DeprecatedContent, these are not validated."
 
 
-class PathIsUnified(ExcempdPath):
+class PathIsUnified(ExemptedPath):
     message = "Path is of a unified content item, these are not validated."
 
 
-def validate_path(path: Path) -> None:
+def _validate(path: Path) -> None:
+    """Runs the logic and raises exceptions on skipped/errorneous paths"""
     logger.debug(f"checking {path=}")
     if path.is_dir():
         raise PathIsFolder
@@ -205,13 +206,12 @@ def validate_path(path: Path) -> None:
         raise SeparatorsInFileNameError
 
 
-def cli(
-    path: Annotated[Path, typer.Argument(exists=True, file_okay=True, dir_okay=True)],
-    github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
-) -> None:
+def validate(path: Path, github_action: bool) -> bool:
+    """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
-        validate_path(path)
+        _validate(path)
         logger.debug(f"[green]{path=} is valid[/green]")
+        return True
 
     except InvalidPathException as e:
         if github_action:
@@ -220,13 +220,28 @@ def cli(
             )
         else:
             logger.error(f"Path {path} is invalid: {e.message}")
-            raise typer.Exit(1)
+        return False
 
-    except ExcempdPath as e:
+    except ExemptedPath as e:
         logger.warning(e.message)
+        return True
 
     except Exception:
         logger.exception(f"Failed checking path {path}")
+        return False
+
+
+def cli(
+    paths: Annotated[
+        List[Path], typer.Argument(exists=True, file_okay=True, dir_okay=True)
+    ],
+    github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
+) -> None:
+    result = [validate(path, github_action) for path in paths]
+    if all(result):
+        logger.info(f"[green]All {len(result)} paths are valid[/green]")
+    else:
+        logger.error(f"{sum(result)}/{len(result)} paths are valid")
         raise typer.Exit(1)
 
 

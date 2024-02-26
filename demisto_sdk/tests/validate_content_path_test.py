@@ -17,7 +17,7 @@ from demisto_sdk.scripts.validate_content_path import (
     PathIsUnified,
     PathUnderDeprecatedContent,
     SeparatorsInFileNameError,
-    validate_path,
+    _validate,
 )
 
 
@@ -58,7 +58,7 @@ def test_depth_zero_pass(file_name: str):
     Then
             Make sure the validation passes
     """
-    validate_path(Path(PACKS_FOLDER, "MyPack", file_name))
+    _validate(Path(PACKS_FOLDER, "MyPack", file_name))
 
 
 @pytest.mark.parametrize("file_name", ("foo.py", "bar.md"))
@@ -73,7 +73,7 @@ def test_depth_zero_fail(file_name: str):
     """
     assert file_name not in ZERO_DEPTH_FILES  # sanity
     with pytest.raises(InvalidDepthZeroFile):
-        validate_path(Path(PACKS_FOLDER, "MyPack", file_name))
+        _validate(Path(PACKS_FOLDER, "MyPack", file_name))
 
 
 def test_first_level_folder_fail():
@@ -87,11 +87,9 @@ def test_first_level_folder_fail():
     """
     assert (folder_name := "folder_name") not in DEPTH_ONE_FOLDERS
     with pytest.raises(DepthOneFolderError):
-        validate_path(Path(DUMMY_PACK_PATH, folder_name, "file"))
+        _validate(Path(DUMMY_PACK_PATH, folder_name, "file"))
     with pytest.raises(DepthOneFolderError):
-        validate_path(
-            Path(DUMMY_PACK_PATH, folder_name, "nested", "very nested", "file")
-        )
+        _validate(Path(DUMMY_PACK_PATH, folder_name, "nested", "very nested", "file"))
 
 
 @pytest.mark.parametrize("folder", DEPTH_ONE_FOLDERS)
@@ -105,8 +103,8 @@ def test_depth_one_pass(folder: str):
             Make sure the validation passes (without raising)
     """
     assert folder in DEPTH_ONE_FOLDERS
-    validate_path(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
-    validate_path(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
+    _validate(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
+    _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
 
 
 @pytest.mark.parametrize("folder", folders_not_allowed_to_contain_files)
@@ -120,7 +118,7 @@ def test_depth_one_fail(folder: str):
             Make sure InvalidDepthTwoFile is raised
     """
     with pytest.raises(DepthOneFileError):
-        validate_path(DUMMY_PACK_PATH / folder / "file")
+        _validate(DUMMY_PACK_PATH / folder / "file")
 
 
 @pytest.mark.parametrize(
@@ -154,7 +152,7 @@ def test_unified_conten(path: Path):
             Make sure the validation raises PathIsUnified
     """
     with pytest.raises(PathIsUnified):
-        validate_path(path)
+        _validate(path)
 
 
 @pytest.mark.parametrize(
@@ -170,7 +168,7 @@ def test_unified_conten(path: Path):
 )
 def test_deprecatedcontent(path: str):
     with pytest.raises(PathUnderDeprecatedContent):
-        validate_path(Path("Packs/DeprecatedContent", path))
+        _validate(Path("Packs/DeprecatedContent", path))
 
 
 def test_first_level_folders_subset():
@@ -189,14 +187,14 @@ def test_dir(repo):
     pack = repo.create_pack("myPack")
     integration = pack.create_integration()
     with pytest.raises(PathIsFolder):
-        validate_path(Path(pack.path))
+        _validate(Path(pack.path))
 
     with pytest.raises(PathIsFolder):
-        validate_path(Path(integration.path))
+        _validate(Path(integration.path))
 
 
 @pytest.mark.parametrize("separator", SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES)
-def test_separator_in_file_name(separator:str):
+def test_separator_in_file_name(separator: str):
     """
     Given
             A file name
@@ -206,7 +204,7 @@ def test_separator_in_file_name(separator:str):
             Make sure it raises the apporpiate exception
     """
     with pytest.raises(SeparatorsInFileNameError):
-        validate_path(
+        _validate(
             Path(
                 DUMMY_PACK_PATH,
                 "Integrations",
@@ -232,7 +230,7 @@ def test_separator_in_file_name_allowed_folder(
     Then
             Make sure the validation passes
     """
-    validate_path(
+    _validate(
         Path(
             DUMMY_PACK_PATH,
             "Integrations",

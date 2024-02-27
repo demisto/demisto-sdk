@@ -18,7 +18,7 @@ class GenericFieldIdPrefixValidateValidator(BaseValidator[ContentTypes]):
     error_code = "GF101"
     description = "Validate the id field include prefix `generic_`"
     error_message = "ID {generic_id} is not a valid generic field ID - it should start with the prefix {generic_id_prefix}."
-    fix_message = ""
+    fix_message = "Change the value of `id` field to {generic_id}."
     related_field = "id"
     is_auto_fixable = True
     related_file_type = [RelatedFileType.JSON]
@@ -41,6 +41,6 @@ class GenericFieldIdPrefixValidateValidator(BaseValidator[ContentTypes]):
         content_item.object_id = GENERIC_FIELD_ID_PREFIX + content_item.object_id
         return FixResult(
             validator=self,
-            message=self.fix_message.format(content_item),
+            message=self.fix_message.format(generic_id=content_item.object_id),
             content_object=content_item,
         )

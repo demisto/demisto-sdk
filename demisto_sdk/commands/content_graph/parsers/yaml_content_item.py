@@ -50,6 +50,7 @@ class YAMLContentItemParser(ContentItemParser):
                 "description": "description",
                 "fromversion": "fromversion",
                 "toversion": "toversion",
+                "version": "version",
             }
         )
         return super().field_mapping
@@ -120,3 +121,7 @@ class YAMLContentItemParser(ContentItemParser):
     @cached_property
     def yml_data(self) -> dict:
         return get_yaml(str(self.path), git_sha=self.git_sha)
+
+    @property
+    def version(self) -> int:
+        return get_value(self.yml_data, self.field_mapping.get("version", ""), 0)

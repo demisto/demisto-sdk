@@ -41,7 +41,7 @@ class TextFile(File):
             "command_example",
             "command_examples",
             PACKS_WHITELIST_FILE_NAME,
-        } or path.suffix.lower() in {".md", ".py", ".txt"}
+        } or path.suffix.lower() in {".md", ".py", ".txt", ".xif"}
 
     def load(self, file_content: bytes) -> Any:
         try:

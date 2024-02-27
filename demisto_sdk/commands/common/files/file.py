@@ -205,12 +205,10 @@ class File(ABC):
             cls.read_from_local_path.cache_clear()
 
         if not path.is_absolute():
+            logger.debug(f"path {path} is not absolute path")
             try:
                 git_util = GitUtil.from_content_path()
                 working_dir = git_util.repo.working_dir
-                logger.debug(
-                    f"path {path} is not absolute, trying to get full relative path from {working_dir}"
-                )
                 path = working_dir / path
                 if not path.exists():
                     path = path.absolute()

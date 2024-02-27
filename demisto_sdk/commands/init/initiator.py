@@ -551,7 +551,7 @@ class Initiator:
         create_integration = str(
             input("\nDo you want to create an integration in the pack? Y/N ")
         ).lower()
-        if string_to_bool(create_integration):
+        if string_to_bool(create_integration, default_when_empty=False):
             if not self.marketplace == MarketplaceVersions.MarketplaceV2:
                 is_same_category = str(
                     input(

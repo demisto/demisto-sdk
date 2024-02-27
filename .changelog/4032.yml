@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where a few USES relationships between playbooks were not collected by the playbook parser.
-  type: fix
-pr_number: 4032

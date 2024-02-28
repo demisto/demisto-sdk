@@ -16,6 +16,7 @@ SUPPORTED_KEYS = [
     "required",
     "description",
     "name",
+    "deprecated",
 ]
 
 

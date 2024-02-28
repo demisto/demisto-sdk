@@ -24,6 +24,7 @@ from urllib3 import HTTPResponse
 from demisto_sdk.commands.common.clients.configs import XsoarClientConfig
 from demisto_sdk.commands.common.clients.errors import (
     InvalidServerType,
+    PollTimeout,
     UnAuthorized,
     UnHealthyServer,
 )
@@ -93,12 +94,12 @@ class XsoarClient:
 
         summary = f"api-url={self.server_config.base_api_url}"
         if about:
-            if about.version:
-                summary = f"{summary}, version={about.version}"
-            if about.deployment_mode:
-                summary = f"{summary}, deployment-mode={self.about.deployment_mode}"
-            if about.product_mode:
-                summary = f"{summary}, product-mode={self.about.product_mode}"
+            if version := about.version:
+                summary = f"{summary}, version={version}"
+            if deployment_mode := about.deployment_mode:
+                summary = f"{summary}, deployment-mode={deployment_mode}"
+            if product_mode := about.product_mode:
+                summary = f"{summary}, product-mode={product_mode}"
 
         return f"{self.__class__.__name__}({summary})"
 
@@ -596,10 +597,10 @@ class XsoarClient:
         raise ValueError(f"Could not find instance for instance name '{instance_name}'")
 
     """
-     #############################
-     incidents related methods
-     #############################
-     """
+    #############################
+    incidents related methods
+    #############################
+    """
 
     @retry(exceptions=ApiException)
     def create_incident(
@@ -726,6 +727,7 @@ class XsoarClient:
                 raise ValueError(
                     f"Could not find incident ID {incident_id}, error:\n{e}"
                 )
+            logger.debug(f"Incident raw response {incident}")
             incident_status = IncidentState(str(incident.get("status"))).name
             incident_name = incident.get("name")
             logger.debug(f"status of the incident {incident_name} is {incident_status}")
@@ -735,7 +737,11 @@ class XsoarClient:
                 time.sleep(interval)
                 elapsed_time = int(time.time() - start_time)
 
-        raise RuntimeError(f"status of incident {incident_name} is {incident_status}")
+        raise PollTimeout(
+            f"status of incident {incident_name} is {incident_status}",
+            expected_states=expected_states,
+            timeout=timeout,
+        )
 
     @retry(exceptions=ApiException)
     def delete_incidents(
@@ -1277,6 +1283,7 @@ class XsoarClient:
 
         while elapsed_time < timeout:
             playbook_state_raw_response = self.get_playbook_state(incident_id)
+            logger.debug(f"playbook state raw-response: {playbook_state_raw_response}")
             playbook_state = playbook_state_raw_response.get("state")
             playbook_id = playbook_state_raw_response.get("playbookId")
             logger.debug(
@@ -1288,10 +1295,12 @@ class XsoarClient:
                 time.sleep(interval)
                 elapsed_time = int(time.time() - start_time)
 
-        error = f"status of the playbook {playbook_id} running in incident {incident_id} is {playbook_state}"
-        if playbook_state == InvestigationPlaybookState.FAILED:
-            error = (
-                f"{error}\nreason: {self.get_incident_playbook_failure(incident_id)}"
-            )
-
-        raise RuntimeError(error)
+        raise PollTimeout(
+            f"status of the playbook {playbook_id} running in incident {incident_id} "
+            f"is {playbook_state}",
+            expected_states=expected_states,
+            timeout=timeout,
+            reason=f"{self.get_incident_playbook_failure(incident_id)}"
+            if playbook_state == InvestigationPlaybookState.FAILED
+            else None,
+        )

@@ -1,0 +1,4 @@
+changes:
+- description: Added the `validate-conf-json` pre-commit hook, checking for structure and linked content.
+  type: internal
+pr_number: 4051

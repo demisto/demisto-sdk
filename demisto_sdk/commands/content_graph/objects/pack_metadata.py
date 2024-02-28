@@ -56,6 +56,7 @@ class PackMetadata(BaseModel):
     videos: List[str] = Field([])
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
+    hybrid: bool = Field(False, alias="hybrid")
 
     # For private packs
     premium: Optional[bool]

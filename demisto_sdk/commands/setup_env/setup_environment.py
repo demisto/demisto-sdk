@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.clients import (
 from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
+from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -585,10 +586,19 @@ def upload_and_create_instance(
 
 
 def add_demistomock_and_commonserveruser(integration_script: IntegrationScript):
-    shutil.copy(
-        CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py",
-        integration_script.path.parent / "demistomock.py",
-    )
+    source_demisto_mock_path = CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py"
+    target_demisto_mock_path = integration_script.path.parent / "demistomock.py"
+    if source_demisto_mock_path.exists():
+        shutil.copy(
+            source_demisto_mock_path,
+            target_demisto_mock_path,
+        )
+    else:
+        demisto_mock_content = TextFile.read_from_github_api(
+            "/Tests/demistomock/demistomock.py", verify_ssl=False
+        )
+        TextFile.write(demisto_mock_content, output_path=target_demisto_mock_path)
+
     (integration_script.path.parent / "CommonServerUserPython.py").touch()
 
 

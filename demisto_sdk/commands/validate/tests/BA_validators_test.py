@@ -1068,7 +1068,8 @@ def test_IsValidVersionValidator_fix():
         pytest.param(
             [
                 create_classifier_object(
-                    paths=["name", "id"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name", "id"],
+                    values=[FIELD_WITH_WHITESPACES, FIELD_WITH_WHITESPACES],
                 ),
                 create_integration_object(
                     paths=["name", "commonfields.id"],
@@ -1076,7 +1077,7 @@ def test_IsValidVersionValidator_fix():
                 ),
             ],
             2,
-            ["name, id" for _ in range(2)],
+            ["id, name" for _ in range(2)],
             id="classifier and integration with trailing spaces",
         ),
         pytest.param(

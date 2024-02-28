@@ -2,33 +2,38 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses, EXCLUDED_DISPLAY_NAME_WORDS
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
+from demisto_sdk.commands.common.constants import (
+    EXCLUDED_DISPLAY_NAME_WORDS,
+    GitStatuses,
+)
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
-from demisto_sdk.commands.content_graph.objects.job import Job
-from demisto_sdk.commands.content_graph.objects.mapper import Mapper
-from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
+from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
+from demisto_sdk.commands.content_graph.objects.generic_definition import (
+    GenericDefinition,
+)
+from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
+from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
+from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
-from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
+from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
-from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
-from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
-from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
-from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
+from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -37,10 +42,36 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[
-    Integration, Script, Playbook, Pack, Dashboard, Classifier, Job, Layout, Mapper, Wizard, CorrelationRule,
-    IncidentField, IncidentType, IndicatorField, IndicatorType, LayoutRule, Layout, ModelingRule, ParsingRule, Report,
-    TestPlaybook, Trigger, Widget, GenericDefinition, GenericField, GenericModule, GenericType, XSIAMDashboard,
-    XSIAMReport]
+    Integration,
+    Script,
+    Playbook,
+    Pack,
+    Dashboard,
+    Classifier,
+    Job,
+    Layout,
+    Mapper,
+    Wizard,
+    CorrelationRule,
+    IncidentField,
+    IncidentType,
+    IndicatorField,
+    IndicatorType,
+    LayoutRule,
+    Layout,
+    ModelingRule,
+    ParsingRule,
+    Report,
+    TestPlaybook,
+    Trigger,
+    Widget,
+    GenericDefinition,
+    GenericField,
+    GenericModule,
+    GenericType,
+    XSIAMDashboard,
+    XSIAMReport,
+]
 
 
 def name_does_contain_excluded_word(content_item: ContentTypes) -> bool:
@@ -54,13 +85,18 @@ def name_does_contain_excluded_word(content_item: ContentTypes) -> bool:
         )
     )
 
+
 class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
     error_code = "BA111"
     description = "Checks whether given object contains excluded word."
     error_message = "The content item name is {} , which contains an excluded word."
     related_field = ""
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.ADDED, GitStatuses.MODIFIED]
+    expected_git_statuses = [
+        GitStatuses.RENAMED,
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+    ]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -70,7 +106,5 @@ class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                name_does_contain_excluded_word(content_item)
-            )
+            if (name_does_contain_excluded_word(content_item))
         ]

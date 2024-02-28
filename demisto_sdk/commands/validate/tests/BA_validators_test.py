@@ -46,8 +46,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import \
-    IsEntityNameContainExcludedWordValidator
+from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import (
+    IsEntityNameContainExcludedWordValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
     CliNameMatchIdValidator,
 )
@@ -1023,36 +1024,51 @@ def test_IsValidVersionValidator_fix():
 
 
 ERROR_MSG_TEMPLATE = "The content item name is {} , which contains an excluded word."
+
+
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_error_message",
     [
         # a correct integration display name
         ([create_integration_object()], 0, ""),
-
         # an incorrect integration display name
-        ([create_integration_object(paths=["display"], values=["partner"])], 1, ERROR_MSG_TEMPLATE.format("partner")),
-
+        (
+            [create_integration_object(paths=["display"], values=["partner"])],
+            1,
+            ERROR_MSG_TEMPLATE.format("partner"),
+        ),
         # a correct playbook display name
         ([create_playbook_object()], 0, ""),
-
         # an incorrect playbook display name
-        ([create_playbook_object(paths=["name"], values=["community"])], 1, ERROR_MSG_TEMPLATE.format("community")),
-
+        (
+            [create_playbook_object(paths=["name"], values=["community"])],
+            1,
+            ERROR_MSG_TEMPLATE.format("community"),
+        ),
         # a correct script display name
         ([create_script_object()], 0, ""),
-
         # an incorrect script display name
-        ([create_script_object(paths=["name"], values=["community"])], 1, ERROR_MSG_TEMPLATE.format("community")),
-
+        (
+            [create_script_object(paths=["name"], values=["community"])],
+            1,
+            ERROR_MSG_TEMPLATE.format("community"),
+        ),
         # a correct classifier display name
         ([create_classifier_object()], 0, ""),
-
         # an incorrect classifier display name
-        ([create_classifier_object(paths=["name"], values=["partner"])], 1, ERROR_MSG_TEMPLATE.format("partner"))
+        (
+            [create_classifier_object(paths=["name"], values=["partner"])],
+            1,
+            ERROR_MSG_TEMPLATE.format("partner"),
+        ),
     ],
 )
-def test_IsEntityNameContainExcludedWordValidator(content_items, expected_number_of_failures, expected_error_message):
-    results = IsEntityNameContainExcludedWordValidator().is_valid(content_items=content_items)
+def test_IsEntityNameContainExcludedWordValidator(
+    content_items, expected_number_of_failures, expected_error_message
+):
+    results = IsEntityNameContainExcludedWordValidator().is_valid(
+        content_items=content_items
+    )
     assert len(results) == expected_number_of_failures
     for result in results:
         assert result.message == expected_error_message

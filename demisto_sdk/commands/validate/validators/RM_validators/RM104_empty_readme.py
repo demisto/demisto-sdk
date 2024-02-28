@@ -35,7 +35,7 @@ class EmptyReadmeValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                # if the pack is partner supported or contains playbooks, it must have a full README.md file
+                # if the pack is partner/xsoar supported or contains playbooks, it must have a full README.md file
                 (
                     content_item.support in (PARTNER_SUPPORT, XSOAR_SUPPORT)
                     or content_item.content_items.playbook

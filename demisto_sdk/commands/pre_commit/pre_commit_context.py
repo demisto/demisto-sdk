@@ -29,6 +29,9 @@ PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
 PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
 PRECOMMIT_DOCKER_CONFIGS = PRECOMMIT_CONFIG / "docker"
 
+# This has to be relative to content path so the docker will be able to write to it
+PRE_COMMIT_FOLDER_SHARED = CONTENT_PATH / ".pre_commit"
+
 
 @dataclass
 class PreCommitContext:
@@ -51,9 +54,16 @@ class PreCommitContext:
         We initialize the hooks and all_files for later use.
         """
         shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
+        shutil.rmtree(PRE_COMMIT_FOLDER_SHARED, ignore_errors=True)
         PRECOMMIT_FOLDER.mkdir(parents=True)
         PRECOMMIT_CONFIG.mkdir()
         PRECOMMIT_DOCKER_CONFIGS.mkdir()
+        (PRE_COMMIT_FOLDER_SHARED / "coverage").mkdir(
+            parents=True, exist_ok=True, mode=777
+        )
+        (PRE_COMMIT_FOLDER_SHARED / "pytest-junit").mkdir(
+            parents=True, exist_ok=True, mode=777
+        )
 
         self.precommit_template: dict = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)  # type: ignore[assignment]
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))

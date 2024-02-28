@@ -1,3 +1,4 @@
+from functools import cache
 import multiprocessing
 import traceback
 from pathlib import Path
@@ -31,6 +32,7 @@ class RepositoryParser:
         self.path: Path = path
         self.packs: List[PackParser] = []
 
+    @cache
     def parse(
         self,
         packs_to_parse: Optional[List[Path]] = None,

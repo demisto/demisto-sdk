@@ -41,7 +41,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[
+ContentTypesOld = Union[
     GenericDefinition,
     GenericField,
     GenericModule,
@@ -69,9 +69,13 @@ ContentTypes = Union[
     IncidentField,
     IndicatorField,
     AssetsModelingRule,
-    LayoutRule
+    LayoutRule,
 ]
 
+ContentTypes = Union[
+    Integration,
+    Script,
+]
 
 class IdChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC105"

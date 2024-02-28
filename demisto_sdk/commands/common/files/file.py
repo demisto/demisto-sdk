@@ -9,6 +9,7 @@ from typing import Any, Optional, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
+from git import InvalidGitRepositoryError
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.constants import (
@@ -33,16 +34,6 @@ from demisto_sdk.commands.common.tools import retry
 
 
 class File(ABC):
-
-    _git_util = GitUtil.from_content_path()
-
-    @classmethod
-    def git_util(cls) -> GitUtil:
-        current_path = Path.cwd()
-        if current_path != Path(cls._git_util.repo.working_dir):
-            cls._git_util = GitUtil.from_content_path(current_path)
-        return cls._git_util
-
     @property
     def path(self) -> Path:
         return getattr(self, "_path")
@@ -225,12 +216,20 @@ class File(ABC):
             cls.read_from_local_path.cache_clear()
 
         if not path.is_absolute():
-            logger.debug(
-                f"path {path} is not absolute, trying to get full relative path from {cls.git_util().repo.working_dir}"
-            )
-            path = cls.git_util().repo.working_dir / path
-            if not path.exists():
-                raise FileNotFoundError(f"File {path} does not exist")
+            logger.debug(f"path {path} is not absolute path")
+            try:
+                git_util = GitUtil.from_content_path()
+                working_dir = git_util.repo.working_dir
+                path = working_dir / path
+                if not path.exists():
+                    path = path.absolute()
+                    if not path.exists():
+                        raise FileNotFoundError(f"File {path} does not exist")
+
+            except InvalidGitRepositoryError:
+                path = path.absolute()
+                if not path.exists():
+                    raise FileNotFoundError(f"File {path} does not exist")
 
         return (
             cls._from_path(path)
@@ -277,7 +276,8 @@ class File(ABC):
         if clear_cache:
             cls.read_from_git_path.cache_clear()
 
-        if not cls.git_util().is_file_exist_in_commit_or_branch(
+        git_util = GitUtil.from_content_path()
+        if not git_util.is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
             raise FileNotFoundError(
@@ -293,7 +293,7 @@ class File(ABC):
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
         try:
             return self.load(
-                self.git_util().read_file_content(
+                GitUtil.from_content_path().read_file_content(
                     self.path, commit_or_branch=tag, from_remote=from_remote
                 )
             )

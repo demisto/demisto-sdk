@@ -44,9 +44,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_beta = self.script_info.get("beta", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.is_long_running = self.script_info.get("longRunning", False)
-        self.has_unittests: bool = (
-            self.path.parent / self.path.parts[-1].replace(".yml", "_test.py")
-        ).exists()
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()

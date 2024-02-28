@@ -1,5 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Optional
 
 import demisto_client
 
@@ -15,6 +16,7 @@ json = JSON_Handler()
 class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg]
     type: str
     is_unified: bool
+    version: Optional[int] = 0
 
     def _upload(
         self,

@@ -31,3 +31,13 @@ mapping:
     type: str
   name:xsoar_on_prem:
     type: str
+  deprecated:xsoar:
+    type: bool
+  deprecated:marketplacev2:
+    type: bool
+  deprecated:xpanse:
+    type: bool
+  deprecated:xsoar_saas:
+    type: bool
+  deprecated:xsoar_on_prem:
+    type: bool

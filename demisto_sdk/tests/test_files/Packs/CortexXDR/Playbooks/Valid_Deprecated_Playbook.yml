@@ -1,6 +1,6 @@
-id: Cortex XDR Incident Handling
+id: Cortex_XDR_Incident_Handling
 version: -1
-name: Cortex XDR Incident Handling
+name: Cortex_XDR_Incident_Handling
 description: Deprecated. Use "Cortex XDR Incident Handling v2" playbook instead.
   This playbook is triggered by fetchinga Palo Alto Networks Cortex XDR
   incident. \nThe playbook syncs and updates new XDR alerts that construct the incident.

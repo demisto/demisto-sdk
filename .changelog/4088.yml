@@ -1,0 +1,6 @@
+changes:
+- description: Fixed an issue where SDK would crash when running on repoitories which do not have git configured.
+  type: fix
+- description: Fixed an issue where reading files on repositories which are not git repositories failed when the path provided was relative path.
+  type: fix
+pr_number: 4088

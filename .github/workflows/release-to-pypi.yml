@@ -4,8 +4,8 @@ on:
   pull_request:
     types: [labeled]
     branches:
-      - 'v[0-9].[0-9].[0-9]'
-      - '[0-9].[0-9].[0-9]'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   deploy-to-pypi:

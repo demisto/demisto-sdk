@@ -69,7 +69,7 @@ ContentTypes = Union[
     IncidentField,
     IndicatorField,
     AssetsModelingRule,
-    LayoutRule,
+    LayoutRule
 ]
 
 

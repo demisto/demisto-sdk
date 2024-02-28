@@ -1026,7 +1026,7 @@ def test_IsValidVersionValidator_fix():
 @pytest.mark.parametrize(
     "content_items, expected_msg",
     [
-        (
+        pytest.param(
             [
                 create_integration_object(
                     paths=["name", "display"],
@@ -1038,8 +1038,9 @@ def test_IsValidVersionValidator_fix():
                 ),
             ],
             "The following fields: name, display shouldn't contain the word 'Integration'.",
+            id="Integration Test (valid and invalid)"
         ),
-        (
+        pytest.param(
             [
                 create_script_object(
                     paths=["name", "display"],
@@ -1047,12 +1048,13 @@ def test_IsValidVersionValidator_fix():
                 ),
                 create_script_object(
                     paths=["name", "display"],
-                    values=["Test Integration", "TestIntegration"],
+                    values=["Test Script", "TestScript"],
                 ),
             ],
             "The following fields: name, display shouldn't contain the word 'Script'.",
+            id="Script Test (valid and invalid)"
         ),
-        (
+        pytest.param(
             [
                 create_playbook_object(
                     paths=["name", "display"],
@@ -1060,13 +1062,13 @@ def test_IsValidVersionValidator_fix():
                 ),
                 create_playbook_object(
                     paths=["name", "display"],
-                    values=["Test Integration", "TestIntegration"],
+                    values=["Test Playbook", "TestPlaybook"],
                 ),
             ],
             "The following fields: name, display shouldn't contain the word 'Playbook'.",
+            id="Playbook Test (valid and invalid)"
         ),
     ],
-    ids=["test integration", "test script, test playbook"],
 )
 def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg):
     """

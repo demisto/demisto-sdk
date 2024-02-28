@@ -199,7 +199,7 @@ def validate(path: Path, github_action: bool) -> bool:
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
         _validate(path)
-        logger.debug(f"[green]{path=} is valid[/green]")
+        logger.debug(f"{path} is valid")
         return True
 
     except InvalidPathException as e:
@@ -212,7 +212,7 @@ def validate(path: Path, github_action: bool) -> bool:
         return False
 
     except ExemptedPath as e:
-        logger.warning(f"Path {path} is skipped: {e.message}")
+        logger.debug(f"Path {path} is skipped: {e.message}")
         return True
 
     except Exception:

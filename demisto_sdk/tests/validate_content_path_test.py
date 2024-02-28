@@ -189,3 +189,4 @@ def test_dir(repo):
     with pytest.raises(PathIsFolder):
         _validate(Path(integration.path))
 
+

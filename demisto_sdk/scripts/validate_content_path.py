@@ -71,10 +71,7 @@ DEPTH_ONE_FOLDERS = set(ContentType.folders()).difference(
         "TestScripts",
         "CommandOrScripts",
     )
-) | {
-    RELEASE_NOTES_DIR,
-    DOC_FILES_DIR,
-}
+) | set(TESTS_AND_DOC_DIRECTORIES)
 
 DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     (

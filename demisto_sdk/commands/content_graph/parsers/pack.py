@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
 import regex
+from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -140,7 +141,7 @@ class PackMetadataParser:
         self.version_info: str = ""
         try:
             self.commit: str = GitUtil().get_current_commit_hash() or ""
-        except Exception as e:
+        except InvalidGitRepositoryError as e:
             logger.warning(
                 f"Failed to get commit hash for pack {self.name}. Error: {e}"
             )

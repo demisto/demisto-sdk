@@ -177,7 +177,7 @@ class PackMetadataParser:
         self.content_commit_hash: Optional[str] = (
             metadata.get("contentCommitHash") or ""
         )
-        self.unified_pack: bool = metadata.get("unifiedPack") or False
+        self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
 
     @property

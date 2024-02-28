@@ -143,7 +143,7 @@ def test_pack_prepare_content(git_repo):
     """
 
     pack: Pack = git_repo.create_pack("PackName")
-    pack.set_data(unifiedPack=True, price=3)
+    pack.set_data(hybrid=True, price=3)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
@@ -159,5 +159,5 @@ def test_pack_prepare_content(git_repo):
     metadata_path = Path(pack.path) / "unzipped_pack" / "metadata.json"
     assert metadata_path.exists()
     metadata = get_file(metadata_path)
-    assert metadata["unifiedPack"]
+    assert metadata["hybrid"]
     assert metadata["price"] == 3

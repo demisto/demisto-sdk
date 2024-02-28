@@ -56,7 +56,7 @@ class PackMetadata(BaseModel):
     videos: List[str] = Field([])
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
-    unified_pack: bool = Field(False, alias="unifiedPack")
+    hybrid: bool = Field(False, alias="hybrid")
 
     # For private packs
     premium: Optional[bool]

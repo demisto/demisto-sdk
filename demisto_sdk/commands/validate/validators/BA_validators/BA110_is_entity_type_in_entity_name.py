@@ -32,23 +32,7 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if is_name_or_display_name_contains_type(content_item)
+            if (
+                content_item.content_type.lower() in (content_item.name.lower(), content_item.display_name.lower())
+            )
         ]
-
-
-def is_name_or_display_name_contains_type(content_item: ContentTypes):
-    """
-    Check if content item name or display name contains the content item type.
-    Args:
-        content_item (ContentTypes): The content item to check its name and display name fields.
-
-    Returns:
-        Boolean: True if one of the relevant felids contain the content item type, False otherwise.
-    """
-    content_type = content_item.content_type.lower()
-    content_name = content_item.name.lower()
-
-    if content_type == "integration":
-        return content_type in (content_name, content_item.display_name.lower())
-    else:
-        return content_type in content_name

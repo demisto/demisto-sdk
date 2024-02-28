@@ -1,4 +1,4 @@
-from typing import Iterable, List, Union, cast
+from typing import Dict, Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -54,7 +54,7 @@ class IdChangedValidator(BaseValidator[ContentTypes]):
     related_field = "id"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     is_auto_fixable = True
-    old_id: dict[str, str] = {}
+    old_id: Dict[str, str] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

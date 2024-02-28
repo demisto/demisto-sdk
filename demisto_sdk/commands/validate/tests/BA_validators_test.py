@@ -1038,7 +1038,7 @@ def test_IsValidVersionValidator_fix():
                 ),
             ],
             "The following fields: name, display shouldn't contain the word 'Integration'.",
-            id="Integration Test (valid and invalid)"
+            id="Integration Test (valid and invalid)",
         ),
         pytest.param(
             [
@@ -1052,7 +1052,7 @@ def test_IsValidVersionValidator_fix():
                 ),
             ],
             "The following fields: name, display shouldn't contain the word 'Script'.",
-            id="Script Test (valid and invalid)"
+            id="Script Test (valid and invalid)",
         ),
         pytest.param(
             [
@@ -1066,7 +1066,7 @@ def test_IsValidVersionValidator_fix():
                 ),
             ],
             "The following fields: name, display shouldn't contain the word 'Playbook'.",
-            id="Playbook Test (valid and invalid)"
+            id="Playbook Test (valid and invalid)",
         ),
     ],
 )

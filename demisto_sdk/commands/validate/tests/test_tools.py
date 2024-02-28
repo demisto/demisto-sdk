@@ -205,6 +205,7 @@ def create_metadata_object(
     values: Optional[List[Any]] = None,
     fields_to_delete: Optional[List[str]] = None,
     readme_text: str = "",
+    image: Optional[str] = None,
 ) -> PackMetadata:
     """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
 
@@ -222,6 +223,8 @@ def create_metadata_object(
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
     pack.readme.write_text(readme_text)
+    if image is not None:
+        pack.author_image.write(image)
     return BaseContent.from_path(Path(pack.path))
 
 

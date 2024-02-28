@@ -150,3 +150,5 @@ If you wish to ignore errors for a specific file in the pack insert the followin
 [file:FILE_NAME]
 ignore=BA101
 ```
+
+For more information, please see the following [document](https://xsoar.pan.dev/docs/reference/packs/content-management#development).

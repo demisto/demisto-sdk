@@ -172,9 +172,12 @@ class GitUtil:
     def read_file_content(
         self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
     ) -> bytes:
-
         commit = self.get_commit(commit_or_branch, from_remote=from_remote)
-        path = str(self.path_from_git_root(path))
+        path = (
+            str(self.path_from_git_root(path))
+            if Path(path).is_absolute()
+            else str(path)
+        )
 
         try:
             blob: Blob = commit.tree / path
@@ -846,7 +849,7 @@ class GitUtil:
         try:
             commit = self.repo.commit(commit_hash)
             return commit.hexsha == commit_hash
-        except ValueError:
+        except (ValueError, gitdb.exc.BadName):
             return False
 
     def get_current_working_branch(self) -> str:

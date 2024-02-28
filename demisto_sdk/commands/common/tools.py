@@ -442,9 +442,13 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
     if marketplaces is None:
         marketplaces = list(MarketplaceVersions)
 
-    for mp, core_packs in get_marketplace_to_core_packs().items():
-        if mp in marketplaces:
-            result.update(core_packs)
+    try:
+        for mp, core_packs in get_marketplace_to_core_packs().items():
+            if mp in marketplaces:
+                result.update(core_packs)
+    except NoInternetConnectionException:
+        logger.debug("SDK running in offline mode, returning core_packs=[]")
+        return []
     return list(result)
 
 
@@ -4416,3 +4420,19 @@ def extract_image_paths_from_str(
     
     return [Path(image_path) for image_path in re.findall(regex_str, text)]
 
+
+
+def remove_nulls_from_dictionary(data):
+    """
+    Remove Null values from a dictionary. (updating the given dictionary)
+
+    :type data: ``dict``
+    :param data: The data to be added to the context (required)
+
+    :return: No data returned
+    :rtype: ``None``
+    """
+    list_of_keys = list(data.keys())[:]
+    for key in list_of_keys:
+        if data[key] in ("", None, [], {}, ()):
+            del data[key]

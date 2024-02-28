@@ -45,12 +45,12 @@ def create_integration_object(
     pack = REPO.create_pack()
     if pack_info:
         pack.set_data(**pack_info)
-    
+
     additional_params = {}
-    
+
     if readme_content is not None:
-        additional_params['readme'] = readme_content
-    
+        additional_params["readme"] = readme_content
+
     integration = pack.create_integration(yml=yml_content, **additional_params)
 
     integration.code.write("from MicrosoftApiModule import *")
@@ -103,7 +103,6 @@ def create_playbook_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
-
 ):
     """Creating an playbook object with altered fields from a default playbook yml structure.
 
@@ -122,8 +121,8 @@ def create_playbook_object(
     additional_params = {}
 
     if readme_content is not None:
-        additional_params['readme'] = readme_content
-    
+        additional_params["readme"] = readme_content
+
     playbook = pack.create_playbook(**additional_params)
     playbook.create_default_playbook(name="sample")
     playbook.yml.update(yml_content)

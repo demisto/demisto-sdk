@@ -65,17 +65,32 @@ def test_IsContainCopyRightSectionValidator_is_valid(
         ]
     )
 
+
 @pytest.mark.parametrize(
     "content_items, is_file_exist, expected_number_of_failures, expected_msgs",
     [
         (
             [
-                create_playbook_object(readme_content="This is a valid readme without any images.", pack_info={'name':'test1'}),
-                create_playbook_object(readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)", pack_info={'name':'test1'}),
-                create_playbook_object(readme_content="", pack_info={'name':'test1'}),
-                create_integration_object(readme_content="This is a valid readme without any images.", pack_info={'name':'test2'}),
-                create_integration_object(readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)", pack_info={'name':'test2'}),
-                create_integration_object(readme_content="", pack_info={'name':'test2'}),
+                create_playbook_object(
+                    readme_content="This is a valid readme without any images.",
+                    pack_info={"name": "test1"},
+                ),
+                create_playbook_object(
+                    readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)",
+                    pack_info={"name": "test1"},
+                ),
+                create_playbook_object(readme_content="", pack_info={"name": "test1"}),
+                create_integration_object(
+                    readme_content="This is a valid readme without any images.",
+                    pack_info={"name": "test2"},
+                ),
+                create_integration_object(
+                    readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)",
+                    pack_info={"name": "test2"},
+                ),
+                create_integration_object(
+                    readme_content="", pack_info={"name": "test2"}
+                ),
             ],
             True,
             0,
@@ -83,21 +98,38 @@ def test_IsContainCopyRightSectionValidator_is_valid(
         ),
         (
             [
-                create_playbook_object(paths=["pack_name"], values=["test"], readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png), ", pack_info={'name':'test1'}),
-                create_integration_object(readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)", pack_info={'name':'test2'}),
-                create_integration_object(readme_content="This is not a valid readme if this file doesn't exists ![example image](https://example.com/test3/doc_files/example.png)", pack_info={'name':'test3'}),
+                create_playbook_object(
+                    paths=["pack_name"],
+                    values=["test"],
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png), ",
+                    pack_info={"name": "test1"},
+                ),
+                create_integration_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)",
+                    pack_info={"name": "test2"},
+                ),
+                create_integration_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image](https://example.com/test3/doc_files/example.png)",
+                    pack_info={"name": "test3"},
+                ),
             ],
             False,
             3,
             [
-                'The following image files does not exists: Packs/test1/doc_files/example.png',
-                'The following image files does not exists: Packs/test2/doc_files/example.png',
-                'The following image files does not exists: https:/example.com/test3/doc_files/example.png'
+                "The following image files does not exists: Packs/test1/doc_files/example.png",
+                "The following image files does not exists: Packs/test2/doc_files/example.png",
+                "The following image files does not exists: https:/example.com/test3/doc_files/example.png",
             ],
         ),
     ],
 )
-def test_IsImageExistsInReadmeValidator_is_valid(mocker, content_items, is_file_exist, expected_number_of_failures, expected_msgs,):
+def test_IsImageExistsInReadmeValidator_is_valid(
+    mocker,
+    content_items,
+    is_file_exist,
+    expected_number_of_failures,
+    expected_msgs,
+):
     mocker.patch.object(Path, "is_file", return_value=is_file_exist)
 
     with ChangeCWD(REPO.path):

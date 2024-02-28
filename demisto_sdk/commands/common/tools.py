@@ -4403,9 +4403,9 @@ def check_text_content_contain_sub_text(
 
     return invalid_lines
 
+
 def extract_image_paths_from_str(
-    text: str,
-    regex_str: str = r"!\[.*\]\((.*/doc_files/[a-zA-Z0-9_-]+\.png)"
+    text: str, regex_str: str = r"!\[.*\]\((.*/doc_files/[a-zA-Z0-9_-]+\.png)"
 ) -> List[Path]:
     """
     Args:
@@ -4417,9 +4417,8 @@ def extract_image_paths_from_str(
     Returns:
         list of lines which contains the given text.
     """
-    
-    return [Path(image_path) for image_path in re.findall(regex_str, text)]
 
+    return [Path(image_path) for image_path in re.findall(regex_str, text)]
 
 
 def remove_nulls_from_dictionary(data):

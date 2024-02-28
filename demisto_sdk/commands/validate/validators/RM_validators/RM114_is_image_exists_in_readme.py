@@ -1,7 +1,5 @@
-
 from __future__ import annotations
 
-import re
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import RelatedFileType
@@ -34,13 +32,15 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-
             if (
-                any(invalid_lines:=
-                    [
-                        f"Packs/{content_item.pack_name}/{str(image_path).replace('../', '')}" 
-                        if content_item.pack_name not in str(image_path) else str(image_path)
-                        for image_path in extract_image_paths_from_str(text=content_item.readme)
+                any(
+                    invalid_lines := [
+                        f"Packs/{content_item.pack_name}/{str(image_path).replace('../', '')}"
+                        if content_item.pack_name not in str(image_path)
+                        else str(image_path)
+                        for image_path in extract_image_paths_from_str(
+                            text=content_item.readme
+                        )
                         if image_path and not image_path.is_file()
                     ]
                 )

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Set
 
 from demisto_sdk.commands.common.logger import logger
@@ -13,6 +14,7 @@ from demisto_sdk.commands.validate.validation_results import (
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    InvalidContentItemResult,
     ValidationResult,
 )
 
@@ -35,9 +37,12 @@ class ValidateManager:
         self.validation_results = validation_results
         self.config_reader = config_reader
         self.initializer = initializer
-        self.objects_to_run: Set[
-            BaseContent
-        ] = self.initializer.gather_objects_to_run_on()
+        self.objects_to_run: Set[BaseContent] = set()
+        self.invalid_items: Set[Path] = set()
+        (
+            self.objects_to_run,
+            self.invalid_items,
+        ) = self.initializer.gather_objects_to_run_on()
         self.use_git = self.initializer.use_git
         self.committed_only = self.initializer.committed_only
         self.configured_validations: ConfiguredValidations = (
@@ -88,6 +93,7 @@ class ValidateManager:
         if BaseValidator.graph_interface:
             logger.info("Closing graph.")
             BaseValidator.graph_interface.close()
+        self.add_invalid_content_items()
         return self.validation_results.post_results(
             only_throw_warning=self.configured_validations.only_throw_warnings
         )
@@ -110,3 +116,22 @@ class ValidateManager:
             ):
                 validators.append(validator())
         return validators
+
+    def add_invalid_content_items(self):
+        """Create results for all the invalid_content_items.
+
+        Args:
+        """
+        self.validation_results.extend_invalid_content_item_results(
+            [
+                InvalidContentItemResult(
+                    path=invalid_path,
+                    message="The given file is not supported in the validate command, see the error above.\n"
+                    "The validate command supports: Integrations, Scripts, Playbooks, "
+                    "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types,"
+                    " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.",
+                    error_code="BA102",
+                )
+                for invalid_path in self.invalid_items
+            ]
+        )

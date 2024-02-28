@@ -905,6 +905,7 @@ PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
 MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
+ASSETS_MODELING_RULE_NAME_SUFFIX = "Asset Collection"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
 ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
@@ -916,7 +917,6 @@ PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
-METADATA_FILE_NAME = "pack_metadata.json"
 PACKS_FOLDER = "Packs"
 
 CONF_JSON_FILE_NAME = "conf.json"
@@ -1544,6 +1544,7 @@ INCORRECT_PACK_NAME_WORDS = [
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
 SUPPORT_LEVEL_HEADER = "supportlevelheader"
+CLASSIFICATION_TYPE = "classification"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
@@ -2128,3 +2129,21 @@ PACK_DEFAULT_MARKETPLACES: List = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
+
+
+class RelatedFileType(Enum):
+    YML = "YML"
+    JSON = "JSON"
+    README = "README"
+    DESCRIPTION = "DESCRIPTION"
+    IMAGE = "IMAGE"
+    DARK_SVG = "DARK_SVG"
+    LIGHT_SVG = "LIGHT_SVG"
+    CODE = "CODE"
+    TEST_CODE = "TEST_CODE"
+    SCHEMA = "SCHEMA"
+    XIF = "XIF"
+    PACK_IGNORE = "PACK_IGNORE"
+    SECRETS_IGNORE = "SECRETS_IGNORE"
+    AUTHOR_IMAGE = "AUTHOR_IMAGE"
+    RELEASE_NOTES = "RELEASE_NOTES"

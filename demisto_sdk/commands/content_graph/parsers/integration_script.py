@@ -29,7 +29,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "commonfields.id"})
+        super().field_mapping.update(
+            {"object_id": "commonfields.id", "version": "commonfields.version"}
+        )
         return super().field_mapping
 
     @cached_property

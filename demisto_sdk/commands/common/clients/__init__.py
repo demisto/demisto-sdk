@@ -34,22 +34,34 @@ from demisto_sdk.commands.common.tools import string_to_bool
 
 
 @lru_cache
-def get_client_from_config(client_config: XsoarClientConfig) -> XsoarClient:
+def get_client_from_config(
+    client_config: XsoarClientConfig, raise_if_server_not_healthy: bool = True
+) -> XsoarClient:
     """
     Returns the correct Client (xsoar on prem, xsoar saas or xsiam) based on the clients config object
 
     Args:
         client_config: clients configuration
+        raise_if_server_not_healthy: whether to raise an exception if the server is not healthy
 
     Returns:
         the correct api clients based on the clients config
     """
     if isinstance(client_config, XsiamClientConfig):
-        return XsiamClient(config=client_config)
+        return XsiamClient(
+            client_config,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
+        )
     elif isinstance(client_config, XsoarSaasClientConfig):
-        return XsoarSaasClient(config=client_config)
+        return XsoarSaasClient(
+            client_config,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
+        )
     else:
-        return XsoarClient(config=client_config)
+        return XsoarClient(
+            client_config,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
+        )
 
 
 def get_client_from_marketplace(
@@ -60,6 +72,7 @@ def get_client_from_marketplace(
     username: Optional[str] = None,
     password: Optional[str] = None,
     verify_ssl: Optional[bool] = None,
+    raise_if_server_not_healthy: bool = True,
 ) -> XsoarClient:
     """
     Returns the client based on the marketplace.
@@ -73,6 +86,7 @@ def get_client_from_marketplace(
         password: the password to authenticate, relevant only for xsoar on prem
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not
                     if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
+        raise_if_server_not_healthy: whether to raise an exception if the server is not healthy
 
     Returns:
         the correct client according to the marketplace provided
@@ -106,7 +120,9 @@ def get_client_from_marketplace(
             auth_id=_auth_id,
             verify_ssl=_verify_ssl,
         )
-    return get_client_from_config(config)
+    return get_client_from_config(
+        config, raise_if_server_not_healthy=raise_if_server_not_healthy
+    )
 
 
 @lru_cache
@@ -117,6 +133,7 @@ def get_client_from_server_type(
     username: Optional[str] = None,
     password: Optional[str] = None,
     verify_ssl: Optional[bool] = None,
+    raise_if_server_not_healthy: bool = True,
 ) -> XsoarClient:
     """
     Returns the client based on the server type by doing api requests to determine which server it is
@@ -129,6 +146,7 @@ def get_client_from_server_type(
         password: the password to authenticate, relevant only for xsoar on prem
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not,
                     if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
+        raise_if_server_not_healthy: whether to raise an exception if the server is not healthy
 
     Returns:
         the correct client based on querying the type of the server
@@ -157,6 +175,7 @@ def get_client_from_server_type(
                 password=_password,
                 verify_ssl=_verify_ssl,
             ),
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
         )
 
     should_validate_server_type = True
@@ -171,6 +190,7 @@ def get_client_from_server_type(
                 verify_ssl=_verify_ssl,
             ),
             should_validate_server_type=should_validate_server_type,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
         )
     except (InvalidServerType, MaxRetryError):
         logger.debug(f"Checking if {_base_url} is {ServerType.XSOAR_SAAS}")
@@ -184,6 +204,7 @@ def get_client_from_server_type(
                 verify_ssl=_verify_ssl,
             ),
             should_validate_server_type=should_validate_server_type,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
         )
     except (InvalidServerType, MaxRetryError):
         logger.debug(f"Checking if {_base_url} is {ServerType.XSOAR}")
@@ -200,6 +221,7 @@ def get_client_from_server_type(
                 verify_ssl=_verify_ssl,
             ),
             should_validate_server_type=should_validate_server_type,
+            raise_if_server_not_healthy=raise_if_server_not_healthy,
         )
     except Exception as error:
         logger.debug(

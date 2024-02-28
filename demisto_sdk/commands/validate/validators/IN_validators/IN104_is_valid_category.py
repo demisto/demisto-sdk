@@ -16,8 +16,7 @@ class IsValidCategoryValidator(BaseValidator[ContentTypes]):
     error_code = "IN104"
     description = "Validate that the Integrations category is valid."
     rationale = (
-        "Using a non-standard category can lead to confusion and make it harder for users to find the integration. "
-        "For a list of valid categories, refer to the following documentation: "
+        "See the list of allowed categories in the platform: "
         "https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
     error_message = "The Integration's category ({0}) doesn't match the standard,\nplease make sure that the field is a category from the following options: {1}."

@@ -19,7 +19,6 @@ class IsValidEndpointCommandValidator(BaseValidator[ContentTypes]):
         "Validate that an endpoint command has at least one of the required fields."
     )
     rationale = (
-        "These fields are necessary to identify the endpoint and retrieve relevant data. "
         "Without them, the command may not function properly or may return incomplete or incorrect data. "
         "for more info see https://xsoar.pan.dev/docs/integrations/generic-endpoint-command"
     )

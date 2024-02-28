@@ -19,7 +19,6 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     )
     rationale = (
         "Changing 'subtype' can break backward compatibility. "
-        "Maintaining the same 'subtype' ensures system functionality. "
         "For 'subtype' info, see: https://xsoar.pan.dev/docs/integrations/yaml-file#script"
     )
     error_message = "Possible backwards compatibility break, You've changed the {0} subtype from {1} to {2}, please undo."

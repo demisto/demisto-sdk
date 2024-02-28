@@ -25,10 +25,8 @@ class IsHiddenableParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN124"
     description = "Validate that a param is not hidden if it can not be hidden."
     rationale = (
-        "Essential parameters in an integration should not be hidden to ensure its functionality. "
         "Hiding these parameters can lead to confusion and may prevent the integration from working as expected. "
-        "The following parameters are allowed to be hidden: "
-        f"{ALLOWED_HIDDEN_PARAMS}"
+        f"Only the following parameters may be hidden: {ALLOWED_HIDDEN_PARAMS}"
     )
     error_message = (
         "The following fields are hidden and cannot be hidden, please unhide them: {0}."

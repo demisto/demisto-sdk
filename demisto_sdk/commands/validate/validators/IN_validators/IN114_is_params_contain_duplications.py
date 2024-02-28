@@ -17,7 +17,7 @@ ContentTypes = Integration
 class IsParamsContainDuplicationsValidator(BaseValidator[ContentTypes]):
     error_code = "IN114"
     description = "Validate that there're no duplicated params for the integration."
-    rationale = "Duplicate parameters in an integration's configuration can cause confusion and errors. "
+    rationale = "Duplicate parameters cause confusion and unpredictable behaviors."
     error_message = "The following params are duplicated: {0}.\nPlease make sure your file doesn't contain duplications."
     related_field = "configuration"
     is_auto_fixable = False

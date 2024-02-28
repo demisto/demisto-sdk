@@ -22,7 +22,7 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
         "Validate that all existing params are in the right format for feed params."
     )
     rationale = (
-        "Feed integrations must have correctly formatted parameters for reliable data fetching and processing. "
+        "Malformed or missing parameters can lead to errors or incomplete data. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/feeds"
     )
     error_message = "The integration is a feed integration with malformed params: {0}"

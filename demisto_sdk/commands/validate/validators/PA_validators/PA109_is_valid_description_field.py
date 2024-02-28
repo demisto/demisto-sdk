@@ -15,8 +15,7 @@ class IsValidDescriptionFieldValidator(BaseValidator[ContentTypes]):
     error_code = "PA109"
     description = "Validate that the metadata description field isn't empty and is different from the default one."
     rationale = (
-        "A unique and meaningful pack description is crucial for identifying the pack, "
-        "understanding its purpose, and differentiating it from other packs."
+        "A meaningful description helps users understand how the pack can help them."
     )
     error_message = "Pack metadata description field is invalid. Please fill valid pack description."
     related_field = "description"

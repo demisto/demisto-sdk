@@ -14,10 +14,9 @@ ContentTypes = Integration
 class IsContainingMultipleDefaultArgsValidator(BaseValidator[ContentTypes]):
     error_code = "IN134"
     rationale = (
-        "Multiple default arguments could lead to unexpected behavior. "
+        "Multiple default arguments are not supported by the platform, and could lead to unexpected behavior. "
         "For more info about command arguments, see https://xsoar.pan.dev/docs/integrations/yaml-file#command-arguments"
     )
-    rationale = "A command in an integration should have at most one default argument to prevent ambiguity during execution. Having multiple default arguments could lead to unexpected behavior, as it's unclear which argument should be used if no value is provided by the user. for more info see https://xsoar.pan.dev/docs/integrations/yaml-file#command-arguments"
     error_message = "The following commands have more than 1 default arg, please make sure they have at most one: {0}."
     related_field = "default"
     is_auto_fixable = False

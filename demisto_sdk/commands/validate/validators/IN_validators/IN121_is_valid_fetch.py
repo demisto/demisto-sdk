@@ -26,7 +26,6 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
         "Validate that fetch integration has the required params in the right format."
     )
     rationale = (
-        "Fetch integrations must have correctly formatted parameters to ensure reliable data retrieval from external systems. "
         "Malformed or missing parameters can lead to errors or incomplete data. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/fetching-incidents"
     )

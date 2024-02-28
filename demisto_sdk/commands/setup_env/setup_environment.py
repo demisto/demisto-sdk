@@ -18,9 +18,13 @@ from demisto_sdk.commands.common.clients import (
     get_client_from_server_type,
 )
 from demisto_sdk.commands.common.constants import DEF_DOCKER
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.content_constant_paths import (
+    COMMON_SERVER_PYTHON_PATH,
+    CONTENT_PATH,
+    PYTHONPATH,
+)
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
-from demisto_sdk.commands.common.files import TextFile
+from demisto_sdk.commands.common.files import FileReadError, TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -86,13 +90,31 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
             docker_python_path.append(
                 f"{docker_prefix}/{path.relative_to(CONTENT_PATH.absolute())}"
             )
+
+    if not COMMON_SERVER_PYTHON_PATH.exists():
+        try:
+            common_server_python_contnet = TextFile.read_from_github_api(
+                COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py", verify_ssl=False
+            )
+        except FileReadError:
+            logger.error(
+                f'Could not retrieve common server python content from content github from path {COMMON_SERVER_PYTHON_PATH}/CommonServerUserPython.py"'
+            )
+            raise RuntimeError("CommonServerPython could not be read")
+
+        TextFile.write(
+            common_server_python_contnet,
+            output_path=COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py",
+        )
+
     if (
         f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"
         not in docker_python_path
     ):
         raise RuntimeError(
-            "Could not set debug-in-docker on VSCode. Probably CONTENT_PATH is not set properly."
+            "Could not set debug-in-docker on VSCode. Either CONTENT_PATH is not set properly or CommonServerPython could not be read "
         )
+
     return docker_python_path
 
 

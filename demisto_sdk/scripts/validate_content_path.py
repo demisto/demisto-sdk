@@ -110,7 +110,7 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     )
 )
 
-FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS = frozenset(TESTS_AND_DOC_DIRECTORIES)
+FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS = frozenset(TESTS_AND_DOC_DIRECTORIES + RELEASE_NOTES_DIR)
 SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES = ("_", " ", "-")
 
 
@@ -198,12 +198,6 @@ def _validate(path: Path) -> None:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise DepthOneFileError
 
-    if any(
-        separator in path.name for separator in SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES
-    ) and not (
-        (FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS).intersection(parts_after_pack)
-    ):
-        raise SeparatorsInFileNameError
 
 
 def validate(path: Path, github_action: bool) -> bool:
@@ -223,7 +217,7 @@ def validate(path: Path, github_action: bool) -> bool:
         return False
 
     except ExemptedPath as e:
-        logger.warning(e.message)
+        logger.warning(f"Path {path} is skipped: {e.message}")
         return True
 
     except Exception:

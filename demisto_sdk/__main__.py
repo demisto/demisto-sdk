@@ -213,6 +213,9 @@ def main(ctx, config, version, release_notes, **kwargs):
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
+    import dotenv
+
+    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
 
     if platform.system() == "Windows":
         logger.warning(

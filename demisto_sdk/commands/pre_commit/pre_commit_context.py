@@ -52,7 +52,7 @@ class PreCommitContext:
         """
         shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
         PRECOMMIT_FOLDER.mkdir(parents=True)
-        (PRECOMMIT_FOLDER / "coverage").mkdir()
+        (CONTENT_PATH / ".pre-commit").mkdir(parents=True, exist_ok=True, mode=0o755)
         (PRECOMMIT_FOLDER / "pytest-junit").mkdir()
         PRECOMMIT_CONFIG.mkdir()
         PRECOMMIT_DOCKER_CONFIGS.mkdir()

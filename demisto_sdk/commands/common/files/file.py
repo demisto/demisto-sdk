@@ -31,6 +31,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
+from demisto_sdk.commands.common.tools import NoInternetConnectionException, is_sdk_defined_working_offline
 
 
 class File(ABC):
@@ -453,6 +454,10 @@ class File(ABC):
         """
         if clear_cache:
             cls.read_from_http_request.cache_clear()
+
+        if is_sdk_defined_working_offline():
+            raise NoInternetConnectionException
+
         try:
             response = requests.get(
                 url,

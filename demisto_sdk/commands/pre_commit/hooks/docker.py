@@ -159,7 +159,7 @@ def get_environment_flag(env: dict) -> str:
 
 def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
-    config_arg: Optional[Tuple],
+    config_arg: Optional[Tuple[str, str]],
     run_isolated: bool = False,
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
@@ -176,9 +176,12 @@ def _split_by_objects(
     object_to_files: Dict[
         Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
     ] = defaultdict(set)
-
+    config_name, config_filename = config_arg if config_arg else ("", "")
     for file, obj in files_with_objects:
-        if run_isolated or (config_arg and (obj.path.parent / config_arg[1]).exists()):
+
+        if run_isolated or (
+            config_arg and (obj.path.parent / config_filename).exists()
+        ):
             object_to_files[obj].add((file, obj))
 
         else:
@@ -209,17 +212,29 @@ class DockerHook(Hook):
         self,
         image: str,
         files_with_objects: List[Tuple[Path, IntegrationScript]],
-        config_arg: Optional[Tuple],
+        config_arg: Optional[Tuple[str, str]],
         run_isolated: bool,
     ) -> List[Dict]:
+        """
+        Process the image and files to run on it, and returns the generated hooks
+
+        Args:
+            image (str): The image to process
+            files_with_objects (List[Tuple[Path, IntegrationScript]]): The files to run on the image
+            config_arg (Optional[Tuple]): The config arg to set where relevant. This will be appended to the end of "args"
+            run_isolated (bool): Whether to run the files in isolated containers
+
+        Returns:
+            List[Dict]: List of generated hooks.
+        """
         object_to_files = _split_by_objects(
             files_with_objects,
             config_arg,
             run_isolated,
         )
-        image_is_powershell = any(obj.is_powershell for _, obj in files_with_objects)
+        is_image_powershell = any(obj.is_powershell for _, obj in files_with_objects)
 
-        dev_image = devtest_image(image, image_is_powershell, self.context.dry_run)
+        dev_image = devtest_image(image, is_image_powershell, self.context.dry_run)
         hooks = self.generate_hooks(dev_image, image, object_to_files, config_arg)
         logger.debug(f"Generated {len(hooks)} hooks for image {image}")
         return hooks
@@ -378,7 +393,7 @@ class DockerHook(Hook):
         self.clean_args_from_hook(ret_hooks)
         return ret_hooks
 
-    def _get_config_file_arg(self) -> Optional[Tuple]:
+    def _get_config_file_arg(self) -> Optional[Tuple[str, str]]:
         """
         A config arg should be of the format
             config_file_arg:

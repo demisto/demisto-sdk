@@ -58,6 +58,8 @@ class Hook:
             hook: mutates the hook with files returned from filter_files_matching_hook_config
             files: the list of files to set on the hook
             use_args: if True, the files will be added to the args of the hook, and pass_filenames will be set to False
+            base_path: The content base path of the hook. In docker hooks, it will be `/src`. Use with `use_args`.
+
         Returns: the number of files that ultimately are set on the hook. Use this to decide if to run the hook at all
 
         """

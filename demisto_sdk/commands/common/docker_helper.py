@@ -166,7 +166,7 @@ class DockerBase:
         try:
             return Version(version)
         except InvalidVersion:
-            # we don't care about the build number
+            # build number makes the version unable to parse, so we need to strip it
             return Version(version.split("-")[0])
 
     def installation_files(self, container_type: str) -> FILES_SRC_TARGET:

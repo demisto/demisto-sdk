@@ -197,6 +197,16 @@ def test__set_properties():
 
 
 def test_isolate_container(mocker):
+    """
+    Given:
+        - files to run a hook
+
+    When:
+        - The hook is configured to run in isolation
+
+    Then:
+        - Make sure that a hook is created for each file
+    """
     hook = create_hook({"run_isolated": True})
     file_path = Path("SomeFile.py")
     file = (file_path, Obj(object_id="id1"))
@@ -221,3 +231,35 @@ def test_isolate_container(mocker):
     assert len(hook["repo"]["hooks"]) == 2
     assert hook["repo"]["hooks"][0]["id"] == "None-sometag-id1"
     assert hook["repo"]["hooks"][1]["id"] == "None-sometag-id2"
+
+
+def test_docker_pass_extra_args(mocker):
+    """
+    Given:
+        - files to run a hook
+
+    When:
+        - The hook is configured to provide extra docker args
+
+    Then:
+        - Make sure that a hook is created with the extra docker args
+    """
+    hook = create_hook({"pass_docker_extra_args": "--rm=false"})
+    file_path = Path("SomeFile.py")
+    file = (file_path, Obj(object_id="id1"))
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        return_value="devtestimg",
+    )
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.docker_tag_to_runfiles",
+        return_value={"sometag": [file]},
+    )
+    mocker.patch.object(
+        PreCommitContext,
+        "files_to_run_with_objects",
+        [(file_path, None)],
+    )
+    mocker.patch.object(PreCommitContext, "dry_run", True)
+    DockerHook(**hook).prepare_hook()
+    assert "--rm=false" in hook["repo"]["hooks"][0]["entry"]

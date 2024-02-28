@@ -457,7 +457,7 @@ def test_WasMarketplaceModifiedValidator__renamed__fails():
 def test_WasMarketplaceModifiedValidator__renamed__passes():
     """
     Given:
-         - Renamed `Integration` and `Script` iterables, each moved into a new pack.
+        - Renamed `Integration` and `Script` iterables, each moved into a new pack.
         - Renamed host-pack hade only `XSOAR` in pack level.
         - old host-pack has all marketplaces in pack level.
 

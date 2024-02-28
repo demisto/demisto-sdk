@@ -110,9 +110,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     )
 )
 
-FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS = frozenset(TESTS_AND_DOC_DIRECTORIES + RELEASE_NOTES_DIR)
-SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES = ("_", " ", "-")
-
 
 class InvalidPathException(Exception, ABC):
     message: ClassVar[str]

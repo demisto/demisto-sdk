@@ -7,8 +7,6 @@ from demisto_sdk.commands.common.constants import CONTENT_ENTITIES_DIRS, PACKS_F
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
-    FOLDERS_ALLOWING_FILE_NAMES_WITH_SEPARATORS,
-    SEPARATORS_NOT_ALLOWED_IN_FILE_NAMES,
     ZERO_DEPTH_FILES,
     DepthOneFileError,
     DepthOneFolderError,
@@ -16,7 +14,6 @@ from demisto_sdk.scripts.validate_content_path import (
     PathIsFolder,
     PathIsUnified,
     PathUnderDeprecatedContent,
-    SeparatorsInFileNameError,
     _validate,
 )
 

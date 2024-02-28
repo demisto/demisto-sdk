@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Tuple, Union
@@ -14,6 +15,7 @@ from demisto_sdk.commands.common.files import (
 from demisto_sdk.commands.common.files.errors import UnknownFileError
 from demisto_sdk.commands.common.files.file import File
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestFile:
@@ -148,6 +150,28 @@ class TestFile:
         ini_file_paths = [pack.pack_ignore.path, _ini_file_path]
         for path in ini_file_paths:
             assert File._from_path(path) == IniFile
+
+    def test_read_from_local_path_no_git_reposiotry(self, repo: Repo):
+        """
+        Given:
+         - secrets file
+         - no git repository
+
+        When:
+         - Running read_from_local_path
+
+        Then:
+         - make sure the file is read successfully even when there is no git reposiotry
+        """
+        secrets_file = repo.create_pack().secrets
+        secrets_file.write_secrets(["1.1.1.1"])
+        with ChangeCWD(repo.path):
+            assert (
+                File.read_from_local_path(
+                    Path(os.path.relpath(secrets_file.path, repo.path))
+                )
+                == Path(secrets_file.path).read_text()
+            )
 
     def test_from_path_valid_binary_files(self, repo: Repo):
         """

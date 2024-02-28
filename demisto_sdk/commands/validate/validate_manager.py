@@ -126,7 +126,7 @@ class ValidateManager:
             [
                 InvalidContentItemResult(
                     path=invalid_path,
-                    message="The given file is not supported in the validate command.\n"
+                    message="The given file is not supported in the validate command, see the error above.\n"
                     "The validate command supports: Integrations, Scripts, Playbooks, "
                     "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types,"
                     " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.",

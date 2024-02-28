@@ -1528,6 +1528,7 @@ INCORRECT_PACK_NAME_WORDS = [
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
 SUPPORT_LEVEL_HEADER = "supportlevelheader"
+CLASSIFICATION_TYPE = "classification"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {

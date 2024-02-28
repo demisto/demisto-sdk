@@ -1,9 +1,8 @@
-from typing import Callable, Dict, Optional
+from typing import Callable, Optional
 
 import demisto_client
 
 from demisto_sdk.commands.common.constants import (
-    PACKS_README_FILE_NAME,
     MarketplaceVersions,
     RelatedFileType,
 )
@@ -44,38 +43,6 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_playbook
-
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
-        related_content_files.update(
-            {
-                RelatedFileType.IMAGE: {
-                    "path": [
-                        str(
-                            self.path.parents[1]
-                            / "doc_files"
-                            / str(self.path.parts[-1])
-                            .replace(".yml", ".png")
-                            .replace("playbook-", "")
-                        ),
-                        str(self.path).replace(".yml", ".png"),
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.README: {
-                    "path": [
-                        str(
-                            self.path.parent
-                            / str(self.path.parts[-1]).replace(
-                                ".yml", f"_{PACKS_README_FILE_NAME}"
-                            )
-                        )
-                    ],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files
 
     @property
     def readme(self) -> str:

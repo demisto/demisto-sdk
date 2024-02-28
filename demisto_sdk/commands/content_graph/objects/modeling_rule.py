@@ -1,9 +1,8 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
-    RelatedFileType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -54,19 +53,3 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
             ):
                 return True
         return False
-
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
-        related_content_files.update(
-            {
-                RelatedFileType.SCHEMA: {
-                    "path": [str(self.path).replace(".yml", "_Schema.json")],
-                    "git_status": None,
-                },
-                RelatedFileType.XIF: {
-                    "path": [str(self.path).replace(".yml", ".xif")],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files

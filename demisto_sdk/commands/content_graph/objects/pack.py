@@ -10,15 +10,11 @@ from packaging.version import Version, parse
 from pydantic import DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
-    AUTHOR_IMAGE_FILE_NAME,
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
-    PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME,
     RELEASE_NOTES_DIR,
     ImagesFolderNames,
     MarketplaceVersions,
@@ -551,22 +547,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         related_content_files = super().get_related_content()
         related_content_files.update(
             {
-                RelatedFileType.PACK_IGNORE: {
-                    "path": [str(self.path / PACKS_PACK_IGNORE_FILE_NAME)],
-                    "git_status": None,
-                },
-                RelatedFileType.SECRETS_IGNORE: {
-                    "path": [str(self.path / PACKS_WHITELIST_FILE_NAME)],
-                    "git_status": None,
-                },
-                RelatedFileType.AUTHOR_IMAGE: {
-                    "path": [str(self.path / AUTHOR_IMAGE_FILE_NAME)],
-                    "git_status": None,
-                },
-                RelatedFileType.README: {
-                    "path": [str(self.path / PACKS_README_FILE_NAME)],
-                    "git_status": None,
-                },
                 RelatedFileType.RELEASE_NOTES: {
                     "path": [
                         str(

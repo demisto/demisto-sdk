@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
-    PACKS_README_FILE_NAME,
     Auto,
     MarketplaceVersions,
     RelatedFileType,
@@ -117,37 +116,6 @@ class IntegrationScript(ContentItem):
                 native_image_config=NativeImageConfig.get_instance(),
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
-
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
-        suffix = (
-            ".ps1" if self.is_powershell else ".js" if self.is_javascript else ".py"
-        )
-        related_content_files.update(
-            {
-                RelatedFileType.README: {
-                    "path": [
-                        str(self.path.parent / PACKS_README_FILE_NAME),
-                        str(self.path).replace(".yml", f"_{PACKS_README_FILE_NAME}"),
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.TEST_CODE: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_test{suffix}")
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.CODE: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}{suffix}"),
-                        str(self.path),
-                    ],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files
 
     @property
     def readme(self) -> str:

@@ -187,36 +187,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data["configuration"] = [param.dict(exclude_none=True) for param in self.params]
         write_dict(self.path, data, indent=4)
 
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
-        related_content_files.update(
-            {
-                RelatedFileType.IMAGE: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_image.png")
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.DARK_SVG: {
-                    "path": [str(self.path.parent / f"{self.path.parts[-2]}_dark.svg")],
-                    "git_status": None,
-                },
-                RelatedFileType.LIGHT_SVG: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_light.svg")
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.DESCRIPTION: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_description.md")
-                    ],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files
-
     @property
     def description_file(self) -> str:
         return self.get_related_text_file(RelatedFileType.DESCRIPTION)

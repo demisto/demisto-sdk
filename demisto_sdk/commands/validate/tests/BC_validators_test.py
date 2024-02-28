@@ -1,5 +1,5 @@
 import pytest
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
@@ -221,7 +221,7 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
         results = WasMarketplaceModifiedValidator().is_valid(modified_content_items)
         assert (
             results[0].message
-            == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
+            == "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
         )
         assert len(results) == 2
 
@@ -305,7 +305,7 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__fai
         results = WasMarketplaceModifiedValidator().is_valid(modified_content_items)
         assert (
             results[0].message
-            == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
+            == "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
         )
         assert len(results) == 2
 
@@ -414,5 +414,72 @@ def test_WasMarketplaceModifiedValidator__a_pack_is_modified__fails(
     results = WasMarketplaceModifiedValidator().is_valid(modified_content_item)
     assert (
         results[0].message
-        == "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
+        == "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
     )
+
+
+def test_WasMarketplaceModifiedValidator__renamed__fails():
+    """
+    Given:
+        - Renamed `Integration` and `Script` iterables, each moved into a new pack.
+        - Old host-pack hade only `XSOAR` in pack level.
+        - renamed host-pack has all marketplaces in pack level.
+
+    When:
+        - Calling the `WasMarketplaceModifiedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should fail the validation since moving to a different pack with less marketplaces is not allowed.
+
+    """
+    renamed_content_items = [
+        create_integration_object(pack_info={"marketplaces":  XSOAR_MARKETPLACE}),
+        create_script_object(pack_info={"marketplaces":  XSOAR_MARKETPLACE}),
+    ]
+    renamed_content_items[0].git_status = renamed_content_items[1].git_status = GitStatuses.RENAMED
+    old_content_items = [create_integration_object(), create_script_object()]
+
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        ALL_MARKETPLACES_FOR_IN_PACK
+    )
+    create_old_file_pointers(renamed_content_items, old_content_items)
+
+    with ChangeCWD(REPO.path):
+        results = WasMarketplaceModifiedValidator().is_valid(renamed_content_items)
+        assert (
+            results[0].message
+            == "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
+        )
+        assert len(results) == 2
+
+
+def test_WasMarketplaceModifiedValidator__renamed__passes():
+    """
+    Given:
+         - Renamed `Integration` and `Script` iterables, each moved into a new pack.
+        - Renamed host-pack hade only `XSOAR` in pack level.
+        - old host-pack has all marketplaces in pack level.
+
+    When:
+        - Calling the `WasMarketplaceModifiedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should pass the validation since the new host has all marketplaces in pack level. 
+
+    """
+    renamed_content_items = [
+        create_integration_object(pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}),
+        create_script_object(pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}),
+    ]
+    renamed_content_items[0].git_status = renamed_content_items[1].git_status = GitStatuses.RENAMED
+    old_content_items = [create_integration_object(), create_script_object()]
+
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        XSOAR_MARKETPLACE
+    )
+    create_old_file_pointers(renamed_content_items, old_content_items)
+
+    with ChangeCWD(REPO.path):
+        assert WasMarketplaceModifiedValidator().is_valid(renamed_content_items) == []

@@ -34,11 +34,11 @@ ALL_MARKETPLACES = list(MarketplaceVersions)
 class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
     error_code = "BC108"
     description = "Ensuring that the 'marketplaces' property hasn't been removed or added in a manner that effectively removes all others."
-    error_message = "You can't add new marketplaces if they'll remove existing ones, or delete current marketplace content. Please undo the change or ask for a forced merge."
+    error_message = "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
     fix_message = ""
     related_field = "marketplaces"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         results: List[ValidationResult] = []
@@ -50,11 +50,17 @@ class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
             # if the content is not a pack, we may want to compare to the pack marketplaces as well, since the item inherits the pack marketplaces, if not specified
             if not isinstance(content_item, Pack):
                 pack_marketplaces = content_item.in_pack.marketplaces  # type: ignore
-
+                
                 # If all marketplaces are included, it might be due to the field not appearing. However, in reality, it is available only in a specific marketplace inherited from the pack marketplace.
                 # In this scenario, we will compare the pack's marketplaces as it serves as the source of truth.
                 if set(old_marketplaces) == set(ALL_MARKETPLACES):
                     old_marketplaces = pack_marketplaces
+                
+                #  If the content item was renamed (perhaps because it was moved into a new pack), we need to compare the marketplaces at the pack level.
+                if content_item.git_status == GitStatuses.RENAMED:
+                    old_pack_marketplaces = content_item.old_base_content_object.in_pack.marketplaces  # type: ignore
+                    old_marketplaces = old_pack_marketplaces
+                    new_marketplaces = pack_marketplaces
 
             if not (set(old_marketplaces).issubset(set(new_marketplaces))):
                 results.append(

@@ -72,6 +72,7 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    logger.debug("[test] in update_content_graph")
     git_util = GitUtil()
 
     if not should_update_graph(
@@ -89,6 +90,7 @@ def update_content_graph(
         )
 
         return
+    logger.debug("[test] passed the not should_update_graph part.")
 
     if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")

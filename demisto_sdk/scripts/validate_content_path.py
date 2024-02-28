@@ -61,7 +61,7 @@ ZERO_DEPTH_FILES = frozenset(
     )
 )
 
-DEPTH_ONE_FOLDERS = set(ContentType.folders()).difference(
+DEPTH_ONE_FOLDERS = (set(ContentType.folders())| set(TESTS_AND_DOC_DIRECTORIES)).difference(
     (
         "Packs",
         "BaseContents",
@@ -71,7 +71,7 @@ DEPTH_ONE_FOLDERS = set(ContentType.folders()).difference(
         "TestScripts",
         "CommandOrScripts",
     )
-) | set(TESTS_AND_DOC_DIRECTORIES)
+) 
 
 DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     (
@@ -227,10 +227,7 @@ def cli(
     github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
 ) -> None:
     result = [validate(path, github_action) for path in paths]
-    if all(result):
-        logger.info(f"[green]All {len(result)} paths are valid[/green]")
-    else:
-        logger.error(f"{sum(result)}/{len(result)} paths are valid")
+    if not all(result):
         raise typer.Exit(1)
 
 

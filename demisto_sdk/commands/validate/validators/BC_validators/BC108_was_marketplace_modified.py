@@ -49,12 +49,12 @@ class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
             # if the content is not a pack, we may want to compare to the pack marketplaces as well, since the item inherits the pack marketplaces, if not specified
             if not isinstance(content_item, Pack):
                 pack_marketplaces = content_item.in_pack.marketplaces  # type: ignore
-                
+
                 # If all marketplaces are included, it might be due to the field not appearing. However, in reality, it is available only in a specific marketplace inherited from the pack marketplace.
                 # In this scenario, we will compare the pack's marketplaces as it serves as the source of truth.
                 if set(old_marketplaces) == set(ALL_MARKETPLACES):
                     old_marketplaces = pack_marketplaces
-                
+
                 #  If the content item was renamed (perhaps because it was moved into a new pack), we need to compare the marketplaces at the pack level.
                 if content_item.git_status == GitStatuses.RENAMED:
                     old_pack_marketplaces = content_item.old_base_content_object.in_pack.marketplaces  # type: ignore

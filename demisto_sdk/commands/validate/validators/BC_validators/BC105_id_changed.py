@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
@@ -46,6 +44,7 @@ ContentTypes = Union[
     Integration,
     Script,
 ]
+
 
 class IdChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC105"

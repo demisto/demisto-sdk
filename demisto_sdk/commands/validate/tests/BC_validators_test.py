@@ -1,10 +1,11 @@
 import pytest
+
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
-    create_old_file_pointers,
     create_metadata_object,
+    create_old_file_pointers,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
@@ -466,7 +467,7 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
 
     Then:
         - The results should be as expected.
-        - Should pass the validation since the new host has all marketplaces in pack level. 
+        - Should pass the validation since the new host has all marketplaces in pack level.
 
     """
     renamed_content_items = [

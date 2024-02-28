@@ -3,15 +3,14 @@ from __future__ import annotations
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.objects import Pack, Playbook
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
-from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
-from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
-from demisto_sdk.commands.content_graph.objects import Pack
-from demisto_sdk.commands.content_graph.objects import Playbook
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,

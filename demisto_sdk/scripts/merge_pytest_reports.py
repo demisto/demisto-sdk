@@ -6,8 +6,11 @@ from pathlib import Path
 import coverage
 from junitparser import JUnitXml
 
+from demisto_sdk.commands.common.constants import CACHE_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup
+
+PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"
 
 
 def fix_coverage_report_path(coverage_file: Path) -> bool:
@@ -68,7 +71,7 @@ def merge_coverage_report():
     coverage_path.unlink(missing_ok=True)
     cov = coverage.Coverage(data_file=coverage_path)
     # this is the path where the pre-commit created the coverage files
-    created_coverage_path = CONTENT_PATH / ".pre-commit" / "coverage"
+    created_coverage_path = PRECOMMIT_FOLDER / "coverage"
     if not created_coverage_path.exists() or not (
         files := list(created_coverage_path.iterdir())
     ):
@@ -82,7 +85,7 @@ def merge_coverage_report():
 
 
 def merge_junit_reports():
-    junit_reports_path = CONTENT_PATH / ".pre-commit" / "pytest-junit"
+    junit_reports_path = PRECOMMIT_FOLDER / "pytest-junit"
     if not junit_reports_path.exists():
         logger.warning("No junit reports found, skipping junit report.")
         return

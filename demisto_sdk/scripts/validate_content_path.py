@@ -61,7 +61,9 @@ ZERO_DEPTH_FILES = frozenset(
     )
 )
 
-DEPTH_ONE_FOLDERS = (set(ContentType.folders())| set(TESTS_AND_DOC_DIRECTORIES)).difference(
+DEPTH_ONE_FOLDERS = (
+    set(ContentType.folders()) | set(TESTS_AND_DOC_DIRECTORIES)
+).difference(
     (
         "Packs",
         "BaseContents",
@@ -71,7 +73,7 @@ DEPTH_ONE_FOLDERS = (set(ContentType.folders())| set(TESTS_AND_DOC_DIRECTORIES))
         "TestScripts",
         "CommandOrScripts",
     )
-) 
+)
 
 DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     (
@@ -104,17 +106,13 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         WIDGETS_DIR,
         WIZARDS_DIR,
         LAYOUT_RULES_DIR,
-        *TESTS_AND_DOC_DIRECTORIES
+        *TESTS_AND_DOC_DIRECTORIES,
     )
 )
 
 
 class InvalidPathException(Exception, ABC):
     message: ClassVar[str]
-
-
-class PathOutsidePacksError(InvalidPathException):
-    message = "Path is not under Packs"
 
 
 class SeparatorsInFileNameError(InvalidPathException):
@@ -137,6 +135,10 @@ class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
 
+class PathOutsidePacks(ExemptedPath):
+    message = "Path is not under Packs"
+
+
 class PathIsFolder(ExemptedPath):
     message = "Path is to a folder, these are not validated."
 
@@ -156,7 +158,7 @@ def _validate(path: Path) -> None:
         raise PathIsFolder
 
     if PACKS_FOLDER not in path.parts:
-        raise PathOutsidePacksError  # TODO
+        raise PathOutsidePacks
 
     if "DeprecatedContent" in path.parts:
         raise PathUnderDeprecatedContent
@@ -192,7 +194,6 @@ def _validate(path: Path) -> None:
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise DepthOneFileError
-
 
 
 def validate(path: Path, github_action: bool) -> bool:

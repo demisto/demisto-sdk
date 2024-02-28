@@ -1,15 +1,23 @@
-from typing import Collection, Dict, List, Optional
+from pathlib import Path
+from typing import Collection, Dict, List, Optional, Set, Tuple
 
 import typer
 from github import Github, WorkflowRun
 from slack_sdk import WebClient
 
 from demisto_sdk.commands.common.logger import logger
+from Utils.pytest_junit_parser import JunitParser
 
 DEFAULT_SLACK_CHANNEL = "dmst-build-test"
 
 
 def get_failed_jobs(workflow_run: WorkflowRun) -> List[str]:
+    """
+    Get a list of failed jobs.
+
+    Args:
+        workflow_run: the workflow run object.
+    """
     jobs = [job for job in workflow_run.jobs() if job.conclusion == "failure"]
 
     failed_jobs = []
@@ -28,7 +36,49 @@ def get_failed_jobs(workflow_run: WorkflowRun) -> List[str]:
     return failed_jobs
 
 
-def construct_slack_message(summary_url: str, failed_jobs: List[str]) -> List[Dict]:
+def get_failed_tests() -> Tuple[List[str], List[str], List[str]]:
+    """
+    Get all the failed tests from the workflow.
+
+    Args:
+        junit_file_paths: paths to all the junit files
+
+    Returns:
+        a list of failed unit-tests, a list of failed integration-tests, a list of failed graph-tests.
+    """
+    failed_unit_tests: Set[str] = set()
+    failed_integration_tests: Set[str] = set()
+    failed_graph_tests: Set[str] = set()
+
+    for path in Path(".").glob("*/junit.xml"):
+        for test_suite in JunitParser(path).test_suites:
+            failed_unit_tests = failed_unit_tests.union(
+                {str(failed_test) for failed_test in test_suite.failed_unit_tests}
+            )
+            failed_integration_tests = failed_integration_tests.union(
+                {
+                    str(failed_test)
+                    for failed_test in test_suite.failed_integration_tests
+                }
+            )
+            failed_graph_tests = failed_graph_tests.union(
+                {str(failed_test) for failed_test in test_suite.failed_graph_tests}
+            )
+
+        logger.info(f"Finished processing junit-file {path}")
+
+    return (
+        list(failed_unit_tests),
+        list(failed_integration_tests),
+        list(failed_graph_tests),
+    )
+
+
+def construct_slack_message(
+    summary_url: str,
+    failed_jobs: List[str],
+    failed_tests: Tuple[List[str], List[str], List[str]],
+) -> List[Dict]:
     def construct_slack_section(_section_title: str, _failed_entities: Collection[str]):
         """
         Construct a single section in the slack body message.
@@ -50,8 +100,31 @@ def construct_slack_message(summary_url: str, failed_jobs: List[str]) -> List[Di
     if failed_jobs:
         slack_body_message.append(
             construct_slack_section(
-                _section_title="Failed Github-Actions Jobs",
+                "Failed Github-Actions Jobs",
                 _failed_entities=failed_jobs,
+            )
+        )
+
+    failed_unit_tests, failed_integration_tests, failed_graph_tests = failed_tests
+
+    if failed_unit_tests:
+        slack_body_message.append(
+            construct_slack_section(
+                "Failed Unit Tests", _failed_entities=failed_unit_tests
+            )
+        )
+
+    if failed_integration_tests:
+        slack_body_message.append(
+            construct_slack_section(
+                "Failed Integration Tests", _failed_entities=failed_integration_tests
+            )
+        )
+
+    if failed_graph_tests:
+        slack_body_message.append(
+            construct_slack_section(
+                "Failed Graph Tests", _failed_entities=failed_graph_tests
             )
         )
 
@@ -100,9 +173,12 @@ def slack_notifier(
     workflow_run: WorkflowRun = repo.get_workflow_run(workflow_id)
 
     failed_jobs = get_failed_jobs(workflow_run)
+    failed_tests = get_failed_tests()
     summary_url = workflow_run.html_url
 
-    slack_message = construct_slack_message(summary_url, failed_jobs=failed_jobs)
+    slack_message = construct_slack_message(
+        summary_url, failed_jobs=failed_jobs, failed_tests=failed_tests
+    )
     if slack_message:
         slack_client = WebClient(token=slack_token)
         slack_client.chat_postMessage(

@@ -18,11 +18,12 @@ from demisto_sdk.commands.common.constants import (
     urljoin,
 )
 from demisto_sdk.commands.common.files.errors import (
-    FileContentReadError,
+    FileLoadError,
     FileReadError,
     GitFileReadError,
     HttpFileReadError,
     LocalFileReadError,
+    MemoryFileReadError,
     UnknownFileError,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
@@ -36,6 +37,16 @@ class File(ABC):
     @property
     def path(self) -> Path:
         return getattr(self, "_path")
+
+    @property
+    def safe_path(self) -> Union[Path, None]:
+        """
+        Returns the path of the file if exists, otherwise returns None
+        """
+        try:
+            return self.path
+        except AttributeError:
+            return None
 
     @cached_property
     def file_content(self) -> bytes:
@@ -165,9 +176,9 @@ class File(ABC):
 
         try:
             return cls.as_default(encoding=encoding, handler=handler).load(file_content)
-        except LocalFileReadError as e:
+        except FileLoadError as error:
             logger.error(f"Could not read file content as {cls.__name__} file")
-            raise FileContentReadError(exc=e.original_exc)
+            raise MemoryFileReadError(error.original_exc) from error
 
     @classmethod
     def as_path(cls, path: Path, **kwargs):
@@ -229,11 +240,11 @@ class File(ABC):
     def __read_local_file(self):
         try:
             return self.load(self.file_content)
-        except FileReadError:
+        except FileLoadError as error:
             logger.error(
                 f"Could not read file {self.path} as {self.__class__.__name__} file"
             )
-            raise
+            raise LocalFileReadError(self.path, exc=error.original_exc) from error
 
     @classmethod
     @lru_cache
@@ -286,17 +297,17 @@ class File(ABC):
                     self.path, commit_or_branch=tag, from_remote=from_remote
                 )
             )
-        except Exception as e:
+        except Exception as error:
             if from_remote:
                 tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
             logger.error(
-                f"Could not read git file {self.path} from {tag} as {self.__class__.__name__} file"
+                f"Could not read git file {self.path} from branch/commit {tag} as {self.__class__.__name__} file"
             )
             raise GitFileReadError(
                 self.path,
                 tag=tag,
-                exc=e,
-            )
+                exc=error.original_exc if isinstance(error, FileReadError) else error,
+            ) from error
 
     @classmethod
     def read_from_github_api(
@@ -440,10 +451,6 @@ class File(ABC):
             Any: the file content in the desired format
 
         """
-        if cls is File:
-            raise ValueError(
-                "when reading from file content please specify concrete class"
-            )
         if clear_cache:
             cls.read_from_http_request.cache_clear()
         try:
@@ -454,8 +461,15 @@ class File(ABC):
                 timeout=timeout,
                 headers={key: value for key, value in headers} if headers else None,
             )
+            if response.status_code == requests.codes.not_found:
+                raise FileNotFoundError(f"file in {url} does not exist")
             response.raise_for_status()
         except RequestException as e:
+            if isinstance(e, (ConnectionError, Timeout)):
+                logger.debug(
+                    f"Could not retrieve file from {url} due to a connection issue"
+                )
+                raise
             logger.exception(f"Could not retrieve file from {url}")
             raise HttpFileReadError(url, exc=e)
 
@@ -465,6 +479,6 @@ class File(ABC):
             return _cls.read_from_file_content(
                 response.content, encoding=encoding, handler=handler
             )
-        except FileContentReadError as e:
-            logger.error(f"Could not read file from {url} as {_cls.__name__} file")
-            raise HttpFileReadError(url, exc=e)
+        except MemoryFileReadError as e:
+            logger.error(f"Could not load file from URL {url} as {_cls.__name__} file")
+            raise HttpFileReadError(url, exc=e.original_exc) from e

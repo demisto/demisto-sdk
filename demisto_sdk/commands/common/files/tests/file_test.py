@@ -14,6 +14,8 @@ from demisto_sdk.commands.common.files import (
 )
 from demisto_sdk.commands.common.files.errors import UnknownFileError
 from demisto_sdk.commands.common.files.file import File
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -209,7 +211,7 @@ class TestFile:
         with pytest.raises(UnknownFileError):
             File._from_path(_path)
 
-    def test_read_from_local_path_error(self):
+    def test_read_from_local_path_file_does_not_exist(self):
         """
         Given:
          - path that does not exist
@@ -223,6 +225,36 @@ class TestFile:
         with pytest.raises(FileNotFoundError):
             File.read_from_local_path("path_does_not_exist")
 
+    def test_read_from_git_path_file_does_not_exist(self, git_repo: Repo):
+        """
+        Given:
+         - file that does not exist in a master git branch
+
+        When:
+         - Running read_from_git_path method from File object
+
+        Then:
+         - make sure FileNotFoundError is raised
+        """
+        with ChangeCWD(git_repo.path):
+            with pytest.raises(FileNotFoundError):
+                File.read_from_git_path("path_does_not_exist", from_remote=False)
+
+    def test_read_from_http_request_file_does_not_exist(self, requests_mock):
+        """
+        Given:
+         - path that does not exist within an api
+
+        When:
+         - Running read_from_http_request method from File object
+
+        Then:
+         - make sure FileNotFoundError is raised
+        """
+        requests_mock.get("https://example.com/file-not-exist.json", status_code=404)
+        with pytest.raises(FileNotFoundError):
+            File.read_from_http_request("https://example.com/file-not-exist.json")
+
     def test_read_from_file_content_error(self):
         """
         Given:
@@ -232,24 +264,85 @@ class TestFile:
          - Running read_from_file_content method from File object
 
         Then:
-         - make sure ValueError is raised
+         - make sure ValueError is raised as its not possible to automatically identify which File subclass based on the
+           file content.
         """
         with pytest.raises(ValueError):
             File.read_from_file_content(b"")
 
-    def test_read_from_http_request_error(self):
+    def test_read_from_local_path(self, repo: Repo):
         """
         Given:
-         - invalid URL
+         - local conf json
+
+        When:
+         - Running read_from_local_path method from File object
+
+        Then:
+         - make sure the conf json is read successfully
+        """
+        conf_json_path = Path(repo.path) / "Tests/conf.json"
+        assert File.read_from_local_path(conf_json_path) == json.loads(
+            conf_json_path.read_text()
+        )
+
+    def test_read_from_git_path(self, git_repo: Repo):
+        """
+        Given:
+         - a pack with a pack-ignore file in the master branch
+         - checking out to a different branch
+
+        When:
+         - Running read_from_git_path method from File object
+
+        Then:
+         - make sure the pack-ignore is read successfully
+        """
+        pack = git_repo.create_pack()
+        pack.pack_ignore.write_list(
+            [
+                "[file:IntegrationTest.yml]\nignore=IN122,RM110",
+            ]
+        )
+        git_repo.git_util.commit_files("add pack")
+        git_repo.git_util.repo.git.checkout("-b", "some-branch")
+
+        with ChangeCWD(git_repo.path):
+            pack_ignore_content = File.read_from_git_path(
+                pack.pack_ignore.path, from_remote=False
+            )
+        assert pack_ignore_content.sections() == ["file:IntegrationTest.yml"]
+        assert "ignore" in pack_ignore_content["file:IntegrationTest.yml"]
+        assert (
+            pack_ignore_content["file:IntegrationTest.yml"]["ignore"] == "IN122,RM110"
+        )
+
+    def test_read_from_http_request(self, mocker, repo: Repo):
+        """
+        Given:
+         - integration yml path
 
         When:
          - Running read_from_http_request method from File object
 
         Then:
-         - make sure ValueError is raised
+         - make sure the yml file of the integration is read successfully
         """
-        with pytest.raises(ValueError):
-            File.read_from_http_request("not/valid/url")
+        import requests
+
+        integration = repo.create_pack().create_integration()
+
+        api_response = requests.Response()
+        api_response.status_code = 200
+        api_response._content = Path(integration.yml.path).read_bytes()
+        mocker.patch.object(requests, "get", return_value=api_response)
+
+        actual_file_content = File.read_from_http_request(integration.yml.path)
+        assert isinstance(actual_file_content, dict)
+        with Path(integration.yml.path).open("r") as file:
+            expected_file_content = yaml.load(file)
+
+        assert actual_file_content == expected_file_content
 
 
 class FileTesting(ABC):

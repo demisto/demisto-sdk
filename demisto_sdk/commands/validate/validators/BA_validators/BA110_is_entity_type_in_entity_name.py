@@ -16,8 +16,10 @@ ContentTypes = Union[Integration, Script, Playbook]
 
 class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
     error_code = "BA110"
-    description = "Check that the entity name or display name does not contain the entity type"
-    error_message = "The following fields: {0} shouldn't contain the word '{1}'"
+    description = (
+        "Check that the entity name or display name does not contain the entity type."
+    )
+    error_message = "The following fields: {0} shouldn't contain the word '{1}'."
     related_field = "name, display"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.YML]
@@ -27,12 +29,13 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    ", ".join(self.related_field), content_item.content_type
+                    self.related_field, content_item.content_type
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                content_item.content_type.lower() in (content_item.name.lower(), content_item.display_name.lower())
+            if any(
+                content_item.content_type.lower() in name.lower()
+                for name in (content_item.name, content_item.display_name)
             )
         ]

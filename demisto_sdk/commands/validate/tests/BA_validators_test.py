@@ -46,6 +46,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
+    IsEntityTypeInEntityNameValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
     CliNameMatchIdValidator,
 )
@@ -1018,3 +1021,64 @@ def test_IsValidVersionValidator_fix():
         == "Updated the content item version to -1."
     )
     assert content_item.version == -1
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_msg",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test v1", "Testv1"],
+                ),
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test Integration", "TestIntegration"],
+                ),
+            ],
+            "The following fields: name, display shouldn't contain the word 'Integration'.",
+        ),
+        (
+            [
+                create_script_object(
+                    paths=["name", "display"],
+                    values=["Test v1", "Testv1"],
+                ),
+                create_script_object(
+                    paths=["name", "display"],
+                    values=["Test Integration", "TestIntegration"],
+                ),
+            ],
+            "The following fields: name, display shouldn't contain the word 'Script'.",
+        ),
+        (
+            [
+                create_playbook_object(
+                    paths=["name", "display"],
+                    values=["Test v1", "Testv1"],
+                ),
+                create_playbook_object(
+                    paths=["name", "display"],
+                    values=["Test Integration", "TestIntegration"],
+                ),
+            ],
+            "The following fields: name, display shouldn't contain the word 'Playbook'.",
+        ),
+    ],
+    ids=["test integration", "test script, test playbook"],
+)
+def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg):
+    """
+    Given
+    - Case 1: A content item doest not have its type in name of display felids.
+    - Case 2: A content item that have its type in name of display felids.
+    When
+    - Running the IsEntityTypeInEntityNameValidator validation.
+    Then
+    - Case 1: Don't fail the validation.
+    - Case 2: Fail the validation with a relevant message.
+    """
+    result = IsEntityTypeInEntityNameValidator().is_valid(content_items)
+    assert result[0].message == expected_msg
+    assert len(result) == 1

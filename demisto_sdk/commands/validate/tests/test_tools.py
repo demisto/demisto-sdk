@@ -29,7 +29,7 @@ def create_integration_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
-    readme_content: str | None = None,
+    readme_content: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -102,7 +102,7 @@ def create_playbook_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
-    readme_content: str | None = None,
+    readme_content: Optional[str] = None,
 
 ):
     """Creating an playbook object with altered fields from a default playbook yml structure.

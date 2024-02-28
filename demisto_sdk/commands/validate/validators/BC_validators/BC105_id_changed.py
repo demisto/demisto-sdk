@@ -68,7 +68,7 @@ ContentTypes = Union[
     GenericModule,
     GenericType,
     XSIAMDashboard,
-    XSIAMReport
+    XSIAMReport,
 ]
 
 

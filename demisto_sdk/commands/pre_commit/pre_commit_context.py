@@ -59,6 +59,8 @@ class PreCommitContext:
         PRECOMMIT_CONFIG.mkdir()
         PRECOMMIT_DOCKER_CONFIGS.mkdir()
         PRE_COMMIT_FOLDER_SHARED.mkdir(parents=True, exist_ok=True, mode=777)
+        (PRE_COMMIT_FOLDER_SHARED / "coverage").mkdir(exist_ok=True, mode=777)
+        (PRE_COMMIT_FOLDER_SHARED / "pytest-junit").mkdir(exist_ok=True, mode=777)
         self.precommit_template: dict = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)  # type: ignore[assignment]
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:

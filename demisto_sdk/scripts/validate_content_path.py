@@ -208,11 +208,11 @@ def validate(path: Path, github_action: bool) -> bool:
                 f"::error file={path},line=1,endLine=1,title=Invalid Path::{e.message}"
             )
         else:
-            logger.error(f"Path {path} is invalid: {e.message}")
+            logger.debug(f"{path} is invalid: {e.message}")
         return False
 
     except ExemptedPath as e:
-        logger.debug(f"Path {path} is skipped: {e.message}")
+        logger.debug(f"{path} is skipped: {e.message}")
         return True
 
     except Exception:

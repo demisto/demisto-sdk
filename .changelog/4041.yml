@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **secrets** command failed in case of detached head git state
-  type: fix
-pr_number: 4041

@@ -6,8 +6,8 @@ from bs4.dammit import UnicodeDammit
 
 from demisto_sdk.commands.common.constants import PACKS_WHITELIST_FILE_NAME
 from demisto_sdk.commands.common.files.errors import (
+    FileLoadError,
     FileWriteError,
-    LocalFileReadError,
 )
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.logger import logger
@@ -41,24 +41,36 @@ class TextFile(File):
             "command_example",
             "command_examples",
             PACKS_WHITELIST_FILE_NAME,
-        } or path.suffix.lower() in {".md", ".py", ".txt"}
+        } or path.suffix.lower() in {".md", ".py", ".txt", ".xif"}
 
     def load(self, file_content: bytes) -> Any:
+        path = self.safe_path
         try:
             return file_content.decode(self.encoding)
         except UnicodeDecodeError:
             original_file_encoding = UnicodeDammit(file_content).original_encoding
-            logger.debug(
-                f"Error when decoding file {self.path} with {self.encoding}, "
-                f"trying to decode the file with original encoding {original_file_encoding}"
-            )
+            if path:
+                logger.debug(
+                    f"Error when decoding file {path} with {self.encoding}, "
+                    f"trying to decode the file with original encoding {original_file_encoding}"
+                )
+            else:
+                logger.debug(
+                    f"Error when decoding file when reading it directly from memory with {self.encoding}, "
+                    f"trying to decode the file with original encoding {original_file_encoding}"
+                )
             try:
                 return UnicodeDammit(file_content).unicode_markup
             except UnicodeDecodeError as e:
-                logger.error(f"Could not auto detect encoding for file {self.path}")
-                raise LocalFileReadError(self.path, exc=e)
+                if path:
+                    logger.error(f"Could not auto detect encoding for file {path}")
+                else:
+                    logger.error(
+                        "Could not auto detect encoding for file when reading it directly from memory"
+                    )
+                raise FileLoadError(e, class_name=self.__class__.__name__, path=path)
         except Exception as e:
-            raise LocalFileReadError(self.path, exc=e)
+            raise FileLoadError(e, class_name=self.__class__.__name__, path=path)
 
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=self.__read_local_file())

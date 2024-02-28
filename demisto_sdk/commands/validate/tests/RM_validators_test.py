@@ -82,11 +82,13 @@ def test_IsContainCopyRightSectionValidator_is_valid(
             [
                 create_pack_object(
                     paths=["support"], values=["partner"], readme_text=""
-                )
-            ],  # empty readme with partner support, not valid
-            1,
+                ),
+                create_pack_object(paths=["support"], values=["xsoar"], readme_text=""),
+            ],  # empty readme with partner/xsoar support, not valid
+            2,
             [
-                "Pack HelloWorld written by a partner or pack containing playbooks must have a full README.md file with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information"
+                "Pack HelloWorld written by a partner or pack containing playbooks must have a full README.md file with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information",
+                "Pack HelloWorld written by a partner or pack containing playbooks must have a full README.md file with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information",
             ],
         ),
         (

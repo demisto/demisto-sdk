@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the *init* command sometimes failed in the dialogue when enter was pressed and not explicitly written false.
-  type: fix
-pr_number: 4058

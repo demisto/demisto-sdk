@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
 import regex
+from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -138,7 +139,13 @@ class PackMetadataParser:
         self.server_min_version: str = metadata.get("serverMinVersion", "")
         self.current_version: str = metadata.get("currentVersion", "")
         self.version_info: str = ""
-        self.commit: str = GitUtil().get_current_commit_hash() or ""
+        try:
+            self.commit: str = GitUtil().get_current_commit_hash() or ""
+        except InvalidGitRepositoryError as e:
+            logger.warning(
+                f"Failed to get commit hash for pack {self.name}. Error: {e}"
+            )
+            self.commit = ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
         self.keywords: List[str] = metadata.get("keywords", [])
@@ -171,7 +178,7 @@ class PackMetadataParser:
         self.content_commit_hash: Optional[str] = (
             metadata.get("contentCommitHash") or ""
         )
-
+        self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
 
     @property

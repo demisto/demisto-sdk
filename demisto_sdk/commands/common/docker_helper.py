@@ -64,10 +64,12 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         logger.debug(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
             DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
-        except docker.errors.DockerException as e:
-            logger.warning(f"{log_prompt} - Failed to init docker client. "
-                           "This might indicate that your docker daemon is not running.")
-            raise e
+        except docker.errors.DockerException:
+            logger.warning(
+                f"{log_prompt} - Failed to init docker client. "
+                "This might indicate that your docker daemon is not running."
+            )
+            raise
         docker_user = os.getenv("DOCKERHUB_USER")
         docker_pass = os.getenv("DOCKERHUB_PASSWORD")
         if docker_user and docker_pass:

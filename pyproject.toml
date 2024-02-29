@@ -31,7 +31,7 @@ python = ">=3.8,<3.11"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
-pylint = "^2.13.0"
+pylint = "2.12.2"
 beautifulsoup4 = "^4.11.1"
 chardet = "^5.2.0"  # Used by bs4.dammit. Can be replaced with `charset-normalizer` which is 20x faster.
 click = "^8.0.0"

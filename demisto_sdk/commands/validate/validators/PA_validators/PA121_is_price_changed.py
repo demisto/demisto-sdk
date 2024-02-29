@@ -16,7 +16,7 @@ ContentTypes = Pack
 class IsPriceChangedValidator(BaseValidator[ContentTypes]):
     error_code = "PA121"
     description = "Validate that no changes were done to the pack's price."
-    rationale = "The pack price should not be changed without approval."  # todo price?
+    rationale = "The pack price should not be changed without approval."
     error_message = "The pack price was changed from {0} to {1} - revert the change."
     fix_message = "Reverted the price back to {0}."
     related_field = "price"

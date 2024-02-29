@@ -55,6 +55,7 @@ ContentTypes = Union[
 class IsValidVersionValidator(BaseValidator[ContentTypes]):
     error_code = "BA100"
     description = "Validate that the content item version equal -1."
+    rationale = ""  # TODO ?
     error_message = (
         "The version for our files should always be -1, please update the file."
     )

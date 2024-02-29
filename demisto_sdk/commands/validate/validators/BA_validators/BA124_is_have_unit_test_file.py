@@ -20,6 +20,7 @@ ContentTypes = Union[Integration, Script]
 class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
     error_code = "BA124"
     description = "Validate that the script / integration has a unit test file."
+    rationale = "Unit tests make sure that the behaviors in code are consistent between versions."
     error_message = ""
     related_field = "test"
     is_auto_fixable = False

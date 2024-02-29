@@ -16,7 +16,7 @@ class IsValidCertificateValidator(BaseValidator[ContentTypes]):
     error_code = "PA118"
     description = "Validate that the metadata's certification field is valid."
     rationale = (
-        "For the list of allowed values of the `certification` filed in the platform: "
+        "See the list of allowed `certification` in the platform: "
         "https://xsoar.pan.dev/docs/packs/packs-format#pack_metadatajson."
     )
     error_message = (

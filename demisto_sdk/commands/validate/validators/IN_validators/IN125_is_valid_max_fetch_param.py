@@ -19,9 +19,9 @@ class IsValidMaxFetchParamValidator(BaseValidator[ContentTypes]):
     description = "Validate that the max_fetch param has a defaultvalue"
     rationale = (
         "The 'max_fetch' parameter prevents overloading XSOAR by limiting fetched incidents. "
-        "Without a default value, the Test button may fail, causing confusion or misconfiguration."
+        "Without a default value can lead to performance issues."
         "For more details, see https://xsoar.pan.dev/docs/integrations/fetching-incidents#fetch-limit"
-    )  # #TODO  what about fetch_limit param? https://github.com/demisto/demisto-sdk/pull/734, https://github.com/demisto/content-docs/pull/361/files
+    )
     error_message = "The integration is a fetch integration with max_fetch param, please make sure the max_fetch param has a default value."
     fix_message = (
         f"Added a 'defaultvalue = {DEFAULT_MAX_FETCH}' to the max_fetch param."

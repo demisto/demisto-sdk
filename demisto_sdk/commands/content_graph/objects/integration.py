@@ -128,8 +128,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         if "category" in _dict and path.suffix == ".yml":
             return True
         return False
-<<<<<<< Updated upstream
-=======
 
     def save(self):
         super().save()
@@ -137,4 +135,3 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data["script"]["commands"] = [command.to_raw_dict for command in self.commands]
         data["configuration"] = [param.dict(exclude_none=True) for param in self.params]
         write_dict(self.path, data, indent=4)
->>>>>>> Stashed changes

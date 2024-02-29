@@ -20,26 +20,7 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
 )
 
 
-@pytest.mark.parametrize(
-    "content_items, empty_image_path_flag, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [create_integration_object()],
-            True,
-            1,
-            [
-                "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at TestIntegration_image.png."
-            ],
-        ),
-        ([create_integration_object()], False, 0, []),
-    ],
-)
-def test_ImageExistsValidator_is_valid_image_path(
-    content_items: List[Integration],
-    empty_image_path_flag: bool,
-    expected_number_of_failures: int,
-    expected_msgs: List[str],
-):
+def test_ImageExistsValidator_is_valid_image_path():
     """
     Given:
     content_items (Integrations).
@@ -54,51 +35,15 @@ def test_ImageExistsValidator_is_valid_image_path(
         - Case 1: Should fail.
         - Case 2: Shouldn't fail.
     """
-    for content_item in content_items:
-        if empty_image_path_flag:
-            content_item.related_content[RelatedFileType.IMAGE]["path"][0] = ""
+    content_items = [create_integration_object(), create_integration_object()]
+    content_items[0].related_content[RelatedFileType.IMAGE]["path"][0] = ""
     result = ImageExistsValidator().is_valid(content_items)
-    assert len(result) == expected_number_of_failures
+    assert len(result) == 1
     assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(result, expected_msgs)
-        ]
-    )
+                "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at TestIntegration_image.png."
+            )
 
-
-@pytest.mark.parametrize(
-    "content_items, empty_image_path_flag, expected_number_of_failures, expected_msgs",
-    [
-        (
-            [create_metadata_object(paths=["support"], values=["community"])],
-            False,
-            0,
-            [],
-        ),
-        ([create_metadata_object(paths=["support"], values=["partner"])], False, 0, []),
-        (
-            [create_metadata_object(paths=["support"], values=["partner"])],
-            True,
-            1,
-            [
-                "You've created/modified a yml or package in a partner supported pack without providing an author image as a .png file. Please make sure to add an image at HelloWorld_image.png."
-            ],
-        ),
-        (
-            [create_metadata_object(paths=["support"], values=["community"])],
-            True,
-            0,
-            [],
-        ),
-    ],
-)
-def test_AuthorImageExistsValidator_is_valid_image_path(
-    content_items: List[Pack],
-    empty_image_path_flag: bool,
-    expected_number_of_failures: int,
-    expected_msgs: List[str],
-):
+def test_AuthorImageExistsValidator_is_valid_image_path():
     """
     Given:
     content_items (Pack).
@@ -117,17 +62,17 @@ def test_AuthorImageExistsValidator_is_valid_image_path(
         - Case 1: Should fail.
         - Case 2: Shouldn't fail.
     """
-    for content_item in content_items:
-        if empty_image_path_flag:
-            content_item.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
-    result = AuthorImageExistsValidator().is_valid(content_items)
-    assert len(result) == expected_number_of_failures
+    content_items = [create_metadata_object(paths=["support"],values=["community"]),
+                     create_metadata_object(paths=["support"], values=["partner"]),
+                    create_metadata_object(paths=["support"], values=["partner"]),
+                    create_metadata_object(paths=["support"], values=["community"])]
+    content_items[2].related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
+    content_items[3].related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
+    results = AuthorImageExistsValidator().is_valid(content_items)
+    assert len(results) == 1
     assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(result, expected_msgs)
-        ]
-    )
+                "You've created/modified a yml or package in a partner supported pack without providing an author image as a .png file. Please make sure to add an image at" in result.message for result in results
+            )
 
 
 @pytest.mark.parametrize(

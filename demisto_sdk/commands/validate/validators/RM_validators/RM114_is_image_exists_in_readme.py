@@ -25,7 +25,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
+    # expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -38,7 +38,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
             if (
                 any(
                     invalid_lines := [
-                        image_path
+                        str(image_path)
                         for image_path in get_full_image_paths_from_relative(
                             content_item.pack_name,
                             extract_image_paths_from_str(text=content_item.readme),

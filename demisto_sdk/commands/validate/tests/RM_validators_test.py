@@ -99,8 +99,6 @@ def test_IsContainCopyRightSectionValidator_is_valid(
         (
             [
                 create_playbook_object(
-                    paths=["pack_name"],
-                    values=["test"],
                     readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png), ",
                     pack_info={"name": "test1"},
                 ),
@@ -108,17 +106,12 @@ def test_IsContainCopyRightSectionValidator_is_valid(
                     readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)",
                     pack_info={"name": "test2"},
                 ),
-                create_integration_object(
-                    readme_content="This is not a valid readme if this file doesn't exists ![example image](https://example.com/test3/doc_files/example.png)",
-                    pack_info={"name": "test3"},
-                ),
             ],
             False,
-            3,
+            2,
             [
                 "The following image files does not exists: Packs/test1/doc_files/example.png",
                 "The following image files does not exists: Packs/test2/doc_files/example.png",
-                "The following image files does not exists: https:/example.com/test3/doc_files/example.png",
             ],
         ),
     ],

@@ -4401,7 +4401,7 @@ def check_text_content_contain_sub_text(
 
 
 def extract_image_paths_from_str(
-    text: str, regex_str: str = r"!\[.*\]\((.*/doc_files/[a-zA-Z0-9_-]+\.png)"
+    text: str, regex_str: str = r"\.\./doc_files/[a-zA-Z0-9_-]+\.png"
 ) -> List[str]:
     """
     Args:

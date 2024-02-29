@@ -18,7 +18,7 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
     error_code = "DO105"
     description = "Validate that the given content item uses a docker image that is not deprecated"
     rationale = (
-        "Deprecated Docker images can lead to security vulnerabilities and compatibility issues. "
+        "It is best practice to use images that are maintained by the platform."
         "Use maintained images for security and stability."
     )
     error_message = "The {0} docker image is deprecated, {1}"

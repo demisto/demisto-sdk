@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
+    RELEASE_NOTES_DIR,
     GitStatuses,
 )
 from demisto_sdk.commands.common.files import TextFile
@@ -27,12 +28,12 @@ class RelatedFileType(Enum):
     LIGHT_SVG = "light_svg"
     CODE_FILE = "code_file"
     TEST_CODE_FILE = "test_code_file"
-    SCHEMA = "schema"
-    XIF = "xif"
+    SCHEMA = "schema_file"
+    XIF = "xif_file"
     PACK_IGNORE = "pack_ignore"
     SECRETS_IGNORE = "secrets_ignore"
-    AUTHOR_IMAGE = "author_image"
-    RELEASE_NOTES = "release_note"
+    AUTHOR_IMAGE = "author_image_file"
+    RELEASE_NOTE = "release_note"
 
 
 class RelatedFile(ABC, BaseModel):
@@ -110,10 +111,20 @@ class JsonRelatedFile(RelatedFile):
 
 
 class RNRelatedFile(TextFiles):
-    file_type = RelatedFileType.RELEASE_NOTES
+    file_type = RelatedFileType.RELEASE_NOTE
+
+    def __init__(
+        self, main_file_path: Path, latest_rn: str, git_sha: Optional[str] = None
+    ) -> None:
+        self.latest_rn_version = latest_rn
+        super().__init__(main_file_path, git_sha)
 
     def get_optional_paths(self) -> List[Path]:
-        raise NotImplementedError
+        return [
+            self.main_file_path
+            / RELEASE_NOTES_DIR
+            / f"{self.latest_rn_version.replace('.', '_')}.md"
+        ]
 
 
 class SecretsIgnoreRelatedFile(RelatedFile):

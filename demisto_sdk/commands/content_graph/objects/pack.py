@@ -52,6 +52,7 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     AuthorImageRelatedFile,
     PackIgnoreRelatedFile,
     ReadmeRelatedFile,
+    RNRelatedFile,
     SecretsIgnoreRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
@@ -553,7 +554,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return ReadmeRelatedFile(self.path, is_pack_readme=True, git_sha=self.git_sha)
 
     @cached_property
-    def author_image(self) -> AuthorImageRelatedFile:
+    def author_image_file(self) -> AuthorImageRelatedFile:
         return AuthorImageRelatedFile(self.path, git_sha=self.git_sha)
 
     @cached_property
@@ -563,3 +564,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @cached_property
     def secrets_ignore(self) -> SecretsIgnoreRelatedFile:
         return SecretsIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def release_note(self) -> RNRelatedFile:
+        return RNRelatedFile(
+            self.path, git_sha=self.git_sha, latest_rn=self.latest_rn_version
+        )

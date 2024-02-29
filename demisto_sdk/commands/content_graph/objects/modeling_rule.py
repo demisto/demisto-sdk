@@ -60,9 +60,9 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
         return False
 
     @cached_property
-    def xif(self) -> XifRelatedFile:
+    def xif_file(self) -> XifRelatedFile:
         return XifRelatedFile(self.path, git_sha=self.git_sha)
 
     @cached_property
-    def schema(self) -> SchemaRelatedFile:
+    def schema_file(self) -> SchemaRelatedFile:
         return SchemaRelatedFile(self.path, git_sha=self.git_sha)

@@ -109,7 +109,8 @@ def create_playbook_object(
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
-
+        pack_info (Optional[List[str]]): The playbook's pack name.
+        readme_content (Optional[List[Any]]): The playbook's readme.
     Returns:
         The playbook object.
     """

@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import RelatedFileType
-from demisto_sdk.commands.common.tools import extract_image_paths_from_str
+from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
+from demisto_sdk.commands.common.tools import (
+    extract_image_paths_from_str,
+    get_full_image_paths_from_relative,
+)
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -22,7 +25,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
-    # expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -35,11 +38,10 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
             if (
                 any(
                     invalid_lines := [
-                        f"Packs/{content_item.pack_name}/{str(image_path).replace('../', '')}"
-                        if content_item.pack_name not in str(image_path)
-                        else str(image_path)
-                        for image_path in extract_image_paths_from_str(
-                            text=content_item.readme
+                        image_path
+                        for image_path in get_full_image_paths_from_relative(
+                            content_item.pack_name,
+                            extract_image_paths_from_str(text=content_item.readme),
                         )
                         if image_path and not image_path.is_file()
                     ]

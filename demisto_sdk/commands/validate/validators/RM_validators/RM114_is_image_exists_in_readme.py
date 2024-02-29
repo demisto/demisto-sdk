@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
+from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.common.tools import (
     extract_image_paths_from_str,
     get_full_image_paths_from_relative,

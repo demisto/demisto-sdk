@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -109,6 +109,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+        keep_untouched = (cached_property,)
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""

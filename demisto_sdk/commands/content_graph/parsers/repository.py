@@ -54,7 +54,7 @@ class RepositoryParser:
             raise
     
     @staticmethod
-    @lru_cache(1500)
+    @lru_cache(500)
     def parse_pack(pack_path: Path) -> Union[PackParser, None]:
         try:
             return PackParser(pack_path)

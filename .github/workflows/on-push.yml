@@ -280,8 +280,11 @@ jobs:
           path: content
       - name: Set up permissions on pre-commit folder
         run: |
-          sudo mkdir -p content/.pre-commit
+          sudo mkdir -p content/.pre-commit/coverage
+          sudo mkdir -p content/.pre-commit/pytest-junit
+
           sudo chmod -R 777 content/.pre-commit
+
       - name: Cache Pre commit
         id: cache-pre-commit
         uses: actions/cache@v4

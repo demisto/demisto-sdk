@@ -1,4 +1,5 @@
 # Site packages
+import gc
 import platform
 import sys
 
@@ -855,6 +856,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 specific_validations=kwargs.get("run_specific_validations"),
             )
             exit_code += validator.run_validation()
+        gc.collect()
         if kwargs["run_new_validate"]:
             validation_results = ResultWriter(
                 json_file_path=kwargs.get("json_file"),

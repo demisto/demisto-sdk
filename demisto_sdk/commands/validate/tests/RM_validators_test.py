@@ -1,12 +1,23 @@
+from pathlib import Path
+
 import pytest
 
-from demisto_sdk.commands.validate.tests.test_tools import create_pack_object
+from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
+    create_integration_object,
+    create_pack_object,
+    create_playbook_object,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_copy_right_section import (
     IsContainCopyRightSectionValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM114_is_image_exists_in_readme import (
+    IsImageExistsInReadmeValidator,
+)
+from TestSuite.repo import ChangeCWD
 
 
 @pytest.mark.parametrize(
@@ -125,6 +136,76 @@ def test_empty_readme_validator(
     """
 
     results = EmptyReadmeValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, is_file_exist, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_playbook_object(
+                    readme_content="This is a valid readme without any images.",
+                    pack_info={"name": "test1"},
+                ),
+                create_playbook_object(
+                    readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)",
+                    pack_info={"name": "test1"},
+                ),
+                create_playbook_object(readme_content="", pack_info={"name": "test1"}),
+                create_integration_object(
+                    readme_content="This is a valid readme without any images.",
+                    pack_info={"name": "test2"},
+                ),
+                create_integration_object(
+                    readme_content="This is a valid readme if this file exists ![example image](../doc_files/example.png)",
+                    pack_info={"name": "test2"},
+                ),
+                create_integration_object(
+                    readme_content="", pack_info={"name": "test2"}
+                ),
+            ],
+            True,
+            0,
+            [],
+        ),
+        (
+            [
+                create_playbook_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png), ",
+                    pack_info={"name": "test1"},
+                ),
+                create_integration_object(
+                    readme_content="This is not a valid readme if this file doesn't exists ![example image](../doc_files/example.png)",
+                    pack_info={"name": "test2"},
+                ),
+            ],
+            False,
+            2,
+            [
+                "The following image files does not exists: Packs/test1/doc_files/example.png",
+                "The following image files does not exists: Packs/test2/doc_files/example.png",
+            ],
+        ),
+    ],
+)
+def test_IsImageExistsInReadmeValidator_is_valid(
+    mocker,
+    content_items,
+    is_file_exist,
+    expected_number_of_failures,
+    expected_msgs,
+):
+    mocker.patch.object(Path, "is_file", return_value=is_file_exist)
+
+    with ChangeCWD(REPO.path):
+        results = IsImageExistsInReadmeValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

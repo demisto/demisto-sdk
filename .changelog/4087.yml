@@ -1,0 +1,4 @@
+changes:
+- description: Added support for `hybrid` field in pack_metadata.json and the integration YAML.
+  type: feature
+pr_number: 4087

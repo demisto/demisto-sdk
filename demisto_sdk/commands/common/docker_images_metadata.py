@@ -3,6 +3,7 @@ from typing import Dict, Optional, Union
 
 from packaging.version import Version
 from pydantic import BaseModel
+from requests.exceptions import ConnectionError
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -58,7 +59,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
                 verify_ssl=False,
                 encoding="utf-8-sig",
             )
-        except (FileReadError, NoInternetConnectionException) as error:
+        except (FileReadError, NoInternetConnectionException, ConnectionError) as error:
             logger.error(
                 f"Could not read {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repository, error: {error}"
             )

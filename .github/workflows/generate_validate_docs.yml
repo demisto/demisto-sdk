@@ -13,6 +13,8 @@ jobs:
       - name: Check whether validate files changed
         id: changed-files
         uses: tj-actions/changed-files@v42
+        with:
+          files: demisto_sdk/commands/validate/**
 
       - name: List all changed files
         env:

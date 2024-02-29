@@ -342,7 +342,7 @@ class DockerHook(Hook):
         docker_extra_args = self._get_property("pass_docker_extra_args", "")
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u 4000:4000 {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} -u {os.getuid() or 4000}:{os.getgid() or 4000} {dev_image}'
         ret_hooks = []
         for (
             integration_script,

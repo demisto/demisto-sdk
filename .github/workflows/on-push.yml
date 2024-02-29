@@ -280,6 +280,7 @@ jobs:
           path: content
       - name: Set up permissions
         run: |
+          sudo mkdir -p content/.pre-commit
           sudo chmod -R 777 content/.pre-commit
       - name: Cache Pre commit
         id: cache-pre-commit

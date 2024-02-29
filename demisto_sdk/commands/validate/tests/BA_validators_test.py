@@ -1038,48 +1038,62 @@ def test_IsValidVersionValidator_fix():
                 ),
             ],
             "The following fields: name, display shouldn't contain the word 'Integration'.",
-            id="Integration Test (valid and invalid)",
+            id="Case 1: Integration Test (valid and invalid)",
         ),
         pytest.param(
             [
                 create_script_object(
-                    paths=["name", "display"],
-                    values=["Test v1", "Testv1"],
+                    paths=["name"],
+                    values=["Test v1"],
                 ),
                 create_script_object(
-                    paths=["name", "display"],
-                    values=["Test Script", "TestScript"],
+                    paths=["name"],
+                    values=["Test Script"],
                 ),
             ],
-            "The following fields: name, display shouldn't contain the word 'Script'.",
-            id="Script Test (valid and invalid)",
+            "The following field: name shouldn't contain the word 'Script'.",
+            id="Case 2: Script Test (valid and invalid)",
         ),
         pytest.param(
             [
                 create_playbook_object(
-                    paths=["name", "display"],
-                    values=["Test v1", "Testv1"],
+                    paths=["name"],
+                    values=["Test v1"],
                 ),
                 create_playbook_object(
-                    paths=["name", "display"],
-                    values=["Test Playbook", "TestPlaybook"],
+                    paths=["name"],
+                    values=["Test Playbook"],
                 ),
             ],
-            "The following fields: name, display shouldn't contain the word 'Playbook'.",
-            id="Playbook Test (valid and invalid)",
+            "The following field: name shouldn't contain the word 'Playbook'.",
+            id="Case 3: Playbook Test (valid and invalid)",
         ),
     ],
 )
 def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg):
     """
     Given
-    - Case 1: A content item doest not have its type in name of display felids.
-    - Case 2: A content item that have its type in name of display felids.
+    - Case 1: Two content items of type 'Integration' are validated.
+        - The first integration doest not have its type in 'name' and 'display' fields.
+        - The second integration does have its type in 'name' and 'display' fields.
+    - Case 2: Two content items of type 'Script' are validated.
+        - The first script doest not have its type in 'name' field.
+        - The second script does have its type in 'name' field.
+    - Case 3: Two content items of type 'Playbook' are validated.
+        - The first playbook doest not have its type in 'name' field.
+        - The second playbook does have its type in 'name' field.
     When
     - Running the IsEntityTypeInEntityNameValidator validation.
     Then
-    - Case 1: Don't fail the validation.
-    - Case 2: Fail the validation with a relevant message.
+    - Case 1:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' and 'display' fields.
+    - Case 2:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' field.
+    - Case 3:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' field.
     """
     result = IsEntityTypeInEntityNameValidator().is_valid(content_items)
     assert result[0].message == expected_msg

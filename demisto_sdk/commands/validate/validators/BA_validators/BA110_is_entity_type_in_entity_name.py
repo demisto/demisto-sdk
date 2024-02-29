@@ -19,23 +19,48 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
     description = (
         "Check that the entity name or display name does not contain the entity type."
     )
-    error_message = "The following fields: {0} shouldn't contain the word '{1}'."
+    error_message = "The following {0}: {1} shouldn't contain the word '{2}'."
     related_field = "name, display"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        incompatible_fields = []
         return [
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    self.related_field, content_item.content_type
+                    "fields" if len(incompatible_fields) > 1 else "field",
+                    ", ".join(incompatible_fields),
+                    content_item.content_type,
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if any(
-                content_item.content_type.lower() in name.lower()
-                for name in (content_item.name, content_item.display_name)
+            if validate_content_item_type_not_in_name_or_display_fields(
+                content_item, incompatible_fields
             )
         ]
+
+
+def validate_content_item_type_not_in_name_or_display_fields(
+    content_item: ContentTypes, incompatible_fields
+) -> bool:
+    """Checks if a content item has its type in its 'name' or 'display' fields and
+    updates the 'incompatible_fields' with relevant fields for the validation's error message.
+
+    Args:
+        content_item (ContentTypes): The content item to validate.
+        incompatible_fields (_type_): list of relevant content item fields to be printed in the validations error message.
+
+    Returns:
+        bool: True if the content item's 'name' or 'display' fields contain the content item type, False otherwise.
+    """
+    content_type = content_item.content_type.lower()
+    if str(content_item.content_type) == "ContentType.INTEGRATION":
+        incompatible_fields += ["name"] * (
+            content_type in content_item.name.lower()
+        ) + ["display"] * (content_type in content_item.display_name.lower())
+    else:
+        incompatible_fields += ["name"] * (content_type in content_item.name.lower())
+    return bool(incompatible_fields)

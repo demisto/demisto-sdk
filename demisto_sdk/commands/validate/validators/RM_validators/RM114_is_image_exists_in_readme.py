@@ -25,7 +25,6 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     related_field = ""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
-    # expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

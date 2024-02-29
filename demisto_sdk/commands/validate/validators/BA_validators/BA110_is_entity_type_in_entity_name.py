@@ -49,7 +49,7 @@ def validate_content_item_type_not_in_name_or_display_fields(
 
     Args:
         content_item (ContentTypes): The content item to validate.
-        incompatible_fields (_type_): list of relevant content item fields to be printed in the validations error message.
+        incompatible_fields (_type_): List of relevant content item fields to be printed in the validations error message.
 
     Returns:
         bool: True if the content item's 'name' or 'display' fields contain the content item type, False otherwise.

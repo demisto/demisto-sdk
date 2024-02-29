@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
@@ -8,6 +9,10 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     ContentItemXSIAM,
+)
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    SchemaRelatedFile,
+    XifRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.rule_unifier import RuleUnifier
 
@@ -53,3 +58,11 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
             ):
                 return True
         return False
+
+    @cached_property
+    def xif(self) -> XifRelatedFile:
+        return XifRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def schema(self) -> SchemaRelatedFile:
+        return SchemaRelatedFile(self.path, git_sha=self.git_sha)

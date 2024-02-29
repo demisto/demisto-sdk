@@ -1,8 +1,9 @@
 import shutil
 from collections import defaultdict
+from functools import cached_property
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -15,10 +16,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
-    RELEASE_NOTES_DIR,
     ImagesFolderNames,
     MarketplaceVersions,
-    RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -49,6 +48,12 @@ from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
 )
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    AuthorImageRelatedFile,
+    PackIgnoreRelatedFile,
+    ReadmeRelatedFile,
+    SecretsIgnoreRelatedFile,
+)
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     replace_markdown_urls_and_upload_to_artifacts,
 )
@@ -543,28 +548,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         data = get_file(file_path)
         super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
 
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
-        related_content_files.update(
-            {
-                RelatedFileType.RELEASE_NOTES: {
-                    "path": [
-                        str(
-                            self.path
-                            / RELEASE_NOTES_DIR
-                            / f"{self.latest_rn_version.replace('.', '_')}.md"
-                        )
-                    ],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files
+    @cached_property
+    def readme(self) -> ReadmeRelatedFile:
+        return ReadmeRelatedFile(self.path, is_pack_readme=True, git_sha=self.git_sha)
 
-    @property
-    def readme(self) -> str:
-        return self.get_related_text_file(RelatedFileType.README)
+    @cached_property
+    def author_image(self) -> AuthorImageRelatedFile:
+        return AuthorImageRelatedFile(self.path, git_sha=self.git_sha)
 
-    @property
-    def author_image_path(self) -> Path:
-        return Path(self.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0])
+    @cached_property
+    def pack_ignore(self) -> PackIgnoreRelatedFile:
+        return PackIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def secrets_ignore(self) -> SecretsIgnoreRelatedFile:
+        return SecretsIgnoreRelatedFile(self.path, git_sha=self.git_sha)

@@ -21,8 +21,6 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
     )
     error_message = "The following {0}: {1} shouldn't contain the word '{2}'."
     related_field = "name, display"
-    is_auto_fixable = False
-    related_file_type = [RelatedFileType.YML]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         incompatible_fields = []

@@ -9,6 +9,7 @@ from typing import Any, Optional, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
+from git import InvalidGitRepositoryError
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.constants import (
@@ -17,34 +18,39 @@ from demisto_sdk.commands.common.constants import (
     urljoin,
 )
 from demisto_sdk.commands.common.files.errors import (
-    FileContentReadError,
+    FileLoadError,
     FileReadError,
     GitFileReadError,
     HttpFileReadError,
     LocalFileReadError,
+    MemoryFileReadError,
     UnknownFileError,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import retry
+from demisto_sdk.commands.common.tools import (
+    NoInternetConnectionException,
+    is_sdk_defined_working_offline,
+    retry,
+)
 
 
 class File(ABC):
-
-    _git_util = GitUtil.from_content_path()
-
-    @classmethod
-    def git_util(cls) -> GitUtil:
-        current_path = Path.cwd()
-        if current_path != Path(cls._git_util.repo.working_dir):
-            cls._git_util = GitUtil.from_content_path(current_path)
-        return cls._git_util
-
     @property
     def path(self) -> Path:
         return getattr(self, "_path")
+
+    @property
+    def safe_path(self) -> Union[Path, None]:
+        """
+        Returns the path of the file if exists, otherwise returns None
+        """
+        try:
+            return self.path
+        except AttributeError:
+            return None
 
     @cached_property
     def file_content(self) -> bytes:
@@ -174,9 +180,9 @@ class File(ABC):
 
         try:
             return cls.as_default(encoding=encoding, handler=handler).load(file_content)
-        except LocalFileReadError as e:
+        except FileLoadError as error:
             logger.error(f"Could not read file content as {cls.__name__} file")
-            raise FileContentReadError(exc=e.original_exc)
+            raise MemoryFileReadError(error.original_exc) from error
 
     @classmethod
     def as_path(cls, path: Path, **kwargs):
@@ -214,12 +220,20 @@ class File(ABC):
             cls.read_from_local_path.cache_clear()
 
         if not path.is_absolute():
-            logger.debug(
-                f"path {path} is not absolute, trying to get full relative path from {cls.git_util().repo.working_dir}"
-            )
-            path = cls.git_util().repo.working_dir / path
-            if not path.exists():
-                raise FileNotFoundError(f"File {path} does not exist")
+            logger.debug(f"path {path} is not absolute path")
+            try:
+                git_util = GitUtil.from_content_path()
+                working_dir = git_util.repo.working_dir
+                path = working_dir / path
+                if not path.exists():
+                    path = path.absolute()
+                    if not path.exists():
+                        raise FileNotFoundError(f"File {path} does not exist")
+
+            except InvalidGitRepositoryError:
+                path = path.absolute()
+                if not path.exists():
+                    raise FileNotFoundError(f"File {path} does not exist")
 
         return (
             cls._from_path(path)
@@ -230,11 +244,11 @@ class File(ABC):
     def __read_local_file(self):
         try:
             return self.load(self.file_content)
-        except FileReadError:
+        except FileLoadError as error:
             logger.error(
                 f"Could not read file {self.path} as {self.__class__.__name__} file"
             )
-            raise
+            raise LocalFileReadError(self.path, exc=error.original_exc) from error
 
     @classmethod
     @lru_cache
@@ -266,7 +280,8 @@ class File(ABC):
         if clear_cache:
             cls.read_from_git_path.cache_clear()
 
-        if not cls.git_util().is_file_exist_in_commit_or_branch(
+        git_util = GitUtil.from_content_path()
+        if not git_util.is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
             raise FileNotFoundError(
@@ -282,21 +297,21 @@ class File(ABC):
     def __read_git_file(self, tag: str, from_remote: bool = True) -> Any:
         try:
             return self.load(
-                self.git_util().read_file_content(
+                GitUtil.from_content_path().read_file_content(
                     self.path, commit_or_branch=tag, from_remote=from_remote
                 )
             )
-        except Exception as e:
+        except Exception as error:
             if from_remote:
                 tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
             logger.error(
-                f"Could not read git file {self.path} from {tag} as {self.__class__.__name__} file"
+                f"Could not read git file {self.path} from branch/commit {tag} as {self.__class__.__name__} file"
             )
             raise GitFileReadError(
                 self.path,
                 tag=tag,
-                exc=e,
-            )
+                exc=error.original_exc if isinstance(error, FileReadError) else error,
+            ) from error
 
     @classmethod
     def read_from_github_api(
@@ -440,12 +455,12 @@ class File(ABC):
             Any: the file content in the desired format
 
         """
-        if cls is File:
-            raise ValueError(
-                "when reading from file content please specify concrete class"
-            )
         if clear_cache:
             cls.read_from_http_request.cache_clear()
+
+        if is_sdk_defined_working_offline():
+            raise NoInternetConnectionException
+
         try:
             response = requests.get(
                 url,
@@ -454,8 +469,15 @@ class File(ABC):
                 timeout=timeout,
                 headers={key: value for key, value in headers} if headers else None,
             )
+            if response.status_code == requests.codes.not_found:
+                raise FileNotFoundError(f"file in {url} does not exist")
             response.raise_for_status()
         except RequestException as e:
+            if isinstance(e, (ConnectionError, Timeout)):
+                logger.debug(
+                    f"Could not retrieve file from {url} due to a connection issue"
+                )
+                raise
             logger.exception(f"Could not retrieve file from {url}")
             raise HttpFileReadError(url, exc=e)
 
@@ -465,6 +487,6 @@ class File(ABC):
             return _cls.read_from_file_content(
                 response.content, encoding=encoding, handler=handler
             )
-        except FileContentReadError as e:
-            logger.error(f"Could not read file from {url} as {_cls.__name__} file")
-            raise HttpFileReadError(url, exc=e)
+        except MemoryFileReadError as e:
+            logger.error(f"Could not load file from URL {url} as {_cls.__name__} file")
+            raise HttpFileReadError(url, exc=e.original_exc) from e

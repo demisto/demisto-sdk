@@ -11,6 +11,7 @@ from typing import (
     TypeVar,
     get_args,
 )
+import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 
 from pydantic import BaseModel
 
@@ -112,11 +113,19 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     def graph(self) -> ContentGraphInterface:
         if not self.graph_interface:
             logger.info("Graph validations were selected, will init graph")
-            BaseValidator.graph_interface = ContentGraphInterface()
-            update_content_graph(
-                BaseValidator.graph_interface,
-                use_git=True,
-            )
+            try:
+                BaseValidator.graph_interface = ContentGraphInterface()
+                update_content_graph(
+                    BaseValidator.graph_interface,
+                    use_git=True,
+                )
+            except Exception as e:
+                logger.error(f"failed with the following error {str(e)}")
+                neo4j_service.start()
+                update_content_graph(
+                    BaseValidator.graph_interface,
+                    use_git=True,
+                )
         return self.graph_interface
 
     def __dir__(self):

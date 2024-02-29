@@ -22,7 +22,7 @@ jobs:
 
       - name: Generate Docs
         # if: steps.changed-files.outputs.any_changed == 'true'
-        run: poetry run python commands/validate/generate_validate_docs.py validation_docs.md
+        run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
 
       - name: Upload artifacts
         # if: steps.changed-files.outputs.any_changed == 'true'
@@ -30,3 +30,6 @@ jobs:
         with:
             path: validation_docs.md
             if-no-files-found: error
+
+      - name: Output to GitHub Action Summary
+        run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY

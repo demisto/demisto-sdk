@@ -36,15 +36,15 @@ def should_update_graph(
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
-    logger.debug(f"[test]: in should_update_graph, first value: {content_graph_interface.is_alive()}")
-    logger.debug(f"[test]: in should_update_graph, second value: {imported_path=}")
-    logger.debug(f"[test]: in should_update_graph, third value: {packs_to_update=}")
-    logger.debug(f"[test]: in should_update_graph, fourth value: {use_git=}")
-    logger.debug(f"[test]: in should_update_graph, fifth value: {content_graph_interface.commit}")
-    logger.debug(f"[test]: in should_update_graph, sixth value: {git_util.get_all_changed_pack_ids(content_graph_interface.commit)}")
-    logger.debug(f"[test]: in should_update_graph, seventh value: {content_graph_interface.content_parser_latest_hash != content_graph_interface._get_latest_content_parser_hash()}")
-    logger.debug(f"[test]: in should_update_graph, content_parser_latest_hash: {content_graph_interface.content_parser_latest_hash}")
-    logger.debug(f"[test]: in should_update_graph, content_parser_latest_hash function: {content_graph_interface._get_latest_content_parser_hash()}")
+    logger.info(f"[test]: in should_update_graph, first value: {content_graph_interface.is_alive()}")
+    logger.info(f"[test]: in should_update_graph, second value: {imported_path=}")
+    logger.info(f"[test]: in should_update_graph, third value: {packs_to_update=}")
+    logger.info(f"[test]: in should_update_graph, fourth value: {use_git=}")
+    logger.info(f"[test]: in should_update_graph, fifth value: {content_graph_interface.commit}")
+    logger.info(f"[test]: in should_update_graph, sixth value: {git_util.get_all_changed_pack_ids(content_graph_interface.commit)}")
+    logger.info(f"[test]: in should_update_graph, seventh value: {content_graph_interface.content_parser_latest_hash != content_graph_interface._get_latest_content_parser_hash()}")
+    logger.info(f"[test]: in should_update_graph, content_parser_latest_hash: {content_graph_interface.content_parser_latest_hash}")
+    logger.info(f"[test]: in should_update_graph, content_parser_latest_hash function: {content_graph_interface._get_latest_content_parser_hash()}")
     return any(
         (
             not content_graph_interface.is_alive(),  # if neo4j service is not alive, we need to update
@@ -81,7 +81,7 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    logger.debug("[test] in update_content_graph")
+    logger.info("[test] in update_content_graph")
     git_util = GitUtil()
 
     if not should_update_graph(
@@ -99,7 +99,7 @@ def update_content_graph(
         )
 
         return
-    logger.debug("[test] passed the not should_update_graph part.")
+    logger.info("[test] passed the not should_update_graph part.")
 
     if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")

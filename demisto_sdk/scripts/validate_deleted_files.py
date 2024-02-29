@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.files.errors import FileReadError
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import find_type
 
 
@@ -86,6 +86,7 @@ def validate_forbidden_deleted_files(
         help="a protected dir to to disallow deleting files from it or from it sub-directories",
     ),
 ):
+    logging_setup()
     if not protected_dirs:
         raise ValueError("--protected-dir must be provided")
     try:

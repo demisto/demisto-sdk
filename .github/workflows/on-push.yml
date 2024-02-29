@@ -278,6 +278,7 @@ jobs:
           fetch-depth: 0
           repository: demisto/content
           path: content
+          ref: pre-commit-all
 
       - name: Cache Pre commit
         id: cache-pre-commit

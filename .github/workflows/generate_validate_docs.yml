@@ -10,7 +10,13 @@ jobs:
       - name: Check whether validate files changed
         id: changed-files
         uses: tj-actions/changed-files@v42
-      - run: echo fromJSON(${{steps.changed-files.outputs}})
+      - name: List all changed files
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: |
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file was changed"
+          done
       - name: Setup Environment
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment

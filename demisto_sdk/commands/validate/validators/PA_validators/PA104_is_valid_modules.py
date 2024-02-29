@@ -17,8 +17,7 @@ class IsValidModulesValidator(BaseValidator[ContentTypes]):
     error_code = "PA104"
     description = "Validate that the modules field include only labels from the list of allowed labels."
     rationale = (
-        "Including labels that are not in the allowed list in the 'modules' field may lead to issues or unexpected behavior, "
-        "as these labels may not be recognized or properly handled by the system."
+        f"See the list of allowed categories in the platform: {', '.join(MODULES)}"
     )
     error_message = f"Module field can include only label from the following options: {', '.join(MODULES)}."
     related_field = "modules"

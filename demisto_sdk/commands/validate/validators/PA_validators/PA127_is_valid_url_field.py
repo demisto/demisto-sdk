@@ -18,8 +18,7 @@ class IsValidURLFieldValidator(BaseValidator[ContentTypes]):
     error_code = "PA127"
     description = "Validate that the pack metadata contains a valid URL field."
     rationale = (
-        "This provides users with a direct link to get support or report issues for the pack. "
-        "Having a valid URL is crucial for maintaining good user experience and ensuring effective issue resolution. "
+        "URLs help users access support or report issues for the pack directly. "
         "For more info, see: https://xsoar.pan.dev/docs/packs/packs-format#pack_metadatajson"
     )
     error_message = "The metadata URL leads to a GitHub repo instead of a support page. Please provide a URL for a support page as detailed in:\nhttps://xsoar.pan.dev/docs/packs/packs-format#pack_metadatajson\nNote that GitHub URLs that lead to a /issues page are also acceptable. (e.g. https://github.com/some_monitored_repo/issues)"

@@ -18,8 +18,8 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
     error_code = "PA103"
     description = "Validate that the pack categories are valid."
     rationale = (
-        "Pack 'categories' field should contain one approved category for efficient marketplace filtering. "
-        "For more info, see: https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
+        "See the list of allowed categories in the platform: "
+        "https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
     error_message = "The pack metadata categories field doesn't match the standard,\nplease make sure the field contain only one category from the following options: {0}."
     related_field = "categories"

@@ -17,8 +17,8 @@ class IsValidUseCasesValidator(BaseValidator[ContentTypes]):
     error_code = "PA119"
     description = "Validate that the metadata's usecases field include valid usecases."
     rationale = (
-        "The 'useCases' field in pack metadata should only contain approved use cases for consistency and meaningful categorization. "
-        "For approved use cases, see: https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
+        "See the list of allowed `useCases` in the platform: "
+        "https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
     error_message = "The pack metadata contains non approved usecases: {0}.\nThe list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     fix_message = "Removed the following use cases: {0}."

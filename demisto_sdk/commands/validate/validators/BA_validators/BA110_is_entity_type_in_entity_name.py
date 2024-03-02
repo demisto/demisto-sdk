@@ -22,7 +22,7 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
     related_field = "name, display"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        incompatible_fields = []
+        incompatible_fields: list[str] = []
         return [
             ValidationResult(
                 validator=self,

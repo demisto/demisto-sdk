@@ -1031,7 +1031,7 @@ def test_IsValidVersionValidator_fix():
             [create_integration_object()],
             0,
             "",
-            id="A correct integration display name",
+            id="valid integration",
         ),
         pytest.param(
             [create_integration_object(paths=["display"], values=["partner"])],

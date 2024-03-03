@@ -1049,7 +1049,7 @@ def test_IsValidVersionValidator_fix():
             id="invalid playbook",
         ),
         pytest.param(
-            [create_script_object()], 0, "", id="A correct script display name"
+            [create_script_object()], 0, "", id="valid script"
         ),
         pytest.param(
             [create_script_object(paths=["name"], values=["community"])],

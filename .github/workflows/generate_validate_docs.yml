@@ -16,14 +16,6 @@ jobs:
         with:
           files: demisto_sdk/commands/validate/**
 
-      - name: List all changed files
-        env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: |
-          for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
-          done
-
       - name: Setup Environment
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
@@ -40,6 +32,7 @@ jobs:
         with:
           path: validation_docs.md
           if-no-files-found: error
+          name: validation_docs
 
       - name: Output to GitHub Action Summary
         run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY

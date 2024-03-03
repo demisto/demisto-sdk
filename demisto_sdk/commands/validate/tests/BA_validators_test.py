@@ -1040,7 +1040,7 @@ def test_IsValidVersionValidator_fix():
             id="An incorrect integration display name",
         ),
         pytest.param(
-            [create_playbook_object()], 0, "", id="A correct playbook display name"
+            [create_playbook_object()], 0, "", id="valid playbook"
         ),
         pytest.param(
             [create_playbook_object(paths=["name"], values=["community"])],

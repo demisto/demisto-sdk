@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Tuple
 
 import pytest
 
@@ -8,8 +7,8 @@ from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     ZERO_DEPTH_FILES,
-    DepthOneFileError,
-    DepthOneFolderError,
+    InvalidDepthOneFileError,
+    InvalidDepthOneFolder,
     InvalidDepthZeroFile,
     PathIsFolder,
     PathIsUnified,
@@ -82,9 +81,9 @@ def test_first_level_folder_fail():
             Make sure the validation raises InvalidDepthOneFolder
     """
     assert (folder_name := "folder_name") not in DEPTH_ONE_FOLDERS
-    with pytest.raises(DepthOneFolderError):
+    with pytest.raises(InvalidDepthOneFolder):
         _validate(Path(DUMMY_PACK_PATH, folder_name, "file"))
-    with pytest.raises(DepthOneFolderError):
+    with pytest.raises(InvalidDepthOneFolder):
         _validate(Path(DUMMY_PACK_PATH, folder_name, "nested", "very nested", "file"))
 
 
@@ -111,9 +110,9 @@ def test_depth_one_fail(folder: str):
     When
             Running validate_path on a file created directly under the folder
     Then
-            Make sure InvalidDepthTwoFile is raised
+            Make sure InvalidDepthOneFileError is raised
     """
-    with pytest.raises(DepthOneFileError):
+    with pytest.raises(InvalidDepthOneFileError):
         _validate(DUMMY_PACK_PATH / folder / "file")
 
 

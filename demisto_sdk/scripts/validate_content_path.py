@@ -123,11 +123,11 @@ class InvalidDepthZeroFile(InvalidPathException):
     message = "The file cannot be saved direclty under the pack folder."
 
 
-class DepthOneFolderError(InvalidPathException):
-    message = "The first folder under the pack is not allowed."
+class InvalidDepthOneFolder(InvalidPathException):
+    message = "The name of the first level folder under the pack is not allowed."
 
 
-class DepthOneFileError(InvalidPathException):
+class InvalidDepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
@@ -160,25 +160,30 @@ def _validate(path: Path) -> None:
     if PACKS_FOLDER not in path.parts:
         raise PathOutsidePacks
 
-    if "DeprecatedContent" in path.parts:
-        raise PathUnderDeprecatedContent
-
     parts_before_packs, parts_after_packs = tuple(
         split_at(path.parts, lambda v: v == PACKS_FOLDER, maxsplit=1)
     )
 
-    parts_after_pack = parts_after_packs[1:]  # everything after Packs/<pack name>
-    depth = len(parts_after_pack) - 1
+    if parts_after_packs[0] in {"DeprecatedContent", "D2"}:  # Pack name
+        """
+        This set neither does nor should contain all names of deprecated packs.
+        D2 is unique with the files it has, so it is explicitly mentioned here.
+        Avoid extending this set beyond these values.
+        """
+        raise PathUnderDeprecatedContent
+
+    parts_inside_pack = parts_after_packs[1:]  # everything after Packs/<pack name>
+    depth = len(parts_inside_pack) - 1
 
     if depth == 0:  # file is directly under pack
         if path.name not in ZERO_DEPTH_FILES:
             raise InvalidDepthZeroFile
         return
 
-    if (first_level_folder := parts_after_pack[0]) not in DEPTH_ONE_FOLDERS:
-        raise DepthOneFolderError
+    if (first_level_folder := parts_inside_pack[0]) not in DEPTH_ONE_FOLDERS:
+        raise InvalidDepthOneFolder
 
-    if depth == 1:  # Packs/myPack/Scripts/script-foo.yml
+    if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         for prefix, folder in (
             ("script", ContentType.SCRIPT),
             ("integration", ContentType.INTEGRATION),
@@ -193,14 +198,14 @@ def _validate(path: Path) -> None:
 
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
-            raise DepthOneFileError
+            raise InvalidDepthOneFileError
 
 
 def validate(path: Path, github_action: bool) -> bool:
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
         _validate(path)
-        logger.debug(f"{path} is valid")
+        logger.debug(f"[green]{path} is valid[/green]")
         return True
 
     except InvalidPathException as e:
@@ -209,15 +214,15 @@ def validate(path: Path, github_action: bool) -> bool:
                 f"::error file={path},line=1,endLine=1,title=Invalid Path::{e.message}"
             )
         else:
-            logger.debug(f"{path} is invalid: {e.message}")
+            logger.error(f"Invalid {path}: {e.message}")
         return False
 
     except ExemptedPath as e:
-        logger.debug(f"{path} is skipped: {e.message}")
+        logger.debug(f"Skipped {path}: {e.message}")
         return True
 
     except Exception:
-        logger.exception(f"Failed checking path {path}")
+        logger.exception(f"Error checking {path}")
         return False
 
 
@@ -230,6 +235,14 @@ def cli(
     result = [validate(path, github_action) for path in paths]
     if not all(result):
         raise typer.Exit(1)
+
+
+def validate_all():
+    """Used in the SDK CI for testing compatibility with content"""
+    logging_setup()
+    for path in sorted(Path("content/Packs").rglob("*")):
+        if path.is_file():
+            validate(path, False)
 
 
 def main():

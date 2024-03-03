@@ -1058,7 +1058,7 @@ def test_IsValidVersionValidator_fix():
             id="An incorrect script display name",
         ),
         pytest.param(
-            [create_classifier_object()], 0, "", id="A correct classifier display name"
+            [create_classifier_object()], 0, "", id="valid classifier"
         ),
         pytest.param(
             [create_classifier_object(paths=["name"], values=["partner"])],

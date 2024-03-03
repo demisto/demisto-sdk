@@ -1039,27 +1039,21 @@ def test_IsValidVersionValidator_fix():
             ERROR_MSG_TEMPLATE.format("partner"),
             id="invalid integration",
         ),
-        pytest.param(
-            [create_playbook_object()], 0, "", id="valid playbook"
-        ),
+        pytest.param([create_playbook_object()], 0, "", id="valid playbook"),
         pytest.param(
             [create_playbook_object(paths=["name"], values=["community"])],
             1,
             ERROR_MSG_TEMPLATE.format("community"),
             id="invalid playbook",
         ),
-        pytest.param(
-            [create_script_object()], 0, "", id="valid script"
-        ),
+        pytest.param([create_script_object()], 0, "", id="valid script"),
         pytest.param(
             [create_script_object(paths=["name"], values=["community"])],
             1,
             ERROR_MSG_TEMPLATE.format("community"),
             id="invalid script",
         ),
-        pytest.param(
-            [create_classifier_object()], 0, "", id="valid classifier"
-        ),
+        pytest.param([create_classifier_object()], 0, "", id="valid classifier"),
         pytest.param(
             [create_classifier_object(paths=["name"], values=["partner"])],
             1,

@@ -47,6 +47,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
     IsFromVersionSufficientIntegrationValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import (
+    ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
@@ -1023,43 +1024,47 @@ def test_IsValidVersionValidator_fix():
     assert content_item.version == -1
 
 
-ERROR_MSG_TEMPLATE = "The content item name is {} , which contains an excluded word."
-
-
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_error_message",
     [
-        # a correct integration display name
-        ([create_integration_object()], 0, ""),
-        # an incorrect integration display name
-        (
+        pytest.param(
+            [create_integration_object()],
+            0,
+            "",
+            id="A correct integration display name",
+        ),
+        pytest.param(
             [create_integration_object(paths=["display"], values=["partner"])],
             1,
             ERROR_MSG_TEMPLATE.format("partner"),
+            id="An incorrect integration display name",
         ),
-        # a correct playbook display name
-        ([create_playbook_object()], 0, ""),
-        # an incorrect playbook display name
-        (
+        pytest.param(
+            [create_playbook_object()], 0, "", id="A correct playbook display name"
+        ),
+        pytest.param(
             [create_playbook_object(paths=["name"], values=["community"])],
             1,
             ERROR_MSG_TEMPLATE.format("community"),
+            id="An incorrect playbook display name",
         ),
-        # a correct script display name
-        ([create_script_object()], 0, ""),
-        # an incorrect script display name
-        (
+        pytest.param(
+            [create_script_object()], 0, "", id="A correct script display name"
+        ),
+        pytest.param(
             [create_script_object(paths=["name"], values=["community"])],
             1,
             ERROR_MSG_TEMPLATE.format("community"),
+            id="An incorrect script display name",
         ),
-        # a correct classifier display name
-        ([create_classifier_object()], 0, ""),
-        # an incorrect classifier display name
-        (
+        pytest.param(
+            [create_classifier_object()], 0, "", id="A correct classifier display name"
+        ),
+        pytest.param(
             [create_classifier_object(paths=["name"], values=["partner"])],
             1,
             ERROR_MSG_TEMPLATE.format("partner"),
+            id="An incorrect classifier display name",
         ),
     ],
 )
@@ -1070,5 +1075,5 @@ def test_IsEntityNameContainExcludedWordValidator(
         content_items=content_items
     )
     assert len(results) == expected_number_of_failures
-    for result in results:
-        assert result.message == expected_error_message
+    if results:
+        assert results[0].message == expected_error_message

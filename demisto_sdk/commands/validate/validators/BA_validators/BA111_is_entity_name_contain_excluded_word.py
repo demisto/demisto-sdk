@@ -41,6 +41,8 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
+ERROR_MSG_TEMPLATE = "The name of {} contains an excluded word."
+
 ContentTypes = Union[
     Integration,
     Script,

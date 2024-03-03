@@ -1046,7 +1046,7 @@ def test_IsValidVersionValidator_fix():
             [create_playbook_object(paths=["name"], values=["community"])],
             1,
             ERROR_MSG_TEMPLATE.format("community"),
-            id="An incorrect playbook display name",
+            id="invalid playbook",
         ),
         pytest.param(
             [create_script_object()], 0, "", id="A correct script display name"

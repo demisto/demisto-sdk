@@ -62,7 +62,7 @@ ZERO_DEPTH_FILES = frozenset(
 )
 
 DEPTH_ONE_FOLDERS = (
-    set(ContentType.folders()) | set(TESTS_AND_DOC_DIRECTORIES)
+    set(ContentType.folders()) | set(TESTS_AND_DOC_DIRECTORIES) | {RELEASE_NOTES_DIR}
 ).difference(
     (
         "Packs",

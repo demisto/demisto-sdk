@@ -1064,7 +1064,7 @@ def test_IsValidVersionValidator_fix():
             [create_classifier_object(paths=["name"], values=["partner"])],
             1,
             ERROR_MSG_TEMPLATE.format("partner"),
-            id="An incorrect classifier display name",
+            id="invalid classifier",
         ),
     ],
 )

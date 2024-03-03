@@ -1037,7 +1037,7 @@ def test_IsValidVersionValidator_fix():
             [create_integration_object(paths=["display"], values=["partner"])],
             1,
             ERROR_MSG_TEMPLATE.format("partner"),
-            id="An incorrect integration display name",
+            id="invalid integration",
         ),
         pytest.param(
             [create_playbook_object()], 0, "", id="valid playbook"

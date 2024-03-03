@@ -1,10 +1,6 @@
-from typing import List
-
 import pytest
 
 from demisto_sdk.commands.common.constants import RelatedFileType
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_metadata_object,
@@ -40,8 +36,9 @@ def test_ImageExistsValidator_is_valid_image_path():
     result = ImageExistsValidator().is_valid(content_items)
     assert len(result) == 1
     assert all(
-                "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at TestIntegration_image.png."
-            )
+        "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at TestIntegration_image.png."
+    )
+
 
 def test_AuthorImageExistsValidator_is_valid_image_path():
     """
@@ -62,17 +59,21 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
         - Case 1: Should fail.
         - Case 2: Shouldn't fail.
     """
-    content_items = [create_metadata_object(paths=["support"],values=["community"]),
-                     create_metadata_object(paths=["support"], values=["partner"]),
-                    create_metadata_object(paths=["support"], values=["partner"]),
-                    create_metadata_object(paths=["support"], values=["community"])]
+    content_items = [
+        create_metadata_object(paths=["support"], values=["community"]),
+        create_metadata_object(paths=["support"], values=["partner"]),
+        create_metadata_object(paths=["support"], values=["partner"]),
+        create_metadata_object(paths=["support"], values=["community"]),
+    ]
     content_items[2].related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
     content_items[3].related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
     results = AuthorImageExistsValidator().is_valid(content_items)
     assert len(results) == 1
     assert all(
-                "You've created/modified a yml or package in a partner supported pack without providing an author image as a .png file. Please make sure to add an image at" in result.message for result in results
-            )
+        "You've created/modified a yml or package in a partner supported pack without providing an author image as a .png file. Please make sure to add an image at"
+        in result.message
+        for result in results
+    )
 
 
 @pytest.mark.parametrize(

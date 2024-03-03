@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, List, Sequence
+from typing import ClassVar, List
 
 import typer
 from more_itertools import split_at
@@ -19,10 +19,9 @@ from demisto_sdk.commands.common.constants import (
     GIT_IGNORE_FILE_NAME,
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
-    INTEGRATIONS_DIR,
-    SCRIPTS_DIR,
     INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR,
     JOBS_DIR,
     LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
@@ -40,6 +39,7 @@ from demisto_sdk.commands.common.constants import (
     PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR,
     REPORTS_DIR,
+    SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
     TRIGGER_DIR,
@@ -224,6 +224,9 @@ def _validate(path: Path) -> None:
 
 def _validate_integration_script_file_name(path: Path):
     """File names directly under Integrations/some_integration/<here> or Scripts/some_script/<here> are not allowed to have separators (with a few exceptions)"""
+    if path.suffix.lower() not in {".md", ".py", ".yml", ".png"}:
+        return
+
     if path.name.startswith("README"):
         return
 
@@ -285,7 +288,7 @@ def cli(
 def validate_all():
     """Used in the SDK CI for testing compatibility with content"""
     logging_setup()
-    for path in sorted(Path("content/Packs").rglob("*")):
+    for path in sorted(Path("../content/Packs").rglob("*")):
         if path.is_file():
             validate(path, False)
 

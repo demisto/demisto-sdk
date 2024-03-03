@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, List
+from typing import ClassVar, List, Sequence
 
 import typer
 from more_itertools import split_at
@@ -19,6 +19,8 @@ from demisto_sdk.commands.common.constants import (
     GIT_IGNORE_FILE_NAME,
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
     INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR,
     JOBS_DIR,
@@ -131,6 +133,14 @@ class InvalidDepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
+class SeparatorInDepthTwoFileName(InvalidPathException):
+    message = "Names of files under Integrations/Scripts may not contain separators (space, dash, hypen)"
+
+
+class SeparatorsInDepthTwoFolderName(InvalidPathException):
+    message = "Names of folders directly under Integrations/Scripts may not contain separators (space, dash, hypen)"
+
+
 class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
@@ -200,6 +210,41 @@ def _validate(path: Path) -> None:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFileError
 
+    if depth >= 2:
+        if first_level_folder in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+            # BA109
+            if _contains_separator(parts_inside_pack[1]):
+                # Packs/myPack/Integrations/<this folder cannot have separators>
+                raise SeparatorsInDepthTwoFolderName
+
+            # BA108
+            if depth == 2:
+                _validate_integration_script_file_name(path)
+
+
+def _validate_integration_script_file_name(path: Path):
+    """File names directly under Integrations/some_integration/<here> or Scripts/some_script/<here> are not allowed to have separators (with a few exceptions)"""
+    if path.name.startswith("README"):
+        return
+
+    name_to_check = path.name
+    for suffix in (
+        "_image.png",
+        "_description.md",
+        "_test.py",
+        "_unified.yml",
+    ):
+        if path.name.endswith(suffix):
+            name_to_check = path.name[: path.name.find(suffix)]
+            break
+
+    if _contains_separator(name_to_check):
+        raise SeparatorInDepthTwoFileName
+
+
+def _contains_separator(string: str) -> bool:
+    return any(sep in string for sep in (" ", "-", "_"))
+
 
 def validate(path: Path, github_action: bool) -> bool:
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
@@ -251,4 +296,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    validate_all()

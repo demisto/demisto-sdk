@@ -89,7 +89,7 @@ def name_does_contain_excluded_word(content_item: ContentTypes) -> bool:
 class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
     error_code = "BA111"
     description = "Checks whether given object contains excluded word."
-    error_message = "The content item name is {} , which contains an excluded word."
+    error_message = "The name of {} contains an excluded word."
     related_field = ""
     is_auto_fixable = False
     expected_git_statuses = [

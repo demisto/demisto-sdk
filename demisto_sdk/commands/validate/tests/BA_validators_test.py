@@ -1055,7 +1055,7 @@ def test_IsValidVersionValidator_fix():
             [create_script_object(paths=["name"], values=["community"])],
             1,
             ERROR_MSG_TEMPLATE.format("community"),
-            id="An incorrect script display name",
+            id="invalid script",
         ),
         pytest.param(
             [create_classifier_object()], 0, "", id="valid classifier"

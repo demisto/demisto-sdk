@@ -19,8 +19,7 @@ class ValidTagsPrefixesValidator(BaseValidator[ContentTypes]):
     error_code = "PA100"
     description = "Validate that all the tags in tags field have a valid prefix."
     rationale = (
-        "This standardization allows for efficient filtering and grouping in the marketplace, "
-        "enhancing user experience and ensuring consistency across different packs. "
+        "This standardization allows for efficient filtering and grouping in the marketplace. "
         "For more info about the valid tags see https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
     error_message = "The pack metadata contains tag(s) with an invalid prefix: {0}.\nThe approved prefixes are: {1}."

@@ -442,9 +442,13 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
     if marketplaces is None:
         marketplaces = list(MarketplaceVersions)
 
-    for mp, core_packs in get_marketplace_to_core_packs().items():
-        if mp in marketplaces:
-            result.update(core_packs)
+    try:
+        for mp, core_packs in get_marketplace_to_core_packs().items():
+            if mp in marketplaces:
+                result.update(core_packs)
+    except NoInternetConnectionException:
+        logger.debug("SDK running in offline mode, returning core_packs=[]")
+        return []
     return list(result)
 
 
@@ -1174,7 +1178,7 @@ def get_latest_release_notes_text(rn_path):
                 logger.info(
                     f"[red]Release Notes may not be empty. Please fill out correctly. - {rn_path}[/red]"
                 )
-                return None
+                return ""
         except OSError:
             return ""
 
@@ -4398,3 +4402,57 @@ def check_text_content_contain_sub_text(
                 invalid_lines.append(str(line_num + 1))
 
     return invalid_lines
+
+
+def extract_image_paths_from_str(
+    text: str, regex_str: str = r"!\[.*\]\((.*/doc_files/[a-zA-Z0-9_-]+\.png)"
+) -> List[str]:
+    """
+    Args:
+        local_paths (List[str]): list of file paths
+        is_lower (bool): True to check when line is lower cased.
+        to_split (bool): True to split the line in order to search specific word
+        text (str): The readme content to search.
+
+    Returns:
+        list of lines which contains the given text.
+    """
+
+    return [image_path for image_path in re.findall(regex_str, text)]
+
+
+def get_full_image_paths_from_relative(
+    pack_name: str, image_paths: List[str]
+) -> List[Path]:
+    """
+        Args:
+            pack_name (str): Pack name to add to path
+            image_paths (List[Path]): List of images with a local path. For example: ![<title>](../doc_files/<image name>.png)
+    )
+
+        Returns:
+            List[Path]: A list of paths with the full path.
+    """
+
+    return [
+        Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
+        if "Packs" not in image_path
+        else Path(image_path)
+        for image_path in image_paths
+    ]
+
+
+def remove_nulls_from_dictionary(data):
+    """
+    Remove Null values from a dictionary. (updating the given dictionary)
+
+    :type data: ``dict``
+    :param data: The data to be added to the context (required)
+
+    :return: No data returned
+    :rtype: ``None``
+    """
+    list_of_keys = list(data.keys())[:]
+    for key in list_of_keys:
+        if data[key] in ("", None, [], {}, ()):
+            del data[key]

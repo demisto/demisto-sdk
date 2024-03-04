@@ -71,3 +71,10 @@
   language: python
   require_serial: true
   pass_filenames: false
+
+- id: validate-deleted-files
+  name: validate-deleted-files
+  entry: validate-deleted-files
+  language: python
+  require_serial: true
+  pass_filenames: false

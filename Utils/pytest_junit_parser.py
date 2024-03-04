@@ -3,7 +3,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
-from junitparser import Element, Failure, JUnitXml, Skipped
+from junitparser import Failure, JUnitXml, Skipped, TestCase
 
 
 class TestStatus(str, Enum):
@@ -80,7 +80,7 @@ class PytestTestSuite:
         skipped: int,
         num_of_tests: int,
         time: float,
-        test_cases: List[Element],
+        test_cases: List[TestCase],
         _type: TestType,
     ):
         self.failures = failures

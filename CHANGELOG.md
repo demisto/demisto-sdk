@@ -629,7 +629,6 @@
 * Fixed an issue where a pack `serverMinVersion` would be calculated by the minimal fromVersion of its content items.
 * Added the `--docker-image-target` flag to **lint** for testing native supported content with new images.
 
-
 ## 1.10.5
 * Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
 * Added a newline at the end of README files generated in **generate-docs**.

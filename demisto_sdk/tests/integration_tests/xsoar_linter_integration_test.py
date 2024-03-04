@@ -65,7 +65,7 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
-        id="invalid,support=base, longrunning=True",
+        id="invalid,support=base,longrunning=True",
     ),
     pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
@@ -91,7 +91,7 @@ files = [
             "kace-tickets-list",
             "error",
         ],
-        id="invalid,support=base, longrunning=False",
+        id="invalid,support=base,longrunning=False",
     ),
     pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
@@ -108,7 +108,7 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
-        id="invalid,support=certified partner, longrunning=False",
+        id="invalid,support=certified partner,longrunning=False",
     ),
     pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
@@ -124,7 +124,7 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
-        id="invalid,support=certified partner, longrunning=True",
+        id="invalid,support=certified partner,longrunning=True",
     ),
     pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
@@ -139,7 +139,7 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
-        id="invalid,support=community, longrunning=False",
+        id="invalid,support=community,longrunning=False",
     ),
     pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
@@ -156,7 +156,7 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
-        id="invalid,support=partner, longrunning=False",
+        id="invalid,support=partner,longrunning=False",
     ),
     pytest.param(
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),
@@ -173,7 +173,7 @@ files = [
             "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
         ],
         [],
-        id="invalid,support=xsoar, longrunning=False",
+        id="invalid,support=xsoar,longrunning=False",
     ),
     # -------------------------------- For Warning file which is relevant from partner level and bigger---------------
     pytest.param(

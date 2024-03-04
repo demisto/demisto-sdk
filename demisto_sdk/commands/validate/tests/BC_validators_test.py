@@ -135,6 +135,7 @@ def test_BreakingBackwardsSubtypeValidator_fix(
     assert validator.fix(content_item).message == expected_fix_msg
     assert content_item.subtype == expected_subtype
 
+
 @pytest.mark.parametrize(
     "content_items, old_content_items, expected_number_of_failures, old_id, expected_msgs",
     [
@@ -261,6 +262,7 @@ def test_IdChangedValidator_fix(content_item, expected_id, expected_fix_msg):
     validator.old_id[content_item.name] = expected_id
     assert validator.fix(content_item).message == expected_fix_msg
     assert content_item.object_id == expected_id
+
 
 @pytest.mark.parametrize(
     "old_marketplaces, in_pack_marketplaces",

@@ -12,6 +12,8 @@ classifiers=[
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: Implementation :: CPython'
 ]
 exclude = ["TestSuite/**", "*/tests/*", "tests"]
@@ -27,7 +29,7 @@ init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.8,<3.13"
 autopep8 = "^1.6.0"
 bandit = "^1.7.4"
 mypy = "^0.982"

@@ -46,7 +46,7 @@ class IsValidNameAndCliNameValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(words=', '.join(words)),
+                message=self.error_message.format(words=", ".join(words)),
                 content_object=content_item,
             )
             for content_item in content_items

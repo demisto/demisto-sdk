@@ -9,21 +9,23 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF100_is_valid_name_
 
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
-    (
-        [
-            create_incident_field_object(["name", "cliName"], ["case 1", "case1"]),
-            create_incident_field_object(["name", "cliName"], ["test 1", "test1"]),
-        ],
-        1,
-        [
-            (
-                "The words: case cannot be used as a name.\n"
-                "To fix the problem, remove the words case, "
-                "or add them to the whitelist named argsExceptionsList in:\n"
-                "https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/servicemodule_test.go#L8273"
-            )
-        ],
-    ),
+    [
+        (
+            [
+                create_incident_field_object(["name", "cliName"], ["case 1", "case1"]),
+                create_incident_field_object(["name", "cliName"], ["test 1", "test1"]),
+            ],
+            1,
+            [
+                (
+                    "The words: case cannot be used as a name.\n"
+                    "To fix the problem, remove the words case, "
+                    "or add them to the whitelist named argsExceptionsList in:\n"
+                    "https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/servicemodule_test.go#L8273"
+                )
+            ],
+        )
+    ]
 )
 def test_IsValidNameAndCliNameValidator_is_valid(
     content_items: list[IncidentField],

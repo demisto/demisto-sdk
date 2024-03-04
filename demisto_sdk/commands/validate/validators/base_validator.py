@@ -29,6 +29,43 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
+VALIDATION_CATEGORIES = {
+    "BA": "Basic",
+    "BC": "Backward Compatability",
+    "CJ": "Conf.json",
+    "CL": "Classifier",
+    "DA": "Dashboard",
+    "DB": "DBot",
+    "DO": "Docker Image",
+    "DS": "Description",
+    "IF": "Incident Field",
+    "IM": "Author Image",
+    "IN": "Integration",
+    "IT": "Incident Type",
+    "PA": "Pack",
+    "PB": "Playbook",
+    "RM": "Readme",
+    "RP": "Reputation (Incident Type)",
+    "SC": "Script",
+    "GF": "Generic Field",
+    "LI": "List",
+    "LO": "Layout",
+    "MP": "Mapper",
+    "PP": "Pre-Process Rule",
+    "RN": "Release Note",
+    "ST": "Structure",
+    "WD": "Widget",
+    "XC": "XSOAR Configuration",
+    "WZ": "Wizard",
+    "MR": "Modeling Rule",
+    "CR": "Correlation Rule",
+    "XR": "XSIAM Report",
+    "PR": "Parsing Rule",
+    "XT": "XDRC Template",
+    "XD": "XSIAM Dashboard",
+    "GR": "Graph",
+}
+
 
 class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     """The generic validator class to inherit from.

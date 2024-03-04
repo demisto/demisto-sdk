@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.validate.validators.base_validator import (
+    VALIDATION_CATEGORIES,
     BaseValidator,
     get_all_validators,
 )
@@ -23,7 +24,12 @@ def generate_validate_docs() -> str:
             ).items()
         )
     ).items():
-        result.extend((f"## {category}", _create_table(validators)))
+        result.extend(
+            (
+                f"## {category}: {VALIDATION_CATEGORIES[category]}",  # test_validation_prefix prevents KeyErrors here
+                _create_table(validators),
+            )
+        )
     return "\n".join(result)
 
 

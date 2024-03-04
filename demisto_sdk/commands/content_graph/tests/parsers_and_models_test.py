@@ -1496,7 +1496,7 @@ class TestParsersAndModels:
         ContentItemModelVerifier.run(
             model,
             expected_id="ce27311ce69c41b1b4a84c7888b34852",
-            expected_name="New Import test ",
+            expected_name="New Import test",
             expected_path=xsiam_dashboard_path,
             expected_content_type=ContentType.XSIAM_DASHBOARD,
             expected_fromversion="8.1.0",

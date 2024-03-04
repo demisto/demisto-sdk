@@ -16,7 +16,7 @@ ContentTypes = Pack
 class IsContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
     error_code = "RM113"
     description = "Validate that non of the readme lines contains the disallowed copyright section keywords."
-    rationale = "Avoiding copyright sections in the readme prevents license confusion."
+    rationale = "Content in the Cortex marketplace is licensed under the MIT license."
     error_message = "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines: {0}. Copyright section cannot be part of pack readme."
     related_field = "readme"
     is_auto_fixable = False

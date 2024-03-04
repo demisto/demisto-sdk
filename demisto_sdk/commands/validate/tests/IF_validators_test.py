@@ -7,6 +7,9 @@ from demisto_sdk.commands.validate.tests.test_tools import create_incident_field
 from demisto_sdk.commands.validate.validators.IF_validators.IF100_is_valid_name_and_cli_name import (
     IsValidNameAndCliNameValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF101_is_valid_content_field import (
+    IsValidContentFieldValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -42,3 +45,23 @@ def test_IsValidNameAndCliNameValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsValidContentFieldValidator_is_valid():
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["content"], [False]),
+        create_incident_field_object(["content"], [True]),
+    ]  # type: ignore
+
+    results = IsValidContentFieldValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert all(
+        [result.message == "The content key must be set to True." for result in results]
+    )
+
+
+def test_IsValidContentFieldValidator_fix():
+    incident_field: IncidentField = create_incident_field_object(["content"], [False])  # type: ignore
+    result = IsValidContentFieldValidator().fix(incident_field)
+    assert result.message == "Content field is set to true."
+    assert incident_field.data["content"]

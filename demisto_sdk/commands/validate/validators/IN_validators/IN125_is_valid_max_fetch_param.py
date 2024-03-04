@@ -18,8 +18,7 @@ class IsValidMaxFetchParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN125"
     description = "Validate that the max_fetch param has a defaultvalue"
     rationale = (
-        "The 'max_fetch' parameter prevents overloading XSOAR by limiting fetched incidents. "
-        "Without a default value can lead to performance issues."
+        "To maintain optimal load in the platform, the maximal number of incidents per fetch is limited. "
         "For more details, see https://xsoar.pan.dev/docs/integrations/fetching-incidents#fetch-limit"
     )
     error_message = "The integration is a fetch integration with max_fetch param, please make sure the max_fetch param has a default value."

@@ -1,3 +1,4 @@
+from typing import List
 import pytest
 
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
@@ -28,9 +29,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF100_is_valid_name_
     ]
 )
 def test_IsValidNameAndCliNameValidator_is_valid(
-    content_items: list[IncidentField],
+    content_items: List[IncidentField],
     expected_number_of_failures: int,
-    expected_msgs: list[str],
+    expected_msgs: List[str],
 ):
     results = IsValidNameAndCliNameValidator().is_valid(content_items=content_items)
     assert len(results) == expected_number_of_failures

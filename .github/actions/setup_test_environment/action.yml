@@ -35,7 +35,7 @@ runs:
 
     - name: Setup Pytest GitHub Annotations plugin
       if: ${{ inputs.python-version }} == "3.10"
-      runs: poetry shell && pip install pytest-github-actions-annotate-failures
+      runs: poetry run pip install pytest-github-actions-annotate-failures
 
     - name: Set up Node.js
       uses: actions/setup-node@v4

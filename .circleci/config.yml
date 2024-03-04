@@ -200,7 +200,7 @@ jobs:
         - <<: *install_neo4j
         - <<: *install_poetry
         - setup_remote_docker:
-            version: 20.10.12
+            version: default
         - python/install-packages:
             pkg-manager: "poetry"
             args: "-E generate-unit-tests"
@@ -360,7 +360,7 @@ jobs:
         - <<: *install_poetry
         - <<: *install_demisto_sdk
         - setup_remote_docker:
-            version: 20.10.12
+            version: default
         - attach_workspace:
             at: ~/project
         - run:

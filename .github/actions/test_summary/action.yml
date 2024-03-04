@@ -42,7 +42,7 @@ runs:
         artifacts-path-dir: ${{ inputs.artifacts-path-dir }}
         artifact-name: ${{ inputs.artifact-name }}
     - name: Print Summary of pytest results in workflow summary
-      if: ${{ inputs.junit-path != '' && inputs.display-results == 'true' }}
+      if: ${{ inputs.junit-path != '' }}
       uses: pmeier/pytest-results-action@main
       with:
         path: ${{ inputs.junit-path}}

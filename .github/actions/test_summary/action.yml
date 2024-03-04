@@ -5,22 +5,22 @@ author: 'Demisto-SDK'
 inputs:
   summary-display-options:
     required: false
+    type: string
     description: "The test-summary display options"
     default: fs  # show all failed and skipped tests
-  display-results:
-    required: true
-    description: "Whether to display the resuls as GitHub annotations."
-    default: "false"
   junit-path:
     required: true
+    type: "string"
     description: "The junit-path file to post its summary in github workflow summary"
     default: ""
   artifacts-path-dir:
     required: false
+    type: string
     default: $GITHUB_JOB
     description: "The path to the artifacts dir"
   artifact-name:
     required: false
+    type: string
     default: $GITHUB_JOB
     description: "The name of of the artifact to upload"
 

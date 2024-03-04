@@ -1,4 +1,7 @@
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
+import dictdiffer
 
 from demisto_sdk.commands.common.constants import (
     ARGUMENT_FIELDS_TO_CHECK,
@@ -29,7 +32,7 @@ class IntegrationDiffDetector:
         self.old_yaml_data = get_yaml(self.old)
         self.new_yaml_data = get_yaml(self.new)
 
-        self.fount_missing = False
+        self.found_missing = False
         self.missing_items_report: dict = {}
 
     def check_different(self) -> bool:
@@ -37,15 +40,10 @@ class IntegrationDiffDetector:
         Checks differences between two integration yaml files.
 
         Return:
-            bool. return true if the new integration contains everything in the old integration.
+            `bool`. return `True` if the new integration contains everything in the old integration.
         """
 
-        self.missing_items_report = self.get_differences()
-
-        if self.print_items():
-            return False
-
-        return True
+        return True if self.get_differences() else False
 
     def get_differences(self) -> dict:
         """
@@ -82,7 +80,9 @@ class IntegrationDiffDetector:
 
         return differences_result
 
-    def get_different_commands(self, old_commands, new_commands) -> tuple:
+    def get_different_commands(
+        self, old_commands, new_commands
+    ) -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
         """
         Checks differences between two list of the integration commands.
 
@@ -350,8 +350,10 @@ class IntegrationDiffDetector:
                     parameters.append(
                         {
                             "type": "parameters",
-                            "name": old_param["display"],
-                            "message": f'Missing the parameter \'{old_param["display"]}\'.',
+                            "name": old_param["display"]
+                            if "display" in old_param
+                            else old_param["name"],
+                            "message": f'Missing the parameter \'{old_param["display"] if "display" in old_param else old_param["name"]}\'.',
                         }
                     )
 
@@ -392,7 +394,10 @@ class IntegrationDiffDetector:
 
         for element in list_of_elements:
 
-            if element[field_to_check] == element_to_check[field_to_check]:
+            if (
+                field_to_check in element_to_check
+                and element[field_to_check] == element_to_check[field_to_check]
+            ):
                 return element
 
         return {}
@@ -564,3 +569,66 @@ class IntegrationDiffDetector:
                 result[element["command_name"]] = [element]
 
         return result
+
+    def get_added_commands(self) -> List[str]:
+        """
+        Helper function to return the list of added commands
+
+        Returns:
+        - `List[str]` with the names of the commands.
+        """
+
+        new_cmds: List[str] = [
+            cmd["name"]
+            for cmd in self.new_yaml_data["script"]["commands"]
+            if cmd["name"]
+        ]
+        old_cmds: List[str] = [
+            cmd["name"]
+            for cmd in self.old_yaml_data["script"]["commands"]
+            if cmd["name"]
+        ]
+
+        return list(set(new_cmds).difference(old_cmds))
+
+    def is_configuration_different(self) -> bool:
+        """
+        Helper function to return whether the configuration is
+        different between the integrations
+
+        Returns:
+        - `bool` indicating whether the configuration is different or not
+        """
+        return bool(
+            list(
+                dictdiffer.diff(
+                    self.old_yaml_data.get("configuration"),
+                    self.new_yaml_data.get("configuration"),
+                )
+            )
+        )
+
+    def get_modified_commands(self) -> List[str]:
+        """
+        Helper function to return a list of modified commands.
+
+        Returns:
+        - `List[str]` with the commands, e.g. ['command-x`, `command-h`]
+        """
+
+        modified_cmds: List[str] = []
+
+        old_cmds: List[Dict[str, Any]] = self.old_yaml_data["script"]["commands"]
+        new_cmds: List[Dict[str, Any]] = self.new_yaml_data["script"]["commands"]
+
+        for old_cmd in old_cmds:
+            old_command_name = old_cmd.get("name", "")
+
+            for new_cmd in new_cmds:
+                new_cmd_name = new_cmd.get("name", "")
+                if new_cmd_name == old_command_name and list(
+                    dictdiffer.diff(old_cmd, new_cmd)
+                ):
+                    modified_cmds.append(new_cmd_name)
+
+        return modified_cmds

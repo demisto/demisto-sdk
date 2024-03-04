@@ -1068,6 +1068,24 @@ def test_IsValidVersionValidator_fix():
             "The following field: name shouldn't contain the word 'Playbook'.",
             id="Case 3: Playbook in name or display (valid and invalid)",
         ),
+        pytest.param(
+            [
+                create_playbook_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_script_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test v1", "Testv1"],
+                ),
+            ],
+            "",
+            id="Case 4: All content items are valid",
+        ),
     ],
 )
 def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg):
@@ -1082,6 +1100,8 @@ def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg)
     - Case 3: Two content items of type 'Playbook' are validated.
         - The first playbook doest not have its type in 'name' field.
         - The second playbook does have its type in 'name' field.
+    - Case 4:
+        - All content items are valid.
     When
     - Running the IsEntityTypeInEntityNameValidator validation.
     Then
@@ -1094,7 +1114,12 @@ def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg)
     - Case 3:
         - Don't fail the validation.
         - Fail the validation with a relevant message containing 'name' field.
+    - Case 4:
+        - Don't fail the validation and is_valid function return empty array.
     """
     result = IsEntityTypeInEntityNameValidator().is_valid(content_items)
-    assert result[0].message == expected_msg
-    assert len(result) == 1
+    if result:
+        assert result[0].message == expected_msg
+        assert len(result) == 1
+    else:
+        assert len(result) == 0

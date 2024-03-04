@@ -567,6 +567,7 @@ def test_get_items_status(repo):
         - The pack readme and pack_metadata.json should return the pack_metadata.json path with the pack_metadata.json status (MODIFIED).
         - The script code should return the script yml path with script code status (ADDED).
     """
+    assert False, "🤡"
     pack = repo.create_pack("pack_no_1")
     initializer = Initializer()
     integration = pack.create_integration()

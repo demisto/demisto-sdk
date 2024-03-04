@@ -11,6 +11,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
+    IdChangedValidator,
+)
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
 )
@@ -131,6 +134,134 @@ def test_BreakingBackwardsSubtypeValidator_fix(
     validator.old_subtype[content_item.name] = "python3"
     assert validator.fix(content_item).message == expected_fix_msg
     assert content_item.subtype == expected_subtype
+
+
+@pytest.mark.parametrize(
+    "content_items, old_content_items, expected_number_of_failures, old_id, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(paths=["commonfields.id"], values=["id_2"]),
+                create_integration_object(),
+            ],
+            [
+                create_integration_object(paths=["commonfields.id"], values=["id_1"]),
+                create_integration_object(),
+            ],
+            1,
+            {"TestIntegration": "id_1"},
+            [
+                "ID of content item was changed from id_1 to id_2, please undo.",
+            ],
+        ),
+        (
+            [
+                create_script_object(paths=["commonfields.id"], values=["id_2"]),
+                create_integration_object(),
+            ],
+            [
+                create_script_object(paths=["commonfields.id"], values=["id_1"]),
+                create_integration_object(),
+            ],
+            1,
+            {"myScript": "id_1"},
+            [
+                "ID of content item was changed from id_1 to id_2, please undo.",
+            ],
+        ),
+        (
+            [
+                create_integration_object(paths=["commonfields.id"], values=["id_2"]),
+                create_script_object(paths=["commonfields.id"], values=["id_4"]),
+            ],
+            [
+                create_integration_object(paths=["commonfields.id"], values=["id_1"]),
+                create_script_object(paths=["commonfields.id"], values=["id_3"]),
+            ],
+            2,
+            {"TestIntegration": "id_1", "myScript": "id_3"},
+            [
+                "ID of content item was changed from id_1 to id_2, please undo.",
+                "ID of content item was changed from id_3 to id_4, please undo.",
+            ],
+        ),
+        (
+            [
+                create_integration_object(),
+                create_script_object(),
+            ],
+            [
+                create_integration_object(),
+                create_script_object(),
+            ],
+            0,
+            {},
+            [],
+        ),
+    ],
+)
+def test_IdChangedValidator(
+    content_items, old_content_items, expected_number_of_failures, old_id, expected_msgs
+):
+    """
+    Given
+    content_items and old_content_items iterables.
+        - Case 1: content_items with 2 integrations where the first one has its id changed.
+        - Case 2: content_items with 1 integration that has its id changed, and one script with no id changed.
+        - Case 3: content_items with 1 integration that has its id changed, and one script that has its id changed.
+        - Case 4: content_items with 1 integration and 1 script, both with no changes.
+    When
+    - Calling the IdChangedValidator is valid function.
+    Then
+        - Make sure the right amount of failures and messages are returned, and that we construct the "old_id" object correctly.
+        - Case 1: Should fail 1 integration.
+        - Case 2: Should fail 1 script.
+        - Case 3: Should fail both the integration and the script
+        - Case 4: Shouldn't fail any content item.
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    validator = IdChangedValidator()
+    results = validator.is_valid(content_items)
+    assert validator.old_id == old_id
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "content_item, expected_id, expected_fix_msg",
+    [
+        (
+            create_integration_object(paths=["commonfields.id"], values=["id_2"]),
+            "id_1",
+            "Changing ID back to id_1.",
+        ),
+        (
+            create_script_object(paths=["commonfields.id"], values=["id_2"]),
+            "id_1",
+            "Changing ID back to id_1.",
+        ),
+    ],
+)
+def test_IdChangedValidator_fix(content_item, expected_id, expected_fix_msg):
+    """
+    Given
+        - content_item.
+        - Case 1: an Integration content item where its id has changed.
+        - Case 2: a Script content item where its id has changed.
+    When
+    - Calling the IdChangedValidator fix function.
+    Then
+        - Make sure the the id was changed to match the old_content_item id, and that the right fix message is returned.
+    """
+    validator = IdChangedValidator()
+    validator.old_id[content_item.name] = expected_id
+    assert validator.fix(content_item).message == expected_fix_msg
+    assert content_item.object_id == expected_id
 
 
 @pytest.mark.parametrize(

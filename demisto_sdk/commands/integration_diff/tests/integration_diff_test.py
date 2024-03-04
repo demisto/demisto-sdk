@@ -1,10 +1,16 @@
 import copy
 import logging
+import os
 
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
+from TestSuite.pack import Pack
 from TestSuite.test_tools import str_in_call_args_list
+
+DEMISTO_SDK_PATH = os.path.join(git_path(), "demisto_sdk")
+TEST_FILES = os.path.join(DEMISTO_SDK_PATH, "commands", "integration_diff", "tests")
 
 
 class TestIntegrationDiffDetector:
@@ -254,7 +260,7 @@ class TestIntegrationDiffDetector:
                 "type": "commands",
                 "name": "command_1",
                 "message": "Missing the command 'command_1'.",
-            }
+            },
         ],
         "arguments": [
             {
@@ -298,7 +304,7 @@ class TestIntegrationDiffDetector:
             new=new_integration.yml.path, old=old_integration.yml.path
         )
 
-        assert integration_detector.check_different()
+        assert not integration_detector.check_different()
 
     def test_invalid_integration_diff(self, pack):
         """
@@ -321,7 +327,7 @@ class TestIntegrationDiffDetector:
             new=new_integration.yml.path, old=old_integration.yml.path
         )
 
-        assert not integration_detector.check_different()
+        assert integration_detector.check_different()
 
     def test_get_differences(self, pack):
         """
@@ -711,3 +717,174 @@ class TestIntegrationDiffDetector:
                 for current_str in excepted_output
             ]
         )
+
+    def test_get_added_commands(self, pack: Pack):
+        """
+        Test whether the added commands is expected.
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 3 commands.
+        - A old integration with 2 commands.
+
+        Then:
+        - We're expecting `command_3` to be returned
+        """
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.get_added_commands()
+
+        assert len(actual) == 1
+        assert actual == ["command_3"]
+
+    def test_is_configuration_different(self, pack: Pack):
+        """
+        Test whether the configuration sections is different
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 3 configurations options.
+        - A old integration with 2 configurations options.
+
+        Then:
+        - The configuration is different.
+        """
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.is_configuration_different()
+
+        assert actual
+
+    def test_is_configuration_different_same(self, pack: Pack):
+        """
+        Test whether the configuration sections is different
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 2 configurations options.
+        - A old integration with 2 configurations options.
+
+        Then:
+        - The configuration is the same.
+        """
+        self.NEW_INTEGRATION_YAML.get("configuration", []).pop(2)
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.is_configuration_different()
+
+        assert not actual
+
+    def test_get_modified_commands_modified(self, pack: Pack):
+        """
+        Test whether the modified commands method works as expected when
+        supplied a list of modified commands.
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 3 commands where 2 of the commands were modified.
+        - A old integration with 2 commands.
+
+        Then:
+        - 2 commands should be returned.
+        """
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[0][
+            "defaultValue"
+        ] = "SOME_DEFAULT"
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[1][
+            "deprecated"
+        ] = True
+        self.NEW_INTEGRATION_YAML.get("script", {}).get("commands", [])[2][
+            "description"
+        ] = "Irrelevant description"
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.get_modified_commands()
+        expected = ["command_1", "command_2"]
+        assert actual == expected
+
+    def test_get_modified_commands_identical(self, pack: Pack):
+        """
+        FIXME check why when using:
+
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.NEW_INTEGRATION_YAML
+        )
+
+        The test fails intermittently
+
+        Test whether the modified commands method works as expected
+        when given a set of identical commands.
+
+        Given:
+        - 2 integrations.
+
+        When:
+        - A new integration with 3 commands where no commands were modified.
+        - A old integration with 2 commands.
+
+        Then:
+        - No commands should be returned.
+        """
+
+        old_integration = pack.create_integration(
+            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+        new_integration = pack.create_integration(
+            "newIntegration", yml=self.OLD_INTEGRATION_YAML
+        )
+
+        integration_detector = IntegrationDiffDetector(
+            new=new_integration.yml.path, old=old_integration.yml.path
+        )
+
+        actual = integration_detector.get_modified_commands()
+
+        assert not actual

@@ -108,7 +108,7 @@ jobs:
           artifact-name: unit-tests-python-${{ matrix.python-version }}-artifacts
           artifacts-path-dir: unit-tests
           junit-path: unit-tests/junit.xml
-          display-results: ${{ matrix.python-version == "3.10" }} 
+          display-results: ${{ matrix.python-version }} == "3.10"
   integration-tests:
     name: Integration Tests / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
@@ -147,7 +147,7 @@ jobs:
           artifact-name: integration-tests-python-${{ matrix.python-version }}-artifacts
           artifacts-path-dir: integration-tests
           junit-path: integration-tests/junit.xml
-          display-results: ${{ matrix.python-version == "3.10" }}
+          display-results: ${{ matrix.python-version }} == "3.10"
 
   graph-tests:
     name: Graph Tests / Python ${{ matrix.python-version }}
@@ -187,7 +187,7 @@ jobs:
           artifact-name: graph-tests-python-${{ matrix.python-version }}-artifacts
           artifacts-path-dir: graph-tests
           junit-path: graph-tests/junit.xml
-          display-results: ${{ matrix.python-version == "3.10" }}
+          display-results: ${{ matrix.python-version }} == "3.10"
   coverage:
     needs: [unit-tests, integration-tests, graph-tests]
     if: github.ref_name != 'master'

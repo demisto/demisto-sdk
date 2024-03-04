@@ -22,7 +22,7 @@ class LatestDockerImageTagValidator(BaseValidator[ContentTypes]):
     error_code = "DO100"
     description = "Validate that the given content-item does not use the tag 'latest' in its docker image"
     rationale = (
-        "To ensure stability and control over the Docker image version used for content. "
+        "Locking content to use a specific tag of a docker image ensures stability. The tag is usually updated in newer versions of the content item."
         "For more details on Docker, visit https://xsoar.pan.dev/docs/integrations/docker."
     )
     error_message = (

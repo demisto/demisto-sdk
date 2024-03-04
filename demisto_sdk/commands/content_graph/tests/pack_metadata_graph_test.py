@@ -24,14 +24,15 @@ from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.fixture(autouse=True)
-def setup_method(mocker, repo: Repo):
+def setup_method(mocker, tmp_path_factory, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
     bc.CONTENT_PATH = Path(repo.path)
+    mocker.patch.object(
+        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    )
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
-    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -117,6 +118,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
 
     assert metadata.get("id") == "TestPack"
     assert metadata.get("name") == "HelloWorld"
+    assert metadata.get("display_name") == "HelloWorld"
     assert (
         metadata.get("description")
         == "This is the Hello World integration for getting started."
@@ -146,7 +148,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     )
     assert metadata.get("categories") == ["Utilities"]
     assert metadata.get("useCases") == ["Identity And Access Management"]
-    assert metadata.get("keywords") == []
+    assert metadata.get("keywords") == ["common"]
     assert metadata.get("searchRank") == 0
     assert metadata.get("excludedDependencies") == []
     assert metadata.get("videos") == []
@@ -247,6 +249,7 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
 
     assert metadata.get("id") == "TestPack"
     assert metadata.get("name") == "HelloWorld2"
+    assert metadata.get("display_name") == "HelloWorld2"
     assert (
         metadata.get("description")
         == "This is the Hello World 2 integration for getting started."

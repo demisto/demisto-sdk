@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -13,16 +14,20 @@ IGNORED_INCIDENT_TYPES = ["dbot_classification_incident_type_all"]
 
 class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.type = self.json_data.get("type")
         self.definition_id = self.json_data.get("definitionId")
         self.connect_to_dependencies()
 
-    @property
-    def name(self) -> Optional[str]:
-        return self.json_data.get("name") or self.json_data.get("brandName")
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update({"name": ["name", "brandName"]})
+        return super().field_mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

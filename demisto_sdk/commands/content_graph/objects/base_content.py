@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -10,7 +10,9 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
+    Union,
     cast,
 )
 
@@ -19,20 +21,26 @@ from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
-import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
+    PACKS_PACK_META_FILE_NAME,
+    GitStatuses,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.files import TextFile
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import set_value, write_dict
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     LazyProperty,
     RelationshipType,
 )
+from demisto_sdk.commands.content_graph.parsers import content_item
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -43,7 +51,7 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
+CONTENT_TYPE_TO_MODEL: Dict[ContentType, Type["BaseContent"]] = {}
 json = JSON_Handler()
 
 
@@ -63,18 +71,18 @@ class BaseContentMetaclass(ModelMetaclass):
 
         Args:
             name: The class object name (e.g., Integration)
-            bases: The bases of the class object (e.g., [YAMLContentItem, ContentItem, BaseContent])
+            bases: The bases of the class object (e.g., [YAMLContentItem, ContentItem, BaseNode])
             namespace: The namespaces of the class object.
             content_type (ContentType, optional): The type corresponds to the class (e.g., ContentType.INTEGRATIONS)
 
         Returns:
-            BaseContent: The model class.
+            BaseNode: The model class.
         """
         super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
         model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
-            content_type_to_model[content_type] = model_cls
+            CONTENT_TYPE_TO_MODEL[content_type] = model_cls
             model_cls.content_type = content_type
 
         if lazy_properties := {
@@ -86,10 +94,11 @@ class BaseContentMetaclass(ModelMetaclass):
         return model_cls
 
 
-class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
+class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
+    source_repo: str = "content"
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 
@@ -159,66 +168,90 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
-
         return json_dct
 
-    @staticmethod
-    @lru_cache
-    def from_path(path: Path) -> Optional["BaseContent"]:
-        logger.debug(f"Loading content item from path: {path}")
-        if (
-            path.is_dir() and path.parent.name == PACKS_FOLDER
-        ):  # if the path given is a pack
-            try:
-                return content_type_to_model[ContentType.PACK].from_orm(
-                    PackParser(path)
-                )
-            except InvalidContentItemException:
-                logger.error(f"Could not parse content from {str(path)}")
-                return None
-        try:
-            content_item_parser = ContentItemParser.from_path(path)
-        except NotAContentItemException:
-            # This is a workaround because `create-content-artifacts` still creates deprecated content items
-            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
-                "0.0.0"
-            )
-            try:
-                content_item_parser = ContentItemParser.from_path(path)
-            except NotAContentItemException:
-                logger.error(
-                    f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
-                )
-                return None
-            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
-                MARKETPLACE_MIN_VERSION
-            )
-        except InvalidContentItemException:
-            logger.error(
-                f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
-            )
-            return None
+    def add_relationship(
+        self, relationship_type: RelationshipType, relationship: "RelationshipData"
+    ) -> None:
+        if relationship.content_item_to == self:
+            # skip adding circular dependency
+            return
+        self.relationships_data[relationship_type].add(relationship)
 
-        model = content_type_to_model.get(content_item_parser.content_type)
-        logger.debug(f"Loading content item from path: {path} as {model}")
-        if not model:
-            logger.error(f"Could not parse content item from path: {path}")
-            return None
-        try:
-            return model.from_orm(content_item_parser)
-        except Exception as e:
-            logger.error(
-                f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
-            )
-            return None
 
-    @abstractmethod
+class BaseContent(BaseNode):
+    field_mapping: dict = Field({}, exclude=True)
+    path: Path
+    git_status: Optional[GitStatuses]
+    git_sha: Optional[str]
+    old_base_content_object: Optional["BaseContent"] = None
+    related_content_dict: dict = Field({}, exclude=True)
+
+    def _save(
+        self,
+        path: Path,
+        data: dict,
+        predefined_keys_to_keep: Optional[Tuple[str, ...]] = None,
+    ):
+        """Save the class vars into the dict data.
+
+        Args:
+            path (Path): The path of the file to save the new data into.
+            data (dict): the data dict.
+            predefined_keys_to_keep (Optional[Tuple[str]], optional): keys to keep even if they're not defined.
+        """
+        for key, val in self.field_mapping.items():
+            attr = getattr(self, key)
+            if key == "docker_image":
+                attr = str(attr)
+            elif key in ["params"]:
+                continue
+            elif key == "marketplaces":
+                if (
+                    MarketplaceVersions.XSOAR_SAAS in attr
+                    and MarketplaceVersions.XSOAR in attr
+                ):
+                    attr.remove(MarketplaceVersions.XSOAR_SAAS)
+                if (
+                    MarketplaceVersions.XSOAR_ON_PREM in attr
+                    and MarketplaceVersions.XSOAR in attr
+                ):
+                    attr.remove(MarketplaceVersions.XSOAR_ON_PREM)
+            if attr or (predefined_keys_to_keep and val in predefined_keys_to_keep):
+                set_value(data, val, attr)
+        write_dict(path, data, indent=4)
+
+    def __hash__(self):
+        return hash(self.path)
+
+    def save(self):
+        raise NotImplementedError
+
+    @property
+    def ignored_errors(self) -> List[str]:
+        raise NotImplementedError
+
+    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+        """Return the errors that should be ignored for the given related file path.
+
+        Args:
+            file_path (str): The path of the file we want to get list of ignored errors for.
+
+        Returns:
+            list: The list of the ignored error codes.
+        """
+        raise NotImplementedError
+
+    @property
+    def support_level(self) -> str:
+        raise NotImplementedError
+
     def dump(
         self,
         path: DirectoryPath,
         marketplace: MarketplaceVersions,
     ) -> None:
-        pass
+        raise NotImplementedError
 
     def upload(
         self,
@@ -230,16 +263,114 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         # Implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
 
-    def add_relationship(
-        self, relationship_type: RelationshipType, relationship: "RelationshipData"
-    ) -> None:
-        if relationship.content_item_to == self:
-            # skip adding circular dependency
-            return
-        self.relationships_data[relationship_type].add(relationship)
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        """Return a dict of the content item's related items with the list of possible paths, and the status of each related file.
+
+        Returns:
+            Dict[RelatedFileType, dict]: The dict of the content item's related items with the list of possible paths, and the status of each related file.
+        """
+        return {}
+
+    @staticmethod
+    @lru_cache
+    def from_path(
+        path: Path,
+        git_sha: Optional[str] = None,
+        raise_on_exception: bool = False,
+        metadata_only: bool = False,
+    ) -> Optional["BaseContent"]:
+        logger.debug(f"Loading content item from path: {path}")
+
+        if (
+            path.is_dir()
+            and path.parent.name == PACKS_FOLDER
+            or path.name == PACKS_PACK_META_FILE_NAME
+        ):  # if the path given is a pack
+            try:
+                return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
+                    PackParser(path, git_sha=git_sha, metadata_only=metadata_only)
+                )
+            except InvalidContentItemException:
+                logger.error(f"Could not parse content from {str(path)}")
+                return None
+        try:
+            content_item.MARKETPLACE_MIN_VERSION = "0.0.0"
+            content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
+            content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
+
+        except NotAContentItemException:
+            if raise_on_exception:
+                raise
+            logger.error(
+                f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
+            )
+            return None
+        except InvalidContentItemException:
+            if raise_on_exception:
+                raise
+            logger.error(
+                f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
+            )
+            return None
+
+        model = CONTENT_TYPE_TO_MODEL.get(content_item_parser.content_type)
+        logger.debug(f"Loading content item from path: {path} as {model}")
+        if not model:
+            logger.error(f"Could not parse content item from path: {path}")
+            return None
+        try:
+            return model.from_orm(content_item_parser)  # type: ignore
+        except Exception as e:
+            logger.error(
+                f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
+            )
+            return None
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        pass
+
+    @property
+    def related_content(self) -> Dict:
+        if not self.related_content_dict:
+            self.related_content_dict = self.get_related_content()
+            if self.old_base_content_object:
+                git_util = GitUtil()
+                remote, branch = git_util.handle_prev_ver(
+                    self.old_base_content_object.git_sha  # type: ignore[arg-type]
+                )
+                for file in self.related_content_dict.values():
+                    for path in file["path"]:
+                        status = git_util._check_file_status(path, remote, branch)
+                        file["git_status"] = (
+                            None
+                            if (not status and not file["git_status"])
+                            else GitStatuses(status)
+                        )
+        return self.related_content_dict
+
+    def get_related_text_file(self, file_type: RelatedFileType) -> str:
+
+        for file_path in self.related_content[file_type]["path"]:
+            try:
+                if self.git_sha:
+                    file = TextFile.read_from_git_path(
+                        path=file_path,
+                        tag=self.git_sha,
+                    )
+                else:
+                    file = TextFile.read_from_local_path(path=file_path)
+                self.related_content[file_type]["path"] = [file_path]
+                return file
+            except Exception as e:
+                logger.error(f"Failed to get related text file, error: {e}")
+                continue
+        raise NotAContentItemException(
+            f"The {file_type.value} file could not be found in the following paths: {', '.join(self.related_content[file_type]['path'])}"
+        )
 
 
-class UnknownContent(BaseContent):
+class UnknownContent(BaseNode):
     """A model for non-existing content items used by existing content items."""
 
     not_in_repository: bool = True

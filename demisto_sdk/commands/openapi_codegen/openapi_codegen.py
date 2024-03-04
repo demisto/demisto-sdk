@@ -774,9 +774,8 @@ class OpenAPIIntegration:
                     extract(item, prop_arr, current_context)
 
             elif isinstance(extracted_object, dict):
-                if (
-                    extracted_object.get("type")
-                    and type(extracted_object.get("type")) == str
+                if extracted_object.get("type") and isinstance(
+                    extracted_object.get("type"), str
                 ):
                     if extracted_object.get("type") in ["array", "object"]:
                         refs = self.extract_values(extracted_object, "$ref")
@@ -809,9 +808,8 @@ class OpenAPIIntegration:
                                 "description": extracted_object.get("description", ""),
                             }
                         )
-                elif (
-                    extracted_object.get("type")
-                    and type(extracted_object.get("type")) == dict
+                elif extracted_object.get("type") and isinstance(
+                    extracted_object.get("type"), dict
                 ):
                     for k, v in extracted_object.items():
                         if k not in current_context:

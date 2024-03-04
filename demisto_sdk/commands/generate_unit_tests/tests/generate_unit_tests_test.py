@@ -4,13 +4,8 @@ from ast import parse
 from pathlib import Path
 
 import pytest
-from klara.contract.solver import MANAGER
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
-    UnitTestsGenerator,
-    run_generate_unit_tests,
-)
 from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
 
 ARGS = [
@@ -80,6 +75,10 @@ class TestUnitTestsGenerator:
         - ensure the config file is generated
         - the config file should be identical to the one we have under resources folder
         """
+        from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
+            UnitTestsGenerator,
+            run_generate_unit_tests,
+        )
 
         mocker.patch.object(
             UnitTestsGenerator,
@@ -123,6 +122,8 @@ def test_get_client_init_args():
     Then
     - Ensure 'get_client_init_args' does not raise an AttributeException
     """
+    from klara.contract.solver import MANAGER
+
     filepath = Path(__file__) / ".." / "test_files" / "client_class_test_cases.py"
     source = filepath.resolve().read_text()
     tree = MANAGER.build_tree(ast_str=source)

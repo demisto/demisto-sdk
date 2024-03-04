@@ -7,32 +7,32 @@ mapping:
   data:
     type: str
   dbotCreatedBy:
-      type: str
+    type: str
   description:
     type: str
   fromVersion:
     type: str
-    required: True
+    required: true
   hasRole:
     type: bool
   id:
     type: str
-    required: True
+    required: true
   itemVersion:
     type: str
-    required: True
+    required: true
   locked:
     type: bool
-    required: True
+    required: true
   name:
     type: str
-    required: True
+    required: true
   nameLocked:
     type: bool
-    required: True
+    required: true
   packID:
     type: str
-    required: True
+    required: true
   previousAllRead:
     type: bool
   previousAllWrite:
@@ -40,29 +40,49 @@ mapping:
   previousRoles:
     type: seq
     sequence:
-      - includes: previousRoles_schema
+    - includes: previousRoles_schema
   roles:
     type: seq
     sequence:
-      - includes: roles_schema
+    - includes: roles_schema
   system:
     type: bool
-    required: True
+    required: true
   tags:
     type: seq
     sequence:
-      - type: str
+    - type: str
   toVersion:
     type: str
   truncated:
     type: bool
   type:
     type: str
-    required: True
+    required: true
   version:
     type: number
-    required: True
+    required: true
 
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
 schema;previousRoles_schema:
   type: any
 

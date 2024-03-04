@@ -580,6 +580,12 @@ class TestPlaybookValidator:
         (INVALID_PLAYBOOK_INPUTS_USE, False, True),
     ]
 
+    def test_valid_schema(self, playbook):
+        structure = StructureValidator(
+            file_path=playbook.yml.path, predefined_scheme="playbook"
+        )
+        assert structure.is_valid_scheme()
+
     @pytest.mark.parametrize(
         "playbook_path, is_modified, expected_result", INVALID_INPUTS
     )

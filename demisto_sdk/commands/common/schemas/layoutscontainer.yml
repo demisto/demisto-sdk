@@ -2,22 +2,22 @@ type: map
 mapping:
   id:
     type: str
-    required: True
+    required: true
   group:
     type: str
-    required: True
+    required: true
     enum: ['incident', 'indicator']
   definitionId:
     type: str
   version:
     type: number
-    required: True
+    required: true
   name:
     type: str
-    required: True
+    required: true
   fromVersion:
     type: str
-    required: True
+    required: true
   toVersion:
     type: str
   description:
@@ -27,8 +27,8 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: [ 'xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem' ]
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
   edit:
     type: map
     mapping:
@@ -118,6 +118,26 @@ mapping:
         sequence:
         - include: section_schema
 
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
 schema;tabs_schema:
   type: any
 
@@ -151,25 +171,45 @@ schema;section_schema:
       sequence:
       - include: field_schema
 
+    name:xsoar:
+      type: str
+    name:marketplacev2:
+      type: str
+    name:xpanse:
+      type: str
+    name:xsoar_saas:
+      type: str
+    name:xsoar_on_prem:
+      type: str
+    description:xsoar:
+      type: str
+    description:marketplacev2:
+      type: str
+    description:xpanse:
+      type: str
+    description:xsoar_saas:
+      type: str
+    description:xsoar_on_prem:
+      type: str
 schema;field_schema:
   type: map
   mapping:
-      id:
-        type: str
-      version:
-        type: number
-      modified:
-        type: str
-      fieldId:
-        type: str
-      isVisible:
-        type: bool
-      sortValues:
-        type: str
-      filters:
-        type: seq
-        sequence:
-        - include: arg_filters_schema
+    id:
+      type: str
+    version:
+      type: number
+    modified:
+      type: str
+    fieldId:
+      type: str
+    isVisible:
+      type: bool
+    sortValues:
+      type: str
+    filters:
+      type: seq
+      sequence:
+      - include: arg_filters_schema
 
 schema;arg_filters_schema:
   type: seq

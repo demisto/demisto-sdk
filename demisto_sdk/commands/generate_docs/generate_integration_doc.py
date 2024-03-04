@@ -1,21 +1,33 @@
 import os.path
 import re
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from git import InvalidGitRepositoryError
 from requests.structures import CaseInsensitiveDict
 
+from demisto_sdk.commands.common import git_util
 from demisto_sdk.commands.common.constants import (
+    CONTENT_FILE_ENDINGS,
     CONTEXT_OUTPUT_README_TABLE_HEADER,
     DOCS_COMMAND_SECTION_REGEX,
+    INTEGRATIONS_DIR,
+    INTEGRATIONS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
+from demisto_sdk.commands.common.files.errors import GitFileReadError
+from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import (
+    get_content_path,
+    get_yaml,
+)
 from demisto_sdk.commands.generate_docs.common import (
+    CONFIGURATION_SECTION_STEPS,
     add_lines,
     build_example_dict,
     generate_numbered_section,
@@ -29,6 +41,371 @@ from demisto_sdk.commands.integration_diff.integration_diff_detector import (
 )
 
 CREDENTIALS = 9
+
+
+class IntegrationDocUpdateManager:
+    """
+    A class to abstract away and manage the Integration documentation update.
+
+    The process is as follows:
+    1) Compare the integration YAMLs from input and master to check for differences in configuration and commands.
+    2) If any changes are detected in the configuration, replace the configuration section.
+    3) If any modifications are detected in the existing commands, replace the modified command'(s') section(s).
+    4) If new commands are detected, we append them to the end of the commands section (EOF).
+    """
+
+    def __init__(
+        self,
+        input_path: str,
+        is_contribution: bool,
+        example_dict: dict,
+        command_permissions_dict: dict,
+    ) -> None:
+        self.new_yaml_path = Path(input_path)
+        self.new_readme_path = self.new_yaml_path.parent / INTEGRATIONS_README_FILE_NAME
+        self.update_errors: List[str] = []
+        self.output_doc: str = ""
+
+        self.is_ui_contribution: bool = is_contribution
+        self.integration_name: str = self.new_yaml_path.stem
+
+        # We attempt to get the integration YAML from version control
+        # first from remote (`demisto/content` `origin/master`).
+        # If we can't get it from remote, we get it from local `master`
+        # branch.
+        self.old_yaml_path = self._get_resource_path_from_source_control(
+            remote=True, type=CONTENT_FILE_ENDINGS[1]
+        ) or self._get_resource_path_from_source_control(
+            remote=False, type=CONTENT_FILE_ENDINGS[1]
+        )
+
+        if self.old_yaml_path:
+            self.integration_diff = IntegrationDiffDetector(
+                new=str(self.new_yaml_path), old=str(self.old_yaml_path)
+            )
+            self.old_readme_path = self._get_resource_path_from_source_control(
+                remote=True, type=CONTENT_FILE_ENDINGS[4]
+            ) or self._get_resource_path_from_source_control(
+                remote=False, type=CONTENT_FILE_ENDINGS[4]
+            )
+            self.output_doc = (
+                self.old_readme_path.read_text() if self.old_readme_path else ""
+            )
+
+        self.example_dict = example_dict
+        self.command_permissions_dict = command_permissions_dict
+
+    def _get_resource_path_from_source_control(
+        self, remote: bool, type: str
+    ) -> Optional[Path]:
+        """
+        Retrieve the resource (integration YML or integration README)
+        from source control (remote or local).
+
+        Args:
+        - `remote` (``bool``): Indicating whether we should download the
+        file from remote or get it locally.
+        - `type` (``type``): The type of file to retrieve. Possible values are 'yml' and 'md'.
+
+        Returns:
+        - `Path` if the YAML was found, `None` otherwise.
+        """
+
+        # Validate file types
+        if type not in {CONTENT_FILE_ENDINGS[1], CONTENT_FILE_ENDINGS[4]}:
+            raise ValueError("'type' argument must be either 'md' or 'yml'.")
+
+        path = None
+
+        # Check if we're retrieving the YML or README
+        if type == CONTENT_FILE_ENDINGS[1]:
+            logger.debug(
+                f"Reading {self.integration_name} YAML from {'remote' if remote else 'local'} git path..."
+            )
+            resource_path = self.new_yaml_path
+
+        else:
+            logger.debug(
+                f"Reading {self.integration_name} README from {'remote' if remote else 'local'} git path..."
+            )
+            resource_path = self.new_readme_path
+
+        try:
+            # In case we're attempting to get the yml/md in a contrib flow
+            # we already have the content repo fork cloned and synced with upstream
+            # so there's no need to get the file from remote.
+            # We therefore set the output path to the relative path from
+            # the content path of the resource.
+            if self.is_ui_contribution or not remote:
+                relative_resource_path = os.path.join(
+                    INTEGRATIONS_DIR, self.integration_name, resource_path.name
+                )
+                path = list(get_content_path().glob(f"**/{relative_resource_path}"))[0]
+            elif remote:
+
+                if not resource_path.is_absolute():
+                    resource_path = resource_path.absolute()
+
+                remote_file_content = TextFile.read_from_git_path(
+                    resource_path, from_remote=remote
+                )
+
+                path = self._write_resource_to_tmp(resource_path, remote_file_content)
+        except (
+            FileNotFoundError,
+            git_util.GitFileNotFoundError,
+            GitFileReadError,
+            KeyError,
+            IndexError,
+        ) as e:
+            msg = f"{e.__class__.__name__}: Could not find file '{str(resource_path)}' in {'remote' if remote else 'local'}. Please specify the full path to the integration YAML file, e.g. `demisto-sdk generate-docs -i $(realpath {resource_path})`"
+            logger.error(msg)
+            self.update_errors.append(msg)
+            path = None
+        except InvalidGitRepositoryError as err:
+            msg = f"Failed to open git repository: {str(err)}"
+            logger.error(msg)
+            self.update_errors.append(msg)
+            path = None
+        finally:
+            logger.debug(f"Path returned: '{path}'")
+            return path if path and path.exists() else None
+
+    def can_update_docs(self) -> bool:
+        """
+        Before generating a new README, we check whether it's possible to update the interation docs.
+        We check whether:
+
+        - There's an integration diff. In case when we can't pull an integration YAML from `origin/master`,
+        we won't have an integration diff instance.
+        - There's an integration README from `origin/master`.
+        If it's not new, we retrieve the integration YAML from `demisto/content` `origin/master``,
+        and regenerate the changed sections.
+        """
+
+        can_update = False
+        try:
+
+            if not self.integration_diff:
+                msg = "Unable to update docs because the integration YAML doesn't exist in remote."
+                logger.error(msg)
+                self.update_errors.append(msg)
+            elif not self.old_readme_path:
+                msg = "Unable to update docs because integration README doesn't exist in remote."
+                logger.error(msg)
+                self.update_errors.append(msg)
+            else:
+                can_update = True
+        except (TypeError, FileNotFoundError) as err:
+            msg = f"Could not create an compare integration '{self.new_yaml_path}' with origin ': {str(err)}"
+            logger.error(msg)
+            self.update_errors.append(msg)
+        finally:
+            return can_update
+
+    def _update_conf_section(self):
+        """
+        Helper function that replaces an integration configuration section in the
+        README.
+        """
+
+        try:
+            new_configuration_section = generate_setup_section(
+                self.integration_diff.new_yaml_data
+            )
+
+            doc_text_lines = self.output_doc.splitlines()
+
+            # We take the first and the second-to-last index of the old section
+            # and use the section range to replace it with the new section.
+            # Second-to-last index because the last element is an empty string
+            old_config_start_line = doc_text_lines.index(
+                CONFIGURATION_SECTION_STEPS.STEP_1.value
+            )
+            old_config_end_line = doc_text_lines.index(
+                CONFIGURATION_SECTION_STEPS.STEP_4.value
+            )
+
+            doc_text_lines[
+                old_config_start_line : old_config_end_line + 1
+            ] = new_configuration_section
+
+            self.output_doc = "\n".join(doc_text_lines)
+        except ValueError as e:
+            error = f"Unable to find configuration section line in README: {str(e)}"
+            self.update_errors.append(error)
+        except Exception as e:
+            error = f"Failed replacing the integration section: {e.__class__.__name__} {str(e)}"
+            self.update_errors.append(error)
+
+    def _update_commands_section(self):
+        """
+        Helper function that replaces an integration commands section in the
+        README.
+        """
+
+        for i, modified_command in enumerate(
+            self.integration_diff.get_modified_commands()
+        ):
+            try:
+                old_command_section, _ = generate_commands_section(
+                    self.integration_diff.old_yaml_data,
+                    {},
+                    {},
+                    modified_command,
+                )
+
+                (
+                    new_command_section,
+                    generate_command_section_errors,
+                ) = generate_commands_section(
+                    self.integration_diff.new_yaml_data,
+                    self.example_dict,
+                    self.command_permissions_dict,
+                    modified_command,
+                )
+
+                # UI contributions cannot generate human readable/example output
+                # of the command so there's no need to add certain error types
+                # to the list of errors
+                if generate_command_section_errors:
+                    for error in generate_command_section_errors:
+                        if (
+                            self.is_ui_contribution
+                            and "Did not get any example for" in error
+                        ):
+                            continue
+                        else:
+                            self.update_errors.extend(generate_command_section_errors)
+
+                doc_text_lines = self.output_doc.splitlines()
+
+                # We take the first and the second-to-last index of the old section
+                # and use the section range to replace it with the new section.
+                # Second-to-last index because the last element is an empty string
+                old_cmd_start_line = doc_text_lines.index(old_command_section[0])
+
+                # In cases when there are multiple identical context outputs
+                # in the second-to-last line, we need to find the relevant
+                # second-to-last line for the specific command we're replacing.
+                indices = [
+                    i
+                    for i, doc_line in enumerate(doc_text_lines)
+                    if doc_line == old_command_section[-2]
+                ]
+
+                if indices and len(indices) > 1:
+                    old_cmd_end_line = doc_text_lines.index(
+                        old_command_section[-2], indices[i]
+                    )
+                else:
+                    old_cmd_end_line = doc_text_lines.index(old_command_section[-2])
+
+                doc_text_lines[
+                    old_cmd_start_line : old_cmd_end_line + 1
+                ] = new_command_section
+
+                self.output_doc = "\n".join(doc_text_lines)
+            except (ValueError, IndexError) as e:
+                error = f"Unable to replace '{modified_command}' section in README: {str(e)}"
+                self.update_errors.append(error)
+
+    def _get_sections_to_update(self) -> Tuple[bool, List[str], List[str]]:
+
+        return (
+            self.integration_diff.is_configuration_different(),
+            self.integration_diff.get_modified_commands(),
+            self.integration_diff.get_added_commands(),
+        )
+
+    def _get_resource_path(self) -> str:
+        """
+        Helper function to resolve the resource path.
+        """
+
+    def _write_resource_to_tmp(self, resource_path: Path, content: str) -> Path:
+        """
+        Helper function to write
+        """
+
+        tmp_file = tempfile.NamedTemporaryFile(
+            "w", suffix=resource_path.name, delete=False
+        )
+        logger.debug(f"Writing {len(content)}B into temp file '{tmp_file.name}'...")
+        tmp_file.write(content)
+        logger.debug(f"Finished writing to temp file '{tmp_file.name}'")
+
+        return Path(tmp_file.name)
+
+    def update_docs(self) -> Tuple[str, List[str]]:
+        """
+        Helper function that updates the integration documentation and returns the
+        raw README text.
+        """
+
+        (
+            update_configuration,
+            modified_commands,
+            added_commands,
+        ) = self._get_sections_to_update()
+
+        # In case the configuration section has changed
+        # we want to replace the section with the new
+        if update_configuration:
+            logger.info("\t\u2699 Integration configuration has changed, updating...")
+
+            self._update_conf_section()
+
+        # Handle changed command arguments
+        # We iterate over every modified command and subtitute
+        # the section with the new one
+        if modified_commands:
+            logger.info(
+                f"\t\u2699 Integration commands {','.join(modified_commands)} have changed, replacing the old section with the new one..."
+            )
+
+            self._update_commands_section()
+
+        # Handle new commands
+        # we append them to the README.
+        if added_commands:
+            self.output_doc += "\n"
+
+            for cmd in added_commands:
+                logger.info(f"\t\u2699 Generating docs for command `{cmd}`...")
+                (
+                    command_section,
+                    generate_command_section_errors,
+                ) = generate_commands_section(
+                    yaml_data=self.integration_diff.new_yaml_data,
+                    example_dict=self.example_dict,
+                    command_permissions_dict=self.command_permissions_dict,
+                    command=cmd,
+                )
+
+                if generate_command_section_errors:
+                    logger.error(
+                        f"\t\u26A0 Generating section for command '{cmd}' resulted in {len(generate_command_section_errors)} error(s)"
+                    )
+                    self.update_errors.extend(generate_command_section_errors)
+
+                command_section_str = "\n".join(command_section)
+                self.output_doc, append_cmd_errs = append_or_replace_command_in_docs(
+                    self.output_doc, command_section_str, cmd
+                )
+                self.output_doc += "\n"
+
+                if append_cmd_errs:
+                    logger.error(
+                        f"\t\u26A0 Appending section for command '{cmd}' to README.md resulted in {len(append_cmd_errs)} error(s)"
+                    )
+                    self.update_errors.extend(append_cmd_errs)
+                else:
+                    logger.info(
+                        f"\t\u2713 New command `{cmd}` section added to the README.md."
+                    )
+
+        return self.output_doc, self.update_errors
 
 
 def append_or_replace_command_in_docs(
@@ -79,7 +456,11 @@ def generate_integration_doc(
     skip_breaking_changes: bool = False,
     is_contribution: bool = False,
 ):
-    """Generate integration documentation.
+    """
+    Generate integration documentation.
+    If the `command` argument is supplied, a new command section is appended to the existing README.
+    If the integration exists in version control, an update is run on the modified sections of the existing README.
+    Otherwise, create a new README.
 
     Args:
         input_path: path to the yaml integration
@@ -106,7 +487,7 @@ def generate_integration_doc(
             example_dict, build_errors = build_example_dict(command_examples, insecure)
             errors.extend(build_errors)
         else:
-            errors.append(f"Command examples was not found: {examples}.")
+            errors.append("Command examples were not supplied.")
 
         if permissions == "per-command":
             command_permissions_dict: Any = {}
@@ -122,6 +503,11 @@ def generate_integration_doc(
                 )
         else:  # permissions in ['none', 'general']
             command_permissions_dict = None
+
+        update_mgr = IntegrationDocUpdateManager(
+            input_path, is_contribution, example_dict, command_permissions_dict
+        )
+
         if command:
             specific_commands = command.split(",")
             readme_path = os.path.join(output, "README.md")
@@ -136,10 +522,26 @@ def generate_integration_doc(
                     command=specific_command,
                 )
                 command_section_str = "\n".join(command_section)
-                doc_text, err = append_or_replace_command_in_docs(
+                doc_text, append_errors = append_or_replace_command_in_docs(
                     doc_text, command_section_str, specific_command
                 )
-                errors.extend(err)
+
+                if command_errors:
+                    errors.extend(command_errors)
+                if append_errors:
+                    errors.extend(append_errors)
+
+        # We check whether the docs can be updated.
+        # We can update the docs when we have the following
+        # in source control:
+        # - An integration YAML.
+        # - An integration README.
+        elif update_mgr.can_update_docs():
+            logger.info("Found existing integration, updating documentation...")
+            doc_text, update_errors = update_mgr.update_docs()
+
+            if update_errors:
+                errors.extend(update_errors)
         else:
             docs: list = []
             docs.extend(add_lines(yml_data.get("description")))
@@ -177,7 +579,10 @@ def generate_integration_doc(
             # Setup integration on Demisto
             docs.extend(generate_setup_section(yml_data))
             # Commands
-            command_section, command_errors = generate_commands_section(
+            (
+                command_section,
+                generate_command_section_errors,
+            ) = generate_commands_section(
                 yml_data, example_dict, command_permissions_dict, command=command
             )
             docs.extend(command_section)
@@ -192,7 +597,7 @@ def generate_integration_doc(
                     )
                 )
 
-            errors.extend(command_errors)
+            errors.extend(generate_command_section_errors)
             # Known limitations
             if limitations:
                 docs.extend(generate_numbered_section("Known Limitations", limitations))
@@ -201,12 +606,12 @@ def generate_integration_doc(
             if not doc_text.endswith("\n"):
                 doc_text += "\n"
 
-        save_output(output, "README.md", doc_text)
+        save_output(output, INTEGRATIONS_README_FILE_NAME, doc_text)
 
         if errors:
-            logger.info("[yellow]Possible Errors:[/yellow]")
+            logger.info(f"[yellow]Found {len(errors)} possible errors:[/yellow]")
             for error in errors:
-                logger.info(f"[yellow]{error}[/yellow]")
+                logger.info(f"\t- {error}")
 
     except Exception as ex:
         logger.info(f"[red]Error: {str(ex)}[/red]")
@@ -222,13 +627,28 @@ with (Path(__file__).parent / "default_additional_information.json").open() as f
     )
 
 
-def generate_setup_section(yaml_data: dict):
+def generate_setup_section(yaml_data: dict) -> List[str]:
+
+    """
+    Generate the configuration section of the README.
+    This section includes:
+    - The steps to set up the integration instance.
+    - The configuration options table.
+
+    Arguments:
+    - `yaml_data` (``dict``): The integration YAML in dictionary format.
+
+    Returns:
+    - `List[str]` of the section lines.
+
+    """
+
     default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
 
     section = [
-        "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-        "2. Search for {}.".format(yaml_data["display"]),
-        "3. Click **Add instance** to create and configure a new integration instance.",
+        CONFIGURATION_SECTION_STEPS.STEP_1.value,
+        CONFIGURATION_SECTION_STEPS.STEP_2_TEMPLATE.value.format(yaml_data["display"]),
+        CONFIGURATION_SECTION_STEPS.STEP_3.value,
     ]
     access_data: List[Dict] = []
 
@@ -261,7 +681,7 @@ def generate_setup_section(yaml_data: dict):
             access_data, "", horizontal_rule=False, numbered_section=True
         )
     )
-    section.append("4. Click **Test** to validate the URLs, token, and connection.")
+    section.append(CONFIGURATION_SECTION_STEPS.STEP_4.value)
     section.append("")
 
     return section
@@ -397,7 +817,7 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
 def generate_commands_section(
     yaml_data: dict,
     example_dict: dict,
-    command_permissions_dict: dict,
+    command_permissions_dict: Optional[dict],
     command: Optional[str] = None,
 ) -> Tuple[list, list]:
     """Generate the commands section the the README.md file.
@@ -512,7 +932,7 @@ def generate_single_command_section(
                         arg["name"], cmd["name"]
                     )
                 )
-            if not description.endswith("."):
+            if description and not description.endswith("."):
                 description = f"{description}."
 
             argument_description = (
@@ -715,7 +1135,7 @@ def generate_command_example(cmd_from_yaml, cmd_example=None):
     errors = []
     if not cmd_example:
         errors.append(
-            f'did not get any example for {cmd_from_yaml["name"]}. please add it manually.'
+            f'Did not get any example for {cmd_from_yaml["name"]}. Please add it manually.'
         )
 
     else:

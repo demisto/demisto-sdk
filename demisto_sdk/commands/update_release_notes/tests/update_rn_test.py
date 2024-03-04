@@ -402,8 +402,7 @@ class TestRNUpdate:
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    @mock.patch.object(UpdateRN, "get_master_version")
-    def test_build_rn_template_when_only_pack_metadata_changed(self, mock_master):
+    def test_build_rn_template_when_only_pack_metadata_changed(self, mocker):
         """
         Given:
             - an empty dict of changed items
@@ -412,10 +411,13 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Integrations\n\n##### HelloWorld\n\n- Documentation and metadata improvements.\n"
+        expected_result = "## HelloWorld\n\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        mock_master.return_value = "1.0.0"
+        mocker.patch.object(
+            UpdateRN, "get_pack_metadata", return_value={"name": "HelloWorld"}
+        )
+        mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
         update_rn = UpdateRN(
             pack_path="Packs/HelloWorld",
             update_type="minor",
@@ -425,7 +427,7 @@ class TestRNUpdate:
         )
         changed_items = {}
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert release_notes == expected_result
 
     @mock.patch.object(UpdateRN, "get_master_version")
     def test_only_docs_changed(self, mock_master):
@@ -1105,10 +1107,14 @@ class TestRNUpdate:
         from demisto_sdk.commands.update_release_notes.update_rn_manager import (
             UpdateReleaseNotesManager,
         )
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
+        from demisto_sdk.commands.validate.old_validate_manager import (
+            OldValidateManager,
+        )
 
         manager = UpdateReleaseNotesManager(user_input="BitcoinAbuse")
-        validate_manager: ValidateManager = ValidateManager(check_is_unskipped=False)
+        validate_manager: OldValidateManager = OldValidateManager(
+            check_is_unskipped=False
+        )
         filtered_set, old_format_files, _ = manager.filter_to_relevant_files(
             {".gitlab/ci/.gitlab-ci.yml"}, validate_manager
         )

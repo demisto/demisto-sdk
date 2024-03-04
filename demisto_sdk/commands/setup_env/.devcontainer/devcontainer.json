@@ -1,0 +1,32 @@
+{
+	"name": "XSOAR Integration",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"IMAGENAME": ""
+		}
+	},
+	"remoteEnv": {
+		"MYPYPATH": "/workspaces/content/Packs/Base/Scripts/CommonServerPython:${containerEnv:MYPYPATH}",
+		"PYTHONPATH": "/workspaces/content/Packs/Base/Scripts/CommonServerPython:${containerEnv:PYTHONPATH}"
+	},
+	"containerUser": "demisto",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-vscode.PowerShell",
+				"cortexxsoarext.xsoar",
+				"eamodio.gitlens",
+				"GitHub.vscode-pull-request-github",
+				"njpwerner.autodocstring",
+				"streetsidesoftware.code-spell-checker",
+				"littlefoxteam.vscode-python-test-adapter"
+			],
+			"settings": {
+				"git.openRepositoryInParentFolders": "always"
+			}
+		}
+	},
+	"onCreateCommand": "cp launch.json ../.vscode/launch.json && cp settings.json ../.vscode/settings.json"
+}

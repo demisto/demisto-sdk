@@ -24,19 +24,16 @@ class XDRCTemplate(JSONBased):
         ) if yaml_content else self.create_default_xdrc_template_yaml()
 
         self._tmp_path = self.xdrc_template_tmp_path
-        super().__init__(xdrc_template_dir_path, name, "")
-        self.write_json(
-            json_content
-        ) if json_content else self.create_default_xdrc_template_json()
+        super().__init__(xdrc_template_dir_path, name, "", json_content)
 
     def write_dict(self, yml: dict):
         yaml.dump(yml, self._tmp_path.open("w+"))
 
-    def create_default_xdrc_template_json(self):
+    def create_default(self):
         self.write_json(
             {
-                "content_global_id": self.name,
-                "name": self.name,
+                "content_global_id": self.id,
+                "name": self.id,
                 "os_type": "os_type_test",
                 "profile_type": "profile_type_test",
                 "from_xdr_version": "3.5.0",

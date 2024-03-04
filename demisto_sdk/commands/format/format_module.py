@@ -97,6 +97,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "xdrctemplate": BaseUpdateJSON,
     "xdrctemplateyml": BaseUpdateYML,
     "layoutrule": BaseUpdateJSON,
+    "assetsmodelingrule": BaseUpdateYML,
+    "assetsmodelingruleschema": BaseUpdateJSON,
 }
 
 UNFORMATTED_FILES = [
@@ -204,11 +206,18 @@ def format_manager(
             else None
         )
         if graph:
-            update_content_graph(
-                graph,
-                use_git=True,
-                output_path=graph.output_path,
-            )
+            try:
+                update_content_graph(
+                    graph,
+                    use_git=True,
+                    output_path=graph.output_path,
+                )
+            except Exception as e:
+                logger.warning(
+                    "Error updating content graph. Will not format using the graph."
+                )
+                logger.debug(f"Error encountered when updating content graph: {e}")
+                graph = False
         for file in files:
             file_path = str(Path(file))
             file_type = find_type(file_path, clear_cache=clear_cache)

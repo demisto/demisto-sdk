@@ -9,6 +9,7 @@ import dictdiffer
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     GENERAL_DEFAULT_FROMVERSION,
+    VALID_SENTENCE_SUFFIX,
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -20,7 +21,6 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_file_from_content_repo,
-    is_sentence_ends_with_bracket,
     is_string_ends_with_url,
     strip_description,
 )
@@ -33,7 +33,7 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
     VERSION_KEY,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
 
@@ -88,7 +88,7 @@ class BaseUpdate:
         self.interactive = interactive
         self.updated_ids: Dict = {}
         if not self.no_validate:
-            self.validate_manager = ValidateManager(
+            self.validate_manager = OldValidateManager(
                 silence_init_prints=True,
                 skip_conf_json=True,
                 skip_dependencies=True,
@@ -298,7 +298,7 @@ class BaseUpdate:
         else:
             user_answer = self.get_answer(
                 "Either no fromversion is specified in your file, "
-                "or it is lower than the minimal fromversion for this content type."
+                "or it is lower than the minimal fromversion for this content type. "
                 "Would you like to set it to the default? [Y/n]"
             )
         if not user_answer or user_answer.lower() in ["y", "yes"]:
@@ -395,7 +395,7 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        logger.info("Removing _dev and _copy suffixes from name, id and display tags")
+        logger.debug("Removing _dev and _copy suffixes from name, id and display tags")
         if self.data["name"]:
             self.data["name"] = (
                 self.data.get("name", "").replace("_copy", "").replace("_dev", "")
@@ -476,10 +476,8 @@ class BaseUpdate:
         def _add_period(value: Optional[str]) -> Optional[str]:
             if value and isinstance(value, str):
                 strip_value = strip_description(value)
-                if (
-                    not strip_value.endswith(".")
-                    and not is_string_ends_with_url(strip_value)
-                    and not is_sentence_ends_with_bracket(strip_value)
+                if not is_string_ends_with_url(strip_value) and not any(
+                    strip_value.endswith(suffix) for suffix in VALID_SENTENCE_SUFFIX
                 ):
                     return f"{strip_value}."
             return value

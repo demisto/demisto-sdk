@@ -1,6 +1,7 @@
 """Configuring tests for the content suite
 """
-import sys
+import shutil
+from pathlib import Path
 from typing import Generator
 from unittest import mock
 
@@ -9,6 +10,7 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
@@ -22,6 +24,11 @@ from TestSuite.yml import YAML
 def get_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
     tmp_dir = _mk_tmp(request, tmp_path_factory)
     return Repo(tmp_dir)
+
+
+def get_git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
+    tmp_dir = _mk_tmp(request, tmp_path_factory)
+    return Repo(tmp_dir, init_git=True)
 
 
 def get_pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack:
@@ -77,8 +84,39 @@ def integration(
 
 @pytest.fixture
 def repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
-    """Mocking tmp_path"""
+    """
+    Initializes a repo without git.
+    """
     return get_repo(request, tmp_path_factory)
+
+
+@pytest.fixture
+def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Generator:
+    """
+    Initializes a repo with graph required mocks.
+    """
+    import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
+    import demisto_sdk.commands.content_graph.objects.base_content as bc
+
+    repo = get_repo(request, tmp_path_factory)
+
+    bc.CONTENT_PATH = Path(repo.path)
+    neo4j_path = bc.CONTENT_PATH.parent.parent / "neo4j"
+
+    mock.patch.object(ContentGraphInterface, "repo_path", bc.CONTENT_PATH)
+    mock.patch.object(neo4j_service, "REPO_PATH", neo4j_path)
+
+    yield repo
+    if (neo4j_path / "neo4j-data/data").exists():
+        shutil.rmtree(neo4j_path / "neo4j-data/data")
+
+
+@pytest.fixture
+def git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory):
+    """
+    Initializes a repo with git.
+    """
+    return get_git_repo(request, tmp_path_factory)
 
 
 @pytest.fixture(scope="module")
@@ -113,23 +151,6 @@ def malformed_incident_field(pack) -> JSONBased:
     incident_field = pack.create_incident_field("malformed")
     incident_field.write_as_text("{\n '1': '1'")
     return incident_field
-
-
-@pytest.fixture(scope="class")
-def are_mock_calls_supported_in_python_version():
-    """
-    Validates whether the mock calls feature is supported by the python version running.
-    mock calls feature is supported only in python 3.8+.
-    Skip the tests using the mock calls in case the python version < 3.8
-
-    secho_mocker = mocker.patch.object(click, 'secho')
-    secho_mocker.mock_calls (not supported in python < 3.8)
-    """
-    python_version = sys.version_info
-    if python_version.major == 2 or (
-        python_version.major == 3 and python_version.minor < 8
-    ):
-        pytest.skip('The current mock "calls" is supported only in python 3.8+')
 
 
 @pytest.fixture(scope="session", autouse=True)

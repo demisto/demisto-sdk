@@ -5,11 +5,11 @@ mapping:
   incidentSamples:
     type: seq
     sequence:
-      - type: str
+    - type: str
   indicatorSamples:
     type: seq
     sequence:
-      - type: str
+    - type: str
   propagationLabels:
     type: any
   isDefault:
@@ -18,38 +18,38 @@ mapping:
     type: any
   id:
     type: str
-    required: True
+    required: true
   version:
     type: number
-    required: True
+    required: true
   fromVersion:
     type: str
   toVersion:
     type: str
   name:
     type: str
-    required: True
+    required: true
   type:
     type: str
-    required: True
+    required: true
   description:
     type: str
-    required: True
+    required: true
   modified:
     type: str
   defaultIncidentType:
     type: str
   unclassifiedCases:
     type: map
-    allowempty: True
+    allowempty: true
   transformer:
     type: map
-    required: True
-    allowempty: True
+    required: true
+    allowempty: true
   keyTypeMap:
     type: map
-    required: True
-    allowempty: True
+    required: true
+    allowempty: true
   custom:
     type: bool
   definitionId:
@@ -57,5 +57,25 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem' ]
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str

@@ -6,9 +6,9 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     CONTENT_PRIVATE_ITEMS,
-    SERVER_CONTENT_ITEMS,
     ContentType,
     RelationshipType,
+    get_server_content_items,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
@@ -121,7 +121,7 @@ def return_preserved_relationships(
     query = f"""// Returns the preserved relationships
 UNWIND $rels_data AS rel_data
 MATCH (s) WHERE elementId(s) = rel_data.source_id AND s.object_id = rel_data.source.object_id AND s.content_type = rel_data.source.content_type
-OPTIONAL MATCH (t:{ContentType.BASE_CONTENT}{{
+OPTIONAL MATCH (t:{ContentType.BASE_NODE}{{
     object_id: rel_data.target.object_id,
     content_type: rel_data.target.content_type
 }})
@@ -146,7 +146,7 @@ def remove_nodes(tx: Transaction, content_type_to_identifiers: dict) -> None:
         if content_type in [ContentType.COMMAND, ContentType.SCRIPT]:
             label = ContentType.COMMAND_OR_SCRIPT
         else:
-            label = ContentType.BASE_CONTENT
+            label = ContentType.BASE_NODE
 
         query = REMOVE_NODES_BY_TYPE.format(
             label=label,
@@ -157,7 +157,7 @@ def remove_nodes(tx: Transaction, content_type_to_identifiers: dict) -> None:
 
 
 def remove_server_nodes(tx: Transaction) -> None:
-    remove_nodes(tx, SERVER_CONTENT_ITEMS)
+    remove_nodes(tx, get_server_content_items())
 
 
 def remove_content_private_nodes(tx: Transaction) -> None:
@@ -182,7 +182,7 @@ def create_nodes_by_type(
 def _match(
     tx: Transaction,
     marketplace: MarketplaceVersions = None,
-    content_type: ContentType = ContentType.BASE_CONTENT,
+    content_type: ContentType = ContentType.BASE_NODE,
     ids_list: Optional[Iterable[int]] = None,
     **properties,
 ) -> List[graph.Node]:

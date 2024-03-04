@@ -12,6 +12,7 @@ import requests
 import typer
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from junitparser.junitparser import Result
+from packaging.version import Version
 from tabulate import tabulate
 from tenacity import (
     Retrying,
@@ -91,9 +92,8 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
     data = [(key, str(val), str(received.get(key))) for key, val in expected.items()]
     return tabulate(
         data,
-        tablefmt="fancy_grid",
+        tablefmt="pretty",
         headers=["Model Field", "Expected Value", "Received Value"],
-        maxcolwidths=[60, 40, 40],
     )
 
 
@@ -208,7 +208,7 @@ def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying
     retry_params: Dict[str, Any] = {
         "reraise": True,
         "before_sleep": before_sleep_log(logger, logging.DEBUG),
-        "retry": retry_if_exception_type(requests.exceptions.HTTPError),
+        "retry": retry_if_exception_type(requests.exceptions.RequestException),
         "stop": stop_after_attempt(retry_attempts),
         "wait": wait_fixed(sleep_interval),
     }
@@ -221,7 +221,7 @@ def xsiam_execute_query(
     """Execute an XQL query and return the results.
     Wrapper for XsiamApiClient.execute_query() with retry logic.
     """
-    execution_id = xsiam_client.start_xql_query(query, print_req_error)
+    execution_id = xsiam_client.start_xql_query(query)
     return xsiam_client.get_xql_query_result(execution_id)
 
 
@@ -461,7 +461,7 @@ def validate_expected_values(
         validate_expected_values_test_case_system_out = [query_info]
         try:
             results = retrying_caller(xsiam_execute_query, xsiam_client, query)
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.RequestException:
             logger.error(
                 f"[red]{XQL_QUERY_ERROR_EXPLANATION}[/red]",
                 extra={"markup": True},
@@ -594,21 +594,22 @@ def validate_schema_aligned_with_test_data(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     retrying_caller: Retrying,
-    test_data: TestData,
+    dataset: str,
     init_sleep_time: int = 30,
+    print_errors: bool = True,
 ) -> TestCase:
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         retrying_caller (tenacity.Retrying): The retrying caller object.
-        test_data (init_test_data.TestData): The data parsed from the test data file.
+        dataset (str): The data set name.
         init_sleep_time (int, optional): The number of seconds to wait for dataset installation. Defaults to 30.
+        print_errors (bool): Whether to print errors.
     Returns:
         TestCase: Test case for checking if the dataset exists in the tenant.
     """
     process_failed = False
-    dataset_set = {data.dataset for data in test_data.data}
     dataset_set_test_case = TestCase(
         "Check if dataset exists in tenant", classname="Check dataset exists"
     )
@@ -618,49 +619,50 @@ def check_dataset_exists(
         f"Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly."
     )
     sleep(init_sleep_time)
-    for dataset in dataset_set:
-        start_time = datetime.now(tz=pytz.UTC)
-        results_exist = False
-        dataset_exist = False
-        logger.info(
-            f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
-            extra={"markup": True},
-        )
-        query = f"config timeframe = 10y | dataset = {dataset}"
-        try:
-            results = retrying_caller(xsiam_execute_query, xsiam_client, query)
+    start_time = datetime.now(tz=pytz.UTC)
+    results_exist = False
+    dataset_exist = False
+    logger.info(
+        f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
+        extra={"markup": True},
+    )
+    query = f"config timeframe = 10y | dataset = {dataset}"
+    try:
+        results = retrying_caller(xsiam_execute_query, xsiam_client, query)
 
-            dataset_exist = True
-            if results:
-                logger.info(
-                    f"[green]Dataset {dataset} exists[/green]",
-                    extra={"markup": True},
-                )
-                results_exist = True
-        except requests.exceptions.HTTPError:
-            results = []
-
-        # There are no results from the dataset, but it exists.
-        if not results:
-            err = (
-                f"Dataset {dataset} exists but no results were returned. This could mean that your testdata "
-                "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
-                "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
-                "meets the criteria for that rule."
+        dataset_exist = True
+        if results:
+            logger.info(
+                f"[green]Dataset {dataset} exists[/green]",
+                extra={"markup": True},
             )
-            test_case_results.append(Error(err))
+            results_exist = True
+    except requests.exceptions.RequestException:
+        results = []
+
+    # There are no results from the dataset, but it exists.
+    if not results:
+        err = (
+            f"Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+            "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+            "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+            "meets the criteria for that rule."
+        )
+        test_case_results.append(Error(err))
+        if print_errors:
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
-        if not dataset_exist:
-            err = f"[red]Dataset {dataset} does not exist[/red]"
-            test_case_results.append(Error(err))
+    if not dataset_exist:
+        err = f"[red]Dataset {dataset} does not exist[/red]"
+        test_case_results.append(Error(err))
+        if print_errors:
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
 
-        duration = datetime.now(tz=pytz.UTC) - start_time
-        logger.info(
-            f"Processing Dataset {dataset} finished after {duration.total_seconds():.2f} seconds"
-        )
-        # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
-        process_failed |= not (dataset_exist and results_exist)
+    duration = datetime.now(tz=pytz.UTC) - start_time
+    logger.info(
+        f"Processing Dataset {dataset} finished after {duration.total_seconds():.2f} seconds"
+    )
+    # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
+    process_failed |= not (dataset_exist and results_exist)
 
     if test_case_results:
         dataset_set_test_case.result += test_case_results
@@ -708,7 +710,7 @@ def push_test_data_to_tenant(
         )
         try:
             retrying_caller(xsiam_push_to_dataset, xsiam_client, events_test_data, rule)
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.RequestException:
             system_err = (
                 f"Failed pushing test data to tenant for dataset {rule.dataset}"
             )
@@ -723,7 +725,7 @@ def push_test_data_to_tenant(
         push_test_data_test_case.system_err = "\n".join(system_errors)
         push_test_data_test_case.result += [Failure(FAILURE_TO_PUSH_EXPLANATION)]
     else:
-        system_out = f"Test data pushed successfully for Modeling rule: {get_relative_path_to_content(mr.path)}"
+        system_out = f"Test data pushed successfully for Modeling rule:{get_relative_path_to_content(mr.path)}"
         push_test_data_test_case.system_out = system_out
         logger.info(f"[green]{system_out}[/green]", extra={"markup": True})
     push_test_data_test_case.time = duration_since_start_time(
@@ -829,17 +831,127 @@ def is_test_data_exists_on_server(
     return missing_event_data, missing_expected_values_data
 
 
+def verify_event_id_does_not_exist_on_tenant(
+    xsiam_client: XsiamApiClient,
+    modeling_rule: ModelingRule,
+    test_data: TestData,
+    retrying_caller: Retrying,
+) -> List[TestCase]:
+    """
+    Verify that the event ID does not exist on the tenant.
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        modeling_rule (ModelingRule): Modeling rule object parsed from the modeling rule file.
+        test_data (init_test_data.TestData): Test data object parsed from the test data file.
+        retrying_caller (Retrying): The retrying caller object.
+    """
+    logger.info(
+        "[cyan]Verifying that the event IDs does not exist on the tenant[/cyan]",
+        extra={"markup": True},
+    )
+    success_msg = "[green]The event IDs does not exists on the tenant[/green]"
+    error_msg = "The event id already exists in the tenant"
+    validate_expected_values_test_cases = []
+
+    for rule in modeling_rule.rules:
+        validate_event_id_does_not_exist_on_tenant_test_case = TestCase(
+            f"Validate event_id_does_not_exist_on_tenant {get_relative_path_to_content(modeling_rule.path)} dataset:{rule.dataset} "
+            f"vendor:{rule.vendor} product:{rule.product}",
+            classname="Validate event id does not exist query",
+        )
+        test_data_event_ids = [
+            f'"{d.test_data_event_id}"'
+            for d in test_data.data
+            if d.dataset == rule.dataset
+        ]
+        td_event_ids = ", ".join(test_data_event_ids)
+        query = f"config timeframe = 10y | datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids})"
+
+        try:
+            result = retrying_caller(xsiam_execute_query, xsiam_client, query)
+        except requests.exceptions.HTTPError:
+            logger.info(
+                success_msg,
+                extra={"markup": True},
+            )
+        else:
+            if not result:
+                logger.info(
+                    success_msg,
+                    extra={"markup": True},
+                )
+            else:
+                logger.error(
+                    error_msg,
+                    extra={"markup": True},
+                )
+                validate_event_id_does_not_exist_on_tenant_test_case.result += [
+                    Error(error_msg)
+                ]
+        validate_expected_values_test_cases.append(
+            validate_event_id_does_not_exist_on_tenant_test_case
+        )
+
+    return validate_expected_values_test_cases
+
+
+def delete_dataset(
+    xsiam_client: XsiamApiClient,
+    dataset_name: str,
+):
+    logger.info(
+        f"[cyan]Deleting existing {dataset_name} dataset[/cyan]",
+        extra={"markup": True},
+    )
+    xsiam_client.delete_dataset(dataset_name)
+    logger.info(
+        f"[green]Dataset {dataset_name} deleted successfully[/green]",
+        extra={"markup": True},
+    )
+
+
+def delete_existing_dataset_flow(
+    xsiam_client: XsiamApiClient, test_data: TestData, retrying_caller: Retrying
+) -> None:
+    """
+    Delete existing dataset if it exists in the tenant.
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        test_data (TestData): Test data object parsed from the test data file.
+        retrying_caller (Retrying): The retrying caller object.
+    """
+    dataset_to_check = list(set([data.dataset for data in test_data.data]))
+    for dataset in dataset_to_check:
+        dataset_set_test_case = check_dataset_exists(
+            xsiam_client, retrying_caller, dataset, print_errors=False
+        )
+        if dataset_set_test_case.is_passed:
+            delete_dataset(xsiam_client, dataset)
+        else:
+            logger.info("[cyan]Dataset does not exists on tenant[/cyan]")
+
+
+def verify_data_sets_exists(xsiam_client, retrying_caller, test_data):
+    datasets_test_case_ls = []
+    for dataset in test_data.data:
+        dataset_name = dataset.dataset
+        dataset_test_case = check_dataset_exists(
+            xsiam_client, retrying_caller, dataset_name
+        )
+        datasets_test_case_ls.append(dataset_test_case)
+    return datasets_test_case_ls
+
+
 def validate_modeling_rule(
     modeling_rule_directory: Path,
     xsiam_url: str,
     retrying_caller: Retrying,
-    api_key: str,
-    auth_id: str,
-    xsiam_token: str,
-    collector_token: str,
     push: bool,
     interactive: bool,
     ctx: typer.Context,
+    delete_existing_dataset: bool,
+    xsiam_client: XsiamApiClient,
+    tenant_demisto_version: Version,
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Validate a modeling rule.
 
@@ -847,13 +959,12 @@ def validate_modeling_rule(
         modeling_rule_directory (Path): Path to the modeling rule directory.
         retrying_caller (tenacity.Retrying): The retrying caller object.
         xsiam_url (str): URL of the xsiam tenant.
-        api_key (str): xsiam API key.
-        auth_id (str): xsiam auth ID.
-        xsiam_token (str): xsiam token.
-        collector_token: collector token.
         push (bool): Whether to push test event data to the tenant.
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
+        delete_existing_dataset (bool): Whether to delete the existing dataset in the tenant.
+        xsiam_client (XsiamApiClient): The XSIAM client used to do API calls to the tenant.
+        tenant_demisto_version (Version): The demisto version of the XSIAM tenant.
     """
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
@@ -896,11 +1007,28 @@ def validate_modeling_rule(
         modeling_rule_test_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
     if modeling_rule.testdata_path:
         logger.info(
-            f"[cyan]Test data file found at {modeling_rule.testdata_path}\n"
+            f"[cyan]Test data file found at {get_relative_path_to_content(modeling_rule.testdata_path)}\n"
             f"Checking that event data was added to the test data file[/cyan]",
             extra={"markup": True},
         )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
+        modeling_rule_is_compatible = validate_modeling_rule_version_against_tenant(
+            to_version=modeling_rule.to_version,
+            from_version=modeling_rule.from_version,
+            tenant_demisto_version=tenant_demisto_version,
+        )
+        if not modeling_rule_is_compatible:
+            # Modeling rule version is not compatible with the demisto version of the tenant, skipping
+            skipped = f"XSIAM Tenant's Demisto version doesn't match Modeling Rule {modeling_rule} version, skipping"
+            logger.warning(f"[yellow]{skipped}[/yellow]", extra={"markup": True})
+            test_case = TestCase(
+                "Modeling Rule not compatible with XSIAM tenant's demisto version",
+                classname=f"Modeling Rule {modeling_rule_file_name}",
+            )
+            test_case.result += [Skipped(skipped)]
+            modeling_rule_test_suite.add_testcase(test_case)
+            # Return True since we don't want to fail the command
+            return True, modeling_rule_test_suite
         if (
             Validations.TEST_DATA_CONFIG_IGNORE.value
             not in test_data.ignored_validations
@@ -912,16 +1040,6 @@ def validate_modeling_rule(
             missing_event_data, _ = is_test_data_exists_on_server(
                 modeling_rule.testdata_path
             )
-
-            # initialize xsiam client
-            xsiam_client_cfg = XsiamApiClientConfig(
-                base_url=xsiam_url,  # type: ignore[arg-type]
-                api_key=api_key,  # type: ignore[arg-type]
-                auth_id=auth_id,  # type: ignore[arg-type]
-                token=xsiam_token,  # type: ignore[arg-type]
-                collector_token=collector_token,  # type: ignore[arg-type]
-            )
-            xsiam_client = XsiamApiClient(xsiam_client_cfg)
             if not verify_pack_exists_on_tenant(
                 xsiam_client, retrying_caller, modeling_rule, interactive
             ):
@@ -933,14 +1051,15 @@ def validate_modeling_rule(
                     test_case,
                     modeling_rule_test_suite,
                 )
-
+            if delete_existing_dataset:
+                delete_existing_dataset_flow(xsiam_client, test_data, retrying_caller)
             schema_test_case = TestCase(
                 "Validate Schema",
                 classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
             )
             if schema_path := modeling_rule.schema_path:
                 try:
-                    schema = get_file(modeling_rule.schema_path)
+                    schema = get_file(schema_path)
                 except json.JSONDecodeError as ex:
                     err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
                     logger.error(
@@ -988,6 +1107,10 @@ def validate_modeling_rule(
                 modeling_rule_test_suite.add_testcase(schema_test_case)
 
             if push:
+                event_id_exists_test_case = verify_event_id_does_not_exist_on_tenant(
+                    xsiam_client, modeling_rule, test_data, retrying_caller
+                )
+                modeling_rule_test_suite.add_testcases(event_id_exists_test_case)
                 if missing_event_data:
                     return handle_missing_event_data_in_modeling_rule(
                         missing_event_data,
@@ -1001,13 +1124,10 @@ def validate_modeling_rule(
                 modeling_rule_test_suite.add_testcase(push_test_data_test_case)
                 if not push_test_data_test_case.is_passed:
                     return False, modeling_rule_test_suite
-
-                dataset_set_test_case = check_dataset_exists(
+                datasets_test_case = verify_data_sets_exists(
                     xsiam_client, retrying_caller, test_data
                 )
-                modeling_rule_test_suite.add_testcase(dataset_set_test_case)
-                if not dataset_set_test_case.is_passed:
-                    return False, modeling_rule_test_suite
+                modeling_rule_test_suite.add_testcases(datasets_test_case)
             else:
                 logger.info(
                     '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
@@ -1109,12 +1229,41 @@ def validate_modeling_rule(
                     extra={"markup": True},
                 )
         else:
+            err = (
+                f"Please create a test data file for {get_relative_path_to_content(modeling_rule_directory)} "
+                f"and then rerun\n{executed_command}"
+            )
             logger.error(
-                f"[red]Please create a test data file for "
-                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
+                f"[red]{err}[/red]",
                 extra={"markup": True},
             )
+            test_data_test_case = TestCase(
+                "Test data file does not exist",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+            )
+            test_data_test_case.result += [Error(err)]
+            modeling_rule_test_suite.add_testcase(test_data_test_case)
+            return False, modeling_rule_test_suite
         return False, None
+
+
+def validate_modeling_rule_version_against_tenant(
+    to_version: Version, from_version: Version, tenant_demisto_version: Version
+) -> bool:
+    """Checks if the version of the modeling rule is compatible with the XSIAM tenant's demisto version.
+    Compatibility is checked by: from_version <= tenant_xsiam_version <= to_version
+
+    Args:
+        to_version (Version): The to version of the modeling rule
+        from_version (Version): The from version of the modeling rule
+        tenant_demisto_version (Version): The demisto version of the XSIAM tenant
+
+    Returns:
+        bool: True if the version of the modeling rule is compatible, else False
+    """
+    return (
+        tenant_demisto_version >= from_version and tenant_demisto_version <= to_version
+    )
 
 
 def handle_missing_event_data_in_modeling_rule(
@@ -1308,6 +1457,12 @@ def test_modeling_rule(
         show_default=True,
         help="The number of times to retry the request against the server.",
     ),
+    delete_existing_dataset: bool = typer.Option(
+        False,
+        "--delete_existing_dataset",
+        "-dd",
+        help="Deletion of the existing dataset from the tenant. Default: False.",
+    ),
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
@@ -1320,11 +1475,11 @@ def test_modeling_rule(
         "--file-log-threshold",
         help="Minimum logging threshold for the file logger.",
     ),
-    log_file_path: str = typer.Option(
-        "demisto_sdk_debug.log",
+    log_file_path: Optional[str] = typer.Option(
+        None,
         "-lp",
         "--log-file-path",
-        help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+        help="Path to save log files onto.",
     ),
 ):
     """
@@ -1353,6 +1508,16 @@ def test_modeling_rule(
     errors = False
     xml = JUnitXml()
     start_time = datetime.now(timezone.utc)
+    # initialize xsiam client
+    xsiam_client_cfg = XsiamApiClientConfig(
+        base_url=xsiam_url,  # type: ignore[arg-type]
+        api_key=api_key,  # type: ignore[arg-type]
+        auth_id=auth_id,  # type: ignore[arg-type]
+        token=xsiam_token,  # type: ignore[arg-type]
+        collector_token=collector_token,  # type: ignore[arg-type]
+    )
+    xsiam_client = XsiamApiClient(xsiam_client_cfg)
+    tenant_demisto_version: Version = xsiam_client.get_demisto_version()
     for i, modeling_rule_directory in enumerate(inputs, start=1):
         logger.info(
             f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
@@ -1363,13 +1528,12 @@ def test_modeling_rule(
             # can ignore the types since if they are not set to str values an error occurs
             xsiam_url,  # type: ignore[arg-type]
             retrying_caller,
-            api_key,  # type: ignore[arg-type]
-            auth_id,  # type: ignore[arg-type]
-            xsiam_token,  # type: ignore[arg-type]
-            collector_token,  # type: ignore[arg-type]
             push,
             interactive,
             ctx,
+            delete_existing_dataset,
+            xsiam_client=xsiam_client,
+            tenant_demisto_version=tenant_demisto_version,
         )
         if success:
             logger.info(
@@ -1388,7 +1552,7 @@ def test_modeling_rule(
 
     if output_junit_file:
         logger.info(
-            f"[cyan]Writing JUnit XML to {output_junit_file}[/cyan]",
+            f"[cyan]Writing JUnit XML to {get_relative_path_to_content(output_junit_file)}[/cyan]",
             extra={"markup": True},
         )
         xml.write(output_junit_file.as_posix(), pretty=True)

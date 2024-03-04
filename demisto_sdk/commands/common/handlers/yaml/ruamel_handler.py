@@ -19,6 +19,7 @@ class RUAMEL_Handler(XSOAR_Handler):
         allow_duplicate_keys=False,
         width=5000,
         ensure_ascii=False,
+        indent=0,
     ):
         """
         typ: 'rt'/None -> RoundTripLoader/RoundTripDumper,  (default, preserves order, comments and formatting. slower then the rest))
@@ -32,6 +33,7 @@ class RUAMEL_Handler(XSOAR_Handler):
         self._allow_duplicate_keys = allow_duplicate_keys
         self._width = width
         self._allow_unicode = not ensure_ascii
+        self.indent = indent
 
     @property
     def yaml(self) -> YAML:
@@ -46,15 +48,16 @@ class RUAMEL_Handler(XSOAR_Handler):
     def load(self, stream):
         return self.yaml.load(stream)
 
-    def dump(self, data, stream, indent=0, sort_keys=False, **kwargs):
+    def dump(self, data, stream, indent=None, sort_keys=False, **kwargs):
         if sort_keys:
             data = order_dict(data)
         yaml = self.yaml
+        indent = indent if indent is not None else self.indent
         if indent:
             yaml.indent(sequence=indent)
         yaml.dump(data, stream)
 
-    def dumps(self, data, indent=0, sort_keys=False, **kwargs):
+    def dumps(self, data, indent=None, sort_keys=False, **kwargs):
         """
 
         This function is not recommended and not efficient!
@@ -64,7 +67,12 @@ class RUAMEL_Handler(XSOAR_Handler):
         to print a YAML, it is better to use `yaml.dump(data, sys.stdout)`
         """
         string_stream = StringIO()
-        self.dump(data, string_stream, sort_keys=sort_keys, indent=indent)
+        self.dump(
+            data,
+            string_stream,
+            sort_keys=sort_keys,
+            indent=indent if indent is not None else self.indent,
+        )
         output_str = string_stream.getvalue()
         string_stream.close()
         return output_str

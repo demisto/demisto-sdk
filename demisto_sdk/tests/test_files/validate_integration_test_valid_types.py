@@ -310,6 +310,32 @@ LAYOUTS_CONTAINER = {
     "version": -1
 }
 
+LIST = {
+    "allRead": True,
+    "allReadWrite": True,
+    "cacheVersn": 0,
+    "data": "p {\n  color: red;\n  text-align: center;\n}",
+    "definitionId": "",
+    "description": "",
+    "detached": False,
+    "fromServerVersion": "",
+    "id": "test_css",
+    "itemVersion": "",
+    "locked": False,
+    "name": "test_css",
+    "nameLocked": False,
+    "packID": "",
+    "packName": "",
+    "previousAllRead": True,
+    "previousAllReadWrite": True,
+    "system": False,
+    "tags": None,
+    "toServerVersion": "",
+    "truncated": False,
+    "type": "css",
+    "version": -1
+}
+
 REPORT = {
     "id": "report",
     "name": "report",

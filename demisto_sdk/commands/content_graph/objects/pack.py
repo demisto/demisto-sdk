@@ -2,7 +2,7 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -10,17 +10,25 @@ from packaging.version import Version, parse
 from pydantic import DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
+    AUTHOR_IMAGE_FILE_NAME,
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
+    PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_README_FILE_NAME,
+    PACKS_WHITELIST_FILE_NAME,
+    RELEASE_NOTES_DIR,
     ImagesFolderNames,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
+    get_file,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -113,15 +121,28 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
+    ignored_errors_dict: dict = Field({}, exclude=True)
+    pack_readme: str = Field("", exclude=True)
+    latest_rn_version: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+    pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
+
+    @classmethod
+    def from_orm(cls, obj) -> "Pack":
+        pack = super().from_orm(obj)
+        for content_item in pack.content_items:
+            content_item.pack = pack
+        return pack
 
     @validator("path", always=True)
-    def validate_path(cls, v: Path) -> Path:
+    def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
-        return CONTENT_PATH / v
+        if not CONTENT_PATH.name:
+            return CONTENT_PATH / v
+        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
 
     @property
     def is_private(self) -> bool:
@@ -132,12 +153,37 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.object_id
 
     @property
+    def ignored_errors(self) -> List[str]:
+        return self.get_ignored_errors(PACK_METADATA_FILENAME)
+
+    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+        return self.get_ignored_errors((Path(file_path)).name)
+
+    def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
+        try:
+            return (
+                list(
+                    self.ignored_errors_dict.get(  # type: ignore
+                        f"file:{path}", []
+                    ).items()
+                )[0][1].split(",")
+                or []
+            )
+        except:  # noqa: E722
+            logger.debug(f"Failed to extract ignored errors list from path {path}")
+            return []
+
+    @property
     def pack_name(self) -> str:
         return self.name
 
     @property
     def pack_version(self) -> Optional[Version]:
         return Version(self.current_version) if self.current_version else None
+
+    @property
+    def support_level(self):
+        return self.support
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -149,11 +195,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             List[RelationshipData]:
                 RelationshipData:
                     relationship_type: RelationshipType
-                    source: BaseContent
-                    target: BaseContent
+                    source: BaseNode
+                    target: BaseNode
 
                     # this is the attribute we're interested in when querying
-                    content_item: BaseContent
+                    content_item: BaseNode
 
                     # Whether the relationship between items is direct or not
                     is_direct: bool
@@ -334,7 +380,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
         destination_zip_dir: Optional[Path] = None,
-        zip: bool = False,
+        zip: bool = True,
         **kwargs,
     ):
         if destination_zip_dir is None:
@@ -495,3 +541,50 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
+
+    def save(self):
+        file_path = self.path / PACK_METADATA_FILENAME
+        data = get_file(file_path)
+        super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
+
+    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
+        related_content_files = super().get_related_content()
+        related_content_files.update(
+            {
+                RelatedFileType.PACK_IGNORE: {
+                    "path": [str(self.path / PACKS_PACK_IGNORE_FILE_NAME)],
+                    "git_status": None,
+                },
+                RelatedFileType.SECRETS_IGNORE: {
+                    "path": [str(self.path / PACKS_WHITELIST_FILE_NAME)],
+                    "git_status": None,
+                },
+                RelatedFileType.AUTHOR_IMAGE: {
+                    "path": [str(self.path / AUTHOR_IMAGE_FILE_NAME)],
+                    "git_status": None,
+                },
+                RelatedFileType.README: {
+                    "path": [str(self.path / PACKS_README_FILE_NAME)],
+                    "git_status": None,
+                },
+                RelatedFileType.RELEASE_NOTES: {
+                    "path": [
+                        str(
+                            self.path
+                            / RELEASE_NOTES_DIR
+                            / f"{self.latest_rn_version.replace('.', '_')}.md"
+                        )
+                    ],
+                    "git_status": None,
+                },
+            }
+        )
+        return related_content_files
+
+    @property
+    def readme(self) -> str:
+        return self.get_related_text_file(RelatedFileType.README)
+
+    @property
+    def author_image_path(self) -> Path:
+        return Path(self.related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0])

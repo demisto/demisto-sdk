@@ -11,16 +11,15 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
-    MODELING_RULE_ID_SUFFIX,
-    MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
-    PARSING_RULE_ID_SUFFIX,
-    PARSING_RULE_NAME_SUFFIX,
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    SUPPORT_LEVEL_HEADER,
+    XSOAR_CONTEXT_AND_OUTPUTS_URL,
+    XSOAR_SUPPORT,
     FileType,
     MarketplaceVersions,
 )
@@ -478,6 +477,10 @@ ERROR_CODE: Dict = {
         "code": "IM111",
         "related_field": "image",
     },
+    "svg_image_not_valid": {
+        "code": "IM112",
+        "related_field": "image",
+    },
     # IN - Integrations
     "wrong_display_name": {
         "code": "IN100",
@@ -585,14 +588,6 @@ ERROR_CODE: Dict = {
         "code": "IN127",
         "related_field": "display",
     },
-    "invalid_integration_deprecation__only_display_name_suffix": {
-        "code": "IN157",
-        "related_field": "deprecated",
-    },
-    "invalid_deprecation__only_description_deprecated": {
-        "code": "IN158",
-        "related_field": "deprecated",
-    },
     "invalid_deprecated_integration_description": {
         "code": "IN128",
         "related_field": "",
@@ -685,10 +680,6 @@ ERROR_CODE: Dict = {
         "code": "IN150",
         "related_field": "display",
     },
-    "invalid_siem_marketplaces_entry": {
-        "code": "IN151",
-        "related_field": "display",
-    },
     "empty_command_arguments": {
         "code": "IN151",
         "related_field": "arguments",
@@ -716,6 +707,26 @@ ERROR_CODE: Dict = {
     "nativeimage_exist_in_integration_yml": {
         "code": "IN157",
         "related_field": "script",
+    },
+    "invalid_deprecation__only_description_deprecated": {
+        "code": "IN158",
+        "related_field": "deprecated",
+    },
+    "command_reputation_output_capitalization_incorrect": {
+        "code": "IN159",
+        "related_field": "outputs",
+    },
+    "invalid_integration_deprecation__only_display_name_suffix": {
+        "code": "IN160",
+        "related_field": "deprecated",
+    },
+    "invalid_siem_marketplaces_entry": {
+        "code": "IN161",
+        "related_field": "display",
+    },
+    "partner_collector_does_not_have_xsoar_support_level": {
+        "code": "IN162",
+        "related_field": "",
     },
     # IT - Incident Types
     "incident_type_integer_field": {
@@ -1304,7 +1315,6 @@ ERROR_CODE: Dict = {
         "code": "ST112",
         "related_field": "",
     },
-    "invalid_yml_file": {"code": "ST113", "related_field": ""},
     # WD - Widgets
     "remove_field_from_widget": {
         "code": "WD100",
@@ -1554,31 +1564,31 @@ ALLOWED_IGNORE_ERRORS = (
         "RN114",
         "RN115",
         "RN116",
-        "MR104",
-        "MR105",
         "MR108",
         "PR101",
         "LO107",
         "IN107",
         "DB100",
         "GR103",
+        "IN150",
+        "IN161",
     ]
 )
 
 
 def get_all_error_codes() -> List:
-    error_codes = []
-    for error in ERROR_CODE:
-        error_codes.append(ERROR_CODE[error].get("code"))
-
-    return error_codes
+    return [error.get("code") for error in ERROR_CODE.values()]
 
 
 def get_error_object(error_code: str) -> Dict:
-    for error in ERROR_CODE:
-        if error_code == ERROR_CODE[error].get("code"):
-            return ERROR_CODE[error]
-    return {}
+    return next(
+        (
+            error_value
+            for error_value in ERROR_CODE.values()
+            if error_code == error_value.get("code")
+        ),
+        {},
+    )
 
 
 @decorator.decorator
@@ -2218,6 +2228,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def partner_collector_does_not_have_xsoar_support_level(path: str):
+        return f"the integration {path} should have the key {SUPPORT_LEVEL_HEADER} = {XSOAR_SUPPORT} in its yml"
+
+    @staticmethod
+    @error_code_decorator
     def invalid_deprecated_integration_description():
         return (
             "The description of all deprecated integrations should follow one of the formats:"
@@ -2457,6 +2472,11 @@ class Errors:
     @error_code_decorator
     def image_too_large():
         return "Too large logo, please update the logo to be under 10kB"
+
+    @staticmethod
+    @error_code_decorator
+    def svg_image_not_valid(error_message):
+        return f"SVG image file is not valid: {error_message}"
 
     @staticmethod
     @error_code_decorator
@@ -3287,7 +3307,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_invalid_modules():
-        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+        return f"Module field can include only label from the following options: {', '.join(MODULES)}."
 
     @staticmethod
     @error_code_decorator
@@ -4270,22 +4290,22 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_modeling_rule_suffix_name(file_path, **kwargs):
+    def invalid_modeling_rule_suffix_name(file_path, id_suffix, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
-            message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{id_suffix}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod
     @error_code_decorator
-    def invalid_parsing_rule_suffix_name(file_path, **kwargs):
+    def invalid_parsing_rule_suffix_name(file_path, id_suffix, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
-            message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{id_suffix}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{PARSING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod
@@ -4353,7 +4373,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def using_unknown_content(content_name: str, unknown_content_names: List[str]):
+    def using_unknown_content(content_name: str, unknown_content_names: Set[str]):
         return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
 
     @staticmethod
@@ -4361,6 +4381,7 @@ class Errors:
     def multiple_packs_with_same_display_name(
         content_name: str, pack_display_names: List[str]
     ):
+        pack_display_names = [f"'{name}'" for name in pack_display_names]
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "
 
     @staticmethod
@@ -4394,3 +4415,13 @@ class Errors:
     @error_code_decorator
     def correlation_rules_missing_search_window():
         return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
+
+    @staticmethod
+    @error_code_decorator
+    def command_reputation_output_capitalization_incorrect(
+        command_name: str,
+        invalid_output: str,
+        reputation_name: str,
+    ):
+        return f"The {command_name} command returns the following reputation output:\n{invalid_output} for reputation: {reputation_name}.\
+The capitalization is incorrect. For further information refer to {XSOAR_CONTEXT_AND_OUTPUTS_URL}"

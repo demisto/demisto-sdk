@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING, Optional
 from packaging.version import Version
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+    from demisto_sdk.commands.content_graph.objects.base_content import (
+        BaseContent,
+    )
     from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 

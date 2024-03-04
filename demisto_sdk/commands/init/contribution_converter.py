@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 import shutil
@@ -6,9 +7,11 @@ import traceback
 import zipfile
 from collections import defaultdict
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
 from string import punctuation
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple
+from zipfile import ZipFile
 
 from packaging.version import Version
 
@@ -21,15 +24,19 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
     PACK_INITIAL_VERSION,
+    PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR,
     SCRIPT,
     SCRIPTS_DIR,
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
+    ContentItems,
     FileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
@@ -106,20 +113,26 @@ class ContributionConverter:
     """
 
     DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+    SOURCE_FIELD_NAMES = {
+        "sourcemoduleid",
+        "sourcescripid",
+        "sourceplaybookid",
+        "sourceClassifierId",
+    }
 
     def __init__(
         self,
+        contribution: str,
         name: str = "",
-        contribution: Union[str] = None,
         description: str = "",
         author: str = "",
         gh_user: str = "",
         create_new: bool = True,
-        pack_dir_name: Union[str] = None,
+        pack_dir_name: Optional[str] = None,
         update_type: str = "",
         release_notes: str = "",
-        detected_content_items: list = None,
-        base_dir: Union[str] = None,
+        detected_content_items: list = [],
+        base_dir: Optional[str] = None,
         working_dir_path: str = "",
     ):
         """Initializes a ContributionConverter instance
@@ -129,7 +142,7 @@ class ContributionConverter:
 
         Args:
             name (str, optional): The name of the pack. Defaults to ''.
-            contribution (Union[str], optional): The path to the contribution zipfile. Defaults to None.
+            contribution (str): The path to the contribution zipfile.
             description (str, optional): The description for the contribution. Defaults to ''.
             author (str, optional): The author of the contribution. Defaults to ''.
             gh_user (str, optional): The github username of the person contributing. Defaults to ''.
@@ -156,7 +169,7 @@ class ContributionConverter:
         self.contribution_items_version: Dict[str, Dict[str, str]] = {}
         self.contribution_items_version_note = ""
         base_dir = base_dir or CONTENT_PATH  # type: ignore
-        self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
+        self.packs_dir_path: str = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)
 
@@ -255,19 +268,11 @@ class ContributionConverter:
 
     def unpack_contribution_to_dst_pack_directory(self) -> None:
         """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
-        if self.contribution:
-            shutil.unpack_archive(
-                filename=self.contribution, extract_dir=str(self.working_dir_path)
-            )
-            # remove metadata.json file
-            Path(self.working_dir_path, "metadata.json").unlink()
-        else:
-            err_msg = (
-                "Tried unpacking contribution to destination directory but the instance variable"
-                ' "contribution" is "None" - Make sure "contribution" is set before trying to unpack'
-                " the contribution."
-            )
-            raise TypeError(err_msg)
+        shutil.unpack_archive(
+            filename=self.contribution, extract_dir=str(self.working_dir_path)
+        )
+        # remove metadata.json file
+        Path(self.working_dir_path, "metadata.json").unlink()
 
     def convert_contribution_dir_to_pack_contents(
         self, unpacked_contribution_dir: str
@@ -335,39 +340,50 @@ class ContributionConverter:
             no_validate=True,
             update_docker=True,
             assume_answer=True,
-            include_untracked=True,
+            include_untracked=False,
             interactive=False,
         )
 
     def generate_readme_for_pack_content_item(
         self, yml_path: str, is_contribution: bool = False
-    ) -> None:
+    ) -> str:
         """Runs the demisto-sdk's generate-docs command on a pack content item
 
         Args:
             yml_path: str: Content item yml path.
             is_contribution: bool: Check if the content item is a new integration contribution or not.
+
+        Returns:
+            `str` path to the generated `README.md`.
         """
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
         if file_type == "integration":
-            generate_integration_doc(yml_path, is_contribution=is_contribution)
-        if file_type == "script":
-            generate_script_doc(input_path=yml_path, examples=[])
-        if file_type == "playbook":
+            generate_integration_doc(
+                yml_path, is_contribution=is_contribution, examples=None
+            )
+        elif file_type == "script":
+            generate_script_doc(input_path=yml_path, examples=None, use_graph=False)
+        elif file_type == "playbook":
             generate_playbook_doc(yml_path)
 
         dir_output = os.path.dirname(os.path.realpath(yml_path))
         if file_type == "playbook":
             readme_path = yml_path.replace(".yml", "_README.md")
         else:
-            readme_path = os.path.join(dir_output, "README.md")
-        self.readme_files.append(readme_path)
+            readme_path = os.path.join(dir_output, PACKS_README_FILE_NAME)
 
-    def generate_readmes_for_new_content_pack(self, is_contribution=False):
+        return readme_path
+
+    def generate_readmes_for_new_content_pack(self, is_contribution=False) -> List[str]:
         """
         Generate the readme files for a new content pack.
+
+        Returns:
+        - `List[str]` with the paths to all the generated `README`s.
         """
+
+        readmes_generated: List[str] = []
         for pack_subdir in get_child_directories(str(self.working_dir_path)):
             basename = Path(pack_subdir).name
             if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
@@ -382,16 +398,20 @@ class ContributionConverter:
                             or file_name.startswith("automation-")
                         ):
                             unified_file = file
-                            self.generate_readme_for_pack_content_item(
+                            readme = self.generate_readme_for_pack_content_item(
                                 unified_file, is_contribution
                             )
+                            readmes_generated.append(readme)
                             Path(unified_file).unlink()
-            elif basename == "Playbooks":
+            elif basename == PLAYBOOKS_DIR:
                 files = get_child_files(pack_subdir)
                 for file in files:
                     file_name = Path(file).name
                     if file_name.startswith("playbook") and file_name.endswith(".yml"):
-                        self.generate_readme_for_pack_content_item(file)
+                        readme = self.generate_readme_for_pack_content_item(file)
+                        readmes_generated.append(readme)
+
+        return readmes_generated
 
     def rearranging_before_conversion(self) -> None:
         """
@@ -400,19 +420,16 @@ class ContributionConverter:
         """
         unpacked_contribution_dirs = get_child_directories(str(self.working_dir_path))
         for unpacked_contribution_dir in unpacked_contribution_dirs:
-
             dir_name = Path(unpacked_contribution_dir).name
 
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
-
                 dst_ioc_fields_dir = str(
                     Path(self.working_dir_path, FileType.INDICATOR_FIELD.value)
                 )
                 src_path = str(Path(self.working_dir_path, dir_name))
 
                 for file in os.listdir(src_path):
-
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
                         Path(dst_ioc_fields_dir).mkdir(parents=True, exist_ok=True)
@@ -423,29 +440,29 @@ class ContributionConverter:
                 if len(os.listdir(src_path)) == 0:
                     shutil.rmtree(src_path, ignore_errors=True)
 
-    def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
-        """Create or updates a pack in the content repo from the contents of a contribution zipfile
-
-        Args:
-            files_to_source_mapping (Dict[str, Dict[str, str]]): Only used when updating a pack. mapping of a file
-                name as inside the contribution zip to a dictionary containing the the associated source info
-                for that file, specifically the base name (the name used in naming the split component files) and
-                the name of the containing directory.
-        """
+    def convert_contribution_to_pack(self):
+        """Create or updates a pack in the content repo from the contents of a contribution zipfile"""
         try:
             # only create pack_metadata.json and base pack files if creating a new pack
             if self.create_new:
-                if self.contribution:
-                    # create pack metadata file
-                    with zipfile.ZipFile(self.contribution) as zipped_contrib:
-                        with zipped_contrib.open("metadata.json") as metadata_file:
-                            logger.info(
-                                f"Pulling relevant information from {metadata_file.name}"
-                            )
-                            metadata = json.loads(metadata_file.read())
-                            self.create_metadata_file(metadata)
+                # create pack metadata file
+                with zipfile.ZipFile(self.contribution) as zipped_contrib:
+                    with zipped_contrib.open("metadata.json") as metadata_file:
+                        logger.info(
+                            f"Pulling relevant information from {metadata_file.name}"
+                        )
+                        metadata = json.loads(metadata_file.read())
+                        self.create_metadata_file(metadata)
                 # create base files
                 self.create_pack_base_files()
+
+            # We need to fix the modified
+            # content items paths and filenames and generate a new zip
+            # with a mapping of the changes done.
+            # We then set the contribution zip to the modified one.
+            modified_contribution_zip, mapping = self.fixup_detected_content_items()
+            self.contribution = modified_contribution_zip
+
             # unpack
             self.unpack_contribution_to_dst_pack_directory()
             # convert
@@ -458,19 +475,94 @@ class ContributionConverter:
                     unpacked_contribution_dir
                 )
             # extract to package format
-            for pack_subdir in get_child_directories(str(self.working_dir_path)):
+            for pack_subdir in get_child_directories(self.working_dir_path):
                 basename = Path(pack_subdir).name
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                     self.content_item_to_package_format(
                         pack_subdir,
                         del_unified=(not self.create_new),
-                        source_mapping=files_to_source_mapping,
+                        source_mapping=mapping,
                     )
 
             self.create_contribution_items_version_note()
 
+            # Create documentation
+
+            generated_readmes: List[str] = []
+
+            # If it's a new Pack, we recursively create READMEs for all content items
             if self.create_new:
-                self.generate_readmes_for_new_content_pack(is_contribution=True)
+                logger.info("Creating documentation for a new Pack...")
+                generated_readmes = self.generate_readmes_for_new_content_pack(
+                    is_contribution=True
+                )
+
+            # If it's an existing Pack, we need to iterate over
+            # all content items that were added and create READMEs for them
+            else:
+                logger.info("Creating documentation for existing Pack...")
+                contributed_ymls = glob.glob(
+                    f"{self.working_dir_path}/**/*.yml", recursive=True
+                )
+                for yml in contributed_ymls:
+                    generated_readme = self.generate_readme_for_pack_content_item(
+                        yml_path=yml, is_contribution=True
+                    )
+
+                    logger.debug(f"{generated_readme=}")
+
+                    # Construct the path to the README from the content path
+                    try:
+
+                        # If it's a README for a playbook
+                        # e.g. 'Playbooks/playbook-New-PB_README.md'
+                        if PLAYBOOKS_DIR in generated_readme:
+                            # e.g. 'playbook-New-PB_README.md'
+                            playbook_readme_filename = Path(generated_readme).name
+                            relative_path = os.path.join(
+                                PLAYBOOKS_DIR, playbook_readme_filename
+                            )
+
+                            # TODO move to debug
+                            logger.info(
+                                f"Generated README for Playbook with '{relative_path}'"
+                            )
+                        # If it's either a script or integration, the absolute path will be:
+                        # e.g. 'Integrations/HelloWorld/README.md'
+                        else:
+                            # e.g. 'Integrations'
+                            content_item_type = Path(generated_readme).parts[-3]
+                            # e.g. 'HelloWorld'
+                            content_item_name = Path(generated_readme).parts[-2]
+                            relative_path = os.path.join(
+                                content_item_type,
+                                content_item_name,
+                                PACKS_README_FILE_NAME,
+                            )
+
+                            # TODO move to debug
+                            logger.info(
+                                f"Generated README for {content_item_type} with '{relative_path}'"
+                            )
+
+                        # e.g. 'tmp_path/to/content/Packs/HelloWorld/Playbooks/playbook-New-PB_README.md'
+                        relative_path_from_content = os.path.join(
+                            str(self.pack_dir_path), relative_path
+                        )
+
+                        # TODO move to debug
+                        logger.info(
+                            f"Adding '{relative_path_from_content}' to list of generated READMEs..."
+                        )
+                        generated_readmes.append(relative_path_from_content)
+
+                    except IndexError:
+                        logger.warn(
+                            f"Failed to construct relative path of the generated README '{generated_readme}'. Skipping addition of README to list of generated READMEs..."
+                        )
+                        continue
+
+            self.readme_files = generated_readmes
 
         except Exception as e:
             logger.info(
@@ -546,7 +638,7 @@ class ContributionConverter:
         self,
         content_item_dir: str,
         del_unified: bool = True,
-        source_mapping: Union[Dict[str, Dict[str, str]]] = None,
+        source_mapping: Dict[str, Dict[str, str]] = None,
     ):
         """
         Iterate over the YAML files in a directory and create packages (a containing directory and
@@ -610,6 +702,7 @@ class ContributionConverter:
                             input=content_item_file_path,
                             file_type=file_type,
                             output=content_item_dir,
+                            no_readme=True,
                         )
                     try:
                         content_item = BaseContent.from_path(
@@ -659,7 +752,7 @@ class ContributionConverter:
         to be in the base directory of a pack
         """
         logger.info("Creating pack base files")
-        Path(self.working_dir_path, "README.md").touch()
+        Path(self.working_dir_path, PACKS_README_FILE_NAME).touch()
 
         Path(self.working_dir_path, ".secrets-ignore").touch()
 
@@ -780,7 +873,7 @@ class ContributionConverter:
             if line.startswith(entity_identifier):
                 entity_name = line.lstrip(entity_identifier)
                 if items_path.get(entity_name):
-                    entity_name = get_display_name(items_path.get(entity_name))
+                    entity_name = get_display_name(items_path[entity_name])
             elif not line.startswith(content_item_type_identifier):
                 rn_per_content_item[entity_name] = (
                     rn_per_content_item[entity_name] + line + "\n"
@@ -827,3 +920,165 @@ class ContributionConverter:
             rn_file.seek(0)
             rn_file.writelines(lines)
             rn_file.truncate()
+
+    def get_source_integration_display_field(
+        self, src_integration_yml_path: str
+    ) -> Optional[str]:
+        """Fetch the value of the 'display' field from the source integration yaml
+
+        Args:
+            src_integration_yml_path (AnyStr): The path to the source integration yaml file
+
+        Returns:
+            Optional[str]: The value of the 'display' field if found, otherwise None
+        """
+        exists = Path(src_integration_yml_path).exists()
+        is_file = Path(src_integration_yml_path).is_file()
+        is_yaml = os.path.splitext(src_integration_yml_path)[1] == ".yml"
+        if exists and is_file and is_yaml:
+            ryaml = YAML_Handler()
+            with open(src_integration_yml_path, "r") as df:
+                data_obj = ryaml.load(df)
+                display_field = data_obj.get("display")
+                return display_field
+        else:
+            path_as_string = str(src_integration_yml_path)
+            if not exists:
+                logger.warn(
+                    f'"{path_as_string}" was not found to exist in the local file system.'
+                )
+            elif not is_file:
+                logger.warn(f'"{path_as_string}" was not found to be a file.')
+            else:
+                logger.warn(f'"{path_as_string}" was not found to be a yaml file.')
+            logger.warn(
+                'Therefore skipping fetching the "display" field from the source integration.'
+            )
+            return None
+
+    def fixup_detected_content_items(
+        self,
+    ) -> Tuple[str, Dict[str, Dict[str, str]]]:
+        """Create new zip from old zip, modifying the files that need to be modified
+
+        Returns:
+            Tuple[str, Dict[str, Dict[str, str]]]: The path to the updated zip file, and the mapping of zip's content file
+                names to eachs associated basename and containing directory name
+        """
+        id_to_data = {
+            id_val: info_dict
+            for info_dict in self.detected_content_items
+            if (id_val := info_dict.get("id"))
+        }
+        integrations_path_pattern = r"^Packs/\S+?/Integrations/.*"
+        for info_dict in id_to_data.values():
+            source_file_path = info_dict.get("source_file_name", "")
+            if re.search(integrations_path_pattern, source_file_path):
+                fetched_display_field = self.get_source_integration_display_field(
+                    Path(self.packs_dir_path).parent / source_file_path
+                )
+                if fetched_display_field:
+                    info_dict["source_display"] = fetched_display_field
+        ids_to_modify = id_to_data.keys()
+
+        filename_to_basename_and_containing_dir = {}
+
+        ryaml = YAML_Handler()
+        modified_contribution_zip_path = os.path.join(
+            self.working_dir_path, "modified_contribution.zip"
+        )
+        tmp_zf = ZipFile(modified_contribution_zip_path, "w")
+        with ZipFile(self.contribution, "r") as zf:
+            for item in zf.infolist():
+                if item.filename.endswith(".yml"):
+                    data_worker: Any = ryaml
+                elif item.filename.endswith(".json"):
+                    data_worker = json
+                else:
+                    continue
+                with zf.open(item, "r") as df:
+                    data_obj = data_worker.load(df)
+                content_id = (
+                    data_obj["commonfields"].get("id", "")
+                    if "commonfields" in data_obj.keys()
+                    else data_obj.get("id", "")
+                )
+                # replace fields with originals
+                if content_id in ids_to_modify:
+                    replacement_info = id_to_data.get(content_id, {})
+                    original_name = replacement_info.get("source_name", "")
+                    original_id = replacement_info.get("source_id", "")
+                    original_file_path = replacement_info.get("source_file_name", "")
+                    original_display = replacement_info.get("source_display", "")
+                    data_obj["name"] = original_name
+                    if (
+                        (display := data_obj.get("display", ""))
+                        and original_display
+                        and display != original_display
+                    ):
+                        # should only occur for integration yamls
+                        data_obj["display"] = original_display
+                    if "commonfields" in data_obj.keys():
+                        data_obj["commonfields"]["id"] = original_id
+                    else:
+                        data_obj["id"] = original_id
+                    # wipe source fields
+                    for source_field in self.SOURCE_FIELD_NAMES.intersection(
+                        set(data_obj.keys())
+                    ):
+                        if source_field == "sourceClassifierId":
+                            data_obj[source_field] = ""
+                        else:
+                            del data_obj[source_field]
+
+                    original_file_name = Path(original_file_path).name
+                    if any(
+                        original_file_name.startswith(prefix.value)
+                        for prefix in ContentItems
+                    ):
+                        # deal with the prefixes that have '-' in the prefix themselves
+                        if original_file_name.startswith(
+                            (
+                                "classifier-mapper-incoming-",
+                                "classifier-mapper-outgoing-",
+                            )
+                        ):
+                            long_classifier_prefix = len("classifier-mapper-incoming-")
+                            original_file_name = original_file_name[
+                                long_classifier_prefix - 1 :
+                            ]
+                        else:
+                            prefix = f'{original_file_name.split("-")[0]}-'
+                            if any(
+                                prefix.casefold().startswith(item.value)
+                                for item in ContentItems
+                            ):
+                                original_file_name = original_file_name.replace(
+                                    prefix, ""
+                                )
+                    file_name_prefix = Path(item.filename).name.split("-")[0].casefold()
+                    file_dir = os.path.dirname(item.filename)
+                    # rename file
+                    new_file_name = f"{file_name_prefix}-{original_file_name}"
+                    new_file_path = os.path.join(file_dir, new_file_name)
+                    # map new file to source basename and source containing directory name
+                    filename_to_basename_and_containing_dir[new_file_name] = {
+                        "base_name": original_file_name.replace(".yml", ""),
+                        "containing_dir_name": Path(
+                            os.path.dirname(original_file_path)
+                        ).name,
+                    }
+
+                    formatted_data_dump = StringIO()
+                    data_worker.dump(data_obj, formatted_data_dump)
+                    tmp_zf.writestr(new_file_path, formatted_data_dump.getvalue())
+                else:
+                    tmp_zf.writestr(item, zf.read(item.filename))
+        return modified_contribution_zip_path, filename_to_basename_and_containing_dir
+
+    def delete_contrib_zip(self):
+        """
+        Delete the contribution zip.
+        """
+
+        Path(self.contribution).unlink()

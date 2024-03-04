@@ -2,9 +2,61 @@ import os
 import re
 from enum import Enum
 from functools import reduce
+from pathlib import Path
 from typing import Dict, List
 
 from packaging.version import Version
+
+# Note: Do NOT add imports of internal modules here, as it may cause circular imports.
+
+
+PROJECT_DATA_DIR = Path.home() / ".demisto-sdk"
+CACHE_DIR = PROJECT_DATA_DIR / "cache"
+LOGS_DIR = PROJECT_DATA_DIR / "logs"
+NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"
+
+LOG_FILE_NAME = "demisto_sdk_debug.log"
+
+NEO4J_DEFAULT_VERSION = "5.13.0"
+
+# --- Environment Variables ---
+# General
+ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
+DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
+DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
+DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "gitlab.xdr.pan.local")
+DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
+    "CI_PROJECT_ID", "1061"
+)  # Default value is the ID of the content repo on GitLab
+ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+DOCKER_REGISTRY_URL = os.getenv("DOCKER_IO", "docker.io")
+
+
+# Authentication
+DEMISTO_BASE_URL = "DEMISTO_BASE_URL"
+DEMISTO_USERNAME = "DEMISTO_USERNAME"
+DEMISTO_PASSWORD = "DEMISTO_PASSWORD"  # guardrails-disable-line
+DEMISTO_KEY = "DEMISTO_API_KEY"
+AUTH_ID = "XSIAM_AUTH_ID"
+XSIAM_TOKEN = "XSIAM_TOKEN"
+XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
+DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
+
+# Logging
+DEMISTO_SDK_LOG_FILE_PATH = "DEMISTO_SDK_LOG_FILE_PATH"
+DEMISTO_SDK_LOG_NOTIFY_PATH = "DEMISTO_SDK_LOG_NOTIFY_PATH"
+DEMISTO_SDK_LOG_FILE_SIZE = "DEMISTO_SDK_LOG_FILE_SIZE"
+DEMISTO_SDK_LOG_FILE_COUNT = "DEMISTO_SDK_LOG_FILE_COUNT"
+DEMISTO_SDK_LOG_NO_COLORS = "DEMISTO_SDK_LOG_NO_COLORS"
+
+# Neo4j
+DEMISTO_SDK_NEO4J_VERSION = "DEMISTO_SDK_NEO4J_VERSION"
+DEMISTO_SDK_NEO4J_DATABASE_HTTP = "DEMISTO_SDK_NEO4J_DATABASE_HTTP"
+DEMISTO_SDK_NEO4J_DATABASE_URL = "DEMISTO_SDK_NEO4J_DATABASE_URL"
+DEMISTO_SDK_NEO4J_USERNAME = "DEMISTO_SDK_NEO4J_USERNAME"
+DEMISTO_SDK_NEO4J_PASSWORD = "DEMISTO_SDK_NEO4J_PASSWORD"
+# --- Environment Variables ---
+
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"
@@ -49,6 +101,7 @@ TRIGGER_DIR = "Triggers"
 WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
+ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
 
 # NAMES OF ENTITIES
 
@@ -96,11 +149,15 @@ XDRC_TEMPLATE = "xdrctemplate"
 LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 EVENT_COLLECTOR = "EventCollector"
-# ENV VARIABLES
+ASSETS_MODELING_RULE = "assetsmodelingrule"
 
-ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
-DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
-DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
+# Marketplaces
+
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = "marketplace-dist"
+DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
+DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
 
 class FileType(str, Enum):
@@ -181,6 +238,9 @@ class FileType(str, Enum):
     INI = "ini"
     PEM = "pem"
     VULTURE_WHITELIST = "vulture_whitelist"
+    ASSETS_MODELING_RULE_SCHEMA = "assetsmodelingruleschema"
+    ASSETS_MODELING_RULE = "assetsmodelingrule"
+    ASSETS_MODELING_RULE_XIF = "assetsmodelingrulexif"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -218,6 +278,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.WIZARD: "Wizards",
     FileType.XDRC_TEMPLATE: "XDRC Templates",
     FileType.LAYOUT_RULE: "Layout Rules",
+    FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -259,6 +320,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.TRIGGER.value: TRIGGER_DIR,
     FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
+    FileType.ASSETS_MODELING_RULE.value: ASSETS_MODELING_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -270,6 +332,7 @@ SIEM_ONLY_ENTITIES = [
     FileType.TRIGGER.value,
     FileType.XDRC_TEMPLATE.value,
     FileType.LAYOUT_RULE.value,
+    FileType.ASSETS_MODELING_RULE,
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]
@@ -315,6 +378,7 @@ CONTENT_ENTITIES_DIRS = [
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
+    ASSETS_MODELING_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -514,12 +578,25 @@ PIPFILE_REGEX = r".*/Pipfile(\.lock)?"
 TEST_DATA_REGEX = r".*test_data.*"
 TEST_FILES_REGEX = r".*test_files.*"
 DOCS_REGEX = r".*docs.*"
-IMAGE_REGEX = r".*\.png$"
+PNG_IMAGE_REGEX = r".*\.png$"
+SVG_IMAGE_REGEX = r".*\.svg$"
 DESCRIPTION_REGEX = r".*\.md"
 SCHEMA_REGEX = "Tests/schemas/.*.yml"
 
 # regex pattern used to convert incident/indicator fields to their CLI names
 NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r"[^a-zA-Z0-9]")
+INCORRECT_PACK_NAME_PATTERN = (
+    "[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK["
+    "^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook["
+    "^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK["
+    "^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook["
+    "^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration["
+    "^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION["
+    "^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration["
+    "^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script["
+    "^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT["
+    "^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ "
+)
 
 PACKS_DIR_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}"
 PACK_DIR_REGEX = rf"{PACKS_DIR_REGEX}\/([^\\\/]+)"
@@ -738,26 +815,30 @@ DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_COMMAND_REGEX,
 ]
 
-PACK_METADATA_NAME = "name"
-PACK_METADATA_DESC = "description"
-PACK_METADATA_SUPPORT = "support"
-PACK_METADATA_MIN_VERSION = "serverMinVersion"
-PACK_METADATA_CURR_VERSION = "currentVersion"
-PACK_METADATA_AUTHOR = "author"
-PACK_METADATA_URL = "url"
-PACK_METADATA_EMAIL = "email"
-PACK_METADATA_CATEGORIES = "categories"
-PACK_METADATA_MODULES = "modules"
-PACK_METADATA_TAGS = "tags"
-PACK_METADATA_CREATED = "created"
-PACK_METADATA_CERTIFICATION = "certification"
-PACK_METADATA_USE_CASES = "useCases"
-PACK_METADATA_KEYWORDS = "keywords"
-PACK_METADATA_PRICE = "price"
-PACK_METADATA_DEPENDENCIES = "dependencies"
-PACK_METADATA_IRON_BANK_TAG = "Iron Bank"
+PACK_METADATA_NAME: str = "name"
+PACK_METADATA_DESC: str = "description"
+PACK_METADATA_SUPPORT: str = "support"
+PACK_METADATA_MIN_VERSION: str = "serverMinVersion"
+PACK_METADATA_CURR_VERSION: str = "currentVersion"
+PACK_METADATA_AUTHOR: str = "author"
+PACK_METADATA_URL: str = "url"
+PACK_METADATA_EMAIL: str = "email"
+PACK_METADATA_CATEGORIES: str = "categories"
+PACK_METADATA_MODULES: str = "modules"
+PACK_METADATA_TAGS: str = "tags"
+PACK_METADATA_CREATED: str = "created"
+PACK_METADATA_CERTIFICATION: str = "certification"
+PACK_METADATA_USE_CASES: str = "useCases"
+PACK_METADATA_KEYWORDS: str = "keywords"
+PACK_METADATA_PRICE: str = "price"
+PACK_METADATA_DEPENDENCIES: str = "dependencies"
+PACK_METADATA_IRON_BANK_TAG: str = "Iron Bank"
+PACK_METADATA_SERVER_MIN_VERSION: str = "serverMinVersion"
+PACK_METADATA_EXCLUDED_DEPENDENCIES: str = "excludedDependencies"
 
-PACK_METADATA_FIELDS = (
+ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
+USE_CASE_TAG: str = "Use Case"
+MANDATORY_PACK_METADATA_FIELDS = (
     PACK_METADATA_NAME,
     PACK_METADATA_DESC,
     PACK_METADATA_SUPPORT,
@@ -769,6 +850,23 @@ PACK_METADATA_FIELDS = (
     PACK_METADATA_USE_CASES,
     PACK_METADATA_KEYWORDS,
 )
+PACK_METADATA_MANDATORY_FILLED_FIELDS = [
+    PACK_METADATA_KEYWORDS,
+    PACK_METADATA_TAGS,
+    PACK_METADATA_CATEGORIES,
+    PACK_METADATA_USE_CASES,
+]
+
+PACK_METADATA_REQUIRE_RN_FIELDS: set = {
+    PACK_METADATA_SUPPORT,
+    PACK_METADATA_DEPENDENCIES,
+    PACK_METADATA_NAME,
+    PACK_METADATA_PRICE,
+    MARKETPLACE_KEY_PACK_METADATA,
+    PACK_METADATA_SERVER_MIN_VERSION,
+    PACK_METADATA_EXCLUDED_DEPENDENCIES,
+}
+
 API_MODULES_PACK = "ApiModules"
 API_MODULE_FILE_SUFFIX = "ApiModule"
 API_MODULE_PY_REGEX = r"{}{}/{}/{}/([^/]+)/([^.]+)\.py".format(
@@ -805,17 +903,20 @@ PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
 MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
+ASSETS_MODELING_RULE_NAME_SUFFIX = "Asset Collection"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
+ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
-PACKS_README_FILE_NAME = "README.md"
+PACKS_README_FILE_NAME = (
+    INTEGRATIONS_README_FILE_NAME
+) = SCRIPTS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
-METADATA_FILE_NAME = "pack_metadata.json"
 PACKS_FOLDER = "Packs"
 
 CONF_JSON_FILE_NAME = "conf.json"
@@ -834,6 +935,10 @@ PYTHON_ALL_REGEXES: List[str] = sum(
 
 INTEGRATION_REGXES: List[str] = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]
 
+IMAGE_ALL_REGEXES: List[str] = [
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
+]
 YML_INTEGRATION_REGEXES: List[str] = [
     PACKS_INTEGRATION_YML_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
@@ -1021,7 +1126,13 @@ PACKAGE_SUPPORTING_DIRECTORIES = [
     PARSING_RULES_DIR,
 ]
 
-IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
+IGNORED_TYPES_REGEXES = [
+    DESCRIPTION_REGEX,
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
+    PIPFILE_REGEX,
+    SCHEMA_REGEX,
+]
 
 IGNORED_PACK_NAMES = ["Legacy", "NonSupported", "ApiModules"]
 
@@ -1138,6 +1249,14 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     ".secrets-ignore",
 )
 
+
+class GitStatuses(str, Enum):
+    RENAMED = "R"
+    MODIFIED = "M"
+    ADDED = "A"
+    DELETED = "D"
+
+
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
 
 # python subtypes
@@ -1162,17 +1281,11 @@ def urljoin(*args: str):
     ).rstrip("/")
 
 
-OFFICIAL_CONTENT_ID_SET_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
-)
+OFFICIAL_CONTENT_ID_SET_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/id_set.json"
 
-OFFICIAL_CONTENT_GRAPH_PATH = (
-    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
-)
+OFFICIAL_CONTENT_GRAPH_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/content_graph"
 
-OFFICIAL_INDEX_JSON_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
-)
+OFFICIAL_INDEX_JSON_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/packs/index.json"
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
@@ -1252,7 +1365,7 @@ SCHEMA_TO_REGEX = {
     "incidentfield": JSON_ALL_INCIDENT_FIELD_REGEXES
     + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     "incidenttype": JSON_ALL_INCIDENT_TYPES_REGEXES,
-    "image": [IMAGE_REGEX],
+    "image": IMAGE_ALL_REGEXES,
     "reputation": JSON_ALL_INDICATOR_TYPES_REGEXES,
     "reputations": JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES,
     "readme": [
@@ -1296,20 +1409,6 @@ DIR_TO_PREFIX = {
 }
 
 ENTITY_NAME_SEPARATORS = [" ", "_", "-"]
-
-DELETED_YML_FIELDS_BY_DEMISTO = [
-    "fromversion",
-    "toversion",
-    "alt_dockerimages",
-    "script.dockerimage45",
-    "tests",
-    "defaultclassifier",
-    "defaultmapperin",
-    "defaultmapperout",
-]
-
-DELETED_JSON_FIELDS_BY_DEMISTO = ["fromVersion", "toVersion"]
-
 FILE_EXIST_REASON = "File already exist"
 FILE_NOT_IN_CC_REASON = "File does not exist in Demisto instance"
 
@@ -1325,28 +1424,70 @@ ACCEPTED_FILE_EXTENSIONS = [
     ".lock",
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
+GET_MAPPING_FIELDS_COMMAND_NAME = "get-mapping-fields"
+GET_MAPPING_FIELDS_COMMAND = {
+    "description": "Retrieves a User Profile schema which holds all of the user fields in the application. Used for outgoing mapping through the Get Schema option.",
+    "name": GET_MAPPING_FIELDS_COMMAND_NAME,
+}
+
+FEED_RELIABILITY = "feedReliability"
+RELIABILITY = "reliability"
 
 RELIABILITY_PARAMETER_NAMES = [
     "integration_reliability",  # First item in the list will be used in errors
     "integrationReliability",
-    "feedReliability",
-    "reliability",
+    FEED_RELIABILITY,
+    RELIABILITY,
 ]
+
+RELIABILITY_PARAM = {
+    "name": RELIABILITY,
+    "display": "Source Reliability",
+    "type": 15,
+    "required": True,
+    "options": [
+        "A - Completely reliable",
+        "B - Usually reliable",
+        "C - Fairly reliable",
+        "D - Not usually reliable",
+        "E - Unreliable",
+        "F - Reliability cannot be judged",
+    ],
+    "additionalinfo": "Reliability of the source providing the intelligence data",
+}
+
+COMMON_PARAMS_DISPLAY_NAME = {
+    "insecure": "Trust any certificate (not secure)",
+    "unsecure": "Trust any certificate (not secure)",
+    "proxy": "Use system proxy settings",
+}
+
+REQUIRED_ALLOWED_PARAMS = ("insecure", "unsecure", "proxy", "isFetch")
 
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
 
 BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
-    "file": {
-        "default": ["file"],
-    },
-    "email": {"default": ["email"]},
-    "domain": {"default": ["domain"]},
-    "url": {"default": ["url"]},
-    "ip": {"default": ["ip"]},
-    "cve": {"default": ["cve"]},
+    "file": {"default": ["file"], "required": True},
+    "email": {"default": ["email"], "required": True},
+    "domain": {"default": ["domain"], "required": True},
+    "url": {"default": ["url"], "required": True},
+    "ip": {"default": ["ip"], "required": True},
+    "cve": {"default": ["cve"], "required": True},
     "endpoint": {"default": ["ip"], "required": False},
+}
+
+MANDATORY_REPUTATION_CONTEXT_NAMES = {
+    "Certificate",
+    "CVE",
+    "Domain",
+    "Email",
+    "Endpoint",
+    "File",
+    "InfoFile",
+    "IP",
+    "URL",
 }
 
 ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
@@ -1369,16 +1510,41 @@ IOC_OUTPUTS_DICT = {
     "url": {"URL.Data"},
     "endpoint": {"Endpoint.Hostname", "Endpoint.IPAddress", "Endpoint.ID"},
 }
+
+# support types:
 XSOAR_SUPPORT = "xsoar"
+PARTNER_SUPPORT = "partner"
+COMMUNITY_SUPPORT = "community"
+DEVELOPER_SUPPORT = "developer"
+PACK_SUPPORT_OPTIONS = [
+    XSOAR_SUPPORT,
+    PARTNER_SUPPORT,
+    DEVELOPER_SUPPORT,
+    COMMUNITY_SUPPORT,
+]
+CONTRIBUTORS_LIST = [PARTNER_SUPPORT, DEVELOPER_SUPPORT, COMMUNITY_SUPPORT]
+SUPPORTED_CONTRIBUTORS_LIST = [DEVELOPER_SUPPORT, PARTNER_SUPPORT]
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"
-PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
 XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
+XSOAR_CONTEXT_AND_OUTPUTS_URL = (
+    "https://xsoar.pan.dev/docs/integrations/context-and-outputs"
+)
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
-EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
+EXCLUDED_DISPLAY_NAME_WORDS = [PARTNER_SUPPORT, COMMUNITY_SUPPORT]
+INCORRECT_PACK_NAME_WORDS = [
+    "Pack",
+    "Playbook",
+    "Integration",
+    "Script",
+    PARTNER_SUPPORT,
+    COMMUNITY_SUPPORT,
+]
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
+SUPPORT_LEVEL_HEADER = "supportlevelheader"
+CLASSIFICATION_TYPE = "classification"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
@@ -1398,17 +1564,19 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
     FileType.XSIAM_DASHBOARD: "6.10.0",
+    FileType.ASSETS_MODELING_RULE: "6.2.1",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = "6.9.0"
+GENERAL_DEFAULT_FROMVERSION = "6.10.0"
 VERSION_5_5_0 = "5.5.0"
 DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
 MARKETPLACE_MIN_VERSION = "6.0.0"
+MINIMUM_XSOAR_SAAS_VERSION = "8.0.0"
 
 OLDEST_SUPPORTED_VERSION = "5.0.0"
 OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION = GENERAL_DEFAULT_FROMVERSION
@@ -1416,7 +1584,7 @@ LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION = "6.0.0"
 GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
 FEATURE_BRANCHES = ["v4.5.0"]
-VERSION_REGEX = r"(\d+\.){2}\d+"
+VERSION_REGEX = r"(\d{1,2}\.){2}\d{1,2}$"
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1452,7 +1620,7 @@ FEED_REQUIRED_PARAMS = [
         "must_be_one_of": {},
     },
     {
-        "name": "feedReliability",
+        "name": FEED_RELIABILITY,
         "must_equal": {
             "display": "Source Reliability",
             "type": 15,
@@ -1531,6 +1699,8 @@ FEED_REQUIRED_PARAMS = [
     },
 ]
 
+ALLOWED_HIDDEN_PARAMS = {"longRunning", "feedIncremental", "feedReputation"}
+
 INCIDENT_FETCH_REQUIRED_PARAMS = [
     {"display": "Incident type", "name": "incidentType", "type": 13},
     {"display": "Fetch incidents", "name": "isFetch", "type": 8},
@@ -1586,9 +1756,12 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."', "\n}", "\n]"]
+
 FIRST_FETCH = "first_fetch"
 
 MAX_FETCH = "max_fetch"
+DEFAULT_MAX_FETCH = 10
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (
     FileType.RELEASE_NOTES,
@@ -1646,6 +1819,10 @@ BUILD_IN_COMMANDS = [
 ]
 
 
+class Auto(str, Enum):
+    PREDEFINED = "PREDEFINED"
+
+
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future
     SCRIPTS = "automation"
@@ -1676,6 +1853,7 @@ class ContentItems(Enum):
     WIZARDS = ("wizard",)
     XDRC_TEMPLATE = "xdrctemplate"
     LAYOUT_RULES = "layoutrule"
+    ASSETS_MODELING_RULES = "assetsmodelingrule"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1703,6 +1881,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
     LAYOUT_RULES_DIR,
+    ASSETS_MODELING_RULES_DIR,
 }
 
 
@@ -1736,16 +1915,11 @@ class MarketplaceVersions(str, Enum):
         return self.value
 
 
-MARKETPLACE_XSOAR_DIST = "marketplace-dist"
-MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
-MARKETPLACE_XPANSE_DIST = "xpanse-dist"
-MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
-
 MarketplaceVersionToMarketplaceName = {
-    MarketplaceVersions.XSOAR.value: MARKETPLACE_XSOAR_DIST,
-    MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAM_DIST,
-    MarketplaceVersions.XPANSE.value: MARKETPLACE_XPANSE_DIST,
-    MarketplaceVersions.XSOAR_SAAS.value: MARKETPLACE_XSOAR_SAAS_DIST,
+    MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
+    MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
+    MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
+    MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
@@ -1834,17 +2008,22 @@ FileType_ALLOWED_TO_DELETE = {
 
 
 class ParameterType(Enum):
-    STRING = 0
-    NUMBER = 1
-    ENCRYPTED = 4
-    BOOLEAN = 8
-    AUTH = 9
+    STRING = 0  # holds a string argument.
+    NUMBER = 1  # holds an int argument.
+    ENCRYPTED = 4  # holds a password argument.
+    BOOLEAN = 8  # holds a boolean argument (checkbox).
+    AUTH = 9  # holds an auth struct (credentials type).
     DOWNLOAD_LINK = 11
     TEXT_AREA = 12
     INCIDENT_TYPE = 13
     TEXT_AREA_ENCRYPTED = 14
     SINGLE_SELECT = 15
     MULTI_SELECT = 16
+    EXPIRATION_FIELD = 17
+    FEED_REPUDATION = 18
+    INTERVAL = 19
+    BOLD_TITLE = 20
+    DAY_DROPDOWN = 21
 
 
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
@@ -1866,14 +2045,12 @@ TABLE_INCIDENT_TO_ALERT = {
     "INCIDENTS": "ALERTS",
 }
 
-NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 FORMATTING_SCRIPT = "indicator-format"
 
-ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
-TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 
 URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
 
@@ -1907,7 +2084,69 @@ XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
+STRING_TO_BOOL_MAP = {
+    "y": True,
+    "1": True,
+    "yes": True,
+    "true": True,
+    "n": False,
+    "0": False,
+    "no": False,
+    "false": False,
+    "t": True,
+    "f": False,
+}
+
+
+#  date formats:
+ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
 
 class ImagesFolderNames(str, Enum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
+
+
+class InvestigationPlaybookState(str, Enum):
+    NEW = "new"  # indicates that playbook not executed yet
+    IN_PROGRESS = "inprogress"  # indicates that playbook in progress
+    PAUSED = "paused"  # indicates that playbook paused
+    COMPLETED = "completed"  # indicates that playbook completed
+    FAILED = "failed"  # indicates that playbook failed
+    WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
+
+
+class IncidentState(str, Enum):
+    NEW = 0  # the incident is new
+    IN_PROGRESS = 1  # the incident is in progress
+    CLOSED = 2  # the incident is closed
+    ACKNOWLEDGED = 3  # the incident is archived
+
+
+# Used to format the writing of the yml/json file
+DEFAULT_JSON_INDENT = 4
+DEFAULT_YAML_INDENT = 0
+
+
+PACK_DEFAULT_MARKETPLACES: List = [
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.MarketplaceV2.value,
+]
+
+
+class RelatedFileType(Enum):
+    YML = "YML"
+    JSON = "JSON"
+    README = "README"
+    DESCRIPTION = "DESCRIPTION"
+    IMAGE = "IMAGE"
+    DARK_SVG = "DARK_SVG"
+    LIGHT_SVG = "LIGHT_SVG"
+    CODE = "CODE"
+    TEST_CODE = "TEST_CODE"
+    SCHEMA = "SCHEMA"
+    XIF = "XIF"
+    PACK_IGNORE = "PACK_IGNORE"
+    SECRETS_IGNORE = "SECRETS_IGNORE"
+    AUTHOR_IMAGE = "AUTHOR_IMAGE"
+    RELEASE_NOTES = "RELEASE_NOTES"

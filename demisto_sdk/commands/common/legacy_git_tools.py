@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.tools import (
     is_origin_content_repo,
     run_command,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 
 
 @functools.lru_cache()
@@ -32,6 +32,7 @@ def git_path() -> str:
     return git_path.replace("\n", "")
 
 
+@functools.lru_cache()
 def get_current_working_branch() -> str:
     branches = run_command("git branch")
     branch_name_reg = re.search(r"\* (.*)", branches)
@@ -370,7 +371,7 @@ def filter_changed_files(
             elif (
                 file_status.lower() in ["m", "a", "r"]
                 and file_type in [FileType.INTEGRATION, FileType.SCRIPT]
-                and ValidateManager.is_old_file_format(file_path, file_type)
+                and OldValidateManager.is_old_file_format(file_path, file_type)
             ):
                 old_format_files.add(file_path)
             # identify modified files

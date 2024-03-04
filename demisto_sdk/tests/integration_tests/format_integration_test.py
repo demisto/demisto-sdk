@@ -29,7 +29,7 @@ from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK_COPY,
@@ -101,9 +101,11 @@ CONF_JSON_ORIGINAL_CONTENT = {
 
 @pytest.fixture(autouse=True)
 def set_git_test_env(mocker):
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git_util", return_value=GitUtil())
-    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(
+        OldValidateManager, "setup_prev_ver", return_value="origin/master"
+    )
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
 
@@ -782,7 +784,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     mocker.patch.object(
         update_generic,
         "is_file_from_content_repo",
-        return_value=(True, f"{playbook.path}/playbook.yml"),
+        return_value=(True, playbook.path),
     )
     mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
     mocker.patch.object(
@@ -794,7 +796,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
 
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     monkeypatch.setattr("builtins.input", lambda _: "N")
-    with ChangeCWD(playbook.path):
+    with ChangeCWD(Path(playbook.path).parent):
         runner = CliRunner(mix_stderr=False)
         runner.invoke(
             main,
@@ -821,7 +823,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
             str_in_call_args_list(logger_info.call_args_list, current_str)
             for current_str in [
                 "======= Updating file",
-                f"Format Status   on file: {playbook.path}/playbook.yml - Success",
+                f"Format Status   on file: {playbook.path} - Success",
                 "The files are valid",
             ]
         ]
@@ -1319,7 +1321,6 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_field_path}",
                 ]
@@ -1370,7 +1371,6 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_type_path}",
                 ]
@@ -1421,7 +1421,6 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_type_path}",
                 ]
@@ -1522,7 +1521,6 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_module_path}",
                 ]
@@ -1572,7 +1570,6 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_definition_path}",
                 ]
@@ -1626,7 +1623,6 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
             [
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
-                    "Setting fromVersion field",
                     "Success",
                     f"======= Updating file {generic_definition_path}",
                 ]

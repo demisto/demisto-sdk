@@ -8,10 +8,10 @@ mapping:
     type: str
   id:
     type: str
-    required: True
+    required: true
   version:
     type: number
-    required: True
+    required: true
   sortValues:
     type: any
   commitMessage:
@@ -22,10 +22,10 @@ mapping:
     type: bool
   regex:
     type: str
-    required: True
+    required: true
   details:
     type: str
-    required: True
+    required: true
   prevDetails:
     type: str
   reputationScriptName:
@@ -67,9 +67,9 @@ mapping:
   legacyNames:
     type: seq
     sequence:
-      - type: str
+    - type: str
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem' ]
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']

@@ -3,6 +3,8 @@ import traceback
 from pathlib import Path
 from typing import Iterator, List, Optional
 
+from tqdm import tqdm
+
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
@@ -29,14 +31,21 @@ class RepositoryParser:
         self.path: Path = path
         self.packs: List[PackParser] = []
 
-    def parse(self, packs_to_parse: Optional[List[Path]] = None):
+    def parse(
+        self,
+        packs_to_parse: Optional[List[Path]] = None,
+        progress_bar: Optional[tqdm] = None,
+    ):
         if not packs_to_parse:
             # if no packs to parse were provided, parse all packs
             packs_to_parse = list(self.iter_packs())
         try:
             logger.debug("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
-                self.packs = list(pool.map(PackParser, packs_to_parse))
+                for pack in pool.imap_unordered(PackParser, packs_to_parse):
+                    self.packs.append(pack)
+                    if progress_bar:
+                        progress_bar.update(1)
         except Exception:
             logger.error(traceback.format_exc())
             raise

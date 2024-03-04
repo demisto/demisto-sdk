@@ -219,7 +219,17 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         server_started = mdx_server_is_up()
         if not server_started:
-            return False
+            if self.handle_error(
+                "Validation of MDX file failed due to unable to start the mdx server. You can skip this by adding RM103"
+                " to the list of skipped validations under '.pack-ignore'.",
+                error_code="RM103",
+                file_path=self.file_path,
+            ):
+                return False
+            logger.info(
+                "[yellow]Validation of MDX file failed due to unable to start the mdx server, skipping.[/yellow]"
+            )
+            return True
         for _ in range(RETRIES_VERIFY_MDX):
             try:
                 readme_content = self.fix_mdx()
@@ -245,6 +255,7 @@ class ReadMeValidator(BaseValidator):
                 start_local_MDX_server()
         return True
 
+    @error_codes("RM103")
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = self.should_run_mdx_validation()
@@ -335,6 +346,7 @@ class ReadMeValidator(BaseValidator):
             return False
         return True
 
+    @error_codes("RM112")
     def verify_readme_relative_urls(self) -> bool:
         """Validate readme (not pack readme) relative urls.
 
@@ -344,7 +356,6 @@ class ReadMeValidator(BaseValidator):
         # If there are errors in one of the following validations return False
         return not self.check_readme_relative_url_paths()
 
-    @error_codes("RM112")
     def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
         """Validate readme url relative paths.
             prints an error if relative paths in README are found since they are not supported.
@@ -408,7 +419,7 @@ class ReadMeValidator(BaseValidator):
         try:
             docker_client: docker.DockerClient = init_global_docker_client(
                 log_prompt="DockerPing"
-            )
+            )  # type: ignore
             docker_client.ping()
             return True
         except Exception:
@@ -446,7 +457,7 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            logger.error(
+            logger.debug(
                 f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
                 f"'npm install' to install all required node dependencies. Otherwise, if docker is installed, the server"
                 f"will run in a docker container"

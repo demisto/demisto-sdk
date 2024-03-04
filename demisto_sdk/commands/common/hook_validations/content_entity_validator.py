@@ -9,6 +9,8 @@ from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
+    ASSETS_MODELING_RULE,
+    ASSETS_MODELING_RULE_NAME_SUFFIX,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEMISTO_GIT_UPSTREAM,
     ENTITY_NAME_SEPARATORS,
@@ -24,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
     PARSING_RULE,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULE_NAME_SUFFIX,
+    VALID_SENTENCE_SUFFIX,
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
@@ -47,7 +50,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_remote_file,
     get_yaml,
-    is_sentence_ends_with_bracket,
     is_string_ends_with_url,
     is_test_config_match,
     run_command,
@@ -775,6 +777,10 @@ class ContentEntityValidator(BaseValidator):
             id_suffix = PARSING_RULE_ID_SUFFIX
             name_suffix = PARSING_RULE_NAME_SUFFIX
             invalid_suffix_function = Errors.invalid_parsing_rule_suffix_name
+        if rule_type == ASSETS_MODELING_RULE:
+            id_suffix = MODELING_RULE_ID_SUFFIX
+            name_suffix = ASSETS_MODELING_RULE_NAME_SUFFIX
+            invalid_suffix_function = Errors.invalid_modeling_rule_suffix_name
 
         invalid_suffix = {
             "invalid_id": not rule_id.endswith(id_suffix),
@@ -783,7 +789,7 @@ class ContentEntityValidator(BaseValidator):
 
         if any(invalid_suffix.values()):
             error_message, error_code = invalid_suffix_function(
-                self.file_path, **invalid_suffix
+                self.file_path, id_suffix, name_suffix, **invalid_suffix
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
@@ -808,15 +814,19 @@ class ContentEntityValidator(BaseValidator):
             stripped_description: (str) a description or comment section from script / integration yml.
         Return True (the description string is invalid) if all of the following conditions are met:
         - The description string exist and not empty.
-        - The description string doesn't end with a dot.
+        - The description string doesn't end with a dot, question mark or exclamation mark.
         - The description string doesn't end with an URL.
-        - The description string doesn't end with a dot inside brackets.
+        - The description string doesn't end with a dot inside brackets or quote.
         """
         return all(
             [
                 stripped_description,
-                not stripped_description.endswith("."),
+                not any(
+                    [
+                        stripped_description.endswith(suffix)
+                        for suffix in VALID_SENTENCE_SUFFIX
+                    ]
+                ),
                 not is_string_ends_with_url(stripped_description),
-                not is_sentence_ends_with_bracket(stripped_description),
             ]
         )

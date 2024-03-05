@@ -20,10 +20,12 @@ jobs:
           pattern='(v[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+\.[0-9]+)'
           
           branch=${{ steps.branch-name.outputs.current_branch }}
-          echo "$branch"
+          echo "current branch is $branch"
           if [[ ! "$branch" =~ $pattern ]]; then
             echo "Branch name $branch does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
             exit 1
+          else
+            echo "branch name $branch is valid"
           fi
 
       - name: Python ${{ matrix.python-version }} - Setup Environment

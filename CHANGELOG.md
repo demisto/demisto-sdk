@@ -13,7 +13,7 @@
 * Fixed an issue where SDK would crash when trying to read files which are not encoded with utf-8 directly from memory. [#4081](https://github.com/demisto/demisto-sdk/pull/4081)
 * Added description field to *Assets Modeling Rules* content item. [#4005](https://github.com/demisto/demisto-sdk/pull/4005)
 * Added the `validate-conf-json` pre-commit hook, checking for structure and linked content. [#4051](https://github.com/demisto/demisto-sdk/pull/4051)
-* Fixed an issue in **lint** where `TextWrap` crashed on an Attribute Error when creating report summery.
+* Fixed an issue where **lint** crashed when collecting invalid logs.
 
 ## 1.27.0
 * Added the **graph get-dependencies** command. [#3992](https://github.com/demisto/demisto-sdk/pull/3992)

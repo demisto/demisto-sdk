@@ -1185,9 +1185,9 @@ class LintManager:
             ):  # TODO remove this when reduce the number of failed `mypy` packages.
                 failed_ut = failed_ut.union(lint_status[key])
         failed_unit_tests = [str(item) for item in failed_ut if item is not None]
-        if path and cleaned_list:
+        if path and failed_unit_tests:
             file_path = Path(path) / "failed_lint_report.txt"
-            file_path.write_text("\n".join(cleaned_list))
+            file_path.write_text("\n".join(failed_unit_tests))
 
     def create_json_output(self):
         """Creates a JSON file output for lints"""

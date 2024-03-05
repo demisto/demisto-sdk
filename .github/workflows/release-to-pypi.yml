@@ -12,11 +12,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - uses: tj-actions/branch-names@v8
+        id: branch-name
+
       - name: Check branch name is a release branch
         run: |
           pattern='(v[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+\.[0-9]+)'
           
-          branch=$(git rev-parse --abbrev-ref HEAD)
+          branch=${{ steps.branch-name.outputs.current_branch }}"
+          echo "$branch"
           if [[ ! "$branch" =~ $pattern ]]; then
             echo "Branch name $branch does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
             exit 1

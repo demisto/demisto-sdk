@@ -20,6 +20,7 @@ jobs:
           if ! echo "$branch" | grep -E -q "$pattern"; then
             echo "Branch name does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
             exit 1
+          fi
 
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment

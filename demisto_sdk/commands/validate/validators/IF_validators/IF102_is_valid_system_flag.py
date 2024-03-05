@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -5,23 +6,24 @@ from typing import Iterable, List
 from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
-    FixResult,
-    ValidationResult,
+        BaseValidator,
+        FixResult,
+        ValidationResult,
 )
 
 ContentTypes = IncidentField
 
 
-class IsValidContentFieldValidator(BaseValidator[ContentTypes]):
-    error_code = "IF101"
-    description = "Validates that the field is marked as content."
-    error_message = "The `content` key must be set to true"
-    fix_message = "`content` field is set to true"
-    related_field = "content"
+class IsValidSystemFlagValidator(BaseValidator[ContentTypes]):
+    error_code = "IF102"
+    description = "Validates that system flag is false"
+    error_message = "The `system` key must be set to false"
+    fix_message = "`system` field is set to false"
+    related_field = "system"
     is_auto_fixable = True
     related_file_type = [RelatedFileType.JSON]
 
+    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -30,13 +32,17 @@ class IsValidContentFieldValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (not content_item.data.get("content"))
+            if (
+                content_item.data.get("system")
+            )
         ]
+    
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        content_item.data["content"] = True
+        content_item.data["system"] = False
         return FixResult(
             validator=self,
             message=self.fix_message,
             content_object=content_item,
         )
+            

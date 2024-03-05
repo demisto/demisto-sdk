@@ -17,8 +17,8 @@ jobs:
           pattern='(v[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+\.[0-9]+)'
           
           branch=$(git rev-parse --abbrev-ref HEAD)
-          if ! echo "$branch" | grep -E -q "$pattern"; then
-            echo "Branch name does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
+          if [[ ! "$branch" =~ $pattern ]]; then
+            echo "Branch name "$branch" does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
             exit 1
           fi
 

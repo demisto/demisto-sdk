@@ -1156,7 +1156,7 @@ class LintManager:
             logger.info("Failed packages:")
         for fail_pack in failed:
             if fail_pack:
-                logger.info(f"[red]{wrapper_fail_pack.fill(fail_pack)}[/red]")
+                logger.info(f"[red]{fail_pack}[/red]")
 
     @staticmethod
     def _create_failed_packs_report(lint_status: dict, path: str):

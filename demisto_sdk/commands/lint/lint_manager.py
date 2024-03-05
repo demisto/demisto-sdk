@@ -1187,7 +1187,7 @@ class LintManager:
         cleaned_list = [str(item) for item in failed_ut if item is not None]
         if path and cleaned_list:
             file_path = Path(path) / "failed_lint_report.txt"
-            file_path.write_text("\n".join(failed_ut))
+            file_path.write_text("\n".join(cleaned_list))
 
     def create_json_output(self):
         """Creates a JSON file output for lints"""

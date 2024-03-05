@@ -17,6 +17,10 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF103_is_valid_field
     FIELD_TYPES,
     IsValidFieldTypeValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF104_is_valid_group_field import (
+    INCIDENT_FIELD_GROUP,
+    IsValidGroupFieldValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -193,3 +197,39 @@ def test_IsValidFieldTypeValidator_is_valid():
             for result in results
         ]
     )
+
+
+def test_IsValidGroupFieldValidator_is_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'group' field is not valid
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["group"], [2]),
+        create_incident_field_object(["group"], [0]),
+    ]
+
+    results = IsValidGroupFieldValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert all([result.message == "Group 2 is not a group field" for result in results])
+
+
+def test_IsValidGroupFieldValidator_fix():
+    """
+    Given:
+        - invalid IncidentField that 'group' field is not 0
+    When:
+        - run fix method
+    Then:
+        - Ensure the fix message as expected
+        - Ensure the field `group` is set to 0
+    """
+    incident_field = create_incident_field_object(["group"], [1])
+    result = IsValidGroupFieldValidator().fix(incident_field)
+    assert result.message == f"`group` field is set to {INCIDENT_FIELD_GROUP}"
+    assert incident_field.data["group"] == INCIDENT_FIELD_GROUP

@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
@@ -338,7 +339,7 @@ def create_incident_type_object(
 
 def create_incident_field_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> IncidentField:
     """Creating an incident_field object with altered fields from a default incident_field json structure.
 
     Args:
@@ -352,7 +353,7 @@ def create_incident_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_incident_field(name="incident_field", content=json_content)
-    return BaseContent.from_path(Path(pack.incident_fields[0].path))
+    return BaseContent.from_path(Path(pack.incident_fields[0].path))  # type: ignore
 
 
 def create_report_object(

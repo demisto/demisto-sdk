@@ -23,8 +23,22 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF101_is_valid_conte
             1,
             [
                 (
-                    "The words: case cannot be used as a name.\n"
-                    "To fix the problem, remove the words case, "
+                    "The words: [case] cannot be used as a name.\n"
+                    "To fix the problem, remove the words [case], "
+                    "or add them to the whitelist named argsExceptionsList in:\n"
+                    "https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/servicemodule_test.go#L8273"
+                )
+            ],
+        ),
+        (
+            [
+                create_incident_field_object(["name", "cliName"], ["case incident 1", "caseincident1"]),
+            ],
+            1,
+            [
+                (
+                    "The words: [case, incident] cannot be used as a name.\n"
+                    "To fix the problem, remove the words [case, incident], "
                     "or add them to the whitelist named argsExceptionsList in:\n"
                     "https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/servicemodule_test.go#L8273"
                 )
@@ -37,6 +51,23 @@ def test_IsValidNameAndCliNameValidator_is_valid(
     expected_number_of_failures: int,
     expected_msgs: List[str],
 ):
+    '''
+    Given:
+        - IncidentFields content items
+          Case 1:
+            - IncidentField with bad word in field `name`
+            - IncidentField with valid field `name`
+          Case 2:
+            - IncidentField with two bad words in field `name`
+    When:
+        - run is_valid method
+    Then:
+        Case 1:
+            - Ensure the error message is as expected
+            - Ensure number of failure is as expected
+        Case 2:
+            - Ensure the error message is as expected with the bad words list
+    '''
     results = IsValidNameAndCliNameValidator().is_valid(content_items=content_items)
     assert len(results) == expected_number_of_failures
     assert all(
@@ -48,10 +79,19 @@ def test_IsValidNameAndCliNameValidator_is_valid(
 
 
 def test_IsValidContentFieldValidator_is_valid():
+    '''
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'content' field is set to False
+    '''
     content_items: List[IncidentField] = [
         create_incident_field_object(["content"], [False]),
         create_incident_field_object(["content"], [True]),
-    ]  # type: ignore
+    ]
 
     results = IsValidContentFieldValidator().is_valid(content_items)
     assert len(results) == 1
@@ -61,7 +101,16 @@ def test_IsValidContentFieldValidator_is_valid():
 
 
 def test_IsValidContentFieldValidator_fix():
-    incident_field: IncidentField = create_incident_field_object(["content"], [False])  # type: ignore
+    '''
+    Given:
+        - invalid IncidentField that its 'content' field is set to False
+    When:
+        - run fix method
+    Then:
+        - Ensure the fix message as expected
+        - Ensure the field `content` is set to true
+    '''
+    incident_field = create_incident_field_object(["content"], [False])  # type: ignore
     result = IsValidContentFieldValidator().fix(incident_field)
     assert result.message == "Content field is set to true."
     assert incident_field.data["content"]

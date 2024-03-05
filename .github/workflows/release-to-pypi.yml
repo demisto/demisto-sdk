@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Publish SDK to PyPi
+      - name: Poetry build
         run: |
           poetry build
 

@@ -25,7 +25,7 @@ jobs:
             echo "Branch name $branch does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
             exit 1
           else
-            echo "branch name $branch is valid"
+            echo "branch name $branch is valid, releasing the SDK into pypi"
           fi
 
       - name: Python ${{ matrix.python-version }} - Setup Environment

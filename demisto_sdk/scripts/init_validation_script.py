@@ -159,6 +159,7 @@ $supported_content_types
 $class_declaration
     error_code = "$error_code"
     description = "$error_description"
+    rationale = "$rationale"
     error_message = "$error_message"$fix_message
     related_field = "$related_field"
     is_auto_fixable = $is_auto_fixable$expected_git_statuses$support_deprecated$related_files
@@ -202,6 +203,7 @@ class ValidationInitializer:
         """
         self.initialize_error_code()
         self.initialize_error_description()
+        self.initialize_validate_rationale()
         self.initialize_error_message()
         self.initialize_validator_related_field()
 
@@ -237,6 +239,16 @@ class ValidationInitializer:
         self.related_field = str(
             input(
                 "Please enter the error's related_field or press enter to leave blank for now: "
+            )
+        )
+
+    def initialize_validate_rationale(self):
+        """
+        Request the rationale from the user.
+        """
+        self.rationale = str(
+            input(
+                "Please enter the rationale for this validation or press enter to leave blank for now: "
             )
         )
 
@@ -572,6 +584,7 @@ Fill the content types as the numbers they appear as: """
                 class_declaration=self.class_declaration,
                 error_code=self.error_code,
                 error_description=self.error_description,
+                rationale=self.rationale,
                 error_message=self.error_message,
                 fix_message=self.fix_message,
                 related_field=self.related_field,

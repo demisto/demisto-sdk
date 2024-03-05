@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List
@@ -6,9 +5,9 @@ from typing import Iterable, List
 from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        FixResult,
-        ValidationResult,
+    BaseValidator,
+    FixResult,
+    ValidationResult,
 )
 
 ContentTypes = IncidentField
@@ -23,7 +22,6 @@ class IsValidSystemFlagValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = True
     related_file_type = [RelatedFileType.JSON]
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -32,11 +30,8 @@ class IsValidSystemFlagValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                content_item.data.get("system")
-            )
+            if (content_item.data.get("system"))
         ]
-    
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         content_item.data["system"] = False
@@ -45,4 +40,3 @@ class IsValidSystemFlagValidator(BaseValidator[ContentTypes]):
             message=self.fix_message,
             content_object=content_item,
         )
-            

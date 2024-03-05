@@ -13,6 +13,10 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF101_is_valid_conte
 from demisto_sdk.commands.validate.validators.IF_validators.IF102_is_valid_system_flag import (
     IsValidSystemFlagValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF103_is_valid_field_type import (
+    FIELD_TYPES,
+    IsValidFieldTypeValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -163,3 +167,29 @@ def test_IsValidSystemFlagValidator_fix():
     result = IsValidSystemFlagValidator().fix(incident_field)
     assert result.message == "`system` field is set to false"
     assert not incident_field.data["system"]
+
+
+def test_IsValidFieldTypeValidator_is_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'type' field is not valid
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type"], ["test"]),
+        create_incident_field_object(["type"], ["html"]),
+    ]
+
+    results = IsValidFieldTypeValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert all(
+        [
+            result.message
+            == f"Type: `test` is not one of available types.\navailable types: {FIELD_TYPES}"
+            for result in results
+        ]
+    )

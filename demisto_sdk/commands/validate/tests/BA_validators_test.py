@@ -1170,6 +1170,31 @@ def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg)
 def test_IsEntityNameContainExcludedWordValidator(
     content_items, expected_number_of_failures, expected_error_message
 ):
+    """
+    Given
+    - Case 1: Content item of type 'Integration' which contains a valid entity name.
+    - Case 2: Content item of type 'Integration' which contains an invalid entity name.
+    - Case 3: Content item of type 'Playbook' which contains a valid entity name.
+    - Case 4: Content item of type 'Playbook' which contains an invalid entity name.
+
+    - Case 5: Content item of type 'Script' which contains a valid entity name.
+    - Case 6: Content item of type 'Script' which contains an invalid entity name.
+
+    - Case 7: Content item of type 'Classifier' which contains a valid entity name.
+    - Case 8: Content item of type 'Classifier' which contains an invalid entity name.
+
+    When
+    - Running the IsEntityNameContainExcludedWordValidator validation.
+    Then
+    - Case 1: Don't fail the validation.
+    - Case 2: Fail the validation with a relevant message containing 'name' field.
+    - Case 3: Don't fail the validation.
+    - Case 4: Fail the validation with a relevant message containing 'name' field.
+    - Case 5: Don't fail the validation.
+    - Case 6: Fail the validation with a relevant message containing 'name' field.
+    - Case 7: Don't fail the validation.
+    - Case 8: Fail the validation with a relevant message containing 'name' field.
+    """
     results = IsEntityNameContainExcludedWordValidator().is_valid(
         content_items=content_items
     )

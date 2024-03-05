@@ -526,20 +526,13 @@ class ContributionConverter:
             self.contribution_items_version_note += (
                 ">\n"
                 "> **For the Reviewer:**\n"
-                "> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand"
-                " the changes the contributor intended to contribute, and **solve the conflicts accordingly**.\n"
-                "> 2. In case improvements are needed, instruct the contributor to edit the code through the "
-                "**GitHub Codespaces** and **Not through the XSOAR UI**.\n"
-            )
-
-            self.contribution_items_version_note += (
-                f">\n"
-                f"> **For the Contributor:**\n @{self.gh_user}\n"
-                f"> In case you are requested by your reviewer to improve the code or to make changes, submit "
-                f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
-                f">\n"
-                f"> **To use the GitHub Codespaces, see the following "
-                f"[link](https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-codespace) for more information.**\n"
+                "> 1. Currently the diff you see on Github is between the contribution original version and the contribution changes "
+                "since the contribution was made on an outdated version.\n"
+                "> 2. You will see the diff between the contribution changes and Content master only after you fix all conflicts."
+                "> 3. Fix conflicts only after completing the review process "
+                "and once the contributor has finished resubmitting changes.\n"
+                "> 4. For more details see "
+                "Confluence page [link](https://confluence-dc.paloaltonetworks.com/display/DemistoContent/Conducting+Code+Review).\n"
             )
 
     def content_item_to_package_format(

@@ -1253,7 +1253,7 @@ def test_ValidPackNameValidator_is_valid(content_items, old_content_items, expec
         ),
     ],
 )
-def test_IdChangedValidator_fix(content_item, expected_id, expected_fix_msg):
+def test_PackNameValidator_fix(content_item, expected_id, expected_fix_msg):
     """
     Given
         - content_item.

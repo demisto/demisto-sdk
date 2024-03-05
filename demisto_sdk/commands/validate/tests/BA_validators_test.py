@@ -46,6 +46,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
+    IsEntityTypeInEntityNameValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import (
     ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
@@ -1022,6 +1025,108 @@ def test_IsValidVersionValidator_fix():
         == "Updated the content item version to -1."
     )
     assert content_item.version == -1
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_msg",
+    [
+        pytest.param(
+            [
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test v1", "Testv1"],
+                ),
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test Integration", "TestIntegration"],
+                ),
+            ],
+            "The following fields: name, display shouldn't contain the word 'Integration'.",
+            id="Case 1: Integration in name or display (valid and invalid)",
+        ),
+        pytest.param(
+            [
+                create_script_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_script_object(
+                    paths=["name"],
+                    values=["Test Script"],
+                ),
+            ],
+            "The following field: name shouldn't contain the word 'Script'.",
+            id="Case 2: Script in name or display (valid and invalid)",
+        ),
+        pytest.param(
+            [
+                create_playbook_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_playbook_object(
+                    paths=["name"],
+                    values=["Test Playbook"],
+                ),
+            ],
+            "The following field: name shouldn't contain the word 'Playbook'.",
+            id="Case 3: Playbook in name or display (valid and invalid)",
+        ),
+        pytest.param(
+            [
+                create_playbook_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_script_object(
+                    paths=["name"],
+                    values=["Test v1"],
+                ),
+                create_integration_object(
+                    paths=["name", "display"],
+                    values=["Test v1", "Testv1"],
+                ),
+            ],
+            "",
+            id="Case 4: All content items are valid",
+        ),
+    ],
+)
+def test_IsEntityTypeInEntityNameValidator_is_valid(content_items, expected_msg):
+    """
+    Given
+    - Case 1: Two content items of type 'Integration' are validated.
+        - The first integration doest not have its type in 'name' and 'display' fields.
+        - The second integration does have its type in 'name' and 'display' fields.
+    - Case 2: Two content items of type 'Script' are validated.
+        - The first script doest not have its type in 'name' field.
+        - The second script does have its type in 'name' field.
+    - Case 3: Two content items of type 'Playbook' are validated.
+        - The first playbook doest not have its type in 'name' field.
+        - The second playbook does have its type in 'name' field.
+    - Case 4:
+        - All content items are valid.
+    When
+    - Running the IsEntityTypeInEntityNameValidator validation.
+    Then
+    - Case 1:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' and 'display' fields.
+    - Case 2:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' field.
+    - Case 3:
+        - Don't fail the validation.
+        - Fail the validation with a relevant message containing 'name' field.
+    - Case 4:
+        - Don't fail the validation and is_valid function return empty array.
+    """
+    result = IsEntityTypeInEntityNameValidator().is_valid(content_items)
+    if result:
+        assert result[0].message == expected_msg
+        assert len(result) == 1
+    else:
+        assert len(result) == 0
 
 
 @pytest.mark.parametrize(

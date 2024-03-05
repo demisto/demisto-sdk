@@ -81,7 +81,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **-v, --verbose**
 
-    Verbose output - The Argument -v is deprecated. Please use --console-log-threshold or --file-log-threshold instead.
+    Verbose output - The argument -v is deprecated. Use --console-log-threshold or --file-log-threshold instead.
 
 * **--input-config-file**
 

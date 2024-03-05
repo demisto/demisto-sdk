@@ -81,7 +81,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **-v, --verbose**
 
-    Verbose output
+    Verbose output - The Argument -v is deprecated. Please use --console-log-threshold or --file-log-threshold instead.
 
 * **--input-config-file**
 
@@ -94,6 +94,14 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 * **-x, --xsiam**
 
     uploads the pack to a XSIAM server. Must be used together with -z
+
+* **--console-log-threshold**
+
+    Minimum logging threshold for the console logger. Possible values: DEBUG, INFO, WARNING, ERROR.
+
+* **--file-log-threshold**
+
+    Minimum logging threshold for the file logger. Possible values: DEBUG, INFO, WARNING, ERROR.
 
 ### Examples
 ```

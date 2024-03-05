@@ -18,7 +18,7 @@ jobs:
           
           branch=$(git rev-parse --abbrev-ref HEAD)
           if [[ ! "$branch" =~ $pattern ]]; then
-            echo "Branch name "$branch" does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
+            echo "Branch name $branch does not match the pattern. do not use release-sdk-to-pypi on non-release branch"
             exit 1
           fi
 

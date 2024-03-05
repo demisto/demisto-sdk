@@ -76,18 +76,6 @@ ContentTypes = Union[
 ]
 
 
-def name_does_contain_excluded_word(content_item: ContentTypes) -> bool:
-
-    lowercase_name = content_item.display_name.lower()
-
-    return any(
-        (
-            excluded_word in lowercase_name
-            for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS
-        )
-    )
-
-
 class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
     error_code = "BA111"
     description = "Checks whether the name of a content item contains an excluded word."
@@ -108,5 +96,16 @@ class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (name_does_contain_excluded_word(content_item))
+            if (self.name_does_contain_excluded_word(content_item))
         ]
+
+    @staticmethod
+    def name_does_contain_excluded_word(content_item: ContentTypes) -> bool:
+        lowercase_name = content_item.display_name.lower()
+
+        return any(
+            (
+                excluded_word in lowercase_name
+                for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS
+            )
+        )

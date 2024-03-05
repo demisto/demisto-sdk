@@ -18,7 +18,7 @@ jobs:
       - name: Check branch name is a release branch
         run: |
           pattern='(v[0-9]+\.[0-9]+\.[0-9]+|[0-9]+\.[0-9]+\.[0-9]+)'
-          
+
           branch=${{ steps.branch-name.outputs.current_branch }}
           echo "current branch is $branch"
           if [[ ! "$branch" =~ $pattern ]]; then

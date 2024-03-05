@@ -1184,7 +1184,8 @@ class LintManager:
                 key.startswith("fail") and "mypy" not in key
             ):  # TODO remove this when reduce the number of failed `mypy` packages.
                 failed_ut = failed_ut.union(lint_status[key])
-        if path and failed_ut:
+        cleaned_list = [str(item) for item in failed_ut if item is not None]
+        if path and cleaned_list:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text("\n".join(failed_ut))
 

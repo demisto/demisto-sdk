@@ -1155,8 +1155,7 @@ class LintManager:
         if failed:
             logger.info("Failed packages:")
         for fail_pack in failed:
-            if fail_pack:
-                logger.info(f"[red]{wrapper_fail_pack.fill(fail_pack)}[/red]")
+            logger.info(f"[red]{wrapper_fail_pack.fill(fail_pack)}[/red]")
 
     @staticmethod
     def _create_failed_packs_report(lint_status: dict, path: str):
@@ -1184,9 +1183,10 @@ class LintManager:
                 key.startswith("fail") and "mypy" not in key
             ):  # TODO remove this when reduce the number of failed `mypy` packages.
                 failed_ut = failed_ut.union(lint_status[key])
-        if path and failed_ut:
+        cleaned_list = [str(item) for item in failed_ut if item is not None]
+        if path and cleaned_list:
             file_path = Path(path) / "failed_lint_report.txt"
-            file_path.write_text("\n".join(failed_ut))
+            file_path.write_text("\n".join(cleaned_list))
 
     def create_json_output(self):
         """Creates a JSON file output for lints"""

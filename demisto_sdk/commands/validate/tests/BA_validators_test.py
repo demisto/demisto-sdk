@@ -17,6 +17,8 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_job_object,
     create_layout_object,
     create_list_object,
+    create_metadata_object,
+    create_old_file_pointers,
     create_outgoing_mapper_object,
     create_parsing_rule_object,
     create_playbook_object,
@@ -27,7 +29,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_wizard_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
-    create_metadata_object
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_version import (
     IsValidVersionValidator,
@@ -1205,15 +1206,64 @@ def test_IsEntityNameContainExcludedWordValidator(
     assert len(results) == expected_number_of_failures
     if results:
         assert results[0].message == expected_error_message
-        
+
 @pytest.mark.parametrize(
-    "content_items, expected_msg",
+    "content_items, old_content_items, expected_number_of_failures, expected_msgs",
     [
         (
-            create_metadata_object(paths=["name"], values=["changedName"]),
-            "stammm"
+            [create_metadata_object(paths=["name"], values=["changedName"]),create_metadata_object()],
+            [create_metadata_object(), create_metadata_object()],
+            1,
+            ["ID of content item was changed from HelloWorld to changedName, please undo."],
         ),
     ],
 )
-def test_ValidPackNameValidator_is_valid(content_items, expected_msg):
-        results = PackNameValidator().is_valid([content_items])
+def test_ValidPackNameValidator_is_valid(content_items, old_content_items, expected_number_of_failures, expected_msgs):
+    """
+    Given:
+    content_items (Pack).
+        - Case 1: A Pack content item where its name has changed.
+        - Case 2: A Pack content item where its name hasn't changed.
+
+    When:
+        - Calling the PackNameValidator is_valid function.
+
+    Then:
+        - Make sure the right amount of pack name failed, and that the right error message is returned.
+        - Case 1: Should fail.
+        - Case 2: Shouldn't fail.
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    results = PackNameValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+    
+@pytest.mark.parametrize(
+    "content_item, expected_id, expected_fix_msg",
+    [
+        (
+            create_integration_object(paths=["name"], values=["changedName"]),
+            "changedName",
+            "Changing name back to changedName.",
+        ),
+    ],
+)
+def test_IdChangedValidator_fix(content_item, expected_id, expected_fix_msg):
+    """
+    Given
+        - content_item.
+        - Case 1: A Pack content item where its name has changed.
+    When
+        - Calling the PackNameValidator fix function.
+    Then
+        - Make sure the name was changed to match the old_content_item name, and that the right fix message is returned.
+    """
+    pack_validator = PackNameValidator()
+    pack_validator.old_name[content_item.name] = expected_id
+    assert pack_validator.fix(content_item).message == expected_fix_msg
+    assert content_item.name == expected_id

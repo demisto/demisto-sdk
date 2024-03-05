@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import dotenv
 from demisto_client.demisto_api.rest import ApiException
 from lxml import etree
+from requests.exceptions import ConnectionError, Timeout
 
 from demisto_sdk.commands.common import docker_helper
 from demisto_sdk.commands.common.clients import (
@@ -91,28 +92,32 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
                 f"{docker_prefix}/{path.relative_to(CONTENT_PATH.absolute())}"
             )
 
-    if not COMMON_SERVER_PYTHON_PATH.exists():
+    if (
+        f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"
+        not in docker_python_path
+    ):
         try:
             common_server_python_contnet = TextFile.read_from_github_api(
-                COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py", verify_ssl=False
+                str(COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py"),
+                verify_ssl=False,
             )
-        except FileReadError:
+        except (FileReadError, ConnectionError, Timeout):
             logger.error(
-                f'Could not retrieve common server python content from content github from path {COMMON_SERVER_PYTHON_PATH}/CommonServerUserPython.py"'
+                f"Could not retrieve common server python content from content github from path {COMMON_SERVER_PYTHON_PATH}/CommonServerUserPython.py"
             )
-            raise RuntimeError("CommonServerPython could not be read")
+            raise RuntimeError(
+                "Could not set debug-in-docker on VSCode. Either CONTENT_PATH is not set properly or CommonServerPython could not be read"
+            )
+
+        Path(COMMON_SERVER_PYTHON_PATH).mkdir(parents=True, exist_ok=True)
 
         TextFile.write(
             common_server_python_contnet,
             output_path=COMMON_SERVER_PYTHON_PATH / "CommonServerUserPython.py",
         )
 
-    if (
-        f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"
-        not in docker_python_path
-    ):
-        raise RuntimeError(
-            "Could not set debug-in-docker on VSCode. Either CONTENT_PATH is not set properly or CommonServerPython could not be read "
+        docker_python_path.append(
+            f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"
         )
 
     return docker_python_path
@@ -616,9 +621,13 @@ def add_demistomock_and_commonserveruser(integration_script: IntegrationScript):
             target_demisto_mock_path,
         )
     else:
-        demisto_mock_content = TextFile.read_from_github_api(
-            "/Tests/demistomock/demistomock.py", verify_ssl=False
-        )
+        try:
+            demisto_mock_content = TextFile.read_from_github_api(
+                "/Tests/demistomock/demistomock.py", verify_ssl=False
+            )
+        except (FileReadError, ConnectionError, Timeout):
+            raise RuntimeError("Could not read demistomock.py from Github")
+
         TextFile.write(demisto_mock_content, output_path=target_demisto_mock_path)
 
     (integration_script.path.parent / "CommonServerUserPython.py").touch()

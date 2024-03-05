@@ -99,8 +99,7 @@ class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
             if (self.name_does_contain_excluded_word(content_item))
         ]
 
-    @staticmethod
-    def name_does_contain_excluded_word(content_item: ContentTypes) -> bool:
+    def name_does_contain_excluded_word(self, content_item: ContentTypes) -> bool:
         lowercase_name = content_item.display_name.lower()
 
         return any(

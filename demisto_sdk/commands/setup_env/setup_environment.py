@@ -93,7 +93,7 @@ def get_docker_python_path(docker_prefix: str) -> List[str]:
             )
 
     if (
-        f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"
+        f"{docker_prefix}/Packs/Base/Scripts/CommonServerPython"  # CommonServerPython does not exist locally
         not in docker_python_path
     ):
         try:

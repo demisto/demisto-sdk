@@ -27,6 +27,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_wizard_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
+    create_metadata_object
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_version import (
     IsValidVersionValidator,
@@ -52,6 +53,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type
 from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import (
     ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA114_is_valid_pack_name import (
+    PackNameValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
     CliNameMatchIdValidator,
@@ -1201,3 +1205,15 @@ def test_IsEntityNameContainExcludedWordValidator(
     assert len(results) == expected_number_of_failures
     if results:
         assert results[0].message == expected_error_message
+        
+@pytest.mark.parametrize(
+    "content_items, expected_msg",
+    [
+        (
+            create_metadata_object(paths=["name"], values=["changedName"]),
+            "stammm"
+        ),
+    ],
+)
+def test_ValidPackNameValidator_is_valid(content_items, expected_msg):
+        results = PackNameValidator().is_valid([content_items])

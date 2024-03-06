@@ -1,10 +1,8 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, cast
+from typing import Dict, Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
-from demisto_sdk.commands.common.tools import get_pack_name
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -14,16 +12,13 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Pack
 
-
 class PackNameValidator(BaseValidator[ContentTypes]):
     error_code = "BA114"
     description = "Validate that the name of the pack was not changed."
-    error_message = "ID of content item was changed from {0} to {1}, please undo."
-    fix_message = "Changing name back to {0}."
+    error_message = "Pack name was changed from {0} to {1}, please undo."
+    fix_message = "Changing pack name back to {0}."
     related_field = "name"
     is_auto_fixable = True
-    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED, GitStatuses.ADDED]
-    related_file_type = [RelatedFileType.YML]
     old_name: Dict[str, str] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

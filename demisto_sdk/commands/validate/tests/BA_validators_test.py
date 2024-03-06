@@ -1214,7 +1214,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             [create_metadata_object(paths=["name"], values=["changedName"]),create_metadata_object()],
             [create_metadata_object(), create_metadata_object()],
             1,
-            ["ID of content item was changed from HelloWorld to changedName, please undo."],
+            ["Pack name was changed from HelloWorld to changedName, please undo."],
         ),
     ],
 )
@@ -1247,9 +1247,9 @@ def test_ValidPackNameValidator_is_valid(content_items, old_content_items, expec
     "content_item, expected_id, expected_fix_msg",
     [
         (
-            create_integration_object(paths=["name"], values=["changedName"]),
+            create_metadata_object(paths=["name"], values=["changedName"]),
             "changedName",
-            "Changing name back to changedName.",
+            "Changing pack name back to changedName.",
         ),
     ],
 )

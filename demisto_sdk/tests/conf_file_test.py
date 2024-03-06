@@ -49,7 +49,7 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
         # pre-conf file - see validate fail on docker related issue
         runner.invoke(
             main,
-            f"validate -i {integration.yml.path}--run-old-validate --skip-new-validate",
+            f"validate -i {integration.yml.path} --run-old-validate --skip-new-validate",
         )
         assert all(
             [
@@ -70,7 +70,7 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
         # post-conf file - see validate not fail on docker related issue as we are skipping
         runner.invoke(
             main,
-            f"validate -i {integration.yml.path}--run-old-validate --skip-new-validate",
+            f"validate -i {integration.yml.path} --run-old-validate --skip-new-validate",
         )
         assert all(
             [

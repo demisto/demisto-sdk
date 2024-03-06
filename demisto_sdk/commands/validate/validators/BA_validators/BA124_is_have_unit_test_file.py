@@ -20,7 +20,7 @@ ContentTypes = Union[Integration, Script]
 class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
     error_code = "BA124"
     description = "Validate that the script / integration has a unit test file."
-    error_message = ""
+    error_message = "The given {0} is missing a unit test file, please make sure to add one with the following name {2}."
     related_field = "test"
     is_auto_fixable = False
 
@@ -28,7 +28,10 @@ class IsHaveUnitTestFileValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(
+                    content_item.content_type,
+                    str(content_item.path).replace("yml", "_test.py"),
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

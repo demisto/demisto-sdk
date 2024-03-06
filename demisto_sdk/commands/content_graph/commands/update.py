@@ -111,9 +111,12 @@ def update_content_graph(
     if is_external_repo:
         packs_to_update = get_all_repo_pack_ids()
     packs_to_update = list(packs_to_update) if packs_to_update else []
+    logger.info("init builder.")
     builder = ContentGraphBuilder(content_graph_interface)
+    logger.info("init database.")
 
     builder.init_database()
+    logger.info("database initialized.")
     if imported_path:
         # Import from provided path
         content_graph_interface.import_graph(imported_path)

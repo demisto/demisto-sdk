@@ -21,6 +21,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF104_is_valid_group
     INCIDENT_FIELD_GROUP,
     IsValidGroupFieldValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF105_is_cli_name_field_alphanumeric import (
+    IsCliNameFieldAlphanumericValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -233,3 +236,28 @@ def test_IsValidGroupFieldValidator_fix():
     result = IsValidGroupFieldValidator().fix(incident_field)
     assert result.message == f"`group` field is set to {INCIDENT_FIELD_GROUP}"
     assert incident_field.data["group"] == INCIDENT_FIELD_GROUP
+
+
+def test_IsCliNameFieldAlphanumericValidator_is_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'cliName' value is non-alphanumeric
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["cliName"], ["test1234"]),
+        create_incident_field_object(["cliName"], ["test_1234"]),
+    ]
+
+    results = IsCliNameFieldAlphanumericValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert all(
+        [
+            result.message == "Field `cliName` contains non-alphanumeric letters"
+            for result in results
+        ]
+    )

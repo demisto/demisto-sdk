@@ -1,5 +1,5 @@
 ignorable_errors = [
-    "BA101", "BA105", "BA106", "BA116", "BA118", 
+    "BA101", "BA105", "BA106", "BA116", "BA118",
     "DO104",
     "IN108", "IN130",
     "PA107", "PA108", "PA111", "PA115", "PA128", "PA130",
@@ -9,7 +9,7 @@ ignorable_errors = [
 
 [use_git]
 select = [
-    "BA101", "BA105", "BA106", "BA116", "BA118", 
+    "BA101", "BA105", "BA106", "BA116", "BA118",
     "DO104",
     "IN108", "IN130",
     "PA107", "PA108", "PA111", "PA115", "PA128", "PA130",
@@ -20,7 +20,7 @@ warning = []
 
 [validate_all]
 select = [
-    "BA101", "BA105", "BA106", "BA116", "BA118", 
+    "BA101", "BA105", "BA106", "BA116", "BA118",
     "DO104",
     "IN108", "IN130",
     "PA107", "PA108", "PA111", "PA115", "PA128", "PA130",

@@ -785,7 +785,7 @@ class OldValidateManager:
         if file_type == FileType.MODELING_RULE_TEST_DATA:
             file_path = file_path.replace("_testdata.json", ".yml")
         if file_path.endswith(".xif"):
-            file_path = file_path.replace(".xif", ".yml")
+            file_path = file_path.replace(".xif", ".yml"),
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)

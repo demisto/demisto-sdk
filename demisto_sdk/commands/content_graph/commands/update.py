@@ -36,15 +36,6 @@ def should_update_graph(
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
-    logger.info(f"[test]: in should_update_graph, first value: {content_graph_interface.is_alive()}")
-    logger.info(f"[test]: in should_update_graph, second value: {imported_path=}")
-    logger.info(f"[test]: in should_update_graph, third value: {packs_to_update=}")
-    logger.info(f"[test]: in should_update_graph, fourth value: {use_git=}")
-    logger.info(f"[test]: in should_update_graph, fifth value: {content_graph_interface.commit}")
-    logger.info(f"[test]: in should_update_graph, sixth value: {git_util.get_all_changed_pack_ids(content_graph_interface.commit)}")
-    logger.info(f"[test]: in should_update_graph, seventh value: {content_graph_interface.content_parser_latest_hash != content_graph_interface._get_latest_content_parser_hash()}")
-    logger.info(f"[test]: in should_update_graph, content_parser_latest_hash: {content_graph_interface.content_parser_latest_hash}")
-    logger.info(f"[test]: in should_update_graph, content_parser_latest_hash function: {content_graph_interface._get_latest_content_parser_hash()}")
     return any(
         (
             not content_graph_interface.is_alive(),  # if neo4j service is not alive, we need to update
@@ -101,15 +92,14 @@ def update_content_graph(
         return
     logger.info("[test] passed the not should_update_graph part.")
 
-    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
-        logger.info(os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"))
-        logger.info(f' the type of the DEMISTO_SDK_GRAPH_FORCE_CREATE is {type(os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"))}')
-        is_equal_str = os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE") == "false"
-        logger.info(f"{is_equal_str=}")
+    if (force_create := os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")) and force_create != "false":
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )
+        logger.info("setting DEMISTO_SDK_GRAPH_FORCE_CREATE to false.")
+        os.environ["DEMISTO_SDK_GRAPH_FORCE_CREATE"] = "false"
+        logger.info(os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"))
         return
 
     if not imported_path and not use_git:

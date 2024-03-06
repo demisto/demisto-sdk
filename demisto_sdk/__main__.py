@@ -777,14 +777,14 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Wether to skip validations based on their support level or not.",
 )
 @click.option(
-    "--skip-old-validate",
+    "--run-old-validate",
     is_flag=True,
     show_default=True,
     default=False,
     help="Wether to skip the old validate flow.",
 )
 @click.option(
-    "--run-new-validate",
+    "--skip-new-validate",
     is_flag=True,
     show_default=True,
     default=False,
@@ -824,7 +824,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
         exit_code = 0
-        if not kwargs["skip_old_validate"]:
+        if kwargs["run_old_validate"]:
             validator = OldValidateManager(
                 is_backward_check=not kwargs["no_backward_comp"],
                 only_committed_files=kwargs["post_commit"],
@@ -855,7 +855,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 specific_validations=kwargs.get("run_specific_validations"),
             )
             exit_code += validator.run_validation()
-        if kwargs["run_new_validate"]:
+        if not kwargs["skip_new_validate"]:
             validation_results = ResultWriter(
                 json_file_path=kwargs.get("json_file"),
             )

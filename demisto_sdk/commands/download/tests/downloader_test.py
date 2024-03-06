@@ -13,6 +13,8 @@ import pytest
 from urllib3.response import HTTPResponse
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_BASE_URL,
+    DEMISTO_KEY,
     JOBS_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
@@ -23,14 +25,21 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import get_child_files
 from demisto_sdk.commands.download.downloader import *
+from TestSuite.playbook import Playbook
 from TestSuite.test_tools import str_in_call_args_list
 
 TESTS_DATA_FOLDER = Path(__file__).parent / "tests_data"
 TESTS_ENV_FOLDER = Path(__file__).parent / "tests_env"
 
-# Avoid missing environment variables errors
-os.environ["DEMISTO_BASE_URL"] = "https://fake-xsoar-server.com"
-os.environ["DEMISTO_API_KEY"] = "fake_api_key"
+
+@pytest.fixture(autouse=True)
+def set_env_vars():
+    # Avoid missing environment variables errors
+    os.environ[DEMISTO_BASE_URL] = "https://fake-xsoar-server.com"
+    os.environ[DEMISTO_KEY] = "fake_api_key"
+    yield
+    os.environ.pop(DEMISTO_BASE_URL, None)
+    os.environ.pop(DEMISTO_KEY, None)
 
 
 def load_test_data(file_name: str, folder: str | None = None) -> dict:
@@ -1155,12 +1164,103 @@ def test_uuids_replacement_in_content_items(mocker):
 
     changed_uuids_count = 0
     for file_object in all_custom_content_objects.values():
-        if downloader.replace_uuid_ids(
+        if downloader.replace_uuid_ids_for_item(
             custom_content_object=file_object, uuid_mapping=uuid_mapping
         ):
             changed_uuids_count += 1
 
     assert changed_uuids_count == 7
+
+
+@pytest.mark.parametrize("content_item_name", ("Test: Test", "[Test] Test"))
+def test_uuids_replacement_in_content_items_with_special_character_names(
+    repo, mocker, content_item_name: str
+):
+    """
+    Given: A YAML-based content item name that contains special YAML characters
+          (that requires wrapping the string quotes)
+    When: Calling 'self.replace_uuid_ids' method.
+    Then: Ensure that the UUIDs are replaced properly and that the update YAML file is valid.
+    """
+    repo = repo.create_pack()
+    playbook_data = {
+        "name": content_item_name,
+        "id": "d470522f-0a68-43c7-a62f-224f04b2e0c9",
+    }
+    playbook: Playbook = repo.create_playbook(yml=playbook_data)
+
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
+    downloader = Downloader(
+        all_custom_content=True,
+        auto_replace_uuids=True,
+    )
+
+    file_name = playbook.obj_path.name
+    file_object = downloader.create_content_item_object(
+        file_name=file_name,
+        file_data=StringIO(safe_read_unicode(playbook.obj_path.read_bytes())),
+        _loaded_data=playbook_data,
+    )
+    custom_content_objects = {file_name: file_object}
+
+    uuid_mapping = downloader.create_uuid_to_name_mapping(
+        custom_content_objects=custom_content_objects
+    )
+    downloader.replace_uuid_ids(
+        custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping
+    )
+    # Assert no warnings logged (error raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
+    assert logger_warning.call_count == 0
+    # Assert ID value is always in quotes
+    assert f"id: '{file_object['name']}'" in file_object["file"].getvalue()
+
+
+@pytest.mark.parametrize("quote_type", ("'", '"'))
+def test_uuids_replacement_in_content_items_with_quoted_id_field(
+    repo, mocker, quote_type: str
+):
+    """
+    Given: A YAML-based content item, with the ID surrounded in quotes on the file
+    When: Calling 'self.replace_uuid_ids' method.
+    Then: Ensure that the replaced ID is properly surrounded by quotes and doesn't have duplicate quotes.
+    """
+    repo = repo.create_pack()
+    playbook_data = {"id": "d470522f-0a68-43c7-a62f-224f04b2e0c9", "name": "Test"}
+    playbook: Playbook = repo.create_playbook(yml=playbook_data)
+
+    with playbook.obj_path.open("w") as f:
+        f.write(
+            f"id: {quote_type}{playbook_data['id']}{quote_type}\nname: {playbook_data['name']}"
+        )
+
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
+    downloader = Downloader(
+        all_custom_content=True,
+        auto_replace_uuids=True,
+    )
+
+    file_name = playbook.obj_path.name
+    file_object = downloader.create_content_item_object(
+        file_name=file_name,
+        file_data=StringIO(safe_read_unicode(playbook.obj_path.read_bytes())),
+        _loaded_data=playbook_data,
+    )
+    custom_content_objects = {file_name: file_object}
+
+    uuid_mapping = downloader.create_uuid_to_name_mapping(
+        custom_content_objects=custom_content_objects
+    )
+    downloader.replace_uuid_ids(
+        custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping
+    )
+    # Assert no warnings logged (error raised by 'get_file_details' in 'replace_uuid_ids_for_item' if YAML is invalid)
+    assert logger_warning.call_count == 0
+    # Assert ID value is always in quotes
+    assert (
+        file_object["file"].getvalue().splitlines()[0] == f"id: '{file_object['name']}'"
+    )
 
 
 def test_get_system_playbooks(mocker):

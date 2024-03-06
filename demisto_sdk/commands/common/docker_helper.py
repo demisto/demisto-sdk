@@ -19,6 +19,7 @@ from requests.exceptions import RequestException
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
+    DOCKER_REGISTRY_URL,
     DOCKERFILES_INFO_REPO,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -64,9 +65,11 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         try:
             DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:
-            msg = "Failed to init docker client. Please check that your docker daemon is running."
-            logger.error(f"{log_prompt} - {msg}")
-            raise DockerException(msg)
+            logger.warning(
+                f"{log_prompt} - Failed to init docker client. "
+                "This might indicate that your docker daemon is not running."
+            )
+            raise
         docker_user = os.getenv("DOCKERHUB_USER")
         docker_pass = os.getenv("DOCKERHUB_PASSWORD")
         if docker_user and docker_pass:
@@ -223,6 +226,14 @@ class DockerBase:
                 with open(tar_file_path.name, "rb") as byte_file:
                     container.put_archive("/", byte_file.read())
 
+    @retry(
+        times=3,
+        exceptions=(
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            DockerException,
+        ),
+    )
     def create_container(
         self,
         image: str,
@@ -234,13 +245,29 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
-        container: docker.models.containers.Container = (
-            init_global_docker_client().containers.create(
-                image=image, command=command, environment=environment, **kwargs
+        docker_client = init_global_docker_client()
+
+        try:
+            container: docker.models.containers.Container = (
+                docker_client.containers.create(
+                    image=image, command=command, environment=environment, **kwargs
+                )
             )
-        )
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            DockerException,
+        ) as e:
+            if container_name := kwargs.get("name"):
+                if container := docker_client.containers.get(
+                    container_id=container_name
+                ):
+                    container.remove(force=True)
+            raise e
+
         if files_to_push:
             self.copy_files_container(container, files_to_push)
+
         return container
 
     def push_image(self, image: str, log_prompt: str = ""):
@@ -253,9 +280,7 @@ class DockerBase:
         for _ in range(2):
             try:
 
-                test_image_name_to_push = image.replace(
-                    "docker-io.art.code.pan.run/", ""
-                )
+                test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
@@ -319,7 +344,7 @@ class DockerBase:
         )
         if os.getenv("CONTENT_GITLAB_CI"):
             container.commit(
-                repository=repository.replace("docker-io.art.code.pan.run/", ""),
+                repository=repository.replace(f"{DOCKER_REGISTRY_URL}/", ""),
                 tag=tag,
                 changes=self.changes[container_type],
             )
@@ -329,8 +354,8 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        if os.getenv("CONTENT_GITLAB_CI") and "code.pan.run" not in image:
-            return f"docker-io.art.code.pan.run/{image}"
+        if os.getenv("CONTENT_GITLAB_CI") and DOCKER_REGISTRY_URL not in image:
+            return f"{DOCKER_REGISTRY_URL}/{image}"
         return image
 
     def get_or_create_test_image(
@@ -634,7 +659,7 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
         repo, tag = image.split(":")
     if os.getenv("CONTENT_GITLAB_CI"):
         # we need to remove the gitlab prefix, as we query the API
-        repo = repo.replace("docker-io.art.code.pan.run/", "")
+        repo = repo.replace(f"{DOCKER_REGISTRY_URL}/", "")
     try:
         token = _get_docker_hub_token(repo)
         digest = _get_image_digest(repo, tag, token)

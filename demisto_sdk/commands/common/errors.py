@@ -11,13 +11,9 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
-    MODELING_RULE_ID_SUFFIX,
-    MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
-    PARSING_RULE_ID_SUFFIX,
-    PARSING_RULE_NAME_SUFFIX,
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -479,6 +475,10 @@ ERROR_CODE: Dict = {
     },
     "invalid_image_dimensions": {
         "code": "IM111",
+        "related_field": "image",
+    },
+    "svg_image_not_valid": {
+        "code": "IM112",
         "related_field": "image",
     },
     # IN - Integrations
@@ -1315,7 +1315,6 @@ ERROR_CODE: Dict = {
         "code": "ST112",
         "related_field": "",
     },
-    "invalid_yml_file": {"code": "ST113", "related_field": ""},
     # WD - Widgets
     "remove_field_from_widget": {
         "code": "WD100",
@@ -1578,18 +1577,18 @@ ALLOWED_IGNORE_ERRORS = (
 
 
 def get_all_error_codes() -> List:
-    error_codes = []
-    for error in ERROR_CODE:
-        error_codes.append(ERROR_CODE[error].get("code"))
-
-    return error_codes
+    return [error.get("code") for error in ERROR_CODE.values()]
 
 
 def get_error_object(error_code: str) -> Dict:
-    for error in ERROR_CODE:
-        if error_code == ERROR_CODE[error].get("code"):
-            return ERROR_CODE[error]
-    return {}
+    return next(
+        (
+            error_value
+            for error_value in ERROR_CODE.values()
+            if error_code == error_value.get("code")
+        ),
+        {},
+    )
 
 
 @decorator.decorator
@@ -2476,6 +2475,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def svg_image_not_valid(error_message):
+        return f"SVG image file is not valid: {error_message}"
+
+    @staticmethod
+    @error_code_decorator
     def image_in_package_and_yml():
         return (
             "Image in both yml and package, remove the 'image' " "key from the yml file"
@@ -3303,7 +3307,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_invalid_modules():
-        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+        return f"Module field can include only label from the following options: {', '.join(MODULES)}."
 
     @staticmethod
     @error_code_decorator
@@ -4286,22 +4290,22 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_modeling_rule_suffix_name(file_path, **kwargs):
+    def invalid_modeling_rule_suffix_name(file_path, id_suffix, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
-            message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{id_suffix}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod
     @error_code_decorator
-    def invalid_parsing_rule_suffix_name(file_path, **kwargs):
+    def invalid_parsing_rule_suffix_name(file_path, id_suffix, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
-            message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{id_suffix}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{PARSING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod
@@ -4369,7 +4373,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def using_unknown_content(content_name: str, unknown_content_names: List[str]):
+    def using_unknown_content(content_name: str, unknown_content_names: Set[str]):
         return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
 
     @staticmethod
@@ -4377,6 +4381,7 @@ class Errors:
     def multiple_packs_with_same_display_name(
         content_name: str, pack_display_names: List[str]
     ):
+        pack_display_names = [f"'{name}'" for name in pack_display_names]
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "
 
     @staticmethod

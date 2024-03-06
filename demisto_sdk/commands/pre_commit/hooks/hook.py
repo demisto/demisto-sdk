@@ -4,7 +4,11 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Set
 
+from packaging.version import Version
+
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.pre_commit.hooks.utils import get_property
+from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
 
 PROPERTIES_TO_DELETE = {"needs"}
 
@@ -14,26 +18,30 @@ class Hook:
         self,
         hook: dict,
         repo: dict,
-        mode: str = "",
-        all_files: bool = False,
-        input_mode: bool = False,
+        context: PreCommitContext,
     ) -> None:
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
         self.hook_index = self.hooks.index(self.base_hook)
         self.hooks.remove(self.base_hook)
-        self.mode = mode
-        self.all_files = all_files
-        self.input_mode = input_mode
+        self.mode = context.mode
+        self.all_files = context.all_files
+        self.input_mode = bool(context.input_files)
+        self.context = context
         self._set_properties()
+        self.exclude_irrelevant_files()
 
-    def prepare_hook(self, **kwargs):
+    def prepare_hook(self):
         """
         This method should be implemented in each hook.
         Since we removed the base hook from the hooks list, we must add it back.
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
         self.hooks.append(deepcopy(self.base_hook))
+
+    def exclude_irrelevant_files(self):
+        self._exclude_hooks_by_version()
+        self._exclude_hooks_by_support_level()
 
     def _set_files_on_hook(
         self, hook: dict, files: Iterable[Path], should_filter: bool = True
@@ -86,22 +94,6 @@ class Hook:
             and (not exclude_pattern or not re.search(exclude_pattern, str(file)))
         }  # only exclude if defined
 
-    @staticmethod
-    def get_property(hook: dict, mode: str, name: str, default=None):
-        """
-        Will get the given property from the base hook, taking mode into account
-        Args:
-            hook: the hook dict
-            mode: the mode to use
-            name: the key to get from the config
-            default: the default value to return
-        Returns: The value from the base hook
-        """
-        ret = None
-        if mode:
-            ret = hook.get(f"{name}:{mode}")
-        return ret or hook.get(name, default)
-
     def _get_property(self, name, default=None):
         """
         Will get the given property from the base hook, taking mode into account
@@ -110,7 +102,7 @@ class Hook:
             default: the default value to return
         Returns: The value from the base hook
         """
-        return self.get_property(self.base_hook, self.mode, name, default=default)
+        return get_property(self.base_hook, self.mode, name, default=default)
 
     def _set_properties(self):
         """
@@ -132,8 +124,46 @@ class Hook:
             if (prop := self._get_property(key)) is not None:
                 hook[key] = prop
         for key in keys_to_delete:
-            del hook[key]
+            hook.pop(key, None)
         self.base_hook = hook
+
+    def _exclude_hooks_by_version(self) -> None:
+        """
+        This function excludes the files that are not supported by the hook, according to the hook min_version property.
+        """
+        min_version = self._get_property("min_py_version")
+        self.base_hook.pop("min_py_version", None)
+        if not min_version:
+            return
+        files_to_exclude: Set[Path] = set()
+
+        for version, paths in self.context.python_version_to_files.items():
+            if Version(version) < Version(min_version):
+                files_to_exclude.update(path for path in paths)
+        if files_to_exclude:
+            join_files_string = join_files(files_to_exclude)
+            if self.base_hook.get("exclude"):
+                self.base_hook["exclude"] += f"|{join_files_string}"
+            else:
+                self.base_hook["exclude"] = join_files_string
+
+    def _exclude_hooks_by_support_level(self) -> None:
+        """This function excludes the hooks that are not supported by the support level of the file."""
+        support_levels = self._get_property("exclude_support_level")
+        self.base_hook.pop("exclude_support_level", None)
+        if not support_levels:
+            return
+        files_to_exclude: Set[Path] = set()
+        for support_level in support_levels:
+            files_to_exclude.update(
+                path for path in self.context.support_level_to_files[support_level]
+            )
+        if files_to_exclude:
+            join_files_string = join_files(files_to_exclude)
+            if self.base_hook.get("exclude"):
+                self.base_hook["exclude"] += f"|{join_files_string}"
+            else:
+                self.base_hook["exclude"] = join_files_string
 
 
 def join_files(files: Set[Path], separator: str = "|") -> str:

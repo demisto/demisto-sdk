@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
@@ -28,17 +29,23 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"object_id": "commonfields.id"})
+        super().field_mapping.update(
+            {"object_id": "commonfields.id", "version": "commonfields.version"}
+        )
         return super().field_mapping
 
-    @property
-    def docker_image(self) -> str:
-        return get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
+    @cached_property
+    def docker_image(self) -> DockerImage:
+        docker_image = (
+            get_value(self.yml_data, self.field_mapping.get("docker_image", ""), "")
+            or ""
+        )
+        return DockerImage(docker_image)
 
     @property
     def alt_docker_images(self) -> List[str]:
         return get_value(
-            self.yml_data, self.field_mapping.get("alt_dockerimages", []), []
+            self.yml_data, self.field_mapping.get("alt_docker_images", []), []
         )
 
     @property
@@ -60,7 +67,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         """Creates IMPORTS relationships with the API modules used in the integration."""
         code = self.code
         if not code:
-            raise ValueError("Integration code is not available")
+            raise ValueError(
+                f"Could not get integration code from {self.object_id} integration lying in folder {self.path.parent}"
+            )
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
         for api_module in api_modules:
             self.add_relationship(

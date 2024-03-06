@@ -40,15 +40,19 @@ GIT_PATH = Path(git_path())
 
 
 @pytest.fixture(autouse=True)
-def setup_method(mocker):
+def setup_method(mocker, tmp_path_factory):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
+    from demisto_sdk.commands.common.files.file import File
 
     bc.CONTENT_PATH = GIT_PATH
-    mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
+    mocker.patch.object(
+        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    )
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+    mocker.patch.object(
+        File,
+        "read_from_github_api",
         return_value={
             "docker_images": {
                 "python3": {
@@ -58,7 +62,6 @@ def setup_method(mocker):
             }
         },
     )
-    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -696,7 +699,9 @@ class TestUpdateContentGraph:
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
             assert all(
-                file.suffix == ".graphml" or file.name == "metadata.json"
+                file.suffix == ".graphml"
+                or file.name == "metadata.json"
+                or file.name == "depends_on.json"
                 for file in extracted_files
             )
 
@@ -794,7 +799,9 @@ class TestUpdateContentGraph:
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
             assert all(
-                file.suffix == ".graphml" or file.name == "metadata.json"
+                file.suffix == ".graphml"
+                or file.name == "metadata.json"
+                or file.name == "depends_on.json"
                 for file in extracted_files
             )
 

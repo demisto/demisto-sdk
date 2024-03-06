@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import (
@@ -26,6 +27,12 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_incident_type_object,
+    create_integration_object,
+    create_metadata_object,
+    create_playbook_object,
+)
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 
@@ -324,9 +331,9 @@ class TestParsersAndModels:
             dependency_ids={
                 "Github": ContentType.INCIDENT_TYPE,
                 "DevSecOps New Git PR": ContentType.INCIDENT_TYPE,
-                "isEqualString": ContentType.SCRIPT,
-                "isNotEmpty": ContentType.SCRIPT,
-                "getField": ContentType.SCRIPT,
+                "isEqualString": ContentType.BASE_SCRIPT,
+                "isNotEmpty": ContentType.BASE_SCRIPT,
+                "getField": ContentType.BASE_SCRIPT,
             },
         )
         model = Classifier.from_orm(parser)
@@ -399,8 +406,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DetectionsCount": ContentType.SCRIPT,
-                "DetectionsData": ContentType.SCRIPT,
+                "DetectionsCount": ContentType.BASE_SCRIPT,
+                "DetectionsData": ContentType.BASE_SCRIPT,
             },
         )
         model = Dashboard.from_orm(parser)
@@ -595,7 +602,7 @@ class TestParsersAndModels:
             parser.relationships,
             dependency_ids={
                 "Traps": ContentType.LAYOUT,
-                "Palo Alto Networks - Endpoint Malware Investigation": ContentType.PLAYBOOK,
+                "Palo Alto Networks - Endpoint Malware Investigation": ContentType.BASE_PLAYBOOK,
             },
         )
         model = IncidentType.from_orm(parser)
@@ -683,7 +690,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "URLReputation": ContentType.SCRIPT,
+                "URLReputation": ContentType.BASE_SCRIPT,
                 "url": ContentType.COMMAND,
                 "urlRep": ContentType.LAYOUT,
             },
@@ -807,7 +814,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "job-TestJob_playbook": ContentType.PLAYBOOK,
+                "job-TestJob_playbook": ContentType.BASE_PLAYBOOK,
             },
         )
         model = Job.from_orm(parser)
@@ -832,12 +839,23 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
+        from demisto_sdk.commands.content_graph.objects import Layout
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 
         layout = pack.create_layout("TestLayout")
         layout_path = Path(layout.path)
-        with pytest.raises(NotAContentItemException):
-            LayoutParser(layout_path, list(MarketplaceVersions))
+        parser = LayoutParser(layout_path, list(MarketplaceVersions))
+        model = Layout.from_orm(parser)
+
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="TestLayout",
+            expected_name="TestLayout",
+            expected_path=layout_path,
+            expected_content_type=ContentType.LAYOUT,
+            expected_fromversion="6.8.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
 
     def test_layoutscontainer_parser(self, pack: Pack):
         """
@@ -978,7 +996,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "substringTo": ContentType.SCRIPT,
+                "substringTo": ContentType.BASE_SCRIPT,
             },
             dependency_names={
                 "DevSecOps New Git PR": ContentType.INCIDENT_TYPE,
@@ -1023,7 +1041,7 @@ class TestParsersAndModels:
             dependency_ids={
                 "description": ContentType.INCIDENT_FIELD,
                 "azuredevopsprojectname": ContentType.INCIDENT_FIELD,
-                "MapValuesTransformer": ContentType.SCRIPT,
+                "MapValuesTransformer": ContentType.BASE_SCRIPT,
             },
             dependency_names={
                 "Azure DevOps": ContentType.INCIDENT_TYPE,
@@ -1165,7 +1183,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DeleteContext": ContentType.SCRIPT,
+                "DeleteContext": ContentType.BASE_SCRIPT,
             },
         )
         model = Playbook.from_orm(parser)
@@ -1200,8 +1218,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "ProofpointTAPMostAttackedUsers": ContentType.SCRIPT,
-                "ProofpointTapTopClickers": ContentType.SCRIPT,
+                "ProofpointTAPMostAttackedUsers": ContentType.BASE_SCRIPT,
+                "ProofpointTapTopClickers": ContentType.BASE_SCRIPT,
             },
         )
         model = Report.from_orm(parser)
@@ -1279,7 +1297,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "DeleteContext": ContentType.SCRIPT,
+                "DeleteContext": ContentType.BASE_SCRIPT,
             },
         )
         model = TestPlaybook.from_orm(parser)
@@ -1313,7 +1331,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "NGFW Scan": ContentType.PLAYBOOK,
+                "NGFW Scan": ContentType.BASE_PLAYBOOK,
             },
         )
         model = Trigger.from_orm(parser)
@@ -1382,7 +1400,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "FeedIntegrationErrorWidget": ContentType.SCRIPT,
+                "FeedIntegrationErrorWidget": ContentType.BASE_SCRIPT,
             },
         )
         model = Widget.from_orm(parser)
@@ -1541,16 +1559,19 @@ class TestParsersAndModels:
         """
         from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 
+        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+
         pack = repo.create_pack("HelloWorld")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        pack.create_classifier("sample", load_json("classifier.json"))
         pack.create_incident_field("sample", load_json("incident_field.json"))
         pack.create_incident_type("sample", load_json("incident_type.json"))
         pack.create_indicator_field("sample", load_json("indicator_field.json"))
         pack.create_indicator_type("sample", load_json("indicator_type.json"))
-        mocker.patch.object(tools, "get_content_path", return_value=Path(repo.path))
+
+        pack.create_classifier("sample", load_json("classifier.json"))
         with open(f"{pack.path}/.pack-ignore", "w") as f:
             f.write("[file:classifier-sample.json]\nignore=SC100")
+
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {
@@ -1584,7 +1605,7 @@ class TestParsersAndModels:
             expected_tags=["TIM"],
             expected_categories=["Utilities"],
             expected_use_cases=["Identity And Access Management"],
-            expected_keywords=[],
+            expected_keywords=["common"],
             expected_marketplaces=[
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.XSOAR,
@@ -2817,3 +2838,98 @@ def test_updated_marketplaces_set(marketplace, expected_market_place_set):
         expected_market_place_set
         == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
     )
+
+
+def test_argument_object__default_description():
+    # validate that the 'description' attribute of the Argument object is set to an empty string by default
+    from demisto_sdk.commands.content_graph.objects.integration_script import Argument
+
+    arg = Argument(name="test")
+    assert arg.description == ""
+
+
+def test_output_object__default_description():
+    # validate that the 'description' attribute of the Output object is set to an empty string by default
+    from demisto_sdk.commands.content_graph.objects.integration import Output
+
+    output = Output()
+    assert output.description == ""
+
+
+def test_parameter_object__default_type():
+    # validate that the 'type' attribute of the Parameter object is set to 0 by default
+    from demisto_sdk.commands.content_graph.objects.integration import Parameter
+
+    param = Parameter(name="test")
+    assert param.type == 0
+
+
+def test_get_related_content():
+    """
+    Given
+    - a list of content items.
+
+    When
+    - calling related_content.
+
+    Then
+    - Ensure that the right amount and file types were returned for each content type.
+    """
+    related_files = {
+        ContentType.INTEGRATION: {
+            "expected_len": 7,
+            "expected_files": [
+                RelatedFileType.DARK_SVG,
+                RelatedFileType.DESCRIPTION,
+                RelatedFileType.IMAGE,
+                RelatedFileType.LIGHT_SVG,
+                RelatedFileType.README,
+                RelatedFileType.CODE,
+                RelatedFileType.TEST_CODE,
+            ],
+        },
+        ContentType.PLAYBOOK: {
+            "expected_len": 2,
+            "expected_files": [RelatedFileType.IMAGE, RelatedFileType.README],
+        },
+        ContentType.PACK: {
+            "expected_len": 5,
+            "expected_files": [
+                RelatedFileType.README,
+                RelatedFileType.AUTHOR_IMAGE,
+                RelatedFileType.PACK_IGNORE,
+                RelatedFileType.SECRETS_IGNORE,
+                RelatedFileType.RELEASE_NOTES,
+            ],
+        },
+        ContentType.INCIDENT_TYPE: {"expected_len": 0, "expected_files": []},
+    }
+    objects = [
+        create_integration_object(),
+        create_incident_type_object(),
+        create_playbook_object(),
+        create_metadata_object(),
+    ]
+    for object in objects:
+        assert related_files[object.content_type]["expected_len"] == len(
+            object.related_content.keys()
+        )
+        assert all(
+            [related_file in object.related_content]
+            for related_file in related_files[object.content_type]["expected_files"]
+        )
+
+
+def test_get_related_text_file():
+    """
+    Given
+    - a pack content object with a readme file.
+
+    When
+    - calling the readme attribute.
+
+    Then
+    - Ensure that the readme content was returned.
+    """
+    pack = create_metadata_object(readme_text="This is a test")
+    assert pack.readme == "This is a test"

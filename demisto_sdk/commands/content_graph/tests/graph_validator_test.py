@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -39,15 +40,20 @@ GIT_PATH = Path(git_path())
 
 
 @pytest.fixture(autouse=True)
-def setup_method(mocker):
+def setup_method(mocker, tmp_path_factory):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
+    from demisto_sdk.commands.common.files.file import File
 
     bc.CONTENT_PATH = GIT_PATH
-    mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
+    mocker.patch.object(
+        neo4j_service, "NEO4J_DIR", new=tmp_path_factory.mktemp("neo4j")
+    )
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+    mocker.patch.object(ContentGraphInterface, "export_graph", return_value=None)
+    mocker.patch.object(
+        File,
+        "read_from_github_api",
         return_value={
             "docker_images": {
                 "python3": {
@@ -462,7 +468,7 @@ def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR], skip_prepare=[])
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,
@@ -482,7 +488,7 @@ def mock_integration(name: str = "SampleIntegration", deprecated: bool = False):
         marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
         deprecated=deprecated,
         type="python3",
-        docker_image="demisto/python3:3.10.11.54799",
+        docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         category="blabla",
         commands=[
             Command(name="test-command", description=""),
@@ -594,7 +600,7 @@ def test_is_file_using_unknown_content(
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,
-        "Content item 'SampleIntegration' using content items: SampleClassifier which"
+        "Content item 'SampleIntegration' using content items: 'SampleClassifier' which"
         " cannot be found in the repository",
     )
 

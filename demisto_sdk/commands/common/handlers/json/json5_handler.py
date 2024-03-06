@@ -1,4 +1,4 @@
-from typing import IO, Any, AnyStr
+from typing import IO, Any, AnyStr, Optional
 
 import json5  # noqa: TID251 - this is the handler
 
@@ -14,8 +14,9 @@ class JSON5_Handler(XSOAR_Handler):
     Use only this wrapper for json handling.
     """
 
-    def __init__(self):
+    def __init__(self, indent=0) -> None:
         self.json = json5
+        self.indent = indent
 
     def loads(self, s: AnyStr):
         try:
@@ -33,7 +34,7 @@ class JSON5_Handler(XSOAR_Handler):
         self,
         data: Any,
         fp: IO[str],
-        indent: int = 0,
+        indent: Optional[int] = None,
         sort_keys: bool = False,
         quote_keys: bool = True,
         **kwargs,
@@ -42,7 +43,7 @@ class JSON5_Handler(XSOAR_Handler):
             self.json.dump(
                 data,
                 fp,
-                indent=indent,
+                indent=indent if indent is not None else self.indent,
                 sort_keys=sort_keys,
                 quote_keys=quote_keys,
                 ensure_ascii=kwargs.get("ensure_ascii", False),
@@ -53,15 +54,15 @@ class JSON5_Handler(XSOAR_Handler):
     def dumps(
         self,
         obj: Any,
-        indent: int = 0,
+        indent: Optional[int] = None,
         sort_keys: bool = False,
         quote_keys: bool = True,
         **kwargs,
     ):
         try:
-            return self.dumps(
+            return self.json.dumps(
                 obj,
-                indent=indent,
+                indent=indent if indent is not None else self.indent,
                 sort_keys=sort_keys,
                 quote_keys=quote_keys,
                 ensure_ascii=kwargs.get("ensure_ascii", False),

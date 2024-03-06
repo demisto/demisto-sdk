@@ -17,7 +17,7 @@ class TestJson5File(FileTesting):
     @pytest.fixture()
     def input_files(self, git_repo: Repo):
         json5_file_path = Path(git_repo.path) / "test.json5"
-        Json5File.write_file({"test": "test"}, output_path=json5_file_path)
+        Json5File.write({"test": "test"}, output_path=json5_file_path)
 
         if git_util := git_repo.git_util:
             git_util.commit_files("commit all json5 files")
@@ -169,6 +169,6 @@ class TestJson5File(FileTesting):
          - make sure writing json5 file is successful.
         """
         _path = Path(git_repo.path) / "file.json5"
-        Json5File.write_file({"test": "test"}, output_path=_path)
+        Json5File.write({"test": "test"}, output_path=_path)
         assert _path.exists()
         assert json5.loads(Path(_path).read_text()) == {"test": "test"}

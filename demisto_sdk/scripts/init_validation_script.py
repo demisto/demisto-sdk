@@ -13,6 +13,24 @@ GIT_STATUSES_DICT = {
     "D": "GitStatuses.DELETED",
 }
 
+RELATED_FILES_DICT = {
+    "1": "RelatedFileType.YML",
+    "2": "RelatedFileType.JSON",
+    "3": "RelatedFileType.README",
+    "4": "RelatedFileType.DESCRIPTION",
+    "5": "RelatedFileType.IMAGE",
+    "6": "RelatedFileType.DARK_SVG",
+    "7": "RelatedFileType.LIGHT_SVG",
+    "8": "RelatedFileType.CODE",
+    "9": "RelatedFileType.TEST_CODE",
+    "10": "RelatedFileType.SCHEMA",
+    "11": "RelatedFileType.XIF",
+    "12": "RelatedFileType.PACK_IGNORE",
+    "13": "RelatedFileType.SECRETS_IGNORE",
+    "14": "RelatedFileType.AUTHOR_IMAGE",
+    "15": "RelatedFileType.RELEASE_NOTES",
+}
+
 CONTENT_TYPES_DICT = {
     "1": {
         "import": "from demisto_sdk.commands.content_graph.objects.integration import Integration",
@@ -39,8 +57,8 @@ CONTENT_TYPES_DICT = {
         "content_type": "Classifier",
     },
     "7": {
-        "import": "from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType",
-        "content_type": "IncidentType",
+        "import": "from demisto_sdk.commands.content_graph.objects.job import Job",
+        "content_type": "Job",
     },
     "8": {
         "import": "from demisto_sdk.commands.content_graph.objects.layout import Layout",
@@ -87,7 +105,7 @@ CONTENT_TYPES_DICT = {
         "content_type": "ModelingRule",
     },
     "19": {
-        "import": "from demisto_sdk.commands.content_graph.objects.parsing_Rule import ParsingRule",
+        "import": "from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule",
         "content_type": "ParsingRule",
     },
     "20": {
@@ -141,10 +159,9 @@ $supported_content_types
 $class_declaration
     error_code = "$error_code"
     description = "$error_description"
-    error_message = "$error_message"
-    fix_message = "$fix_message"
+    error_message = "$error_message"$fix_message
     related_field = "$related_field"
-    is_auto_fixable = $is_auto_fixable$expected_git_statuses$support_deprecated
+    is_auto_fixable = $is_auto_fixable$expected_git_statuses$support_deprecated$related_files
 
     $is_valid_method
 
@@ -157,7 +174,6 @@ class ValidationInitializer:
         self.git_statuses = ""
         self.fix_method = ""
         self.fix_message = ""
-        self.include_old_format_files_fix_method = ""
         self.run_on_deprecated = ""
         self.min_content_type_val = 1
         self.max_content_type_val = int(list(CONTENT_TYPES_DICT.keys())[-1])
@@ -241,6 +257,7 @@ class ValidationInitializer:
         self.initialize_validator_class_name()
         self.initialize_git_statuses()
         self.initialize_content_types()
+        self.initialize_related_files()
         self.initialize_fix_info()
 
     def initialize_validator_class_name(self):
@@ -284,6 +301,25 @@ class ValidationInitializer:
                 input(
                     "Please make sure to insert either valid inputs which are:\n"
                     "R: renamed files\nA: added files\nD: deleted files\nM: modified files\nor leave empty if you wish that the validation will run on all files: "
+                )
+            )
+
+    def initialize_related_files(self):
+        """
+        Request the supported related_files and ensure the input is valid.
+        """
+        related_files = "\n".join(
+            [f"{key}: {value}" for key, value in RELATED_FILES_DICT.items()]
+        )
+        self.related_files = str(
+            input(
+                f"Enter a comma separated list of related files the validation should run on or leave empty to run on the chosen main content item.\nThe related files are:\n{related_files}\nFill the content types as the numbers they appear as: "
+            )
+        )
+        while self.related_files and not set().issubset(set(RELATED_FILES_DICT.keys())):
+            self.related_files = str(
+                input(
+                    f"Please make sure to insert either valid inputs which are:\n{related_files}\nor leave empty if you wish that the validation will run on all files: "
                 )
             )
 
@@ -348,11 +384,12 @@ Fill the content types as the numbers they appear as: """
             )
         if support_fix in ["Y", "y"]:
             self.support_fix = True
-            self.fix_message = str(
+            fix_message = str(
                 input(
                     "Please enter the fix message or press enter to leave blank for now: "
                 )
             )
+            self.fix_message = f'\n    fix_message = "{fix_message}"'
         else:
             self.support_fix = False
 
@@ -394,6 +431,7 @@ Fill the content types as the numbers they appear as: """
         """
         calling all the generators functions
         """
+        self.generate_related_file_section()
         self.generate_git_section()
         self.generate_imports()
         self.generate_supported_content_types_section()
@@ -401,18 +439,26 @@ Fill the content types as the numbers they appear as: """
         self.generate_fix_function()
         self.generate_file_info()
 
+    def generate_related_file_section(self):
+        """
+        Generate the related_file section string.
+        """
+        if self.related_files:
+            related_files_enum_ls = [
+                RELATED_FILES_DICT[related_file]
+                for related_file in self.related_files.split(",")
+            ]
+            related_files_enum_str = str(related_files_enum_ls).replace("'", "")
+            self.related_files = f"\n    related_file_type = {related_files_enum_str}"
+
     def generate_git_section(self):
         """
         Generate the expected_git_statuses section string.
         """
         if self.git_statuses_str:
-            git_statuses_ls = self.git_statuses_str.split(",")
-            if "A" not in git_statuses_ls and "D" not in git_statuses_ls:
-                self.include_old_format_files_fix_method = (
-                    ", old_content_object: Optional[BaseContent]=None"
-                )
             git_statuses_enum_ls = [
-                GIT_STATUSES_DICT[git_status] for git_status in git_statuses_ls
+                GIT_STATUSES_DICT[git_status]
+                for git_status in self.git_statuses_str.split(",")
             ]
             git_statuses_enum_str = str(git_statuses_enum_ls).replace("'", "")
             self.git_statuses = f"\n    expected_git_statuses = {git_statuses_enum_str}"
@@ -426,9 +472,15 @@ Fill the content types as the numbers they appear as: """
             self.imports += "from typing import Iterable, List\n\n"
         else:
             self.imports += "from typing import Iterable, List, Union\n\n"
-        if self.git_statuses:
+        if self.git_statuses and self.related_files:
+            self.imports += "from demisto_sdk.commands.common.constants import (GitStatuses, RelatedFileType)\n"
+        elif self.git_statuses:
             self.imports += (
                 "from demisto_sdk.commands.common.constants import GitStatuses\n"
+            )
+        elif self.related_files:
+            self.imports += (
+                "from demisto_sdk.commands.common.constants import RelatedFileType\n"
             )
         for content_type in self.content_types:
             self.imports += (
@@ -461,8 +513,17 @@ Fill the content types as the numbers they appear as: """
         """
         self.is_valid_method = """
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        # Add your validation right here
-        pass
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message,
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (
+                # Add your validation right here
+            )
+        ]
     """
 
     def generate_fix_function(self):
@@ -470,9 +531,13 @@ Fill the content types as the numbers they appear as: """
         Generate the fix function is fix is supported by the validation.
         """
         if self.support_fix:
-            self.fix_method = f"""def fix(self, content_item: ContentTypes{self.include_old_format_files_fix_method}) -> FixResult:
+            self.fix_method = """def fix(self, content_item: ContentTypes) -> FixResult:
         # Add your fix right here
-        pass
+        return FixResult(
+            validator=self,
+            message=self.fix_message,
+            content_object=content_item,
+        )
             """
 
     def generate_file_info(self):
@@ -512,6 +577,7 @@ Fill the content types as the numbers they appear as: """
                 related_field=self.related_field,
                 is_auto_fixable=self.support_fix,
                 expected_git_statuses=self.git_statuses,
+                related_files=self.related_files,
                 is_valid_method=self.is_valid_method,
                 fix_method=self.fix_method,
                 support_deprecated=self.run_on_deprecated,

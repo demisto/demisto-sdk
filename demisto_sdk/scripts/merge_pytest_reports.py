@@ -7,8 +7,7 @@ import coverage
 from junitparser import JUnitXml
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
+from demisto_sdk.commands.common.logger import logger, logging_setup
 
 
 def fix_coverage_report_path(coverage_file: Path) -> bool:
@@ -68,20 +67,25 @@ def merge_coverage_report():
     coverage_path = CONTENT_PATH / ".coverage"
     coverage_path.unlink(missing_ok=True)
     cov = coverage.Coverage(data_file=coverage_path)
-    if not (files := coverage_files()):
+    # this is the path where the pre-commit created the coverage files
+    created_coverage_path = CONTENT_PATH / ".pre-commit" / "coverage"
+    if not created_coverage_path.exists() or not (
+        files := list(created_coverage_path.iterdir())
+    ):
         logger.warning("No coverage files found, skipping coverage report.")
         return
-    fixed_files = [file for file in files if fix_coverage_report_path(Path(file))]
+    fixed_files = [str(file) for file in files if fix_coverage_report_path(Path(file))]
     cov.combine(fixed_files)
-    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
     for file in files:
         Path(file).unlink(missing_ok=True)
-    logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
+    logger.info("Coverage report was successfully merged.")
 
 
 def merge_junit_reports():
     junit_reports_path = CONTENT_PATH / ".pre-commit" / "pytest-junit"
-
+    if not junit_reports_path.exists():
+        logger.warning("No junit reports found, skipping junit report.")
+        return
     report_files = junit_reports_path.iterdir()
     if reports := [JUnitXml.fromfile(str(file)) for file in report_files]:
         report = reports[0]
@@ -90,14 +94,17 @@ def merge_junit_reports():
         report.write(str(CONTENT_PATH / ".report_pytest.xml"))
         for file in report_files:
             Path(file).unlink(missing_ok=True)
+    logger.info("Junit report was successfully merged.")
 
 
 def main():
     try:
+        logging_setup()
         merge_coverage_report()
         merge_junit_reports()
     except Exception as e:
         logger.warning(f"Failed to merge reports: {e}")
+        raise
 
 
 if __name__ == "__main__":

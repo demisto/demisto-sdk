@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -8,19 +7,8 @@ from demisto_sdk.commands.pre_commit.hooks.docker import (
     DockerHook,
     docker_tag_to_runfiles,
 )
-from demisto_sdk.commands.pre_commit.tests.pre_commit_test import create_hook
-
-
-@dataclass(frozen=True)
-class Obj:
-    path: Path = Path("somefile")
-    object_id: str = "id1"
-    is_powershell: bool = False
-    docker_image: str = "dockerimage"
-
-    @property
-    def docker_images(self):
-        return [self.docker_image]
+from demisto_sdk.commands.pre_commit.pre_commit_command import PreCommitContext
+from demisto_sdk.commands.pre_commit.tests.pre_commit_test import Obj, create_hook
 
 
 @pytest.fixture(autouse=True)
@@ -44,7 +32,7 @@ def test_no_files(repo):
         There are no raw hooks added to the config
     """
     raw_hook = create_hook({"args": []})
-    DockerHook(**raw_hook).prepare_hook([], True)
+    DockerHook(**raw_hook).prepare_hook()
 
     hooks = raw_hook["repo"]["hooks"]
     assert len(hooks) == 0
@@ -78,13 +66,18 @@ def test_moded_properties(mocker, mode, expected_text):
         "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
         return_value="devtestimg",
     )
-    raw_hook = create_hook({"args": [], "language": "docker"})
+    mocker.patch.object(
+        PreCommitContext, "files_to_run_with_objects", [(file_path, None)]
+    )
+    mocker.patch.object(PreCommitContext, "dry_run", True)
+
+    raw_hook = create_hook({"args": [], "language": "docker"}, mode=mode)
 
     raw_hook["hook"]["args"] = ["i am some argument"]
     raw_hook["hook"]["args:nightly"] = ["i am the nightly args"]
     raw_hook["hook"]["args:other"] = ["i am some other argument"]
 
-    DockerHook(**raw_hook, mode=mode).prepare_hook([(file_path, None)], True)
+    DockerHook(**raw_hook).prepare_hook()
 
     hook = raw_hook["repo"]["hooks"][0]
     assert hook["args"] == expected_text
@@ -113,9 +106,9 @@ def test_get_property():
                         "prop1": value1,
                         "prop1:nightly": nightly_val,
                         "prop1:othermode": "someval",
-                    }
+                    },
+                    mode=mode,
                 ),
-                mode=mode
             )._get_property(prop)
             == expected_value
         )
@@ -190,9 +183,10 @@ def test__set_properties():
                 "prop1:othermode": "someval",
                 "other_prop": "whatever",
                 "nonused:mode": "isignored",
-            }
+            },
+            mode=mode,
         )
-        docker_hook = DockerHook(**hook, mode=mode)
+        docker_hook = DockerHook(**hook)
         assert docker_hook.base_hook == expected_value
 
     assert_get_prop_successful(

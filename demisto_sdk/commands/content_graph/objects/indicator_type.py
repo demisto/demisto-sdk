@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Set
+from typing import Any, List, Optional, Set
 
 import demisto_client
 from pydantic import Field
@@ -17,9 +17,11 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
     description: str = Field(alias="details")
     regex: Optional[str]
     reputation_script_name: Optional[str] = Field("", alias="reputationScriptName")
+    expiration: Any
     enhancement_script_names: Optional[List[str]] = Field(
         alias="enhancementScriptNames"
     )
+    version: Optional[int] = 0
 
     def metadata_fields(self) -> Set[str]:
         return (

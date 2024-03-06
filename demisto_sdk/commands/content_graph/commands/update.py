@@ -103,7 +103,9 @@ def update_content_graph(
 
     if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
         logger.info(os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"))
-        logger.info(type(os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")))
+        logger.info(f' the type of the DEMISTO_SDK_GRAPH_FORCE_CREATE is {type(os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"))}')
+        is_equal_str = os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE") == "false"
+        logger.info(f"{is_equal_str=}")
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path

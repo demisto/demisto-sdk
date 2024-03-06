@@ -1222,8 +1222,8 @@ def test_ValidPackNameValidator_is_valid(content_items, old_content_items, expec
     """
     Given:
     content_items (Pack).
-        - Case 1: A Pack content item where its name has changed.
-        - Case 2: A Pack content item where its name hasn't changed.
+        - Case 1: A Pack content item that its name has changed.
+        - Case 2: A Pack content item that its name hasn't changed.
 
     When:
         - Calling the PackNameValidator is_valid function.
@@ -1257,7 +1257,7 @@ def test_PackNameValidator_fix(content_item, expected_id, expected_fix_msg):
     """
     Given
         - content_item.
-        - Case 1: A Pack content item where its name has changed.
+        - Case 1: A Pack content item that its name has changed.
     When
         - Calling the PackNameValidator fix function.
     Then

@@ -24,6 +24,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF104_is_valid_group
 from demisto_sdk.commands.validate.validators.IF_validators.IF105_is_cli_name_field_alphanumeric import (
     IsCliNameFieldAlphanumericValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_reserved_word import (
+    IsCliNameReservedWordValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -258,6 +261,32 @@ def test_IsCliNameFieldAlphanumericValidator_is_valid():
     assert all(
         [
             result.message == "Field `cliName` contains non-alphanumeric letters"
+            for result in results
+        ]
+    )
+
+
+def test_IsCliNameReservedWordValidator_is_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'cliName' value is a reserved word
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["cliName"], ["test"]),
+        create_incident_field_object(["cliName"], ["parent"]),
+    ]
+
+    results = IsCliNameReservedWordValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert all(
+        [
+            result.message
+            == "`cliName` field can not be `parent` as it's a builtin key"
             for result in results
         ]
     )

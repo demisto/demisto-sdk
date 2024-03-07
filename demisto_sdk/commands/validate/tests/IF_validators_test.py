@@ -41,9 +41,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
             [
                 (
                     "The words: [case] cannot be used as a name.\n"
-                    "To fix the problem, remove the words [case], "
-                    "or add them to the whitelist named argsExceptionsList in:\n"
-                    "https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/servicemodule_test.go#L8273"
+                    "To fix the problem, remove the words [case]"
                 )
             ],
         ),
@@ -57,9 +55,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
             [
                 (
                     "The words: [case, incident] cannot be used as a name.\n"
-                    "To fix the problem, remove the words [case, incident], "
-                    "or add them to the whitelist named argsExceptionsList in:\n"
-                    "https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/servicemodule_test.go#L8273"
+                    "To fix the problem, remove the words [case, incident]"
                 )
             ],
         ),

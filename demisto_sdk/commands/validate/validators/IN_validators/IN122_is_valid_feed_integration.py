@@ -21,6 +21,10 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that all existing params are in the right format for feed params."
     )
+    rationale = (
+        "Malformed or missing parameters can lead to errors or incomplete data. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/feeds"
+    )
     error_message = "The integration is a feed integration with malformed params: {0}"
     related_field = "configuration"
     invalid_params: ClassVar[Dict[str, Dict[str, Dict]]] = {}

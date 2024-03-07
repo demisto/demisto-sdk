@@ -15,6 +15,7 @@ ContentTypes = Integration
 class IsNameContainIncidentInCorePackValidator(BaseValidator[ContentTypes]):
     error_code = "IN139"
     description = "Validate that there's no 'incident' in any of the commands names or arguments names for core packs integrations."
+    rationale = "This helps maintain the flexibility of the platform."
     error_message = "The following commands contain the word 'incident' in one or more of their fields, please remove:\n{0}"
     related_field = "name"
     invalid_commands: ClassVar[Dict[str, dict]] = {}

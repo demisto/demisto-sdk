@@ -34,6 +34,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     Class variables:
     error_code: (ClassVar[str]): The validation's error code.
     description: (ClassVar[str]): The validation's error description.
+    rationale: (ClassVar[str]): The validation's rationale.
     error_message: (ClassVar[str]): The validation's error message.
     fix_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
@@ -46,6 +47,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     error_code: ClassVar[str]
     description: ClassVar[str]
+    rationale: ClassVar[str]
     error_message: ClassVar[str]
     fix_message: ClassVar[str] = ""
     related_field: ClassVar[str]

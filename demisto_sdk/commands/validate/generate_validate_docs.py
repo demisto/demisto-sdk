@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Set
 
 import typer
 from more_itertools import map_reduce
@@ -26,7 +26,7 @@ def generate_validate_docs() -> str:
     ).items():
         result.extend(
             (
-                f"## {category}: {VALIDATION_CATEGORIES[category]}",  # test_validation_prefix prevents KeyErrors here
+                f"## `{category}`: {VALIDATION_CATEGORIES[category]}",  # test_validation_prefix prevents KeyErrors here
                 _create_table(validators),
             )
         )
@@ -34,18 +34,19 @@ def generate_validate_docs() -> str:
 
 
 def _create_table(validators: Iterable[BaseValidator]) -> str:
-    return tabulate(
-        (
+    table_rows: List[dict] = sorted(
+        {
+            # using set to dedupe, as we have multiple classes implementing the same validation
             {
                 "Code": validator.error_code,
                 "Description": validator.description.replace("\n", ". "),
                 "Autofixable": "Yes" if validator.is_auto_fixable else "No",
             }
-            for validator in sorted(validators, key=lambda v: v.error_code)
-        ),
-        headers="keys",
-        tablefmt="github",
+            for validator in validators
+        },
+        key=lambda row: row["Code"],
     )
+    return tabulate(table_rows, headers="keys", tablefmt="github")
 
 
 def cli(

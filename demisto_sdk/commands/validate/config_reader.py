@@ -35,8 +35,11 @@ class ConfigReader:
         if not config_file_path:
             config_file_path = CONFIG_FILE_PATH
         try:
+            logger.info(f"opening config file in the following path: {config_file_path}")
             self.config_file_content: dict = toml.load(config_file_path)
+            logger.info(f"{self.config_file_content=}")
             self.category_to_run = category_to_run
+            logger.info(f"{self.category_to_run=}")
         except FileNotFoundError:
             logger.error(f"Failed to find config file at path {config_file_path}")
             exit(1)

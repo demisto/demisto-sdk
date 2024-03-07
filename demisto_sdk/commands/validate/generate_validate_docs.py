@@ -44,7 +44,7 @@ def _create_table(validators: Iterable[BaseValidator]) -> str:
         first(sorted(validators, key=lambda validator: validator.description))
         for validators in code_to_validator.values()
     )
-    
+
     def clean_newlines(string: str) -> str:
         return string.replace("\n", ". ")
 

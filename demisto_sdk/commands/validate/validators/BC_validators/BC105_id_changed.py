@@ -76,8 +76,10 @@ class IdChangedValidator(BaseValidator[ContentTypes]):
     error_code = "BC105"
     description = "Validate that the ID of the content item was not changed."
     error_message = "ID of content item was changed from {0} to {1}, please undo."
-    rationale = ("Changing the ID of an item will cause it to show as a new item in the platform, "
-    "and not update properly for users who already have a previous version installed.")
+    rationale = (
+        "Changing the ID of an item will cause it to show as a new item in the platform, "
+        "and not update properly for users who already have a previous version installed."
+    )
     fix_message = "Changing ID back to {0}."
     related_field = "id"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]

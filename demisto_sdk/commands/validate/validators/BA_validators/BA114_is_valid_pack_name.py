@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
+    GitStatuses,
     ValidationResult,
 )
 
@@ -18,6 +19,7 @@ class PackNameValidator(BaseValidator[ContentTypes]):
     error_message = "Pack name was changed from {0} to {1}, please undo."
     # fix_message = "Changing pack name back to {0}."
     related_field = "path"
+    expected_git_statuses = [GitStatuses.RENAMED]
     # is_auto_fixable = True
     new_pack_name: str = ''
     old_pack_name: str = ''

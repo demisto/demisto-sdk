@@ -963,37 +963,37 @@ class TestRNUpdate:
                 # Case 1: xsoar file type and xsoar marketplace, should only have xsoar.
                 FileType.TEST_SCRIPT.value,
                 ["xsoar"],
-                "<~XSOAR>(Available from Cortex XSOAR 5.5.0).</~XSOAR>",
-                "<~XSIAM>(Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
             ),
             (
                 # Case 2: xsoar file type and xsiam marketplace, should only have xsiam.
                 FileType.TEST_SCRIPT.value,
                 ["marketplacev2"],
-                "<~XSIAM>(Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
-                "<~XSOAR>(Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
             ),
             (
                 # Case 3: xsoar file type and xsoar & xsiam marketplaces, should have both.
                 FileType.TEST_SCRIPT.value,
                 ["xsoar", "marketplacev2"],
-                "<~XSIAM>(Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
-                "<~XSOAR>(Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
                 "",
             ),
             (
                 # Case 4: xsiam file type and xsiam marketplace, should only have xsiam.
                 FileType.MODELING_RULE.value,
                 ["marketplacev2"],
-                "<~XSIAM>(Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
-                "<~XSOAR>(Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
             ),
             (
                 # Case 5: xsiam file type and xsoar & xsiam marketplaces, should only have xsiam.
                 FileType.MODELING_RULE.value,
                 ["xsoar", "marketplacev2"],
-                "<~XSIAM>(Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
-                "<~XSOAR>(Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
             ),
         ],
     )

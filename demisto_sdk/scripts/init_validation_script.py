@@ -248,7 +248,7 @@ class ValidationInitializer:
         """
         self.rationale = str(
             input(
-                "Please enter the rationale for this validation or press enter to leave blank for now: "
+                "Please enter the rationale for this validation; *why* do we have this validation? (not what it does)"
             )
         )
 

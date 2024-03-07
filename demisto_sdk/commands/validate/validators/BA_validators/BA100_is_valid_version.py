@@ -54,7 +54,7 @@ ContentTypes = Union[
 
 class IsValidVersionValidator(BaseValidator[ContentTypes]):
     error_code = "BA100"
-    description = "Validate that the content item version equal -1."
+    description = "Marketplace content set to -1 makes it easier to tell from modified, versioned content."
     rationale = (
         "The version for system content items should always be -1 as per the standard."
     )

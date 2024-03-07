@@ -1,4 +1,0 @@
-changes:
-- description: Added README to the **xsoar-lint** command
-  type: fix
-pr_number: 4043

@@ -20,6 +20,7 @@ class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     description = (
         "Checks if script name is versioned correctly, e.g.: ends with V<number>."
     )
+    rationale = "This standardization ensures consistency across content items."
     error_message = "The name {0} for the script is incorrect, it should be {1}."
     is_auto_fixable = True
     fix_message = "Updated name from {0} to {1}"

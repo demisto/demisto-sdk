@@ -15,6 +15,10 @@ ContentTypes = Pack
 class AuthorImageIsEmptyValidator(BaseValidator[ContentTypes]):
     error_code = "IM108"
     description = "Checks that the author image file is not empty"
+    rationale = (
+        "If an author image is provided, it must be a valid image. "
+        "For more info, see: https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng"
+    )
     error_message = (
         "The author image should not be empty. Please provide a relevant image."
     )

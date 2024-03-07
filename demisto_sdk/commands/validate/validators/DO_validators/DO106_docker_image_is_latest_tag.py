@@ -27,6 +27,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
     description = (
         "Validate that the given content-item uses the latest tag of a docker image"
     )
+    rationale = "Updated docker images ensure the code uses the latest versions the dependencies, including bugfixes and fixed vulnerabilities."
     error_message = (
         "docker image {0}'s tag {1} is not the latest tag, the latest tag is {2}"
     )

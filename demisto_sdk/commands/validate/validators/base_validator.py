@@ -35,11 +35,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     Class variables:
     error_code: (ClassVar[str]): The validation's error code.
     description: (ClassVar[str]): The validation's error description.
+    rationale: (ClassVar[str]): The validation's rationale.
     error_message: (ClassVar[str]): The validation's error message.
     fix_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
-    run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
+    run_on_deprecated: (ClassVar[bool]): Whether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
     dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
@@ -47,6 +48,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     error_code: ClassVar[str]
     description: ClassVar[str]
+    rationale: ClassVar[str]
     error_message: ClassVar[str]
     fix_message: ClassVar[str] = ""
     related_field: ClassVar[str]

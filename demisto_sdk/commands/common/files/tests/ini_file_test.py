@@ -4,6 +4,7 @@ from typing import List, Tuple
 import pytest
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.files.errors import LocalFileReadError
 from demisto_sdk.commands.common.files.ini_file import IniFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
@@ -55,6 +56,21 @@ class TestIniFile(FileTesting):
         for path in ini_file_paths:
             actual_file_content = IniFile.read_from_local_path(path)
             assert actual_file_content.sections()
+
+    def test_read_from_local_path_invalid_ini_file_raises_error(self, repo: Repo):
+        """
+        Given:
+         - invalid ini file
+
+        When:
+         - Running read_from_local_path method from IniFile object
+
+        Then:
+         - make sure an exception is raised as the file is an invalid ini file.
+        """
+        pack = repo.create_pack()
+        with pytest.raises(LocalFileReadError):
+            IniFile.read_from_local_path(pack.pack_metadata.path)
 
     def test_read_from_local_path_from_content_root(
         self, input_files: Tuple[List[str], str]

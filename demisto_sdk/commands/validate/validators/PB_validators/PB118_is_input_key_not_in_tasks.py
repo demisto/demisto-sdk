@@ -19,9 +19,7 @@ ContentTypes = Playbook
 class IsInputKeyNotInTasksValidator(BaseValidator[ContentTypes]):
     error_code = "PB118"
     description = "Validate that all inputs described in the playbooks input section are used in tasks."
-    rationale = (
-        "For more info, see: https://xsoar.pan.dev/docs/playbooks/playbooks-overview#inputs-and-outputs"
-    )
+    rationale = "For more info, see: https://xsoar.pan.dev/docs/playbooks/playbooks-overview#inputs-and-outputs"
     error_message = "The playbook '{playbook_name}' contains the following inputs that are not used in any of its tasks: {inputs_not_in_use}"
     fix_message = ""
     related_field = "input"

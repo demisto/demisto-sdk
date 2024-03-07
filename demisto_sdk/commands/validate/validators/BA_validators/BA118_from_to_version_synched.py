@@ -78,9 +78,7 @@ class FromToVersionSyncedValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the item's toversion is greater/equal then its fromversion."
     )
-    rationale = (
-        "Content with a from_version greater than to_version will not show in the platform."
-    )
+    rationale = "Content with a from_version greater than to_version will not show in the platform."
     error_message = "The {0} fromversion and toversion are not synchronized.\nThe toversion ({1}) should be greater than the fromversion ({2})."
     related_field = "fromversion, toversion"
     is_auto_fixable = True

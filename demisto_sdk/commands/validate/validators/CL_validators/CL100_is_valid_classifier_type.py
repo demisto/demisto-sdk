@@ -15,7 +15,7 @@ ContentTypes = Classifier
 
 class IsValidClassifierTypeValidator(BaseValidator[ContentTypes]):
     error_code = "CL100"
-    description = "Validate that a classifier with a version >= 6.0.0 has a type = classification field."
+    description = "Validate that a classifier has a type = classification field."
     error_message = f"Classifiers type must be {CLASSIFICATION_TYPE}."
     fix_message = "Changed type to 'classification'."
     related_field = "type"

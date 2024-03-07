@@ -18,6 +18,7 @@ class CliNameMatchIdValidator(BaseValidator[ContentTypes]):
     description = (
         "validate that the CLI name and the id match for incident and indicators field"
     )
+    rationale = "Consistency between the CLI name (used by the platform) and the id."
     error_message = (
         "The cli name {0} doesn't match the standards. the cliName should be: {1}."
     )

@@ -18,6 +18,7 @@ class DuplicatedScriptNameValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that there are no scripts with the same type and the same name."
     )
+    rationale = "Duplicate names cause confusion and unpredictable behaviors."
     error_message = (
         "Cannot create a script with the name {0}, because a script with the name {1} already exists.\n"
         "(it will not be possible to create a new script whose name includes the word Alert/Alerts "

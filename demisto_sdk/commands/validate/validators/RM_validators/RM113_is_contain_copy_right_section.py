@@ -34,7 +34,7 @@ class IsContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
                 invalid_lines := check_text_content_contain_sub_text(
                     sub_text_list=["BSD", "MIT", "Copyright", "proprietary"],
                     to_split=True,
-                    text=content_item.readme.get_file_content(),
+                    text=content_item.readme.file_content,
                 )
             )
         ]

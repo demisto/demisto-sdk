@@ -3,8 +3,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar, List, Optional, Union
 
-from pydantic import BaseModel
-
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     PACKS_PACK_IGNORE_FILE_NAME,
@@ -36,7 +34,7 @@ class RelatedFileType(Enum):
     RELEASE_NOTE = "release_note"
 
 
-class RelatedFile(ABC, BaseModel):
+class RelatedFile(ABC):
     file_type: ClassVar[RelatedFileType]
 
     def __init__(self, main_file_path: Path, git_sha: Optional[str] = None) -> None:
@@ -66,7 +64,7 @@ class RelatedFile(ABC, BaseModel):
     def get_optional_paths(self) -> List[Path]:
         raise NotImplementedError
 
-    def get_file_content(self) -> Any:
+    def file_content(self) -> Any:
         raise NotImplementedError
 
     def is_file_exist(self, file_path: Path, git_sha: Optional[str]) -> bool:
@@ -86,20 +84,25 @@ class RelatedFile(ABC, BaseModel):
 
 class TextFiles(RelatedFile):
     def __init__(self, main_file_path: Path, git_sha: Optional[str] = None) -> None:
+        self.file_content_str = ""
         super().__init__(main_file_path, git_sha)
 
-    def get_file_content(self) -> str:
-        try:
-            if self.git_sha:
-                return TextFile.read_from_git_path(
-                    path=self.file_path,
-                    tag=self.git_sha,
-                )
-            else:
-                return TextFile.read_from_local_path(path=self.file_path)
-        except Exception as e:
-            logger.error(f"Failed to get related text file, error: {e}")
-            return ""
+    @property
+    def file_content(self) -> str:
+        if not self.file_content_str:
+            try:
+                if self.git_sha:
+                    self.file_content_str = TextFile.read_from_git_path(
+                        path=self.file_path,
+                        tag=self.git_sha,
+                    )
+                else:
+                    self.file_content_str = TextFile.read_from_local_path(
+                        path=self.file_path
+                    )
+            except Exception as e:
+                logger.error(f"Failed to get related text file, error: {e}")
+        return self.file_content_str
 
 
 class YmlRelatedFile(RelatedFile):

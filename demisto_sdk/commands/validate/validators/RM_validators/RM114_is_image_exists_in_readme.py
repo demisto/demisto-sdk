@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.common.tools import (
     extract_image_paths_from_str,
     get_full_image_paths_from_relative,
@@ -10,6 +9,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -40,7 +40,9 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                         str(image_path)
                         for image_path in get_full_image_paths_from_relative(
                             content_item.pack_name,
-                            extract_image_paths_from_str(text=content_item.readme),
+                            extract_image_paths_from_str(
+                                text=content_item.readme.file_content
+                            ),
                         )
                         if image_path and not image_path.is_file()
                     ]

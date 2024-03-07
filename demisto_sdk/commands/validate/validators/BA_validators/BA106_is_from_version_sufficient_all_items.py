@@ -106,7 +106,6 @@ class IsFromVersionSufficientAllItemsValidator(
     This class is for cases where the IsFromVersionSufficientValidator need to run on items that are not dependent on the item's type.
     """
 
-    description = "Validate that the item's fromversion field is sufficient."
     error_message = "The {0} from version field is either missing or insufficient, need at least {1}, current is {2}."
 
     def is_valid(self, content_items: Iterable[ContentItem]) -> List[ValidationResult]:

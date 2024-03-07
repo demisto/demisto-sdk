@@ -153,7 +153,7 @@ class DockerImageValidator(BaseValidator):
             suggested_fix = Errors.suggest_docker_fix(
                 self.docker_image_name, self.file_path, self.is_iron_bank
             )
-            if self.is_docker_older_than_three_days():
+            if self.is_docker_older_than_three_months():
                 if self.handle_error(
                     error_message,
                     error_code,
@@ -182,14 +182,14 @@ class DockerImageValidator(BaseValidator):
 
         return is_latest_tag
 
-    def is_docker_older_than_three_days(self):
+    def is_docker_older_than_three_months(self):
         """
         Return True if the docker is more than 3 days old.
 
         Returns:
             bool: True if the docker is more than 3 days old.
         """
-        three_days_ago: Optional[datetime] = parse("3 days ago")
+        three_days_ago: Optional[datetime] = parse("3 months ago")
         last_updated = self.get_docker_image_creation_date(
             self.docker_image_name, self.docker_image_tag
         )

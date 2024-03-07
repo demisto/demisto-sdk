@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Iterable, List, Set
+from typing import Iterable, List
 
 import typer
-from more_itertools import map_reduce
+from more_itertools import first, map_reduce
 from tabulate import tabulate
 from typing_extensions import Annotated
 
@@ -34,18 +34,31 @@ def generate_validate_docs() -> str:
 
 
 def _create_table(validators: Iterable[BaseValidator]) -> str:
-    table_rows: List[dict] = sorted(
-        {
-            # using set to dedupe, as we have multiple classes implementing the same validation
-            {
-                "Code": validator.error_code,
-                "Description": validator.description.replace("\n", ". "),
-                "Autofixable": "Yes" if validator.is_auto_fixable else "No",
-            }
-            for validator in validators
-        },
-        key=lambda row: row["Code"],
+    code_to_validator = map_reduce(
+        # group validators by code, in case there are multiple implementations
+        validators,
+        keyfunc=lambda validator: validator.error_code,
     )
+    unique_validators = (
+        # dedupe per error code, by choosing the one with the "smaller" description (ordered alphabetically)
+        first(sorted(validators, key=lambda validator: validator.description))
+        for validators in code_to_validator.values()
+    )
+    
+    def clean_newlines(string: str) -> str:
+        return string.replace("\n", ". ")
+
+    table_rows = [
+        {
+            "Code": validator.error_code,
+            "Description": clean_newlines(validator.description),
+            "Rationale": clean_newlines(validator.rationale),
+            "Autofixable": "Yes" if validator.is_auto_fixable else "No",
+        }
+        for validator in sorted(
+            unique_validators, key=lambda validator: validator.error_code
+        )
+    ]
     return tabulate(table_rows, headers="keys", tablefmt="github")
 
 

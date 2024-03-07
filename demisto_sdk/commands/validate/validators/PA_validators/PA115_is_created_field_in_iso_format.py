@@ -18,6 +18,7 @@ ContentTypes = Pack
 class IsCreatedFieldInISOFormatValidator(BaseValidator[ContentTypes]):
     error_code = "PA115"
     description = "Validate that the pack_metadata created field is in ISO format."
+    rationale = "The format is required by the platform."
     error_message = "The pack_metadata's 'created' field {} is not in ISO format."
     fix_message = "Changed the pack_metadata's 'created' field value to {}."
     related_field = "created"

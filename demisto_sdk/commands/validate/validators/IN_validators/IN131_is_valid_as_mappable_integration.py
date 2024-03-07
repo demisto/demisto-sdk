@@ -17,6 +17,11 @@ ContentTypes = Integration
 class IsValidAsMappableIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN131"
     description = "Validate that the integration is valid as a mappable integration."
+    rationale = (
+        "For easy debugging and troubleshooting, integrations supporting schema mapping (ismappable: true) should include the 'get-mapping-fields' command. "
+        "This validator ensures the command is present in the integration YAML, enhancing maintainability and user experience."
+        "For more info, visit https://xsoar.pan.dev/docs/integrations/mirroring_integration#get-mapping-fields"
+    )
     error_message = f"The integration is a mappable integration and is missing the {GET_MAPPING_FIELDS_COMMAND_NAME} command. Please add the command."
     related_field = "ismappable, commands"
 

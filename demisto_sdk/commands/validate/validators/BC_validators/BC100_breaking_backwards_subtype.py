@@ -17,6 +17,10 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the pack name subtype of the new file matches the old one."
     )
+    rationale = (
+        "Changing 'subtype' can break backward compatibility. "
+        "For 'subtype' info, see: https://xsoar.pan.dev/docs/integrations/yaml-file#script"
+    )
     error_message = "Possible backwards compatibility break, You've changed the {0} subtype from {1} to {2}, please undo."
     related_field = "subtype"
     fix_message = "Changing subtype back to ({0})."

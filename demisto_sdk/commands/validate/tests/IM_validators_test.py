@@ -1,6 +1,6 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import RelatedFileType
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_metadata_object,
@@ -19,9 +19,9 @@ from demisto_sdk.commands.validate.validators.IM_validators.IM109_author_image_e
 def test_ImageExistsValidator_is_valid_image_path():
     """
     Given:
-    content_items (Integrations).
-        - Case 1: Image path doesn't exist.
-        - Case 2: Image path exists.
+    content_items with 2 integrations:
+        - One integration without image.
+        - One integration with an existing image.
 
     When:
         - Calling the ImageExistsValidator is_valid function.
@@ -32,7 +32,7 @@ def test_ImageExistsValidator_is_valid_image_path():
         - Case 2: Shouldn't fail.
     """
     content_items = [create_integration_object(), create_integration_object()]
-    content_items[0].related_content[RelatedFileType.IMAGE]["path"][0] = ""
+    content_items[0].image.exist = False
     results = ImageExistsValidator().is_valid(content_items)
     assert len(results) == 1
     assert all(

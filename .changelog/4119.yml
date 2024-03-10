@@ -1,0 +1,4 @@
+changes:
+- description: Updated the *DO106* error code in the **validate** command to not fail when a docker image is younger than 3 months instead of 3 days.
+  type: feature
+pr_number: 4119

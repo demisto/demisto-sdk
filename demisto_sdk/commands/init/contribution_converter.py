@@ -620,7 +620,7 @@ class ContributionConverter:
                 "> **For the Reviewer:**\n"
                 "> 1. Currently the diff you see on Github is between the contribution original version and the contribution changes "
                 "since the contribution was made on an outdated version.\n"
-                "> 2. You will see the diff between the contribution changes and Content master only after you fix all conflicts."
+                "> 2. You will see the diff between the contribution changes and Content master only after you fix all conflicts.\n"
                 "> 3. Fix conflicts only after completing the review process "
                 "and once the contributor has finished resubmitting changes.\n"
                 "> 4. For more details see "

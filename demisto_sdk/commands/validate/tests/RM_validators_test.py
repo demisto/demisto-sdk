@@ -110,8 +110,8 @@ def test_IsContainCopyRightSectionValidator_is_valid(
             False,
             2,
             [
-                "The following image files does not exists: Packs/test1/doc_files/example.png",
-                "The following image files does not exists: Packs/test2/doc_files/example.png",
+                "The following image files do not exist: Packs/test1/doc_files/example.png",
+                "The following image files do not exist: Packs/test2/doc_files/example.png",
             ],
         ),
     ],

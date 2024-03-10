@@ -110,8 +110,8 @@ def test_IsContainCopyRightSectionValidator_is_valid(
             False,
             2,
             [
-                "The following image files do not exist: Packs/test1/doc_files/example.png",
-                "The following image files do not exist: Packs/test2/doc_files/example.png",
+                "The following images do not exist: Packs/test1/doc_files/example.png",
+                "The following images do not exist: Packs/test2/doc_files/example.png",
             ],
         ),
     ],
@@ -130,7 +130,7 @@ def test_IsImageExistsInReadmeValidator_is_valid(
     assert len(results) == expected_number_of_failures
     assert all(
         [
-            result.message == expected_msg
+            (result.message, expected_msg)
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )

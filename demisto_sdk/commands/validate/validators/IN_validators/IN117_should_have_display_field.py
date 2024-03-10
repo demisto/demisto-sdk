@@ -21,6 +21,7 @@ class ShouldHaveDisplayFieldValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that type 17 configuration params doesn't include the display field."
     )
+    rationale = "The display name is handle by the platform."
     error_message = "The following params are expiration fields and therefore can't have a 'display' field. Make sure to remove the field for the following: {0}."
     fix_message = "Removed display field for the following params: {0}."
     related_field = "display, type"

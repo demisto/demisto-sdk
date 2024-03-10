@@ -33,8 +33,8 @@ ALL_MARKETPLACES = list(MarketplaceVersions)
 class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
     error_code = "BC108"
     description = "Ensuring that the 'marketplaces' property hasn't been removed or added in a manner that effectively removes all others."
+    rationale = "Removing `marketplaces` or adding a new one that effectively removes all others can cause issues with the content item's visibility and availability."
     error_message = "You can't delete current marketplaces or add new ones if doing so will remove existing ones. Please undo the change or request a forced merge."
-    fix_message = ""
     related_field = "marketplaces"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]

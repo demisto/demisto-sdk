@@ -25,6 +25,10 @@ class IsValidFetchValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that fetch integration has the required params in the right format."
     )
+    rationale = (
+        "Malformed or missing parameters can lead to errors or incomplete data. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/fetching-incidents"
+    )
     error_message = "The integration is a fetch integration and is missing/containing malformed required params:\n{0}"
     related_field = "configuration"
     missing_or_malformed_integration: ClassVar[dict] = {}

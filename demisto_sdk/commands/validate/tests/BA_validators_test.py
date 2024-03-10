@@ -50,20 +50,18 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_versio
 from demisto_sdk.commands.validate.validators.BA_validators.BA106_is_from_version_sufficient_integration import (
     IsFromVersionSufficientIntegrationValidator,
 )
-
-from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
-    ContentTypes as ContentTypes113,
-)
-from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
-    IsContentItemNameContainTrailingSpacesValidator,
-
 from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type_in_entity_name import (
     IsEntityTypeInEntityNameValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import (
     ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
-
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
+    ContentTypes as ContentTypes113,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
+    IsContentItemNameContainTrailingSpacesValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
     CliNameMatchIdValidator,
@@ -1218,7 +1216,7 @@ def test_IsEntityNameContainExcludedWordValidator(
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_filed_error_messages",
+    "content_items, expected_number_of_failures, expected_field_error_messages",
     [
         pytest.param(
             [
@@ -1262,7 +1260,7 @@ def test_IsEntityNameContainExcludedWordValidator(
                 ),
             ],
             2,
-            ["id, name" for _ in range(2)],
+            ["object_id, name" for _ in range(2)],
             id="classifier and integration with trailing spaces",
         ),
         pytest.param(
@@ -1319,7 +1317,7 @@ def test_IsEntityNameContainExcludedWordValidator(
 def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
     content_items: Iterable[ContentTypes113],
     expected_number_of_failures: int,
-    expected_filed_error_messages: List[str],
+    expected_field_error_messages: List[str],
 ):
     """Test validate BA113 - Trailing spaces in content item name
     Given:
@@ -1341,18 +1339,18 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
             result.message
             == f"The following fields have a trailing spaces: {expected_field_msg} \nContent item fields can not have trailing spaces."
             for result, expected_field_msg in zip(
-                results, expected_filed_error_messages
+                results, expected_field_error_messages
             )
         ]
     )
 
 
 @pytest.mark.parametrize(
-    "content_item, invalid_fields",
+    "content_item, fields_with_trailing_spaces",
     [
         pytest.param(
             create_integration_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
-            {"name": "name"},
+            ["name"],
             id="case integration with trailing spaces in name with fix",
         ),
         pytest.param(
@@ -1362,19 +1360,19 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
         ),
         pytest.param(
             create_dashboard_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
-            {"name": "name"},
+            ["name"],
             id="case dashboard with trailing spaces in name with fix",
         ),
         pytest.param(
             create_incident_type_object(
                 paths=["name"], values=[FIELD_WITH_WHITESPACES]
             ),
-            {"name": "name"},
+            ["name"],
             id="case incident type with trailing spaces in name with fix",
         ),
         pytest.param(
             create_wizard_object({"name": FIELD_WITH_WHITESPACES}),
-            {"name": "name"},
+            ["name"],
             id="case wizard with trailing spaces in name with fix",
         ),
         pytest.param(
@@ -1382,13 +1380,13 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
                 paths=["name", "id"],
                 values=[FIELD_WITH_WHITESPACES, FIELD_WITH_WHITESPACES],
             ),
-            {"object_id": "id", "name": "name"},
+            ["object_id", "name"],
             id="classifier and integration with trailing spaces",
         ),
     ],
 )
 def test_IsContentItemNameContainTrailingSpacesValidator_fix(
-    content_item: ContentTypes113, invalid_fields: dict
+    content_item: ContentTypes113, fields_with_trailing_spaces: List[str]
 ):
     """
     Test validate BA113 - Trailing spaces in content item name
@@ -1409,11 +1407,12 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         - Case 6: A classifier and an integration are created with trailing spaces in their names. The validator should remove the trailing spaces and return a fix message.
     """
     validator = IsContentItemNameContainTrailingSpacesValidator()
-    validator.invalid_fields[content_item.name] = list(invalid_fields.keys())
+    validator.fields_with_trailing_spaces[
+        content_item.name
+    ] = fields_with_trailing_spaces
     results = validator.fix(content_item)
     assert (
         results.message
-        == f"Removed trailing spaces from the following content item {FIELD_WITH_WHITESPACES.rstrip()} fields: '{', '.join(list(invalid_fields.values()))}'."
+        == f"Removed trailing spaces from the following content item {FIELD_WITH_WHITESPACES.rstrip()} fields: '{', '.join(fields_with_trailing_spaces)}'."
     )
     assert content_item.name == FIELD_WITH_WHITESPACES.rstrip()
-

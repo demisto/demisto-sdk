@@ -6,7 +6,6 @@ from typing import Dict, Iterable, List
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixResult,
     GitStatuses,
     ValidationResult,
 )
@@ -17,10 +16,8 @@ class PackNameValidator(BaseValidator[ContentTypes]):
     error_code = "BA114"
     description = "Validate that the name of the pack was not changed."
     error_message = "Pack name was changed from {0} to {1}, please undo."
-    # fix_message = "Changing pack name back to {0}."
     related_field = "path"
     expected_git_statuses = [GitStatuses.RENAMED]
-    # is_auto_fixable = True
     new_pack_name: str = ''
     old_pack_name: str = ''
 
@@ -48,12 +45,4 @@ class PackNameValidator(BaseValidator[ContentTypes]):
             self.new_pack_name = new_pack_name
             self.old_pack_name = old_pack_name
         return name_has_changed
-
-    # def fix(self, content_item: ContentTypes) -> FixResult:
-    #     content_item.name = self.old_name[content_item.name]
-    #     return FixResult(
-    #         validator=self,
-    #         message=self.fix_message.format(content_item.name),
-    #         content_object=content_item,
-    #     )
             

@@ -18,6 +18,10 @@ ContentTypes = Integration
 class IsRepCommandContainIsArrayArgumentValidator(BaseValidator[ContentTypes]):
     error_code = "IN144"
     description = "Validate that a reputation command has isArray field set to True for its default argument."
+    rationale = (
+        "Reputation commands often get multiple inputs to enrich. Without isArray=true, providing an array of inputs may impact performance."
+        "For more info about reputation commands, see https://xsoar.pan.dev/docs/integrations/generic-commands-reputation"
+    )
     error_message = "The following reputation commands contain default arguments without 'isArray: True':\n{0}"
     related_field = "script.commands"
     is_auto_fixable = False

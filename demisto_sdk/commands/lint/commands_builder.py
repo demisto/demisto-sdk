@@ -148,7 +148,7 @@ def build_xsoar_linter_command(
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors
-    command += " -E --disable=all"
+    command += " --disable=all"
     # Message format
     command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
     # Enable only Demisto Plugins errors.
@@ -251,10 +251,8 @@ def build_pylint_command(
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Prints only errors
-    command += " -E"
     # disable xsoar linter messages
     disable = ["bad-option-value"]
-    # TODO: remove when pylint will update its version to support py3.9
 
     if docker_version:
         py_ver = parse(docker_version)

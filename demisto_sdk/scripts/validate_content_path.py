@@ -131,6 +131,20 @@ class InvalidDepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
+class InvalidMetaFileName(InvalidPathException):
+    message = "This file's name must start with the name of its parent folder."
+
+
+class InvalidMetaMarkdownFileName(InvalidPathException):
+    message = (
+        "This file's name must either be (parent folder)_description.md, or README.md"
+    )
+
+
+class InvalidCommandExampleFile(InvalidPathException):
+    message = "This file's name must be command_examples"
+
+
 class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
@@ -200,6 +214,28 @@ def _validate(path: Path) -> None:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFileError
 
+    if depth == 2 and first_level_folder in (
+        ContentType.INTEGRATION.as_folder,
+        ContentType.SCRIPT.as_folder,
+    ):
+        parent = path.parent.name
+        if path.suffix == ".png" and path.stem != f"{parent}_image":
+            raise InvalidMetaFileName
+        elif path.suffix == ".yml" and path.stem != parent:
+            raise InvalidMetaFileName
+        elif path.suffix == ".py":
+            if path.stem not in (parent, f"{path.parent.name}_test"):
+                raise InvalidMetaFileName
+        elif path.suffix == ".md" and path.stem not in (
+            "README",
+            f"{parent}_description",
+        ):
+            raise InvalidMetaMarkdownFileName
+        elif not path.suffix and not path.stem.startswith("command_example"):
+            raise InvalidCommandExampleFile
+        elif path.suffix == ".js" and path.stem != parent:
+            raise InvalidMetaFileName
+
 
 def validate(path: Path, github_action: bool) -> bool:
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
@@ -248,7 +284,6 @@ def validate_all():
 def main():
     logging_setup()
     typer.run(cli)
-
 
 if __name__ == "__main__":
     main()

@@ -260,7 +260,6 @@ files = [
 ]
 
 
-@pytest.mark.xfail()
 @pytest.mark.parametrize(
     "file, python_version,support_level,long_running,expected_exit_code,error_msgs,commands",
     files,

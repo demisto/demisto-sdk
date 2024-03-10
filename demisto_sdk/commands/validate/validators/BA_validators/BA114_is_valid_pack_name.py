@@ -36,10 +36,10 @@ class PackNameValidator(BaseValidator[ContentTypes]):
         ]
         
     def pack_name_has_changed(self, content_item: ContentTypes):
-        old_path_to_pack_metadata = str(content_item.old_base_content_object.path) #type: ignore
-        new_path_to_pack_metadata = str(content_item.path)
-        old_pack_name = old_path_to_pack_metadata.split('/')[-1]
-        new_pack_name = new_path_to_pack_metadata.split('/')[-1]
+        old_path = str(content_item.old_base_content_object.path) #type: ignore
+        new_path = str(content_item.path)
+        old_pack_name = old_path.split('/')[-1]
+        new_pack_name = new_path.split('/')[-1]
         name_has_changed = new_pack_name != old_pack_name
         if name_has_changed:
             self.new_pack_name = new_pack_name

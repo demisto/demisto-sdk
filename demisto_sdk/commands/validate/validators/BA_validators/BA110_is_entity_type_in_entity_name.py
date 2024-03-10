@@ -18,6 +18,7 @@ class IsEntityTypeInEntityNameValidator(BaseValidator[ContentTypes]):
     description = (
         "Check that the entity name or display name does not contain the entity type."
     )
+    rationale = "Improves clarity and simplicity in the content repository"
     error_message = "The following {0}: {1} shouldn't contain the word '{2}'."
     related_field = "name, display"
 

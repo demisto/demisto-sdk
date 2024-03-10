@@ -623,7 +623,7 @@ class ContributionConverter:
                 "> 2. You will see the diff between the contribution changes and Content master only after you fix all conflicts.\n"
                 "> 3. Fix conflicts only after completing the review process "
                 "and once the contributor has finished resubmitting changes.\n"
-                "> 4. For more details see "
+                "> For more details see "
                 "Confluence page [link](https://confluence-dc.paloaltonetworks.com/display/DemistoContent/Conducting+Code+Review).\n"
             )
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
@@ -31,7 +30,5 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if content_item.support == "partner"
-            and (
-                not content_item.author_image_file.exist
-            )
+            and (not content_item.author_image_file.exist)
         ]

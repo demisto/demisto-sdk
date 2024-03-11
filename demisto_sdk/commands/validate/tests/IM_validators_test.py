@@ -1,6 +1,5 @@
 import pytest
 
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_metadata_object,
@@ -67,8 +66,8 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
         create_metadata_object(paths=["support"], values=["partner"]),
         create_metadata_object(paths=["support"], values=["community"]),
     ]
-    content_items[2].related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
-    content_items[3].related_content[RelatedFileType.AUTHOR_IMAGE]["path"][0] = ""
+    content_items[2].author_image_file.exist = False
+    content_items[3].author_image_file.exist = False
     results = AuthorImageExistsValidator().is_valid(content_items)
     assert len(results) == 1
     assert all(

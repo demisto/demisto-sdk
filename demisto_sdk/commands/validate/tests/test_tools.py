@@ -353,7 +353,9 @@ def create_incident_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_incident_field(name="incident_field", content=json_content)
-    return cast(IncidentField, BaseContent.from_path(Path(pack.incident_fields[0].path)))
+    return cast(
+        IncidentField, BaseContent.from_path(Path(pack.incident_fields[0].path))
+    )
 
 
 def create_report_object(

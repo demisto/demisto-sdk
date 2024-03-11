@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_assets_modeling_rule_object,
     create_classifier_object,
@@ -16,11 +17,13 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_incident_type_object,
     create_incoming_mapper_object,
     create_indicator_field_object,
+    create_indicator_type_object,
     create_integration_object,
     create_job_object,
     create_layout_object,
     create_list_object,
     create_metadata_object,
+    create_modeling_rule_object,
     create_old_file_pointers,
     create_outgoing_mapper_object,
     create_parsing_rule_object,
@@ -28,8 +31,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_ps_integration_object,
     create_report_object,
     create_script_object,
+    create_trigger_object,
     create_widget_object,
     create_wizard_object,
+    create_xdrc_template_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
 )
@@ -1214,9 +1219,40 @@ def test_IsEntityNameContainExcludedWordValidator(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-            [create_metadata_object(), create_metadata_object()],
-            1,
-            ["Pack name was changed from pack_170 to newPackName, please undo."],
+            [create_metadata_object(), create_integration_object(), create_parsing_rule_object(), create_correlation_rule_object(), create_playbook_object(), create_modeling_rule_object(), create_ps_integration_object(), create_script_object(), create_classifier_object(), create_list_object(), create_job_object(), create_dashboard_object(), create_incident_type_object(), create_incident_field_object(), create_report_object(), create_xsiam_report_object(), create_xsiam_dashboard_object(), create_xdrc_template_object(), create_assets_modeling_rule_object(), create_trigger_object(), create_layout_object(), create_widget_object(), create_indicator_field_object(), create_wizard_object(), create_generic_definition_object(), create_generic_field_object(), create_generic_type_object(), create_generic_module_object(), create_incoming_mapper_object(), create_outgoing_mapper_object(), create_indicator_type_object()],
+            31,
+            ['Pack name for a content item with path /newPackName was changed from pack_170 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Integrations/integration_0/integration_0.yml was changed from pack_171 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml was changed from pack_172 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/CorrelationRules/correlation_rule.yml was changed from pack_173 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Playbooks/playbook-0.yml was changed from pack_174 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml was changed from pack_175 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Integrations/integration_0/integration_0.yml was changed from pack_176 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Scripts/script0/script0.yml was changed from pack_177 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Classifiers/classifier-test_classifier.json was changed from pack_178 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Lists/list-list.json was changed from pack_179 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Jobs/job-job.json was changed from pack_180 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Dashboards/dashboard-dashboard.json was changed from pack_181 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/IncidentTypes/incidenttype-incident_type.json was changed from pack_182 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/IncidentFields/incidentfield-incident_field.json was changed from pack_183 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Reports/report-report.json was changed from pack_184 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/XSIAMReports/xsiam_report.json was changed from pack_185 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/XSIAMDashboards/xsiam_dashboard.json was changed from pack_186 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/XDRCTemplates/pack_187_xdrc_template/xdrc_template.json was changed from pack_187 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml was changed from pack_188 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Triggers/trigger.json was changed from pack_189 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Layouts/layout-layout.json was changed from pack_190 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Widgets/widget-widget.json was changed from pack_191 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/IndicatorFields/indicatorfield-indicator_field.json was changed from pack_192 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Wizards/wizard-test_wizard.json was changed from pack_193 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/GenericDefinitions/genericdefinition-generic_definition.json was changed from pack_194 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/GenericFields/generic_field/genericfield-generic_field.json was changed from pack_195 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/GenericTypes/generic_type/generictype-generic_type.json was changed from pack_196 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/GenericModules/genericmodule-generic_module.json was changed from pack_197 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Classifiers/classifier-mapper-incoming_mapper.json was changed from pack_198 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/Classifiers/classifier-mapper-outgoing_mapper.json was changed from pack_199 to newPackName, please undo.',
+             'Pack name for a content item with path /newPackName/IndicatorTypes/reputation-indicator_type.json was changed from pack_200 to newPackName, please undo.',
+            ],
         ),
     ],
 )
@@ -1237,11 +1273,12 @@ def test_ValidPackNameValidator_is_valid(content_items, expected_number_of_failu
     """
     old_content_items = copy.deepcopy(content_items)
     create_old_file_pointers(content_items, old_content_items)
-    current_path = str(content_items[0].path)
-    path_components = current_path.split('/')
-    path_components[-1] = "newPackName"
-    new_path_str = Path('/'.join(path_components))
-    content_items[0].path = new_path_str
+    for content_item in content_items:
+        content_item_parts = list(content_item.path.parts)
+        packs_folder_index = content_item_parts.index(PACKS_FOLDER) + 1
+        content_item_parts[packs_folder_index] = "newPackName"
+        new_path = Path(*content_item_parts)
+        content_item.path = new_path
     results = PackNameValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(

@@ -37,9 +37,9 @@ jobs:
         run: |
           poetry build
 
-#      - name: Publish SDK to PyPi
-#        run: |
-#          poetry publish -u __token__ -p ${PYPI_TOKEN}
+      - name: Publish SDK to PyPi
+        run: |
+          poetry publish -u __token__ -p ${PYPI_TOKEN}
 
       - name: Comment PR that SDK has been released
         uses: thollander/actions-comment-pull-request@v2

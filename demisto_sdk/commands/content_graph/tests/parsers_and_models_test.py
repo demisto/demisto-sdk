@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
+    RelatedFileType,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import (
@@ -26,6 +27,12 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_incident_type_object,
+    create_integration_object,
+    create_metadata_object,
+    create_playbook_object,
+)
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 
@@ -2831,3 +2838,98 @@ def test_updated_marketplaces_set(marketplace, expected_market_place_set):
         expected_market_place_set
         == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
     )
+
+
+def test_argument_object__default_description():
+    # validate that the 'description' attribute of the Argument object is set to an empty string by default
+    from demisto_sdk.commands.content_graph.objects.integration_script import Argument
+
+    arg = Argument(name="test")
+    assert arg.description == ""
+
+
+def test_output_object__default_description():
+    # validate that the 'description' attribute of the Output object is set to an empty string by default
+    from demisto_sdk.commands.content_graph.objects.integration import Output
+
+    output = Output()
+    assert output.description == ""
+
+
+def test_parameter_object__default_type():
+    # validate that the 'type' attribute of the Parameter object is set to 0 by default
+    from demisto_sdk.commands.content_graph.objects.integration import Parameter
+
+    param = Parameter(name="test")
+    assert param.type == 0
+
+
+def test_get_related_content():
+    """
+    Given
+    - a list of content items.
+
+    When
+    - calling related_content.
+
+    Then
+    - Ensure that the right amount and file types were returned for each content type.
+    """
+    related_files = {
+        ContentType.INTEGRATION: {
+            "expected_len": 7,
+            "expected_files": [
+                RelatedFileType.DARK_SVG,
+                RelatedFileType.DESCRIPTION,
+                RelatedFileType.IMAGE,
+                RelatedFileType.LIGHT_SVG,
+                RelatedFileType.README,
+                RelatedFileType.CODE,
+                RelatedFileType.TEST_CODE,
+            ],
+        },
+        ContentType.PLAYBOOK: {
+            "expected_len": 2,
+            "expected_files": [RelatedFileType.IMAGE, RelatedFileType.README],
+        },
+        ContentType.PACK: {
+            "expected_len": 5,
+            "expected_files": [
+                RelatedFileType.README,
+                RelatedFileType.AUTHOR_IMAGE,
+                RelatedFileType.PACK_IGNORE,
+                RelatedFileType.SECRETS_IGNORE,
+                RelatedFileType.RELEASE_NOTES,
+            ],
+        },
+        ContentType.INCIDENT_TYPE: {"expected_len": 0, "expected_files": []},
+    }
+    objects = [
+        create_integration_object(),
+        create_incident_type_object(),
+        create_playbook_object(),
+        create_metadata_object(),
+    ]
+    for object in objects:
+        assert related_files[object.content_type]["expected_len"] == len(
+            object.related_content.keys()
+        )
+        assert all(
+            [related_file in object.related_content]
+            for related_file in related_files[object.content_type]["expected_files"]
+        )
+
+
+def test_get_related_text_file():
+    """
+    Given
+    - a pack content object with a readme file.
+
+    When
+    - calling the readme attribute.
+
+    Then
+    - Ensure that the readme content was returned.
+    """
+    pack = create_metadata_object(readme_text="This is a test")
+    assert pack.readme == "This is a test"

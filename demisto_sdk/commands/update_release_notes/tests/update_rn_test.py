@@ -262,7 +262,7 @@ class TestRNUpdate:
         assert expected_result == release_notes
 
     @mock.patch.object(UpdateRN, "get_master_version")
-    def test_build_rn_template_markdown_valid(self, mock_master):
+    def test_build_rn_template_markdown_valid(self, mock_master, mocker):
         """
         Given:
             - a dict of changed items
@@ -272,6 +272,8 @@ class TestRNUpdate:
             - return a markdown string
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        mocker.patch.object(UpdateRN, "get_pack_metadata", return_value={})
 
         mock_master.return_value = "1.0.0"
         update_rn = UpdateRN(
@@ -402,8 +404,7 @@ class TestRNUpdate:
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    @mock.patch.object(UpdateRN, "get_master_version")
-    def test_build_rn_template_when_only_pack_metadata_changed(self, mock_master):
+    def test_build_rn_template_when_only_pack_metadata_changed(self, mocker):
         """
         Given:
             - an empty dict of changed items
@@ -412,10 +413,13 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Integrations\n\n##### HelloWorld\n\n- Documentation and metadata improvements.\n"
+        expected_result = "## HelloWorld\n\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        mock_master.return_value = "1.0.0"
+        mocker.patch.object(
+            UpdateRN, "get_pack_metadata", return_value={"name": "HelloWorld"}
+        )
+        mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
         update_rn = UpdateRN(
             pack_path="Packs/HelloWorld",
             update_type="minor",
@@ -425,7 +429,7 @@ class TestRNUpdate:
         )
         changed_items = {}
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert release_notes == expected_result
 
     @mock.patch.object(UpdateRN, "get_master_version")
     def test_only_docs_changed(self, mock_master):
@@ -906,18 +910,20 @@ class TestRNUpdate:
         )
 
     new_file_test_params = [
-        (
-            FileType.TEST_SCRIPT.value,
-            "(Available from Cortex XSOAR 5.5.0).",
-        ),
+        (FileType.TEST_SCRIPT.value, "(Available from Cortex XSOAR 5.5.0).", ["xsoar"]),
         (
             FileType.MODELING_RULE.value,
             "(Available from Cortex XSIAM %%XSIAM_VERSION%%).",
+            ["marketplacev2"],
         ),
     ]
 
-    @pytest.mark.parametrize("file_type, expected_result", new_file_test_params)
-    def test_build_rn_desc_new_file(self, file_type, expected_result):
+    @pytest.mark.parametrize(
+        "file_type, expected_result, marketplaces", new_file_test_params
+    )
+    def test_build_rn_desc_new_file(
+        self, mocker, file_type, expected_result, marketplaces
+    ):
         """
         Given
             - A new file
@@ -927,6 +933,10 @@ class TestRNUpdate:
             - Validate That from-version added to the rn description.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        mocker.patch.object(
+            UpdateRN, "get_pack_metadata", return_value={"marketplaces": marketplaces}
+        )
 
         update_rn = UpdateRN(
             pack_path="Packs/HelloWorld",
@@ -945,6 +955,104 @@ class TestRNUpdate:
             docker_image=None,
         )
         assert expected_result in desc
+
+    @pytest.mark.parametrize(
+        "file_type, marketplaces, expected_result, not_expected",
+        [
+            (
+                # Case 1: xsoar file type and xsoar marketplace, should only have xsoar.
+                FileType.TEST_SCRIPT.value,
+                ["xsoar"],
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
+            ),
+            (
+                # Case 2: xsoar file type and xsiam marketplace, should only have xsiam.
+                FileType.TEST_SCRIPT.value,
+                ["marketplacev2"],
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+            ),
+            (
+                # Case 3: xsoar file type and xsoar & xsiam marketplaces, should have both.
+                FileType.TEST_SCRIPT.value,
+                ["xsoar", "marketplacev2"],
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+                "",
+            ),
+            (
+                # Case 4: xsiam file type and xsiam marketplace, should only have xsiam.
+                FileType.MODELING_RULE.value,
+                ["marketplacev2"],
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+            ),
+            (
+                # Case 5: xsiam file type and xsoar & xsiam marketplaces, should only have xsiam.
+                FileType.MODELING_RULE.value,
+                ["xsoar", "marketplacev2"],
+                "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
+                "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
+            ),
+        ],
+    )
+    def test_build_rn_desc_new_file_several_marketplaces(
+        self, pack, file_type, marketplaces, expected_result, not_expected
+    ):
+        """
+        Given: New pack supported in different marketplaces with new file of type file_type.
+
+        When: Running build_rn_desc when updating release notes.
+
+        Then: Check the marketplace specific from version string is as expected.
+
+        Cases:
+            Case 1: xsoar file type and xsoar marketplace, should only have xsoar.
+            Case 2: xsoar file type and xsiam marketplace, should only have xsiam.
+            Case 3: xsoar file type and xsoar & xsiam marketplaces, should have both.
+            Case 4: xsiam file type and xsiam marketplace, should only have xsiam.
+            Case 5: xsiam file type and xsoar & xsiam marketplaces, should only have xsiam.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        pack.pack_metadata.write_json(
+            {
+                "name": "HelloWorld",
+                "description": "This pack.",
+                "support": "xsoar",
+                "currentVersion": "1.0.1",
+                "author": "Cortex XSOAR",
+                "url": "https://www.paloaltonetworks.com/cortex",
+                "email": "",
+                "created": "2021-06-07T07:45:21Z",
+                "categories": [],
+                "tags": [],
+                "useCases": [],
+                "keywords": [],
+                "marketplaces": marketplaces,
+            }
+        )
+
+        update_rn = UpdateRN(
+            pack_path=pack.path,
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        desc = update_rn.build_rn_desc(
+            _type=file_type,
+            content_name="Hello World Test",
+            desc="Test description",
+            is_new_file=True,
+            text="",
+            from_version="5.5.0",
+            docker_image=None,
+        )
+        assert expected_result in desc
+        if not_expected:
+            assert not_expected not in desc
 
     def test_build_rn_desc_old_file(self):
         """
@@ -975,7 +1083,7 @@ class TestRNUpdate:
         )
         assert "(Available from Cortex XSOAR 5.5.0)." not in desc
 
-    def test_build_rn_template_with_fromversion(self):
+    def test_build_rn_template_with_fromversion(self, mocker):
         """
         Given
             - New playbook integration and script.
@@ -985,6 +1093,8 @@ class TestRNUpdate:
             - Validate That from-version added to each of rn descriptions.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        mocker.patch.object(UpdateRN, "get_pack_metadata", return_value={})
 
         changed_items = {
             ("Hello World Integration", FileType.INTEGRATION): {

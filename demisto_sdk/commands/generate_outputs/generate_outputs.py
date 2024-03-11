@@ -15,14 +15,14 @@ from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs impor
 
 def json_to_outputs_flow(kwargs):
     if not kwargs.get("command"):
-        logger.info(
-            "[red]To use the json-to-outputs version of this command please include a `command` argument.[/red]"
+        logger.error(
+            "To use the json-to-outputs version of this command please include a `command` argument."
         )
         return 1
 
     if not kwargs.get("prefix"):
-        logger.info(
-            "[red]To use the json-to-outputs version of this command please include a `prefix` argument.[/red]"
+        logger.error(
+            "To use the json-to-outputs version of this command please include a `prefix` argument."
         )
         return 1
 

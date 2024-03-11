@@ -10,26 +10,36 @@ inputs:
   node-version:
     required: false
     type: string
-    default: "16"
+    default: "20"
     description: "The node version to install"
+  artifacts-dir:
+    required: false
+    type: string
+    default: "artifacts-dir"
+    description: "The name of the artifacts dir"
 
 
 runs:
   using: 'composite'
   steps:
+    - name: Create Artifacts Dir
+      run: |
+        mkdir -p ${{ inputs.artifacts-dir }}
+        echo "Created directory ${{ inputs.artifacts-dir }} successfully"
+      shell: bash
 
     - name: Python ${{ matrix.python-version }} - Setup Environment
-      uses: ./.github/actions/setup_poetry_python_environment
+      uses: ./.github/actions/setup_environment
       with:
         python-version: ${{ inputs.python-version }}
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
 
     - name: Install npm
       run: |
         npm install
-        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+        echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > ${{ inputs.artifacts-dir }}/node_versions_info.json
       shell: bash

@@ -42,9 +42,9 @@ class RelatedFile(ABC):
         self.git_sha = git_sha
         self.exist: bool = False
         self.file_path: Path = self.find_the_right_path(self.get_optional_paths())
-        self.git_status: Union[GitStatuses, None] = self.get_git_status()
 
-    def get_git_status(self) -> Union[GitStatuses, None]:
+    @property
+    def git_status(self) -> Union[GitStatuses, None]:
         status = None
         if self.git_sha:
             git_util = GitUtil.from_content_path()

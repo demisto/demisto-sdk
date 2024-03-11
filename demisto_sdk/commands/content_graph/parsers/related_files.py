@@ -73,9 +73,7 @@ class RelatedFile(ABC):
             git_util = GitUtil.from_content_path()
             return git_util.is_file_exist_in_commit_or_branch(
                 file_path, git_sha
-            ) or git_util.is_file_exist_in_commit_or_branch(
-                file_path, git_sha, False
-            )
+            ) or git_util.is_file_exist_in_commit_or_branch(file_path, git_sha, False)
         else:
             return file_path.exists()
 

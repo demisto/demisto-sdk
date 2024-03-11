@@ -288,11 +288,13 @@ class OldValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
+        logger.info(f"prev_ver value is {prev_ver}")
         if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
             self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver)
         else:
             self.prev_ver = self.setup_prev_ver(prev_ver)
 
+        logger.info(f"prev_ver configured to be {prev_ver}")
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()
@@ -2295,13 +2297,16 @@ class OldValidateManager:
         if self.git_util:
             # If demisto exists in remotes if so set prev_ver as 'demisto/master'
             if self.git_util.check_if_remote_exists("demisto"):
+                logger.info('Log 1')
                 return "demisto/master"
 
             # Otherwise, use git to get the primary branch
             _, branch = self.git_util.handle_prev_ver()
+            logger.info(f'Log 2 {DEMISTO_GIT_UPSTREAM=}, {branch=}')
             return f"{DEMISTO_GIT_UPSTREAM}/" + branch
 
         # Default to 'origin/master'
+        logger.info(f'Log 3 {DEMISTO_GIT_UPSTREAM=}')
         return f"{DEMISTO_GIT_UPSTREAM}/master"
 
     def setup_git_params(self):

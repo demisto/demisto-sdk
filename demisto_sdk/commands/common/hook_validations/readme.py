@@ -195,6 +195,35 @@ class ReadMeValidator(BaseValidator):
         Returns:
             bool: True if env configured else False.
         """
+        a = self.verify_readme_relative_urls()
+        logger.info(f'{a=}')
+        b = self.is_image_path_valid()
+        logger.info(f'{b=}')
+        c = self.verify_image_exist()
+        logger.info(f'{c=}')
+        d = self.verify_readme_image_paths()
+        logger.info(f'{d=}')
+        e = self.is_mdx_file()
+        logger.info(f'{e=}')
+        f = self.verify_no_empty_sections()
+        logger.info(f'{f=}')
+        g = self.verify_no_default_sections_left()
+        logger.info(f'{g=}')
+        h = self.verify_readme_is_not_too_short()
+        logger.info(f'{h=}')
+        i = self.is_context_different_in_yml()
+        logger.info(f'{i=}')
+        j = self.verify_demisto_in_readme_content()
+        logger.info(f'{j=}')
+        k = self.verify_template_not_in_readme()
+        logger.info(f'{k=}')
+        l = self.verify_copyright_section_in_readme_content()
+        logger.info(f'{l=}')
+        m = self.validate_no_disallowed_terms_in_customer_facing_docs(
+                    file_content=self.readme_content, file_path=self.file_path_str
+                )
+        logger.info(f'{m=}')
+        
         return all(
             [
                 self.verify_readme_relative_urls(),

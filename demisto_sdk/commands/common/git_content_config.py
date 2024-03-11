@@ -184,6 +184,7 @@ class GitContentConfig:
             repo_name (str, optional): The repo name. Defaults to None.
             project_id (int, optional): The repo id. Defaults to None.
         """
+        logger.info(f'Log 5 {hostname=}, {organization=}, {repo_name=}, {project_id=}, {self.repo_hostname=}')
         gitlab_hostname, gitlab_id = (
             (self._search_gitlab_repo(hostname, project_id=project_id))
             or (self._search_gitlab_repo(self.repo_hostname, project_id=project_id))
@@ -191,8 +192,11 @@ class GitContentConfig:
             or (self._search_gitlab_repo(self.repo_hostname, repo_name=repo_name))
             or (None, None)
         )
+        
+        logger.info(f'Log 6 {gitlab_hostname=}, {gitlab_id=}')
 
         if self.git_provider == GitProvider.GitLab and gitlab_id is None:
+            logger.info('Log 7 - Project not found on GitLab, setting to default Demisto repo')
             self._print_private_repo_warning_if_needed()
             self.git_provider = GitProvider.GitHub
             self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
@@ -228,6 +232,7 @@ class GitContentConfig:
         """
         Checks the class variable, prints if necessary, and sets the class variable to avoid multiple prints
         """
+        logger.info(f'LOG 4 {GitContentConfig.NOTIFIED_PRIVATE_REPO=}')
         if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
             logger.info(
                 "[yellow]Could not find the repository name on gitlab - defaulting to demisto/content[/yellow]"

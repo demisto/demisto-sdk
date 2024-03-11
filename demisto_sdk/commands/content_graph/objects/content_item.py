@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -83,17 +83,26 @@ class ContentItem(BaseContent):
         )
 
     @property
-    def ignored_errors(self) -> list:
+    def ignored_errors(self) -> List[str]:
+        return self.get_ignored_errors(self.path.name)
+
+    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+        return self.get_ignored_errors((Path(file_path)).name)
+
+    def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:
             return (
                 list(
                     self.in_pack.ignored_errors_dict.get(  # type: ignore
-                        f"file:{self.path.name}", []
+                        f"file:{path}", []
                     ).items()
                 )[0][1].split(",")
                 or []
             )
         except:  # noqa: E722
+            logger.debug(
+                f"Failed to extract ignored errors list from {path} for {self.object_id}"
+            )
             return []
 
     @property
@@ -123,7 +132,7 @@ class ContentItem(BaseContent):
         if not pack:
             if pack_name := get_pack_name(self.path):
                 pack = BaseContent.from_path(
-                    CONTENT_PATH / PACKS_FOLDER / pack_name
+                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
                 )  # type: ignore[assignment]
         if pack:
             self.pack = pack

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
@@ -16,22 +16,22 @@ class ConfJSON:
 
     def write_json(
         self,
-        tests: Optional[List[str]] = None,
-        skipped_tests: Optional[List[str]] = None,
-        skipped_integrations: Optional[List[str]] = None,
+        tests: Optional[List[dict]] = None,
+        skipped_tests: Optional[Dict[str, str]] = None,
+        skipped_integrations: Optional[Dict[str, str]] = None,
         unmockable_integrations: Optional[List[str]] = None,
         docker_thresholds: Optional[dict] = None,
     ):
         if tests is None:
             tests = []
         if skipped_tests is None:
-            skipped_tests = None
+            skipped_tests = {}
         if skipped_integrations is None:
-            skipped_integrations = []
+            skipped_integrations = {}
         if unmockable_integrations is None:
             unmockable_integrations = []
         if docker_thresholds is None:
-            docker_thresholds = {}
+            docker_thresholds = {"_comment": "", "images": []}
         self._file_path.write_text(
             json.dumps(
                 {
@@ -40,6 +40,15 @@ class ConfJSON:
                     "skipped_integrations": skipped_integrations,
                     "unmockable_integrations": unmockable_integrations,
                     "docker_thresholds": docker_thresholds,
+                    # the next fields are not modified in tests (hence lack of args), but are structurally required.
+                    "available_tests_fields": [],
+                    "testTimeout": 100,
+                    "testInterval": 100,
+                    "nightly_packs": [],
+                    "parallel_integrations": [],
+                    "private_tests": [],
+                    "test_marketplacev2": [],
+                    "reputation_tests": [],
                 }
             ),
             None,

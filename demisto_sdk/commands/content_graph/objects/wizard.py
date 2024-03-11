@@ -14,6 +14,7 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
     packs: List[str]
     integrations: List[str]
     playbooks: List[str]
+    version: Optional[int] = 0
 
     def metadata_fields(self) -> Set[str]:
         return (

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import glob
-import logging
 import os
 import re
 import shlex
@@ -10,6 +9,7 @@ import sys
 import time
 import traceback
 import urllib.parse
+import xml.etree.ElementTree as ET
 from abc import ABC
 from collections import OrderedDict
 from concurrent.futures import as_completed
@@ -84,7 +84,6 @@ from demisto_sdk.commands.common.constants import (
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
     MARKETPLACE_TO_CORE_PACKS_FILE,
-    METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
     OFFICIAL_CONTENT_GRAPH_PATH,
@@ -108,6 +107,7 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
+    STRING_TO_BOOL_MAP,
     TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
@@ -138,11 +138,10 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
-
-logger = logging.getLogger("demisto-sdk")
 
 yaml_safe_load = YAML_Handler(typ="safe")
 
@@ -443,9 +442,13 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
     if marketplaces is None:
         marketplaces = list(MarketplaceVersions)
 
-    for mp, core_packs in get_marketplace_to_core_packs().items():
-        if mp in marketplaces:
-            result.update(core_packs)
+    try:
+        for mp, core_packs in get_marketplace_to_core_packs().items():
+            if mp in marketplaces:
+                result.update(core_packs)
+    except NoInternetConnectionException:
+        logger.debug("SDK running in offline mode, returning core_packs=[]")
+        return []
     return list(result)
 
 
@@ -884,6 +887,8 @@ def get_file(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
+        elif type_of_file.lstrip(".") in {"svg"}:
+            return ET.fromstring(file_content)
         else:
             result = json.load(StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
@@ -1028,9 +1033,7 @@ def get_from_version(file_path):
         )
 
         if not from_version:
-            logger.warning(
-                f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}'
-            )
+            logger.warning(f"fromversion/fromVersion was not found in '{file_path}'")
             return ""
 
         if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", from_version):
@@ -1173,7 +1176,7 @@ def get_latest_release_notes_text(rn_path):
                 logger.info(
                     f"[red]Release Notes may not be empty. Please fill out correctly. - {rn_path}[/red]"
                 )
-                return None
+                return ""
         except OSError:
             return ""
 
@@ -1651,7 +1654,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
-        elif path.name == METADATA_FILE_NAME:
+        elif path.name == PACKS_PACK_META_FILE_NAME:
             return FileType.METADATA
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
@@ -1671,6 +1674,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.MODELING_RULE_SCHEMA
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
+        elif PRE_PROCESS_RULES_DIR in path.parts:
+            return FileType.PRE_PROCESS_RULES
 
     elif (path.stem.endswith("_image") and path.suffix == ".png") or (
         (path.stem.endswith("_dark") or path.stem.endswith("_light"))
@@ -2808,7 +2813,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     readme_content += (
         "### "  # mark end of file so last pattern of regex will be recognized.
     )
-    commands = yml_dict.get("script", {})
+    commands = yml_dict.get("script") or {}
 
     # handles scripts
     if not commands:
@@ -3295,12 +3300,12 @@ def get_mp_types_from_metadata_by_item(file_path):
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
     if (
-        METADATA_FILE_NAME in Path(file_path).parts
+        PACKS_PACK_META_FILE_NAME in Path(file_path).parts
     ):  # for when the type is pack, the item we get is the metadata path
         metadata_path = file_path
     else:
         metadata_path_parts = get_pack_dir(file_path)
-        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+        metadata_path = Path(*metadata_path_parts) / PACKS_PACK_META_FILE_NAME
 
     try:
         if not (
@@ -3690,20 +3695,6 @@ def normalize_field_name(field: str) -> str:
         field (str): the incident/indicator field.
     """
     return field.replace("incident_", "").replace("indicator_", "")
-
-
-STRING_TO_BOOL_MAP = {
-    "y": True,
-    "1": True,
-    "yes": True,
-    "true": True,
-    "n": False,
-    "0": False,
-    "no": False,
-    "false": False,
-    "t": True,
-    "f": False,
-}
 
 
 def string_to_bool(
@@ -4371,3 +4362,95 @@ def get_pack_latest_rn_version(pack_path: str) -> str:
         return list_of_versions[-1]
     else:
         return ""
+
+
+def is_str_bool(input_: str) -> bool:
+    try:
+        string_to_bool(input_)
+        return True
+    except ValueError:
+        return False
+
+
+def check_text_content_contain_sub_text(
+    sub_text_list: List[str],
+    is_lower: bool = False,
+    to_split: bool = False,
+    text: str = "",
+) -> List[str]:
+    """
+    Args:
+        sub_text_list (List[str]): list of words/sentences to search in line content.
+        is_lower (bool): True to check when line is lower cased.
+        to_split (bool): True to split the line in order to search specific word
+        text (str): The readme content to search.
+
+    Returns:
+        list of lines which contains the given text.
+    """
+    invalid_lines = []
+
+    for line_num, line in enumerate(text.split("\n")):
+        if is_lower:
+            line = line.lower()
+        if to_split:
+            line = line.split()  # type: ignore
+        for text in sub_text_list:
+            if text in line:
+                invalid_lines.append(str(line_num + 1))
+
+    return invalid_lines
+
+
+def extract_image_paths_from_str(
+    text: str, regex_str: str = r"!\[.*\]\((.*/doc_files/[a-zA-Z0-9_-]+\.png)"
+) -> List[str]:
+    """
+    Args:
+        local_paths (List[str]): list of file paths
+        is_lower (bool): True to check when line is lower cased.
+        to_split (bool): True to split the line in order to search specific word
+        text (str): The readme content to search.
+
+    Returns:
+        list of lines which contains the given text.
+    """
+
+    return [image_path for image_path in re.findall(regex_str, text)]
+
+
+def get_full_image_paths_from_relative(
+    pack_name: str, image_paths: List[str]
+) -> List[Path]:
+    """
+        Args:
+            pack_name (str): Pack name to add to path
+            image_paths (List[Path]): List of images with a local path. For example: ![<title>](../doc_files/<image name>.png)
+    )
+
+        Returns:
+            List[Path]: A list of paths with the full path.
+    """
+
+    return [
+        Path(f"Packs/{pack_name}/{image_path.replace('../', '')}")
+        if "Packs" not in image_path
+        else Path(image_path)
+        for image_path in image_paths
+    ]
+
+
+def remove_nulls_from_dictionary(data):
+    """
+    Remove Null values from a dictionary. (updating the given dictionary)
+
+    :type data: ``dict``
+    :param data: The data to be added to the context (required)
+
+    :return: No data returned
+    :rtype: ``None``
+    """
+    list_of_keys = list(data.keys())[:]
+    for key in list_of_keys:
+        if data[key] in ("", None, [], {}, ()):
+            del data[key]

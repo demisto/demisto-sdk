@@ -1,0 +1,27 @@
+name: 'Upload artifacts to github summary'
+description: 'Uploads artifacts to the github summary of a workflow'
+author: 'Demisto-SDK'
+
+inputs:
+  artifacts-path-dir:
+    required: true
+    type: string
+    description: "The path to the artifacts dir"
+
+  artifact-name:
+    required: false
+    type: string
+    default: $GITHUB_JOB
+    description: "The name of of the artifact to upload"
+
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ inputs.artifacts-path-dir }}

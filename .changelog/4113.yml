@@ -1,0 +1,4 @@
+changes:
+- description: Improved reviewer instructions on outdated pack submissions.
+  type: internal
+pr_number: 4113

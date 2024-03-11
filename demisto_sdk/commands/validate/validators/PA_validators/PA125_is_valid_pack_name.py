@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import re
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
+    EXCLUDED_DISPLAY_NAME_WORDS,
+    INCORRECT_PACK_NAME_PATTERN,
     INCORRECT_PACK_NAME_WORDS,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -17,6 +20,7 @@ ContentTypes = Pack
 class IsValidPackNameValidator(BaseValidator[ContentTypes]):
     error_code = "PA125"
     description = "Validate that the pack name is valid."
+    rationale = "Pack names should follow conventions for consistency and readability in the marketplace."
     error_message = "Invalid pack name ({0}), pack name should be at least 3 characters long, start with a capital letter, must not contain the words: {1}."
     related_field = "name"
 
@@ -32,8 +36,9 @@ class IsValidPackNameValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if len(content_item.name) < 3
             or content_item.name[0].islower()
+            or re.findall(INCORRECT_PACK_NAME_PATTERN, content_item.name)
             or any(
-                excluded_word.lower() in content_item.name.lower()
-                for excluded_word in INCORRECT_PACK_NAME_WORDS
+                excluded_word in content_item.name.lower()
+                for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS
             )
         ]

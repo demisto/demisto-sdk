@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     ImagesFolderNames,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -394,6 +395,21 @@ class IntegrationScriptUnifier(Unifier):
         return yml_path, code
 
     @staticmethod
+    def get_script_or_integration_package_data_with_sha(
+        yml_path: Path, git_sha: str, yml_data: dict
+    ):
+        # should be static method
+        if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+            code_type = yml_data.get("type")
+        else:
+            code_type = yml_data.get("script", {}).get("type")
+        code_path = str(yml_path).replace(".yml", TYPE_TO_EXTENSION[code_type])  # type: ignore[index]
+
+        code = TextFile.read_from_git_path(code_path, tag=git_sha)
+
+        return yml_path, code
+
+    @staticmethod
     def check_api_module_imports(script_code: str) -> Dict[str, str]:
         """
         Checks integration code for API module imports
@@ -587,14 +603,17 @@ class IntegrationScriptUnifier(Unifier):
         Returns:
             The unified yaml file (dict).
         """
-        if " Contribution)" not in unified_yml["display"]:
+        if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
+            contributor_type = support_level_header
+
+        if (
+            " Contribution)" not in unified_yml["display"]
+            and contributor_type != "xsoar"
+        ):
             unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(
                 contributor_type.capitalize()
             )
         existing_detailed_description = unified_yml.get("detaileddescription", "")
-
-        if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
-            contributor_type = support_level_header
 
         if contributor_type == COMMUNITY_SUPPORT:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)

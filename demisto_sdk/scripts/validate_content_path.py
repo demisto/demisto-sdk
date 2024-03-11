@@ -4,6 +4,7 @@ from typing import ClassVar, List
 
 import typer
 from more_itertools import split_at
+from tqdm import tqdm
 from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
@@ -110,6 +111,8 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     )
 )
 
+app = typer.Typer()
+
 
 class InvalidPathException(Exception, ABC):
     message: ClassVar[str]
@@ -131,7 +134,7 @@ class InvalidDepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
-class InvalidMetaFileName(InvalidPathException):
+class InvalidIntegrationScriptFileName(InvalidPathException):
     message = "This file's name must start with the name of its parent folder."
 
 
@@ -167,12 +170,18 @@ class PathIsUnified(ExemptedPath):
 
 def _validate(path: Path) -> None:
     """Runs the logic and raises exceptions on skipped/errorneous paths"""
-    logger.debug(f"checking {path=}")
+    logger.debug(f"checking {path}")
     if path.is_dir():
         raise PathIsFolder
-
     if PACKS_FOLDER not in path.parts:
         raise PathOutsidePacks
+
+    if (
+        "Tests" in path.parts
+        and PACKS_FOLDER in path.parts
+        and (path.parts).index("Tests") < (path.parts).index(PACKS_FOLDER)
+    ):  # Tests comes before Packs
+        raise PathOutsidePacks  # Under Tests/
 
     parts_before_packs, parts_after_packs = tuple(
         split_at(path.parts, lambda v: v == PACKS_FOLDER, maxsplit=1)
@@ -219,22 +228,39 @@ def _validate(path: Path) -> None:
         ContentType.SCRIPT.as_folder,
     ):
         parent = path.parent.name
+
         if path.suffix == ".png" and path.stem != f"{parent}_image":
-            raise InvalidMetaFileName
-        elif path.suffix == ".yml" and path.stem != parent:
-            raise InvalidMetaFileName
+            raise InvalidIntegrationScriptFileName
+        elif path.suffix in {".yml", ".js"} and path.stem != parent:
+            raise InvalidIntegrationScriptFileName
         elif path.suffix == ".py":
-            if path.stem not in (parent, f"{path.parent.name}_test"):
-                raise InvalidMetaFileName
-        elif path.suffix == ".md" and path.stem not in (
+            if path.stem not in {
+                parent,
+                f"{parent}_test",
+                "conftest",
+                ".vulture_whitelist",
+            }:
+                raise InvalidIntegrationScriptFileName
+        elif path.suffix == ".md" and path.stem not in {
             "README",
             f"{parent}_description",
-        ):
+        }:
             raise InvalidMetaMarkdownFileName
-        elif not path.suffix and not path.stem.startswith("command_example"):
-            raise InvalidCommandExampleFile
-        elif path.suffix == ".js" and path.stem != parent:
-            raise InvalidMetaFileName
+
+        elif not path.suffix:
+            if path.stem == "command_examples":
+                return
+            if "command" in path.stem and "example" in path.stem:
+                raise InvalidCommandExampleFile
+            if path.stem == ".pylintrc":
+                return
+            if (
+                path.stem == "LICENSE"
+                and parts_after_packs[0] == "FireEye-Detection-on-Demand"
+            ):
+                # Decided to exempt this pack only from using LICENSE files.
+                return
+            raise InvalidIntegrationScriptFileName
 
 
 def validate(path: Path, github_action: bool) -> bool:
@@ -262,28 +288,39 @@ def validate(path: Path, github_action: bool) -> bool:
         return False
 
 
-def cli(
+@app.command(name="validate")
+def validate_paths(
     paths: Annotated[
         List[Path], typer.Argument(exists=True, file_okay=True, dir_okay=True)
     ],
     github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
 ) -> None:
+    """Validate given paths"""
     result = [validate(path, github_action) for path in paths]
     if not all(result):
         raise typer.Exit(1)
 
 
-def validate_all():
+@app.command(name="validate-all")
+def validate_all(
+    content_path: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)]
+):
     """Used in the SDK CI for testing compatibility with content"""
-    logging_setup()
-    for path in sorted(Path("content/Packs").rglob("*")):
-        if path.is_file():
-            validate(path, False)
+    logger.info(f"{content_path.resolve()=}")
+    invalid = 0
+    for path in tqdm(content_paths := sorted(content_path.rglob("*"))):
+        if path.is_file() and not validate(path, False):
+            invalid += 1
+    total = len(content_paths)
+    valid = total - invalid
+    print(f"{total=}, {valid=}, {invalid=}")  # noqa: T201
 
 
 def main():
     logging_setup()
-    typer.run(cli)
+    validate_all(Path("../../content"))
+    app()
+
 
 if __name__ == "__main__":
     main()

@@ -293,14 +293,15 @@ class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, _ = astroid.extract_node(
+        node_a, node_b = astroid.extract_node(
             """
             def test_function(): #@
                 # demisto.log("Some log message") #@
                 return True #@
         """
         )
-        assert node_a is not None and node_b is None
+        assert node_a
+        assert node_b
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)

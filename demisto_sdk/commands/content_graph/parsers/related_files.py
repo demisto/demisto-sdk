@@ -70,12 +70,10 @@ class RelatedFile(ABC):
     def is_file_exist(self, file_path: Path, git_sha: Optional[str]) -> bool:
         if git_sha:
             # Checking if file exist in remote branch/sha.
-            if GitUtil.from_content_path().is_file_exist_in_commit_or_branch(
+            git_util = GitUtil.from_content_path()
+            return git_util.is_file_exist_in_commit_or_branch(
                 file_path, git_sha
-            ):
-                return True
-            # Otherwise, checking if file exist locally.
-            return GitUtil.from_content_path().is_file_exist_in_commit_or_branch(
+            ) or git_util.is_file_exist_in_commit_or_branch(
                 file_path, git_sha, False
             )
         else:

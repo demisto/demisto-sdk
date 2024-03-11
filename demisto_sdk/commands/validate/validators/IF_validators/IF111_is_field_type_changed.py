@@ -15,7 +15,8 @@ ContentTypes = IncidentField
 
 class IsFieldTypeChangedValidator(BaseValidator[ContentTypes]):
     error_code = "IF111"
-    description = "Validates that the field type was not changed"
+    description = "Checks if the field type was not changed"
+    rationale = "Changing type of IncidentField is not allowed by the platform"
     error_message = "Changing incident field type is not allowed"
     fix_message = "The type field has changed back"
     related_field = "type"

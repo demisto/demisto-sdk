@@ -207,6 +207,10 @@ class PreCommitRunner:
             path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-docker-{i}.yaml"
             write_dict(path, data=pre_commit_context.precommit_template)
 
+        # will run the main hook
+        # result = PreCommitRunner.run_hooks(None, precommit_env=precommit_env, verbose=verbose, stdout=stdout)
+
+
         # the threads will run in separate process and will wait for completion
         with ThreadPool(num_processes) as pool:
             results = pool.map(

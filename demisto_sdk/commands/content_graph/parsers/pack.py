@@ -123,7 +123,9 @@ class PackMetadataParser:
         self.display_name: str = metadata.get("name", "")
         self.description: str = metadata.get("description", "")
         self.support: str = metadata.get("support", "")
-        self.created: str = metadata.get("firstCreated") or NOW
+        self.created = metadata.get("created") or metadata.get("firstCreated") or NOW
+        if "created" in metadata and "firstCreated" not in metadata:
+            metadata['firstCreated'] = self.created
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None

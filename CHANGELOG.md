@@ -1,4 +1,11 @@
 # Changelog
+## 1.27.2
+* Updated the *DO106* error code in the **validate** command to not fail when a docker image is younger than 3 months instead of 3 days. [#4119](https://github.com/demisto/demisto-sdk/pull/4119)
+* Fixed an issue where **lint** crashed when collecting invalid logs. [#4072](https://github.com/demisto/demisto-sdk/pull/4072)
+* Adds auto-update to existing integration README and fixes README generation for existing Packs in contribution flow. [#3820](https://github.com/demisto/demisto-sdk/pull/3820)
+* Fixed an issue where new release notes were generated without marketplace specific tags when needed. [#4118](https://github.com/demisto/demisto-sdk/pull/4118)
+* Improved reviewer instructions on outdated pack submissions. [#4113](https://github.com/demisto/demisto-sdk/pull/4113)
+
 ## 1.27.1
 * Updated the **validate** command (`PA114`) to verify the "currentVersion" field was raised in the pack_metadata when changing specific fields in the pack_metadata file. [#3972](https://github.com/demisto/demisto-sdk/pull/3972)
 * Added support for **update-release-notes** command to update release notes when changing specific fields in the pack_metadata file. [#3972](https://github.com/demisto/demisto-sdk/pull/3972)

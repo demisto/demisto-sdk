@@ -81,6 +81,7 @@ class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
     description = "Checks whether the name of a content item contains an excluded word."
     error_message = "The name of {} contains an excluded word."
     related_field = ""
+    rationale = "Increases clarity by keeping content names simple"
     is_auto_fixable = False
     expected_git_statuses = [
         GitStatuses.RENAMED,

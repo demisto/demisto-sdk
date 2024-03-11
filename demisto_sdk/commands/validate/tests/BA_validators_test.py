@@ -1337,7 +1337,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
     assert all(
         [
             result.message
-            == f"The following fields have a trailing spaces: {expected_field_msg} \nContent item fields can not have trailing spaces."
+            == f"The following fields have a trailing spaces: {expected_field_msg}."
             for result, expected_field_msg in zip(
                 results, expected_field_error_messages
             )
@@ -1399,20 +1399,14 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
         - The trailing spaces should be removed from the content item's name, and the fix message should indicate that the trailing spaces have been removed.
 
     Test cases:
-        - Case 1: An integration is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
-        - Case 2: A classifier is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
-        - Case 3: A dashboard is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
-        - Case 4: An incident type is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
-        - Case 5: A wizard is created with trailing spaces in its name. The validator should remove the trailing spaces and return a fix message.
-        - Case 6: A classifier and an integration are created with trailing spaces in their names. The validator should remove the trailing spaces and return a fix message.
+        - Various content items (integrations, classifiers, dashboards, incident types, wizards) are created with trailing spaces in their names.
+            The validator should remove the trailing spaces and return a fix message for each.
     """
     validator = IsContentItemNameContainTrailingSpacesValidator()
-    validator.fields_with_trailing_spaces[
-        content_item.name
-    ] = fields_with_trailing_spaces
+    validator.violations[content_item.object_id] = fields_with_trailing_spaces
     results = validator.fix(content_item)
     assert (
         results.message
-        == f"Removed trailing spaces from the following content item {FIELD_WITH_WHITESPACES.rstrip()} fields: '{', '.join(fields_with_trailing_spaces)}'."
+        == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {FIELD_WITH_WHITESPACES.rstrip()}"
     )
     assert content_item.name == FIELD_WITH_WHITESPACES.rstrip()

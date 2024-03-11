@@ -64,15 +64,15 @@ ContentTypes = Union[
 
 class IsContentItemNameContainTrailingSpacesValidator(BaseValidator[ContentTypes]):
     error_code = "BA113"
-    description = "Validator to check if content item names contain trailing spaces."
-    rationale = "Content item names should not contain trailing spaces to ensure accurate referencing."
-    error_message = "The following fields have a trailing spaces: {0} \nContent item fields can not have trailing spaces."
+    description = "Checks for content item names with trailing spaces."
+    rationale = "Ensures accurate referencing."
+    error_message = "The following fields have a trailing spaces: {0}."
     fix_message = (
-        "Removed trailing spaces from the following content item {0} fields: '{1}'."
+        "Removed trailing spaces from the {1} fields of following content items: {0}"
     )
     related_field = "name, commonfields.id"
     is_auto_fixable = True
-    fields_with_trailing_spaces: ClassVar[Dict[str, List[str]]] = {}
+    violations: ClassVar[Dict[str, List[str]]] = {}
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
 
@@ -90,26 +90,31 @@ class IsContentItemNameContainTrailingSpacesValidator(BaseValidator[ContentTypes
 
     def get_fields_with_trailing_spaces(self, content_item: ContentTypes) -> List[str]:
         """
-        Get the fields of a content item that contain trailing spaces.
+        Get the fields of a content item that contain trailing spaces. These fields are saved in self.violations
+        under the object id of the content item. This is done for the fix function to know which fields to correct.
         """
         item_fields = {"object_id": content_item.object_id, "name": content_item.name}
-        self.fields_with_trailing_spaces[content_item.name] = [
+        self.violations[content_item.object_id] = [
             field_name
             for field_name, field_value in item_fields.items()
             if field_value != field_value.rstrip()
         ]
-        return self.fields_with_trailing_spaces[content_item.name]
+        return self.violations[content_item.object_id]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         """
         Remove trailing spaces from the fields of a content item.
+        This method uses the saved self.violations
+        to identify the fields with trailing spaces for each unique content item.
         """
         updated_fields: list[str] = []
-        for field_name in self.fields_with_trailing_spaces[content_item.name]:
+        for field_name in self.violations[content_item.object_id]:
             if field_name == "object_id":
                 content_item.object_id = content_item.object_id.rstrip()
             elif field_name == "name":
                 content_item.name = content_item.name.rstrip()
+            else:
+                raise ValueError(f"Unknown field: {field_name}.")
             updated_fields.append(field_name)
         return FixResult(
             validator=self,

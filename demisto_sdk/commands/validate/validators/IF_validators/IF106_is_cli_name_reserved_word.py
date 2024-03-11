@@ -67,7 +67,8 @@ INCIDENT_PROHIBITED_CLI_NAMES = {
 
 class IsCliNameReservedWordValidator(BaseValidator[ContentTypes]):
     error_code = "IF106"
-    description = "Validate `cliName` field is not a reserved word"
+    description = "Checks if `cliName` field is not a reserved word"
+    rationale = "The cliName values of the IncidentField are limited by the platform"
     error_message = "`cliName` field can not be `{cli_name}` as it's a builtin key"
     related_field = "cliName"
     is_auto_fixable = False

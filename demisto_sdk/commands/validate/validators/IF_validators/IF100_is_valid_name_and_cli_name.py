@@ -33,8 +33,7 @@ class IsValidNameAndCliNameValidator(BaseValidator[ContentTypes]):
     error_code = "IF100"
     description = "Validate that the name and cliName does not contain any potential incident synonyms."
     error_message = (
-        "The words: [{words}] cannot be used as a name.\n"
-        "To fix the problem, remove the words [{words}]"
+        "The words: [{words}] cannot be used as a name"
     )
     related_field = "name,cliName"
     is_auto_fixable = False

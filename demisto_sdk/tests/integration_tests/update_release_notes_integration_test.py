@@ -59,7 +59,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
         "\n"
         + "#### Integrations\n\n"
         + "##### New: Azure Feed\n\n"
-        + "- New: Azure.CloudIPs Feed Integration. (Available from Cortex XSOAR 5.5.0).\n"
+        + "- New: Azure.CloudIPs Feed Integration.<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>\n"
     )
     added_files = {
         join(

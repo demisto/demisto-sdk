@@ -32,7 +32,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        (
+        pytest.param(
             [
                 create_incident_field_object(["name", "cliName"], ["case 1", "case1"]),
                 create_incident_field_object(["name", "cliName"], ["test 1", "test1"]),
@@ -44,8 +44,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
                     "To fix the problem, remove the words [case]"
                 )
             ],
+            id="One IncidentField with bad word in field `name`"
         ),
-        (
+        pytest.param(
             [
                 create_incident_field_object(
                     ["name", "cliName"], ["case incident 1", "caseincident1"]
@@ -58,6 +59,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
                     "To fix the problem, remove the words [case, incident]"
                 )
             ],
+            id="IncidentField with two bad words in field `name`"
         ),
     ],
 )
@@ -69,11 +71,6 @@ def test_IsValidNameAndCliNameValidator_is_valid(
     """
     Given:
         - IncidentFields content items
-          Case 1:
-            - IncidentField with bad word in field `name`
-            - IncidentField with valid field `name`
-          Case 2:
-            - IncidentField with two bad words in field `name`
     When:
         - run is_valid method
     Then:

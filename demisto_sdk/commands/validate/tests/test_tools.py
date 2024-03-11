@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.constants import (
@@ -353,7 +353,7 @@ def create_incident_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_incident_field(name="incident_field", content=json_content)
-    return BaseContent.from_path(Path(pack.incident_fields[0].path))  # type: ignore
+    return cast(IncidentField, BaseContent.from_path(Path(pack.incident_fields[0].path)))
 
 
 def create_report_object(

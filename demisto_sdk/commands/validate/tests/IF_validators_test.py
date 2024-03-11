@@ -38,12 +38,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
                 create_incident_field_object(["name", "cliName"], ["test 1", "test1"]),
             ],
             1,
-            [
-                (
-                    "The words: [case] cannot be used as a name.\n"
-                    "To fix the problem, remove the words [case]"
-                )
-            ],
+            [("The words: [case] cannot be used as a name")],
             id="One IncidentField with bad word in field `name`",
         ),
         pytest.param(
@@ -53,12 +48,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
                 ),
             ],
             1,
-            [
-                (
-                    "The words: [case, incident] cannot be used as a name.\n"
-                    "To fix the problem, remove the words [case, incident]"
-                )
-            ],
+            [("The words: [case, incident] cannot be used as a name")],
             id="IncidentField with two bad words in field `name`",
         ),
     ],
@@ -253,7 +243,8 @@ def test_IsCliNameFieldAlphanumericValidator_is_valid():
     assert len(results) == 1
     assert all(
         [
-            result.message == "Field `cliName` contains non-alphanumeric letters"
+            result.message
+            == "Field `cliName` contains non-alphanumeric or uppercase letters"
             for result in results
         ]
     )

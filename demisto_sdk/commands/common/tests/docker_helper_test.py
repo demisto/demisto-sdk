@@ -2,6 +2,7 @@ import os
 from unittest import mock
 
 import pytest
+import requests
 from packaging.version import Version
 
 import demisto_sdk.commands.common.docker_helper as dhelper
@@ -35,14 +36,16 @@ def test_init_global_docker_client():
 )
 def test_get_python_version_from_image(image: str, output: str, expected: str, mocker):
     from demisto_sdk.commands.common import docker_helper
+    from demisto_sdk.commands.common.files.file import File
 
     class ImageMock:
         def __init__(self, attrs):
             self.attrs = attrs
 
     mocker.patch.object(docker_helper, "init_global_docker_client")
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+    mocker.patch.object(
+        File,
+        "read_from_github_api",
         return_value={
             "docker_images": {
                 "python3": {
@@ -66,7 +69,7 @@ def test_get_python_version_from_image(image: str, output: str, expected: str, m
 def test_cache_of_get_python_version_from_image():
     """
     Given -
-        docker image that should be alrady cached
+        docker image that should be already cached
 
     When -
         Try to get python version from am docker image
@@ -130,3 +133,69 @@ def test_custom_container_registry(mocker):
         "password": "password",
         "registry": "custom",
     }
+
+
+@pytest.mark.parametrize(
+    "image_name, container_name, exception, exception_text",
+    [
+        (
+            "demisto_test:1234",
+            "test",
+            requests.exceptions.ConnectionError,
+            "Connection error",
+        ),
+        ("demisto_test:1234", "test", requests.exceptions.Timeout, "Timeout error"),
+        ("demisto_test:1234", "test", dhelper.DockerException, "Docker exception"),
+    ],
+)
+def test_create_docker_container_successfully(
+    mocker, image_name, container_name, exception, exception_text
+):
+    """
+    Given -
+        Docker client and docker image name
+
+    When -
+        Try to create docker container
+
+    Then -
+        Validate the re-run works as expected
+            1. Getting ConnectionError
+            2. Getting Timeout error
+            3. Getting Docker error
+    """
+
+    class MockContainer:
+        @staticmethod
+        def remove(**kwargs):
+            assert kwargs.get("force")
+            raise exception(exception_text)
+
+    class MockContainerCollection:
+        @staticmethod
+        def create(**kwargs):
+            assert kwargs.get("image") == image_name
+            assert kwargs.get("name") == container_name
+            raise exception(exception_text)
+
+        @staticmethod
+        def get(**kwargs):
+            assert kwargs.get("container_id") == container_name
+            return MockContainer()
+
+    class MockedDockerClient:
+        containers = MockContainerCollection()
+
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_helper.init_global_docker_client",
+        return_value=MockedDockerClient,
+    )
+    log_result = mocker.patch("demisto_sdk.commands.common.tools.logger.debug")
+
+    with pytest.raises(exception):
+        dhelper.DockerBase().create_container(image=image_name, name=container_name)
+
+    assert (
+        f"error when executing func create_container, error: {exception_text}, time 3"
+        in log_result.call_args.args
+    )

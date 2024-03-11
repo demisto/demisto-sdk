@@ -428,10 +428,10 @@ def test_IsIntegrationRunnableValidator_is_valid(
             ],
             4,
             [
-                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8.",
-                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8.",
-                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8.",
-                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'required' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'type' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'type' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'type' field should be 8.",
+                "The following params are invalid:\nThe proxy param display name should be 'Use system proxy settings', the 'defaultvalue' field should be 'false', the 'required' field should be 'False', and the 'type' field should be 8.",
             ],
         ),
     ],
@@ -1938,9 +1938,7 @@ def test_IsValidAsMappableIntegrationValidator_is_valid(
                 ),
             ],
             1,
-            [
-                "The following commands have more than 1 default arg, please make sure they have at most one: test_1."
-            ],
+            ["The following commands have multiple default arguments: test_1."],
         ),
     ],
 )

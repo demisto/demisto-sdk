@@ -4,6 +4,7 @@ from typing import List, Tuple
 import pytest
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.files.errors import LocalFileReadError
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.files.yml_file import YmlFile
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
@@ -27,7 +28,6 @@ class TestYMLFile(FileTesting):
         )
 
         if git_util := git_repo.git_util:
-            YmlFile.git_util = git_util
             git_util.commit_files("commit all yml files")
 
         yml_file_paths = [
@@ -58,6 +58,22 @@ class TestYMLFile(FileTesting):
             assert (
                 actual_file_content == expected_file_content
             ), f"Could not read yml file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
+
+    def test_read_from_local_path_invalid_yml_file_raises_error(self, repo: Repo):
+        """
+        Given:
+         - invalid yml file
+
+        When:
+         - Running read_from_local_path method from YmlFile object
+
+        Then:
+         - make sure an exception is raised as the file is invalid yml file.
+        """
+        pack = repo.create_pack()
+        pack.pack_ignore.write_text("{'test':'test''}")
+        with pytest.raises(LocalFileReadError):
+            YmlFile.read_from_local_path(pack.pack_ignore.path)
 
     def test_read_from_local_path_from_content_root(
         self, input_files: Tuple[List[str], str]

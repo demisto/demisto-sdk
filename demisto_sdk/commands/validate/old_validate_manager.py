@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES,
     LISTS_DIR,
     OLDEST_SUPPORTED_VERSION,
+    PACK_METADATA_REQUIRE_RN_FIELDS,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
     SKIP_RELEASE_NOTES_FOR_TYPES,
@@ -46,6 +47,7 @@ from demisto_sdk.commands.common.errors import (
     get_all_error_codes,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.author_image import (
     AuthorImageValidator,
 )
@@ -1222,14 +1224,14 @@ class OldValidateManager:
                 "\n[cyan]================= Running validation on old format files =================[/cyan]"
             )
             validation_results.add(self.validate_no_old_format(old_format_files))
-            logger.info("*** after adding validate_no_old_format")
+            logger.debug("added validate_no_old_format")
 
         if not self.skip_pack_rn_validation:
-            logger.info("*** adding validate_no_duplicated_release_notes")
+            logger.debug("adding validate_no_duplicated_release_notes")
             validation_results.add(
                 self.validate_no_duplicated_release_notes(added_files)
             )
-            logger.info("*** after adding validate_no_duplicated_release_notes")
+            logger.debug("added validate_no_duplicated_release_notes")
 
         all_files_set = list(
             set().union(
@@ -2117,7 +2119,7 @@ class OldValidateManager:
 
         packs_that_should_have_version_raised = (
             self.get_packs_that_should_have_version_raised(
-                modified_files, added_files, old_format_files
+                modified_files, added_files, old_format_files, changed_meta_files
             )
         )
 
@@ -2760,7 +2762,7 @@ class OldValidateManager:
         )
 
     def get_packs_that_should_have_version_raised(
-        self, modified_files, added_files, old_format_files
+        self, modified_files, added_files, old_format_files, changed_meta_files
     ):
         # modified packs (where the change is not test-playbook, test-script, readme, metadata file, release notes or
         # doc/author images)
@@ -2778,6 +2780,16 @@ class OldValidateManager:
                 FileType.PACK_IGNORE,
             },
         )
+        if changed_meta_files:
+            modified_packs_that_should_have_version_raised = (
+                modified_packs_that_should_have_version_raised.union(
+                    get_pack_names_from_files(
+                        self.get_changed_meta_files_that_should_have_version_raised(
+                            changed_meta_files
+                        )
+                    )
+                )
+            )
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
         # should have their version raised
@@ -2891,3 +2903,27 @@ class OldValidateManager:
 
             return is_valid_as_deprecated
         return None
+
+    def get_changed_meta_files_that_should_have_version_raised(
+        self, changed_meta_files
+    ):
+        """
+        Check if specified fields have changed in each meta_file to determine if it should have its version raised.
+
+        Args:
+            changed_meta_files (set): set of file paths of the changed meta files.
+
+        Returns:
+            set: A set containing file paths of meta_files that should have their version raised.
+        """
+        changed_meta_files_that_should_have_version_raised = set()
+        for file_path in changed_meta_files:
+            old_meta_file_content = get_remote_file(file_path, tag=self.prev_ver)
+            with open(file_path) as f:
+                current_meta_file_content = json.load(f)
+            if any(
+                current_meta_file_content.get(field) != old_meta_file_content.get(field)
+                for field in PACK_METADATA_REQUIRE_RN_FIELDS
+            ):
+                changed_meta_files_that_should_have_version_raised.add(file_path)
+        return changed_meta_files_that_should_have_version_raised

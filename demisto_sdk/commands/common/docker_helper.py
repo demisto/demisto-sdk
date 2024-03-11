@@ -66,9 +66,11 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         try:
             DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:
-            msg = "Failed to init docker client. Please check that your docker daemon is running."
-            logger.error(f"{log_prompt} - {msg}")
-            raise DockerException(msg)
+            logger.warning(
+                f"{log_prompt} - Failed to init docker client. "
+                "This might indicate that your docker daemon is not running."
+            )
+            raise
         docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
@@ -244,6 +246,14 @@ class DockerBase:
                 with open(tar_file_path.name, "rb") as byte_file:
                     container.put_archive("/", byte_file.read())
 
+    @retry(
+        times=3,
+        exceptions=(
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            DockerException,
+        ),
+    )
     def create_container(
         self,
         image: str,
@@ -255,13 +265,29 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
-        container: docker.models.containers.Container = (
-            init_global_docker_client().containers.create(
-                image=image, command=command, environment=environment, **kwargs
+        docker_client = init_global_docker_client()
+
+        try:
+            container: docker.models.containers.Container = (
+                docker_client.containers.create(
+                    image=image, command=command, environment=environment, **kwargs
+                )
             )
-        )
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            DockerException,
+        ) as e:
+            if container_name := kwargs.get("name"):
+                if container := docker_client.containers.get(
+                    container_id=container_name
+                ):
+                    container.remove(force=True)
+            raise e
+
         if files_to_push:
             self.copy_files_container(container, files_to_push)
+
         return container
 
     def push_image(self, image: str, log_prompt: str = ""):
@@ -462,10 +488,6 @@ class MountableDocker(DockerBase):
                 logger.debug(f"Failed to mount {src} to {target}")
         return mounts
 
-    @retry(
-        times=3,
-        exceptions=(requests.exceptions.ConnectionError, requests.exceptions.Timeout),
-    )
     def create_container(
         self,
         image: str,

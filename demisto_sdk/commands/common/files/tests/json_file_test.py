@@ -4,11 +4,13 @@ from typing import List, Tuple
 import pytest
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.files.errors import LocalFileReadError
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -26,7 +28,6 @@ class TestJsonFile(FileTesting):
         _list = pack.create_list("test", content=file_content)
 
         if git_util := git_repo.git_util:
-            JsonFile.git_util = git_util
             git_util.commit_files("commit all json files")
 
         json_file_paths = [
@@ -58,6 +59,24 @@ class TestJsonFile(FileTesting):
             assert (
                 actual_file_content == expected_file_content
             ), f"Could not read json file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
+
+    def test_read_from_local_path_invalid_json_file_raises_error(self, repo: Repo):
+        """
+        Given:
+         - invalid json file
+
+        When:
+         - Running read_from_local_path method from JsonFile object
+
+        Then:
+         - make sure an exception is raised as the file is an invalid json file.
+         - make sure json-decoding error was raised
+        """
+        pack = repo.create_pack()
+        with pytest.raises(LocalFileReadError) as exc:
+            JsonFile.read_from_local_path(pack.pack_ignore.path)
+
+        assert isinstance(exc.value.original_exc, JSONDecodeError)
 
     def test_read_from_local_path_from_content_root(
         self, input_files: Tuple[List[str], str]

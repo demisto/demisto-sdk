@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from pathlib import Path
 from typing import (
     ClassVar,
     Generic,
@@ -13,7 +14,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
@@ -33,11 +34,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     Class variables:
     error_code: (ClassVar[str]): The validation's error code.
     description: (ClassVar[str]): The validation's error description.
+    rationale: (ClassVar[str]): The validation's rationale.
     error_message: (ClassVar[str]): The validation's error message.
     fix_message: (ClassVar[str]): The validation's fixing message.
     related_field: (ClassVar[str]): The validation's related field.
     expected_git_statuses: (ClassVar[Optional[List[GitStatuses]]]): The list of git statuses the validation should run on.
-    run_on_deprecated: (ClassVar[bool]): Wether the validation should run on deprecated items or not.
+    run_on_deprecated: (ClassVar[bool]): Whether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
     dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
@@ -45,6 +47,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     error_code: ClassVar[str]
     description: ClassVar[str]
+    rationale: ClassVar[str]
     error_message: ClassVar[str]
     fix_message: ClassVar[str] = ""
     related_field: ClassVar[str]
@@ -52,6 +55,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
+    related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -83,7 +87,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     content_item.git_status, self.expected_git_statuses
                 ),
                 not is_error_ignored(
-                    self.error_code, content_item.ignored_errors, ignorable_errors
+                    self.error_code,
+                    ignorable_errors,
+                    content_item,
+                    self.related_file_type,
                 ),
                 not is_support_level_support_validation(
                     self.error_code, support_level_dict, content_item.support_level
@@ -138,26 +145,17 @@ class BaseResult(BaseModel):
     @property
     def format_json_message(self):
         return {
-            "file path": str(self.content_object.path),
+            "file path": str(self.content_object.path.relative_to(CONTENT_PATH)),
             "error code": self.validator.error_code,
             "message": self.message,
         }
 
 
-class ValidationResult(BaseResult, BaseModel):
-    """This is a class for validation results."""
-
-
-class FixResult(BaseResult, BaseModel):
-    """This is a class for fix results."""
-
-    @property
-    def format_readable_message(self):
-        return f"Fixing {str(self.content_object.path)}: [{self.validator.error_code}] - {self.message}"
-
-
 def is_error_ignored(
-    err_code: str, ignored_errors: List[str], ignorable_errors: List[str]
+    err_code: str,
+    ignorable_errors: List[str],
+    content_item: ContentTypes,
+    related_file_type: Optional[List[RelatedFileType]] = None,
 ) -> bool:
     """
     Check if the given validation error code is ignored by the current item ignored error list.
@@ -170,7 +168,50 @@ def is_error_ignored(
     Returns:
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
-    return err_code in ignored_errors and err_code in ignorable_errors
+    if err_code not in ignorable_errors:
+        return False
+    if related_file_type:
+        # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
+        for related_file in related_file_type:
+            for path in content_item.related_content.get(related_file, {}).get(
+                "path", ""
+            ):
+                if err_code in content_item.ignored_errors_related_files(path):
+                    # If the error code is found in one of the paths, will set the path in the related_content and return True.
+                    content_item.related_content[related_file]["path"] = [path]
+                    return True
+        return False
+    else:
+        # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
+        return err_code in content_item.ignored_errors
+
+
+class ValidationResult(BaseResult, BaseModel):
+    """This is a class for validation results."""
+
+
+class FixResult(BaseResult, BaseModel):
+    """This is a class for fix results."""
+
+
+class InvalidContentItemResult(BaseResult, BaseModel):
+    validator: Optional[BaseValidator] = None  # type: ignore[assignment]
+    message: str
+    content_object: Optional[BaseContent] = None  # type: ignore[assignment]
+    error_code: str
+    path: Path
+
+    @property
+    def format_readable_message(self):
+        return f"{str(self.path.relative_to(CONTENT_PATH))}: [{self.error_code}] - {self.message}"
+
+    @property
+    def format_json_message(self):
+        return {
+            "file path": str(self.path.relative_to(CONTENT_PATH)),
+            "error code": self.error_code,
+            "message": self.message,
+        }
 
 
 def is_support_level_support_validation(
@@ -196,11 +237,9 @@ def should_run_according_to_status(
 ) -> bool:
     """
     Check if the given content item git status is in the given expected git statuses for the specific validation.
-
     Args:
         content_item_git_status (Optional[str]): The content item git status (Added, Modified, Renamed, Deleted or None if file was created via -i/-a)
         expected_git_statuses (Optional[List[str]]): The validation's expected git statuses, if None then validation should run on all cases.
-
     Returns:
         bool: True if the given validation should run on the content item according to the expected git statuses. Otherwise, return False.
     """

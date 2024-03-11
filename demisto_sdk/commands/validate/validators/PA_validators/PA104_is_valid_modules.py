@@ -16,6 +16,7 @@ ContentTypes = Pack
 class IsValidModulesValidator(BaseValidator[ContentTypes]):
     error_code = "PA104"
     description = "Validate that the modules field include only labels from the list of allowed labels."
+    rationale = f"See the list of allowed modules in the platform: {', '.join(MODULES)}"
     error_message = f"Module field can include only label from the following options: {', '.join(MODULES)}."
     related_field = "modules"
     is_auto_fixable = True

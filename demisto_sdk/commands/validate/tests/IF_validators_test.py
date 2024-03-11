@@ -44,7 +44,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
                     "To fix the problem, remove the words [case]"
                 )
             ],
-            id="One IncidentField with bad word in field `name`"
+            id="One IncidentField with bad word in field `name`",
         ),
         pytest.param(
             [
@@ -59,7 +59,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
                     "To fix the problem, remove the words [case, incident]"
                 )
             ],
-            id="IncidentField with two bad words in field `name`"
+            id="IncidentField with two bad words in field `name`",
         ),
     ],
 )

@@ -165,11 +165,21 @@ class PreCommitContext:
             Tuple[List[dict], List[dict]]: The first item is the list of docker hooks, the second is the list of no docker hooks
         """
         local_repo_hooks = local_repo["hooks"]
-        docker_hooks = [hook for hook in local_repo_hooks if "in-docker" in hook["id"]]
-        no_docker_hooks = [
-            hook for hook in local_repo_hooks if "in-docker" not in hook["id"]
-        ]
-        return docker_hooks, no_docker_hooks
+        splitted_hooks = []
+        non_splitted_hooks = []
+        for hook in local_repo_hooks:
+            found = False
+            for saved_hooks in self.hook_ids_to_hooks.values():
+                saved_hook_ids = {h["id"] for h in saved_hooks}
+                if hook["id"] in saved_hook_ids and len(saved_hook_ids) > 1:
+                    found = True
+                    break
+            if found:
+                splitted_hooks.append(hook)
+            else:
+                non_splitted_hooks.append(hook)
+
+        return splitted_hooks, non_splitted_hooks
 
     def _filter_hooks_need_docker(self, repos: dict) -> dict:
         """

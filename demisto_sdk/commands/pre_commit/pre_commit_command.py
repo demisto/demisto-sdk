@@ -204,12 +204,11 @@ class PreCommitRunner:
             command=["install-hooks"],
         )
 
-        for hooks in pre_commit_context.hook_ids_to_hooks.values():
-            for hook in hooks:
-                pre_commit_context.precommit_template["repos"] = [local_repo]
-                local_repo["hooks"] = [hook]
-                path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
-                write_dict(path, data=pre_commit_context.precommit_template)
+        for hook in splitted_hooks:
+            pre_commit_context.precommit_template["repos"] = [local_repo]
+            local_repo["hooks"] = [hook]
+            path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
+            write_dict(path, data=pre_commit_context.precommit_template)
 
         # will run the main hook
         results = [

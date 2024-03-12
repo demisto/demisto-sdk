@@ -1,4 +1,0 @@
-changes:
-- description: Adds auto-update to existing integration README and fixes README generation for existing Packs in contribution flow.
-  type: fix
-pr_number: 3820

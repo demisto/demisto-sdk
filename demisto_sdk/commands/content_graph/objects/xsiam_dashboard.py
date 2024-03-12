@@ -1,4 +1,5 @@
 import shutil
+from functools import cached_property
 from pathlib import Path
 from typing import Optional
 
@@ -9,6 +10,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     ContentItemXSIAM,
 )
+from demisto_sdk.commands.content_graph.parsers.related_files import ImageRelatedFile
 
 
 class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD):  # type: ignore[call-arg]
@@ -39,3 +41,7 @@ class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD)
         if "dashboards_data" in _dict and path.suffix == ".json":
             return True
         return False
+
+    @cached_property
+    def image(self) -> ImageRelatedFile:
+        return ImageRelatedFile(self.path, git_sha=self.git_sha)

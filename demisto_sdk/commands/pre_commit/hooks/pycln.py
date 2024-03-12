@@ -26,3 +26,4 @@ class PyclnHook(Hook):
         safe_update_hook_args(self.base_hook, skip_imports)
 
         self.hooks.append(self.base_hook)
+        self.update_hook_ids_to_hooks()

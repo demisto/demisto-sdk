@@ -253,6 +253,7 @@ class DockerHook(Hook):
         logger.debug(
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
+        self.update_hook_ids_to_hooks()
 
     def get_new_hooks(
         self,
@@ -274,8 +275,8 @@ class DockerHook(Hook):
             All the hooks to be appended for this image
         """
         new_hook = deepcopy(self.base_hook)
-        new_hook["id"] = f"{new_hook.get('id')}-{image}"
-        new_hook["name"] = f"{new_hook.get('name')}-{image}"
+        new_hook["id"] = f"{new_hook.get('id')}-{image.replace('/', '-')}"
+        new_hook["name"] = f"{new_hook.get('name')}-{image.replace('/', '-')}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
         new_hook[

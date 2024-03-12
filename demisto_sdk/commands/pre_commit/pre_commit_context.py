@@ -5,7 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Any
 
 from demisto_sdk.commands.common.constants import CACHE_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -45,6 +45,7 @@ class PreCommitContext:
     skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
     dry_run: bool = False
+    hook_ids_to_hooks: Dict[str, List[Dict]] = field(default_factory=dict)
 
     def __post_init__(self):
         """
@@ -152,7 +153,7 @@ class PreCommitContext:
             and any("in-docker" in need for need in needs)
         }
 
-    def _get_docker_and_no_docker_hooks(
+    def _get_splitted_and_non_splitted_hooks(
         self, local_repo: dict
     ) -> Tuple[List[dict], List[dict]]:
         """This function separates the docker and no docker hooks of a local repo

@@ -49,3 +49,5 @@ class SourceryHook(Hook):
             )
 
             self.hooks.append(hook)
+
+        self.update_hook_ids_to_hooks()

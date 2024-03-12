@@ -1,4 +1,4 @@
 changes:
-- description: Fix an issue that RM100 validation failed silently when it was malformed and in the pack ignore file.
+- description: Fixed an issue in **validate** that RM100 failed silently when the readme was malformed and in the pack ignore errors.
   type: fix
 pr_number: 4129

@@ -186,7 +186,7 @@ class PreCommitRunner:
         (
             split_hooks,
             non_splitted_hooks,
-        ) = pre_commit_context._get_splitted_and_non_splitted_hooks(local_repo)
+        ) = pre_commit_context._get_split_and_non_split_hooks(local_repo)
         # all the hooks which do not split will run on the main template
         local_repo["hooks"] = non_splitted_hooks
 

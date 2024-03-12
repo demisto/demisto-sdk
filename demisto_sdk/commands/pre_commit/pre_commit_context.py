@@ -153,7 +153,7 @@ class PreCommitContext:
             and any("in-docker" in need for need in needs)
         }
 
-    def _get_splitted_and_non_splitted_hooks(
+    def _get_split_and_non_split_hooks(
         self, local_repo: dict
     ) -> Tuple[List[dict], List[dict]]:
         """This function separates the docker and no docker hooks of a local repo
@@ -165,8 +165,8 @@ class PreCommitContext:
             Tuple[List[dict], List[dict]]: The first item is the list of docker hooks, the second is the list of no docker hooks
         """
         local_repo_hooks = local_repo["hooks"]
-        splitted_hooks = []
-        non_splitted_hooks = []
+        split_hooks = []
+        non_split_hooks = []
         for hook in local_repo_hooks:
             found = False
             for saved_hooks in self.hook_ids_to_hooks.values():
@@ -175,11 +175,11 @@ class PreCommitContext:
                     found = True
                     break
             if found:
-                splitted_hooks.append(hook)
+                split_hooks.append(hook)
             else:
-                non_splitted_hooks.append(hook)
+                non_split_hooks.append(hook)
 
-        return splitted_hooks, non_splitted_hooks
+        return split_hooks, non_split_hooks
 
     def _yield_split_hooks(self):
         for hooks in self.hook_ids_to_hooks.values():

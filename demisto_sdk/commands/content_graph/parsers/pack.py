@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
-    MarketplaceVersions,
+    MarketplaceVersions, ISO_TIMESTAMP_FORMAT,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
@@ -112,7 +112,7 @@ class PackContentItems:
         )
 
 
-NOW = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+NOW = datetime.now().strftime(ISO_TIMESTAMP_FORMAT)
 
 
 class PackMetadataParser:
@@ -123,7 +123,9 @@ class PackMetadataParser:
         self.display_name: str = metadata.get("name", "")
         self.description: str = metadata.get("description", "")
         self.support: str = metadata.get("support", "")
-        self.created = metadata.get("created") or metadata.get("firstCreated") or NOW
+        self.created = metadata.get("created") or metadata.get("firstCreated")
+        if not self.created:
+            self.created = GitUtil().get_file_creation_date(file_path=path)
         if "created" in metadata and "firstCreated" not in metadata:
             metadata['firstCreated'] = self.created
         self.updated: str = metadata.get("updated") or NOW

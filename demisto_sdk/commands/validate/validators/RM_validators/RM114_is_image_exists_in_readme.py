@@ -20,8 +20,9 @@ ContentTypes = Union[Integration, Script, Playbook]
 
 class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
     error_code = "RM114"
-    description = "Validate README images are actually exits."
-    error_message = "The following image files does not exists: {0}"
+    description = "Validate README images used in README exist."
+    error_message = "The following images do not exist: {0}"
+    rationale = "Missing images are not shown in rendered markdown"
     related_field = ""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]

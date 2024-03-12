@@ -5,7 +5,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Dict, List, Optional, Set, Tuple
 
 from demisto_sdk.commands.common.constants import CACHE_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH

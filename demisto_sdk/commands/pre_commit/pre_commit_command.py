@@ -184,18 +184,17 @@ class PreCommitRunner:
         repos = pre_commit_context._get_repos(pre_commit_context.precommit_template)
         local_repo = repos["local"]
         (
-            splitted_hooks,
+            split_hooks,
             non_splitted_hooks,
         ) = pre_commit_context._get_splitted_and_non_splitted_hooks(local_repo)
+        # all the hooks which do not split will run on the main template
         local_repo["hooks"] = non_splitted_hooks
 
         full_hooks_need_docker = pre_commit_context._filter_hooks_need_docker(repos)
 
-        num_processes = cpu_count()
-        logger.info(f"Pre-Commit will use {num_processes} processes")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
 
-        stdout = subprocess.PIPE if splitted_hooks else None
+        stdout = subprocess.PIPE if split_hooks else None
         # install main hook
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
@@ -204,7 +203,8 @@ class PreCommitRunner:
             command=["install-hooks"],
         )
 
-        for hook in splitted_hooks:
+        for hook in split_hooks:
+            # each split hook will be written to a pre-commit file of its own
             pre_commit_context.precommit_template["repos"] = [local_repo]
             local_repo["hooks"] = [hook]
             path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
@@ -212,23 +212,28 @@ class PreCommitRunner:
 
         # run the main hook first
         results = [
-            PreCommitRunner.run_hooks("main", precommit_env=precommit_env, verbose=verbose, stdout=stdout)
+            PreCommitRunner.run_hooks(
+                "main", precommit_env=precommit_env, verbose=verbose, stdout=stdout
+            )
         ]
 
         # run the split hooks if exist, if there wasn't any split hook, won't run any multi-processing
-        for hooks in pre_commit_context._yield_split_hooks():
-            with ThreadPool(num_processes) as pool:
-                hooks_results = pool.map(
-                    partial(
-                        PreCommitRunner.run_hooks,
-                        precommit_env=precommit_env,
-                        verbose=verbose,
-                        stdout=stdout,
-                    ),
-                    [hook["id"] for hook in hooks]
-                )
+        if split_hooks:
+            num_processes = cpu_count()
+            logger.info(f"Pre-Commit will use {num_processes} processes")
+            for hooks in pre_commit_context._yield_split_hooks():
+                with ThreadPool(num_processes) as pool:
+                    hooks_results = pool.map(
+                        partial(
+                            PreCommitRunner.run_hooks,
+                            precommit_env=precommit_env,
+                            verbose=verbose,
+                            stdout=stdout,
+                        ),
+                        [hook["id"] for hook in hooks],
+                    )
 
-            results.extend(hooks_results)
+                results.extend(hooks_results)
 
         return_code = int(any(results))
         if pre_commit_context.hooks_need_docker:

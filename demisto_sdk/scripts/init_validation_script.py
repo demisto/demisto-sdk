@@ -484,16 +484,12 @@ Fill the content types as the numbers they appear as: """
             self.imports += "from typing import Iterable, List\n\n"
         else:
             self.imports += "from typing import Iterable, List, Union\n\n"
-        if self.git_statuses and self.related_files:
-            self.imports += "from demisto_sdk.commands.common.constants import (GitStatuses, RelatedFileType)\n"
-        elif self.git_statuses:
+        if self.git_statuses:
             self.imports += (
                 "from demisto_sdk.commands.common.constants import GitStatuses\n"
             )
-        elif self.related_files:
-            self.imports += (
-                "from demisto_sdk.commands.common.constants import RelatedFileType\n"
-            )
+        if self.related_files:
+            self.imports += "from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType\n"
         for content_type in self.content_types:
             self.imports += (
                 f"{CONTENT_TYPES_DICT.get(content_type, {}).get('import', '')}\n"

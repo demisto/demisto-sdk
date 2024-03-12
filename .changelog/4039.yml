@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in **lint** and **pre-commit** with custom container registry
+  type: fix
+pr_number: 4039

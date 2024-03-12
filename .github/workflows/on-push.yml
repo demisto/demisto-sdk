@@ -375,7 +375,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Validate All - New Validate
+      - name: Run Validate
         uses: ./.github/actions/validate
         with:
           artifacts-path-dir: test-old-validate-command
@@ -392,7 +392,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Validate All - New Validate
+      - name: Run Validate
         uses: ./.github/actions/validate
         with:
           artifacts-path-dir: test-new-validate-command

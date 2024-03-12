@@ -196,7 +196,7 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
 
         stdout = subprocess.PIPE if splitted_hooks else None
-        # install non-local hooks
+        # install main hook
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
@@ -210,25 +210,25 @@ class PreCommitRunner:
             path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
             write_dict(path, data=pre_commit_context.precommit_template)
 
-        # will run the main hook
+        # run the main hook first
         results = [
             PreCommitRunner.run_hooks("main", precommit_env=precommit_env, verbose=verbose, stdout=stdout)
         ]
 
-        for _id, hooks in pre_commit_context.hook_ids_to_hooks.items():
-            if len(hooks) > 1:
-                with ThreadPool(num_processes) as pool:
-                    hooks_results = pool.map(
-                        partial(
-                            PreCommitRunner.run_hooks,
-                            precommit_env=precommit_env,
-                            verbose=verbose,
-                            stdout=stdout,
-                        ),
-                        [hook["id"] for hook in hooks]
-                    )
+        # run the split hooks if exist, if there wasn't any split hook, won't run any multi-processing
+        for hooks in pre_commit_context._yield_split_hooks():
+            with ThreadPool(num_processes) as pool:
+                hooks_results = pool.map(
+                    partial(
+                        PreCommitRunner.run_hooks,
+                        precommit_env=precommit_env,
+                        verbose=verbose,
+                        stdout=stdout,
+                    ),
+                    [hook["id"] for hook in hooks]
+                )
 
-                results.extend(hooks_results)
+            results.extend(hooks_results)
 
         return_code = int(any(results))
         if pre_commit_context.hooks_need_docker:

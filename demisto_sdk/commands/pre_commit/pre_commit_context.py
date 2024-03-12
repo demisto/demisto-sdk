@@ -181,6 +181,11 @@ class PreCommitContext:
 
         return splitted_hooks, non_splitted_hooks
 
+    def _yield_split_hooks(self):
+        for hooks in self.hook_ids_to_hooks.values():
+            if len(hooks) > 1:
+                yield hooks
+
     def _filter_hooks_need_docker(self, repos: dict) -> dict:
         """
         This filters the pre-commit config file the hooks that needed docker, so we will be able to execute them after the docker hooks are finished

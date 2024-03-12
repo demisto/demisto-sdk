@@ -29,7 +29,7 @@ validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.12"
-autopep8 = "^1.6.0"
+autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
 pylint = "^2.16.0,<2.17"

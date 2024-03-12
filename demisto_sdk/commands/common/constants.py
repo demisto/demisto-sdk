@@ -29,7 +29,12 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "1061"
 )  # Default value is the ID of the content repo on GitLab
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
-DOCKER_REGISTRY_URL = os.getenv("DOCKER_IO", "docker.io")
+
+DEFAULT_DOCKER_REGISTRY_URL = "docker.io"
+DOCKER_REGISTRY_URL = os.getenv(
+    "DEMISTO_SDK_CONTAINER_REGISTRY",
+    os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+)
 
 
 # Authentication

@@ -22,31 +22,28 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[Integration, Script]
 
 
-class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes]):
+class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
     error_code = "DO106"
-    description = (
-        "Validate that the given content-item uses the latest tag of a docker image"
-    )
-    rationale = "Updated docker images ensure the code uses the latest versions the dependencies, including bugfixes and fixed vulnerabilities."
-    error_message = (
-        "docker image {0}'s tag {1} is not the latest tag, the latest tag is {2}"
-    )
+    description = "Validate that the given content-item's docker image isnt outdated'"
+    rationale = "Updated docker images ensure the code dont use outdated dependencies, including bugfixes and fixed vulnerabilities."
+    error_message = "docker image {0}'s tag {1} is outdated. The latest tag is {2}"
+
     fix_message = "docker image {0} has been updated to {1}"
     related_field = "Docker image"
     is_auto_fixable = True
 
     @staticmethod
-    def is_docker_image_older_than_three_days(docker_image: DockerImage) -> bool:
+    def is_docker_image_older_than_three_months(docker_image: DockerImage) -> bool:
         """
-        Return True if the docker image is more than 3 days old.
+        Return True if the docker image is more than 3 months old.
 
         Args:
             docker_image: the docker image object.
         """
-        three_days_ago: datetime = parse("3 days ago")  # type: ignore[assignment]
+        three_months_ago: datetime = parse("3 months ago")  # type: ignore[assignment]
         try:
             last_updated = docker_image.creation_date
-            return not last_updated or three_days_ago > last_updated
+            return not last_updated or three_months_ago > last_updated
         except DockerHubRequestException as error:
             if error.exception.response.status_code == requests.codes.not_found:
                 logger.debug(
@@ -92,7 +89,7 @@ class DockerImageTagIsLatestNumericVersionValidator(BaseValidator[ContentTypes])
                     continue
                 if (
                     docker_image.tag != docker_image_latest_tag
-                    and self.is_docker_image_older_than_three_days(docker_image)
+                    and self.is_docker_image_older_than_three_months(docker_image)
                 ):
                     invalid_content_items.append(
                         ValidationResult(

@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where new release notes were generated without marketplace specific tags when needed.
-  type: fix
-pr_number: 4118

@@ -7,6 +7,8 @@ from typing import Dict, List
 
 from packaging.version import Version
 
+from demisto_sdk.commands.common.StrEnum import StrEnum
+
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
 
 
@@ -165,7 +167,7 @@ DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 
 
-class FileType(str, Enum):
+class FileType(StrEnum):
     INTEGRATION = "integration"
     SCRIPT = "script"
     TEST_SCRIPT = "testscript"
@@ -1255,7 +1257,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
 )
 
 
-class GitStatuses(str, Enum):
+class GitStatuses(StrEnum):
     RENAMED = "R"
     MODIFIED = "M"
     ADDED = "A"
@@ -1824,7 +1826,7 @@ BUILD_IN_COMMANDS = [
 ]
 
 
-class Auto(str, Enum):
+class Auto(StrEnum):
     PREDEFINED = "PREDEFINED"
 
 
@@ -1909,7 +1911,7 @@ class IronBankDockers:
     API_LINK = "https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F"
 
 
-class MarketplaceVersions(str, Enum):
+class MarketplaceVersions(StrEnum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
@@ -2107,12 +2109,12 @@ STRING_TO_BOOL_MAP = {
 ISO_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
-class ImagesFolderNames(str, Enum):
+class ImagesFolderNames(StrEnum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
 
 
-class InvestigationPlaybookState(str, Enum):
+class InvestigationPlaybookState(StrEnum):
     NEW = "new"  # indicates that playbook not executed yet
     IN_PROGRESS = "inprogress"  # indicates that playbook in progress
     PAUSED = "paused"  # indicates that playbook paused
@@ -2121,7 +2123,7 @@ class InvestigationPlaybookState(str, Enum):
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
-class IncidentState(str, Enum):
+class IncidentState(Enum):
     NEW = 0  # the incident is new
     IN_PROGRESS = 1  # the incident is in progress
     CLOSED = 2  # the incident is closed

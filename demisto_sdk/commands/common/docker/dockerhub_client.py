@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta
-from enum import Enum
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
@@ -11,6 +10,7 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
 
 DOCKERHUB_USER = "DOCKERHUB_USER"
@@ -18,7 +18,7 @@ DOCKERHUB_PASSWORD = "DOCKERHUB_PASSWORD"
 DEFAULT_REPOSITORY = "demisto"
 
 
-class DockerHubAuthScope(str, Enum):
+class DockerHubAuthScope(StrEnum):
     PULL = "pull"  # Grants read-only access to the repository, allowing you to pull images.
     PUSH = "push"  # Grants write access to the repository, allowing you to push images.
     DELETE = "delete"  # Grants permission to delete images from the repository.

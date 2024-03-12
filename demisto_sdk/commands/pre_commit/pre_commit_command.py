@@ -222,7 +222,7 @@ class PreCommitRunner:
         # run the split hooks if exist, if there wasn't any split hook, won't run any multi-processing
         if split_hooks:
             num_processes = cpu_count()
-            logger.info(f"Pre-Commit will use {num_processes} processes")
+            logger.info(f"Pre-Commit will use {num_processes} processes to run split hooks")
             for hooks in pre_commit_context._yield_split_hooks():
                 with ThreadPool(num_processes) as pool:
                     hooks_results = pool.map(

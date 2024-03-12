@@ -1,0 +1,4 @@
+changes:
+- description: Fix an issue that RM100 validation failed silently when it was in the pack ignore file.
+  type: fix
+pr_number: 4129

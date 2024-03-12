@@ -3,8 +3,8 @@
 Makes sure your content repository files are in order and have valid file scheme.
 
 **Use Cases**
-This command is used to make sure that the content repo files are valid and are able to be processed by Demisto.
-This is used in our validation process both locally and in Circle CI.
+This command is used to make sure that the content repo files are valid and are able to be processed by the platform.
+This is used in our validation process both locally and in gitlab.
 
 **Arguments**:
 * **-g, --use-git**
@@ -33,11 +33,10 @@ Wether to autofix failing validations with an available auto fix or not.
 Path for a config file to run, if not given - will run the default path at: [demisto_sdk/commands/validate/default_config.toml](default_config.toml)
 * **--ignore-support-level**
 Wether to skip validations based on their support level or not.
-* **--skip-old-validate**
+* **--run-old-validate**
 Wether to skip the old validate flow.
-* **--run-new-validate**
+* **--skip-new-validate**
 Wether to run the new validate flow.
-
 
 **Examples**:
 
@@ -51,45 +50,20 @@ This indicates that the command runs post commit.
 This will validate the file Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml only.
 
 `demisto-sdk validate -a`
-This will validate all files under `Packs` directory
+This will validate all files under `Packs` directory.
 
 `demisto-sdk validate -i Packs/HelloWorld`
-This will validate all files under the content pack `HelloWorld`
+This will validate all files under the content pack `HelloWorld`.
 
-### Notes
-* In external repositories (repos which contain the `.private-repo-settings` file in its root) **all** the validations are ignorable.
+`demisto-sdk validate --run-old-validate --skip-new-validate -a`
+This will validate all files in the repo using the old validate method.
 
+`demisto-sdk validate --config-path {config_file_path} -a`
+This will validate all files in the repo using the settings configured in the config file in the given path.
 
 ### Error Codes and Ignoring Them
 Each error found by validate  has an error code attached to it - the code can be found in brackets preceding the error itself.
 For example: `path/to/file: [IN103] - The type field of the proxy parameter should be 8`
-
-The first 2 letters indicate the error type and can be used to easily identify the cause of the error.
-| Code | Type |
-| --- | --- |
-| BA | Basic error |
-| BC | Backwards compatibility error |
-| CJ | Conf json error |
-| CL | Classifier error |
-| DA | Dashboard error |
-| DB | DBootScore error |
-| DO | Docker error |
-| DS | Description error |
-| ID | Id set error |
-| IF | Incident field or type error |
-| IM | Image error |
-| IN | Integration or script error |
-| IT | Incident type error |
-| MA | Mapper error |
-| PA | Pack files error (pack-metadata, pack-secrets, pack-ignore) |
-| PB | Playbook error |
-| RM | Readme error |
-| RN | Release notes error |
-| RP | Reputation error |
-| SC | Script error |
-| ST | Structure error |
-| WD | Widget error |
-
 
 Each user will have a personal config file which he can edit however he wants.
 A default config file can be found [here.](default_config.toml)

@@ -265,7 +265,8 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="return-outputs-exists",
                 node=node_b,
-            ),ignore_position=True
+            ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_b)
 

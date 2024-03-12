@@ -227,7 +227,8 @@ class TestExitChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="exit-exists",
                 node=node_b,
-            ),ignore_position=True,
+            ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
@@ -281,7 +282,8 @@ class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="demisto-log-exists",
                 node=node_a,
-            ),ignore_position=True,
+            ),
+            ignore_position=True,
         ):
             self.checker.visit_call(node_a)
 
@@ -406,7 +408,8 @@ class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="invalid-import-common-server-python",
                 node=node_a,
-            ),ignore_position=True,
+            ),
+            ignore_position=True,
         ):
             self.checker.visit_importfrom(node_a)
             self.checker.visit_importfrom(node_a)

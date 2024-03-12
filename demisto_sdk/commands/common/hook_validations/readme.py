@@ -673,9 +673,9 @@ class ReadMeValidator(BaseValidator):
         is_valid = not bool(errors)
         if not is_valid:
             error_message, error_code = Errors.readme_error(errors)
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-
-        return is_valid
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
     @error_codes("RM100")
     def verify_readme_is_not_too_short(self):

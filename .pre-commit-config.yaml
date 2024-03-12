@@ -22,7 +22,7 @@ repos:
     - -o
     - requirements.txt
 - repo: https://github.com/demisto/demisto-sdk
-  rev: d13ab4089a1cefececb1ea8472f1d2ab9efb771a # TODO CHANGE BACK
+  rev: 13e6b53dea6dc2e209a5b9232c967b2308bbe1a4 # TODO CHANGE BACK
   hooks:
   - id: update-additional-dependencies
 - repo: https://github.com/pre-commit/mirrors-mypy

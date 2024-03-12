@@ -21,6 +21,10 @@ ContentTypes = Integration
 class IsMissingReliabilityParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN154"
     description = "Validate that feed integration and integrations with reputation commands have a reliability param."
+    rationale = (
+        "The reliability parameter is required to set indicator's reliability. "
+        "For more info see, https://xsoar.pan.dev/docs/integrations/feeds#required-parameters"
+    )
     error_message = "Feed integrations and integrations with reputation commands must implement a reliability parameter, make sure to add one."
     related_field = "isfeed, configuration, script.commands"
 

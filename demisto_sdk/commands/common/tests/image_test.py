@@ -251,3 +251,18 @@ def test_is_valid_image_name_with_invalid_name(repo, file_name):
         image_validator = image.ImageValidator(integration.image.path)
 
         assert not image_validator.is_valid_image_name()
+
+
+def test_get_size_svg_image():
+    image_path = os.path.normpath(
+        os.path.join(
+            __file__,
+            f"{git_path()}/demisto_sdk/tests",
+            "test_files",
+            "SVG_example_light.svg",
+        )
+    )
+    image_validator = image.ImageValidator(image_path)
+    width, height = image_validator.get_size_svg_image()
+
+    assert width == 1280 and height == 770

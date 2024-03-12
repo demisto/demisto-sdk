@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Set
 
 from demisto_sdk.commands.common.constants import IOC_OUTPUTS_DICT
 from demisto_sdk.commands.content_graph.objects.integration import (
@@ -18,6 +18,10 @@ ContentTypes = Integration
 class IsMissingReputationOutputValidator(BaseValidator[ContentTypes]):
     error_code = "IN107"
     description = "Validate that the reputation commands include the list of required contextPaths."
+    rationale = (
+        "Reputation commands must include required contextPaths for consistency and reliable use in playbooks or scripts. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/context-standards-mandatory"
+    )
     error_message = "The integration contains invalid reputation command(s):\n\t{0}"
     related_field = "script.commands"
 
@@ -28,7 +32,7 @@ class IsMissingReputationOutputValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n\t".join(
                         [
-                            f"The command '{key}' is missing the following output contextPaths: {', '.join(val)}."
+                            f"The command '{key}' should include at least one of the output contextPaths: {', '.join(val)}."
                             for key, val in invalid_commands.items()
                         ]
                     )
@@ -38,14 +42,14 @@ class IsMissingReputationOutputValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 invalid_commands := self.get_invalid_reputation_commands(
-                    content_item.commands, content_item.name
+                    content_item.commands
                 )
             )
         ]
 
     def get_invalid_reputation_commands(
-        self, commands: List[Command], integration_name: str
-    ) -> Dict[str, List[str]]:
+        self, commands: List[Command]
+    ) -> Dict[str, Set[str]]:
         """List the reputation commands that are missing required contextPaths.
 
         Args:
@@ -59,10 +63,6 @@ class IsMissingReputationOutputValidator(BaseValidator[ContentTypes]):
         for command in commands:
             if command.name in IOC_OUTPUTS_DICT:
                 command_outputs = [output.contextPath for output in command.outputs]
-                if missing_paths := [
-                    context_path
-                    for context_path in IOC_OUTPUTS_DICT[command.name]
-                    if context_path not in command_outputs
-                ]:
-                    invalid_commands[command.name] = missing_paths
+                if not (IOC_OUTPUTS_DICT[command.name]).intersection(command_outputs):
+                    invalid_commands[command.name] = IOC_OUTPUTS_DICT[command.name]
         return invalid_commands

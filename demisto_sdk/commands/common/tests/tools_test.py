@@ -19,9 +19,9 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
     MARKETPLACE_TO_CORE_PACKS_FILE,
-    METADATA_FILE_NAME,
     PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_PACK_META_FILE_NAME,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -345,7 +345,7 @@ class TestGenericFunctions:
         (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
         (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
         (Path(DOC_FILES_DIR) / "foo", FileType.DOC_FILE),
-        (METADATA_FILE_NAME, FileType.METADATA),
+        (PACKS_PACK_META_FILE_NAME, FileType.METADATA),
         ("", None),
         (VULTURE_WHITELIST_PATH, FileType.VULTURE_WHITELIST),
         (VALID_PRE_PROCESSING_RULE_PATH, FileType.PRE_PROCESS_RULES),
@@ -802,7 +802,7 @@ def test_get_latest_release_notes_text_invalid():
     """
     PATH_TO_HERE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/"
     file_path = os.path.join(PATH_TO_HERE, "empty-RN.md")
-    assert get_latest_release_notes_text(file_path) is None
+    assert get_latest_release_notes_text(file_path) == ""
 
 
 def test_get_release_notes_file_path_valid():

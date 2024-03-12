@@ -2056,6 +2056,7 @@ class TestContext:
     def replace_external_playbook_configuration(
         self,
         external_playbook_configuration: dict,
+        server_version: Version,
     ):
         """takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
                                                "input_parameters":{"Endpoint_hostname": {"simple", "test"}}}
@@ -2070,9 +2071,6 @@ class TestContext:
                 "External Playbook Configuration not provided, skipping re-configuration."
             )
             return False, {}, ""
-
-        # Checking server version
-        server_version = get_demisto_version(self.client)
 
         if Version(server_version.base_version) < Version("6.2.0"):  # type: ignore
             self.playbook.log_info(
@@ -2145,9 +2143,23 @@ class TestContext:
 
         try:
             if changed_keys:
-                demisto_client.generic_request_func(
-                    self.client, method="POST", path=saving_inputs_path, body=inputs
-                )
+                if Version(server_version.base_version) >= Version("8.5.0"):
+                    self.playbook.log_info(
+                        "Sending request replace playbook configuration to server with version >= 8.5.0"
+                    )
+                    demisto_client.generic_request_func(
+                        self.client,
+                        method="POST",
+                        path=saving_inputs_path,
+                        body={"inputs": inputs},
+                    )
+                else:
+                    self.playbook.log_info(
+                        "Sending request replace playbook configuration to server with version < 8.5.0"
+                    )
+                    demisto_client.generic_request_func(
+                        self.client, method="POST", path=saving_inputs_path, body=inputs
+                    )
 
         except Exception as e:
             raise Exception(
@@ -2161,15 +2173,27 @@ class TestContext:
         return True, inputs_default, saving_inputs_path
 
     def restore_external_playbook_configuration(
-        self,
-        restore_path: str,
-        restore_values: dict,
+        self, restore_path: str, restore_values: dict, server_version: Version
     ):
         self.playbook.log_info("Restoring External Playbook parameters.")
 
-        demisto_client.generic_request_func(
-            self.client, method="POST", path=restore_path, body=restore_values
-        )
+        if Version(server_version.base_version) >= Version("8.5.0"):
+            self.playbook.log_info(
+                "Sending request restore playbook configuration to server with version >= 8.5.0"
+            )
+            demisto_client.generic_request_func(
+                self.client,
+                method="POST",
+                path=restore_path,
+                body={"inputs": restore_values},
+            )
+        else:
+            self.playbook.log_info(
+                "Sending request restore playbook configuration to server with version < 8.5.0"
+            )
+            demisto_client.generic_request_func(
+                self.client, method="POST", path=restore_path, body=restore_values
+            )
 
         self.playbook.log_info("Restored External Playbook successfully.")
 
@@ -2179,6 +2203,10 @@ class TestContext:
         Returns:
             Empty string or
         """
+
+        # Checking server version
+        server_version = get_demisto_version(self.client)
+
         try:
             instance_configuration = self.playbook.configuration.instance_configuration
 
@@ -2204,7 +2232,7 @@ class TestContext:
                 default_vals,
                 restore_path,
             ) = self.replace_external_playbook_configuration(
-                external_playbook_configuration
+                external_playbook_configuration, server_version
             )
 
             incident = self.playbook.create_incident(self.client)
@@ -2248,7 +2276,9 @@ class TestContext:
             # restore Configuration for external playbook
             if restore_needed:
                 self.restore_external_playbook_configuration(
-                    restore_path=restore_path, restore_values=default_vals
+                    restore_path=restore_path,
+                    restore_values=default_vals,
+                    server_version=server_version,
                 )
 
             self.playbook.disable_integrations(self.client, self.server_context)

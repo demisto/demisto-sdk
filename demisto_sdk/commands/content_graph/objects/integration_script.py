@@ -1,5 +1,6 @@
+from functools import cached_property
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -19,6 +20,11 @@ from demisto_sdk.commands.common.native_image import (
 )
 from demisto_sdk.commands.content_graph.common import lazy_property
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    CodeRelatedFile,
+    ReadmeRelatedFile,
+    TestCodeRelatedFile,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -26,17 +32,29 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 class Argument(BaseModel):
     name: str
-    description: str
-    required: Optional[bool] = False
-    default: Optional[bool] = False
+    description: str = ""
+    required: Optional[bool] = None
+    default: Optional[bool] = None
     predefined: Optional[List[str]] = None
-    isArray: Optional[bool] = False
+    isArray: Optional[bool] = None
     defaultvalue: Optional[Any] = None
-    secret: Optional[bool] = False
+    secret: Optional[bool] = None
     deprecated: Optional[bool] = False
     type: Optional[str] = None
     hidden: Optional[bool] = False
     auto: Optional[Auto] = None
+
+    @property
+    def to_raw_dict(self) -> Dict:
+        """Generate a Dict representation of the Argument object.
+
+        Returns:
+            Dict: The Dict representation of the Argument object.
+        """
+        dictified_arg = self.dict(exclude_none=True)
+        if "auto" in dictified_arg:
+            dictified_arg["auto"] = str(dictified_arg["auto"])
+        return dictified_arg
 
 
 class IntegrationScript(ContentItem):
@@ -48,6 +66,7 @@ class IntegrationScript(ContentItem):
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
+    version: Optional[int] = 0
 
     @lazy_property
     def python_version(self) -> Optional[str]:
@@ -102,3 +121,21 @@ class IntegrationScript(ContentItem):
                 native_image_config=NativeImageConfig.get_instance(),
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
+
+    @cached_property
+    def code_file(self) -> CodeRelatedFile:
+        suffix = (
+            ".ps1" if self.is_powershell else ".js" if self.is_javascript else ".py"
+        )
+        return CodeRelatedFile(self.path, suffix=suffix, git_sha=self.git_sha)
+
+    @cached_property
+    def test_code_file(self) -> TestCodeRelatedFile:
+        suffix = (
+            ".ps1" if self.is_powershell else ".js" if self.is_javascript else ".py"
+        )
+        return TestCodeRelatedFile(self.path, suffix=suffix, git_sha=self.git_sha)
+
+    @cached_property
+    def readme(self) -> ReadmeRelatedFile:
+        return ReadmeRelatedFile(self.path, is_pack_readme=False, git_sha=self.git_sha)

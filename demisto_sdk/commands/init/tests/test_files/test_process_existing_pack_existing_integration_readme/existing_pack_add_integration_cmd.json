@@ -1,0 +1,17 @@
+{
+	"HelloWorld": {
+		"detected_content_items": [
+			{
+				"id": "HelloWorld_copy",
+				"name": "HelloWorld_copy",
+				"source_id": "HelloWorld",
+				"source_name": "HelloWorld",
+				"source_file_name": "Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml",
+				"contribution_pack_version": "2.0.0"
+			}
+		],
+		"pack_name": "HelloWorld",
+		"pack_author": "Cortex XSOAR",
+		"pack_description": "This is the Hello World integration for getting started."
+	}
+}

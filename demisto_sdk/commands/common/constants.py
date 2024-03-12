@@ -11,8 +11,13 @@ from packaging.version import Version
 
 
 PROJECT_DATA_DIR = Path.home() / ".demisto-sdk"
+CACHE_DIR = PROJECT_DATA_DIR / "cache"
 LOGS_DIR = PROJECT_DATA_DIR / "logs"
+NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"
+
 LOG_FILE_NAME = "demisto_sdk_debug.log"
+
+NEO4J_DEFAULT_VERSION = "5.13.0"
 
 # --- Environment Variables ---
 # General
@@ -24,7 +29,12 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "1061"
 )  # Default value is the ID of the content repo on GitLab
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
-DOCKER_REGISTRY_URL = os.getenv("DOCKER_IO", "docker.io")
+
+DEFAULT_DOCKER_REGISTRY_URL = "docker.io"
+DOCKER_REGISTRY_URL = os.getenv(
+    "DEMISTO_SDK_CONTAINER_REGISTRY",
+    os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+)
 
 
 # Authentication
@@ -43,6 +53,13 @@ DEMISTO_SDK_LOG_NOTIFY_PATH = "DEMISTO_SDK_LOG_NOTIFY_PATH"
 DEMISTO_SDK_LOG_FILE_SIZE = "DEMISTO_SDK_LOG_FILE_SIZE"
 DEMISTO_SDK_LOG_FILE_COUNT = "DEMISTO_SDK_LOG_FILE_COUNT"
 DEMISTO_SDK_LOG_NO_COLORS = "DEMISTO_SDK_LOG_NO_COLORS"
+
+# Neo4j
+DEMISTO_SDK_NEO4J_VERSION = "DEMISTO_SDK_NEO4J_VERSION"
+DEMISTO_SDK_NEO4J_DATABASE_HTTP = "DEMISTO_SDK_NEO4J_DATABASE_HTTP"
+DEMISTO_SDK_NEO4J_DATABASE_URL = "DEMISTO_SDK_NEO4J_DATABASE_URL"
+DEMISTO_SDK_NEO4J_USERNAME = "DEMISTO_SDK_NEO4J_USERNAME"
+DEMISTO_SDK_NEO4J_PASSWORD = "DEMISTO_SDK_NEO4J_PASSWORD"
 # --- Environment Variables ---
 
 
@@ -566,12 +583,25 @@ PIPFILE_REGEX = r".*/Pipfile(\.lock)?"
 TEST_DATA_REGEX = r".*test_data.*"
 TEST_FILES_REGEX = r".*test_files.*"
 DOCS_REGEX = r".*docs.*"
-IMAGE_REGEX = r".*\.png$"
+PNG_IMAGE_REGEX = r".*\.png$"
+SVG_IMAGE_REGEX = r".*\.svg$"
 DESCRIPTION_REGEX = r".*\.md"
 SCHEMA_REGEX = "Tests/schemas/.*.yml"
 
 # regex pattern used to convert incident/indicator fields to their CLI names
 NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r"[^a-zA-Z0-9]")
+INCORRECT_PACK_NAME_PATTERN = (
+    "[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK["
+    "^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook["
+    "^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK["
+    "^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook["
+    "^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration["
+    "^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION["
+    "^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration["
+    "^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script["
+    "^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT["
+    "^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ "
+)
 
 PACKS_DIR_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}"
 PACK_DIR_REGEX = rf"{PACKS_DIR_REGEX}\/([^\\\/]+)"
@@ -808,6 +838,8 @@ PACK_METADATA_KEYWORDS: str = "keywords"
 PACK_METADATA_PRICE: str = "price"
 PACK_METADATA_DEPENDENCIES: str = "dependencies"
 PACK_METADATA_IRON_BANK_TAG: str = "Iron Bank"
+PACK_METADATA_SERVER_MIN_VERSION: str = "serverMinVersion"
+PACK_METADATA_EXCLUDED_DEPENDENCIES: str = "excludedDependencies"
 
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
 USE_CASE_TAG: str = "Use Case"
@@ -829,6 +861,17 @@ PACK_METADATA_MANDATORY_FILLED_FIELDS = [
     PACK_METADATA_CATEGORIES,
     PACK_METADATA_USE_CASES,
 ]
+
+PACK_METADATA_REQUIRE_RN_FIELDS: set = {
+    PACK_METADATA_SUPPORT,
+    PACK_METADATA_DEPENDENCIES,
+    PACK_METADATA_NAME,
+    PACK_METADATA_PRICE,
+    MARKETPLACE_KEY_PACK_METADATA,
+    PACK_METADATA_SERVER_MIN_VERSION,
+    PACK_METADATA_EXCLUDED_DEPENDENCIES,
+}
+
 API_MODULES_PACK = "ApiModules"
 API_MODULE_FILE_SUFFIX = "ApiModule"
 API_MODULE_PY_REGEX = r"{}{}/{}/{}/([^/]+)/([^.]+)\.py".format(
@@ -865,6 +908,7 @@ PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
 MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
+ASSETS_MODELING_RULE_NAME_SUFFIX = "Asset Collection"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
 ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
@@ -873,10 +917,11 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
-PACKS_README_FILE_NAME = "README.md"
+PACKS_README_FILE_NAME = (
+    INTEGRATIONS_README_FILE_NAME
+) = SCRIPTS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
-METADATA_FILE_NAME = "pack_metadata.json"
 PACKS_FOLDER = "Packs"
 
 CONF_JSON_FILE_NAME = "conf.json"
@@ -895,6 +940,10 @@ PYTHON_ALL_REGEXES: List[str] = sum(
 
 INTEGRATION_REGXES: List[str] = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]
 
+IMAGE_ALL_REGEXES: List[str] = [
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
+]
 YML_INTEGRATION_REGEXES: List[str] = [
     PACKS_INTEGRATION_YML_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
@@ -1082,7 +1131,13 @@ PACKAGE_SUPPORTING_DIRECTORIES = [
     PARSING_RULES_DIR,
 ]
 
-IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
+IGNORED_TYPES_REGEXES = [
+    DESCRIPTION_REGEX,
+    PNG_IMAGE_REGEX,
+    SVG_IMAGE_REGEX,
+    PIPFILE_REGEX,
+    SCHEMA_REGEX,
+]
 
 IGNORED_PACK_NAMES = ["Legacy", "NonSupported", "ApiModules"]
 
@@ -1315,7 +1370,7 @@ SCHEMA_TO_REGEX = {
     "incidentfield": JSON_ALL_INCIDENT_FIELD_REGEXES
     + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     "incidenttype": JSON_ALL_INCIDENT_TYPES_REGEXES,
-    "image": [IMAGE_REGEX],
+    "image": IMAGE_ALL_REGEXES,
     "reputation": JSON_ALL_INDICATOR_TYPES_REGEXES,
     "reputations": JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES,
     "readme": [
@@ -1412,6 +1467,8 @@ COMMON_PARAMS_DISPLAY_NAME = {
     "proxy": "Use system proxy settings",
 }
 
+REQUIRED_ALLOWED_PARAMS = ("insecure", "unsecure", "proxy", "isFetch")
+
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
@@ -1492,6 +1549,7 @@ INCORRECT_PACK_NAME_WORDS = [
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
 SUPPORT_LEVEL_HEADER = "supportlevelheader"
+CLASSIFICATION_TYPE = "classification"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {

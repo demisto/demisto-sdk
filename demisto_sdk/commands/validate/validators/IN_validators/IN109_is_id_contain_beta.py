@@ -16,6 +16,7 @@ ContentTypes = Integration
 class IsIdContainBetaValidator(BaseValidator[ContentTypes]):
     error_code = "IN109"
     description = "Validate that the ID field doesn't include the substring 'beta'."
+    rationale = "The ID field in an integration should not contain the word 'beta'. This ensures unambiguous identification of production-ready integrations."
     error_message = (
         "The ID field ({0}) contains the word 'beta', make sure to remove it."
     )

@@ -1,11 +1,18 @@
+from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 import demisto_client
 
-from demisto_sdk.commands.common.tools import write_dict
+from demisto_sdk.commands.common.tools import remove_nulls_from_dictionary, write_dict
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
+)
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    DarkSVGRelatedFile,
+    DescriptionRelatedFile,
+    ImageRelatedFile,
+    LightSVGRelatedFile,
 )
 
 if TYPE_CHECKING:
@@ -25,23 +32,23 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 
 class Parameter(BaseModel):
     name: str
-    type: int
+    type: int = 0
     additionalinfo: Optional[str] = None
     defaultvalue: Optional[Any] = None
-    required: Optional[bool] = False
+    required: Optional[bool] = None
     display: Optional[str] = None
     section: Optional[str] = None
-    advanced: Optional[bool] = False
-    hidden: Optional[Any] = False
+    advanced: Optional[bool] = None
+    hidden: Optional[Any] = None
     options: Optional[List[str]] = None
     displaypassword: Optional[str] = None
-    hiddenusername: Optional[bool] = False
-    hiddenpassword: Optional[bool] = False
+    hiddenusername: Optional[bool] = None
+    hiddenpassword: Optional[bool] = None
     fromlicense: Optional[str] = None
 
 
 class Output(BaseModel):
-    description: str
+    description: str = ""
     contentPath: Optional[str] = None
     contextPath: Optional[str] = None
     important: Optional[bool] = False
@@ -75,6 +82,23 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     def dump(self, *args) -> None:
         raise NotImplementedError()
 
+    @property
+    def to_raw_dict(self) -> Dict:
+        """Generate a dict representation of the Command object.
+
+        Returns:
+            Dict: The dict representation of the Command object.
+        """
+        command = {
+            "name": self.name,
+            "deprecated": self.deprecated,
+            "description": self.description,
+            "arguments": [arg.to_raw_dict for arg in self.args],
+            "outputs": [output.dict(exclude_none=True) for output in self.outputs],
+        }
+        remove_nulls_from_dictionary(command)
+        return command
+
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
     is_fetch: bool = Field(False, alias="isfetch")
@@ -88,7 +112,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     category: str
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
-    has_unittests: bool = False
 
     @property
     def imports(self) -> List["Script"]:
@@ -167,16 +190,22 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     def save(self, output_path: Path = None):
         super().save(output_path)
         data = self.data
-        data["script"]["commands"] = []
-        yml_commands = []
-        for command in self.commands:
-            yml_commands.append(
-                {
-                    "name": command.name,
-                    "deprecated": command.deprecated,
-                    "description": command.description,
-                }
-            )
-
-        data["script"]["commands"] = yml_commands
+        data["script"]["commands"] = [command.to_raw_dict for command in self.commands]
+        data["configuration"] = [param.dict(exclude_none=True) for param in self.params]
         write_dict(self.path, data, indent=4)
+
+    @cached_property
+    def description_file(self) -> DescriptionRelatedFile:
+        return DescriptionRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def dark_svg(self) -> DarkSVGRelatedFile:
+        return DarkSVGRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def light_svg(self) -> LightSVGRelatedFile:
+        return LightSVGRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def image(self) -> ImageRelatedFile:
+        return ImageRelatedFile(self.path, git_sha=self.git_sha)

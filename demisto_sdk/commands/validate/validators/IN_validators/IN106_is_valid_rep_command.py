@@ -18,6 +18,10 @@ ContentTypes = Integration
 class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
     error_code = "IN106"
     description = "Validate that the command is valid as a reputation command."
+    rationale = (
+        "Reputation commands must follow standards for consistency and compatibility. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/generic-commands-reputation"
+    )
     error_message = "The following reputation commands are invalid:\n{0}\nMake sure to fix the issue both in the yml and the code."
     related_field = "script.commands"
 
@@ -43,13 +47,9 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                     ).get("default", []):
                         # If the argument is found, validate that the argument is according to the standards.
                         flag_found_arg = True
-                        if not arg.default or not arg.isArray:
-                            if command.name == "endpoint":
-                                mandatory_fields_suffix = ", the 'isArray', and 'required' fields should be True."
-                            else:
-                                mandatory_fields_suffix = ", the 'default', 'isArray', and 'required' fields should be True."
+                        if arg.default is False:
                             invalid_commands.append(
-                                f"- The {command.name} command arguments are invalid, it should include the following argument with the following configuration: name should be '{arg.name}'{mandatory_fields_suffix}"
+                                f"- The {command.name} command arguments are invalid, it should include the following argument with the following configuration: name should be '{arg.name}', the 'isArray' field should be True, and the default field should not be set to False."
                             )
                             break
                 if not flag_found_arg and BANG_COMMAND_ARGS_MAPPING_DICT.get(
@@ -60,6 +60,6 @@ class IsValidRepCommandValidator(BaseValidator[ContentTypes]):
                         command.name, {}
                     ).get("default", [])[0]
                     invalid_commands.append(
-                        f"- The {command.name} command arguments are invalid, it should include the following argument with the following configuration: name should be '{missing_arg}', the 'default', 'isArray', and 'required' fields should be True."
+                        f"- The {command.name} command arguments are invalid, it should include the following argument with the following configuration: name should be '{missing_arg}', the 'isArray' field should be True, and the default field should not be set to False."
                     )
         return invalid_commands

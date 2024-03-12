@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.26.1"
+version = "1.27.3"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -22,6 +22,9 @@ update-additional-dependencies = "demisto_sdk.scripts.update_additional_dependen
 sdk-changelog = "demisto_sdk.scripts.changelog.changelog:main"
 merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
 merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"
+validate-conf-json = "demisto_sdk.scripts.validate_conf_json:main"
+init-validation = "demisto_sdk.scripts.init_validation_script:main"
+validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
@@ -129,6 +132,8 @@ black = "^22.10.0"
 ipykernel = "^6.16.1"
 ruff = "^0.1.11"
 pytest-github-actions-annotate-failures = "^0.2.0"
+pytest-sugar = "^1.0.0"
+pygithub = "^2.2.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]

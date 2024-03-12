@@ -208,7 +208,7 @@ def test_mypy_hooks(mocker):
             "--allow-redefinition",
             "--python-version=3.10",
         ],
-        "id": "mypy"
+        "id": "mypy",
     }
     mocker.patch.object(
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
@@ -233,7 +233,11 @@ def test_ruff_hook(github_actions, mocker):
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
     ruff_hook = create_hook(
-        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"], "id": "ruff"}
+        {
+            "args": ["--fix"],
+            "args:nightly": ["--config=nightly_ruff.toml"],
+            "id": "ruff",
+        }
     )
 
     mocker.patch.dict(
@@ -262,7 +266,11 @@ def test_ruff_hook_nightly_mode(mocker):
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
     ruff_hook = create_hook(
-        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"], "id": "ruff"},
+        {
+            "args": ["--fix"],
+            "args:nightly": ["--config=nightly_ruff.toml"],
+            "id": "ruff",
+        },
         mode="nightly",
     )
 
@@ -280,7 +288,9 @@ def test_validate_format_hook_nightly_mode_and_all_files(mocker):
     """
     Testing validate_format hook created successfully (the -a flag is added and the -i arg is not exist)
     """
-    validate_format_hook = create_hook({"args": [], "id": "validate"}, mode="nightly", all_files=True)
+    validate_format_hook = create_hook(
+        {"args": [], "id": "validate"}, mode="nightly", all_files=True
+    )
     mocker.patch.object(
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
@@ -528,12 +538,12 @@ def test_coverage_analyze_general_hook(mode, expected_args):
 @pytest.mark.parametrize(
     "hook, expected_result",
     [
-        ({"files": r"\.py$", "exclude": r"_test\.py$", "id": "test"}, ["file1.py", "file6.py"]),
         (
-            {
-                "files": r"\.py$",
-                "id": "test"
-            },
+            {"files": r"\.py$", "exclude": r"_test\.py$", "id": "test"},
+            ["file1.py", "file6.py"],
+        ),
+        (
+            {"files": r"\.py$", "id": "test"},
             ["file1.py", "file6.py", "file2_test.py"],
         ),
         (

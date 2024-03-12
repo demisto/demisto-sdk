@@ -113,7 +113,7 @@ class PreCommitRunner:
             )
         else:
             process = PreCommitRunner._run_pre_commit_process(
-                PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-{hook_id}.yaml",
+                PRECOMMIT_SPLIT_HOOKS_CONFIGS / f"pre-commit-config-{hook_id}.yaml",
                 precommit_env,
                 verbose,
                 stdout,
@@ -207,7 +207,9 @@ class PreCommitRunner:
             # each split hook will be written to a pre-commit file of its own
             pre_commit_context.precommit_template["repos"] = [local_repo]
             local_repo["hooks"] = [hook]
-            path = PRECOMMIT_SPLIT_HOOKS_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
+            path = (
+                PRECOMMIT_SPLIT_HOOKS_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
+            )
             write_dict(path, data=pre_commit_context.precommit_template)
 
         # run the main hook first

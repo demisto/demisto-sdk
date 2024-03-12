@@ -106,7 +106,7 @@ def test_get_property():
                         "prop1": value1,
                         "prop1:nightly": nightly_val,
                         "prop1:othermode": "someval",
-                        "id": "test"
+                        "id": "test",
                     },
                     mode=mode,
                 ),
@@ -184,7 +184,7 @@ def test__set_properties():
                 "prop1:othermode": "someval",
                 "other_prop": "whatever",
                 "nonused:mode": "isignored",
-                "id": "test"
+                "id": "test",
             },
             mode=mode,
         )
@@ -195,4 +195,6 @@ def test__set_properties():
         "nightly",
         {"prop1": nightly_val, "other_prop": "whatever", "id": "test"},
     )
-    assert_get_prop_successful(None, {"prop1": value1, "other_prop": "whatever", "id": "test"})
+    assert_get_prop_successful(
+        None, {"prop1": value1, "other_prop": "whatever", "id": "test"}
+    )

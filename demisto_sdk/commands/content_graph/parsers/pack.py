@@ -119,6 +119,7 @@ class PackMetadataParser:
     """A pack metadata parser."""
 
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
+        logger.debug(f"Start {metadata}")
         self.name: str = metadata.get("name", "")
         self.display_name: str = metadata.get("name", "")
         self.description: str = metadata.get("description", "")
@@ -184,6 +185,8 @@ class PackMetadataParser:
         )
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
+        logger.debug(f"Stop {metadata}")
+
 
     @property
     def url(self) -> str:

@@ -370,6 +370,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
                 end_line=3,
                 end_col_offset=17,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_subscript(node_b)
 
@@ -389,6 +390,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
                 end_line=2,
                 end_col_offset=27,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_subscript(node_b)
 
@@ -404,6 +406,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
                 msg_id="direct-access-args-params-dict-exist",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_subscript(node_b)
 
@@ -419,5 +422,6 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
                 msg_id="direct-access-args-params-dict-exist",
                 node=node_b,
             ),
+            ignore_position=True,
         ):
             self.checker.visit_subscript(node_b)

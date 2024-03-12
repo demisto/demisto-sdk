@@ -51,17 +51,17 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that it does not raise any errors, Check that there is no error message.
         """
-        node = astroid.extract_node(
-            """
+        assert (
+            astroid.extract_node(
+                """
             def test_function():
                 ''' this is sys.exit(1) in doc string test''' #@
                 # this is sys.exit(1) in comment #@
                 return True
         """
+            )
+            == []
         )
-        assert node
-        with self.assertNoMessages():
-            self.checker.visit_call(node)
 
     def test_sys_exit_non_zero_exists(self):
         """

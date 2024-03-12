@@ -31,7 +31,7 @@ def test_no_files(repo):
     Then:
         There are no raw hooks added to the config
     """
-    raw_hook = create_hook({"args": []})
+    raw_hook = create_hook({"args": [], "id": "test"})
     DockerHook(**raw_hook).prepare_hook()
 
     hooks = raw_hook["repo"]["hooks"]
@@ -71,7 +71,7 @@ def test_moded_properties(mocker, mode, expected_text):
     )
     mocker.patch.object(PreCommitContext, "dry_run", True)
 
-    raw_hook = create_hook({"args": [], "language": "docker"}, mode=mode)
+    raw_hook = create_hook({"args": [], "language": "docker", "id": "test"}, mode=mode)
 
     raw_hook["hook"]["args"] = ["i am some argument"]
     raw_hook["hook"]["args:nightly"] = ["i am the nightly args"]
@@ -106,6 +106,7 @@ def test_get_property():
                         "prop1": value1,
                         "prop1:nightly": nightly_val,
                         "prop1:othermode": "someval",
+                        "id": "test"
                     },
                     mode=mode,
                 ),
@@ -183,6 +184,7 @@ def test__set_properties():
                 "prop1:othermode": "someval",
                 "other_prop": "whatever",
                 "nonused:mode": "isignored",
+                "id": "test"
             },
             mode=mode,
         )
@@ -191,6 +193,6 @@ def test__set_properties():
 
     assert_get_prop_successful(
         "nightly",
-        {"prop1": nightly_val, "other_prop": "whatever"},
+        {"prop1": nightly_val, "other_prop": "whatever", "id": "test"},
     )
-    assert_get_prop_successful(None, {"prop1": value1, "other_prop": "whatever"})
+    assert_get_prop_successful(None, {"prop1": value1, "other_prop": "whatever", "id": "test"})

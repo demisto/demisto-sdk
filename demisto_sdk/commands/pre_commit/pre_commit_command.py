@@ -38,7 +38,7 @@ from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_context import (
     PRECOMMIT_CONFIG_MAIN_PATH,
-    PRECOMMIT_DOCKER_CONFIGS,
+    PRECOMMIT_SPLIT_HOOKS_CONFIGS,
     PreCommitContext,
 )
 
@@ -207,7 +207,7 @@ class PreCommitRunner:
             # each split hook will be written to a pre-commit file of its own
             pre_commit_context.precommit_template["repos"] = [local_repo]
             local_repo["hooks"] = [hook]
-            path = PRECOMMIT_DOCKER_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
+            path = PRECOMMIT_SPLIT_HOOKS_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
             write_dict(path, data=pre_commit_context.precommit_template)
 
         # run the main hook first

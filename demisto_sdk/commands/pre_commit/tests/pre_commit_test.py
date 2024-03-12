@@ -88,13 +88,17 @@ class MockProcess:
 def test_config_files(mocker, repo: Repo):
     """
     Given:
-        A repository with different scripts and integration of different python versions
+        A repository with different scripts and integration of different python versions which do not require
+        split hooks
 
     When:
         Calling demisto-sdk pre-commit
 
     Then:
-        Categorize the scripts and integration by python version, and make sure that pre-commit configuration is created for each
+        - Categorize the scripts and integration by python version,
+          and make sure that pre-commit configuration is created
+        - make sure no split hooks are created
+
     """
     mocker.patch.object(DockerHook, "__init__", return_value=None)
     mocker.patch.object(
@@ -117,13 +121,8 @@ def test_config_files(mocker, repo: Repo):
     )
     mocker.patch.object(
         context,
-        "PRECOMMIT_DOCKER_CONFIGS",
-        Path(repo.path) / "docker-config",
-    )
-    mocker.patch.object(
-        pre_commit_command,
-        "PRECOMMIT_DOCKER_CONFIGS",
-        Path(repo.path) / "docker-config",
+        "PRECOMMIT_SPLIT_HOOKS_CONFIGS",
+        Path(repo.path) / "split-hooks",
     )
     mocker.patch.object(context, "PRECOMMIT_CONFIG", Path(repo.path) / "config")
     integration1 = pack1.create_integration(
@@ -191,7 +190,8 @@ def test_config_files(mocker, repo: Repo):
 
     PreCommitRunner.prepare_and_run(pre_commit_context)
     assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
-    assert list((Path(repo.path) / "docker-config").iterdir())
+    assert (Path(repo.path) / "split-hooks").exists()
+    assert not list((Path(repo.path) / "split-hooks").iterdir())
     assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
 
 
@@ -207,7 +207,8 @@ def test_mypy_hooks(mocker):
             "--follow-imports=silent",
             "--allow-redefinition",
             "--python-version=3.10",
-        ]
+        ],
+        "id": "mypy"
     }
     mocker.patch.object(
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
@@ -232,7 +233,7 @@ def test_ruff_hook(github_actions, mocker):
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
     ruff_hook = create_hook(
-        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]}
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"], "id": "ruff"}
     )
 
     mocker.patch.dict(
@@ -261,7 +262,7 @@ def test_ruff_hook_nightly_mode(mocker):
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
     ruff_hook = create_hook(
-        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"]},
+        {"args": ["--fix"], "args:nightly": ["--config=nightly_ruff.toml"], "id": "ruff"},
         mode="nightly",
     )
 
@@ -279,7 +280,7 @@ def test_validate_format_hook_nightly_mode_and_all_files(mocker):
     """
     Testing validate_format hook created successfully (the -a flag is added and the -i arg is not exist)
     """
-    validate_format_hook = create_hook({"args": []}, mode="nightly", all_files=True)
+    validate_format_hook = create_hook({"args": [], "id": "validate"}, mode="nightly", all_files=True)
     mocker.patch.object(
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
@@ -296,7 +297,7 @@ def test_validate_format_hook_nightly_mode(mocker):
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist, even in nightly mode)
     """
     validate_format_hook = create_hook(
-        {"args": []}, mode="nightly", input_files=[Path("file1.py")]
+        {"args": [], "id": "validate"}, mode="nightly", input_files=[Path("file1.py")]
     )
     mocker.patch.object(
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
@@ -313,7 +314,7 @@ def test_validate_format_hook_all_files(mocker):
     """
     Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist)
     """
-    validate_format_hook = create_hook({"args": []}, all_files=True)
+    validate_format_hook = create_hook({"args": [], "id": "validate"}, all_files=True)
     mocker.patch.object(
         PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
     )
@@ -514,7 +515,7 @@ def test_coverage_analyze_general_hook(mode, expected_args):
     """
 
     coverage_analyze_hook = create_hook(
-        {"args": args, "args:nightly": args_nightly},
+        {"args": args, "args:nightly": args_nightly, "id": "coverage-analyze"},
         mode=mode,
         all_files=True,
         input_files=[Path("file1.py")],
@@ -527,15 +528,16 @@ def test_coverage_analyze_general_hook(mode, expected_args):
 @pytest.mark.parametrize(
     "hook, expected_result",
     [
-        ({"files": r"\.py$", "exclude": r"_test\.py$"}, ["file1.py", "file6.py"]),
+        ({"files": r"\.py$", "exclude": r"_test\.py$", "id": "test"}, ["file1.py", "file6.py"]),
         (
             {
                 "files": r"\.py$",
+                "id": "test"
             },
             ["file1.py", "file6.py", "file2_test.py"],
         ),
         (
-            {},
+            {"id": "test"},
             [
                 "file1.py",
                 "file2_test.py",
@@ -545,7 +547,7 @@ def test_coverage_analyze_general_hook(mode, expected_args):
                 "file6.py",
             ],
         ),
-        ({"files": r"\.ps1$"}, ["file3.ps1"]),
+        ({"files": r"\.ps1$", "id": "test"}, ["file3.ps1"]),
     ],
 )
 def test_filter_files_matching_hook_config(hook, expected_result):
@@ -626,7 +628,7 @@ def test_system_hooks():
 
     Path(sys.executable).parent
     system_hook = create_hook(
-        {"args": [], "entry": "demisto-sdk", "language": "system"}
+        {"args": [], "entry": "demisto-sdk", "language": "system", "id": "test"}
     )
     SystemHook(**system_hook).prepare_hook()
     assert (

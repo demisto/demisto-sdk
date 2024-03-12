@@ -59,7 +59,7 @@ def validate_content_item_type_not_in_name_or_display_fields(
     invalid_fields = []
     fields = {"name": content_item.name}
 
-    if isinstance(content_item, ContentType.INTEGRATION):
+    if content_item.content_type == ContentType.INTEGRATION:
         # only integrations have a display name
         fields["display"] = content_item.display_name
 

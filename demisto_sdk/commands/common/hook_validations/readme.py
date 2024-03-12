@@ -332,8 +332,8 @@ class ReadMeValidator(BaseValidator):
                         error_message, error_code, file_path=self.file_path
                     )
                 )
-                if any(handled_errors):
-                    return False
+            if any(handled_errors):
+                return False
         return True
 
     def verify_readme_image_paths(self) -> bool:

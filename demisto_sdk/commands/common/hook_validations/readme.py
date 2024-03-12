@@ -385,6 +385,7 @@ class ReadMeValidator(BaseValidator):
 
         return error_list
 
+    @error_codes("RM114")
     def verify_image_exist(self) -> bool:
         """Validate README images are actually exits.
 
@@ -825,7 +826,7 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
-    # @error_codes("RM114")
+    @error_codes("RM115")
     def has_no_markdown_lint_errors(self):
         """
         Will check if the readme has markdownlint.

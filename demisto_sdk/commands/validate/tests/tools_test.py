@@ -37,22 +37,21 @@ from demisto_sdk.commands.validate.tools import (
 def test_collect_all_inputs_in_use(content_item, expected_result):
     """
     Given:
-        - A playbook with inputs in some tasks
+        - A playbook with inputs in certain tasks
           Case 1:
-            The inputs for the first task are the default inputs with addition of: 'inputs.hello: test'
-            The inputs for the second task are the default inputs with addition of:'inputs.example: test'
+            The first task input is: 'inputs.hello: test'
+            The second task input is: 'inputs.example: test'
           Case 2:
-            The inputs for the first task are the default inputs with addition of:'inputs: test'
-            The inputs for the second task are the default inputs with addition of:'inputs: test2'
+            The first task input is: 'inputs: test'
+            The second task input is: 'inputs: test2'
     When:
         - Running collect_all_inputs_in_use
     Then:
-        - Return a set of input names and values from any task in the playbook, if the inputs match the pattern inputs.<input_name>
-        Case 1: The results should be A set object containing:
+        - It should return a set of input names and values from any task in the playbook, provided the inputs match the pattern: inputs.<input_name>
+        Case 1: The output should be a set object containing all default task inputs and the newly added inputs:
             'hello: test'
-           'example: test'
-        Case 2: The results should be:
-            only the default inputs. (Because the inputs are not in the pattern inputs.<input_name>)
+            'example: test'
+        Case 2: The output should be: Only the default inputs, as the inputs do not match the pattern inputs.<input_name>)
     """
     assert collect_all_inputs_in_use(content_item) == expected_result
 

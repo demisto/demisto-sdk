@@ -11,24 +11,22 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
     [
         (
             create_playbook_object(
-                paths=["inputs", "tasks"],
+                paths=["inputs", "tasks.0.task.key"],
                 values=[
                     [{"key": "input_name1", "value": "input_value1"}],
-                    {"key": {"first_input": "inputs.input_name1"}},
+                    {"first_input": "inputs.input_name1"},
                 ],
             ),
             [],
         ),
         (
             create_playbook_object(
-                paths=["inputs", "tasks"],
+                paths=["inputs", "tasks.0.task.key"],
                 values=[
                     [{"key": "input_name1", "value": "input_value1"}],
                     {
-                        "key": {
-                            "first_input": "inputs.input_name1",
-                            "second_input": "inputs.input_name2",
-                        }
+                        "first_input": "inputs.input_name1",
+                        "second_input": "inputs.input_name2",
                     },
                 ],
             ),
@@ -36,10 +34,10 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_n
         ),
         (
             create_playbook_object(
-                paths=["inputs", "tasks"],
+                paths=["inputs", "tasks.0.task.key"],
                 values=[
                     [{"key": "input_name2", "value": "input_value2"}],
-                    {"key": {"first_input": "inputs.input_name1"}},
+                    {"first_input": "inputs.input_name1"},
                 ],
             ),
             "The playbook 'Detonate File - JoeSecurity V2' contains the following inputs that are not used in any of its tasks: input_name2",

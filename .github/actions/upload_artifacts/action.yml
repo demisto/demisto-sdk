@@ -22,7 +22,7 @@ runs:
       shell: bash
       run: |
         ls ~/.demisto-sdk
-        "between ls"
+        echo "between ls"
         ls $HOME/.demisto-sdk
         if [ -f "~/.demisto-sdk" ]; then
           cp -r "~/.demisto-sdk" ${{ inputs.artifacts-path-dir }}/demisto-sdk-home-folder-artifacts

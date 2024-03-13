@@ -24,7 +24,10 @@ runs:
         if [ -f "$HOME/.demisto-sdk" ]; then
           cp -r "$HOME/.demisto-sdk" ${{ inputs.artifacts-path-dir }}/demisto-sdk-home-folder-artifacts
         else
-            echo "The $HOME/.demisto-sdk folder does not exist, hence not uploading its artifacts"
+          echo "try to ls with ~/"
+          ls ~/.demisto-sdk
+          echo "successfully ls with ~/"
+          echo "The $HOME/.demisto-sdk folder does not exist, hence not uploading its artifacts"
         fi
     - name: Upload artifacts
       if: always()

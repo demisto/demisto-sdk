@@ -347,7 +347,7 @@ jobs:
       - name: Validate content master paths
         run: |
           source $(poetry env info --path)/bin/activate
-          validate-content-path validate-all ../content --skip_depth_one_file --skip_depth_one_folder --skip_depth_zero_file --skip_integration_script_file_name --skip_integration_script_file_type --skip_markdown
+          validate-content-path validate-all ../content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown
 
       - name: Upload artifacts
         if: always()

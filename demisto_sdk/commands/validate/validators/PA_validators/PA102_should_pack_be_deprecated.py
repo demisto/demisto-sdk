@@ -20,7 +20,7 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
         "This ensures clarity for users and prevents potential confusion of deprecated content. "
         "For more about deprecation see: https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs"
     )
-    error_message = f"The Pack {0} should be deprecated, as all its integrations, playbooks and scripts are deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated).\nThe description of the pack in the pack_metadata.json should be one of the following formats:\n1. 'Deprecated. Use <PACK_NAME> instead.'\n2. 'Deprecated. <REASON> No available replacement.'"
+    error_message = "The Pack {0} should be deprecated, as all its integrations, playbooks and scripts are deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated).\nThe description of the pack in the pack_metadata.json should be one of the following formats:\n1. 'Deprecated. Use <PACK_NAME> instead.'\n2. 'Deprecated. <REASON> No available replacement.'"
     fix_message = "Deprecated the pack {0}.\nPlease make sure to edit the description of the pack in the pack_metadata.json file if there's an existing pack to use instead or add the deprecation reason."
     related_field = "deprecated"
     is_auto_fixable = True
@@ -39,16 +39,24 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
         ]
 
     def are_all_content_items_deprecated(self, content_item: ContentTypes) -> bool:
-        for integration in content_item.content_items.integration:
-            if not integration.deprecated:
-                return False
-        for script in content_item.content_items.script:
-            if not script.deprecated:
-                return False
-        for playbook in content_item.content_items.playbook:
-            if not playbook.deprecated:
-                return False
-        return True
+        if any(
+            [
+                content_item.content_items.integration,
+                content_item.content_items.script,
+                content_item.content_items.playbook,
+            ]
+        ):
+            for integration in content_item.content_items.integration:
+                if not integration.deprecated:
+                    return False
+            for script in content_item.content_items.script:
+                if not script.deprecated:
+                    return False
+            for playbook in content_item.content_items.playbook:
+                if not playbook.deprecated:
+                    return False
+            return True
+        return False
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         if not content_item.name.endswith("(Deprecated)"):

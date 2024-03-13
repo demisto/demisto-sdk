@@ -306,9 +306,7 @@ jobs:
 
           echo "# test" >> Tests/collect_tests.py
           git add .
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose || pre_commit_exit_code=$?
-          cp -r ~/.demisto-sdk test-pre-commit-command/demisto-sdk
-          exit "${pre_commit_exit_code}"
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
 
       - name: run pre-commit on input files
         timeout-minutes: 60

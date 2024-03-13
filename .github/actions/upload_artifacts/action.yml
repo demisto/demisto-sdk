@@ -18,6 +18,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Copy Files from home directory produced by SDK
+      shell: bash
+      run: |
+        cp -r ~/.demisto-sdk ${{ inputs.artifacts-path-dir }}/demisto-sdk-folder
     - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v4

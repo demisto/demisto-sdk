@@ -64,10 +64,18 @@ This will validate all files in the repo using the settings configured in the co
 ### Error Codes and Ignoring Them
 Each error found by validate  has an error code attached to it - the code can be found in brackets preceding the error itself.
 For example: `path/to/file: [IN103] - The type field of the proxy parameter should be 8`
+In addition, each pack has a `.pack-ignore` file. In order to ignore a certain validation for a given file, the error-code needs to be listed in the **ignorable_errors** section in the config-file (more about this in the config file section), and the user need to mention the file name (only the name and extension, without the whole path), and the error code to ignore.
+For example: This .pack-ignore will not fail ipinfo_v2.yml on the validations with the codes BA108 & BA109.
+[file:ipinfo_v2.yml]
+ignore=BA108,BA109
 
+### Config file
 Each user will have a personal config file which he can edit however he wants.
 A default config file can be found [here.](default_config.toml)
-The config file will have few sections: validate_all, use_git, and sections provided by the user.
+The default config file cover all the mandatory validations - the validations that without them te upload will fail.
+The config file will have few sections:
+**ignorable_errors** - A list of the error codes that can be ignored in the .pack-ignore file.
+, validate_all, use_git, and custom sections provided by the user.
 Each section will have the following options:
 **select**: The validations to run.
 **warning**: Validations to only throw warning (shouldn't fail the flow).

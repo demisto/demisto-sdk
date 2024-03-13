@@ -12,7 +12,7 @@ from demisto_sdk.commands.validate.tools import (
     [
         (
             create_playbook_object(
-                paths=["tasks"],
+                paths=["tasks.0.task.key"],
                 values=[
                     {"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}}
                 ],
@@ -21,7 +21,7 @@ from demisto_sdk.commands.validate.tools import (
         ),
         (
             create_playbook_object(
-                paths=["tasks"],
+                paths=["tasks.0.task.key"],
                 values=[{"0": {"inputs": "test"}, "1": {"inputs": "test2"}}],
             ),
             set(),

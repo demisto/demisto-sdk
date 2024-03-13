@@ -1,5 +1,4 @@
 from functools import cached_property
-from typing import Callable, Optional
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -139,7 +138,6 @@ class TaskConfig(BaseModel):
 
 class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
     version: Optional[int] = 0
-
 
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
 

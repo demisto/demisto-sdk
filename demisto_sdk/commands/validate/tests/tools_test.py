@@ -12,19 +12,25 @@ from demisto_sdk.commands.validate.tools import (
     [
         (
             create_playbook_object(
-                paths=["tasks"],
-                values=[
-                    {"0": {"inputs.hello": "test"}, "1": {"inputs.example": "test"}}
-                ],
+                paths=["tasks.0.task.key", "tasks.1.task.key"],
+                values=[{"inputs.hello": "test"}, {"inputs.example": "test"}],
             ),
-            {"hello: test", "example: test"},
+            {
+                "Systems",
+                "Comments",
+                "Timeout",
+                "File",
+                "hello: test",
+                "example: test",
+                "ReportFileType",
+            },
         ),
         (
             create_playbook_object(
-                paths=["tasks"],
-                values=[{"0": {"inputs": "test"}, "1": {"inputs": "test2"}}],
+                paths=["tasks.0.task.key", "tasks.1.task.key"],
+                values=[{"inputs": "test"}, {"inputs": "test2"}],
             ),
-            set(),
+            {"Systems", "File", "ReportFileType", "Timeout", "Comments"},
         ),
     ],
 )
@@ -33,11 +39,11 @@ def test_collect_all_inputs_in_use(content_item, expected_result):
     Given:
         - A playbook with inputs in some tasks
           Case 1:
-            The inputs for the first task are 'inputs.hello: test'
-            The inputs for the second task are 'inputs.example: test'
+            The inputs for the first task are the default inputs with addition of: 'inputs.hello: test'
+            The inputs for the second task are the default inputs with addition of:'inputs.example: test'
           Case 2:
-            The inputs for the first task are 'inputs: test'
-            The inputs for the second task are 'inputs: test2'
+            The inputs for the first task are the default inputs with addition of:'inputs: test'
+            The inputs for the second task are the default inputs with addition of:'inputs: test2'
     When:
         - Running collect_all_inputs_in_use
     Then:
@@ -46,7 +52,7 @@ def test_collect_all_inputs_in_use(content_item, expected_result):
             'hello: test'
            'example: test'
         Case 2: The results should be:
-            An empty set object. (Because the inputs are not in the pattern inputs.<input_name>)
+            only the default inputs. (Because the inputs are not in the pattern inputs.<input_name>)
     """
     assert collect_all_inputs_in_use(content_item) == expected_result
 

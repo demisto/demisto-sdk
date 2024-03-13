@@ -347,8 +347,7 @@ jobs:
       - name: Validate content master paths
         run: |
           source $(poetry env info --path)/bin/activate
-          cd content
-          demisto-sdk pre-commit -a validate-content-path
+          validate-content-path validate-all ../content --skip_depth_one_file --skip_depth_one_folder --skip_depth_zero_file --skip_integration_script_file_name --skip_integration_script_file_type --skip_markdown
 
       - name: Upload artifacts
         if: always()

@@ -13,7 +13,7 @@ from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     DIRS_ALLOWING_SPACE_IN_FILENAMES,
     ZERO_DEPTH_FILES,
-    InvalidDepthOneFileError,
+    InvalidDepthOneFile,
     InvalidDepthOneFolder,
     InvalidDepthZeroFile,
     InvalidIntegrationScriptFileName,
@@ -126,7 +126,7 @@ def test_depth_one_fail(folder: str):
     Then
             Make sure InvalidDepthOneFileError is raised
     """
-    with pytest.raises(InvalidDepthOneFileError):
+    with pytest.raises(InvalidDepthOneFile):
         _validate(DUMMY_PACK_PATH / folder / "file")
 
 

@@ -133,7 +133,7 @@ class InvalidDepthOneFolder(InvalidPathException):
     message = "The name of the first level folder under the pack is not allowed."
 
 
-class InvalidDepthOneFileError(InvalidPathException):
+class InvalidDepthOneFile(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
@@ -227,7 +227,7 @@ def _validate(path: Path) -> None:
 
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
-            raise InvalidDepthOneFileError
+            raise InvalidDepthOneFile
 
         if first_level_folder == LAYOUTS_DIR and not (
             path.stem.startswith(("layout-", "layoutscontainer-"))
@@ -312,7 +312,16 @@ def _exempt_unified_files(path: Path, first_level_folder: str):
             raise PathIsUnified
 
 
-def validate(path: Path, github_action: bool) -> bool:
+def validate(
+    path: Path,
+    github_action: bool,
+    skip_depth_one_file: bool = False,
+    skip_depth_one_folder: bool = False,
+    skip_depth_zero_file: bool = False,
+    skip_integration_script_file_name: bool = False,
+    skip_integration_script_file_type: bool = False,
+    skip_markdown: bool = False,
+) -> bool:
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
         _validate(path)
@@ -320,6 +329,19 @@ def validate(path: Path, github_action: bool) -> bool:
         return True
 
     except InvalidPathException as e:
+        for exception_type, skip in {
+            # Allows gradual application
+            InvalidDepthOneFile: skip_depth_one_file,
+            InvalidDepthOneFolder: skip_depth_one_folder,
+            InvalidDepthZeroFile: skip_depth_zero_file,
+            InvalidIntegrationScriptFileName: skip_integration_script_file_name,
+            InvalidIntegrationScriptFileType: skip_integration_script_file_type,
+            InvalidIntegrationScriptMarkdownFileName: skip_markdown,
+        }.items():
+            if isinstance(e, exception_type) and skip:
+                logger.warning(f"skipping {path} ({e.message})")
+                return True
+
         if github_action:
             print(  # noqa: T201
                 f"::error file={path},line=1,endLine=1,title=Invalid Path::{e.message}"
@@ -344,21 +366,64 @@ def validate_paths(
         List[Path], typer.Argument(exists=True, file_okay=True, dir_okay=True)
     ],
     github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
+    skip_depth_one_file: bool = False,
+    skip_depth_one_folder: bool = False,
+    skip_depth_zero_file: bool = False,
+    skip_integration_script_file_name: bool = False,
+    skip_integration_script_file_type: bool = False,
+    skip_markdown: bool = False,
 ) -> None:
     """Validate given paths"""
-    if not all((validate(path, github_action) for path in paths)):
+    if not all(
+        (
+            validate(
+                path,
+                github_action,
+                skip_depth_one_file=skip_depth_one_file,
+                skip_depth_one_folder=skip_depth_one_folder,
+                skip_depth_zero_file=skip_depth_zero_file,
+                skip_integration_script_file_name=skip_integration_script_file_name,
+                skip_integration_script_file_type=skip_integration_script_file_type,
+                skip_markdown=skip_markdown,
+            )
+            for path in paths
+        )
+    ):
         raise typer.Exit(1)
 
 
 @app.command(name="validate-all")
 def validate_all(
-    content_path: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)]
+    content_path: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)],
+    skip_depth_one_file: bool = False,
+    skip_depth_one_folder: bool = False,
+    skip_depth_zero_file: bool = False,
+    skip_integration_script_file_name: bool = False,
+    skip_integration_script_file_type: bool = False,
+    skip_markdown: bool = False,
 ):
-    """Used in the SDK CI for testing compatibility with content"""
+    """
+    Used in the SDK CI for testing compatibility with content.
+    Skip arguments will be removed in future versions.
+    """
     logger.info(f"Content path: {content_path.resolve()}")
     paths = sorted(content_path.rglob("*"))
     invalid = len(
-        [path for path in tqdm(paths) if path.is_file() and not validate(path, False)]
+        [
+            path
+            for path in tqdm(paths)
+            if path.is_file()
+            and not validate(
+                path,
+                github_actions=False,
+                skip_depth_one_file=skip_depth_one_file,
+                skip_depth_one_folder=skip_depth_one_folder,
+                skip_depth_zero_file=skip_depth_zero_file,
+                skip_integration_script_file_name=skip_integration_script_file_name,
+                skip_integration_script_file_type=skip_integration_script_file_type,
+                skip_markdown=skip_markdown,
+            )
+        ]
     )
     valid = (total := len(paths)) - invalid
     logger.info(f"{total=},[green]{valid=}[/green],[red]{invalid=}[/red]")

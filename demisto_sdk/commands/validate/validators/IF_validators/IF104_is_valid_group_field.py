@@ -17,13 +17,12 @@ INCIDENT_FIELD_GROUP = 0
 
 class IsValidGroupFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IF104"
-    description = "Checks if group number is valid"
-    rationale = "IncidentField must be group `0` for mapping of the platform"
-    error_message = "Group {group} is not a group field"
-    fix_message = f"`group` field is set to {INCIDENT_FIELD_GROUP}"
+    description = "Checks if group number is valid."
+    rationale = "IncidentField must be group `0` for mapping of the platform."
+    error_message = "Group {group} is not a group field."
+    fix_message = f"`group` field is set to {INCIDENT_FIELD_GROUP}."
     related_field = "group"
     is_auto_fixable = True
-    related_file_type = [RelatedFileType.JSON]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

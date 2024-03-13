@@ -28,17 +28,16 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     IsCliNameReservedWordValidator,
 )
 
+""" NOT VALID """
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
+    "content_items, expected_msgs",
     [
         pytest.param(
             [
-                create_incident_field_object(["name", "cliName"], ["case 1", "case1"]),
-                create_incident_field_object(["name", "cliName"], ["test 1", "test1"]),
+                create_incident_field_object(["name", "cliName"], ["case 1", "case1"])
             ],
-            1,
-            [("The words: [case] cannot be used as a name")],
+            [("The following words cannot be used as a name: case.")],
             id="One IncidentField with bad word in field `name`",
         ),
         pytest.param(
@@ -47,15 +46,13 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
                     ["name", "cliName"], ["case incident 1", "caseincident1"]
                 ),
             ],
-            1,
-            [("The words: [case, incident] cannot be used as a name")],
+            [("The following words cannot be used as a name: case, incident.")],
             id="IncidentField with two bad words in field `name`",
         ),
     ],
 )
-def test_IsValidNameAndCliNameValidator_is_valid(
+def test_IsValidNameAndCliNameValidator_not_valid(
     content_items: List[IncidentField],
-    expected_number_of_failures: int,
     expected_msgs: List[str],
 ):
     """
@@ -71,7 +68,6 @@ def test_IsValidNameAndCliNameValidator_is_valid(
             - Ensure the error message is as expected with the bad words list
     """
     results = IsValidNameAndCliNameValidator().is_valid(content_items=content_items)
-    assert len(results) == expected_number_of_failures
     assert all(
         [
             result.message == expected_msg
@@ -80,7 +76,7 @@ def test_IsValidNameAndCliNameValidator_is_valid(
     )
 
 
-def test_IsValidContentFieldValidator_is_valid():
+def test_IsValidContentFieldValidator_not_valid():
     """
     Given:
         - IncidentField content items
@@ -91,19 +87,237 @@ def test_IsValidContentFieldValidator_is_valid():
           for the IncidentField whose 'content' field is set to False
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["content"], [False]),
-        create_incident_field_object(["content"], [True]),
+        create_incident_field_object(["content"], [False])
     ]
 
     results = IsValidContentFieldValidator().is_valid(content_items)
-    assert len(results) == 1
     assert all(
         [
-            result.message == "The `content` key must be set to true"
+            result.message == "The `content` key must be set to true."
             for result in results
         ]
     )
 
+
+def test_IsValidSystemFlagValidator_not_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'system' field is set to True
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["system"], [True])
+    ]
+
+    results = IsValidSystemFlagValidator().is_valid(content_items)
+    assert all(
+        [
+            result.message == "The `system` key must be set to false."
+            for result in results
+        ]
+    )
+
+
+def test_IsValidFieldTypeValidator_not_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'type' field is not valid
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type"], ["test"])
+    ]
+
+    results = IsValidFieldTypeValidator().is_valid(content_items)
+    assert all(
+        [
+            result.message
+            == f"Type: `test` is not one of available types.\navailable types: {FIELD_TYPES}."
+            for result in results
+        ]
+    )
+
+
+def test_IsValidGroupFieldValidator_not_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'group' field is not valid
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["group"], [2])
+    ]
+
+    results = IsValidGroupFieldValidator().is_valid(content_items)
+    assert all([result.message == "Group 2 is not a group field." for result in results])
+
+
+def test_IsCliNameFieldAlphanumericValidator_not_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'cliName' value is non-alphanumeric
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["cliName"], ["test_1234"])
+    ]
+
+    results = IsCliNameFieldAlphanumericValidator().is_valid(content_items)
+    assert all(
+        [
+            result.message
+            == "Field `cliName` contains non-alphanumeric or uppercase letters."
+            for result in results
+        ]
+    )
+
+
+def test_IsCliNameReservedWordValidator_not_valid():
+    """
+    Given:
+        - IncidentField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'cliName' value is a reserved word
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["cliName"], ["parent"])
+    ]
+
+    results = IsCliNameReservedWordValidator().is_valid(content_items)
+    assert len(results) == 1
+    assert all(
+        [
+            result.message
+            == "`cliName` field can not be `parent` as it's a builtin key."
+            for result in results
+        ]
+    )
+
+
+""" VALID """
+
+def test_IsValidContentFieldValidator_valid():
+    """
+    Given:
+        - IncidentField content items with a content value True
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["content"], [True])
+    ]
+
+    results = IsValidContentFieldValidator().is_valid(content_items)
+    assert not results
+
+
+def test_IsValidSystemFlagValidator_valid():
+    """
+    Given:
+        - IncidentField content items with a system value False
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["system"], [False])
+    ]
+
+    results = IsValidSystemFlagValidator().is_valid(content_items)
+    assert not results
+
+
+def test_IsValidFieldTypeValidator_valid():
+    """
+    Given:
+        - IncidentField content items with a valid type value
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["type"], ["html"])
+    ]
+
+    results = IsValidFieldTypeValidator().is_valid(content_items)
+    assert not results
+
+def test_IsValidGroupFieldValidator_valid():
+    """
+    Given:
+        - IncidentField content items with a group value 0
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["group"], [0])
+    ]
+
+    results = IsValidGroupFieldValidator().is_valid(content_items)
+    assert not results
+
+
+def test_IsCliNameFieldAlphanumericValidator_valid():
+    """
+    Given:
+        - IncidentField content items with a cliName value
+          that is alphanumeric and lowercase letters
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["cliName"], ["test1234"])
+    ]
+
+    results = IsCliNameFieldAlphanumericValidator().is_valid(content_items)
+    assert not results
+
+
+def test_IsCliNameReservedWordValidator_valid():
+    """
+    Given:
+        - IncidentField content items with a cliName value that is not reserve word
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    content_items: List[IncidentField] = [
+        create_incident_field_object(["cliName"], ["test"])
+    ]
+
+    results = IsCliNameReservedWordValidator().is_valid(content_items)
+    assert not results
+
+
+""" FIX """
 
 def test_IsValidContentFieldValidator_fix():
     """
@@ -117,33 +331,8 @@ def test_IsValidContentFieldValidator_fix():
     """
     incident_field = create_incident_field_object(["content"], [False])
     result = IsValidContentFieldValidator().fix(incident_field)
-    assert result.message == "`content` field is set to true"
+    assert result.message == "`content` field is set to true."
     assert incident_field.data["content"]
-
-
-def test_IsValidSystemFlagValidator_is_valid():
-    """
-    Given:
-        - IncidentField content items
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that the ValidationResult returned
-          for the IncidentField whose 'system' field is set to True
-    """
-    content_items: List[IncidentField] = [
-        create_incident_field_object(["system"], [True]),
-        create_incident_field_object(["system"], [False]),
-    ]
-
-    results = IsValidSystemFlagValidator().is_valid(content_items)
-    assert len(results) == 1
-    assert all(
-        [
-            result.message == "The `system` key must be set to false"
-            for result in results
-        ]
-    )
 
 
 def test_IsValidSystemFlagValidator_fix():
@@ -158,54 +347,8 @@ def test_IsValidSystemFlagValidator_fix():
     """
     incident_field = create_incident_field_object(["system"], [True])
     result = IsValidSystemFlagValidator().fix(incident_field)
-    assert result.message == "`system` field is set to false"
+    assert result.message == "`system` field is set to false."
     assert not incident_field.data["system"]
-
-
-def test_IsValidFieldTypeValidator_is_valid():
-    """
-    Given:
-        - IncidentField content items
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that the ValidationResult returned
-          for the IncidentField whose 'type' field is not valid
-    """
-    content_items: List[IncidentField] = [
-        create_incident_field_object(["type"], ["test"]),
-        create_incident_field_object(["type"], ["html"]),
-    ]
-
-    results = IsValidFieldTypeValidator().is_valid(content_items)
-    assert len(results) == 1
-    assert all(
-        [
-            result.message
-            == f"Type: `test` is not one of available types.\navailable types: {FIELD_TYPES}"
-            for result in results
-        ]
-    )
-
-
-def test_IsValidGroupFieldValidator_is_valid():
-    """
-    Given:
-        - IncidentField content items
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that the ValidationResult returned
-          for the IncidentField whose 'group' field is not valid
-    """
-    content_items: List[IncidentField] = [
-        create_incident_field_object(["group"], [2]),
-        create_incident_field_object(["group"], [0]),
-    ]
-
-    results = IsValidGroupFieldValidator().is_valid(content_items)
-    assert len(results) == 1
-    assert all([result.message == "Group 2 is not a group field" for result in results])
 
 
 def test_IsValidGroupFieldValidator_fix():
@@ -220,57 +363,5 @@ def test_IsValidGroupFieldValidator_fix():
     """
     incident_field = create_incident_field_object(["group"], [1])
     result = IsValidGroupFieldValidator().fix(incident_field)
-    assert result.message == f"`group` field is set to {INCIDENT_FIELD_GROUP}"
+    assert result.message == f"`group` field is set to {INCIDENT_FIELD_GROUP}."
     assert incident_field.data["group"] == INCIDENT_FIELD_GROUP
-
-
-def test_IsCliNameFieldAlphanumericValidator_is_valid():
-    """
-    Given:
-        - IncidentField content items
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that the ValidationResult returned
-          for the IncidentField whose 'cliName' value is non-alphanumeric
-    """
-    content_items: List[IncidentField] = [
-        create_incident_field_object(["cliName"], ["test1234"]),
-        create_incident_field_object(["cliName"], ["test_1234"]),
-    ]
-
-    results = IsCliNameFieldAlphanumericValidator().is_valid(content_items)
-    assert len(results) == 1
-    assert all(
-        [
-            result.message
-            == "Field `cliName` contains non-alphanumeric or uppercase letters"
-            for result in results
-        ]
-    )
-
-
-def test_IsCliNameReservedWordValidator_is_valid():
-    """
-    Given:
-        - IncidentField content items
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that the ValidationResult returned
-          for the IncidentField whose 'cliName' value is a reserved word
-    """
-    content_items: List[IncidentField] = [
-        create_incident_field_object(["cliName"], ["test"]),
-        create_incident_field_object(["cliName"], ["parent"]),
-    ]
-
-    results = IsCliNameReservedWordValidator().is_valid(content_items)
-    assert len(results) == 1
-    assert all(
-        [
-            result.message
-            == "`cliName` field can not be `parent` as it's a builtin key"
-            for result in results
-        ]
-    )

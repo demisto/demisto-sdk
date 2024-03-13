@@ -34,12 +34,10 @@ FIELD_TYPES = {
 
 class IsValidFieldTypeValidator(BaseValidator[ContentTypes]):
     error_code = "IF103"
-    description = "Checks if given field type is valid"
-    rationale = "The types of the IncidentField are limited by the platform"
-    error_message = "Type: `{file_type}` is not one of available types.\navailable types: {type_fields}"
+    description = "Checks if given field type is valid."
+    rationale = "The types of the IncidentField are limited by the platform."
+    error_message = "Type: `{file_type}` is not one of available types.\navailable types: {type_fields}."
     related_field = "type"
-    is_auto_fixable = False
-    related_file_type = [RelatedFileType.JSON]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

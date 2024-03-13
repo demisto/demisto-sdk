@@ -2,17 +2,27 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.constants import CONTENT_ENTITIES_DIRS, PACKS_FOLDER
+from demisto_sdk.commands.common.constants import (
+    CONTENT_ENTITIES_DIRS,
+    INTEGRATIONS_DIR,
+    LAYOUTS_DIR,
+    PACKS_FOLDER,
+)
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
     DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
+    DIRS_ALLOWING_SPACE_IN_FILENAMES,
     ZERO_DEPTH_FILES,
     InvalidDepthOneFileError,
     InvalidDepthOneFolder,
     InvalidDepthZeroFile,
+    InvalidIntegrationScriptFileName,
+    InvalidIntegrationScriptFileType,
+    InvalidLayoutFileName,
     PathIsFolder,
     PathIsUnified,
     PathUnderDeprecatedContent,
+    SpacesInFileNameError,
     _validate,
 )
 
@@ -95,11 +105,15 @@ def test_depth_one_pass(folder: str):
     When
             Running validate_path on a file created indirectly under it
     Then
-            Make sure the validation passes (without raising)
+            Make sure the validation does not raise InvalidDepthOneFileError
     """
     assert folder in DEPTH_ONE_FOLDERS
-    _validate(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
-    _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
+    try:
+        _validate(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
+        _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
+    except (InvalidIntegrationScriptFileType, InvalidIntegrationScriptFileName):
+        # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
+        pass
 
 
 @pytest.mark.parametrize("folder", folders_not_allowed_to_contain_files)
@@ -186,3 +200,92 @@ def test_dir(repo):
 
     with pytest.raises(PathIsFolder):
         _validate(Path(integration.path))
+
+
+DUMMY_INTEGRATION_NAME = "MyIntegration"
+DUMMY_INTEGRATION_PATH = DUMMY_PACK_PATH / INTEGRATIONS_DIR / DUMMY_INTEGRATION_NAME
+MALFORMED_DUMMY_INTEGRATION_NAME = DUMMY_INTEGRATION_NAME + "-"
+
+
+def test_space_invalid():
+    with pytest.raises(SpacesInFileNameError):
+        _validate(DUMMY_INTEGRATION_PATH / "foo bar.yml")
+
+
+@pytest.mark.parametrize("path", DIRS_ALLOWING_SPACE_IN_FILENAMES)
+def test_space_valid(path):
+    """Make sure files under"""
+    _validate(DUMMY_INTEGRATION_PATH / path / "foo bar.yml")
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        f"{MALFORMED_DUMMY_INTEGRATION_NAME}.yml",
+        f"{MALFORMED_DUMMY_INTEGRATION_NAME}.png",
+        f"{MALFORMED_DUMMY_INTEGRATION_NAME}.py",
+        f"{MALFORMED_DUMMY_INTEGRATION_NAME}.js",
+        f"{MALFORMED_DUMMY_INTEGRATION_NAME}.ps1",
+        f"{MALFORMED_DUMMY_INTEGRATION_NAME}.Tests.ps1",
+        f"{DUMMY_INTEGRATION_NAME}_Test.py",
+        f"{DUMMY_INTEGRATION_NAME}_tests.py",
+        f"{DUMMY_INTEGRATION_NAME.upper()}.py",
+        "README",
+        "{DUMMY_INTEGRATION_NAME}_description",
+    ],
+)
+def test_integration_script_file_invalid(file_name: str):
+    with pytest.raises(InvalidIntegrationScriptFileName):
+        _validate(DUMMY_INTEGRATION_PATH / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        f"{DUMMY_INTEGRATION_NAME}.yml",
+        f"{DUMMY_INTEGRATION_NAME}_image.png",
+        f"{DUMMY_INTEGRATION_NAME}.py",
+        f"{DUMMY_INTEGRATION_NAME}.js",
+        f"{DUMMY_INTEGRATION_NAME}.ps1",
+        f"{DUMMY_INTEGRATION_NAME}.Tests.ps1",
+        f"{DUMMY_INTEGRATION_NAME}_test.py",
+        "conftest.py",
+        ".vulture_whitelist.py",
+        "README.md",
+        f"{DUMMY_INTEGRATION_NAME}_description.md",
+        "command_examples",
+        ".pylintrc",
+    ],
+)
+def test_integration_script_file_valid(file_name: str):
+    _validate(DUMMY_INTEGRATION_PATH / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "layouts-.json",
+        "not-layout-.json",
+        "not-layoutscontainer-.json",
+        "foo.json",
+        "Layout-.json",
+        "Layoutscontainer-.json",
+        "layout_.json",
+        "layout-foo.NOTjson",
+        "layoutscontainer-foo.NOTjson",
+    ),
+)
+def test_layout_invalid(file_name: str):
+    with pytest.raises(InvalidLayoutFileName):
+        _validate(DUMMY_PACK_PATH / LAYOUTS_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "layout-foo.json",
+        "layoutscontainer-.json",
+    ),
+)
+def test_layout_file_valid(file_name: str):
+    _validate(DUMMY_PACK_PATH / LAYOUTS_DIR / file_name)

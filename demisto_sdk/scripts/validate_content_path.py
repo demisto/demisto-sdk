@@ -1,6 +1,6 @@
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, List
+from typing import ClassVar, List, Sequence
 
 import typer
 from more_itertools import split_at
@@ -111,6 +111,9 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
     )
 )
 
+DIRS_ALLOWING_SPACE_IN_FILENAMES = frozenset(
+    TESTS_AND_DOC_DIRECTORIES + [TEST_PLAYBOOKS_DIR]
+)
 app = typer.Typer()
 
 
@@ -118,8 +121,8 @@ class InvalidPathException(Exception, ABC):
     message: ClassVar[str]
 
 
-class SeparatorsInFileNameError(InvalidPathException):
-    message = "file name has a separator (space, hypen, underscore)"
+class SpacesInFileNameError(InvalidPathException):
+    message = "file name contains spaces"
 
 
 class InvalidDepthZeroFile(InvalidPathException):
@@ -134,11 +137,19 @@ class InvalidDepthOneFileError(InvalidPathException):
     message = "The folder containing this file cannot directly contain files. Add another folder under it."
 
 
+class InvalidLayoutFileName(InvalidPathException):
+    message = "The Layout folder can only contain json files, with names starting with `layout-` or `layoutscontainer-`"
+
+
 class InvalidIntegrationScriptFileName(InvalidPathException):
     message = "This file's name must start with the name of its parent folder."
 
 
-class InvalidMetaMarkdownFileName(InvalidPathException):
+class InvalidIntegrationScriptFileType(InvalidPathException):
+    message = "This file type is not allowed under this folder."
+
+
+class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
     message = (
         "This file's name must either be (parent folder)_description.md, or README.md"
     )
@@ -180,8 +191,8 @@ def _validate(path: Path) -> None:
         "Tests" in path.parts
         and PACKS_FOLDER in path.parts
         and (path.parts).index("Tests") < (path.parts).index(PACKS_FOLDER)
-    ):  # Tests comes before Packs
-        raise PathOutsidePacks  # Under Tests/
+    ):  # if Tests comes before Packs, it's not a real content path
+        raise PathOutsidePacks
 
     parts_before_packs, parts_after_packs = tuple(
         split_at(path.parts, lambda v: v == PACKS_FOLDER, maxsplit=1)
@@ -201,66 +212,104 @@ def _validate(path: Path) -> None:
     if depth == 0:  # file is directly under pack
         if path.name not in ZERO_DEPTH_FILES:
             raise InvalidDepthZeroFile
-        return
+        return  # following checks assume the depth>0, so we stop here
 
     if (first_level_folder := parts_inside_pack[0]) not in DEPTH_ONE_FOLDERS:
         raise InvalidDepthOneFolder
 
+    if " " in path.stem and set(parts_after_packs).isdisjoint(
+        DIRS_ALLOWING_SPACE_IN_FILENAMES
+    ):
+        raise SpacesInFileNameError
+
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
-        for prefix, folder in (
-            ("script", ContentType.SCRIPT),
-            ("integration", ContentType.INTEGRATION),
-        ):
-            if (
-                first_level_folder == folder.as_folder
-                and path.name.startswith(f"{prefix}-")
-                and (path.suffix in {".md", ".yml"})  # these fail validate-all
-            ):
-                # old, unified format, e.g. Packs/myPack/Scripts/script-foo.yml
-                raise PathIsUnified
+        _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
 
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFileError
 
-    if depth == 2 and first_level_folder in (
+        if first_level_folder == LAYOUTS_DIR and not (
+            path.stem.startswith(("layout-", "layoutscontainer-"))
+            and path.suffix == ".json"
+        ):
+            raise InvalidLayoutFileName
+
+    if depth == 2 and first_level_folder in {
         ContentType.INTEGRATION.as_folder,
         ContentType.SCRIPT.as_folder,
-    ):
-        parent = path.parent.name
+    }:
+        _validate_integration_script_file(path, parts_after_packs)
 
-        if path.suffix == ".png" and path.stem != f"{parent}_image":
-            raise InvalidIntegrationScriptFileName
-        elif path.suffix in {".yml", ".js"} and path.stem != parent:
-            raise InvalidIntegrationScriptFileName
-        elif path.suffix == ".py":
-            if path.stem not in {
-                parent,
-                f"{parent}_test",
-                "conftest",
-                ".vulture_whitelist",
-            }:
-                raise InvalidIntegrationScriptFileName
-        elif path.suffix == ".md" and path.stem not in {
-            "README",
-            f"{parent}_description",
+
+def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):
+    """Only use from _validate"""
+    parent = path.parent.name
+    if path.suffix == ".png" and path.stem != f"{parent}_image":
+        raise InvalidIntegrationScriptFileName
+
+    elif path.suffix in {".yml", ".js"} and path.stem != parent:
+        raise InvalidIntegrationScriptFileName
+
+    elif path.suffix == ".ps1" and path.stem not in {parent, f"{parent}.Tests"}:
+        raise InvalidIntegrationScriptFileName
+
+    elif path.suffix == ".py":
+        if path.stem not in {
+            parent,
+            f"{parent}_test",
+            "conftest",
+            ".vulture_whitelist",
         }:
-            raise InvalidMetaMarkdownFileName
-
-        elif not path.suffix:
-            if path.stem == "command_examples":
-                return
-            if "command" in path.stem and "example" in path.stem:
-                raise InvalidCommandExampleFile
-            if path.stem == ".pylintrc":
-                return
-            if (
-                path.stem == "LICENSE"
-                and parts_after_packs[0] == "FireEye-Detection-on-Demand"
-            ):
-                # Decided to exempt this pack only from using LICENSE files.
-                return
             raise InvalidIntegrationScriptFileName
+
+    elif path.suffix == ".md" and path.stem not in {
+        "README",
+        f"{parent}_description",
+    }:
+        raise InvalidIntegrationScriptMarkdownFileName
+
+    elif not path.suffix:
+        if path.stem in {"command_examples", ".pylintrc"}:
+            return
+        if (
+            path.stem == "LICENSE"
+            and parts_after_packs[0] == "FireEye-Detection-on-Demand"
+        ):
+            # Decided to exempt this pack only from using LICENSE files.
+            return
+        if "command" in path.stem and "example" in path.stem:
+            # `command example`, `commands examples` and other single/plural, delimiters permutations
+            raise InvalidCommandExampleFile
+        raise InvalidIntegrationScriptFileName
+
+    if path.suffix not in {
+        ".py",
+        ".yml",
+        ".js",
+        ".md",
+        ".png",
+        ".svg",
+        ".txt",
+        ".ps1",
+        "",
+    }:
+        raise InvalidIntegrationScriptFileType
+
+
+def _exempt_unified_files(path: Path, first_level_folder: str):
+    """Raises PathIsUnified when necessary. Only use from _validate"""
+    for prefix, folder in (
+        ("script", ContentType.SCRIPT),
+        ("integration", ContentType.INTEGRATION),
+    ):
+        if (
+            first_level_folder == folder.as_folder
+            and path.name.startswith(f"{prefix}-")
+            and (path.suffix in {".md", ".yml"})  # these fail validate-all
+        ):
+            # old, unified format, e.g. Packs/myPack/Scripts/script-foo.yml
+            raise PathIsUnified
 
 
 def validate(path: Path, github_action: bool) -> bool:
@@ -277,6 +326,7 @@ def validate(path: Path, github_action: bool) -> bool:
             )
         else:
             logger.error(f"Invalid {path}: {e.message}")
+            # print(";".join((str(path), path.suffix, e.message, type(e).__name__))) # for debugging
         return False
 
     except ExemptedPath as e:
@@ -296,8 +346,7 @@ def validate_paths(
     github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
 ) -> None:
     """Validate given paths"""
-    result = [validate(path, github_action) for path in paths]
-    if not all(result):
+    if not all((validate(path, github_action) for path in paths)):
         raise typer.Exit(1)
 
 
@@ -306,19 +355,17 @@ def validate_all(
     content_path: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)]
 ):
     """Used in the SDK CI for testing compatibility with content"""
-    logger.info(f"{content_path.resolve()=}")
-    invalid = 0
-    for path in tqdm(content_paths := sorted(content_path.rglob("*"))):
-        if path.is_file() and not validate(path, False):
-            invalid += 1
-    total = len(content_paths)
-    valid = total - invalid
-    print(f"{total=}, {valid=}, {invalid=}")  # noqa: T201
+    logger.info(f"Content path: {content_path.resolve()}")
+    paths = sorted(content_path.rglob("*"))
+    invalid = len(
+        [path for path in tqdm(paths) if path.is_file() and not validate(path, False)]
+    )
+    valid = (total := len(paths)) - invalid
+    logger.info(f"{total=},[green]{valid=}[/green],[red]{invalid=}[/red]")
 
 
 def main():
     logging_setup()
-    validate_all(Path("../../content"))
     app()
 
 

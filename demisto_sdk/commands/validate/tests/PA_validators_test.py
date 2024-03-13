@@ -15,14 +15,20 @@ from demisto_sdk.commands.common.constants import (
     PACK_METADATA_USE_CASES,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
+    create_integration_object,
     create_metadata_object,
     create_old_file_pointers,
+    create_playbook_object,
+    create_script_object,
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA100_valid_tags_prefixes import (
     ValidTagsPrefixesValidator,
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA101_is_version_match_rn import (
     IsVersionMatchRnValidator,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA102_should_pack_be_deprecated import (
+    ShouldPackBeDeprecatedValidator,
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA103_is_valid_categories import (
     IsValidCategoriesValidator,
@@ -1291,3 +1297,78 @@ def test_IsValidUseCasesValidator_fix():
         == "Removed the following use cases: Invalid_use_Case_1, Invalid_use_Case_2."
     )
     assert content_item.use_cases == ["Malware", "Case Management"]
+
+
+@pytest.mark.parametrize(
+    "pack, is_deprecated_pack, integrations, playbooks, scripts, expected_number_of_failures, expected_msgs",
+    [
+        (create_metadata_object(), False, [], [], [], 0, []),
+        (
+            create_metadata_object(),
+            False,
+            [create_integration_object(["deprecated"], [True])],
+            [],
+            [],
+            1,
+            [
+                "The Pack HelloWorld should be deprecated, as all its integrations, playbooks and scripts are deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated).\nThe description of the pack in the pack_metadata.json should be one of the following formats:\n1. 'Deprecated. Use <PACK_NAME> instead.'\n2. 'Deprecated. <REASON> No available replacement.'"
+            ],
+        ),
+        (
+            create_metadata_object(),
+            False,
+            [],
+            [create_playbook_object(["deprecated"], [True])],
+            [create_script_object()],
+            0,
+            [],
+        ),
+        (
+            create_metadata_object(),
+            True,
+            [create_integration_object(["deprecated"], [True])],
+            [],
+            [],
+            0,
+            [],
+        ),
+    ],
+)
+def test_ShouldPackBeDeprecatedValidator_is_valid(
+    pack,
+    is_deprecated_pack,
+    integrations,
+    playbooks,
+    scripts,
+    expected_number_of_failures,
+    expected_msgs,
+):
+    """
+    Given
+    A pack objects, and a list of related integrations, playbooks & scripts.
+        - Case 1: A non deprecated pack without any integrations, playbooks & scripts.
+        - Case 2: A non deprecated pack with a deprecated integration.
+        - Case 3: A non deprecated pack with a deprecated integration and a non deprecated script
+        - Case 4: A deprecated pack with a deprecated integration.
+    When
+    - Calling the ShouldPackBeDeprecatedValidator is_valid function.
+    Then
+        - Make sure the right amount of packs failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+        - Case 3: Shouldn't fail.
+        - Case 4: Shouldn't fail.
+    """
+    pack.deprecated = is_deprecated_pack
+    pack.content_items.integration.extend(integrations)
+    pack.content_items.playbook.extend(playbooks)
+    pack.content_items.script.extend(scripts)
+    content_items = [pack]
+    results = ShouldPackBeDeprecatedValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

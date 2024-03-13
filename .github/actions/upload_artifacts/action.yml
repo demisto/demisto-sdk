@@ -21,6 +21,7 @@ runs:
     - name: Copy Files from home directory produced by SDK
       shell: bash
       run: |
+        ls ~/.demisto-sdk
         cp -r ~/.demisto-sdk ${{ inputs.artifacts-path-dir }}/demisto-sdk-folder
     - name: Upload artifacts
       if: always()

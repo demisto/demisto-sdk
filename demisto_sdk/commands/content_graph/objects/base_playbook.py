@@ -128,7 +128,7 @@ class TaskConfig(BaseModel):
     nexttasks: Optional[Dict[str, List[str]]]
     loop: Optional[Loop]
     conditions: Optional[List[ConditionSchema]]
-    view: str
+    view: Optional[str]
     results: Optional[List[str]]
     continueonerror: Optional[bool]
     continueonerrortype: Optional[str]

@@ -275,7 +275,7 @@ class DockerHook(Hook):
             All the hooks to be appended for this image
         """
         new_hook = deepcopy(self.base_hook)
-        _image = image.replace('/', '-').replace(':', "-")
+        _image = image.replace("/", "-").replace(":", "-")
         new_hook["id"] = f"{new_hook.get('id')}-{_image}"
         new_hook["name"] = f"{new_hook.get('name')}-{image.replace('/', '-')}"
         new_hook["language"] = "docker_image"

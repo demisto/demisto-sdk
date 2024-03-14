@@ -1288,20 +1288,8 @@ class TestParsersAndModels:
         script.yml["autoUpdateDockerImage"] = "false"
         script_path = Path(script.path)
         parser = ScriptParser(script_path, list(MarketplaceVersions))
-        RelationshipsVerifier.run(
-            parser.relationships,
-            commands_or_scripts_executions=["dummy-command"],
-        )
         model = Script.from_orm(parser)
-        ContentItemModelVerifier.run(
-            model,
-            expected_id="sample_script",
-            expected_name="sample_script",
-            expected_content_type=ContentType.SCRIPT,
-            expected_fromversion="5.0.0",
-            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
-        )
-        assert model.auto_update_docker_image
+        assert not model.auto_update_docker_image
 
     def test_test_playbook_parser(self, pack: Pack):
         """

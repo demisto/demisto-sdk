@@ -10,6 +10,7 @@ import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 import demisto_sdk.commands.pre_commit.pre_commit_context as context
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
@@ -35,6 +36,17 @@ PYTHON_VERSION_TO_FILES = {
     "3.9": {Path("Packs/Pack1/Integrations/integration2/integration2.py")},
     "3.10": {Path("Packs/Pack1/Integrations/integration3/integration3.py")},
 }
+
+
+@pytest.fixture()
+def native_image_config(mocker, repo) -> NativeImageConfig:
+    native_image_config = NativeImageConfig.from_path(
+        repo.docker_native_image_config.path
+    )
+    mocker.patch.object(
+        NativeImageConfig, "get_instance", return_value=native_image_config
+    )
+    return native_image_config
 
 
 @dataclass(frozen=True)
@@ -85,10 +97,10 @@ class MockProcess:
         return "", ""
 
 
-def test_config_files(mocker, repo: Repo):
+def test_config_files(mocker, repo: Repo, native_image_config):
     """
     Given:
-        A repository with different scripts and integration of different python versions which do not require
+        A repository with different scripts and integration of different python versions which require
         split hooks
 
     When:
@@ -97,15 +109,18 @@ def test_config_files(mocker, repo: Repo):
     Then:
         - Categorize the scripts and integration by python version,
           and make sure that pre-commit configuration is created
-        - make sure no split hooks are created
+        - make sure split hooks are created
 
     """
-    mocker.patch.object(DockerHook, "__init__", return_value=None)
-    mocker.patch.object(
-        DockerHook,
-        "prepare_hook",
-        return_value=[{"id": "run-in-docker"}],
+
+    def devtest_side_effect(image_tag: str, is_powershell: bool, should_pull: bool):
+        return image_tag
+
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.hooks.docker.devtest_image",
+        side_effect=devtest_side_effect,
     )
+
     mocker.patch.object(
         context,
         "PRECOMMIT_TEMPLATE_PATH",
@@ -118,6 +133,11 @@ def test_config_files(mocker, repo: Repo):
         pre_commit_command,
         "PRECOMMIT_CONFIG_MAIN_PATH",
         Path(repo.path) / ".pre-commit-config.yaml",
+    )
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_SPLIT_HOOKS_CONFIGS",
+        Path(repo.path) / "split-hooks",
     )
     mocker.patch.object(
         context,
@@ -191,7 +211,7 @@ def test_config_files(mocker, repo: Repo):
     PreCommitRunner.prepare_and_run(pre_commit_context)
     assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
     assert (Path(repo.path) / "split-hooks").exists()
-    assert not list((Path(repo.path) / "split-hooks").iterdir())
+    assert list((Path(repo.path) / "split-hooks").iterdir())
     assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
 
 

@@ -353,7 +353,7 @@ jobs:
         if: always()
         uses: ./.github/actions/upload_artifacts
         with:
-          artifacts-path-dir: .demisto-sdk/logs/demisto_sdk_debug.log
+          artifacts-path-dir: .demisto-sdk
           artifact-name: test-validate-content-path-log
 
   test-graph-commands:

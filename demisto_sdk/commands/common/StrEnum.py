@@ -5,7 +5,7 @@ https://tomwojcik.com/posts/2023-01-02/python-311-str-enum-breaking-change
 
 try:
     # On Python3.11, the (backwards incompatible) StrEnum was added. Importing it succesfully means we're on >=3.11.
-    from enum import StrEnum  # type:ignore[attr-defined] not available <3.11
+    from enum import StrEnum  # type:ignore[attr-defined]  # not available <3.11
 
 except ImportError:
     # If it's not there, we create its equivalent manually.

@@ -78,7 +78,7 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
 main = typer.Typer(pretty_exceptions_enable=False)
 
 
-@main.command("validate")
+@main.command()
 def validate_forbidden_deleted_files(
     protected_dirs: Annotated[List[str], typer.Argument(default=[], exists=True)],
 ):

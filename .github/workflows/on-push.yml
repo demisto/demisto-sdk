@@ -315,7 +315,7 @@ jobs:
           cd content
           demisto-sdk pre-commit --validate --show-diff-on-failure --verbose -i Packs/HelloWorld -i Packs/QRadar/Integrations/QRadar_v3 --mode=nightly
 
-      - name: run pre-commit on input files
+      - name: run pre-commit on all files # TODO REMOVE
         timeout-minutes: 120
         run: |
           source $(poetry env info --path)/bin/activate

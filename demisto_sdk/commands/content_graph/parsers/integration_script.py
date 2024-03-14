@@ -90,5 +90,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
     @property
     def auto_update_docker_image(self):
         return (
-            get_value(self.yml_data, self.field_mapping.get("type", "")) or ""
+            get_value(
+                self.yml_data, self.field_mapping.get("autoUpdateDockerImage", "")
+            )
         ).lower() != "false"

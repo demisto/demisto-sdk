@@ -78,10 +78,14 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
 main = typer.Typer(pretty_exceptions_enable=False)
 
 
-@main.command()
+@main.command(
+    help="Validate that there are not any files deleted from protected directories"
+)
 def validate_forbidden_deleted_files(
     protected_dirs: Annotated[List[str], typer.Argument(default=[], exists=True)],
 ):
+    if not protected_dirs:
+        raise ValueError("Provide at least one protected dir")
     logging_setup()
     try:
         if forbidden_deleted_files := get_forbidden_deleted_files(set(protected_dirs)):

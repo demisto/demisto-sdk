@@ -274,3 +274,25 @@ def test_validate_deleted_files_when_deleting_integration_folder(git_repo: Repo)
 
     assert result.exit_code == 1
     assert isinstance(result.exception, SystemExit)
+
+
+def test_validate_deleted_files_without_protected_dirs():
+    """
+    Given:
+        - validate deleted files script
+
+    When:
+        - executing the validate-deleted-files script with no --protected-dirs argument
+
+    Then:
+        - make sure typer returns that the argument is missing
+    """
+    from demisto_sdk.scripts.validate_deleted_files import main
+
+    runner = CliRunner()
+
+    result = runner.invoke(
+        main,
+        catch_exceptions=False,
+    )
+    assert "Missing argument" in result.stdout

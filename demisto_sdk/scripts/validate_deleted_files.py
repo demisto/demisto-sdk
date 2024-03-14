@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
-from typing import List, Set, Annotated, Tuple
+from typing import List, Set
 
 import typer
+from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -79,9 +80,7 @@ main = typer.Typer(pretty_exceptions_enable=False)
 
 @main.command("validate")
 def validate_forbidden_deleted_files(
-    protected_dirs: Annotated[
-        List[str], typer.Argument(default=[], exists=True)
-    ],
+    protected_dirs: Annotated[List[str], typer.Argument(default=[], exists=True)],
 ):
     logging_setup()
     try:

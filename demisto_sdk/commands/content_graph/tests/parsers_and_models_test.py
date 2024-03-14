@@ -1285,7 +1285,7 @@ class TestParsersAndModels:
 
         script = pack.create_script()
         script.create_default_script()
-        script.yml["autoUpdateDockerImage"] = "false"
+        script.yml.update({"autoUpdateDockerImage": "falsey"})
         script_path = Path(script.path)
         parser = ScriptParser(script_path, list(MarketplaceVersions))
         model = Script.from_orm(parser)

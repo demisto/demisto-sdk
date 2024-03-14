@@ -1,0 +1,4 @@
+changes:
+- description: Added `auto_update_docker_image` to IntegrationScript graph object.
+  type: feature
+pr_number: 4133

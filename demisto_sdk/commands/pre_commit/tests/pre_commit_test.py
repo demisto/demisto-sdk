@@ -101,7 +101,7 @@ def test_config_files(mocker, repo: Repo, native_image_config):
     """
     Given:
         A repository with different scripts and integration of different python versions which require
-        split hooks
+        split hooks for pylint
 
     When:
         Calling demisto-sdk pre-commit
@@ -109,8 +109,8 @@ def test_config_files(mocker, repo: Repo, native_image_config):
     Then:
         - Categorize the scripts and integration by python version,
           and make sure that pre-commit configuration is created
-        - make sure split hooks are created
-
+        - make sure split hooks are created properly
+        - make sure that the created hooks are pylint based only as its the only hook that should be split
     """
 
     def devtest_side_effect(image_tag: str, is_powershell: bool, should_pull: bool):
@@ -211,7 +211,10 @@ def test_config_files(mocker, repo: Repo, native_image_config):
     PreCommitRunner.prepare_and_run(pre_commit_context)
     assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
     assert (Path(repo.path) / "split-hooks").exists()
-    assert list((Path(repo.path) / "split-hooks").iterdir())
+    split_hooks = list((Path(repo.path) / "split-hooks").iterdir())
+    assert len(split_hooks) == 4
+    for hook in split_hooks:
+        assert "pylint" in str(hook)
     assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
 
 

@@ -274,7 +274,7 @@ class DockerHook(SplitHook):
             All the hooks to be appended for this image
         """
         new_hook = deepcopy(self.base_hook)
-        _image = image.replace("/", "-").replace(":", "-")
+        _image = image.replace("/", "-").replace(":", "-")  # avoid adding / to the ids as these are saved as files
         new_hook["id"] = f"{new_hook.get('id')}-{_image}"
         new_hook["name"] = f"{new_hook.get('name')}-{_image}"
         new_hook["language"] = "docker_image"

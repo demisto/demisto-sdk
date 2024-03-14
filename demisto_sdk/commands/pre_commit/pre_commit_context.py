@@ -45,7 +45,6 @@ class PreCommitContext:
     skipped_hooks: Set[str] = field(default_factory=set)
     run_docker_hooks: bool = True
     dry_run: bool = False
-    hook_ids_to_hooks: Dict[str, List[Dict]] = field(default_factory=dict)
 
     def __post_init__(self):
         """
@@ -67,6 +66,9 @@ class PreCommitContext:
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
         self.hooks = self._get_hooks(self.precommit_template)
+        self.split_hooks: Dict[
+            str, Set[str]
+        ] = {}  # mapping between original hook IDs to their newly created hooks
         self.hooks_need_docker = self._hooks_need_docker()
         logger.debug(f"PreCommitContext: {self.asdict()}")
 
@@ -167,14 +169,9 @@ class PreCommitContext:
         local_repo_hooks = local_repo["hooks"]
         split_hooks = []
         non_split_hooks = []
+        split_hook_ids = set().union(*self._yield_split_hooks())
         for hook in local_repo_hooks:
-            found = False
-            for saved_hooks in self.hook_ids_to_hooks.values():
-                saved_hook_ids = {h["id"] for h in saved_hooks}
-                if hook["id"] in saved_hook_ids and len(saved_hook_ids) > 1:
-                    found = True
-                    break
-            if found:
+            if hook["id"] in split_hook_ids:
                 split_hooks.append(hook)
             else:
                 non_split_hooks.append(hook)
@@ -182,9 +179,9 @@ class PreCommitContext:
         return split_hooks, non_split_hooks
 
     def _yield_split_hooks(self):
-        for hooks in self.hook_ids_to_hooks.values():
-            if len(hooks) > 1:
-                yield hooks
+        for hook_ids in self.split_hooks.values():
+            if hook_ids:
+                yield hook_ids
 
     def _filter_hooks_need_docker(self, repos: dict) -> dict:
         """

@@ -26,4 +26,3 @@ class ValidateFormatHook(Hook):
             safe_update_hook_args(self.base_hook, "-g")
 
         self.hooks.insert(self.hook_index, self.base_hook)
-        self.update_hook_ids_to_hooks()

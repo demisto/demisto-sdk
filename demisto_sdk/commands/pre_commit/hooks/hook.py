@@ -20,7 +20,7 @@ class Hook:
         repo: dict,
         context: PreCommitContext,
     ) -> None:
-        self.hook_id = hook["id"]
+        self.original_hook_id = hook["id"]
         self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
         self.hook_index = self.hooks.index(self.base_hook)
@@ -39,13 +39,6 @@ class Hook:
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
         self.hooks.append(deepcopy(self.base_hook))
-
-    def update_hook_ids_to_hooks(self):
-        if self.hook_id not in self.context.hook_ids_to_hooks:
-            self.context.hook_ids_to_hooks[self.hook_id] = []
-        for hook in self.hooks:
-            if self.hook_id in hook["id"]:
-                self.context.hook_ids_to_hooks[self.hook_id].append(hook)
 
     def exclude_irrelevant_files(self):
         self._exclude_hooks_by_version()

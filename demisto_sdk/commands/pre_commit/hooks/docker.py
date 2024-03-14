@@ -27,7 +27,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+from demisto_sdk.commands.pre_commit.hooks.split_hook import SplitHook
 
 NO_SPLIT = None
 
@@ -179,7 +179,7 @@ def _split_by_objects(
     return object_to_files
 
 
-class DockerHook(Hook):
+class DockerHook(SplitHook):
     """
     This class will make common manipulations on commands that need to run in docker
     """
@@ -253,7 +253,6 @@ class DockerHook(Hook):
         logger.debug(
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
-        self.update_hook_ids_to_hooks()
 
     def get_new_hooks(
         self,
@@ -277,7 +276,7 @@ class DockerHook(Hook):
         new_hook = deepcopy(self.base_hook)
         _image = image.replace("/", "-").replace(":", "-")
         new_hook["id"] = f"{new_hook.get('id')}-{_image}"
-        new_hook["name"] = f"{new_hook.get('name')}-{image.replace('/', '-')}"
+        new_hook["name"] = f"{new_hook.get('name')}-{_image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
         new_hook[
@@ -321,6 +320,7 @@ class DockerHook(Hook):
             hook.pop("config_file_arg", None)
             hook.pop("copy_files", None)
             hook.pop("split_by_object", None)
+            self.context.split_hooks[self.original_hook_id].add(hook["id"])
         return ret_hooks
 
     def _get_config_file_arg(self) -> Optional[Tuple]:

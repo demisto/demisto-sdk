@@ -225,7 +225,7 @@ class PreCommitRunner:
             logger.info(
                 f"Pre-Commit will use {num_processes} processes to run split hooks"
             )
-            for hooks in pre_commit_context._yield_split_hooks():
+            for split_hook_ids in pre_commit_context._yield_split_hooks():
                 with ThreadPool(num_processes) as pool:
                     hooks_results = pool.map(
                         partial(
@@ -234,7 +234,7 @@ class PreCommitRunner:
                             verbose=verbose,
                             stdout=stdout,
                         ),
-                        [hook["id"] for hook in hooks],
+                        split_hook_ids,
                     )
 
                 results.extend(hooks_results)

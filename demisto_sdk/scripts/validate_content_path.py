@@ -243,14 +243,18 @@ def _validate(path: Path) -> None:
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):
     """Only use from _validate"""
     parent = path.parent.name
-    if path.suffix == ".png" and path.stem != f"{parent}_image":
-        raise InvalidIntegrationScriptFileName
 
-    elif path.suffix in {".yml", ".js"} and path.stem != parent:
-        raise InvalidIntegrationScriptFileName
+    if path.suffix == ".png":
+        if path.stem != f"{parent}_image":
+            raise InvalidIntegrationScriptFileName
 
-    elif path.suffix == ".ps1" and path.stem not in {parent, f"{parent}.Tests"}:
-        raise InvalidIntegrationScriptFileName
+    elif path.suffix in {".yml", ".js"}:
+        if path.stem != parent:
+            raise InvalidIntegrationScriptFileName
+
+    elif path.suffix == ".ps1":
+        if path.stem not in {parent, f"{parent}.Tests"}:
+            raise InvalidIntegrationScriptFileName
 
     elif path.suffix == ".py":
         if path.stem not in {
@@ -261,11 +265,9 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
         }:
             raise InvalidIntegrationScriptFileName
 
-    elif path.suffix == ".md" and path.stem not in {
-        "README",
-        f"{parent}_description",
-    }:
-        raise InvalidIntegrationScriptMarkdownFileName
+    elif path.suffix == ".md":
+        if path.stem not in {"README", f"{parent}_description"}:
+            raise InvalidIntegrationScriptMarkdownFileName
 
     elif not path.suffix:
         if path.stem in {"command_examples", ".pylintrc"}:
@@ -281,16 +283,10 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
             raise InvalidCommandExampleFile
         raise InvalidIntegrationScriptFileName
 
-    if path.suffix not in {
-        ".py",
-        ".yml",
-        ".js",
-        ".md",
+    elif path.suffix not in {
         ".png",
         ".svg",
         ".txt",
-        ".ps1",
-        "",
     }:
         raise InvalidIntegrationScriptFileType
 
@@ -413,7 +409,7 @@ def validate_all(
             if path.is_file()
             and not validate(
                 path,
-                github_actions=False,
+                github_action=False,
                 skip_depth_one_file=skip_depth_one_file,
                 skip_depth_one_folder=skip_depth_one_folder,
                 skip_depth_zero_file=skip_depth_zero_file,

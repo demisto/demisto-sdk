@@ -1270,7 +1270,8 @@ class TestParsersAndModels:
         assert not model.skip_prepare
 
     @pytest.mark.parametrize(
-        "raw_value, expected_value", [("false", False), ("true", True)]
+        "raw_value, expected_value",
+        [("false", False), ("true", True), ("tRue", True), ("something", True)],
     )
     def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
         """

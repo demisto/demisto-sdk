@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List, Set
+from typing import List, Set, Annotated, Tuple
 
 import typer
 
@@ -77,18 +77,13 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
 main = typer.Typer(pretty_exceptions_enable=False)
 
 
-@main.command()
+@main.command("validate")
 def validate_forbidden_deleted_files(
-    ctx: typer.Context,
-    protected_dirs: List[str] = typer.Option(
-        [],
-        "--protected-dir",
-        help="a protected dir to to disallow deleting files from it or from it sub-directories",
-    ),
+    protected_dirs: Annotated[
+        List[str], typer.Argument(default=[], exists=True)
+    ],
 ):
     logging_setup()
-    if not protected_dirs:
-        raise ValueError("--protected-dir must be provided")
     try:
         if forbidden_deleted_files := get_forbidden_deleted_files(set(protected_dirs)):
             logger.error(

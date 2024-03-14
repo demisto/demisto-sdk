@@ -2,11 +2,11 @@
 
 import inspect
 
-from demisto_sdk.commands.common.content.content import *
-from demisto_sdk.commands.common.content.errors import *
-from demisto_sdk.commands.common.content.objects.pack_objects import *
-from demisto_sdk.commands.common.content.objects.root_objects import *
-from demisto_sdk.commands.common.content.objects_factory import *  # type:ignore[misc]
+from .content import *  # lgtm [py/polluting-import]
+from .errors import *  # lgtm [py/polluting-import]
+from .objects.pack_objects import *  # lgtm [py/polluting-import]
+from .objects.root_objects import *  # lgtm [py/polluting-import]
+from .objects_factory import *  # lgtm [py/polluting-import]
 
 __all__ = [
     name

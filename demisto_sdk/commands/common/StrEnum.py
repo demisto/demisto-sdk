@@ -6,14 +6,15 @@ https://tomwojcik.com/posts/2023-01-02/python-311-str-enum-breaking-change
 import sys
 
 if sys.version_info >= (3, 11):
-    # On Python3.11, the (backwards incompatible) StrEnum was added. Importing it succesfully means we're on >=3.11.
-    from enum import (
-        StrEnum as _StrEnum,  # type:ignore[attr-defined]  # not available <3.11
-    )
+    # StrEnum was added in 3.11
+    from enum import StrEnum as _StrEnum  # type:ignore[attr-defined]
     from typing import Self, overload
 
     class StrEnum(_StrEnum):
-        # Since MyPy falsely detects usage of StrEnum as str, (https://github.com/python/mypy/issues/14688), we patch
+        """
+        Since MyPy falsely detects usage of StrEnum as str, we patch it. See https://github.com/python/mypy/issues/14688.
+        """
+
         @overload
         def __new__(cls, object: object = ...) -> Self:
             ...
@@ -27,7 +28,7 @@ if sys.version_info >= (3, 11):
         def __new__(cls, *values):
             return _StrEnum._new_member_(cls, *values)
 
-else:  # If it's not there, we create its equivalent manually.
+else:
     from enum import Enum
 
     class StrEnum(str, Enum):  # type:ignore[no-redef]

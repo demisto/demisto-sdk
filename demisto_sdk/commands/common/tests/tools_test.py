@@ -2741,7 +2741,7 @@ def test_string_to_bool_error(value: str):
         ("Packs/myPack/Scripts/myScript/myScript.yml", FileType.SCRIPT),
         ("Packs/myPack/Scripts/script-myScript.yml", FileType.SCRIPT),
         (f"Packs/myPack/{PACK_IGNORE}", FileType.PACK_IGNORE),
-        (f"Packs/myPack/{FileType.SECRET_IGNORE.value}", FileType.SECRET_IGNORE),
+        (f"Packs/myPack/{FileType.SECRET_IGNORE}", FileType.SECRET_IGNORE),
         (f"Packs/myPack/{DOC_FILES_DIR}/foo.md", FileType.DOC_FILE),
         ("Packs/myPack/some_random_file", None),
         ("some_random_file_not_under_Packs", None),

@@ -62,7 +62,7 @@ class IntegrationScript(ContentItem):
     subtype: Optional[str]
     docker_image: DockerImage = DockerImage("")
     alt_docker_images: List[str] = []
-    auto_update_docker_image: bool = Field(True)
+    auto_update_docker_image: bool = True
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)

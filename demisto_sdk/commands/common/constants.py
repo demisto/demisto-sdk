@@ -2120,11 +2120,11 @@ class InvestigationPlaybookState(StrEnum):
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
-class IncidentState(Enum):
-    NEW = 0  # the incident is new
-    IN_PROGRESS = 1  # the incident is in progress
-    CLOSED = 2  # the incident is closed
-    ACKNOWLEDGED = 3  # the incident is archived
+class IncidentState(StrEnum):
+    NEW = "NEW"  # the incident is new
+    IN_PROGRESS = "IN_PROGRESS"  # the incident is in progress
+    CLOSED = "CLOSED"  # the incident is closed
+    ACKNOWLEDGED = "ACKNOWLEDGED"  # the incident is archived
 
 
 # Used to format the writing of the yml/json file

@@ -2740,13 +2740,6 @@ class TestContext:
             True if test has finished its execution else False
         """
         # we want to test first playback only once (we want to skip it when using retries mechanism)
-        self.playbook.log_info("################ running _execute_mockable_test function")
-        self.playbook.log_info(f"################ {self.playbook=}")
-        self.playbook.log_info(f"################ {self.playbook.configuration.playbook_id=}")
-        self.playbook.log_info(f"################ proxy.has_mock_file: {proxy.has_mock_file(self.playbook.configuration.playbook_id)}")
-        self.playbook.log_info(f"################ {proxy.branch_name=}")
-        self.playbook.log_info(f"################ {proxy.current_folder=}")
-
         if (
             not self.playbook.configuration.is_first_playback_failed
             and proxy.has_mock_file(self.playbook.configuration.playbook_id)
@@ -2755,7 +2748,6 @@ class TestContext:
             with run_with_mock(
                 proxy, self.playbook.configuration.playbook_id
             ) as result_holder:
-                self.playbook.log_warning("################ _execute_mockable_test | running run_with_mock with proxy with record=False")
                 status = self._incident_and_docker_test()
                 status = self._update_playbook_status(
                     status, is_first_playback_run=True
@@ -2772,14 +2764,12 @@ class TestContext:
         self.playbook.log_info(f"------ Test {self} start ------ (Mock: Recording)")
         with acquire_test_lock(self.playbook) as lock:
             if not lock:
-                self.playbook.log_warning(f"################{lock=}")
                 # If the integrations were not locked - the test has not finished its execution
                 return False
 
             with run_with_mock(
                 proxy, self.playbook.configuration.playbook_id, record=True
             ) as result_holder:
-                self.playbook.log_info("################ _execute_mockable_test | running run_with_mock with record=True")
                 status = self._incident_and_docker_test()
                 self.playbook.configuration.number_of_executions += 1
                 status = self._update_playbook_status(status, is_record_run=True)
@@ -2792,7 +2782,6 @@ class TestContext:
             with run_with_mock(
                 proxy, self.playbook.configuration.playbook_id
             ) as result_holder:
-                self.playbook.log_info("################ running run_with_mock with proxy with record=False")
                 status = self._run_incident_test()
                 self._update_playbook_status(status, is_second_playback_run=True)
                 result_holder[RESULT] = status == PB_Status.COMPLETED

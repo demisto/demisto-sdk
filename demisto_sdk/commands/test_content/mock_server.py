@@ -201,7 +201,6 @@ class MITMProxy:
 
     def commit_mock_file(self, folder_name):
         self.logging_module.debug("Committing mock files")
-        logger.info("[red]################ running commit_mock_file | Committing mock files[/red]")
         try:
             output = self.ami.check_output(
                 "cd content-test-data && "
@@ -209,7 +208,6 @@ class MITMProxy:
                 f"git commit -m \"Updated mock files for '{folder_name}' from build number - {self.build_number}\" -v".split(),
                 stderr=STDOUT,
             )
-            logger.info(f"[red]Committing mock files output: {output.decode()=}[/red]")
             self.logging_module.debug(
                 f"Committing mock files output:\n{output.decode()}"
             )
@@ -217,7 +215,6 @@ class MITMProxy:
             self.logging_module.debug(
                 f"Committing mock files output:\n{exc.output.decode()}"
             )
-            logger.info(f"[red]################ Committing mock files output: {exc.output.decode()=}[/red]")
 
     def reset_mock_files(self):
         self.logging_module.debug("Resetting mock files")
@@ -237,7 +234,6 @@ class MITMProxy:
         self.logging_module.debug(
             "Pushing new/updated mock files to mock git repo.", real_time=True
         )
-        logger.info("[red]################ running push_mock_files function[/red]")
         self.content_data_lock.acquire()
         try:
             output = self.ami.check_output(
@@ -247,18 +243,18 @@ class MITMProxy:
             self.logging_module.debug(
                 f"Pushing mock files output:\n{output.decode()}", real_time=True
             )
-            logger.info(f"[red]################ Pushing mock files output: {output.decode()}[/red]")
         except CalledProcessError as exc:
             self.logging_module.debug(
                 f"Pushing mock files output:\n{exc.output.decode()}", real_time=True
             )
-            logger.info(f"[red]################ CalledProcessError - Pushing mock files output: {exc.output.decode()}[/red]")
         except Exception as exc:
             self.logging_module.debug(
                 f"Failed pushing mock files with error: {exc}", real_time=True
             )
-            logger.info(f"[red]################ Failed pushing mock files with error: {exc}[/red]")
         finally:
+            logger.info(
+                "[green]################ Successfully pushed new/updated mock files to mock git repo.[/green]"
+            )
             self.content_data_lock.release()
 
     def configure_proxy_in_demisto(
@@ -346,33 +342,26 @@ class MITMProxy:
         Args:
             playbook_or_integration_id (string): ID of the test playbook or integration of which the files should be moved.
         """
-        logger.info(f"[red]################ running move_mock_file_to_repo function[/red]")
 
         src_filepath = os.path.join(
             self.tmp_folder, get_mock_file_path(playbook_or_integration_id)
         )
-        logger.info(f"[red################ {src_filepath=}[/red]")
         src_files = os.path.join(
             self.tmp_folder, get_folder_path(playbook_or_integration_id) + "*"
         )
-        logger.info(f"[red################ {src_files=}[/red]")
         dst_folder = os.path.join(
             self.repo_folder, get_folder_path(playbook_or_integration_id)
         )
-        logger.info(f"[red################ {dst_folder=}[/red]")
         if not self.has_mock_file(playbook_or_integration_id):
             self.logging_module.debug("Mock file not created!")
-            logger.info(f"[red]################ Mock file not created![/red]")
         elif self.get_mock_file_size(src_filepath) == "0":
             self.logging_module.debug("Mock file is empty, ignoring.")
-            logger.info(f"[red]################ Mock file is empty, ignoring.[/red]")
             self.empty_files.append(playbook_or_integration_id)
         else:
             # Move to repo folder
             self.logging_module.debug(
                 f'Moving "{src_files}" files to "{dst_folder}" directory'
             )
-            logger.info(f"[red]################ Moving '{src_files}' files to '{dst_folder}' directory[/red]")
             self.ami.call(["mkdir", "--parents", dst_folder])
             self.ami.call(["mv", src_files, dst_folder])
 
@@ -396,10 +385,7 @@ class MITMProxy:
         self.logging_module.debug(
             f'normalize_mock_file was called for test "{playbook_or_integration_id}"'
         )
-        logger.info(f"[red]normalize_mock_file was called for test {playbook_or_integration_id}[/red]")
         path = path or self.current_folder
-        self.logging_module.debug(f'normalize_mock_file | {path=}')
-        logger.info(f"[red]normalize_mock_filex | {path=}[/red]")
         problem_keys_filepath = os.path.join(
             path, get_folder_path(playbook_or_integration_id), "problematic_keys.json"
         )
@@ -416,23 +402,17 @@ class MITMProxy:
         mock_file_path = os.path.join(
             path, get_mock_file_path(playbook_or_integration_id)
         )
-        logger.info(f"[red]################ mock_file_path: {mock_file_path}[/red]")
         cleaned_mock_filepath = mock_file_path.strip(".mock") + "_cleaned.mock"
-        logger.info(f"[red]################ cleaned_mock_filepath: {cleaned_mock_filepath}[/red]")
         log_file = os.path.join(
             path, get_log_file_path(playbook_or_integration_id, record=True)
         )
-        logger.info(f"[red]################ log_file: {log_file}[/red]")
         command = (
             f"/home/{SSH_USER}/.local/bin/mitmdump -ns ~/timestamp_replacer.py "
             f"--set script_mode=clean --set keys_filepath={problem_keys_filepath}"
             f" -r {mock_file_path} -w {cleaned_mock_filepath} | sudo tee -a {log_file}"
         )
-        self.logging_module.debug(f"command to normalize mockfile:\n\t{command=}")
+        self.logging_module.debug(f"command to normalize mockfile:\n\t{command}")
         self.logging_module.debug("Let's try and normalize the mockfile")
-
-        logger.info(f"[red[command to normalize mockfile: {command}[/red]")
-        logger.info(f"[red]Let's try and normalize the mockfile[/red]")
 
         try:
             check_output(
@@ -455,33 +435,25 @@ class MITMProxy:
 
         # verify cleaned mock is different than original
         diff_cmd = f"diff -sq {cleaned_mock_filepath} {mock_file_path}"
-        logger.info(f"[red]################ diff_cmd: {diff_cmd}[/red]")
         try:
             diff_cmd_output = self.ami.check_output(diff_cmd.split()).decode().strip()
-            logger.info(f"[red]################ diff_cmd_output: {diff_cmd_output}[/red]")
             self.logging_module.debug(f"diff_cmd_output={diff_cmd_output}")
-            logger.info(f"[red]################ diff_cmd_output: {diff_cmd_output}[/red]")
             if diff_cmd_output.endswith("are identical"):
                 self.logging_module.debug(
                     "normalized mock file and original mock file are identical"
                 )
-                logger.info(f"[red]################ normalized mock file and original mock file are identical[/red]")
             else:
                 self.logging_module.debug(
                     "the normalized mock file differs from the original"
                 )
-                logger.info(f"[red]################ the normalized mock file differs from the original[/red]")
         except CalledProcessError:
             self.logging_module.debug(
                 "the normalized mock file differs from the original"
             )
-            logger.info(f"[red]################ the normalized mock file differs from the original[/red]")
         self.logging_module.debug(
             "Replacing original mock file with the normalized one."
         )
-        logger.info(f"[red]################ Replacing original mock file with the normalized one.[/red]")
         mv_cmd = f"mv {cleaned_mock_filepath} {mock_file_path}"
-        logger.info(f"[red]################ mv_cmd: {mv_cmd}[/red]")
         self.ami.call(mv_cmd.split())
 
     def start(self, playbook_or_integration_id, path=None, record=False) -> None:
@@ -664,7 +636,6 @@ def run_with_mock(
         record: A boolean indicating this is record mode or not
     Yields: A result holder dict in which the calling method can add the result of the proxy run under the key 'result'
     """
-    logger.info(f"Running run_with_mock")
     proxy_instance.logging_module.debug("Running run_with_mock")
     if record:
         proxy_instance.set_tmp_folder()
@@ -688,13 +659,10 @@ def run_with_mock(
                 proxy_instance.move_mock_file_to_repo(playbook_or_integration_id)
                 proxy_instance.successful_rerecord_count += 1
                 proxy_instance.rerecorded_tests.append(playbook_or_integration_id)
-                logger.info(f"[red]################ {proxy_instance.should_update_mock_repo=}[/red]")
-                logger.info(f"[red]################ {DEMISTO_GIT_PRIMARY_BRANCH=}[/red]")
                 if proxy_instance.should_update_mock_repo:
                     proxy_instance.logging_module.debug(
                         "committing new/updated mock files to mock git repo."
                     )
-                    logger.info("[red]################ committing new/updated mock files to mock git repo.[/red]")
                     proxy_instance.commit_mock_file(playbook_or_integration_id)
             else:
                 proxy_instance.failed_rerecord_count += 1

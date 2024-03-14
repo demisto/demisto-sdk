@@ -1277,11 +1277,9 @@ class TestParsersAndModels:
         Given:
             - A pack with a script.
         When:
-            - Creating the content item's parser and model.
+            - setting autoUpdateDockerImage
         Then:
-            - Verify all relationships of the content item are collected.
-            - Verify the generic content item properties are parsed correctly.
-            - Verify the specific properties of the content item are parsed correctly.
+            - Verify the field is parsed correctly
         """
         from demisto_sdk.commands.content_graph.objects.script import Script
         from demisto_sdk.commands.content_graph.parsers.script import ScriptParser

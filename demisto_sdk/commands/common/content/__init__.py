@@ -2,7 +2,7 @@
 
 import inspect
 
-from .content import *  # lgtm [py/polluting-import]
+from content import *  # lgtm [py/polluting-import]
 from .errors import *  # lgtm [py/polluting-import]
 from .objects.pack_objects import *  # lgtm [py/polluting-import]
 from .objects.root_objects import *  # lgtm [py/polluting-import]

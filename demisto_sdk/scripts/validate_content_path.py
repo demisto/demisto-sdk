@@ -187,10 +187,8 @@ def _validate(path: Path) -> None:
     if PACKS_FOLDER not in path.parts:
         raise PathOutsidePacks
 
-    if (
-        "Tests" in path.parts
-        and PACKS_FOLDER in path.parts
-        and (path.parts).index("Tests") < (path.parts).index(PACKS_FOLDER)
+    if "Tests" in path.parts and (path.parts).index("Tests") < (path.parts).index(
+        PACKS_FOLDER
     ):  # if Tests comes before Packs, it's not a real content path
         raise PathOutsidePacks
 

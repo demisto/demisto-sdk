@@ -185,10 +185,12 @@ class PreCommitRunner:
         local_repo = repos["local"]
         (
             split_hooks,
-            non_splitted_hooks,
+            non_split_hooks,
         ) = pre_commit_context._get_split_and_non_split_hooks(local_repo)
+        logger.info(f'Split hooks: {[hook["id"] for hook in split_hooks]}')
+        logger.info(f'Non-split hooks: {[hook["id"] for hook in non_split_hooks]}')
         # all the hooks which do not split will run on the main template
-        local_repo["hooks"] = non_splitted_hooks
+        local_repo["hooks"] = non_split_hooks
 
         full_hooks_need_docker = pre_commit_context._filter_hooks_need_docker(repos)
 

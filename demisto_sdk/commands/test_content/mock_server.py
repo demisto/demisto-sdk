@@ -176,7 +176,6 @@ class MITMProxy:
         repo_folder=MOCKS_GIT_PATH,
         tmp_folder=MOCKS_TMP_PATH,
     ):
-        self.branch_name = branch_name
         is_branch_master = branch_name == DEMISTO_GIT_PRIMARY_BRANCH
         self.internal_ip = internal_ip
         self.current_folder = self.repo_folder = repo_folder
@@ -342,7 +341,6 @@ class MITMProxy:
         Args:
             playbook_or_integration_id (string): ID of the test playbook or integration of which the files should be moved.
         """
-
         src_filepath = os.path.join(
             self.tmp_folder, get_mock_file_path(playbook_or_integration_id)
         )
@@ -352,6 +350,7 @@ class MITMProxy:
         dst_folder = os.path.join(
             self.repo_folder, get_folder_path(playbook_or_integration_id)
         )
+
         if not self.has_mock_file(playbook_or_integration_id):
             self.logging_module.debug("Mock file not created!")
         elif self.get_mock_file_size(src_filepath) == "0":
@@ -636,7 +635,6 @@ def run_with_mock(
         record: A boolean indicating this is record mode or not
     Yields: A result holder dict in which the calling method can add the result of the proxy run under the key 'result'
     """
-    proxy_instance.logging_module.debug("Running run_with_mock")
     if record:
         proxy_instance.set_tmp_folder()
         # If the record files should be committed - clean the content-test-data repo first

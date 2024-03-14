@@ -9,11 +9,12 @@ from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock
 from typing import Dict, Iterator
-from demisto_sdk.commands.common.logger import logger
+
 import demisto_client.demisto_api
 import urllib3
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
 VALID_FILENAME_CHARS = f"-_.() {string.ascii_letters}{string.digits}"
@@ -412,7 +413,6 @@ class MITMProxy:
         )
         self.logging_module.debug(f"command to normalize mockfile:\n\t{command}")
         self.logging_module.debug("Let's try and normalize the mockfile")
-
         try:
             check_output(
                 self.ami.add_ssh_prefix(command.split(), ssh_options="-t"),
@@ -445,10 +445,12 @@ class MITMProxy:
                 self.logging_module.debug(
                     "the normalized mock file differs from the original"
                 )
+
         except CalledProcessError:
             self.logging_module.debug(
                 "the normalized mock file differs from the original"
             )
+
         self.logging_module.debug(
             "Replacing original mock file with the normalized one."
         )

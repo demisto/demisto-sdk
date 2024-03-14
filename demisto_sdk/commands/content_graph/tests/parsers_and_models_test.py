@@ -1263,6 +1263,7 @@ class TestParsersAndModels:
         )
         assert model.type == "python"
         assert model.subtype == "python3"
+        assert model.auto_update_docker_image
         assert model.docker_image == "demisto/python3:3.8.3.8715"
         assert model.tags == ["transformer"]
         assert not model.is_test

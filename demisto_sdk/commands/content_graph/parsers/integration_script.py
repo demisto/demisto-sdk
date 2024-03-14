@@ -86,3 +86,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         if not subtype and self.type == "python":
             subtype = "python2"
         return subtype
+
+    @property
+    def auto_update_docker_image(self):
+        return (
+            get_value(self.yml_data, self.field_mapping.get("type", "")) or ""
+        ).lower() != "false"

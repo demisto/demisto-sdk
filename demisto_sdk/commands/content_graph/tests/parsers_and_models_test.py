@@ -1269,6 +1269,40 @@ class TestParsersAndModels:
         assert not model.is_test
         assert not model.skip_prepare
 
+    def test_script_parser_false_autoupdate(self, pack: Pack):
+        """
+        Given:
+            - A pack with a script.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml["autoUpdateDockerImage"] = "false"
+        script_path = Path(script.path)
+        parser = ScriptParser(script_path, list(MarketplaceVersions))
+        RelationshipsVerifier.run(
+            parser.relationships,
+            commands_or_scripts_executions=["dummy-command"],
+        )
+        model = Script.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="sample_script",
+            expected_name="sample_script",
+            expected_content_type=ContentType.SCRIPT,
+            expected_fromversion="5.0.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
+        assert model.auto_update_docker_image
+
     def test_test_playbook_parser(self, pack: Pack):
         """
         Given:

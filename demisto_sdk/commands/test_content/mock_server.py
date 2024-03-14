@@ -184,8 +184,8 @@ class MITMProxy:
         self.logging_module = logging_module
         self.build_number = build_number
         self.ami = AMIConnection(self.internal_ip)
-        self.should_update_mock_repo = True
-        self.should_validate_playback = True
+        self.should_update_mock_repo = is_branch_master
+        self.should_validate_playback = not is_branch_master
         self.empty_files = []
         self.failed_tests_count = 0
         self.successful_tests_count = 0

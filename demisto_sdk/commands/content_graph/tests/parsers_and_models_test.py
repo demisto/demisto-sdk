@@ -1269,7 +1269,10 @@ class TestParsersAndModels:
         assert not model.is_test
         assert not model.skip_prepare
 
-    def test_script_parser_false_autoupdate(self, pack: Pack):
+    @pytest.mark.parametrize(
+        "raw_value, expected_value", [("false", False), ("true", True)]
+    )
+    def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
         """
         Given:
             - A pack with a script.
@@ -1285,11 +1288,11 @@ class TestParsersAndModels:
 
         script = pack.create_script()
         script.create_default_script()
-        script.yml.update({"autoUpdateDockerImage": "falsey"})
+        script.yml.update({"autoUpdateDockerImage": raw_value})
         script_path = Path(script.path)
         parser = ScriptParser(script_path, list(MarketplaceVersions))
         model = Script.from_orm(parser)
-        assert not model.auto_update_docker_image
+        assert model.auto_update_docker_image is expected_value
 
     def test_test_playbook_parser(self, pack: Pack):
         """

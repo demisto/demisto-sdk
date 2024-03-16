@@ -30,6 +30,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
 
 """ NOT VALID """
 
+
 @pytest.mark.parametrize(
     "content_items, expected_msg",
     [

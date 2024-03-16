@@ -304,7 +304,7 @@ def test_IsValidContentFieldValidator_fix():
     incident_field = create_incident_field_object(["content"], [False])
     result = IsValidContentFieldValidator().fix(incident_field)
     assert result.message == "`content` field is set to true."
-    assert incident_field.data["content"]
+    assert incident_field.content
 
 
 def test_IsValidSystemFlagValidator_fix():
@@ -320,7 +320,7 @@ def test_IsValidSystemFlagValidator_fix():
     incident_field = create_incident_field_object(["system"], [True])
     result = IsValidSystemFlagValidator().fix(incident_field)
     assert result.message == "`system` field is set to false."
-    assert not incident_field.data["system"]
+    assert not incident_field.system
 
 
 def test_IsValidGroupFieldValidator_fix():

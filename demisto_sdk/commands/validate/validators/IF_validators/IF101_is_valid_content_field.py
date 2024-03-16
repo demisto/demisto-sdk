@@ -29,11 +29,11 @@ class IsValidContentFieldValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (not content_item.data.get("content"))
+            if (not content_item.content)
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        content_item.data["content"] = True
+        content_item.content = True
         return FixResult(
             validator=self,
             message=self.fix_message,

@@ -29,11 +29,11 @@ class IsValidSystemFlagValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (content_item.data.get("system"))
+            if (content_item.system)
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        content_item.data["system"] = False
+        content_item.system = False
         return FixResult(
             validator=self,
             message=self.fix_message,

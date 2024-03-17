@@ -25,6 +25,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_incident_type_object,

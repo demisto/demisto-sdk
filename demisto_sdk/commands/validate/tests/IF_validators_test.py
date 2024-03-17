@@ -25,6 +25,7 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF105_is_cli_name_fi
     IsCliNameFieldAlphanumericValidator,
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_reserved_word import (
+    INCIDENT_PROHIBITED_CLI_NAMES,
     IsCliNameReservedWordValidator,
 )
 
@@ -33,24 +34,22 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     "content_items, expected_msg",
     [
         pytest.param(
-            [create_incident_field_object(["name", "cliName"], ["case 1", "case1"])],
+            create_incident_field_object(["name", "cliName"], ["case 1", "case1"]),
             "The following words cannot be used as a name: case.",
             id="One IncidentField with bad word in field `name`",
         ),
         pytest.param(
-            [
-                create_incident_field_object(
-                    ["name", "cliName"], ["case incident 1", "caseincident1"]
-                ),
-            ],
+            create_incident_field_object(
+                ["name", "cliName"], ["case incident 1", "caseincident1"]
+            ),
             "The following words cannot be used as a name: case, incident.",
             id="IncidentField with two bad words in field `name`",
         ),
     ],
 )
 def test_IsValidNameAndCliNameValidator_not_valid(
-    content_items: List[IncidentField],
-    expected_msg: List[str],
+    content_items: IncidentField,
+    expected_msg: str,
 ):
     """
     Given:
@@ -63,7 +62,7 @@ def test_IsValidNameAndCliNameValidator_not_valid(
         Case 2:
             - Ensure the error message is as expected with the bad words list
     """
-    results = IsValidNameAndCliNameValidator().is_valid(content_items=content_items)
+    results = IsValidNameAndCliNameValidator().is_valid(content_items=[content_items])
     assert results
     assert results[0].message == expected_msg
 
@@ -145,7 +144,8 @@ def test_IsValidGroupFieldValidator_not_valid():
     assert results[0].message == "Group 2 is not allowed for Incident Field"
 
 
-def test_IsCliNameFieldAlphanumericValidator_not_valid():
+@pytest.mark.parametrize("cli_name_value", ["", "Foo", "123_", "123A"])
+def test_IsCliNameFieldAlphanumericValidator_not_valid(cli_name_value):
     """
     Given:
         - IncidentField content items
@@ -156,7 +156,7 @@ def test_IsCliNameFieldAlphanumericValidator_not_valid():
           for the IncidentField whose 'cliName' value is non-alphanumeric, or contains an uppercase letter.
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["cliName"], ["test_1234"])
+        create_incident_field_object(["cliName"], [cli_name_value])
     ]
 
     results = IsCliNameFieldAlphanumericValidator().is_valid(content_items)
@@ -167,7 +167,8 @@ def test_IsCliNameFieldAlphanumericValidator_not_valid():
     )
 
 
-def test_IsCliNameReservedWordValidator_not_valid():
+@pytest.mark.parametrize("reserved_word", INCIDENT_PROHIBITED_CLI_NAMES)
+def test_IsCliNameReservedWordValidator_not_valid(reserved_word):
     """
     Given:
         - IncidentField content items
@@ -178,14 +179,14 @@ def test_IsCliNameReservedWordValidator_not_valid():
           for the IncidentField whose 'cliName' value is a reserved word
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["cliName"], ["parent"])
+        create_incident_field_object(["cliName"], [reserved_word])
     ]
 
     results = IsCliNameReservedWordValidator().is_valid(content_items)
     assert results
     assert (
         results[0].message
-        == "`cliName` field can not be `parent` as it's a builtin key."
+        == f"`cliName` field can not be `{reserved_word}` as it's a builtin key."
     )
 
 
@@ -255,7 +256,8 @@ def test_IsValidGroupFieldValidator_valid():
     assert not results
 
 
-def test_IsCliNameFieldAlphanumericValidator_valid():
+@pytest.mark.parametrize("cli_name_value", ["foo1234", "foo", "1234"])
+def test_IsCliNameFieldAlphanumericValidator_valid(cli_name_value):
     """
     Given:
         - IncidentField content items with a cliName value
@@ -266,7 +268,7 @@ def test_IsCliNameFieldAlphanumericValidator_valid():
         - Ensure that no ValidationResult returned
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["cliName"], ["test1234"])
+        create_incident_field_object(["cliName"], [cli_name_value])
     ]
 
     results = IsCliNameFieldAlphanumericValidator().is_valid(content_items)
@@ -283,7 +285,7 @@ def test_IsCliNameReservedWordValidator_valid():
         - Ensure that no ValidationResult returned
     """
     content_items: List[IncidentField] = [
-        create_incident_field_object(["cliName"], ["test"])
+        create_incident_field_object(["cliName"], ["foo"])
     ]
 
     results = IsCliNameReservedWordValidator().is_valid(content_items)

@@ -92,9 +92,11 @@ def test_IsContainCopyRightSectionValidator_is_valid(
         (
             [
                 create_pack_object(
-                    paths=["support"], values=["partner"], readme_text=""
+                    paths=["support"], values=["partner"], readme_text="", playbooks=1
                 ),
-                create_pack_object(paths=["support"], values=["xsoar"], readme_text=""),
+                create_pack_object(
+                    paths=["support"], values=["xsoar"], readme_text="", playbooks=2
+                ),
             ],  # empty readme with partner/xsoar support, not valid
             2,
             [

@@ -40,6 +40,6 @@ class EmptyReadmeValidator(BaseValidator[ContentTypes]):
                     content_item.support in (PARTNER_SUPPORT, XSOAR_SUPPORT)
                     or content_item.content_items.playbook
                 )
-                and not content_item.readme
+                and not content_item.readme.file_content
             )
         ]

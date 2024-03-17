@@ -1,0 +1,4 @@
+changes:
+- description: Update file paths in test_content from ec2-user to gcp-user.
+  type: fix
+pr_number: 3828

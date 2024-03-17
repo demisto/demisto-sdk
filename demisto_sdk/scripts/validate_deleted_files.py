@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Annotated, List, Set  # type: ignore[attr-defined]
+from typing import List, Set  # type: ignore[attr-defined]
 
 import typer
 
@@ -83,19 +83,21 @@ main = typer.Typer(pretty_exceptions_enable=False)
     help="Validate that there are not any files deleted from protected directories"
 )
 def validate_forbidden_deleted_files(
-    protected_dirs: Annotated[List[str], typer.Argument(default=[], exists=True)],
+    protected_dirs: List[str],
 ):
     if not protected_dirs:
         raise ValueError("Provide at least one protected dir")
     logging_setup()
     try:
-        if forbidden_deleted_files := get_forbidden_deleted_files(set(protected_dirs)):
-            logger.error(
-                f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
-            )
-            raise SystemExit(1)
+        forbidden_deleted_files = get_forbidden_deleted_files(set(protected_dirs))
     except Exception as error:
         logger.error(
             f"Unexpected error occurred while validating deleted files {error}"
         )
         raise
+
+    if forbidden_deleted_files:
+        logger.error(
+            f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
+        )
+        raise SystemExit(1)

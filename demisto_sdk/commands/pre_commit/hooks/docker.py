@@ -4,16 +4,23 @@ import shutil
 import subprocess
 import time
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from docker.errors import DockerException
+from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.constants import (
+    TYPE_PWSH,
+    TYPE_PYTHON,
+)
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.docker_helper import (
+    DockerBase,
     docker_login,
     get_docker,
     init_global_docker_client,
@@ -152,8 +159,8 @@ def get_environment_flag(env: dict) -> str:
 
 def _split_by_objects(
     files_with_objects: List[Tuple[Path, IntegrationScript]],
-    config_arg: Optional[Tuple],
-    split_by_obj: bool = False,
+    config_arg: Optional[Tuple[str, str]],
+    run_isolated: bool = False,
 ) -> Dict[Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]]:
     """
     Will group files into groups that share the same configuration file.
@@ -161,7 +168,7 @@ def _split_by_objects(
     Args:
         files: the files to split
         config_arg: a tuple, argument_name, file_name
-        split_by_obj: a boolean. If true it will split all the objects into separate hooks.
+        run_isolated: a boolean. If true it will split all the objects into separate hooks.
 
     Returns:
         a dict where the keys are the names of the folder of the config and the value is a set of files for that config
@@ -169,10 +176,14 @@ def _split_by_objects(
     object_to_files: Dict[
         Optional[IntegrationScript], Set[Tuple[Path, IntegrationScript]]
     ] = defaultdict(set)
-
+    config_name, config_filename = config_arg if config_arg else ("", "")
     for file, obj in files_with_objects:
-        if split_by_obj or (config_arg and (obj.path.parent / config_arg[1]).exists()):
+
+        if run_isolated or (
+            config_arg and (obj.path.parent / config_filename).exists()
+        ):
             object_to_files[obj].add((file, obj))
+
         else:
             object_to_files[NO_SPLIT].add((file, obj))
 
@@ -183,6 +194,50 @@ class DockerHook(Hook):
     """
     This class will make common manipulations on commands that need to run in docker
     """
+
+    def clean_args_from_hook(self, hooks: List[Dict]):
+        """This clean unsupported args from the generated hooks
+
+        Args:
+            hooks (List[Dict]): The hooks generated
+        """
+        for hook in hooks:
+            hook.pop("docker_image", None)
+            hook.pop("config_file_arg", None)
+            hook.pop("copy_files", None)
+            hook.pop("run_isolated", None)
+            hook.pop("pass_docker_extra_args", None)
+
+    def process_image(
+        self,
+        image: str,
+        files_with_objects: List[Tuple[Path, IntegrationScript]],
+        config_arg: Optional[Tuple[str, str]],
+        run_isolated: bool,
+    ) -> List[Dict]:
+        """
+        Process the image and files to run on it, and returns the generated hooks
+
+        Args:
+            image (str): The image to process
+            files_with_objects (List[Tuple[Path, IntegrationScript]]): The files to run on the image
+            config_arg (Optional[Tuple]): The config arg to set where relevant. This will be appended to the end of "args"
+            run_isolated (bool): Whether to run the files in isolated containers
+
+        Returns:
+            List[Dict]: List of generated hooks.
+        """
+        object_to_files = _split_by_objects(
+            files_with_objects,
+            config_arg,
+            run_isolated,
+        )
+        is_image_powershell = any(obj.is_powershell for _, obj in files_with_objects)
+
+        dev_image = devtest_image(image, is_image_powershell, self.context.dry_run)
+        hooks = self.generate_hooks(dev_image, image, object_to_files, config_arg)
+        logger.debug(f"Generated {len(hooks)} hooks for image {image}")
+        return hooks
 
     def prepare_hook(
         self,
@@ -222,39 +277,39 @@ class DockerHook(Hook):
                 for file in copy_files:
                     source: Path = CONTENT_PATH / file
                     target = obj.path.parent / Path(file).name
-                    if source != target and source.exists():
+                    if source != target and source.exists() and not target.exists():
                         shutil.copy(
                             CONTENT_PATH / file, obj.path.parent / Path(file).name
                         )
-        split_by_obj = self._get_property("split_by_object", False)
+        run_isolated = self._get_property("run_isolated", False)
         config_arg = self._get_config_file_arg()
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
         logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
-        for image, files_with_objects in sorted(
-            tag_to_files_objs.items(), key=lambda item: item[0]
-        ):
-            object_to_files = _split_by_objects(
-                files_with_objects, config_arg, split_by_obj
-            )
-            image_is_powershell = any(
-                obj.is_powershell for _, obj in files_with_objects
-            )
-
-            dev_image = devtest_image(image, image_is_powershell, self.context.dry_run)
-            hooks = self.get_new_hooks(
-                dev_image,
-                image,
-                object_to_files,
-                config_arg,
-            )
+        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+            results = []
+            for image, files_objs in sorted(
+                tag_to_files_objs.items(), key=lambda item: item[0]
+            ):
+                results.append(
+                    executor.submit(
+                        self.process_image,
+                        image,
+                        files_objs,
+                        config_arg,
+                        run_isolated,
+                    )
+                )
+        for result in results:
+            hooks = result.result()
             self.hooks.extend(hooks)
+
         end_time = time.time()
         logger.debug(
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
 
-    def get_new_hooks(
+    def generate_hooks(
         self,
         dev_image,
         image,
@@ -270,6 +325,7 @@ class DockerHook(Hook):
             image: name of the base image (for naming)
             object_to_files_with_objects: A dict where the key is the object (or None) and value is the set of files to run together.
             config_arg: The config arg to set where relevant. This will be appended to the end of "args"
+
         Returns:
             All the hooks to be appended for this image
         """
@@ -278,24 +334,35 @@ class DockerHook(Hook):
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
+        docker_version = DockerBase.version()
+        quiet = True
+        # quiet mode silently pulls the image, and it is supported only above 19.03
+        if docker_version < Version("19.03"):
+            quiet = False
+        docker_extra_args = self._get_property("pass_docker_extra_args", "")
         new_hook[
             "entry"
-        ] = f'--entrypoint {new_hook.get("entry")} {get_environment_flag(env)} --quiet {dev_image}'
+        ] = f'--entrypoint {new_hook.get("entry")} {docker_extra_args} {get_environment_flag(env)} {"--quiet" if quiet else ""} {dev_image}'
         ret_hooks = []
         for (
             integration_script,
             files_with_objects,
         ) in object_to_files_with_objects.items():
+            change_working_directory = False
             files = {file for file, _ in files_with_objects}
             hook = deepcopy(new_hook)
             if integration_script is not None:
+                change_working_directory = (
+                    True  # isolate container, so run in the same directory
+                )
                 if config_arg:
                     args = deepcopy(self._get_property("args", []))
                     args.extend(
                         [
                             config_arg[0],
                             str(
-                                (
+                                Path("/src")
+                                / (
                                     integration_script.path.parent / config_arg[1]
                                 ).relative_to(CONTENT_PATH)
                             ),
@@ -308,20 +375,25 @@ class DockerHook(Hook):
                 hook[
                     "name"
                 ] = f"{hook['name']}-{integration_script.object_id}"  # for uniqueness
+                # change the working directory to the integration script, as it runs in an isolated container
+                hook[
+                    "entry"
+                ] = f"-w {Path('/src') / integration_script.path.parent.relative_to(CONTENT_PATH)} {hook['entry']}"
+
             if self._set_files_on_hook(
-                hook, files, should_filter=False
+                hook,
+                files,
+                should_filter=False,
+                use_args=change_working_directory,
+                base_path=Path("/src"),
             ):  # no need to filter again, we have only filtered files
                 # disable multiprocessing on hook
                 hook["require_serial"] = True
                 ret_hooks.append(hook)
-        for hook in ret_hooks:
-            hook.pop("docker_image", None)
-            hook.pop("config_file_arg", None)
-            hook.pop("copy_files", None)
-            hook.pop("split_by_object", None)
+        self.clean_args_from_hook(ret_hooks)
         return ret_hooks
 
-    def _get_config_file_arg(self) -> Optional[Tuple]:
+    def _get_config_file_arg(self) -> Optional[Tuple[str, str]]:
         """
         A config arg should be of the format
             config_file_arg:

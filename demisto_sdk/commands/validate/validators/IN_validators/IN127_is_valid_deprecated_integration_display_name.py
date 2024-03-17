@@ -17,6 +17,11 @@ class IsValidDeprecatedIntegrationDisplayNameValidator(BaseValidator[ContentType
     description = (
         "Validate that a deprecated integration display name ends with (Deprecated)."
     )
+    rationale = (
+        "Deprecated integrations should end with (Deprecated) in the display name to clearly indicate their status. "
+        "This prevents inadvertent use of unsupported integrations. "
+        "For more details, see https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs#how-to-deprecate-an-integration"
+    )
     error_message = "The integration is deprecated, make sure the display name ({0}) ends with (Deprecated)."
     fix_message = "Added the (Deprecated) suffix to the integration display name: {0}."
     related_field = "display"

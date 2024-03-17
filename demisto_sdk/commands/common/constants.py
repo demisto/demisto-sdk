@@ -29,7 +29,12 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "1061"
 )  # Default value is the ID of the content repo on GitLab
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
-DOCKER_REGISTRY_URL = os.getenv("DOCKER_IO", "docker.io")
+
+DEFAULT_DOCKER_REGISTRY_URL = "docker.io"
+DOCKER_REGISTRY_URL = os.getenv(
+    "DEMISTO_SDK_CONTAINER_REGISTRY",
+    os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+)
 
 
 # Authentication
@@ -912,7 +917,9 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
-PACKS_README_FILE_NAME = "README.md"
+PACKS_README_FILE_NAME = (
+    INTEGRATIONS_README_FILE_NAME
+) = SCRIPTS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
@@ -2128,21 +2135,3 @@ PACK_DEFAULT_MARKETPLACES: List = [
     MarketplaceVersions.XSOAR.value,
     MarketplaceVersions.MarketplaceV2.value,
 ]
-
-
-class RelatedFileType(Enum):
-    YML = "YML"
-    JSON = "JSON"
-    README = "README"
-    DESCRIPTION = "DESCRIPTION"
-    IMAGE = "IMAGE"
-    DARK_SVG = "DARK_SVG"
-    LIGHT_SVG = "LIGHT_SVG"
-    CODE = "CODE"
-    TEST_CODE = "TEST_CODE"
-    SCHEMA = "SCHEMA"
-    XIF = "XIF"
-    PACK_IGNORE = "PACK_IGNORE"
-    SECRETS_IGNORE = "SECRETS_IGNORE"
-    AUTHOR_IMAGE = "AUTHOR_IMAGE"
-    RELEASE_NOTES = "RELEASE_NOTES"

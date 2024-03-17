@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -761,9 +762,18 @@ class UpdateRN:
                 if _type in SIEM_ONLY_ENTITIES or content_name.replace(
                     " ", ""
                 ).lower().endswith(EVENT_COLLECTOR.lower()):
-                    rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
+                    rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>"
                 elif from_version and _type not in SIEM_ONLY_ENTITIES:
-                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
+                    pack_marketplaces = self.get_pack_metadata().get(
+                        "marketplaces", [MarketplaceVersions.XSOAR.value]
+                    )
+                    if MarketplaceVersions.MarketplaceV2.value in pack_marketplaces:
+                        rn_desc += "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
+                    if (
+                        not pack_marketplaces
+                        or MarketplaceVersions.XSOAR.value in pack_marketplaces
+                    ):
+                        rn_desc += f"<~XSOAR> (Available from Cortex XSOAR {from_version}).</~XSOAR>"
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

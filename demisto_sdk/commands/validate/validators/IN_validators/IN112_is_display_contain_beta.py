@@ -14,6 +14,7 @@ ContentTypes = Integration
 class IsDisplayContainBetaValidator(BaseValidator[ContentTypes]):
     error_code = "IN112"
     description = "Validate that the display name contain the substring 'beta'."
+    rationale = "Beta integrations should have 'beta' in the display name for clear identification and to manage user expectations."
     error_message = (
         "The display name ({0}) doesn't contain the word 'beta', make sure to add it."
     )

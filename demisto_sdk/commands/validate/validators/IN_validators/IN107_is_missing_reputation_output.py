@@ -18,6 +18,10 @@ ContentTypes = Integration
 class IsMissingReputationOutputValidator(BaseValidator[ContentTypes]):
     error_code = "IN107"
     description = "Validate that the reputation commands include the list of required contextPaths."
+    rationale = (
+        "Reputation commands must include required contextPaths for consistency and reliable use in playbooks or scripts. "
+        "For more details, see https://xsoar.pan.dev/docs/integrations/context-standards-mandatory"
+    )
     error_message = "The integration contains invalid reputation command(s):\n\t{0}"
     related_field = "script.commands"
 

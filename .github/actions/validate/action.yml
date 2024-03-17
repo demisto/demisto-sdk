@@ -36,6 +36,7 @@ runs:
           fetch-depth: 0
           repository: demisto/content
           path: content
+          rev: ds-sdk-py311
 
       - name: Run Validate All
         run: |

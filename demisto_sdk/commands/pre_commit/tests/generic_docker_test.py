@@ -211,7 +211,7 @@ def test_isolate_container(mocker):
     Then:
         - Make sure that a hook is created for each file
     """
-    hook = create_hook({"run_isolated": True})
+    hook = create_hook({"run_isolated": True, "id": "test"})
     file_path = Path("SomeFile.py")
     file = (file_path, Obj(object_id="id1"))
 
@@ -233,8 +233,8 @@ def test_isolate_container(mocker):
     mocker.patch.object(PreCommitContext, "dry_run", True)
     DockerHook(**hook).prepare_hook()
     assert len(hook["repo"]["hooks"]) == 2
-    assert hook["repo"]["hooks"][0]["id"] == "None-sometag-id1"
-    assert hook["repo"]["hooks"][1]["id"] == "None-sometag-id2"
+    assert hook["repo"]["hooks"][0]["id"] == "test-sometag-id1"
+    assert hook["repo"]["hooks"][1]["id"] == "test-sometag-id2"
 
 
 def test_docker_pass_extra_args(mocker):
@@ -248,7 +248,7 @@ def test_docker_pass_extra_args(mocker):
     Then:
         - Make sure that a hook is created with the extra docker args
     """
-    hook = create_hook({"pass_docker_extra_args": "--rm=false"})
+    hook = create_hook({"pass_docker_extra_args": "--rm=false", "id": "test"})
     file_path = Path("SomeFile.py")
     file = (file_path, Obj(object_id="id1"))
     mocker.patch(

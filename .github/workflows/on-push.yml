@@ -282,6 +282,7 @@ jobs:
           fetch-depth: 1
           repository: demisto/content
           path: content
+          ref: ds-sdk-py311
 
       - name: Cache Pre commit
         id: cache-pre-commit

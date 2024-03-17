@@ -2897,4 +2897,4 @@ def test_get_related_text_file():
     - Ensure that the readme content was returned.
     """
     pack = create_pack_object(readme_text="This is a test")
-    assert pack.readme == "This is a test"
+    assert pack.readme.file_content == "This is a test"

@@ -1,9 +1,8 @@
 import os
 from pathlib import Path
-from typing import List, Set
+from typing import Annotated, List, Set  # type: ignore[attr-defined]
 
 import typer
-from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,

@@ -59,7 +59,7 @@ jobs:
       #   uses: pre-commit/action@v3.0.1
       #   with:
       #     extra_args: --all-files
-      - run: pre-commit run -a 
+      - run: poetry run pre-commit run -a 
 
       - name: Run Pytest collection
         run: |

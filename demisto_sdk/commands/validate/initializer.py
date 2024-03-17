@@ -507,7 +507,7 @@ class Initializer:
             path_str = str(path)
             if self.is_unrelated_path(path_str):
                 continue
-            if "Integrations" in path_str or "Scripts" in path_str:
+            if "/Integrations/" in path_str or "/Scripts/" in path_str:
                 if path_str.endswith(".yml"):
                     statuses_dict[path] = git_status
                 elif self.is_code_file(path, path_str):
@@ -522,7 +522,7 @@ class Initializer:
                     path = Path(path.parent / f"{path.parts[-2]}.yml")
                     if path not in statuses_dict:
                         statuses_dict[path] = None
-            elif "Playbooks" in path_str:
+            elif "/Playbooks/" in path_str:
                 if path_str.endswith(".yml"):
                     statuses_dict[path] = git_status
                 else:

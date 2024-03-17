@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -18,6 +18,7 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     description = "Checks if the pack has an author image path."
     error_message = "You've created/modified a yml or package in a partner supported pack without providing an author image as a .png file. Please make sure to add an image at"
     related_field = "Author_image"
+    rationale = "Author images make it easier to identify the author."
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.AUTHOR_IMAGE]
 
@@ -30,8 +31,5 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if content_item.support == "partner"
-            and (
-                not Path(content_item.author_image_path).is_file()
-                or not Path(content_item.author_image_path).exists()
-            )
+            and (not content_item.author_image_file.exist)
         ]

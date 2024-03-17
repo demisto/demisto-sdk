@@ -20,6 +20,7 @@ ContentTypes = Pack
 class IsValidPackNameValidator(BaseValidator[ContentTypes]):
     error_code = "PA125"
     description = "Validate that the pack name is valid."
+    rationale = "Pack names should follow conventions for consistency and readability in the marketplace."
     error_message = "Invalid pack name ({0}), pack name should be at least 3 characters long, start with a capital letter, must not contain the words: {1}."
     related_field = "name"
 

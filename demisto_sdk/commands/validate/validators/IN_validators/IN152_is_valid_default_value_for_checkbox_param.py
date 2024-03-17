@@ -19,6 +19,7 @@ ContentTypes = Integration
 class IsValidDefaultValueForCheckboxParamValidator(BaseValidator[ContentTypes]):
     error_code = "IN152"
     description = "Validate that the default value of a checkbox param is valid."
+    rationale = "Checkbox parameters' default values should be lowercase boolean strings ('true', 'false') for correct interpretation and functionality."
     error_message = "The following checkbox params have invalid defaultvalue: {0}.\nUse a boolean represented as a lowercase string, e.g defaultvalue: 'true'"
     fix_message = "Changed the default values of the following checkbox params: {0}"
     related_field = "configuration"

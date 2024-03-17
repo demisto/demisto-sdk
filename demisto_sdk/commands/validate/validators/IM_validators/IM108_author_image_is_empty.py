@@ -34,5 +34,6 @@ class AuthorImageIsEmptyValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (content_item.author_image_file.get_file_size().st_size == 0)
+            if content_item.author_image_file.exist
+            and (content_item.author_image_file.get_file_size().st_size == 0)
         ]

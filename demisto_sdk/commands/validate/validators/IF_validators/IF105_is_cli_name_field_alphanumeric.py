@@ -17,7 +17,7 @@ FIELD_CLI_NAME_VALIDATION_REGEX = re.compile(r"[0-9a-z]+$")
 class IsCliNameFieldAlphanumericValidator(BaseValidator[ContentTypes]):
     error_code = "IF105"
     description = "Checks if cliName field is alphanumeric and lowercase."
-    rationale = "`cliName` is not allowed with non-alphanumeric uppercase letters in the platform."
+    rationale = "Required by the platform"
     error_message = "Field `cliName` contains non-alphanumeric or uppercase letters."
     related_field = "cliName"
 

@@ -1,7 +1,7 @@
 from subprocess import CalledProcessError
 
-from demisto_sdk.commands.test_content.tools import is_redhat_instance
 from demisto_sdk.commands.test_content.constants import SSH_USER
+from demisto_sdk.commands.test_content.tools import is_redhat_instance
 
 
 def raise_exception():

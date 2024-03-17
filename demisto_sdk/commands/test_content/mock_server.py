@@ -251,9 +251,6 @@ class MITMProxy:
                 f"Failed pushing mock files with error: {exc}", real_time=True
             )
         finally:
-            self.logging_module.debug(
-                "Successfully pushed new/updated mock files to mock git repo.", real_time=True
-            )
             self.content_data_lock.release()
 
     def configure_proxy_in_demisto(

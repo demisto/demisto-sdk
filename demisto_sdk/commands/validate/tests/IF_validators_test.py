@@ -28,8 +28,6 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     IsCliNameReservedWordValidator,
 )
 
-""" NOT VALID """
-
 
 @pytest.mark.parametrize(
     "content_items, expected_msg",
@@ -185,9 +183,6 @@ def test_IsCliNameReservedWordValidator_not_valid():
     )
 
 
-""" VALID """
-
-
 def test_IsValidContentFieldValidator_valid():
     """
     Given:
@@ -287,9 +282,6 @@ def test_IsCliNameReservedWordValidator_valid():
 
     results = IsCliNameReservedWordValidator().is_valid(content_items)
     assert not results
-
-
-""" FIX """
 
 
 def test_IsValidContentFieldValidator_fix():

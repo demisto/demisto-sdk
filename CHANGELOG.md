@@ -1,4 +1,29 @@
 # Changelog
+## 1.27.3
+* Fixed an issue in **lint** and **pre-commit** with custom container registry [#4039](https://github.com/demisto/demisto-sdk/pull/4039)
+
+## 1.27.2
+* Updated the *DO106* error code in the **validate** command to not fail when a docker image is younger than 3 months instead of 3 days. [#4119](https://github.com/demisto/demisto-sdk/pull/4119)
+* Fixed an issue where **lint** crashed when collecting invalid logs. [#4072](https://github.com/demisto/demisto-sdk/pull/4072)
+* Adds auto-update to existing integration README and fixes README generation for existing Packs in contribution flow. [#3820](https://github.com/demisto/demisto-sdk/pull/3820)
+* Fixed an issue where new release notes were generated without marketplace specific tags when needed. [#4118](https://github.com/demisto/demisto-sdk/pull/4118)
+* Improved reviewer instructions on outdated pack submissions. [#4113](https://github.com/demisto/demisto-sdk/pull/4113)
+
+## 1.27.1
+* Updated the **validate** command (`PA114`) to verify the "currentVersion" field was raised in the pack_metadata when changing specific fields in the pack_metadata file. [#3972](https://github.com/demisto/demisto-sdk/pull/3972)
+* Added support for **update-release-notes** command to update release notes when changing specific fields in the pack_metadata file. [#3972](https://github.com/demisto/demisto-sdk/pull/3972)
+* Added support to load the correct file content when reading remote files according to its URL. [#4050](https://github.com/demisto/demisto-sdk/pull/4050)
+* Added to the **pre-commit** command a new hook `validate-deleted-files` which validates it is not possible to delete certain files. [#4050](https://github.com/demisto/demisto-sdk/pull/4050)
+* Added support for `hybrid` field in pack_metadata.json and the integration YAML. [#4087](https://github.com/demisto/demisto-sdk/pull/4087)
+* Improved error handling when reading files locally, remotely or from git. [#4081](https://github.com/demisto/demisto-sdk/pull/4081)
+* Added README to the **xsoar-lint** command [#4043](https://github.com/demisto/demisto-sdk/pull/4043)
+* Fixed an issue where SDK would crash when running on repoitories which do not have git configured. [#4088](https://github.com/demisto/demisto-sdk/pull/4088)
+* Fixed an issue where reading files on repositories which are not git repositories failed when the path provided was relative path. [#4088](https://github.com/demisto/demisto-sdk/pull/4088)
+* Fixed an issue where **lint** would crash without internet connectivity. [#4098](https://github.com/demisto/demisto-sdk/pull/4098)
+* Fixed an issue where SDK would crash when trying to read files which are not encoded with utf-8 directly from memory. [#4081](https://github.com/demisto/demisto-sdk/pull/4081)
+* Added description field to *Assets Modeling Rules* content item. [#4005](https://github.com/demisto/demisto-sdk/pull/4005)
+* Added the `validate-conf-json` pre-commit hook, checking for structure and linked content. [#4051](https://github.com/demisto/demisto-sdk/pull/4051)
+
 ## 1.27.0
 * Added the **graph get-dependencies** command. [#3992](https://github.com/demisto/demisto-sdk/pull/3992)
 * Added a new command **xsoar-lint** and added it as a hook to **pre-commit**. [#3962](https://github.com/demisto/demisto-sdk/pull/3962)

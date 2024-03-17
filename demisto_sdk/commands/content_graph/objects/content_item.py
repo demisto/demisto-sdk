@@ -121,9 +121,6 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        # This function converts the pack attribute, which is a parser object to the pack model
-        # This happens since we cant mark the pack type as `Pack` because it is a forward reference.
-        # When upgrading to pydantic v2, remove this method and change pack type to `Pack` directly.
         pack = self.pack
         if not pack or isinstance(pack, fields.FieldInfo):
             pack = None

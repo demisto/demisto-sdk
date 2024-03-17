@@ -141,7 +141,10 @@ class BaseResult(BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.content_object.path.relative_to(CONTENT_PATH))}: [{self.validator.error_code}] - {self.message}"
+        path: Path = self.content_object.path
+        if path.is_absolute():
+            path = path.relative_to(CONTENT_PATH)
+        return f"{str(path)}: [{self.validator.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):

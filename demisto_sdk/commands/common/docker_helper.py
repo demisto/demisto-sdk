@@ -12,7 +12,7 @@ import docker
 import requests
 import urllib3
 from docker.types import Mount
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 from requests import JSONDecodeError
 from requests.exceptions import RequestException
 
@@ -180,6 +180,16 @@ class DockerBase:
 
     def __del__(self):
         del self.tmp_dir_name
+
+    @staticmethod
+    @functools.lru_cache
+    def version() -> Version:
+        version = init_global_docker_client().version()["Version"]
+        try:
+            return Version(version)
+        except InvalidVersion:
+            # build number makes the version unable to parse, so we need to strip it
+            return Version(version.split("-")[0])
 
     def installation_files(self, container_type: str) -> FILES_SRC_TARGET:
         files = self._files_to_push_on_installation.copy()

@@ -92,11 +92,9 @@ def test_IsContainCopyRightSectionValidator_is_valid(
         (
             [
                 create_pack_object(
-                    paths=["support"], values=["partner"], readme_text="", playbooks=1
+                    paths=["support"], values=["partner"], readme_text=""
                 ),
-                create_pack_object(
-                    paths=["support"], values=["xsoar"], readme_text="", playbooks=2
-                ),
+                create_pack_object(paths=["support"], values=["xsoar"], readme_text=""),
             ],  # empty readme with partner/xsoar support, not valid
             2,
             [
@@ -127,7 +125,7 @@ def test_empty_readme_validator(
             - 1 pack with valid readme text and partner support.
             - 1 pack with an empty readme.
             - 1 pack with valid readme and playbooks.
-        - Case 2: One invalid pack_metadata with empty readme and partner support.
+        - Case 2: Two invalid pack_metadata with empty readme and partner/xsoar support.
         - Case 3: One invalid pack_metadata with empty readme and playbooks.
 
     When:

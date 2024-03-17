@@ -24,6 +24,7 @@ class IncidentFieldParser(
         self.associated_to_all = self.json_data.get("associatedToAll")
         self.content = self.json_data.get("content", True)
         self.system = self.json_data.get("system", False)
+        self.group = self.json_data.get("group", 0)
 
         self.connect_to_dependencies()
 

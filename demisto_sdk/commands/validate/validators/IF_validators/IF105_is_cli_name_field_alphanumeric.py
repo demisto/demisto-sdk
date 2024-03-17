@@ -11,14 +11,12 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = IncidentField
 
-FIELD_CLI_NAME_VALIDATION_REGEX = re.compile(r"[0-9a-z]+$")
-
 
 class IsCliNameFieldAlphanumericValidator(BaseValidator[ContentTypes]):
     error_code = "IF105"
     description = "Checks if cliName field is alphanumeric and lowercase."
     rationale = "Required by the platform"
-    error_message = "Field `cliName` contains non-alphanumeric or uppercase letters."
+    error_message = "Field `cliName` contains uppercase or non-alphanumeric letters."
     related_field = "cliName"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
@@ -29,5 +27,8 @@ class IsCliNameFieldAlphanumericValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (not FIELD_CLI_NAME_VALIDATION_REGEX.fullmatch(content_item.cli_name))
+            if not (
+                content_item.cli_name.isalnum()
+                and content_item.cli_name.lower() == content_item.cli_name
+            )
         ]

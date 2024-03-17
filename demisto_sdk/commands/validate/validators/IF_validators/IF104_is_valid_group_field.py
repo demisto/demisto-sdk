@@ -11,15 +11,15 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = IncidentField
 
-INCIDENT_FIELD_GROUP = 0
+REQUIRED_GROUP_VALUE = 0
 
 
 class IsValidGroupFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IF104"
-    description = "Checks if group number is valid."
+    description = f"Checks if group field is set to {REQUIRED_GROUP_VALUE}."
     rationale = "Required by the platform."
-    error_message = "Group {group} is not a group field."
-    fix_message = f"`group` field is set to {INCIDENT_FIELD_GROUP}."
+    error_message = "Group {group} is not allowed for Incident Field"
+    fix_message = f"`group` field is set to {REQUIRED_GROUP_VALUE}."
     related_field = "group"
     is_auto_fixable = True
 
@@ -27,15 +27,15 @@ class IsValidGroupFieldValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(group=content_item.data["group"]),
+                message=self.error_message.format(group=content_item.group),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (content_item.data["group"] != INCIDENT_FIELD_GROUP)
+            if (content_item.group != REQUIRED_GROUP_VALUE)
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        content_item.data["group"] = INCIDENT_FIELD_GROUP
+        content_item.group = REQUIRED_GROUP_VALUE
         return FixResult(
             validator=self,
             message=self.fix_message,

@@ -45,7 +45,7 @@ class IsValidNameAndCliNameValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 words := [
-                    word for word in content_item.name.split() if word in BAD_WORDS
+                    word.lower() for word in content_item.name.split() if word in BAD_WORDS
                 ]
             )
         ]

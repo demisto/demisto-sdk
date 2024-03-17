@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import PARTNER_SUPPORT, GitStatuses
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -30,6 +30,6 @@ class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.support == "partner"
+            if content_item.support == PARTNER_SUPPORT
             and (not content_item.author_image_file.exist)
         ]

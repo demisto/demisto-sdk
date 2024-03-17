@@ -1263,10 +1263,35 @@ class TestParsersAndModels:
         )
         assert model.type == "python"
         assert model.subtype == "python3"
+        assert model.auto_update_docker_image
         assert model.docker_image == "demisto/python3:3.8.3.8715"
         assert model.tags == ["transformer"]
         assert not model.is_test
         assert not model.skip_prepare
+
+    @pytest.mark.parametrize(
+        "raw_value, expected_value",
+        [("false", False), ("true", True), ("tRue", True), ("something", True)],
+    )
+    def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
+        """
+        Given:
+            - A pack with a script.
+        When:
+            - setting autoUpdateDockerImage
+        Then:
+            - Verify the field is parsed correctly
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update({"autoUpdateDockerImage": raw_value})
+        script_path = Path(script.path)
+        parser = ScriptParser(script_path, list(MarketplaceVersions))
+        model = Script.from_orm(parser)
+        assert model.auto_update_docker_image is expected_value
 
     def test_test_playbook_parser(self, pack: Pack):
         """

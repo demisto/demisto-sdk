@@ -65,7 +65,7 @@ jobs:
         run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
 
       - name: Run Pytest collection
-        run: run pytest --collect-only .
+        run: poetry run pytest --collect-only .
 
   unit-tests:
     name: Unit Tests / Python ${{ matrix.python-version }}

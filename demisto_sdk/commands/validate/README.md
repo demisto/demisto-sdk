@@ -72,33 +72,29 @@ ignore=BA108,BA109
 ### Config file
 Each user will have a personal config file which he can edit however he wants.
 A default config file can be found [here.](default_config.toml)
-The default config file cover all the mandatory validations - the validations that without them te upload will fail.
-The config file will have few sections:
-**ignorable_errors** - A list of the error codes that can be ignored in the .pack-ignore file.
-, validate_all, use_git, and custom sections provided by the user.
-Each section will have the following options:
-**select**: The validations to run.
-**warning**: Validations to only throw warning (shouldn't fail the flow).
-**ignorable_errors**: Validations that can be ignored using the pack-ignore.
-If **category-to-run** is provided, the validations that will run will be according to the configuration in the particular section.
+The default config file cover all the mandatory validations - the validations that without them the upload will fail.
+The config file will have a **ignorable_errors** - A list of the error codes that can be ignored in the .pack-ignore file.
+The config file will also have different handling categories:
+**validate_all** - the configurations to run when running with -a / -i flags.
+**use_git** - the configurations to run when running with -g flag.
+And custom sections provided by the user - will be configured to run with the **category-to-run** flag.
+Each handling category will have the following options:
+**select** - The validations to run.
+**warning** - Validations to only throw warning (shouldn't fail the flow).
+The config file can also configure which validations to ignore based on the content item support level using the section header support_level.<support_type> where support_type is one of  xsoar, partner, or community.
+If the user wishes to ignore this feature in some of the calls, he can use the **--ignore-support-level** flag.
 
-For example: if the following configurations are given
+**Examples**:
+```
 [custom_category]
 select = ["BA101"]
-then validate will run only BA101 validation.
+```
+Validate will run only BA101 validation.
 
-In addition, each config file will have a **support_level** section which will be divided into xsoar, partner, and community each have ignore, select, warning, and ignorable_errors options. If the ignore-support-level flag is not given, the validations that will run will be according to both the given section (user custom section / use_git / validate_all) and the relevant support level.
-For example: if the following configurations are given:
-```buildoutcfg
+```
 [custom_category]
 select = ["BA100", "BA101", "BA102"]
 [support_level.community]
 ignore = ["BA102"]
 ```
-then validate will run all the validations with error codes "BA100", "BA101", "BA102" except for BA102 in case of community supported files
-
-If you wish to ignore errors for a specific file in the pack insert the following to the `pack-ignore` file.
-```buildoutcfg
-[file:FILE_NAME]
-ignore=BA101
-```
+Validate will run all the validations with error codes "BA100", "BA101", "BA102" except for BA102 in case of community supported files.

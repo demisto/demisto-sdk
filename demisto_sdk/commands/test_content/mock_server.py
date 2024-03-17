@@ -14,7 +14,6 @@ import demisto_client.demisto_api
 import urllib3
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
 VALID_FILENAME_CHARS = f"-_.() {string.ascii_letters}{string.digits}"
@@ -252,8 +251,8 @@ class MITMProxy:
                 f"Failed pushing mock files with error: {exc}", real_time=True
             )
         finally:
-            logger.info(
-                "[green]################ Successfully pushed new/updated mock files to mock git repo.[/green]"
+            self.logging_module.debug(
+                "Successfully pushed new/updated mock files to mock git repo.", real_time=True
             )
             self.content_data_lock.release()
 

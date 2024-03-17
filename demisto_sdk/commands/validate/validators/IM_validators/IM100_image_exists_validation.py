@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -18,6 +18,7 @@ class ImageExistsValidator(BaseValidator[ContentTypes]):
     description = "Checks if the integration has an image path."
     error_message = "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at"
     related_field = "image"
+    rationale = "Images make it easier to find integrations"
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.IMAGE]
 
@@ -29,6 +30,5 @@ class ImageExistsValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if not Path(content_item.image_file).is_file()
-            or not Path(content_item.image_file).exists()
+            if not content_item.image.exist
         ]

@@ -30,5 +30,5 @@ warning = []
 
 
 [Custom_Categories]
-select = []
+select = ["IM108"]
 warning = []

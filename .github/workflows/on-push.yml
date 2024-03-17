@@ -349,12 +349,6 @@ jobs:
           source $(poetry env info --path)/bin/activate
           validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown
 
-      - name: Upload artifacts
-        if: always()
-        uses: ./.github/actions/upload_artifacts
-        with:
-          artifacts-path-dir: ~/.demisto-sdk/logs/demisto_sdk_debug.log
-          artifact-name: test-validate-content-path-log
 
   test-graph-commands:
     runs-on: ubuntu-latest

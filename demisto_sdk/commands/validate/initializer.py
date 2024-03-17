@@ -507,7 +507,7 @@ class Initializer:
             path_str = str(path)
             if self.is_unrelated_path(path_str):
                 continue
-            if "/Integrations/" in path_str or "/Scripts/" in path_str:
+            if f"/{INTEGRATIONS_DIR}/" in path_str or f"/{SCRIPTS_DIR}/" in path_str:
                 if path_str.endswith(".yml"):
                     statuses_dict[path] = git_status
                 elif self.is_code_file(path, path_str):
@@ -522,7 +522,7 @@ class Initializer:
                     path = Path(path.parent / f"{path.parts[-2]}.yml")
                     if path not in statuses_dict:
                         statuses_dict[path] = None
-            elif "/Playbooks/" in path_str:
+            elif f"/{PLAYBOOKS_DIR }/" in path_str:
                 if path_str.endswith(".yml"):
                     statuses_dict[path] = git_status
                 else:
@@ -584,7 +584,7 @@ class Initializer:
             path_str = str(path)
             if self.is_unrelated_path(path_str):
                 continue
-            if INTEGRATIONS_DIR in path_str or SCRIPTS_DIR in path_str:
+            if f"/{INTEGRATIONS_DIR}/" in path_str or f"/{SCRIPTS_DIR}/" in path_str:
                 if path_str.endswith(".yml"):
                     paths_set.add(path)
                 elif self.is_code_file(path, path_str):
@@ -594,7 +594,7 @@ class Initializer:
                     paths_set.add(path)
                 else:
                     paths_set.add(path.parent / f"{path.parts[-2]}.yml")
-            elif PLAYBOOKS_DIR in path_str:
+            elif f"/{PLAYBOOKS_DIR }/" in path_str:
                 if path_str.endswith(".yml"):
                     paths_set.add(path)
                 else:

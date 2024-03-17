@@ -393,6 +393,7 @@ class DockerHook(SplitHook):
                 # disable multiprocessing on hook
                 hook["require_serial"] = True
                 ret_hooks.append(hook)
+                self.context.split_hooks[self.original_hook_id].add(hook["id"])
         self.clean_args_from_hook(ret_hooks)
         return ret_hooks
 

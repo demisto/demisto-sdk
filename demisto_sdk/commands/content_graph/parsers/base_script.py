@@ -48,7 +48,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         return super().field_mapping
 
     @property
-    def outputs(self) -> Optional[List]:
+    def outputs(self) -> List[Output]:
         return get_value(self.yml_data, self.field_mapping.get("outputs", ""), []) or []
 
     def connect_to_dependencies(self) -> None:

@@ -14,7 +14,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import GitStatuses, RelatedFileType
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_abstract_class
@@ -26,6 +26,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     BaseContentMetaclass,
 )
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
@@ -190,7 +191,10 @@ class BaseResult(BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.content_object.path.relative_to(CONTENT_PATH))}: [{self.validator.error_code}] - {self.message}"
+        path: Path = self.content_object.path
+        if path.is_absolute():
+            path = path.relative_to(CONTENT_PATH)
+        return f"{str(path)}: [{self.validator.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
@@ -221,15 +225,13 @@ def is_error_ignored(
     if err_code not in ignorable_errors:
         return False
     if related_file_type:
+        content_item_as_dict = content_item.dict()
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
-            for path in content_item.related_content.get(related_file, {}).get(
-                "path", ""
-            ):
-                if err_code in content_item.ignored_errors_related_files(path):
-                    # If the error code is found in one of the paths, will set the path in the related_content and return True.
-                    content_item.related_content[related_file]["path"] = [path]
-                    return True
+            if related_file_object := content_item_as_dict.get(related_file.value):
+                return err_code in content_item.ignored_errors_related_files(
+                    related_file_object.path
+                )
         return False
     else:
         # If the validation should run on the main content, will check if the validation's error code is ignored by the file.

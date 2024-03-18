@@ -57,6 +57,7 @@ class PackMetadata(BaseModel):
     modules: List[str] = Field([])
     integrations: List[str] = Field([])
     hybrid: bool = Field(False, alias="hybrid")
+    default_data_source: Optional[str] = Field(None, alias="defaultDataSource")
 
     # For private packs
     premium: Optional[bool]
@@ -103,6 +104,7 @@ class PackMetadata(BaseModel):
         - Adding the content items display names.
         - Gathering the pack dependencies and adding the metadata.
         - Unifying the `url` and `email` into the `support_details` property.
+        - Adding the default data source if exists.
 
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
@@ -125,6 +127,7 @@ class PackMetadata(BaseModel):
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
+                "defaultDataSource": self._get_default_data_source(content_items),
             }
         )
 
@@ -328,6 +331,16 @@ class PackMetadata(BaseModel):
             )
             == 1
         )
+
+    def _get_default_data_source(self, content_items: PackContentItems) -> Optional[str]:
+        """If there is more than one data source in the pack, return the default data source."""
+        data_sources = [
+            integration.name
+            for integration in content_items.integration
+            if MarketplaceVersions.MarketplaceV2 in integration.marketplaces
+            and (integration.is_fetch or integration.is_fetch_events)
+        ]
+        return data_sources[0] if len(data_sources) == 1 else None
 
     def _get_tags_from_landing_page(self, pack_id: str) -> set:
         """

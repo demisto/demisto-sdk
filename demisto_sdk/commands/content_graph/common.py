@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Set
 
 from neo4j import graph
+from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_DATABASE_HTTP,
@@ -12,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_PASSWORD,
     DEMISTO_SDK_NEO4J_USERNAME,
     PACKS_FOLDER,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.tools import (
@@ -270,15 +272,28 @@ class ContentType(str, enum.Enum):
         raise ValueError(f"Could not find content type in path {path}")
 
 
+class Relationship(BaseModel):
+    relationship: Optional[RelationshipType] = None
+    source_id: Optional[str] = None
+    source_type: Optional[ContentType] = None
+    source_fromversion: Optional[str] = None
+    source_marketplaces: Optional[List[MarketplaceVersions]]
+    target: Optional[str] = None
+    target_type: Optional[ContentType] = None
+    mandatorily: Optional[bool] = None
+    # source == source_id?
+
+
 class Relationships(dict):
     def add(self, relationship: RelationshipType, **kwargs):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
-        self.__getitem__(relationship).append(kwargs)
+        self.__getitem__(relationship).append(Relationship.parse_obj(kwargs).dict())
 
     def add_batch(self, relationship: RelationshipType, data: List[Dict[str, Any]]):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
+        data = [Relationship.parse_obj(item).dict() for item in data]
         self.__getitem__(relationship).extend(data)
 
     def update(self, other: "Relationships") -> None:  # type: ignore

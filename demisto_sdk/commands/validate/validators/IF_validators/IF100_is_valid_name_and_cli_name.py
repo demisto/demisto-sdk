@@ -30,7 +30,7 @@ BAD_WORDS = {
 
 class IsValidNameAndCliNameValidator(BaseValidator[ContentTypes]):
     error_code = "IF100"
-    description = "Checks if the name and cliName does not contain any potential incident synonyms."
+    description = "Checks if the name and cliName do not contain potential incident synonyms."
     rationale = "The name and cliName fields are limited by the platform."
     error_message = "The following words cannot be used as a name: {words}."
     related_field = "name,cliName"

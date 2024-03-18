@@ -15,7 +15,7 @@ class IsCliNameFieldAlphanumericValidator(BaseValidator[ContentTypes]):
     error_code = "IF105"
     description = "Checks if cliName field is alphanumeric and lowercase."
     rationale = "Required by the platform"
-    error_message = "Field `cliName` contains uppercase or non-alphanumeric letters."
+    error_message = "Field `cliName` contains uppercase or non-alphanumeric symbols."
     related_field = "cliName"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

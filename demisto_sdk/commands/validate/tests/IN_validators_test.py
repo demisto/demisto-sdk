@@ -29,6 +29,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.IN_validators.IN100_is_valid_proxy_and_insecure import (
     IsValidProxyAndInsecureValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN101_is_valid_dbot import IsValidDbotValidator
 from demisto_sdk.commands.validate.validators.IN_validators.IN102_is_valid_checkbox_default_field import (
     IsValidCheckboxDefaultFieldValidator,
 )
@@ -5643,6 +5644,73 @@ def test_IsRepCommandContainIsArrayArgumentValidator_is_valid(
         - Case 2: Should fail all.
     """
     results = IsRepCommandContainIsArrayArgumentValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+
+
+
+
+
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["configuration", "script.commands"],
+                    values=[
+                        [RELIABILITY_PARAM],
+                        [
+                            {
+                                "name": "ip",
+                                "description": "ip command",
+                                "arguments": [],
+                                "outputs": [
+                                    {
+                                        "contextPath": "DBotScore.Indicator",
+                                        "description": "test"
+                                    }
+                                    ],
+                            }
+                        ],
+                    ],
+                ),
+            ],
+            1,
+            ["The integration contains reputation command(s) with missing outputs/malformed descriptions:\nThe command 'ip' is invalid:\n\tThe following outputs are missing:\n\t\t- The output 'DBotScore.Type', the description should be 'The indicator type.'\n\t\t- The output 'DBotScore.Vendor', the description should be 'The vendor used to calculate the score.'\n\t\t- The output 'DBotScore.Score', the description should be 'The actual score.'\n\tThe following outputs descriptions are invalid:\n\t\t- The output 'DBotScore.Indicator' description is invalid. Description should be 'The indicator that was tested.'"],
+        ),
+    ],
+)
+def test_IsValidDbotValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Three valid integrations:
+            - One integration without reliability param and with no need for it.
+            - One feed integration with reliability param.
+            - One integration with reliability param and reputation command.
+        - Case 2: Two invalid integrations:
+            - One feed integration without reliability param.
+            - One integration without reliability param and with reputation command.
+    When
+    - Calling the IsValidDbotValidator is valid function.
+    Then
+        - Make sure the validation fail when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail all.
+    """
+    results = IsValidDbotValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

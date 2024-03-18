@@ -18,6 +18,15 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Copy Files from home directory produced by SDK
+      shell: bash
+      run: |
+        if [[ -d "$HOME/.demisto-sdk" ]]; then
+          cp -r "$HOME/.demisto-sdk" ${{ inputs.artifacts-path-dir }}/demisto-sdk-home-folder-artifacts
+          echo "Successfully copied $HOME/.demisto-sdk folder to ${{ inputs.artifacts-path-dir }}/demisto-sdk-home-folder-artifacts"
+        else
+          echo "The $HOME/.demisto-sdk folder does not exist, hence not uploading its artifacts"
+        fi
     - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v4

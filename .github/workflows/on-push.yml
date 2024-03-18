@@ -83,7 +83,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts-dir: unit-tests/logs
+          artifacts-dir: unit-tests
 
       - name: Run Unit Tests
         timeout-minutes: 60
@@ -128,7 +128,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts-dir: integration-tests/logs
+          artifacts-dir: integration-tests
 
       - name: Run Integration Tests
         timeout-minutes: 60
@@ -167,7 +167,7 @@ jobs:
         uses: ./.github/actions/setup_test_environment
         with:
           python-version: ${{ matrix.python-version }}
-          artifacts-dir: graph-tests/logs
+          artifacts-dir: graph-tests
 
       - name: Run Graph Tests
         timeout-minutes: 60
@@ -197,7 +197,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: Download all artifacts # TODO - download only the relevant artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
         run: |
@@ -297,8 +297,7 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
-          mkdir -p test-pre-commit-command/logs
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-pre-commit-command/logs
+          mkdir -p test-pre-commit-command
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
           echo "# test" >> Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
@@ -346,8 +345,7 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
-          mkdir -p test-graph-commands/logs
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-graph-commands/logs
+          mkdir -p test-graph-commands
           # create content graph from scratch
           demisto-sdk create-content-graph
           # clean import folder
@@ -375,7 +373,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Validate All - New Validate
+      - name: Run Validate
         uses: ./.github/actions/validate
         with:
           artifacts-path-dir: test-old-validate-command
@@ -392,7 +390,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Validate All - New Validate
+      - name: Run Validate
         uses: ./.github/actions/validate
         with:
           artifacts-path-dir: test-new-validate-command
@@ -424,9 +422,7 @@ jobs:
           source $(poetry env info --path)/bin/activate
 
           cd content
-
-          mkdir -p test-lint/logs
-          export DEMISTO_SDK_LOG_FILE_PATH=./test-lint/logs
+          mkdir -p test-lint
 
           # python file (CommonServerPython lint is running over python 3 and 2)
           demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython --coverage-report test-lint/coverage-report
@@ -471,6 +467,9 @@ jobs:
         uses: ./.github/actions/setup_environment
         with:
           python-version: "3.10"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
 
       - name: Notify Failed Jobs
         run: |

@@ -7,8 +7,8 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
-    create_metadata_object,
     create_old_file_pointers,
+    create_pack_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
@@ -513,8 +513,8 @@ def test_WasMarketplaceModifiedValidator__a_pack_is_modified__passes(
         - Case 2: Should pass the validation since the user added marketplaces or removed all marketplaces which is equal to adding all marketplaces.
         - Case 3: Should pass the validation since the user didn't change anything or removed all marketplaces which is equal to adding all marketplaces.
     """
-    modified_content_item = [create_metadata_object()]
-    old_content_item = [create_metadata_object()]
+    modified_content_item = [create_pack_object()]
+    old_content_item = [create_pack_object()]
     modified_content_item[0].marketplaces = modified_pack
     old_content_item[0].marketplaces = old_pack
 
@@ -543,8 +543,8 @@ def test_WasMarketplaceModifiedValidator__a_pack_is_modified__fails(
         - Case 1: Should fail the validation since the user removed marketplaces.
         - Case 2: Should fail the validation since the user replaced one marketplace with a different one.
     """
-    modified_content_item = [create_metadata_object()]
-    old_content_item = [create_metadata_object()]
+    modified_content_item = [create_pack_object()]
+    old_content_item = [create_pack_object()]
     modified_content_item[0].marketplaces = modified_pack
     old_content_item[0].marketplaces = old_pack
 

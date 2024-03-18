@@ -1,4 +1,10 @@
 # Changelog
+## 1.27.4
+* Added support for `run_isolated` field to the **pre-commit** configuration file. [#3952](https://github.com/demisto/demisto-sdk/pull/3952)
+* Added support for `pass_docker_extra_args` field to the **pre-commit** configuration file. [#3952](https://github.com/demisto/demisto-sdk/pull/3952)
+* Added the `auto_update_docker_image` field to the content-graph for scripts and integrations. [#4133](https://github.com/demisto/demisto-sdk/pull/4133)
+* Fixed an issue in **validate** where several failed silently when the readme was malformed and the validation was ignored in the pack ignore errors. [#4129](https://github.com/demisto/demisto-sdk/pull/4129)
+
 ## 1.27.3
 * Fixed an issue in **lint** and **pre-commit** with custom container registry [#4039](https://github.com/demisto/demisto-sdk/pull/4039)
 

@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from demisto_sdk.commands.pre_commit.hooks.hook import (
     Hook,
@@ -23,12 +23,14 @@ class RuffHook(Hook):
 
     def prepare_hook(
         self,
-    ) -> None:
+    ) -> List[Dict[str, Any]]:
         """
         Prepares the Ruff hook for each Python version.
         Changes the hook's name, files and the "--target-version" argument according to the Python version.
         Args:
         """
+        ruff_hooks = []
+
         for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"ruff-py{python_version}",
@@ -48,4 +50,6 @@ class RuffHook(Hook):
                 }
             )
 
-            self.hooks.append(hook)
+            ruff_hooks.append(hook)
+
+        return ruff_hooks

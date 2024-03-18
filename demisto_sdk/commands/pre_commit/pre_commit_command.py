@@ -7,7 +7,7 @@ from collections import defaultdict
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import more_itertools
 from packaging.version import Version
@@ -50,15 +50,39 @@ INTEGRATIONS_BATCH = 300
 
 
 class PreCommitRunner:
+
+    original_hook_id_to_generated_hooks: Dict[str, Set[str]] = {}
+
     @staticmethod
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
         hooks = pre_commit_context.hooks
         if "pycln" in hooks:
-            PyclnHook(**hooks.pop("pycln"), context=pre_commit_context).prepare_hook()
+            hook_id = hooks["pycln"]["hook"]["id"]
+            pycln_hooks = PyclnHook(
+                **hooks.get("pycln"), context=pre_commit_context
+            ).prepare_hook()
+            hooks["pycln"]["hooks"] = pycln_hooks
+            PreCommitRunner.original_hook_id_to_generated_hooks[
+                hook_id
+            ] = PreCommitRunner.get_hook_ids(pycln_hooks)
         if "ruff" in hooks:
-            RuffHook(**hooks.pop("ruff"), context=pre_commit_context).prepare_hook()
+            hook_id = hooks["ruff"]["hook"]["id"]
+            ruff_hooks = RuffHook(
+                **hooks.get("ruff"), context=pre_commit_context
+            ).prepare_hook()
+            hooks["ruff"]["hooks"] = ruff_hooks
+            PreCommitRunner.original_hook_id_to_generated_hooks[
+                hook_id
+            ] = PreCommitRunner.get_hook_ids(ruff_hooks)
         if "mypy" in hooks:
-            MypyHook(**hooks.pop("mypy"), context=pre_commit_context).prepare_hook()
+            hook_id = hooks["mypy"]["hook"]["id"]
+            mypy_hooks = MypyHook(
+                **hooks.pop("mypy"), context=pre_commit_context
+            ).prepare_hook()
+            hooks["mypy"]["hooks"] = mypy_hooks
+            PreCommitRunner.original_hook_id_to_generated_hooks[
+                hook_id
+            ] = PreCommitRunner.get_hook_ids(mypy_hooks)
         if "sourcery" in hooks:
             SourceryHook(
                 **hooks.pop("sourcery"), context=pre_commit_context
@@ -89,6 +113,10 @@ class PreCommitRunner:
         ]
         for hook_id in system_hooks.copy():
             SystemHook(**hooks[hook_id], context=pre_commit_context).prepare_hook()
+
+    @staticmethod
+    def get_hook_ids(hooks: List[Dict[str, Any]]) -> Set[str]:
+        return {hook["id"] for hook in hooks}
 
     @staticmethod
     def run_hooks(

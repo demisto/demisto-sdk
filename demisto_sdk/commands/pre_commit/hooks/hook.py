@@ -21,11 +21,11 @@ class Hook:
         repo: dict,
         context: PreCommitContext,
     ) -> None:
-        self.original_hook_id = hook["id"]
-        self.hooks: List[dict] = repo["hooks"]
+        # self.original_hook_id = hook["id"]
+        # self.hooks: List[dict] = repo["hooks"]
         self.base_hook = deepcopy(hook)
-        self.hook_index = self.hooks.index(self.base_hook)
-        self.hooks.remove(self.base_hook)
+        # self.hook_index = self.hooks.index(self.base_hook)
+        # self.hooks.remove(self.base_hook)
         self.mode = context.mode
         self.all_files = context.all_files
         self.input_mode = bool(context.input_files)
@@ -33,13 +33,15 @@ class Hook:
         self._set_properties()
         self.exclude_irrelevant_files()
 
-    def prepare_hook(self):
+    def prepare_hook(self) -> List[Dict[str, Any]]:
         """
         This method should be implemented in each hook.
         Since we removed the base hook from the hooks list, we must add it back.
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
-        self.hooks.append(deepcopy(self.base_hook))
+        raise NotImplementedError
+        # self.hooks.append(deepcopy(self.base_hook))
+        # return self.hooks[self.hook_index]
 
     def exclude_irrelevant_files(self):
         self._exclude_hooks_by_version()

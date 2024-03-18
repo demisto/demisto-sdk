@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
-    RelatedFileType,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import (
@@ -28,10 +27,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
-    create_incident_type_object,
-    create_integration_object,
-    create_metadata_object,
-    create_playbook_object,
+    create_pack_object,
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
@@ -1267,10 +1263,35 @@ class TestParsersAndModels:
         )
         assert model.type == "python"
         assert model.subtype == "python3"
+        assert model.auto_update_docker_image
         assert model.docker_image == "demisto/python3:3.8.3.8715"
         assert model.tags == ["transformer"]
         assert not model.is_test
         assert not model.skip_prepare
+
+    @pytest.mark.parametrize(
+        "raw_value, expected_value",
+        [("false", False), ("true", True), ("tRue", True), ("something", True)],
+    )
+    def test_script_parser_set_autoupdate(self, raw_value, expected_value, pack: Pack):
+        """
+        Given:
+            - A pack with a script.
+        When:
+            - setting autoUpdateDockerImage
+        Then:
+            - Verify the field is parsed correctly
+        """
+        from demisto_sdk.commands.content_graph.objects.script import Script
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update({"autoUpdateDockerImage": raw_value})
+        script_path = Path(script.path)
+        parser = ScriptParser(script_path, list(MarketplaceVersions))
+        model = Script.from_orm(parser)
+        assert model.auto_update_docker_image is expected_value
 
     def test_test_playbook_parser(self, pack: Pack):
         """
@@ -2864,62 +2885,6 @@ def test_parameter_object__default_type():
     assert param.type == 0
 
 
-def test_get_related_content():
-    """
-    Given
-    - a list of content items.
-
-    When
-    - calling related_content.
-
-    Then
-    - Ensure that the right amount and file types were returned for each content type.
-    """
-    related_files = {
-        ContentType.INTEGRATION: {
-            "expected_len": 7,
-            "expected_files": [
-                RelatedFileType.DARK_SVG,
-                RelatedFileType.DESCRIPTION,
-                RelatedFileType.IMAGE,
-                RelatedFileType.LIGHT_SVG,
-                RelatedFileType.README,
-                RelatedFileType.CODE,
-                RelatedFileType.TEST_CODE,
-            ],
-        },
-        ContentType.PLAYBOOK: {
-            "expected_len": 2,
-            "expected_files": [RelatedFileType.IMAGE, RelatedFileType.README],
-        },
-        ContentType.PACK: {
-            "expected_len": 5,
-            "expected_files": [
-                RelatedFileType.README,
-                RelatedFileType.AUTHOR_IMAGE,
-                RelatedFileType.PACK_IGNORE,
-                RelatedFileType.SECRETS_IGNORE,
-                RelatedFileType.RELEASE_NOTES,
-            ],
-        },
-        ContentType.INCIDENT_TYPE: {"expected_len": 0, "expected_files": []},
-    }
-    objects = [
-        create_integration_object(),
-        create_incident_type_object(),
-        create_playbook_object(),
-        create_metadata_object(),
-    ]
-    for object in objects:
-        assert related_files[object.content_type]["expected_len"] == len(
-            object.related_content.keys()
-        )
-        assert all(
-            [related_file in object.related_content]
-            for related_file in related_files[object.content_type]["expected_files"]
-        )
-
-
 def test_get_related_text_file():
     """
     Given
@@ -2931,5 +2896,5 @@ def test_get_related_text_file():
     Then
     - Ensure that the readme content was returned.
     """
-    pack = create_metadata_object(readme_text="This is a test")
-    assert pack.readme == "This is a test"
+    pack = create_pack_object(readme_text="This is a test")
+    assert pack.readme.file_content == "This is a test"

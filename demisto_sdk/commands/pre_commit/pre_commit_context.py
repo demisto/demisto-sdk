@@ -69,9 +69,6 @@ class PreCommitContext:
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
         self.hooks = self._get_hooks(self.precommit_template)
-        self.split_hooks: Dict[
-            str, Set[str]
-        ] = {}  # mapping between original hook IDs to their newly created hook IDs
         self.hooks_need_docker = self._hooks_need_docker()
         logger.debug(f"PreCommitContext: {self.asdict()}")
 

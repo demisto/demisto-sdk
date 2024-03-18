@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -31,9 +31,9 @@ class IsPackReadmeNotEqualPackDescriptionValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                content_item.readme
+                content_item.readme.file_content
                 and content_item.description
                 and content_item.description.lower().strip()
-                == content_item.readme.lower().strip()
+                == content_item.readme.file_content.lower().strip()
             )
         ]

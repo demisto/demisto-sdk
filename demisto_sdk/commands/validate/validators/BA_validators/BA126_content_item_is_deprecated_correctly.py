@@ -20,6 +20,11 @@ ContentTypes = Union[Script, Integration]
 class IsDeprecatedCorrectlyValidator(BaseValidator[ContentTypes]):
     error_code = "BA126"
     description = "Checks if script/integration is deprecated correctly"
+    rationale = (
+        "Deprecated scripts/integrations need clear descriptions for user guidance. "
+        "For deprecation process, see: "
+        "https://xsoar.pan.dev/docs/reference/articles/deprecation-process-and-hidden-packs#how-to-deprecate-and-hide-a-pack"
+    )
     error_message = (
         "The description of all deprecated {0} should follow one of the formats:"
         '1. "Deprecated. Use <CONTENT_ITEM_NAME> instead."'

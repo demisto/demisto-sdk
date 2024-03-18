@@ -160,7 +160,6 @@ def test_validate_deleted_files_when_modifying_pack_metadata(git_repo: Repo):
         result = runner.invoke(
             main,
             [
-                "--protected-dir",
                 PACKS_DIR,
             ],
             catch_exceptions=False,
@@ -196,7 +195,6 @@ def test_validate_deleted_files_when_adding_integration(git_repo: Repo):
         result = runner.invoke(
             main,
             [
-                "--protected-dir",
                 PACKS_DIR,
             ],
             catch_exceptions=False,
@@ -231,7 +229,6 @@ def test_validate_deleted_files_when_renaming_file_name(git_repo: Repo):
         result = runner.invoke(
             main,
             [
-                "--protected-dir",
                 TESTS_DIR,
             ],
             catch_exceptions=False,
@@ -269,9 +266,7 @@ def test_validate_deleted_files_when_deleting_integration_folder(git_repo: Repo)
         result = runner.invoke(
             main,
             [
-                "--protected-dir",
                 PACKS_DIR,
-                "--protected-dir",
                 TESTS_DIR,
             ],
             catch_exceptions=False,
@@ -281,7 +276,7 @@ def test_validate_deleted_files_when_deleting_integration_folder(git_repo: Repo)
     assert isinstance(result.exception, SystemExit)
 
 
-def test_validate_deleted_files_without_protected_dirs_argument():
+def test_validate_deleted_files_without_protected_dirs():
     """
     Given:
         - validate deleted files script
@@ -290,13 +285,14 @@ def test_validate_deleted_files_without_protected_dirs_argument():
         - executing the validate-deleted-files script with no --protected-dirs argument
 
     Then:
-        - make sure ValueError is returned as --protected-dirs is a required arugment.
+        - make sure typer returns that the argument is missing
     """
     from demisto_sdk.scripts.validate_deleted_files import main
 
     runner = CliRunner()
-    with pytest.raises(ValueError):
-        runner.invoke(
-            main,
-            catch_exceptions=False,
-        )
+
+    result = runner.invoke(
+        main,
+        catch_exceptions=False,
+    )
+    assert "Missing argument" in result.stdout

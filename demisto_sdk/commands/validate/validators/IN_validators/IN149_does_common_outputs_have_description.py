@@ -16,6 +16,7 @@ ContentTypes = Integration
 class DoesCommonOutputsHaveDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "IN149"
     description = "Validate that a contextPath has a description if it belongs to a predefined list of contextPaths that should have a description."
+    rationale = "Common outputs in integrations need descriptions for clarity and effective usage."
     error_message = "The following commands are missing description for the following contextPath: {0}"
     fix_message = "Added description for the following outputs: {0}"
     related_field = "output.description, output.contextPath"

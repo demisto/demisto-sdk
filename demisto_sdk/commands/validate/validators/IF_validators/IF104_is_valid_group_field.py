@@ -18,7 +18,7 @@ class IsValidGroupFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IF104"
     description = f"Checks if group field is set to {REQUIRED_GROUP_VALUE}."
     rationale = "Required by the platform."
-    error_message = "Group {group} is not allowed for Incident Field"
+    error_message = "The `group` key must be set to 0 for Incident Field"
     fix_message = f"`group` field is set to {REQUIRED_GROUP_VALUE}."
     related_field = "group"
     is_auto_fixable = True
@@ -27,7 +27,7 @@ class IsValidGroupFieldValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(group=content_item.group),
+                message=self.error_message,
                 content_object=content_item,
             )
             for content_item in content_items

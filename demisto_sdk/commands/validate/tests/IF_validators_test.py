@@ -141,7 +141,7 @@ def test_IsValidGroupFieldValidator_not_valid():
 
     results = IsValidGroupFieldValidator().is_valid(content_items)
     assert results
-    assert results[0].message == "Group 2 is not allowed for Incident Field"
+    assert results[0].message == "The `group` key must be set to 0 for Incident Field"
 
 
 @pytest.mark.parametrize("cli_name_value", ["", "Foo", "123_", "123A"])

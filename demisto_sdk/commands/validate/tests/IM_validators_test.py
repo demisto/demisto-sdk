@@ -2,7 +2,7 @@ import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
-    create_metadata_object,
+    create_pack_object,
 )
 from demisto_sdk.commands.validate.validators.IM_validators.IM100_image_exists_validation import (
     ImageExistsValidator,
@@ -61,10 +61,10 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
         - Case 2: Shouldn't fail.
     """
     content_items = [
-        create_metadata_object(paths=["support"], values=["community"]),
-        create_metadata_object(paths=["support"], values=["partner"]),
-        create_metadata_object(paths=["support"], values=["partner"]),
-        create_metadata_object(paths=["support"], values=["community"]),
+        create_pack_object(paths=["support"], values=["community"]),
+        create_pack_object(paths=["support"], values=["partner"]),
+        create_pack_object(paths=["support"], values=["partner"]),
+        create_pack_object(paths=["support"], values=["community"]),
     ]
     content_items[2].author_image_file.exist = False
     content_items[3].author_image_file.exist = False
@@ -80,9 +80,9 @@ def test_AuthorImageExistsValidator_is_valid_image_path():
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        ([create_metadata_object()], 0, []),
+        ([create_pack_object()], 0, []),
         (
-            [create_metadata_object(image="")],
+            [create_pack_object(image="")],
             1,
             ["The author image should not be empty. Please provide a relevant image."],
         ),

@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Any
 
 from docker.errors import DockerException
 from packaging.version import Version
@@ -34,7 +34,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
-from demisto_sdk.commands.pre_commit.hooks.split_hook import SplitHook
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
 NO_SPLIT = None
 
@@ -190,7 +190,7 @@ def _split_by_objects(
     return object_to_files
 
 
-class DockerHook(SplitHook):
+class DockerHook(Hook):
     """
     This class will make common manipulations on commands that need to run in docker
     """
@@ -241,7 +241,7 @@ class DockerHook(SplitHook):
 
     def prepare_hook(
         self,
-    ):
+    ) -> List[Dict[str, Any]]:
         """
         Group all the files by dockerimages
         Split those images by config files
@@ -257,7 +257,7 @@ class DockerHook(SplitHook):
             logger.debug(
                 "No files matched docker hook filter, skipping docker preparation"
             )
-            return
+            return []
         filtered_files_with_objects = {
             (file, obj)
             for file, obj in self.context.files_to_run_with_objects
@@ -286,6 +286,7 @@ class DockerHook(SplitHook):
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
         logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
+        docker_hooks = []
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
             results = []
             for image, files_objs in sorted(
@@ -302,12 +303,14 @@ class DockerHook(SplitHook):
                 )
         for result in results:
             hooks = result.result()
-            self.hooks.extend(hooks)
+            docker_hooks.extend(hooks)
 
         end_time = time.time()
         logger.debug(
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
+
+        return docker_hooks
 
     def generate_hooks(
         self,
@@ -393,7 +396,6 @@ class DockerHook(SplitHook):
                 # disable multiprocessing on hook
                 hook["require_serial"] = True
                 ret_hooks.append(hook)
-                self.context.split_hooks[self.original_hook_id].add(hook["id"])
         self.clean_args_from_hook(ret_hooks)
         return ret_hooks
 

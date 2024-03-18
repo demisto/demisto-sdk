@@ -41,7 +41,6 @@ class Hook:
         """
         raise NotImplementedError
         # self.hooks.append(deepcopy(self.base_hook))
-        # return self.hooks[self.hook_index]
 
     def exclude_irrelevant_files(self):
         self._exclude_hooks_by_version()

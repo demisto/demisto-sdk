@@ -1,3 +1,5 @@
+from typing import Any, Dict, List
+
 from demisto_sdk.commands.pre_commit.hooks.hook import (
     Hook,
     join_files,
@@ -6,7 +8,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import (
 
 
 class ValidateFormatHook(Hook):
-    def prepare_hook(self):
+    def prepare_hook(self) -> List[Dict[str, Any]]:
         """
         Prepares the Validate or the Format hook.
         In case of nightly mode and all files, runs validate/format with the --all flag, (nightly mode is not supported on specific files).
@@ -25,4 +27,4 @@ class ValidateFormatHook(Hook):
         else:
             safe_update_hook_args(self.base_hook, "-g")
 
-        self.hooks.insert(self.hook_index, self.base_hook)
+        return [self.base_hook]

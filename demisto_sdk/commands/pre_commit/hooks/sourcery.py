@@ -1,7 +1,7 @@
 import tempfile
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -24,7 +24,7 @@ class SourceryHook(Hook):
         tools.write_dict(tf.name, data=config_file)
         return tf.name
 
-    def prepare_hook(self):
+    def prepare_hook(self) -> List[Dict[str, Any]]:
         """
         Prepares the Sourcery hook for each Python version.
         Changes the hook's name, files and the "--config" argument according to the Python version.
@@ -34,8 +34,9 @@ class SourceryHook(Hook):
         """
         config_file = CONTENT_PATH / self._get_property("config_file", ".sourcery.yml")
         if not config_file.exists():
-            return
+            return []
         self.base_hook.pop("config_file", None)
+        sourcery_hooks = []
         for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"sourcery-py{python_version}",
@@ -48,4 +49,6 @@ class SourceryHook(Hook):
                 self.context.python_version_to_files[python_version]
             )
 
-            self.hooks.append(hook)
+            sourcery_hooks.append(hook)
+
+        return sourcery_hooks

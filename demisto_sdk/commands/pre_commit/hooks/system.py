@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from typing import List, Dict, Any
 
 from demisto_sdk.commands.pre_commit.hooks.hook import (
     Hook,
@@ -7,7 +8,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import (
 
 
 class SystemHook(Hook):
-    def prepare_hook(self):
+    def prepare_hook(self) -> List[Dict[str, Any]]:
         """
         Prepares the Validate or the Format hook.
         In case of nightly mode and all files, runs validate/format with the --all flag, (nightly mode is not supported on specific files).
@@ -20,4 +21,4 @@ class SystemHook(Hook):
             entry = self.base_hook["entry"]
             bin_path = Path(sys.executable).parent
             self.base_hook["entry"] = f"{bin_path}/{entry}"
-        self.hooks.insert(self.hook_index, self.base_hook)
+        return [self.base_hook]

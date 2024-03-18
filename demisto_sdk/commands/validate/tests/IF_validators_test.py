@@ -163,7 +163,7 @@ def test_IsCliNameFieldAlphanumericValidator_not_valid(cli_name_value):
     assert results
     assert (
         results[0].message
-        == "Field `cliName` contains uppercase or non-alphanumeric letters."
+        == "Field `cliName` contains uppercase or non-alphanumeric symbols."
     )
 
 

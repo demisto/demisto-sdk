@@ -226,7 +226,7 @@ Note that the following commands may work partially without an internet connecti
 
 Docker is required to run certain commands effectively.
 
-The following commands require Docker:
+The following command requires Docker:
 
 1. [setup-env](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/setup_env/README.md)
 
@@ -249,6 +249,6 @@ For information regarding XSOAR CI/CD, please see [this article](https://xsoar.p
 By default, the `demisto-sdk` will use `dockerhub` as the container registry to pull the integrations and scripts docker image.
 In order configure a custom container registry, the following environment variables must be set:
 
-- `DEMISTO_SDK_CONTAINER_REGISTRY`: the url of the container registry.
+- `DEMISTO_SDK_CONTAINER_REGISTRY`: the URL of the container registry.
 - `DEMISTO_SDK_CR_USER`: the username to use in the container registry.
 - `DEMISTO_SDK_CR_PASSWORD`: the password to use in the container registry.

@@ -73,7 +73,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_i
     IsDeprecatedCorrectlyValidator,
 )
 
-FIELD_WITH_WHITESPACES = "field_with_space_should_fail "
+VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
 
 
 @pytest.mark.parametrize(
@@ -1252,11 +1252,11 @@ def test_IsEntityNameContainExcludedWordValidator(
             [
                 create_classifier_object(
                     paths=["name", "id"],
-                    values=[FIELD_WITH_WHITESPACES, FIELD_WITH_WHITESPACES],
+                    values=[VALUE_WITH_TRAILING_SPACE, VALUE_WITH_TRAILING_SPACE],
                 ),
                 create_integration_object(
                     paths=["name", "commonfields.id"],
-                    values=[FIELD_WITH_WHITESPACES, FIELD_WITH_WHITESPACES],
+                    values=[VALUE_WITH_TRAILING_SPACE, VALUE_WITH_TRAILING_SPACE],
                 ),
             ],
             2,
@@ -1266,47 +1266,51 @@ def test_IsEntityNameContainExcludedWordValidator(
         pytest.param(
             [
                 create_indicator_field_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
-                create_wizard_object({"name": FIELD_WITH_WHITESPACES}),
+                create_wizard_object({"name": VALUE_WITH_TRAILING_SPACE}),
                 create_correlation_rule_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_incident_type_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_dashboard_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_generic_definition_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_generic_type_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_incident_type_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_generic_module_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_generic_field_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
-                create_layout_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+                create_layout_object(
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+                ),
                 create_incoming_mapper_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_modeling_rule_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_incoming_mapper_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
                 create_parsing_rule_object(
-                    paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
                 ),
-                create_playbook_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+                create_playbook_object(
+                    paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+                ),
             ],
             16,
             ["name" for _ in range(16)],
@@ -1349,36 +1353,40 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
     "content_item, fields_with_trailing_spaces",
     [
         pytest.param(
-            create_integration_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+            create_integration_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
             ["name"],
             id="case integration with trailing spaces in name with fix",
         ),
         pytest.param(
-            create_classifier_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+            create_classifier_object(
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
+            ),
             {"name": "name"},
             id="case classifier with trailing spaces in name with fix",
         ),
         pytest.param(
-            create_dashboard_object(paths=["name"], values=[FIELD_WITH_WHITESPACES]),
+            create_dashboard_object(paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]),
             ["name"],
             id="case dashboard with trailing spaces in name with fix",
         ),
         pytest.param(
             create_incident_type_object(
-                paths=["name"], values=[FIELD_WITH_WHITESPACES]
+                paths=["name"], values=[VALUE_WITH_TRAILING_SPACE]
             ),
             ["name"],
             id="case incident type with trailing spaces in name with fix",
         ),
         pytest.param(
-            create_wizard_object({"name": FIELD_WITH_WHITESPACES}),
+            create_wizard_object({"name": VALUE_WITH_TRAILING_SPACE}),
             ["name"],
             id="case wizard with trailing spaces in name with fix",
         ),
         pytest.param(
             create_classifier_object(
                 paths=["name", "id"],
-                values=[FIELD_WITH_WHITESPACES, FIELD_WITH_WHITESPACES],
+                values=[VALUE_WITH_TRAILING_SPACE, VALUE_WITH_TRAILING_SPACE],
             ),
             ["object_id", "name"],
             id="classifier and integration with trailing spaces",
@@ -1407,6 +1415,6 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     results = validator.fix(content_item)
     assert (
         results.message
-        == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {FIELD_WITH_WHITESPACES.rstrip()}"
+        == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"
     )
-    assert content_item.name == FIELD_WITH_WHITESPACES.rstrip()
+    assert content_item.name == VALUE_WITH_TRAILING_SPACE.rstrip()

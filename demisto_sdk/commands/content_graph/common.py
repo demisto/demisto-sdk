@@ -281,6 +281,8 @@ class Relationship(BaseModel):
     target: Optional[str] = None
     target_type: Optional[ContentType] = None
     mandatorily: Optional[bool] = None
+    description: Optional[str] = None
+    deprecated: Optional[bool] = None
 
 
 class Relationships(dict):

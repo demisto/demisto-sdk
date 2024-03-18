@@ -30,6 +30,7 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    code: Optional[str] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
@@ -52,8 +53,8 @@ def create_integration_object(
         additional_params["readme"] = readme_content
 
     integration = pack.create_integration(yml=yml_content, **additional_params)
-
-    integration.code.write("from MicrosoftApiModule import *")
+    code = code or "from MicrosoftApiModule import *"
+    integration.code.write(code)
     return BaseContent.from_path(Path(integration.path))  # type:ignore
 
 
@@ -179,6 +180,8 @@ def create_script_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
+    code: Optional[str] = None,
+    test_code: Optional[str] = None,
 ):
     """Creating an script object with altered fields from a default script yml structure.
 
@@ -196,7 +199,10 @@ def create_script_object(
     if pack_info:
         pack.set_data(**pack_info)
     script = pack.create_script(yml=yml_content)
-    script.code.write("from MicrosoftApiModule import *")
+    code = code or "from MicrosoftApiModule import *"
+    script.code.write(code)
+    if test_code:
+        script.test.write(test_code)
     return BaseContent.from_path(Path(script.path))
 
 

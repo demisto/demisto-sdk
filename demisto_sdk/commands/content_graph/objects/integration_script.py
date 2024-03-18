@@ -31,7 +31,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 
 class Output(BaseModel):
-    description: Optional[str] = None
+    description: Optional[str] = ""
     contentPath: Optional[str] = None
     contextPath: Optional[str] = None
     type: Optional[str] = None

@@ -29,7 +29,7 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     "\n".join(
                         [
-                            f"The {file} containing copyright key words in the lines {', '.join(malformed_lines)}."
+                            f"The {file} contains copyright key words in line(s) {', '.join(malformed_lines)}."
                             for file, malformed_lines in malformed_files.items()
                         ]
                     )

@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -12,6 +12,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    Union,
     cast,
 )
 
@@ -20,7 +21,6 @@ from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
-import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
@@ -37,6 +37,7 @@ from demisto_sdk.commands.content_graph.common import (
     LazyProperty,
     RelationshipType,
 )
+from demisto_sdk.commands.content_graph.parsers import content_item
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -108,6 +109,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+        keep_untouched = (cached_property,)
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
@@ -179,7 +181,9 @@ class BaseContent(BaseNode):
     field_mapping: dict = Field({}, exclude=True)
     path: Path
     git_status: Optional[GitStatuses]
+    git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None
+    related_content_dict: dict = Field({}, exclude=True)
 
     def _save(
         self,
@@ -196,7 +200,11 @@ class BaseContent(BaseNode):
         """
         for key, val in self.field_mapping.items():
             attr = getattr(self, key)
-            if key == "marketplaces":
+            if key == "docker_image":
+                attr = str(attr)
+            elif key in ["params"]:
+                continue
+            elif key == "marketplaces":
                 if (
                     MarketplaceVersions.XSOAR_SAAS in attr
                     and MarketplaceVersions.XSOAR in attr
@@ -218,7 +226,18 @@ class BaseContent(BaseNode):
         raise NotImplementedError
 
     @property
-    def ignored_errors(self) -> list:
+    def ignored_errors(self) -> List[str]:
+        raise NotImplementedError
+
+    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+        """Return the errors that should be ignored for the given related file path.
+
+        Args:
+            file_path (str): The path of the file we want to get list of ignored errors for.
+
+        Returns:
+            list: The list of the ignored error codes.
+        """
         raise NotImplementedError
 
     @property
@@ -246,20 +265,12 @@ class BaseContent(BaseNode):
     @lru_cache
     def from_path(
         path: Path,
-        git_status: Optional[GitStatuses] = None,
-        old_file_path: Optional[Path] = None,
         git_sha: Optional[str] = None,
+        raise_on_exception: bool = False,
+        metadata_only: bool = False,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
-        # if the file was added or renamed - add a pointer to the object created from the old file content / path.
-        if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
-            obj = BaseContent.from_path(path)
-            if obj:
-                path = path if not old_file_path else old_file_path
-                obj.git_status = git_status
-                old_obj = BaseContent.from_path(path, git_sha=git_sha)
-                obj.old_base_content_object = old_obj
-            return obj
+
         if (
             path.is_dir()
             and path.parent.name == PACKS_FOLDER
@@ -267,29 +278,26 @@ class BaseContent(BaseNode):
         ):  # if the path given is a pack
             try:
                 return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
-                    PackParser(path, git_sha=git_sha)
+                    PackParser(path, git_sha=git_sha, metadata_only=metadata_only)
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {str(path)}")
                 return None
         try:
+            content_item.MARKETPLACE_MIN_VERSION = "0.0.0"
             content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
+            content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
+
         except NotAContentItemException:
-            # This is a workaround because `create-content-artifacts` still creates deprecated content items
-            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
-                "0.0.0"
+            if raise_on_exception:
+                raise
+            logger.error(
+                f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
             )
-            try:
-                content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
-            except NotAContentItemException:
-                logger.error(
-                    f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
-                )
-                return None
-            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
-                MARKETPLACE_MIN_VERSION
-            )
+            return None
         except InvalidContentItemException:
+            if raise_on_exception:
+                raise
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
             )
@@ -301,10 +309,7 @@ class BaseContent(BaseNode):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         try:
-            obj = model.from_orm(content_item_parser)  # type: ignore
-            if obj:
-                obj.git_status = git_status
-            return obj
+            return model.from_orm(content_item_parser)  # type: ignore
         except Exception as e:
             logger.error(
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"

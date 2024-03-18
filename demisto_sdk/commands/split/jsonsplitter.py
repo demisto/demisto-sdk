@@ -209,22 +209,20 @@ class JsonSplitter:
                     f"Could not parse data of the list {self.json_data['name']}.\n"
                 ) from e
 
-            JsonFile.write_file(
+            JsonFile.write(
                 data_list,
                 (list_name_dir / file_data_name),
                 indent=DEFAULT_JSON_INDENT,
             )
         else:
-            TextFile.write_file(
-                self.json_data["data"], (list_name_dir / file_data_name)
-            )
+            TextFile.write(self.json_data["data"], (list_name_dir / file_data_name))
 
     def write_file_metadata_list(self, file_path: Path):
         """
         writes the metadata of the list so that the data segment with `-` because the split
         """
         self.json_data["data"] = "-"
-        JsonFile.write_file(self.json_data, file_path, indent=DEFAULT_JSON_INDENT)
+        JsonFile.write(self.json_data, file_path, indent=DEFAULT_JSON_INDENT)
 
     def split_list(self):
         list_name_dir, file_name, file_data_name = self.get_auto_output_path_for_list()

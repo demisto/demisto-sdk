@@ -1,10 +1,8 @@
 import argparse
-import logging
 import sys
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.scripts.changelog.changelog import Changelog
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def validate_changelog_and_logs(pr_num: str, pr_name: str) -> bool:

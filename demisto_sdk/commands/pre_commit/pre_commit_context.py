@@ -7,6 +7,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+from demisto_sdk.commands.common.constants import CACHE_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -23,10 +24,13 @@ IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
 PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
-PRECOMMIT_FOLDER = CONTENT_PATH / ".pre-commit"
+PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"
 PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
-PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / ".pre-commit-config-main.yaml"
+PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
 PRECOMMIT_DOCKER_CONFIGS = PRECOMMIT_CONFIG / "docker"
+
+# This has to be relative to content path so the docker will be able to write to it
+PRE_COMMIT_FOLDER_SHARED = CONTENT_PATH / ".pre-commit"
 
 
 @dataclass
@@ -50,11 +54,11 @@ class PreCommitContext:
         We initialize the hooks and all_files for later use.
         """
         shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
-        PRECOMMIT_FOLDER.mkdir()
+        shutil.rmtree(PRE_COMMIT_FOLDER_SHARED, ignore_errors=True)
+        PRECOMMIT_FOLDER.mkdir(parents=True)
         PRECOMMIT_CONFIG.mkdir()
         PRECOMMIT_DOCKER_CONFIGS.mkdir()
-
-        self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
+        self.precommit_template: dict = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)  # type: ignore[assignment]
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:
             logger.info(
@@ -107,7 +111,7 @@ class PreCommitContext:
     def support_level_to_files(self) -> Dict[str, Set[Path]]:
         support_level_to_files = defaultdict(set)
         for path, obj in self.files_to_run_with_objects:
-            if obj:
+            if obj is not None:
                 support_level_to_files[obj.support_level].add(path)
         return support_level_to_files
 
@@ -125,7 +129,7 @@ class PreCommitContext:
             for hook in repo.get("hooks", []):
                 if not self.run_docker_hooks and hook["id"].endswith("in-docker"):
                     continue
-                if (self.run_hook and hook["id"] in self.run_hook) or (
+                if (self.run_hook and self.run_hook in hook["id"]) or (
                     not self.run_hook
                     and hook["id"] not in self.skipped_hooks
                     and not get_property(hook, self.mode, "skip")

@@ -31,9 +31,6 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
-logger = logging.getLogger("demisto-sdk")
-
-
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
     "name": "test",

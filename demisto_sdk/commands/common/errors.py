@@ -11,13 +11,9 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
-    MODELING_RULE_ID_SUFFIX,
-    MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
-    PARSING_RULE_ID_SUFFIX,
-    PARSING_RULE_NAME_SUFFIX,
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -479,6 +475,10 @@ ERROR_CODE: Dict = {
     },
     "invalid_image_dimensions": {
         "code": "IM111",
+        "related_field": "image",
+    },
+    "svg_image_not_valid": {
+        "code": "IM112",
         "related_field": "image",
     },
     # IN - Integrations
@@ -1096,59 +1096,63 @@ ERROR_CODE: Dict = {
         "related_field": "",
     },
     # RM - READMEs
-    "readme_error": {"code": "RM100", "related_field": ""},
-    "image_path_error": {"code": "RM101", "related_field": ""},
+    "readme_error": {"code": "RM100", "related_field": "readme"},
+    "image_path_error": {"code": "RM101", "related_field": "readme"},
     "readme_missing_output_context": {
         "code": "RM102",
-        "related_field": "",
+        "related_field": "readme",
     },
     "error_starting_mdx_server": {
         "code": "RM103",
-        "related_field": "",
+        "related_field": "readme",
     },
     "empty_readme_error": {
         "code": "RM104",
-        "related_field": "",
+        "related_field": "readme",
     },
     "readme_equal_description_error": {
         "code": "RM105",
-        "related_field": "",
+        "related_field": "readme",
     },
     "readme_contains_demisto_word": {
         "code": "RM106",
-        "related_field": "",
+        "related_field": "readme",
     },
     "template_sentence_in_readme": {
         "code": "RM107",
-        "related_field": "",
+        "related_field": "readme",
     },
     "invalid_readme_image_error": {
         "code": "RM108",
-        "related_field": "",
+        "related_field": "readme",
     },
     "missing_readme_file": {
         "code": "RM109",
-        "related_field": "",
+        "related_field": "readme",
     },
     "missing_commands_from_readme": {
         "code": "RM110",
-        "related_field": "",
+        "related_field": "readme",
     },
     "error_uninstall_node": {
         "code": "RM111",
-        "related_field": "",
+        "related_field": "readme",
     },
     "invalid_readme_relative_url_error": {
         "code": "RM112",
-        "related_field": "",
+        "related_field": "readme",
     },
     "copyright_section_in_readme_error": {
         "code": "RM113",
-        "related_field": "",
+        "related_field": "readme",
     },
     "image_does_not_exist": {
         "code": "RM114",
-        "related_field": "",
+        "related_field": "readme",
+    },
+    "readme_lint_errors": {
+        "code": "RM115",
+        "related_field": "readme",
     },
     # RN - Release Notes
     "missing_release_notes": {
@@ -1577,18 +1581,18 @@ ALLOWED_IGNORE_ERRORS = (
 
 
 def get_all_error_codes() -> List:
-    error_codes = []
-    for error in ERROR_CODE:
-        error_codes.append(ERROR_CODE[error].get("code"))
-
-    return error_codes
+    return [error.get("code") for error in ERROR_CODE.values()]
 
 
 def get_error_object(error_code: str) -> Dict:
-    for error in ERROR_CODE:
-        if error_code == ERROR_CODE[error].get("code"):
-            return ERROR_CODE[error]
-    return {}
+    return next(
+        (
+            error_value
+            for error_value in ERROR_CODE.values()
+            if error_code == error_value.get("code")
+        ),
+        {},
+    )
 
 
 @decorator.decorator
@@ -2472,6 +2476,11 @@ class Errors:
     @error_code_decorator
     def image_too_large():
         return "Too large logo, please update the logo to be under 10kB"
+
+    @staticmethod
+    @error_code_decorator
+    def svg_image_not_valid(error_message):
+        return f"SVG image file is not valid: {error_message}"
 
     @staticmethod
     @error_code_decorator
@@ -4285,22 +4294,22 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_modeling_rule_suffix_name(file_path, **kwargs):
+    def invalid_modeling_rule_suffix_name(file_path, id_suffix, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
-            message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{id_suffix}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod
     @error_code_decorator
-    def invalid_parsing_rule_suffix_name(file_path, **kwargs):
+    def invalid_parsing_rule_suffix_name(file_path, id_suffix, name_suffix, **kwargs):
         message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_id"):
-            message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{id_suffix}'"
         if kwargs.get("invalid_name"):
-            message += f"\nThe rule name should end with '{PARSING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{name_suffix}'"
         return message
 
     @staticmethod

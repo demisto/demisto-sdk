@@ -1,5 +1,7 @@
 args:
-- []
+- defaultValue: test
+  description: a test argument.
+  name: test-argument
 comment: This is a test script
 commonfields:
   id: myScript

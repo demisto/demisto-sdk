@@ -11,7 +11,9 @@ class TestSuiteBase:
 
     @property
     def object(self):
-        return BaseContent.from_path(self.obj_path)
+        obj = BaseContent.from_path(self.obj_path)
+        assert obj, f"Object not found in path: {self.obj_path}"
+        return obj
 
     def get_graph_object(self, interface: ContentGraphInterface):
         """Returns content item from the graph, enriched with the relationships.

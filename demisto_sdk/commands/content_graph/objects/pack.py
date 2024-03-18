@@ -1,8 +1,9 @@
 import shutil
 from collections import defaultdict
+from functools import cached_property
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -47,6 +48,13 @@ from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
 )
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    AuthorImageRelatedFile,
+    PackIgnoreRelatedFile,
+    ReadmeRelatedFile,
+    RNRelatedFile,
+    SecretsIgnoreRelatedFile,
+)
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     replace_markdown_urls_and_upload_to_artifacts,
 )
@@ -118,7 +126,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     ignored_errors_dict: dict = Field({}, exclude=True)
     pack_readme: str = Field("", exclude=True)
     latest_rn_version: str = Field("", exclude=True)
-    latest_rn_content: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
@@ -144,16 +151,29 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.premium or False
 
     @property
-    def readme(self) -> str:
-        return get_file(str(self.path / "README.md"), return_content=True)
-
-    @property
     def pack_id(self) -> str:
         return self.object_id
 
     @property
-    def ignored_errors(self) -> list:
-        return self.ignored_errors_dict.get(PACK_METADATA_FILENAME, [])
+    def ignored_errors(self) -> List[str]:
+        return self.get_ignored_errors(PACK_METADATA_FILENAME)
+
+    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+        return self.get_ignored_errors((Path(file_path)).name)
+
+    def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
+        try:
+            return (
+                list(
+                    self.ignored_errors_dict.get(  # type: ignore
+                        f"file:{path}", []
+                    ).items()
+                )[0][1].split(",")
+                or []
+            )
+        except:  # noqa: E722
+            logger.debug(f"Failed to extract ignored errors list from path {path}")
+            return []
 
     @property
     def pack_name(self) -> str:
@@ -528,3 +548,25 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
         super()._save(file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS)  # type: ignore
+
+    @cached_property
+    def readme(self) -> ReadmeRelatedFile:
+        return ReadmeRelatedFile(self.path, is_pack_readme=True, git_sha=self.git_sha)
+
+    @cached_property
+    def author_image_file(self) -> AuthorImageRelatedFile:
+        return AuthorImageRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def pack_ignore(self) -> PackIgnoreRelatedFile:
+        return PackIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def secrets_ignore(self) -> SecretsIgnoreRelatedFile:
+        return SecretsIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def release_note(self) -> RNRelatedFile:
+        return RNRelatedFile(
+            self.path, git_sha=self.git_sha, latest_rn=self.latest_rn_version
+        )

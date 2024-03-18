@@ -40,7 +40,7 @@ def test_docker_image_parse_valid_docker_images(
     Then:
     - make sure images are parsed correctly
     """
-    docker_image_object = DockerImage.parse(docker_image)
+    docker_image_object = DockerImage(docker_image)
     assert docker_image_object.repository == expected_repo
     assert docker_image_object.image_name == expected_image_name
     assert docker_image_object.tag == expected_tag
@@ -68,4 +68,4 @@ def test_docker_image_parse_invalid_docker_images(docker_image: str):
     - make sure ValueError is raised
     """
     with pytest.raises(ValueError):
-        DockerImage.parse(docker_image, raise_if_not_valid=True)
+        DockerImage(docker_image, raise_if_not_valid=True)

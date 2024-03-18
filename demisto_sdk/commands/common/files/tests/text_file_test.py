@@ -84,7 +84,7 @@ class TestTextFile(FileTesting):
                     actual_file_content == expected_file_content
                 ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
-    def test_read_from_local_path_unicode_error(self, mocker, git_repo: Repo):
+    def test_read_from_local_path_unicode_error(self, mocker, repo: Repo):
         """
         Given:
          - text file that is not encoded with utf-8
@@ -97,7 +97,7 @@ class TestTextFile(FileTesting):
         """
         from demisto_sdk.commands.common.logger import logger
 
-        _path = Path(git_repo.path) / "file"
+        _path = Path(repo.path) / "file"
         debug_logger_mocker = mocker.patch.object(logger, "debug")
         # create a byte sequence that cannot be decoded using utf-8 which represents the char ÿ
         _path.write_bytes(b"\xff")
@@ -105,6 +105,29 @@ class TestTextFile(FileTesting):
         assert str_in_call_args_list(
             debug_logger_mocker.call_args_list,
             required_str=f"Error when decoding file {_path} with utf-8",
+        )
+
+    def test_read_from_file_content_unicode_error(self, mocker, repo: Repo):
+        """
+        Given:
+         - text file that is not encoded with utf-8
+
+        When:
+         - Running read_from_file_content method from TextFile object
+
+        Then:
+         - make sure reading the text file from memory is successful even when UnicodeDecodeError is raised
+        """
+        from demisto_sdk.commands.common.logger import logger
+
+        _path = Path(repo.path) / "file"
+        debug_logger_mocker = mocker.patch.object(logger, "debug")
+        # create a byte sequence that cannot be decoded using utf-8 which represents the char ÿ
+        _path.write_bytes(b"\xff")
+        assert TextFile.read_from_file_content(_path.read_bytes()) == "ÿ"
+        assert str_in_call_args_list(
+            debug_logger_mocker.call_args_list,
+            required_str="Error when decoding file when reading it directly from memory",
         )
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
@@ -212,6 +235,6 @@ class TestTextFile(FileTesting):
          - make sure writing text file is successful.
         """
         _path = Path(git_repo.path) / "file.txt"
-        TextFile.write_file("text", output_path=_path)
+        TextFile.write("text", output_path=_path)
         assert _path.exists()
         assert _path.read_text() == "text"

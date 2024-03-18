@@ -17,6 +17,7 @@ ContentTypes = Union[Integration, Script]
 class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
     error_code = "DO105"
     description = "Validate that the given content item uses a docker image that is not deprecated"
+    rationale = "It is best practice to use images that are maintained by the platform."
     error_message = "The {0} docker image is deprecated, {1}"
     related_field = "Docker image"
     is_auto_fixable = False
@@ -43,14 +44,12 @@ class DockerImageIsNotDeprecatedValidator(BaseValidator[ContentTypes]):
                 message=self.error_message.format(
                     content_item.docker_image,
                     self.deprecated_dockers_to_reasons.get(
-                        content_item.docker_image_object.name
+                        content_item.docker_image.name
                     ),
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
             if not content_item.is_javascript
-            and self.deprecated_dockers_to_reasons.get(
-                content_item.docker_image_object.name
-            )
+            and self.deprecated_dockers_to_reasons.get(content_item.docker_image.name)
         ]

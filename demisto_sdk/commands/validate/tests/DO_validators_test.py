@@ -213,7 +213,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
      - make sure that javascripts integrations/scripts are ignored
     """
     from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
-        DockerImageTagIsLatestNumericVersionValidator,
+        DockerImageTagIsNotOutdated,
     )
 
     content_items = [
@@ -264,12 +264,12 @@ def test_DockerImageTagIsLatestNumericVersionValidator_is_valid(mocker, requests
         json={"tags": ["1.0.0.11111", "1.0.0.99999"]},
     )
     mocker.patch.object(
-        DockerImageTagIsLatestNumericVersionValidator,
-        "is_docker_image_older_than_three_days",
+        DockerImageTagIsNotOutdated,
+        "is_docker_image_older_than_three_months",
         return_value=True,
     )
 
-    results = DockerImageTagIsLatestNumericVersionValidator().is_valid(content_items)
+    results = DockerImageTagIsNotOutdated().is_valid(content_items)
     assert len(results) == 2
     for result in results:
         content_item: IntegrationScript = result.content_object
@@ -289,7 +289,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_fix(requests_mock):
      - make sure docker-image is getting updated to the latest docker tag
     """
     from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
-        DockerImageTagIsLatestNumericVersionValidator,
+        DockerImageTagIsNotOutdated,
     )
 
     integration = create_integration_object(
@@ -310,7 +310,7 @@ def test_DockerImageTagIsLatestNumericVersionValidator_fix(requests_mock):
         json={"tags": ["3.10.13.88888", "3.10.13.99999"]},
     )
 
-    fix_result = DockerImageTagIsLatestNumericVersionValidator().fix(integration)
+    fix_result = DockerImageTagIsNotOutdated().fix(integration)
     assert fix_result.content_object.docker_image == "demisto/python3:3.10.13.99999"
 
 

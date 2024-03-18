@@ -41,7 +41,7 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
             and (malformed_files := self.get_malformed_files(content_item))
         ]
 
-    def get_malformed_files(self, content_item) -> Dict[str, List[str]]:
+    def get_malformed_files(self, content_item: ContentTypes) -> Dict[str, List[str]]:
         malformed_files = {}
         if content_item.code_file.exist and (
             invalid_lines := check_text_content_contain_sub_text(

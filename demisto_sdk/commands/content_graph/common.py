@@ -281,7 +281,6 @@ class Relationship(BaseModel):
     target: Optional[str] = None
     target_type: Optional[ContentType] = None
     mandatorily: Optional[bool] = None
-    # source == source_id?
 
 
 class Relationships(dict):

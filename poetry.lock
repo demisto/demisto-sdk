@@ -4690,17 +4690,17 @@ files = [
 
 [[package]]
 name = "types-requests"
-version = "2.28.11"
+version = "2.31.0.20240311"
 description = "Typing stubs for requests"
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 files = [
-    {file = "types-requests-2.28.11.tar.gz", hash = "sha256:7ee827eb8ce611b02b5117cfec5da6455365b6a575f5e3ff19f655ba603e6b4e"},
-    {file = "types_requests-2.28.11-py3-none-any.whl", hash = "sha256:af5f55e803cabcfb836dad752bd6d8a0fc8ef1cd84243061c0e27dee04ccf4fd"},
+    {file = "types-requests-2.31.0.20240311.tar.gz", hash = "sha256:b1c1b66abfb7fa79aae09097a811c4aa97130eb8831c60e47aee4ca344731ca5"},
+    {file = "types_requests-2.31.0.20240311-py3-none-any.whl", hash = "sha256:47872893d65a38e282ee9f277a4ee50d1b28bd592040df7d1fdaffdf3779937d"},
 ]
 
 [package.dependencies]
-types-urllib3 = "<1.27"
+urllib3 = ">=2"
 
 [[package]]
 name = "types-setuptools"
@@ -4755,17 +4755,6 @@ python-versions = "*"
 files = [
     {file = "types-ujson-5.7.0.5.tar.gz", hash = "sha256:7ff2a6776048e6ad6abc7ebedfd42ae1b6c005512affbae44caf3fb1e96b5d12"},
     {file = "types_ujson-5.7.0.5-py3-none-any.whl", hash = "sha256:be07904f1ba1ba0a8b36315ec42393599fca0eb13892900f7ae322d11ce2c7ad"},
-]
-
-[[package]]
-name = "types-urllib3"
-version = "1.26.25.12"
-description = "Typing stubs for urllib3"
-optional = false
-python-versions = "*"
-files = [
-    {file = "types-urllib3-1.26.25.12.tar.gz", hash = "sha256:a1557355ce8d350a555d142589f3001903757d2d36c18a66f588d9659bbc917d"},
-    {file = "types_urllib3-1.26.25.12-py3-none-any.whl", hash = "sha256:3ba3d3a8ee46e0d5512c6bd0594da4f10b2584b47a470f8422044a2ab462f1df"},
 ]
 
 [[package]]
@@ -5272,4 +5261,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "4e90f21f1189b21e386d9532a9e826420f13eb895970085320f0fcf9818f28d2"
+content-hash = "d83bc65912e507161a25c1a92b7c99649f520ad0b6eabef882b66ccfcba6fd8c"

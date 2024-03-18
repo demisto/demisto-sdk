@@ -122,11 +122,11 @@ class InvalidPathException(Exception, ABC):
 
 
 class SpacesInFileNameError(InvalidPathException):
-    message = "file name contains spaces"
+    message = "File name contains spaces."
 
 
 class InvalidDepthZeroFile(InvalidPathException):
-    message = "The file cannot be saved direclty under the pack folder."
+    message = "The file cannot be saved directly under the pack folder."
 
 
 class InvalidDepthOneFolder(InvalidPathException):
@@ -138,7 +138,7 @@ class InvalidDepthOneFile(InvalidPathException):
 
 
 class InvalidLayoutFileName(InvalidPathException):
-    message = "The Layout folder can only contain json files, with names starting with `layout-` or `layoutscontainer-`"
+    message = "The Layout folder can only contain JSON files, with names starting with `layout-` or `layoutscontainer-`"
 
 
 class InvalidIntegrationScriptFileName(InvalidPathException):
@@ -168,15 +168,15 @@ class PathOutsidePacks(ExemptedPath):
 
 
 class PathIsFolder(ExemptedPath):
-    message = "Path is to a folder, these are not validated."
+    message = "Folder paths are not validated"
 
 
 class PathUnderDeprecatedContent(ExemptedPath):
-    message = "Path under DeprecatedContent, these are not validated."
+    message = "Paths under DeprecatedContent are not validated."
 
 
 class PathIsUnified(ExemptedPath):
-    message = "Path is of a unified content item, these are not validated."
+    message = "Paths of unified content items are not validated."
 
 
 def _validate(path: Path) -> None:
@@ -283,7 +283,7 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
             raise InvalidCommandExampleFile
         raise InvalidIntegrationScriptFileName
 
-    elif path.suffix not in {
+    elif path.suffix not in {  # remaining supported suffixes
         ".png",
         ".svg",
         ".txt",
@@ -342,7 +342,6 @@ def validate(
             )
         else:
             logger.error(f"Invalid {path}: {e.message}")
-            # print(";".join((str(path), path.suffix, e.message, type(e).__name__))) # for debugging
         return False
 
     except ExemptedPath as e:

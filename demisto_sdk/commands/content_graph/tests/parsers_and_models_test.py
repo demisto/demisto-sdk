@@ -27,7 +27,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
-    create_metadata_object,
+    create_pack_object,
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
@@ -2896,5 +2896,5 @@ def test_get_related_text_file():
     Then
     - Ensure that the readme content was returned.
     """
-    pack = create_metadata_object(readme_text="This is a test")
+    pack = create_pack_object(readme_text="This is a test")
     assert pack.readme.file_content == "This is a test"

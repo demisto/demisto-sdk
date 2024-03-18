@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.27.3"
+version = "1.27.4"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -74,7 +74,6 @@ python-dotenv = "^0.20.0"
 importlib-resources = "^5.6.0"
 dictdiffer = "^0.9.0"
 imagesize = "^1.3.0"
-cryptography = "^36.0.2"
 dateparser = "^1.1.1"
 typed-ast = "^1.5.2"
 types-dateparser = "^1.1.0"

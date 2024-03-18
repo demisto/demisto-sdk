@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
@@ -200,14 +200,16 @@ def create_script_object(
     return BaseContent.from_path(Path(script.path))
 
 
-def create_metadata_object(
+def create_pack_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     fields_to_delete: Optional[List[str]] = None,
     readme_text: str = "",
     image: Optional[str] = None,
-) -> PackMetadata:
-    """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
+    playbooks: int = 0,
+    name: Optional[str] = None,
+) -> Pack:
+    """Creating an pack object with altered fields from a default pack_metadata json structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
@@ -225,6 +227,9 @@ def create_metadata_object(
     pack.readme.write_text(readme_text)
     if image is not None:
         pack.author_image.write(image)
+    if playbooks:
+        for _ in range(playbooks):
+            pack.create_playbook()
     return BaseContent.from_path(Path(pack.path))
 
 

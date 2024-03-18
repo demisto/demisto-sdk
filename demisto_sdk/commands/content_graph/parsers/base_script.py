@@ -49,7 +49,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
 
     @property
     def outputs(self) -> Optional[List]:
-        return get_value(self.yml_data, self.field_mapping.get("outputs", ""), [])
+        return get_value(self.yml_data, self.field_mapping.get("outputs", ""), []) or []
 
     def connect_to_dependencies(self) -> None:
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.

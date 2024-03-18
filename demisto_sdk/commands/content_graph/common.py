@@ -287,12 +287,14 @@ class Relationships(dict):
     def add(self, relationship: RelationshipType, **kwargs):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
-        self.__getitem__(relationship).append(Relationship.parse_obj(kwargs).dict())
+        self.__getitem__(relationship).append(
+            Relationship.parse_obj(kwargs).dict(exclude_none=True)
+        )
 
     def add_batch(self, relationship: RelationshipType, data: List[Dict[str, Any]]):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
-        data = [Relationship.parse_obj(item).dict() for item in data]
+        data = [Relationship.parse_obj(item).dict(exclude_none=True) for item in data]
         self.__getitem__(relationship).extend(data)
 
     def update(self, other: "Relationships") -> None:  # type: ignore

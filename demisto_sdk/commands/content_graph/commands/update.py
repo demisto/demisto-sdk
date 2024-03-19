@@ -72,7 +72,7 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
+    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE") == "true":
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path

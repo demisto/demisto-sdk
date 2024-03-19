@@ -858,6 +858,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             )
             exit_code += validator.run_validation()
         if kwargs["run_new_validate"]:
+            os.environ["DEMISTO_SDK_GRAPH_FORCE_CREATE"] = "False"
             validation_results = ResultWriter(
                 json_file_path=kwargs.get("json_file"),
             )

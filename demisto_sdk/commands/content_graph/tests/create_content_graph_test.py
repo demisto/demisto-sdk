@@ -919,11 +919,11 @@ class TestCreateContentGraph:
 def test_add_relationship__to_Pydentic_and_back():
     """
     Given:
-        - A set of relationship data provided as keyword arguments
+        - A set of relationship data
     When:
         - This data is added to a Relationship object using the 'add' method
     Then:
-        - Verify that the data was added through the Pydantic Relationship object and complies with its specifications:
+        - Verify that the data was added through the Pydantic 'Relationship' object and complies with its specifications:
             - Convert boolean strings to boolean objects.
             - Include only properties defined in the Pydantic model.
             - Exclude properties with a value of None from the object.
@@ -934,7 +934,7 @@ def test_add_relationship__to_Pydentic_and_back():
         RelationshipType.DEPENDS_ON,
         mandatorily="True",
         source=None,
-        fake_attribute="fake",
+        non_define_attribute="fake",
     )
 
     added_relationship = relationships[RelationshipType.DEPENDS_ON][0]

@@ -57,13 +57,16 @@ class PreCommitRunner:
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
         hooks = pre_commit_context.hooks
         if "pycln" in hooks:
-            hook_id = hooks["pycln"]["hook"]["id"]
-            pycln_hooks = PyclnHook(
-                **hooks.get("pycln"), context=pre_commit_context
-            ).prepare_hook()
-            hooks["pycln"]["repo"]["hooks"] = pycln_hooks
+            pycln = hooks.pop("pycln")
+            repo_hooks: List[Dict] = pycln.get("repo").get("hooks")
+            hook = pycln.get("hook")
+            index = repo_hooks.index(hook)
+            repo_hooks.remove(hook)
+
+            pycln_hooks = PyclnHook(hook, context=pre_commit_context).prepare_hook()
+            repo_hooks.insert(index, pycln_hooks)
             PreCommitRunner.original_hook_id_to_generated_hooks[
-                hook_id
+                "pycln"
             ] = PreCommitRunner.get_hook_ids(pycln_hooks)
         if "ruff" in hooks:
             hook_id = hooks["ruff"]["hook"]["id"]

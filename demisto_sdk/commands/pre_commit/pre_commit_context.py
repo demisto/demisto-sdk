@@ -68,7 +68,7 @@ class PreCommitContext:
             raise TypeError(
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
-        self.hooks = self._get_hooks(self.precommit_template)
+        self.hooks = self._filter_hooks(self.precommit_template)
         self.hooks_need_docker = self._hooks_need_docker()
         logger.debug(f"PreCommitContext: {self.asdict()}")
 
@@ -122,7 +122,7 @@ class PreCommitContext:
             repos[repo["repo"]] = repo
         return repos
 
-    def _get_hooks(self, pre_commit_config: dict) -> dict:
+    def _filter_hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
         for repo in pre_commit_config.get("repos", []):
             new_hooks = []

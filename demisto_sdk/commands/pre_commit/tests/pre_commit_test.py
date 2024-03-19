@@ -475,7 +475,7 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
     )
     PreCommitRunner.prepare_hooks(pre_commit_context)
 
-    hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
+    hooks = pre_commit_context._filter_hooks(pre_commit_context.precommit_template)
     assert hooks["validate"]["hook"].get("exclude") is None
     assert "file1.py" in hooks["ruff"]["hook"]["exclude"]
 
@@ -507,7 +507,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
 
     PreCommitRunner.prepare_hooks(pre_commit_context)
 
-    hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
+    hooks = pre_commit_context._filter_hooks(pre_commit_context.precommit_template)
     assert hooks["pycln"]["hook"].get("exclude") is None
     assert "file2.py" in hooks["autopep8"]["hook"]["exclude"]
 

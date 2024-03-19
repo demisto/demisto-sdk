@@ -3,7 +3,10 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
-from demisto_sdk.commands.validate.tests.test_tools import create_incident_field_object, create_old_file_pointers
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_incident_field_object,
+    create_old_file_pointers,
+)
 from demisto_sdk.commands.validate.validators.IF_validators.IF100_is_valid_name_and_cli_name import (
     IsValidNameAndCliNameValidator,
 )
@@ -28,7 +31,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     INCIDENT_PROHIBITED_CLI_NAMES,
     IsCliNameReservedWordValidator,
 )
-from demisto_sdk.commands.validate.validators.IF_validators.IF111_is_field_type_changed import IsFieldTypeChangedValidator
+from demisto_sdk.commands.validate.validators.IF_validators.IF111_is_field_type_changed import (
+    IsFieldTypeChangedValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -204,9 +209,7 @@ def test_IsFieldTypeChangedValidator_not_valid():
     content_items = [
         create_incident_field_object(["type"], ["html"]),
     ]
-    old_content_items = [
-        create_incident_field_object(["type"], ["short text"])
-    ]
+    old_content_items = [create_incident_field_object(["type"], ["short text"])]
     create_old_file_pointers(content_items, old_content_items)
     results = IsFieldTypeChangedValidator().is_valid(content_items)
     assert results
@@ -327,9 +330,7 @@ def test_IsFieldTypeChangedValidator_valid():
     content_items = [
         create_incident_field_object(["type"], ["html"]),
     ]
-    old_content_items = [
-        create_incident_field_object(["type"], ["html"])
-    ]
+    old_content_items = [create_incident_field_object(["type"], ["html"])]
     create_old_file_pointers(content_items, old_content_items)
     results = IsFieldTypeChangedValidator().is_valid(content_items)
     assert not results

@@ -25,6 +25,7 @@ class IncidentFieldParser(
         self.content = self.json_data.get("content")
         self.system = self.json_data.get("system")
         self.group = self.json_data.get("group")
+        self.unsearchable = self.json_data.get("unsearchable")
 
         self.connect_to_dependencies()
 

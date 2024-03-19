@@ -34,6 +34,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
 from demisto_sdk.commands.validate.validators.IF_validators.IF111_is_field_type_changed import (
     IsFieldTypeChangedValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_key import (
+    UnsearchableKeyValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -216,6 +219,51 @@ def test_IsFieldTypeChangedValidator_not_valid():
     assert results[0].message == "Changing incident field type is not allowed"
 
 
+def test_UnsearchableKeyValidator_not_valid():
+    """
+    Given:
+        - IncidentFiled content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'unsearchable' field set to False
+    """
+    content_items = [
+        create_incident_field_object(paths=["unsearchable"], values=[False])
+    ]
+    results = UnsearchableKeyValidator().is_valid(content_items)
+    assert results
+    assert results[0].message == (
+        "Warning: Indicator and incident fields should include the `unsearchable` key set to true."
+        " When missing or set to false, the platform will index the data in this field."
+        " Unnecessary indexing of fields might affect the performance and disk usage in environments."
+        " While considering the above mentioned warning, you can bypass this error by adding it to the .pack-ignore file."
+    )
+
+
+def test_UnsearchableKeyValidator_not_valid_without_unsearchable():
+    """
+    Given:
+        - IncidentFiled content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the IncidentField whose 'unsearchable' field is undefined
+    """
+    incident_field = create_incident_field_object()
+    incident_field.unsearchable = None
+    results = UnsearchableKeyValidator().is_valid([incident_field])
+    assert results
+    assert results[0].message == (
+        "Warning: Indicator and incident fields should include the `unsearchable` key set to true."
+        " When missing or set to false, the platform will index the data in this field."
+        " Unnecessary indexing of fields might affect the performance and disk usage in environments."
+        " While considering the above mentioned warning, you can bypass this error by adding it to the .pack-ignore file."
+    )
+
+
 def test_IsValidContentFieldValidator_valid():
     """
     Given:
@@ -333,6 +381,22 @@ def test_IsFieldTypeChangedValidator_valid():
     old_content_items = [create_incident_field_object(["type"], ["html"])]
     create_old_file_pointers(content_items, old_content_items)
     results = IsFieldTypeChangedValidator().is_valid(content_items)
+    assert not results
+
+
+def test_UnsearchableKeyValidator_valid():
+    """
+    Given:
+        - IncidentFiled whose 'unsearchable' is set to True
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    content_items = [
+        create_incident_field_object(paths=["unsearchable"], values=[True])
+    ]
+    results = UnsearchableKeyValidator().is_valid(content_items)
     assert not results
 
 

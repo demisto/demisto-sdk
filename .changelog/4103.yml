@@ -1,4 +1,4 @@
 changes:
-- description: internal
-  type: Added a script for generating documentation for `BaseValidator`-based validations.
+- description: Added a script for generating validation docs
+  type: internal
 pr_number: 4103

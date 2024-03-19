@@ -1,13 +1,12 @@
-
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Iterable, List, cast
 
 from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = IncidentField
@@ -19,10 +18,7 @@ class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
     rationale = ""
     error_message = "Field name: {field_name} is invalid. Field name must start with the relevant pack name"
     related_field = "name"
-    is_auto_fixable = False
-    related_file_type = [RelatedFileType.JSON]
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -32,9 +28,30 @@ class NameFieldPrefixValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                # Add your validation right here
+                content_item.name
+                in cast(
+                    List[str],
+                    self.get_allowed_prefixes_for_specific_incident_field(content_item),
+                )
             )
         ]
-    
 
-    
+    def get_allowed_prefixes_for_specific_incident_field(
+        self, content_item: ContentTypes
+    ):
+        """
+        Collects from pack metadata all the allowed prefixes
+        """
+        if content_item.in_pack and (
+            metadata := content_item.in_pack.pack_metadata_dict
+        ):
+            if not metadata.get("itemPrefix"):
+                return [content_item.pack_name]
+            else:
+                return (
+                    metadata.get("itemPrefix")
+                    if isinstance(metadata.get("itemPrefix"), list)
+                    else [metadata.get("itemPrefix")]
+                )
+        else:
+            return [content_item.pack_name]

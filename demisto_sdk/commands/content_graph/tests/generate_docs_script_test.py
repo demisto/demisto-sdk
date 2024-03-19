@@ -79,15 +79,15 @@ def repository(mocker, repo) -> ContentDTO:
     pack.content_items.playbook.append(mock_playbook(USED_BY_PLAYBOOK))
     repository.packs.extend([pack])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
         if not packs_to_update:
-            return [repository]
+            return repository
         repo_copy = repository.copy()
         repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
-        return [repo_copy]
+        return repo_copy
 
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
 

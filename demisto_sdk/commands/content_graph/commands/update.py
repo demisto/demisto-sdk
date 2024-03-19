@@ -72,7 +72,9 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    logger.debug(f'DEMISTO_SDK_GRAPH_FORCE_CREATE = {os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")}')
+    logger.debug(
+        f'DEMISTO_SDK_GRAPH_FORCE_CREATE = {os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")}'
+    )
     if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE") == "true":
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
         create_content_graph(
@@ -135,7 +137,8 @@ def update_content_graph(
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")
-    builder.update_graph(packs_to_update)
+
+    builder.update_graph(tuple(packs_to_update) if packs_to_update else None)
 
     if dependencies:
         content_graph_interface.create_pack_dependencies()

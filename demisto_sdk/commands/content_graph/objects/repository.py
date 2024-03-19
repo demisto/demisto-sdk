@@ -1,8 +1,9 @@
 import shutil
 import time
+from functools import lru_cache
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import tqdm
 from pydantic import BaseModel, DirectoryPath
@@ -22,20 +23,26 @@ class ContentDTO(BaseModel):
     packs: List[Pack]
 
     @staticmethod
-    def from_path(path: Path = CONTENT_PATH):
+    @lru_cache(maxsize=1)
+    def from_path(
+        path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None
+    ):
         """
         Returns a ContentDTO object with all the packs of the content repository.
         """
         repo_parser = RepositoryParser(path)
         with tqdm.tqdm(
-            total=len(tuple(repo_parser.iter_packs())),
+            total=len(tuple(repo_parser.iter_packs()))
+            if not packs_to_parse
+            else len(packs_to_parse),
             unit="packs",
             desc="Parsing packs",
             position=0,
             leave=True,
         ) as progress_bar:
             repo_parser.parse(progress_bar=progress_bar)
-        return ContentDTO.from_orm(repo_parser)
+        content_dto = ContentDTO.from_orm(repo_parser)
+        return content_dto
 
     def dump(
         self,

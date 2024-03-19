@@ -189,15 +189,15 @@ def repository(mocker) -> ContentDTO:
     pack3.content_items.script.append(mock_script("SampleScript2"))
     repository.packs.extend([pack1, pack2, pack3])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
         if not packs_to_update:
-            return [repository]
+            return repository
         repo_copy = repository.copy()
         repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
-        return [repo_copy]
+        return repo_copy
 
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
     return repository
@@ -221,19 +221,19 @@ def external_repository(mocker) -> ContentDTO:
         return [repo_copy]
 
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
         if not packs_to_update:
-            return [repository]
+            return repository
         repo_copy = repository.copy()
         repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
-        return [repo_copy]
+        return repo_copy
 
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         side_effect=mock__create_content_dto,
     )
     return repository

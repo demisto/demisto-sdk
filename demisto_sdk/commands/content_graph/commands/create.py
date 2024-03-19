@@ -48,8 +48,6 @@ def create_content_graph(
     content_graph_interface.export_graph(
         output_path, override_commit=True, marketplace=marketplace
     )
-    logger.info("ohh noooo")
-    exit(1)
     logger.info(
         f"Successfully created the content graph. UI representation "
         f"is available at {NEO4J_DATABASE_HTTP} "

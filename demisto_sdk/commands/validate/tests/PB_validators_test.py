@@ -4,6 +4,8 @@ from demisto_sdk.commands.validate.tests.test_tools import create_playbook_objec
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import \
+    DeprecatedDescriptionValidator
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
@@ -149,35 +151,35 @@ def test_is_no_rolename_fix():
     "content_item, expected_result",
     [
         (
-                create_playbook_object(
-                    paths=["deprecated", "description"],
-                    values=[True, "Deprecated. Use <PLAYBOOK_NAME> instead."],
-                ),
-                [],
+            create_playbook_object(
+                paths=["deprecated", "description"],
+                values=[True, "Deprecated. Use <PLAYBOOK_NAME> instead."],
+            ),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["deprecated", "description"],
-                    values=[True, "Deprecated. <REASON> No available replacement."],
-                ),
-                [],
+            create_playbook_object(
+                paths=["deprecated", "description"],
+                values=[True, "Deprecated. <REASON> No available replacement."],
+            ),
+            [],
         ),
         (
-                create_playbook_object(
-                    paths=["deprecated", "description"],
-                    values=[True, "Not a valid description"],
-                ),
-                [],
+            create_playbook_object(
+                paths=["deprecated", "description"],
+                values=[True, "Not a valid description"],
+            ),
+            ["The deprecated playbook '{playbook_name}'"],
         ),
     ],
 )
-def test_is_no_rolename(content_item, expected_result):
+def test_is_deprecated_with_invalid_description(content_item, expected_result):
     """
     Given:
     - A playbook with id
-        Case 1: The playbook has only id and no rolename.
-        Case 2: The playbook has id and an empty rolename.
-        Case 3: The playbook has id and rolename.
+        Case 1: The playbook is deprecated and has valid description.
+        Case 2: The playbook is deprecated and has valid description.
+        Case 3: The playbook is deprecated and has invalid description.
 
     When:
     - Validating the playbook
@@ -188,7 +190,7 @@ def test_is_no_rolename(content_item, expected_result):
         Case 2: The playbook is valid
         Case 3: The playbook is invalid
     """
-    result = IsNoRolenameValidator().is_valid([content_item])
+    result = DeprecatedDescriptionValidator().is_valid([content_item])
 
     assert (
         result == expected_result

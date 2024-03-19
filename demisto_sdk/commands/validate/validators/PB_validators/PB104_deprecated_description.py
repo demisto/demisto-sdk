@@ -5,8 +5,8 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Playbook
@@ -18,10 +18,12 @@ DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement
 class DeprecatedDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "PB104"
     description = "Validate whether a deprecated playbook has a valid description"
-    error_message = "The deprecated playbook '{playbook_name}' has invalid description.\n"\
-                    "The description of all deprecated playbooks should follow one of the formats:\n"\
-                    '1. "Deprecated. Use <PLAYBOOK_NAME> instead."\n'\
-                    '2. "Deprecated. <REASON> No available replacement."'
+    error_message = (
+        "The deprecated playbook '{playbook_name}' has invalid description.\n"
+        "The description of all deprecated playbooks should follow one of the formats:\n"
+        '1. "Deprecated. Use <PLAYBOOK_NAME> instead."\n'
+        '2. "Deprecated. <REASON> No available replacement."'
+    )
     related_field = "description"
     is_auto_fixable = False
 
@@ -30,8 +32,10 @@ class DeprecatedDescriptionValidator(BaseValidator[ContentTypes]):
         is_deprecated = content_item.data.get("deprecated", False)
         description = content_item.data.get("description", "")
 
-        if is_deprecated and not any(re.search(pattern, description) for pattern in
-                                     [DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX]):
+        if is_deprecated and not any(
+            re.search(pattern, description)
+            for pattern in [DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX]
+        ):
             return True
 
         return False
@@ -48,5 +52,3 @@ class DeprecatedDescriptionValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if self._is_deprecated_with_invalid_description(content_item)
         ]
-
-    

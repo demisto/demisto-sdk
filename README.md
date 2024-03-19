@@ -224,7 +224,7 @@ Note that the following commands may work partially without an internet connecti
 
 ## Docker Usage
 
-Docker is required to run certain commands effectively.
+Docker is required to run certain commands.
 
 The following command requires Docker:
 

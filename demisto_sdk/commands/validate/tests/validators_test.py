@@ -617,7 +617,9 @@ def test_rationale():
     Tests that all validators have a non-empty rationale.
     If this test failed when you modified a validator, go ahead and add the rationale attribute, explaining *why* the validation exists.
     """
-    assert not [validator for validator in get_all_validators() if not validator.rationale]
+    assert not [
+        validator for validator in get_all_validators() if not validator.rationale
+    ]
 
 
 def test_description():
@@ -625,4 +627,6 @@ def test_description():
     Tests that all validators have a non-empty description.
     If this test failed when you modified a validator, go ahead and add the description attribute, explaining *what* the validation checks in content.
     """
-    assert not [validator for validator in get_all_validators() if not validator.description]
+    assert not [
+        validator for validator in get_all_validators() if not validator.description
+    ]

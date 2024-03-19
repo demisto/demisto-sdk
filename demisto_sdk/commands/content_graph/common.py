@@ -283,6 +283,7 @@ class Relationship(BaseModel):
     mandatorily: Optional[bool] = None
     description: Optional[str] = None
     deprecated: Optional[bool] = None
+    name: Optional[str] = None
 
 
 class Relationships(dict):

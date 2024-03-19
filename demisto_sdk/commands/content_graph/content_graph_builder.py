@@ -54,7 +54,7 @@ class ContentGraphBuilder:
             path (Path): The repository path.
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
-        return ContentDTO.from_path(packs)
+        return ContentDTO.from_path(packs_to_parse=packs)
 
     def _collect_nodes_and_relationships_from_model(
         self, content_dto: ContentDTO

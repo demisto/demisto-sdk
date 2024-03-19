@@ -88,7 +88,7 @@ types-ujson = "^5.6.0.0"
 typer = {extras = ["all"], version = "^0.9.0"}
 types-pkg-resources = "^0.1.3"
 types-toml = "^0.10.8.7"
-packaging = "^23.1"
+packaging = "^24.0"
 orjson = "^3.8.3"
 more-itertools = "^9.0.0"
 junitparser = "^3.1.0"

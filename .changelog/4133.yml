@@ -1,4 +1,0 @@
-changes:
-- description: Added the `auto_update_docker_image` field to the content-graph for scripts and integrations.
-  type: feature
-pr_number: 4133

@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
+    Relationships,
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.objects import IncidentField, Layout, Mapper
@@ -913,3 +914,28 @@ class TestCreateContentGraph:
         )
         assert expected_python_version == integrations[0].python_version
         assert dockerhub_api_mocker.called == is_taken_from_dockerhub
+
+
+def test_add_relationship__to_Pydentic_and_back():
+    """
+    Given:
+        - A set of relationship data provided as keyword arguments
+    When:
+        - This data is added to a Relationship object using the 'add' method
+    Then:
+        - Verify that the data was added through the Pydantic Relationship object and complies with its specifications:
+            - Convert boolean strings to boolean objects.
+            - Include only properties defined in the Pydantic model.
+            - Exclude properties with a value of None from the object.
+        - Verify that the data was converted back into a dictionary.
+    """
+    relationships = Relationships()
+    relationships.add(
+        RelationshipType.DEPENDS_ON,
+        mandatorily="True",
+        source=None,
+        fake_attribute="fake",
+    )
+
+    added_relationship = relationships[RelationshipType.DEPENDS_ON][0]
+    assert added_relationship == {"mandatorily": True}

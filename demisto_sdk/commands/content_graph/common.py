@@ -274,6 +274,7 @@ class ContentType(str, enum.Enum):
 
 class Relationship(BaseModel):
     relationship: Optional[RelationshipType] = None
+    source: Optional[str] = None
     source_id: Optional[str] = None
     source_type: Optional[ContentType] = None
     source_fromversion: Optional[str] = None

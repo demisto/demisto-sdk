@@ -301,7 +301,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         ):  # add Base pack dependency for all the packs except Base itself
             self.relationships.add(
                 RelationshipType.DEPENDS_ON,
-                source_id=self.object_id,
+                source=self.object_id,
                 target=BASE_PACK,
                 mandatorily=True,
             )

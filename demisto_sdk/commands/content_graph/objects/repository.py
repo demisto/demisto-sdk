@@ -22,6 +22,9 @@ USE_MULTIPROCESSING = False  # toggle this for better debugging
 def from_path(path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None):
     """
     Returns a ContentDTO object with all the packs of the content repository.
+
+    This function is outside of the class for better caching.
+    The class function uses this function so the behavior is the same.
     """
     repo_parser = RepositoryParser(path)
     with tqdm.tqdm(

@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.logger import (
 from demisto_sdk.commands.common.tools import (
     get_all_repo_pack_ids,
     is_external_repository,
+    string_to_bool,
 )
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.commands.create import create_content_graph
@@ -72,10 +73,10 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    logger.debug(
-        f'DEMISTO_SDK_GRAPH_FORCE_CREATE = {os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")}'
-    )
-    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE") == "true":
+    force_create_graph = os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")
+    logger.debug(f"DEMISTO_SDK_GRAPH_FORCE_CREATE = {force_create_graph}")
+
+    if string_to_bool(force_create_graph, False):
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path

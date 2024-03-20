@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.tools import get_pack_name
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -45,6 +45,6 @@ class PackNameValidator(BaseValidator[ContentTypes]):
         if name_has_changed:
             self.new_pack_name = new_pack_name
             self.old_pack_name = old_pack_name
-            self.new_path = content_item.path.parent.relative_to(CONTENT_PATH)
+            self.new_path = str(content_item.path).split(PACKS_FOLDER)[-1]
         return name_has_changed
             

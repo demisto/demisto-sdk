@@ -13,15 +13,21 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = BaseContent
+
+
 class PackNameValidator(BaseValidator[ContentTypes]):
     error_code = "BA114"
-    description = "Validate that the name of the pack for a content item was not changed."
-    error_message = "Pack for a content item '{0}' was changed from '{1}' to '{2}', please undo."
+    description = (
+        "Validate that the name of the pack for a content item was not changed."
+    )
+    error_message = (
+        "Pack for a content item '{0}' was changed from '{1}' to '{2}', please undo."
+    )
     related_field = "path"
     expected_git_statuses = [GitStatuses.RENAMED]
-    new_pack_name = ''
-    old_pack_name = ''
-    new_path = ''
+    new_pack_name = ""
+    old_pack_name = ""
+    new_path = ""
     
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
@@ -39,7 +45,7 @@ class PackNameValidator(BaseValidator[ContentTypes]):
         ]
         
     def pack_has_changed(self, content_item: ContentTypes):
-        old_pack_name = get_pack_name(content_item.old_base_content_object.path)
+        old_pack_name = get_pack_name(content_item.old_base_content_object.path) #type: ignore
         new_pack_name = get_pack_name(content_item.path)
         if name_has_changed := new_pack_name != old_pack_name:
             self.new_pack_name = new_pack_name

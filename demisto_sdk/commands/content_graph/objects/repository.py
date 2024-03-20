@@ -47,7 +47,7 @@ class ContentDTO(BaseModel):
 
     @staticmethod
     def from_path(
-        path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None
+        path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str, ...]] = None
     ):
         """
         Returns a ContentDTO object with all the packs of the content repository.

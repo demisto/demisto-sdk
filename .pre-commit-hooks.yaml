@@ -84,3 +84,9 @@
   entry: validate-content-path
   language: python
   pass_filenames: true
+
+- id: validate-xsoar-config
+  name: validate-xsoar-config
+  entry: validate-xsoar-config
+  language: python
+  pass_filenames: true

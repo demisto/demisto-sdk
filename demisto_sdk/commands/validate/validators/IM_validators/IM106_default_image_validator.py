@@ -5,7 +5,6 @@ from typing import Iterable, List
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64,
     DEFAULT_IMAGE_BASE64,
-    GitStatuses,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -24,18 +23,11 @@ class DefaultImageValidator(BaseValidator[ContentTypes]):
     error_message = "This is the default image, please change to the integration image."
     related_field = "image"
     is_auto_fixable = False
-    expected_git_statuses = [
-        # GitStatuses.RENAMED,
-        GitStatuses.ADDED,
-        # GitStatuses.DELETED,
-        GitStatuses.MODIFIED,
-    ]
+    # No need for git statuses, since git statuses are relevant for content type, and not
+    # related field
     related_file_type = [RelatedFileType.IMAGE]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        raise Exception("hi")
-        print("helloooo")
-        x = 0
         return [
             ValidationResult(
                 validator=self,

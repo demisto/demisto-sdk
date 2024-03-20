@@ -11,6 +11,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC103_have_the_args_changed import (
+    HaveTheArgsChangedValidator,
+)
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
 )
@@ -621,3 +624,29 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
 
     with ChangeCWD(REPO.path):
         assert WasMarketplaceModifiedValidator().is_valid(renamed_content_items) == []
+
+
+def test_have_the_args_changed_validator():
+    """
+    Given:
+        - Integration content item with a changed argument name.
+        - Old Integration content item with the old argument name.
+
+    When:
+        - Calling the `HaveTheArgsChangedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should fail the validation since the user changed the argument name.
+    """
+    modified_content_items = [create_script_object()]
+    old_content_items = [create_script_object()]
+
+    modified_content_items[0].args[0].name = "new_arg"
+    old_content_items[0].args[0].name = "old_arg"
+    create_old_file_pointers(modified_content_items, old_content_items)
+
+    results = HaveTheArgsChangedValidator().is_valid(modified_content_items)
+    assert results[0].message == (
+        "One or more argument names in the 'myScript' file have been changed. Please undo the change."
+    )

@@ -255,5 +255,4 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
             values=["Pack_metadata description"],
         ),
     ]
-    results = IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
-    assert not results
+    assert not IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)

@@ -1,5 +1,4 @@
 import gc
-import os
 from typing import Optional, Tuple
 
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
@@ -55,9 +54,6 @@ class ContentGraphBuilder:
             path (Path): The repository path.
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
-        if os.getenv("PYTEST_CURRENT_TEST"):
-            # if running tests, clear the cache to avoid caching issues
-            ContentDTO.from_path.cache_clear()
         return ContentDTO.from_path(packs_to_parse=packs)
 
     def _collect_nodes_and_relationships_from_model(

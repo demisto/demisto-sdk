@@ -63,7 +63,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name
     ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA114_is_valid_pack_name import (
+from demisto_sdk.commands.validate.validators.BA_validators.BA114_is_pack_changed import (
     PackNameValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA116_cli_name_should_equal_id import (
@@ -1214,6 +1214,7 @@ def test_IsEntityNameContainExcludedWordValidator(
     assert len(results) == expected_number_of_failures
     if results:
         assert results[0].message == expected_error_message
+
 
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",

@@ -1250,7 +1250,7 @@ def test_IsEntityNameContainExcludedWordValidator(
                 create_generic_module_object(),
                 create_incoming_mapper_object(),
                 create_outgoing_mapper_object(),
-                create_indicator_type_object()
+                create_indicator_type_object(),
             ],
             31,
             [

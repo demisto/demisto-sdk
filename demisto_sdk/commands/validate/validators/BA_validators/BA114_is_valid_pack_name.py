@@ -28,7 +28,7 @@ class PackNameValidator(BaseValidator[ContentTypes]):
     new_pack_name = ""
     old_pack_name = ""
     new_path = ""
-    
+
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -43,7 +43,7 @@ class PackNameValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if self.pack_has_changed(content_item)
         ]
-        
+
     def pack_has_changed(self, content_item: ContentTypes):
         old_pack_name = get_pack_name(content_item.old_base_content_object.path)  # type: ignore
         new_pack_name = get_pack_name(content_item.path)
@@ -52,4 +52,3 @@ class PackNameValidator(BaseValidator[ContentTypes]):
             self.old_pack_name = old_pack_name
             self.new_path = str(content_item.path).split(PACKS_FOLDER)[-1]
         return name_has_changed
-            

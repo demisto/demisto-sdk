@@ -18,7 +18,7 @@ class JSON5_Handler(XSOAR_Handler):
         self.json = json5
         self.indent = indent
 
-    def loads(self, s: AnyStr):
+    def loads(self, s: str):
         try:
             return self.json.loads(s)
         except ValueError as e:

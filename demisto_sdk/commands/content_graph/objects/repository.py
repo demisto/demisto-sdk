@@ -18,6 +18,26 @@ from demisto_sdk.commands.content_graph.parsers.repository import RepositoryPars
 USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
+@lru_cache
+def from_path(path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None):
+    """
+    Returns a ContentDTO object with all the packs of the content repository.
+    """
+    repo_parser = RepositoryParser(path)
+    with tqdm.tqdm(
+        total=len(tuple(repo_parser.iter_packs()))
+        if not packs_to_parse
+        else len(packs_to_parse),
+        unit="packs",
+        desc="Parsing packs",
+        position=0,
+        leave=True,
+    ) as progress_bar:
+        repo_parser.parse(progress_bar=progress_bar)
+    content_dto = ContentDTO.from_orm(repo_parser)
+    return content_dto
+
+
 class ContentDTO(BaseModel):
     path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
@@ -30,19 +50,7 @@ class ContentDTO(BaseModel):
         """
         Returns a ContentDTO object with all the packs of the content repository.
         """
-        repo_parser = RepositoryParser(path)
-        with tqdm.tqdm(
-            total=len(tuple(repo_parser.iter_packs()))
-            if not packs_to_parse
-            else len(packs_to_parse),
-            unit="packs",
-            desc="Parsing packs",
-            position=0,
-            leave=True,
-        ) as progress_bar:
-            repo_parser.parse(progress_bar=progress_bar)
-        content_dto = ContentDTO.from_orm(repo_parser)
-        return content_dto
+        return from_path(path, packs_to_parse)
 
     def dump(
         self,

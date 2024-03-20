@@ -61,7 +61,7 @@ class RepositoryParser:
         try:
             return PackParser(pack_path)
         except NotAContentItemException:
-            logger.warning(f"Pack {pack_path.name} is not a valid pack. Skipping")
+            logger.error(f"Pack {pack_path.name} is not a valid pack. Skipping")
             return None
 
     @staticmethod

@@ -452,6 +452,33 @@ def test_readme_ignore(integration, readme_fake_path, readme_text):
     assert result
 
 
+@pytest.mark.parametrize(
+    "error_code_to_ignore, expected_result",
+    [({"README.md": "RM100"}, True), ({}, False)],
+)
+def test_readme_verify_no_default_ignore_test(
+    error_code_to_ignore, expected_result, integration
+):
+    """
+    Given:
+        - A readme that violates a validation and the ignore error code for the validation.
+        - A readme that violates a validation without the ignore error code for the validation.
+
+    When:
+        - When running the validate command on a readme file.
+
+    Then:
+        - Validate that when the error code is ignored, the validation passes.
+        - Validate that when the error code is not ignored, the validation fails.
+    """
+    readme_text = "This is a test readme running on version xx"
+    readme_path = "fake_path"
+    integration.readme.write(readme_text)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path, ignored_errors=error_code_to_ignore)
+    assert readme_validator.verify_no_default_sections_left() == expected_result
+
+
 @pytest.mark.parametrize("errors_found, errors_ignore, expected", ERROR_FOUND_CASES)
 def test_context_only_runs_once_when_error_exist(
     mocker, integration, errors_found, errors_ignore, expected

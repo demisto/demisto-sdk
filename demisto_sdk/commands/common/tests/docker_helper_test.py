@@ -91,6 +91,50 @@ def test_cache_of_get_python_version_from_image():
     assert cache_info.hits == cache_info_before.hits + 1
 
 
+class DockerClientMock:
+    def __init__(self):
+        # mock the function login
+        self.login = mock.MagicMock()
+
+    def ping(self):
+        return True
+
+
+def test_custom_container_registry(mocker):
+    """
+    Given:
+        - Custom container registry
+
+    When:
+        - Running the init_global_docker_client function
+
+    Then:
+        - Ensure the login function is called with the correct parameters
+
+    """
+    from demisto_sdk.commands.common import docker_helper
+
+    docker_client_mock = DockerClientMock()
+    mocker.patch.object(docker_helper, "DOCKER_REGISTRY_URL", "custom")
+    mocker.patch.dict(
+        os.environ,
+        {
+            "DEMISTO_SDK_CONTAINER_REGISTRY": "custom",
+            "DEMISTO_SDK_CR_USER": "user",
+            "DEMISTO_SDK_CR_PASSWORD": "password",
+        },
+    )
+    assert docker_helper.is_custom_registry()
+    docker_helper.docker_login(docker_client_mock)
+    assert docker_client_mock.login.called
+    assert docker_client_mock.login.call_count == 1
+    assert docker_client_mock.login.call_args[1] == {
+        "username": "user",
+        "password": "password",
+        "registry": "custom",
+    }
+
+
 @pytest.mark.parametrize(
     "image_name, container_name, exception, exception_text",
     [

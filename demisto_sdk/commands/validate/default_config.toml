@@ -35,7 +35,8 @@ select = [
     "PB118",
     "DO100", "DO101", "DO102", "DO103", "DO104, DO105, DO106",
     "SC100", "SC105", "SC106", "SC109",
-    "RM113"
+    "RM113",
+    "IM100", "IM108", "IM109"
 ]
 warning = []
 
@@ -57,7 +58,7 @@ warning = []
 
 
 [Custom_Categories]
-select = ["BA114"]
+select = []
 warning = []
 
 

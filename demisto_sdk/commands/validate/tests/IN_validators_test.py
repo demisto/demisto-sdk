@@ -1938,9 +1938,7 @@ def test_IsValidAsMappableIntegrationValidator_is_valid(
                 ),
             ],
             1,
-            [
-                "The following commands have more than 1 default arg, please make sure they have at most one: test_1."
-            ],
+            ["The following commands have multiple default arguments: test_1."],
         ),
     ],
 )

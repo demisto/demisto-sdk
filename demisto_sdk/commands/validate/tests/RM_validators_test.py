@@ -237,10 +237,10 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_not_valid():
     ]
     expected_msg = (
         "README.md content is equal to pack description."
-        "Please remove the duplicate description from README.md file."
+        " Please remove the duplicate description from README.md file."
     )
     results = IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
-    assert results == 1
+    assert results
     assert results[0].message == expected_msg
 
 

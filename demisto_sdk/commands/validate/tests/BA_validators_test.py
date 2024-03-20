@@ -22,10 +22,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_job_object,
     create_layout_object,
     create_list_object,
-    create_metadata_object,
     create_modeling_rule_object,
     create_old_file_pointers,
     create_outgoing_mapper_object,
+    create_pack_object,
     create_parsing_rule_object,
     create_playbook_object,
     create_ps_integration_object,
@@ -1221,7 +1221,7 @@ def test_IsEntityNameContainExcludedWordValidator(
     [
         (
             [
-                create_metadata_object(),
+                create_pack_object(),
                 create_integration_object(),
                 create_parsing_rule_object(),
                 create_correlation_rule_object(),

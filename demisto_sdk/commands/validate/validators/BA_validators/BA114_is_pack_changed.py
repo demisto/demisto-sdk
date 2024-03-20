@@ -51,4 +51,5 @@ class PackNameValidator(BaseValidator[ContentTypes]):
             self.new_pack_name = new_pack_name
             self.old_pack_name = old_pack_name
             self.new_path = str(content_item.path).split(PACKS_FOLDER)[-1]
+        return name_has_changed
 

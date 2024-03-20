@@ -43,7 +43,6 @@ class ContentDTO(BaseModel):
     packs: List[Pack]
 
     @staticmethod
-    @lru_cache
     def from_path(
         path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None
     ):

@@ -31,14 +31,13 @@ def create_integration_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
-    integration_params: Optional[Dict[str, Any]] = None,
 ) -> Integration:
     """Creating an integration object with altered fields from a default integration yml structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
-        integration_params (Optional[Dict[str, Any]]): Addition integration data to populate.
+
     Returns:
         The integration object.
     """
@@ -48,12 +47,11 @@ def create_integration_object(
     if pack_info:
         pack.set_data(**pack_info)
 
-    additional_params: Dict[str, Any] = {}
+    additional_params = {}
 
     if readme_content is not None:
         additional_params["readme"] = readme_content
-    if integration_params:
-        additional_params |= integration_params
+
     integration = pack.create_integration(yml=yml_content, **additional_params)
 
     integration.code.write("from MicrosoftApiModule import *")

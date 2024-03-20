@@ -1,5 +1,9 @@
 import pytest
+from pytest_mock import MockerFixture
 
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    ImageRelatedFile,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_pack_object,
@@ -118,7 +122,7 @@ def test_AuthorImageIsEmptyValidator_is_valid(
     )
 
 
-def test_DefaultImageValidator_is_valid():
+def test_DefaultImageValidator_is_valid(mocker: MockerFixture):
     """
     Given:
         - First integration with a default image.
@@ -132,20 +136,16 @@ def test_DefaultImageValidator_is_valid():
         - Case 1: Should fail.
         - Case 2: Shouldn't fail.
     """
-    default_image_content = image_content = b''
-
-    # default_image_content will contain data of the default image, which is not valid
-    with open(DEFAULT_IMAGE, "rb") as image_file:
-        default_image_content = image_file.read()
-
-    # image_content will contain the data of a sample image, which is valid
-    with open("TestSuite/assets/default_integration/sample_image.png", "rb") as image_file:
-        image_content = image_file.read()
+    from pathlib import Path
+    default_image = ImageRelatedFile(main_file_path=Path(DEFAULT_IMAGE))
+    sample_image = ImageRelatedFile(main_file_path=Path("TestSuite/assets/default_integration/sample_image.png"))
 
     content_items = [
-        create_integration_object(integration_params={"image": default_image_content}),
-        create_integration_object(integration_params={"image": image_content})
+        create_integration_object(),
+        create_integration_object()
     ]
+    mocker.patch.object(content_items[0].image, "load_image", return_value=default_image.load_image())
+    mocker.patch.object(content_items[1].image, "load_image", return_value=sample_image.load_image())
     results = DefaultImageValidator().is_valid(content_items)
     assert len(results) == 1
     assert results[0].message == "This is the default image, please change to the integration image."

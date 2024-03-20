@@ -1251,7 +1251,7 @@ def test_IsEntityNameContainExcludedWordValidator(
                 create_incoming_mapper_object(),
                 create_outgoing_mapper_object(),
                 create_indicator_type_object()
-                ],
+            ],
             31,
             [
                 "Pack for a content item '/newPackName' was changed from 'pack_170' to 'newPackName', please undo.",
@@ -1294,17 +1294,15 @@ def test_ValidPackNameValidator_is_valid(
 ):
     """
     Given:
-    content_items (Pack).
-        - Case 1: A Pack content item that its name has changed.
-        - Case 2: A Pack content item that its name hasn't changed.
+    content_items.
+        31 packs content items.
 
     When:
         - Calling the PackNameValidator is_valid function.
 
     Then:
         - Make sure the right amount of pack name failed, and that the right error message is returned.
-        - Case 1: Should fail.
-        - Case 2: Shouldn't fail.
+        - 31 Should fail.
     """
     old_content_items = copy.deepcopy(content_items)
     create_old_file_pointers(content_items, old_content_items)

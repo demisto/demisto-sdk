@@ -11,6 +11,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
+    IsReadmeExistsValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_copy_right_section import (
     IsContainCopyRightSectionValidator,
 )
@@ -213,3 +216,46 @@ def test_IsImageExistsInReadmeValidator_is_valid(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_playbook_object(),
+                create_playbook_object(),
+            ],
+            1,
+            ["There is no README file for content item from type Playbook in pack named 'pack_18'. Please add relevant README."],
+        ),
+        (
+            [
+                create_pack_object(),
+                create_pack_object(),
+            ],
+            1,
+            ["There is no README file for content item from type Pack in pack named 'pack_20'. Please add relevant README."]
+        ),
+        (
+            [
+                create_integration_object(),
+                create_integration_object(),
+            ],
+            1,
+            ["There is no README file for content item from type Integration in pack named 'pack_22'. Please add relevant README."]
+        )
+    ]
+)
+def test_IsReadmeExistsValidator_is_valid(content_items, expected_number_of_failures, expected_msgs):
+    content_items[1].readme.exist= False
+    results = IsReadmeExistsValidator().is_valid(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+

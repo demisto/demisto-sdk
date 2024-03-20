@@ -8,6 +8,9 @@ from tqdm import tqdm
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    NotAContentItemException,
+)
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 IGNORED_PACKS_FOR_PARSING = ["NonSupported"]
@@ -42,13 +45,34 @@ class RepositoryParser:
         try:
             logger.debug("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
-                for pack in pool.imap_unordered(PackParser, packs_to_parse):
+                for pack in pool.imap_unordered(
+                    RepositoryParser.parse_pack, packs_to_parse
+                ):
+                    if not pack:
+                        continue
                     self.packs.append(pack)
                     if progress_bar:
                         progress_bar.update(1)
         except Exception:
             logger.error(traceback.format_exc())
             raise
+
+    @staticmethod
+    def parse_pack(pack_path: Path) -> Optional[PackParser]:
+        """This will parse a pack path, and return a PackParser object.
+        If the pack is not a content item, it will be skipped.
+
+        Args:
+            pack_path (Path): The pack path
+
+        Returns:
+            Optional[PackParser]: The parsed pack
+        """
+        try:
+            return PackParser(pack_path)
+        except NotAContentItemException as e:
+            logger.warning(f"Skipping pack {pack_path.name} - {e}")
+            return None
 
     @staticmethod
     def should_parse_pack(path: Path) -> bool:

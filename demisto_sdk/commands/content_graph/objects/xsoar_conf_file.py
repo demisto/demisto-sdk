@@ -40,7 +40,7 @@ class Job(BaseModel):  # Not strict, unlike the others
         ...,
         alias="cronView",
         description="Whether to configure the recurrent time as a cron string",
-    )  # TODO
+    )
     cron: str = Field(
         ...,
         description="Cron string to represent the recurrence of the job",

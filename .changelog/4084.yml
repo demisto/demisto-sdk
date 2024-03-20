@@ -1,0 +1,4 @@
+changes:
+- description: Added the `validate-content-path` **pre-commit** hook
+  type: feature
+pr_number: 4084

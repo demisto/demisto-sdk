@@ -1,3 +1,4 @@
+import base64
 from abc import ABC
 from enum import Enum
 from pathlib import Path
@@ -198,14 +199,30 @@ class ImageFiles(RelatedFile):
     def get_file_dimensions(self):
         raise NotImplementedError
 
+    def load_image(self):
+        raise NotImplementedError
+
 
 class PNGFiles(ImageFiles):
     def get_file_size(self):
         return self.file_path.stat()
 
+    def load_image(self) -> str | bytearray | memoryview:
+        encoded_image = ""
+        with open(self.file_path, "rb") as image:
+            image_data = image.read()
+            encoded_image = base64.b64encode(image_data)  # type: ignore
+            if isinstance(encoded_image, bytes):
+                encoded_image = encoded_image.decode("utf-8")
+        return encoded_image
+
 
 class SVGFiles(ImageFiles):
-    pass
+    def load_image(self) -> bytes:
+        encoded_image = ""
+        with open(self.file_path, "rb") as image_file:
+            encoded_image = image_file.read()  # type: ignore
+        return encoded_image
 
 
 class DarkSVGRelatedFile(RelatedFile):

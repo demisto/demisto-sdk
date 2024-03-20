@@ -37,8 +37,7 @@ def from_path(path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = 
         leave=True,
     ) as progress_bar:
         repo_parser.parse(progress_bar=progress_bar)
-    content_dto = ContentDTO.from_orm(repo_parser)
-    return content_dto
+    return ContentDTO.from_orm(repo_parser)
 
 
 class ContentDTO(BaseModel):

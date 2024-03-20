@@ -4,8 +4,9 @@ from demisto_sdk.commands.validate.tests.test_tools import create_playbook_objec
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
 )
-from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import \
-    DeprecatedDescriptionValidator
+from demisto_sdk.commands.validate.validators.PB_validators.PB104_deprecated_description import (
+    DeprecatedDescriptionValidator,
+)
 from demisto_sdk.commands.validate.validators.PB_validators.PB118_is_input_key_not_in_tasks import (
     IsInputKeyNotInTasksValidator,
 )
@@ -169,7 +170,9 @@ def test_is_no_rolename_fix():
                 paths=["deprecated", "description"],
                 values=[True, "Not a valid description"],
             ),
-            ["The deprecated playbook '{playbook_name}'"],
+            "The deprecated playbook 'Detonate File - JoeSecurity V2' has invalid description.\nThe description of "
+            'all deprecated playbooks should follow one of the formats:\n1. "Deprecated. Use <PLAYBOOK_NAME> '
+            'instead."\n2. "Deprecated. <REASON> No available replacement."',
         ),
     ],
 )

@@ -632,23 +632,58 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
     "content_item, old_content_item",
     [
         pytest.param(
-            create_integration_object(paths=["fromversion"], values=["5.0.0"]),
-            create_integration_object(paths=["fromversion"], values=["4.0.0"]),
-            id="test 1",
-        )
+            [
+                create_integration_object(paths=["fromversion"], values=["5.0.0"]),
+                create_integration_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            [
+                create_integration_object(paths=["fromversion"], values=["6.0.0"]),
+                create_integration_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            id="Case 1: integration - fromversion changed",
+        ),
+        pytest.param(
+            [
+                create_script_object(paths=["fromversion"], values=["5.0.0"]),
+                create_script_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            [
+                create_script_object(paths=["fromversion"], values=["6.0.0"]),
+                create_script_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            id="Case 2: script - fromversion changed",
+        ),
+        pytest.param(
+            [
+                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            [
+                create_incoming_mapper_object(paths=["fromversion"], values=["6.0.0"]),
+                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            id="Case 3: mapper - fromversion changed",
+        ),
     ],
 )
-def test_IsValidFromversionOnModifiedValidator_is_valid(content_item, old_content_item):
+def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
+    content_item, old_content_item
+):
     """
-    Given
-        -
-        -
-        -
-    When
+    Given:
+        - Case 1: two content item of type 'Integration', one with modified `fromversion`.
+        - Case 2: two content item of type 'Script', one with modified `fromversion`.
+        - Case 3: two content item of type 'Mapper', one with modified `fromversion`.
+    When:
         - Calling the `IsValidFromversionOnModifiedValidator` validator.
-    Then
-        -
+    Then:
+        - Case 2:
     """
     create_old_file_pointers(content_item, old_content_item)
-    result = IsValidFromversionOnModifiedValidator().is_valid([content_item])
-    assert result
+    result = IsValidFromversionOnModifiedValidator().is_valid(content_item)
+
+    assert (
+        len(result) == 1
+        and result[0].message
+        == "Changing the maximal supported version field fromversion is not allowed. Please undo, or request a force merge."
+    )

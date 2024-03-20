@@ -4,10 +4,12 @@ from __future__ import annotations
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import get_pack_name
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 from demisto_sdk.commands.content_graph.objects.base_script import BaseScript
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
@@ -51,47 +53,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[
-    GenericDefinition,
-    GenericField,
-    GenericModule,
-    GenericType,
-    List,
-    Mapper,
-    Classifier,
-    Widget,
-    Integration,
-    Dashboard,
-    IncidentType,
-    Script,
-    Playbook,
-    Report,
-    Wizard,
-    Job,
-    Layout,
-    PreProcessRule,
-    CorrelationRule,
-    ParsingRule,
-    ModelingRule,
-    XSIAMDashboard,
-    Trigger,
-    XSIAMReport,
-    IncidentField,
-    IndicatorField,
-    AssetsModelingRule,
-    LayoutRule,
-    BasePlaybook,
-    BaseScript,
-    IndicatorType,
-    Pack,
-    TestPlaybook,
-    TestScript,
-    XDRCTemplate
-]
+ContentTypes = BaseContent
 class PackNameValidator(BaseValidator[ContentTypes]):
     error_code = "BA114"
     description = "Validate that the name of the pack for a content item was not changed."
-    error_message = "Pack name for a content item with path {0} was changed from {1} to {2}, please undo."
+    error_message = "Pack for a content item '{0}' was changed from '{1}' to '{2}', please undo."
     related_field = "path"
     expected_git_statuses = [GitStatuses.RENAMED]
     new_pack_name = ''
@@ -110,16 +76,16 @@ class PackNameValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if self.pack_name_has_changed(content_item)
+            if self.pack_has_changed(content_item)
         ]
         
-    def pack_name_has_changed(self, content_item: ContentTypes):
+    def pack_has_changed(self, content_item: ContentTypes):
         old_pack_name = get_pack_name(content_item.old_base_content_object.path)
         new_pack_name = get_pack_name(content_item.path)
         name_has_changed = new_pack_name != old_pack_name
         if name_has_changed:
             self.new_pack_name = new_pack_name
             self.old_pack_name = old_pack_name
-            self.new_path = str(content_item.path).split(PACKS_FOLDER)[-1]
+            self.new_path = content_item.path.parent.relative_to(CONTENT_PATH)
         return name_has_changed
             

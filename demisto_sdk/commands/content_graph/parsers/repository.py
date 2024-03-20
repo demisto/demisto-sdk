@@ -8,6 +8,9 @@ from tqdm import tqdm
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    NotAContentItemException,
+)
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 IGNORED_PACKS_FOR_PARSING = ["NonSupported"]
@@ -49,6 +52,13 @@ class RepositoryParser:
         except Exception:
             logger.error(traceback.format_exc())
             raise
+
+    def parse_pack(self, pack_path: Path) -> Optional[PackParser]:
+        try:
+            return PackParser(pack_path)
+        except NotAContentItemException:
+            logger.warning(f"Pack {pack_path.name} is not a valid pack. Skipping")
+            return None
 
     @staticmethod
     def should_parse_pack(path: Path) -> bool:

@@ -20,7 +20,7 @@ from demisto_sdk.commands.content_graph.interface import (
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO, from_path
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     find_model_for_id,
     mock_classifier,
@@ -45,7 +45,7 @@ def setup_method(mocker, tmp_path_factory):
     import demisto_sdk.commands.content_graph.objects.base_content as bc
     from demisto_sdk.commands.common.files.file import File
 
-    ContentDTO.from_path.cache_clear()
+    from_path.cache_clear()
 
     bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(

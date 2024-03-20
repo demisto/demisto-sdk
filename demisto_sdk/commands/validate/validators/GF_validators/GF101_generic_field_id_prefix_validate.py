@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -16,12 +15,12 @@ ContentTypes = GenericField
 
 class GenericFieldIdPrefixValidateValidator(BaseValidator[ContentTypes]):
     error_code = "GF101"
-    description = "Validate the id field include prefix `generic_`"
-    error_message = "ID {generic_id} is not a valid generic field ID - it should start with the prefix {generic_id_prefix}."
-    fix_message = "Change the value of `id` field to {generic_id}."
+    rationale = "Required by the platform."
+    description = "Checks if `id` field include prefix `generic_`"
+    error_message = "ID `{generic_id}` is not valid, it should start with the prefix `{generic_id_prefix}`."
+    fix_message = "Change the value of `id` field to `{generic_id}`."
     related_field = "id"
     is_auto_fixable = True
-    related_file_type = [RelatedFileType.JSON]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

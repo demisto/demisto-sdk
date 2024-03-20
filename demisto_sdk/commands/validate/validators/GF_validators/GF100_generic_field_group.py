@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -21,7 +20,6 @@ class GenericFieldGroupValidator(BaseValidator[ContentTypes]):
     fix_message = ""
     related_field = "group"
     is_auto_fixable = True
-    related_file_type = [RelatedFileType.JSON]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

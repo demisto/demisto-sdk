@@ -1,8 +1,10 @@
 import pytest
 
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_incoming_mapper_object,
     create_integration_object,
     create_old_file_pointers,
     create_pack_object,
@@ -13,6 +15,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC106_is_valid_fromversion_on_modified import (
+    IsValidFromversionOnModifiedValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
@@ -621,3 +626,29 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
 
     with ChangeCWD(REPO.path):
         assert WasMarketplaceModifiedValidator().is_valid(renamed_content_items) == []
+
+
+@pytest.mark.parametrize(
+    "content_item, old_content_item",
+    [
+        pytest.param(
+            create_integration_object(paths=["fromversion"], values=["5.0.0"]),
+            create_integration_object(paths=["fromversion"], values=["4.0.0"]),
+            id="test 1",
+        )
+    ],
+)
+def test_IsValidFromversionOnModifiedValidator_is_valid(content_item, old_content_item):
+    """
+    Given
+        -
+        -
+        -
+    When
+        - Calling the `IsValidFromversionOnModifiedValidator` validator.
+    Then
+        -
+    """
+    create_old_file_pointers(content_item, old_content_item)
+    result = IsValidFromversionOnModifiedValidator().is_valid([content_item])
+    assert result

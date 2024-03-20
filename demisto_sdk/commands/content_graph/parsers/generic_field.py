@@ -18,7 +18,7 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.definition_id = self.json_data.get("definitionId")
         self.field_type = self.json_data.get("type") or ""
-
+        self.group = self.json_data.get("group")
         self.connect_to_dependencies()
 
     @property

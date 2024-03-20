@@ -45,15 +45,19 @@ class RepositoryParser:
         try:
             logger.debug("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
-                for pack in pool.imap_unordered(PackParser, packs_to_parse):
-                    self.packs.append(pack)
-                    if progress_bar:
-                        progress_bar.update(1)
+                for pack in pool.imap_unordered(
+                    RepositoryParser.parse_pack, packs_to_parse
+                ):
+                    if pack:
+                        self.packs.append(pack)
+                        if progress_bar:
+                            progress_bar.update(1)
         except Exception:
             logger.error(traceback.format_exc())
             raise
 
-    def parse_pack(self, pack_path: Path) -> Optional[PackParser]:
+    @staticmethod
+    def parse_pack(pack_path: Path) -> Optional[PackParser]:
         try:
             return PackParser(pack_path)
         except NotAContentItemException:

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import List, Set
+from typing import List, Set  # type: ignore[attr-defined]
 
 import typer
 
@@ -12,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.files.errors import FileReadError
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import find_type
 
 
@@ -77,25 +79,25 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
 main = typer.Typer(pretty_exceptions_enable=False)
 
 
-@main.command()
+@main.command(
+    help="Validate that there are not any files deleted from protected directories"
+)
 def validate_forbidden_deleted_files(
-    ctx: typer.Context,
-    protected_dirs: List[str] = typer.Option(
-        [],
-        "--protected-dir",
-        help="a protected dir to to disallow deleting files from it or from it sub-directories",
-    ),
+    protected_dirs: List[str],
 ):
     if not protected_dirs:
-        raise ValueError("--protected-dir must be provided")
+        raise ValueError("Provide at least one protected dir")
+    logging_setup()
     try:
-        if forbidden_deleted_files := get_forbidden_deleted_files(set(protected_dirs)):
-            logger.error(
-                f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
-            )
-            raise SystemExit(1)
+        forbidden_deleted_files = get_forbidden_deleted_files(set(protected_dirs))
     except Exception as error:
         logger.error(
             f"Unexpected error occurred while validating deleted files {error}"
         )
         raise
+
+    if forbidden_deleted_files:
+        logger.error(
+            f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
+        )
+        raise SystemExit(1)

@@ -14,6 +14,7 @@ class PackMetadataNameValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that the pack name field exist and is different from the default one."
     )
+    rationale = "A unique and meaningful pack name is crucial for identifying the pack and its contents."
     error_message = "Pack metadata name field is either missing or invalid. Please fill valid pack name."
     related_field = "pack name"
     is_auto_fixable = False

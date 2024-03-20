@@ -21,6 +21,10 @@ class IsValidReputationCommandContextPathCapitalizationValidator(
 ):
     error_code = "IN159"
     description = "Validate that the capitalization of reputation command specific keys is correct."
+    rationale = (
+        "This ensures consistency and effective data passage between playbook tasks. "
+        "For more about the standard context output for reputation commands see: https://xsoar.pan.dev/docs/integrations/context-standards-mandatory"
+    )
     error_message = "The following reputation commands contains invalid contextPath capitalization: {0}"
     related_field = "script.commands"
     is_auto_fixable = False

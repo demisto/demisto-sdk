@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
@@ -7,6 +8,12 @@ from demisto_sdk.commands.common.tools import remove_nulls_from_dictionary, writ
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    DarkSVGRelatedFile,
+    DescriptionRelatedFile,
+    ImageRelatedFile,
+    LightSVGRelatedFile,
+)
 
 if TYPE_CHECKING:
     # avoid circular imports
@@ -14,7 +21,7 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, RelatedFileType
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -187,36 +194,18 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data["configuration"] = [param.dict(exclude_none=True) for param in self.params]
         write_dict(self.path, data, indent=4)
 
-    def get_related_content(self) -> Dict[RelatedFileType, Dict]:
-        related_content_files = super().get_related_content()
-        related_content_files.update(
-            {
-                RelatedFileType.IMAGE: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_image.png")
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.DARK_SVG: {
-                    "path": [str(self.path.parent / f"{self.path.parts[-2]}_dark.svg")],
-                    "git_status": None,
-                },
-                RelatedFileType.LIGHT_SVG: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_light.svg")
-                    ],
-                    "git_status": None,
-                },
-                RelatedFileType.DESCRIPTION: {
-                    "path": [
-                        str(self.path.parent / f"{self.path.parts[-2]}_description.md")
-                    ],
-                    "git_status": None,
-                },
-            }
-        )
-        return related_content_files
+    @cached_property
+    def description_file(self) -> DescriptionRelatedFile:
+        return DescriptionRelatedFile(self.path, git_sha=self.git_sha)
 
-    @property
-    def description_file(self) -> str:
-        return self.get_related_text_file(RelatedFileType.DESCRIPTION)
+    @cached_property
+    def dark_svg(self) -> DarkSVGRelatedFile:
+        return DarkSVGRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def light_svg(self) -> LightSVGRelatedFile:
+        return LightSVGRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def image(self) -> ImageRelatedFile:
+        return ImageRelatedFile(self.path, git_sha=self.git_sha)

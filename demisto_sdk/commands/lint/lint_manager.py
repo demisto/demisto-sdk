@@ -67,11 +67,11 @@ class LintManager:
 
     Attributes:
         input(str): Directories to run lint on.
-        git(bool): Perform lint and test only on chaged packs.
+        git(bool): Perform lint and test only on changed packs.
         all_packs(bool): Whether to run on all packages.
         log_path(str): Path to all levels of logs.
         prev_ver(str): Previous branch or SHA1 commit to run checks against.
-        json_file_path(str): Path to a json file to write the run resutls to.
+        json_file_path(str): Path to a json file to write the run results to.
         id_set_path(str): Path to an existing id_set.json.
         check_dependent_api_module(bool): Whether to run lint also on the packs dependent on the modified api modules
         files.
@@ -1086,7 +1086,7 @@ class LintManager:
     def report_summary(
         pkg, pkgs_status: dict, lint_status: dict, all_packs: bool = False
     ):
-        """Log failed image creation if occured
+        """Log failed image creation if occurred
 
         Args:
             pkgs_status: The packs status
@@ -1155,7 +1155,8 @@ class LintManager:
         if failed:
             logger.info("Failed packages:")
         for fail_pack in failed:
-            logger.info(f"[red]{wrapper_fail_pack.fill(fail_pack)}[/red]")
+            if fail_pack:
+                logger.info(f"[red]{wrapper_fail_pack.fill(fail_pack)}[/red]")
 
     @staticmethod
     def _create_failed_packs_report(lint_status: dict, path: str):
@@ -1183,9 +1184,10 @@ class LintManager:
                 key.startswith("fail") and "mypy" not in key
             ):  # TODO remove this when reduce the number of failed `mypy` packages.
                 failed_ut = failed_ut.union(lint_status[key])
-        if path and failed_ut:
+        failed_unit_tests = [str(item) for item in failed_ut if item is not None]
+        if path and failed_unit_tests:
             file_path = Path(path) / "failed_lint_report.txt"
-            file_path.write_text("\n".join(failed_ut))
+            file_path.write_text("\n".join(failed_unit_tests))
 
     def create_json_output(self):
         """Creates a JSON file output for lints"""

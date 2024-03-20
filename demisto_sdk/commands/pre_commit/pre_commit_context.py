@@ -29,6 +29,9 @@ PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
 PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
 PRECOMMIT_DOCKER_CONFIGS = PRECOMMIT_CONFIG / "docker"
 
+# This has to be relative to content path so the docker will be able to write to it
+PRE_COMMIT_FOLDER_SHARED = CONTENT_PATH / ".pre-commit"
+
 
 @dataclass
 class PreCommitContext:
@@ -51,11 +54,11 @@ class PreCommitContext:
         We initialize the hooks and all_files for later use.
         """
         shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
+        shutil.rmtree(PRE_COMMIT_FOLDER_SHARED, ignore_errors=True)
         PRECOMMIT_FOLDER.mkdir(parents=True)
         PRECOMMIT_CONFIG.mkdir()
         PRECOMMIT_DOCKER_CONFIGS.mkdir()
-
-        self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
+        self.precommit_template: dict = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)  # type: ignore[assignment]
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:
             logger.info(
@@ -108,7 +111,7 @@ class PreCommitContext:
     def support_level_to_files(self) -> Dict[str, Set[Path]]:
         support_level_to_files = defaultdict(set)
         for path, obj in self.files_to_run_with_objects:
-            if obj:
+            if obj is not None:
                 support_level_to_files[obj.support_level].add(path)
         return support_level_to_files
 

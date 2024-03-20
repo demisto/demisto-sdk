@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+from typing import Iterable, List, Union, cast
+
+from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    ValidationResult,
+)
+
+ContentTypes = Union[Integration, Script, Mapper]
+
+
+class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):
+    error_code = "BC106"
+    description = (
+        "Check that the fromversion property was not changed on existing Content files."
+    )
+    rationale = ""
+    error_message = (
+        "Changing the maximal supported version field (fromversion/fromVersion) is not allowed. \n"
+        "Please undo, or request a force merge."
+    )
+    related_field = "fromversion"
+    is_auto_fixable = False
+    expected_git_statuses = [GitStatuses.MODIFIED]
+    related_file_type = [RelatedFileType.YML, RelatedFileType.JSON]
+
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message,
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if fromversion_modified(content_item)
+        ]
+
+def fromversion_modified(content_item: ContentTypes) -> bool:
+    if not content_item.old_base_content_object:
+        return True
+
+    old_file = cast(ContentTypes, content_item.old_base_content_object)
+    return (content_item.fromversion == old_file.fromversion)

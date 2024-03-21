@@ -655,23 +655,23 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
         ),
         pytest.param(
             [
-                create_incident_type_object(paths=["fromversion"], values=["5.0.0"]),
-                create_incident_type_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromVersion"], values=["6.0.0"]),
             ],
             [
-                create_incident_type_object(paths=["fromversion"], values=["6.0.0"]),
-                create_incident_type_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromVersion"], values=["5.0.0"]),
             ],
             id="Case 3: incident type - fromversion changed",
         ),
         pytest.param(
             [
-                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
-                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incoming_mapper_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incoming_mapper_object(paths=["fromVersion"], values=["6.0.0"]),
             ],
             [
-                create_incoming_mapper_object(paths=["fromversion"], values=["6.0.0"]),
-                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incoming_mapper_object(paths=["fromVersion"], values=["5.0.0"]),
+                create_incoming_mapper_object(paths=["fromVersion"], values=["5.0.0"]),
             ],
             id="Case 4: mapper - fromversion changed",
         ),
@@ -697,5 +697,5 @@ def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
     assert (
         len(result) == 1
         and result[0].message
-        == "Changing the maximal supported version field fromversion is not allowed. Please undo, or request a force merge."
+        == "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge."
     )

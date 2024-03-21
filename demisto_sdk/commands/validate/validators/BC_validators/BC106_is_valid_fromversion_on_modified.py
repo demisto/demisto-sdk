@@ -22,7 +22,7 @@ class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):
         "Check that the fromversion property was not changed on existing Content files."
     )
     rationale = ""
-    error_message = "Changing the maximal supported version field fromversion is not allowed. Please undo, or request a force merge."
+    error_message = "Changing the minimal supported version field `fromversion` is not allowed. Please undo, or request a force merge."
     related_field = "fromversion"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]

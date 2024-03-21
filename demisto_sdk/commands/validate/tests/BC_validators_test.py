@@ -3,12 +3,9 @@ import pytest
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
-    create_incident_type_object,
-    create_incoming_mapper_object,
     create_integration_object,
     create_old_file_pointers,
     create_pack_object,
-    create_playbook_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
@@ -16,9 +13,6 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
-)
-from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_toversion_on_modified import (
-    IsValidToversionOnModifiedValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
@@ -304,12 +298,12 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
-        XSIAM_MARKETPLACE
-    )
-    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
-        old_marketplaces
-    )
+    modified_content_items[0].marketplaces = modified_content_items[
+        1
+    ].marketplaces = XSIAM_MARKETPLACE
+    old_content_items[0].marketplaces = old_content_items[
+        1
+    ].marketplaces = old_marketplaces
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -347,12 +341,12 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
-        XSIAM_MARKETPLACE
-    )
-    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
-        old_marketplaces
-    )
+    modified_content_items[0].marketplaces = modified_content_items[
+        1
+    ].marketplaces = XSIAM_MARKETPLACE
+    old_content_items[0].marketplaces = old_content_items[
+        1
+    ].marketplaces = old_marketplaces
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -395,12 +389,12 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__pas
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
-        modified_marketplaces
-    )
-    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
-        XSIAM_MARKETPLACE
-    )
+    modified_content_items[0].marketplaces = modified_content_items[
+        1
+    ].marketplaces = modified_marketplaces
+    old_content_items[0].marketplaces = old_content_items[
+        1
+    ].marketplaces = XSIAM_MARKETPLACE
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -431,12 +425,12 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__fai
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
-        modified_marketplaces
-    )
-    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
-        XSIAM_MARKETPLACE
-    )
+    modified_content_items[0].marketplaces = modified_content_items[
+        1
+    ].marketplaces = modified_marketplaces
+    old_content_items[0].marketplaces = old_content_items[
+        1
+    ].marketplaces = XSIAM_MARKETPLACE
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -575,14 +569,14 @@ def test_WasMarketplaceModifiedValidator__renamed__fails():
         create_integration_object(pack_info={"marketplaces": XSOAR_MARKETPLACE}),
         create_script_object(pack_info={"marketplaces": XSOAR_MARKETPLACE}),
     ]
-    renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
-        GitStatuses.RENAMED
-    )
+    renamed_content_items[0].git_status = renamed_content_items[
+        1
+    ].git_status = GitStatuses.RENAMED
     old_content_items = [create_integration_object(), create_script_object()]
 
-    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
-        ALL_MARKETPLACES_FOR_IN_PACK
-    )
+    old_content_items[0].marketplaces = old_content_items[
+        1
+    ].marketplaces = ALL_MARKETPLACES_FOR_IN_PACK
     create_old_file_pointers(renamed_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -615,14 +609,14 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
         ),
         create_script_object(pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}),
     ]
-    renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
-        GitStatuses.RENAMED
-    )
+    renamed_content_items[0].git_status = renamed_content_items[
+        1
+    ].git_status = GitStatuses.RENAMED
     old_content_items = [create_integration_object(), create_script_object()]
 
-    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
-        XSOAR_MARKETPLACE
-    )
+    old_content_items[0].marketplaces = old_content_items[
+        1
+    ].marketplaces = XSOAR_MARKETPLACE
     create_old_file_pointers(renamed_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):

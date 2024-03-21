@@ -1,0 +1,6 @@
+changes:
+- description: A new version of validate is out, for more information please refer to the [docs](docs-site TBA)
+  type: feature
+- description: The new validate flow is activated automatically while the old one is disabled, for more information on how to switch them back, please refer to the [docs](docs-site TBA)
+  type: breaking
+pr_number: 4114

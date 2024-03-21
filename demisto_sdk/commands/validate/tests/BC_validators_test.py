@@ -3,9 +3,12 @@ import pytest
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_incident_type_object,
+    create_incoming_mapper_object,
     create_integration_object,
     create_old_file_pointers,
     create_pack_object,
+    create_playbook_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
@@ -13,6 +16,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_toversion_on_modified import (
+    IsValidToversionOnModifiedValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
@@ -298,12 +304,12 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[
-        1
-    ].marketplaces = XSIAM_MARKETPLACE
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = old_marketplaces
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
+        XSIAM_MARKETPLACE
+    )
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        old_marketplaces
+    )
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -341,12 +347,12 @@ def test_WasMarketplaceModifiedValidator__modified_item_has_only_one_marketplace
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[
-        1
-    ].marketplaces = XSIAM_MARKETPLACE
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = old_marketplaces
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
+        XSIAM_MARKETPLACE
+    )
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        old_marketplaces
+    )
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -389,12 +395,12 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__pas
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[
-        1
-    ].marketplaces = modified_marketplaces
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = XSIAM_MARKETPLACE
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
+        modified_marketplaces
+    )
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        XSIAM_MARKETPLACE
+    )
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -425,12 +431,12 @@ def test_WasMarketplaceModifiedValidator__old_item_has_only_one_marketplace__fai
     ]
     old_content_items = [create_integration_object(), create_script_object()]
 
-    modified_content_items[0].marketplaces = modified_content_items[
-        1
-    ].marketplaces = modified_marketplaces
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = XSIAM_MARKETPLACE
+    modified_content_items[0].marketplaces = modified_content_items[1].marketplaces = (
+        modified_marketplaces
+    )
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        XSIAM_MARKETPLACE
+    )
     create_old_file_pointers(modified_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -569,14 +575,14 @@ def test_WasMarketplaceModifiedValidator__renamed__fails():
         create_integration_object(pack_info={"marketplaces": XSOAR_MARKETPLACE}),
         create_script_object(pack_info={"marketplaces": XSOAR_MARKETPLACE}),
     ]
-    renamed_content_items[0].git_status = renamed_content_items[
-        1
-    ].git_status = GitStatuses.RENAMED
+    renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
+        GitStatuses.RENAMED
+    )
     old_content_items = [create_integration_object(), create_script_object()]
 
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = ALL_MARKETPLACES_FOR_IN_PACK
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        ALL_MARKETPLACES_FOR_IN_PACK
+    )
     create_old_file_pointers(renamed_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
@@ -609,15 +615,75 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
         ),
         create_script_object(pack_info={"marketplaces": ALL_MARKETPLACES_FOR_IN_PACK}),
     ]
-    renamed_content_items[0].git_status = renamed_content_items[
-        1
-    ].git_status = GitStatuses.RENAMED
+    renamed_content_items[0].git_status = renamed_content_items[1].git_status = (
+        GitStatuses.RENAMED
+    )
     old_content_items = [create_integration_object(), create_script_object()]
 
-    old_content_items[0].marketplaces = old_content_items[
-        1
-    ].marketplaces = XSOAR_MARKETPLACE
+    old_content_items[0].marketplaces = old_content_items[1].marketplaces = (
+        XSOAR_MARKETPLACE
+    )
     create_old_file_pointers(renamed_content_items, old_content_items)
 
     with ChangeCWD(REPO.path):
         assert WasMarketplaceModifiedValidator().is_valid(renamed_content_items) == []
+
+
+@pytest.mark.parametrize(
+    "content_items, old_content_items",
+    [
+        pytest.param(
+            [
+                create_integration_object(paths=["toversion"], values=["6.0.0"]),
+                create_integration_object(paths=["toversion"], values=["5.0.0"]),
+            ],
+            [
+                create_integration_object(paths=["toversion"], values=["5.0.0"]),
+                create_integration_object(paths=["toversion"], values=["5.0.0"]),
+            ],
+            id="Case 1: integration - toversion changed",
+        ),
+        pytest.param(
+            [
+                create_script_object(paths=["toversion"], values=["6.0.0"]),
+                create_script_object(paths=["toversion"], values=["5.0.0"]),
+            ],
+            [
+                create_script_object(paths=["toversion"], values=["5.0.0"]),
+                create_script_object(paths=["toversion"], values=["5.0.0"]),
+            ],
+            id="Case 2: playbook - toversion changed",
+        ),
+        pytest.param(
+            [
+                create_playbook_object(paths=["toversion"], values=["6.0.0"]),
+                create_playbook_object(paths=["toversion"], values=["5.0.0"]),
+            ],
+            [
+                create_playbook_object(paths=["toversion"], values=["5.0.0"]),
+                create_playbook_object(paths=["toversion"], values=["5.0.0"]),
+            ],
+            id="Case 2: playbook - toversion changed",
+        ),
+    ],
+)
+def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content_items):
+    """
+    Given:
+        - Case 1: two content item of type 'Integration', one with modified `fromversion`.
+        - Case 2: two content item of type 'Script', one with modified `fromversion`.
+        - Case 3: two content item of type 'Incident Type', one with modified `fromversion`.
+        - Case 4: two content item of type 'Mapper', one with modified `fromversion`.
+    When:
+        - Calling the `IsValidFromversionOnModifiedValidator` validator.
+    Then:
+        - The is_valid function will catch the change in `fromversion` and will fail the validation only on the relevant content_item.
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    result = IsValidToversionOnModifiedValidator().is_valid(content_items)
+
+    assert (
+        len(result) == 1
+        and result[0].message
+        == "Changing the maximal supported version field `toversion` is not allowed. Please undo, or request a force merge."
+    )

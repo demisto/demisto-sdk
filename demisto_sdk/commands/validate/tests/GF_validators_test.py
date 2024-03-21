@@ -10,7 +10,7 @@ from demisto_sdk.commands.validate.validators.GF_validators.GF101_generic_field_
 )
 
 
-def test_GenericFieldIdPrefixValidateValidator_not_valid():
+def test_GenericFieldIdPrefixValidateValidator_is_valid():
     """
     Given:
         - GenericField content items
@@ -19,16 +19,24 @@ def test_GenericFieldIdPrefixValidateValidator_not_valid():
     Then:
         - Ensure that the ValidationResult returned
           for the GenericField whose 'id' without `generic_` prefix
+        - Ensure that no ValidationResult returned
+          when `id` field with `generic_` prefix
     """
     generic_field = create_generic_field_object(paths=["id"], values=["foo"])
+
+    # not valid
     results = GenericFieldIdPrefixValidateValidator().is_valid([generic_field])
     assert (
         results[0].message
         == "ID `foo` is not valid, it should start with the prefix `generic_`."
     )
 
+    # valid
+    generic_field.object_id = "generic_foo"
+    assert not GenericFieldIdPrefixValidateValidator().is_valid([generic_field])
 
-def test_GenericFieldGroupValidator_not_valid():
+
+def test_GenericFieldGroupValidator_is_valid():
     """
     Given:
         - GenericField content items
@@ -37,21 +45,14 @@ def test_GenericFieldGroupValidator_not_valid():
     Then:
         - Ensure that the ValidationResult returned
           for the GenericField whose 'group' field is not valid
+        - Ensure that no ValidationResult returned when group field set to 4
     """
+    # not valid
     generic_field = create_generic_field_object(paths=["group"], values=[0])
     assert GenericFieldGroupValidator().is_valid([generic_field])
 
-
-def test_GenericFieldGroupValidator_valid():
-    """
-    Given:
-        - GenericField content items with a group value `4` (valid)
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that no ValidationResult returned
-    """
-    generic_field = create_generic_field_object(paths=["group"], values=[4])
+    # valid
+    generic_field.group = 4
     assert not GenericFieldGroupValidator().is_valid([generic_field])
 
 
@@ -87,4 +88,3 @@ def test_GenericFieldIdPrefixValidateValidator_fix():
     result = GenericFieldIdPrefixValidateValidator().fix(generic_field)  # type:ignore
     assert result
     assert result.message == "Change the value of `id` field to `generic_foo`."
-

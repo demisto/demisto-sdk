@@ -23,7 +23,7 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"group": "group"})
+        super().field_mapping.update({"group": "group", "unsearchable": "unsearchable"})
         return super().field_mapping
 
     @property
@@ -37,6 +37,10 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
     @property
     def group(self) -> Optional[int]:
         return self.json_data.get("group")
+
+    @property
+    def unsearchable(self) -> Optional[bool]:
+        return self.json_data.get("unsearchable")
 
     def connect_to_dependencies(self) -> None:
         """Collects the generic types associated to the generic field as optional dependencies."""

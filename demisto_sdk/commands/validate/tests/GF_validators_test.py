@@ -26,10 +26,7 @@ def test_GenericFieldIdPrefixValidateValidator_is_valid():
 
     # not valid
     results = GenericFieldIdPrefixValidateValidator().is_valid([generic_field])
-    assert (
-        results[0].message
-        == "foo is not a valid id, it should start with generic_."
-    )
+    assert results[0].message == "foo is not a valid id, it should start with generic_."
 
     # valid
     generic_field.object_id = "generic_foo"

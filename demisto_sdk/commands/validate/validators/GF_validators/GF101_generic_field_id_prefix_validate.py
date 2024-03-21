@@ -17,7 +17,9 @@ class GenericFieldIdPrefixValidateValidator(BaseValidator[ContentTypes]):
     error_code = "GF101"
     rationale = "Required by the platform."
     description = "Checks if the id starts with `generic_`."
-    error_message = "{generic_id} is not a valid id, it should start with {generic_id_prefix}."
+    error_message = (
+        "{generic_id} is not a valid id, it should start with {generic_id_prefix}."
+    )
     related_field = "id"
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

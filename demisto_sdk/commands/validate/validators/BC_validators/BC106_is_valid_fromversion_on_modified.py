@@ -39,6 +39,7 @@ class IsValidFromversionOnModifiedValidator(BaseValidator[ContentTypes]):
             if fromversion_modified(content_item)
         ]
 
+
 def fromversion_modified(content_item: ContentTypes) -> bool:
     if not content_item.old_base_content_object:
         return False

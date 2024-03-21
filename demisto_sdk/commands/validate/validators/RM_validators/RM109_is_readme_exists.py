@@ -21,7 +21,7 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
     error_code = "RM109"
     description = "Validates if there is a readme file for the content item."
     rationale = "Ensure that the content item contains additional information about use-cases, inputs, and outputs."
-    error_message = "There is no README file for content item from type {0} in pack named '{1}'. Please add relevant README."
+    error_message = "The {0} doesn't have a README file. Please add a README.md file in the content item's directory."
     related_field = "readme"
     related_file_type = [RelatedFileType.README]
 

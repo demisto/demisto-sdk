@@ -67,11 +67,11 @@ class LintManager:
 
     Attributes:
         input(str): Directories to run lint on.
-        git(bool): Perform lint and test only on chaged packs.
+        git(bool): Perform lint and test only on changed packs.
         all_packs(bool): Whether to run on all packages.
         log_path(str): Path to all levels of logs.
         prev_ver(str): Previous branch or SHA1 commit to run checks against.
-        json_file_path(str): Path to a json file to write the run resutls to.
+        json_file_path(str): Path to a json file to write the run results to.
         id_set_path(str): Path to an existing id_set.json.
         check_dependent_api_module(bool): Whether to run lint also on the packs dependent on the modified api modules
         files.
@@ -1086,7 +1086,7 @@ class LintManager:
     def report_summary(
         pkg, pkgs_status: dict, lint_status: dict, all_packs: bool = False
     ):
-        """Log failed image creation if occured
+        """Log failed image creation if occurred
 
         Args:
             pkgs_status: The packs status

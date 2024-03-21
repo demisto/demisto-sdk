@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.27.2"
+version = "1.27.4"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -22,6 +22,7 @@ update-additional-dependencies = "demisto_sdk.scripts.update_additional_dependen
 sdk-changelog = "demisto_sdk.scripts.changelog.changelog:main"
 merge-coverage-report = "demisto_sdk.scripts.merge_coverage_report:main"
 merge-pytest-reports = "demisto_sdk.scripts.merge_pytest_reports:main"
+validate-content-path = "demisto_sdk.scripts.validate_content_path:main"
 validate-conf-json = "demisto_sdk.scripts.validate_conf_json:main"
 init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
@@ -73,7 +74,6 @@ python-dotenv = "^0.20.0"
 importlib-resources = "^5.6.0"
 dictdiffer = "^0.9.0"
 imagesize = "^1.3.0"
-cryptography = "^36.0.2"
 dateparser = "^1.1.1"
 typed-ast = "^1.5.2"
 types-dateparser = "^1.1.0"
@@ -102,7 +102,7 @@ types-decorator = "^5.1.8"
 types-mock = "^4.0.15"
 types-setuptools = ">=65.6.0.1,<68.0.0.0"
 types-ujson = "^5.6.0.0"
-typer = {extras = ["all"], version = ">=0.6.1,<0.8.0"}
+typer = {extras = ["all"], version = "^0.9.0"}
 types-pkg-resources = "^0.1.3"
 types-toml = "^0.10.8.7"
 packaging = "^23.1"

@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Pack, Playbook]
+ContentTypes = Union[Integration, Script, Playbook]
 
 
 class IsReadmeExistsValidator(BaseValidator[ContentTypes]):

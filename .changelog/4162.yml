@@ -1,0 +1,4 @@
+changes:
+- description: Fix a bug in `generate-docs` for new integrations in existing Packs.
+  type: fix
+pr_number: 4162

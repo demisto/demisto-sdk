@@ -23,8 +23,6 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
     rationale = "Ensure that the content item contains additional information about use-cases, inputs, and outputs."
     error_message = "There is no README file for content item from type {0} in pack named '{1}'. Please add relevant README."
     related_field = "readme"
-    is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.DELETED]
     related_file_type = [RelatedFileType.README]
 
     

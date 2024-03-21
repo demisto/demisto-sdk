@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue in integration script unifier related to developer contributor type handling.
+- description: Fixed an issue where **prepare-content** command didn't add contribution section to description files when support level of pack-metadata was `developer` support.
   type: fix
 pr_number: 4151

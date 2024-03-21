@@ -24,7 +24,6 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -323,7 +322,7 @@ class Initializer:
                 set(self.load_files(self.file_path.split(",")))
             )
         elif self.all_files:
-            content_dto = ContentDTO.from_path(CONTENT_PATH)
+            content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)

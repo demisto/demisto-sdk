@@ -8,6 +8,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Setup Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.10"
+  
       - id: find-last-release-commit
         run: |
           import git
@@ -38,12 +43,6 @@ jobs:
             demisto_sdk/commands/validate/**
             demisto_sdk/commands/validate/generate_validate_docs.py
           base_sha: ${{ steps.find-last-release-commit.outputs.ref }}
-
-      - name: Setup Environment
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup_environment
-        with:
-          python-version: "3.10"
 
       - name: Generate Docs
         if: steps.changed-files.outputs.any_changed == 'true'

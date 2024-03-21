@@ -78,3 +78,9 @@
   language: python
   require_serial: true
   pass_filenames: false
+
+- id: validate-content-path
+  name: validate-content-path
+  entry: validate-content-path
+  language: python
+  pass_filenames: true

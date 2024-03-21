@@ -1,5 +1,3 @@
-import pytest
-
 from demisto_sdk.commands.validate.tests.test_tools import create_generic_field_object
 from demisto_sdk.commands.validate.validators.GF_validators.GF100_generic_field_group import (
     REQUIRED_GROUP_VALUE,

@@ -136,13 +136,12 @@ class IntegrationDocUpdateManager:
             # so there's no need to get the file from remote.
             # We therefore set the output path to the relative path from
             # the content path of the resource.
-            if self.is_ui_contribution or not remote:
+            if self.is_ui_contribution:
                 relative_resource_path = os.path.join(
                     INTEGRATIONS_DIR, self.integration_name, resource_path.name
                 )
                 path = list(get_content_path().glob(f"**/{relative_resource_path}"))[0]
-            elif remote:
-
+            else:
                 if not resource_path.is_absolute():
                     resource_path = resource_path.absolute()
 
@@ -158,7 +157,7 @@ class IntegrationDocUpdateManager:
             KeyError,
             IndexError,
         ) as e:
-            msg = f"{e.__class__.__name__}: Could not find file '{str(resource_path)}' in {'remote' if remote else 'local'}. Please specify the full path to the integration YAML file, e.g. `demisto-sdk generate-docs -i $(realpath {resource_path})`"
+            msg = f"{e.__class__.__name__}: Could not find file '{str(resource_path)}' in {'remote' if remote else 'local'}."
             logger.error(msg)
             self.update_errors.append(msg)
             path = None

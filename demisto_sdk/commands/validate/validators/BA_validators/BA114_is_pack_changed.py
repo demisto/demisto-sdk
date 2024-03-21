@@ -20,7 +20,7 @@ class PackNameValidator(BaseValidator[ContentTypes]):
         "Validate that the name of the pack for a content item was not changed."
     )
     error_message = (
-        "Pack for a content item '{0}' was changed from '{1}' to '{2}', please undo."
+        "Pack for content item '{0}' and all related files were changed from '{1}' to '{2}', please undo."
     )
     related_field = "path"
     expected_git_statuses = [GitStatuses.RENAMED]

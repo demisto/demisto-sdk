@@ -3,11 +3,10 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.tools import get_pack_name
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -30,13 +29,13 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.content_type, get_pack_name(content_item.path)),
+                message=self.error_message.format(
+                    content_item.content_type, get_pack_name(content_item.path)
+                ),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                not content_item.readme.exist
-            )
+            if (not content_item.readme.exist)
         ]
     
 

@@ -7,6 +7,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
     create_pack_object,
     create_playbook_object,
+    create_script_object,
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
@@ -267,15 +268,19 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
                 create_playbook_object(),
             ],
             1,
-            ["There is no README file for content item from type Playbook in pack named 'pack_18'. Please add relevant README."],
+            [
+                "The Playbook doesn't have a README file. Please add a README.md file in the content item's directory."
+            ],
         ),
         (
             [
-                create_pack_object(),
-                create_pack_object(),
+                create_script_object(),
+                create_script_object(),
             ],
             1,
-            ["There is no README file for content item from type Pack in pack named 'pack_20'. Please add relevant README."]
+            [
+                "The Script doesn't have a README file. Please add a README.md file in the content item's directory."
+            ]
         ),
         (
             [
@@ -283,11 +288,25 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
                 create_integration_object(),
             ],
             1,
-            ["There is no README file for content item from type Integration in pack named 'pack_22'. Please add relevant README."]
+            [
+                "The Integration doesn't have a README file. Please add a README.md file in the content item's directory."
+            ]
         )
     ]
 )
-def test_IsReadmeExistsValidator_is_valid(content_items, expected_number_of_failures, expected_msgs):
+
+
+def test_IsReadmeExistsValidator_is_valid(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given:
+        - Integration, Script and Playbook objects- one have and one does not have README file
+    When:
+        - run is_valid method from IsReadmeExistsValidator
+    Then:
+        - Ensure that for each test only one ValidationResult returns with the correct message
+    """
     content_items[1].readme.exist= False
     results = IsReadmeExistsValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
@@ -297,5 +316,3 @@ def test_IsReadmeExistsValidator_is_valid(content_items, expected_number_of_fail
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
-
-

@@ -1,4 +1,4 @@
-from typing import IO, Any, AnyStr, Optional
+from typing import IO, Any, Optional
 
 import json5  # noqa: TID251 - this is the handler
 

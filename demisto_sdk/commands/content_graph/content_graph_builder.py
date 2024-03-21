@@ -1,13 +1,11 @@
 import gc
-from typing import List, Optional
-
-import more_itertools
-import tqdm
+from typing import Optional, Tuple
 
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
+from demisto_sdk.commands.content_graph.objects.repository import (
+    ContentDTO,
+)
 
 PACKS_PER_BATCH = 600
 
@@ -27,7 +25,7 @@ class ContentGraphBuilder:
 
     def update_graph(
         self,
-        packs_to_update: Optional[List[str]] = None,
+        packs_to_update: Optional[Tuple[str, ...]] = None,
     ) -> None:
         """Imports a content graph from files and updates the given pack nodes.
 
@@ -44,38 +42,19 @@ class ContentGraphBuilder:
         self.content_graph.create_indexes_and_constraints()
 
     def _parse_and_model_content(
-        self, packs_to_parse: Optional[List[str]] = None
+        self, packs_to_parse: Optional[Tuple[str, ...]] = None
     ) -> None:
+        content_dto: ContentDTO = self._create_content_dto(packs_to_parse)
+        self._collect_nodes_and_relationships_from_model(content_dto)
 
-        content_dtos: List[ContentDTO] = self._create_content_dtos(packs_to_parse)
-        for content_dto in content_dtos:
-            self._collect_nodes_and_relationships_from_model(content_dto)
-
-    def _create_content_dtos(self, packs: Optional[List[str]]) -> List[ContentDTO]:
+    def _create_content_dto(self, packs: Optional[Tuple[str, ...]]) -> ContentDTO:
         """Parses the repository, then creates and returns a repository model.
 
         Args:
             path (Path): The repository path.
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
-        content_dtos = []
-        repository_parser = RepositoryParser(self.content_graph.repo_path)
-        packs_to_parse = tuple(repository_parser.iter_packs(packs))
-        # parse the content packs with a progress bar
-        with tqdm.tqdm(
-            total=len(packs_to_parse),
-            unit="packs",
-            desc="Parsing packs",
-            position=0,
-            leave=True,
-        ) as progress_bar:
-            for packs_batch in more_itertools.chunked(packs_to_parse, PACKS_PER_BATCH):
-                repository_parser.parse(packs_batch, progress_bar)
-                content_dtos.append(ContentDTO.from_orm(repository_parser))
-
-                repository_parser.clear()
-                gc.collect()
-        return content_dtos
+        return ContentDTO.from_path(packs_to_parse=packs)
 
     def _collect_nodes_and_relationships_from_model(
         self, content_dto: ContentDTO

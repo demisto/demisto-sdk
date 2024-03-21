@@ -25,7 +25,7 @@ disallowed_terms = (
     )
 
 
-class IsCustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
+class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
     error_code = "BA125"
     description = "Validate that customer facing docs and fields don't contain any internal terms that aren't clear for customers."
     rationale = "Ensure customer-facing docs avoid internal terms for clarity."

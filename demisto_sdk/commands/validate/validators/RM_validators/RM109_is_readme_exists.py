@@ -20,7 +20,7 @@ ContentTypes = Union[Integration, Pack, Playbook]
 class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
     error_code = "RM109"
     description = "Validates if there is a readme file for the content item."
-    rationale = "Insure that we have a README file for uploading to xsoar.pan.dev"
+    rationale = "Ensure that the content item contains additional information about use-cases, inputs, and outputs."
     error_message = "There is no README file for content item from type {0} in pack named '{1}'. Please add relevant README."
     related_field = "readme"
     is_auto_fixable = False

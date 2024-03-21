@@ -19,7 +19,7 @@ ContentTypes = Integration
 class DefaultImageValidator(BaseValidator[ContentTypes]):
     error_code = "IM106"
     description = "Checks if the integration has an image other than the default ones."
-    rationale = "If an author image is provided, it must not be the default ones."
+    rationale = "If an image is provided, it must not be the default ones."
     error_message = "This is the default image, please change to the integration image."
     related_field = "image"
     is_auto_fixable = False

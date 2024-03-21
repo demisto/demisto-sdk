@@ -70,17 +70,17 @@ For example: This .pack-ignore will not fail ipinfo_v2.yml on the validations wi
 ignore=BA108,BA109
 
 ### Config file
-Each user will have a personal config file which he can edit however he wants.
-A default config file can be found [here.](default_config.toml)
-The default config file cover all the mandatory validations - the validations that without them the upload will fail.
-The config file will have a **ignorable_errors** - A list of the error codes that can be ignored in the .pack-ignore file.
-The config file will also have different handling categories:
+You can define a config file to suit your bussiness needs. If no file is defined, the  [default config file](default_config.toml) will be used.
+The default configuration covers basic validations, which prevent successful upload of the content to XSOAR.
+#### How to define a configuration file
+You can define the following sections:
+**ignorable_errors** - a list of the error codes that can be ignored for individual content items in the .pack-ignore file.
 **validate_all** - the configurations to run when running with -a / -i flags.
 **use_git** - the configurations to run when running with -g flag.
-And custom sections provided by the user - will be configured to run with the **category-to-run** flag.
-Each handling category will have the following options:
+You can also define custom sections - which can be configured to run with the **category-to-run** flag.
+Each section will have the following options:
 **select** - The validations to run.
-**warning** - Validations to only throw warning (shouldn't fail the flow).
+**warning** - Validations for which to only throw warnings (will not fail the flow).
 The config file can also configure which validations to ignore based on the content item support level using the section header support_level.<support_type> where support_type is one of  xsoar, partner, or community.
 If the user wishes to ignore this feature in some of the calls, he can use the **--ignore-support-level** flag.
 

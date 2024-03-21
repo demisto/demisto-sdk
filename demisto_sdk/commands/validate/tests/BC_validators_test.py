@@ -673,7 +673,7 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
                 create_incoming_mapper_object(paths=["fromversion"], values=["6.0.0"]),
                 create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
             ],
-            id="Case 3: incident type - fromversion changed",
+            id="Case 4: mapper - fromversion changed",
         ),
     ],
 )

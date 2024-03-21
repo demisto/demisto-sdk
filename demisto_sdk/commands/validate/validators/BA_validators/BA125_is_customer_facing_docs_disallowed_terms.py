@@ -51,6 +51,6 @@ class IsCustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
     def find_disallowed_terms(self, content_item, found_terms):
         related_files = [content_item.readme, content_item.description_file, content_item.in_pack.release_note]
         for file in related_files:
-            file_content = file.file_content
-            found_terms.extend([term for term in disallowed_terms if term.casefold() in file_content])
+            file_content = file.file_content.casefold()
+            found_terms.extend([term for term in disallowed_terms if term in file_content])
         return found_terms

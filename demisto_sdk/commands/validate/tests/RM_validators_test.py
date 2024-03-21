@@ -11,9 +11,14 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
+<<<<<<< HEAD
 from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme_not_equal_pack_description import IsPackReadmeNotEqualPackDescriptionValidator
 from demisto_sdk.commands.validate.validators.RM_validators.RM109_is_readme_exists import (
     IsReadmeExistsValidator,
+=======
+from demisto_sdk.commands.validate.validators.RM_validators.RM105_is_pack_readme_not_equal_pack_description import (
+    IsPackReadmeNotEqualPackDescriptionValidator,
+>>>>>>> origin
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM113_is_contain_copy_right_section import (
     IsContainCopyRightSectionValidator,
@@ -218,6 +223,10 @@ def test_IsImageExistsInReadmeValidator_is_valid(
         ]
     )
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin
 def test_IsPackReadmeNotEqualPackDescriptionValidator_not_valid():
     """
     Given:

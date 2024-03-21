@@ -277,8 +277,8 @@ def test_integration_script_file_valid(file_name: str):
         "Layout-.json",
         "Layoutscontainer-.json",
         "layout_.json",
-        "layout-foo.NOTjson",
-        "layoutscontainer-foo.NOTjson",
+        "layout-foo.py",
+        "layoutscontainer-foo.py",
     ),
 )
 def test_layout_invalid(file_name: str):

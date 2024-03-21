@@ -4,6 +4,7 @@ from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersio
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_incident_type_object,
     create_incoming_mapper_object,
     create_integration_object,
     create_old_file_pointers,
@@ -655,32 +656,32 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
         ),
         pytest.param(
             [
-                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
-                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromversion"], values=["5.0.0"]),
             ],
             [
-                create_incoming_mapper_object(paths=["fromversion"], values=["6.0.0"]),
-                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incident_type_object(paths=["fromversion"], values=["6.0.0"]),
+                create_incident_type_object(paths=["fromversion"], values=["5.0.0"]),
             ],
-            id="Case 3: mapper - fromversion changed",
+            id="Case 3: incident type - fromversion changed",
         ),
     ],
 )
 def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
-    content_item, old_content_item
+    content_items, old_content_items
 ):
     """
     Given:
         - Case 1: two content item of type 'Integration', one with modified `fromversion`.
         - Case 2: two content item of type 'Script', one with modified `fromversion`.
-        - Case 3: two content item of type 'Mapper', one with modified `fromversion`.
+        - Case 3: two content item of type 'Incident Type', one with modified `fromversion`.
     When:
         - Calling the `IsValidFromversionOnModifiedValidator` validator.
     Then:
-        - Case 2:
+        - The is_valid function will catch the change in `fromversion` and will fail the validation only on the relevant content_item.
     """
-    create_old_file_pointers(content_item, old_content_item)
-    result = IsValidFromversionOnModifiedValidator().is_valid(content_item)
+    create_old_file_pointers(content_items, old_content_items)
+    result = IsValidFromversionOnModifiedValidator().is_valid(content_items)
 
     assert (
         len(result) == 1

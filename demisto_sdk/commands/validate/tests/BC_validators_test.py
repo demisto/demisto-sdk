@@ -654,30 +654,17 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
             ],
             id="Case 2: playbook - toversion changed",
         ),
-        pytest.param(
-            [
-                create_playbook_object(paths=["toversion"], values=["6.0.0"]),
-                create_playbook_object(paths=["toversion"], values=["5.0.0"]),
-            ],
-            [
-                create_playbook_object(paths=["toversion"], values=["5.0.0"]),
-                create_playbook_object(paths=["toversion"], values=["5.0.0"]),
-            ],
-            id="Case 2: playbook - toversion changed",
-        ),
     ],
 )
 def test_IsValidToversionOnModifiedValidator_is_valid(content_items, old_content_items):
     """
     Given:
-        - Case 1: two content item of type 'Integration', one with modified `fromversion`.
-        - Case 2: two content item of type 'Script', one with modified `fromversion`.
-        - Case 3: two content item of type 'Incident Type', one with modified `fromversion`.
-        - Case 4: two content item of type 'Mapper', one with modified `fromversion`.
+        - Case 1: two content item of type 'Integration', one with modified `toversion`.
+        - Case 2: two content item of type 'Script', one with modified `toversion`.
     When:
-        - Calling the `IsValidFromversionOnModifiedValidator` validator.
+        - Calling the `IsValidToversionOnModifiedValidator` validator.
     Then:
-        - The is_valid function will catch the change in `fromversion` and will fail the validation only on the relevant content_item.
+        - The is_valid function will catch the change in `toversion` and will fail the validation only on the relevant content_item.
     """
     create_old_file_pointers(content_items, old_content_items)
     result = IsValidToversionOnModifiedValidator().is_valid(content_items)

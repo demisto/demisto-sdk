@@ -1,0 +1,4 @@
+changes:
+- description: Fixes an issue in **graph** commands where empty pack folders were not being ignored.
+  type: fix
+pr_number: 4154

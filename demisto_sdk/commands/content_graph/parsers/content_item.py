@@ -94,7 +94,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
         git_sha: Optional[str] = None,
-        strict: bool = False,
+        strict_path: bool = False,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
@@ -103,7 +103,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             path (Path): The path of the content item.
             pack_marketplaces (List[MarketplaceVersions], optional): The marketplaces of the pack.
             git_sha (Optional[str], optional): The git sha of the pack.
-            strict (bool, optional): Whether or not to raise an exception if the content item can't be determined by path. Defaults to False.
+            strict_path (bool, optional): Whether or not to raise an exception if the content item can't be determined by path. Defaults to False.
 
         Returns:
             Optional[ContentItemParser]: The parsed content item.
@@ -117,10 +117,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         try:
             content_type: ContentType = ContentType.by_path(path)
         except ValueError as e:
-            if strict:
-                logger.error(
-                    f"Could not determine content type for {path}. Using strict mode."
-                )
+            if strict_path:
+                logger.error(f"Could not determine content type for '{path}'.")
                 raise InvalidContentItemException from e
             try:
                 optional_content_type = ContentType.by_schema(path)

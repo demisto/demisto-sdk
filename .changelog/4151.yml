@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in integration script unifier related to developer contributor type handling.
+  type: fix
+pr_number: 4151

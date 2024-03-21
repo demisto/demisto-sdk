@@ -1516,6 +1516,7 @@ ALLOWED_IGNORE_ERRORS = (
         "IF113",
         "IF115",
         "IF116",
+        "IN101",
         "IN109",
         "IN110",
         "IN122",

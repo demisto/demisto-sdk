@@ -22,6 +22,9 @@ class IncidentFieldParser(
         super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.field_type = self.json_data.get("type")
         self.associated_to_all = self.json_data.get("associatedToAll")
+        self.content = self.json_data.get("content")
+        self.system = self.json_data.get("system")
+        self.group = self.json_data.get("group")
 
         self.connect_to_dependencies()
 

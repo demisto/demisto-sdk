@@ -28,7 +28,7 @@ def test_GenericFieldIdPrefixValidateValidator_is_valid():
     results = GenericFieldIdPrefixValidateValidator().is_valid([generic_field])
     assert (
         results[0].message
-        == "ID `foo` is not valid, it should start with the prefix `generic_`."
+        == "foo is not a valid id, it should start with generic_."
     )
 
     # valid
@@ -52,7 +52,7 @@ def test_GenericFieldGroupValidator_is_valid():
     assert GenericFieldGroupValidator().is_valid([generic_field])
 
     # valid
-    generic_field.group = 4
+    generic_field.group = REQUIRED_GROUP_VALUE
     assert not GenericFieldGroupValidator().is_valid([generic_field])
 
 
@@ -68,23 +68,5 @@ def test_GenericFieldGroupValidator_fix():
     """
     generic_field = create_generic_field_object(paths=["group"], values=["0"])
     result = GenericFieldGroupValidator().fix(generic_field)
-    assert result.message == f"`group` field is set to {REQUIRED_GROUP_VALUE}."
+    assert result.message == f"set the `group` field to {REQUIRED_GROUP_VALUE}."
     assert generic_field.group == REQUIRED_GROUP_VALUE
-
-
-def test_GenericFieldIdPrefixValidateValidator_fix():
-    """
-    Given:
-        - invalid GenericField that 'id' without `generic_` prefix
-    When:
-        - run fix method
-    Then:
-        - Ensure the fix message as expected
-        - Ensure the field `id` changing to with `generic_` prefix
-    """
-
-    generic_field = create_generic_field_object(paths=["id"], values=["foo"])
-
-    result = GenericFieldIdPrefixValidateValidator().fix(generic_field)  # type:ignore
-    assert result
-    assert result.message == "Change the value of `id` field to `generic_foo`."

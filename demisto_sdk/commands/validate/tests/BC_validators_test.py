@@ -626,11 +626,11 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
         assert WasMarketplaceModifiedValidator().is_valid(renamed_content_items) == []
 
 
-def test_have_the_args_changed_validator():
+def test_have_the_args_changed_validator__fails():
     """
     Given:
-        - Integration content item with a changed argument name.
-        - Old Integration content item with the old argument name.
+        - Script content item with a changed argument name.
+        - Old Script content item with the old argument name.
 
     When:
         - Calling the `HaveTheArgsChangedValidator` function.
@@ -639,14 +639,42 @@ def test_have_the_args_changed_validator():
         - The results should be as expected.
         - Should fail the validation since the user changed the argument name.
     """
-    modified_content_items = [create_script_object()]
-    old_content_items = [create_script_object()]
+    modified_content_items = [
+        create_script_object(paths=["args[0].name"], values=["new_arg"])
+    ]
+    old_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
 
-    modified_content_items[0].args[0].name = "new_arg"
-    old_content_items[0].args[0].name = "old_arg"
     create_old_file_pointers(modified_content_items, old_content_items)
 
     results = HaveTheArgsChangedValidator().is_valid(modified_content_items)
     assert results[0].message == (
         "One or more argument names in the 'myScript' file have been changed. Please undo the change."
     )
+
+
+def test_have_the_args_changed_validator__passes():
+    """
+    Given:
+        - Script content item with a new argument name, and an existing argument name.
+        - Old Script content item with the existing argument name.
+    When:
+        - Calling the `HaveTheArgsChangedValidator` function.
+
+    Then:
+        - The results should be as expected.
+        - Should pass the validation since the user didn't change existing argument names, only added new ones.
+    """
+    modified_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+    new_arg = create_script_object(paths=["args[0].name"], values=["new_arg"]).args[0]
+    modified_content_items[0].args.append(new_arg)
+    old_content_items = [
+        create_script_object(paths=["args[0].name"], values=["old_arg"])
+    ]
+
+    create_old_file_pointers(modified_content_items, old_content_items)
+
+    assert HaveTheArgsChangedValidator().is_valid(modified_content_items) == []

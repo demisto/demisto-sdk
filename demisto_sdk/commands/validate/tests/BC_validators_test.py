@@ -629,7 +629,7 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
 
 
 @pytest.mark.parametrize(
-    "content_item, old_content_item",
+    "content_items, old_content_items",
     [
         pytest.param(
             [

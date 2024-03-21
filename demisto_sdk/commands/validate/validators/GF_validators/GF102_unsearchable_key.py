@@ -35,7 +35,5 @@ class UnsearchableKeyValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                not content_item.unsearchable
-            )
+            if (not content_item.unsearchable)
         ]

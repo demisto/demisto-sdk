@@ -6,7 +6,9 @@ from demisto_sdk.commands.validate.validators.GF_validators.GF100_generic_field_
 from demisto_sdk.commands.validate.validators.GF_validators.GF101_generic_field_id_prefix_validate import (
     GenericFieldIdPrefixValidateValidator,
 )
-from demisto_sdk.commands.validate.validators.GF_validators.GF102_unsearchable_key import UnsearchableKeyValidator
+from demisto_sdk.commands.validate.validators.GF_validators.GF102_unsearchable_key import (
+    UnsearchableKeyValidator,
+)
 
 
 def test_GenericFieldIdPrefixValidateValidator_is_valid():
@@ -70,7 +72,6 @@ def test_UnsearchableKeyValidator_is_valid():
     # valid
     generic_field.unsearchable = True
     assert not UnsearchableKeyValidator().is_valid([generic_field])
-
 
 
 def test_GenericFieldGroupValidator_fix():

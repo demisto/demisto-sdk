@@ -703,7 +703,7 @@ def create_indicator_type_object(
 
 
 def create_old_file_pointers(content_items, old_content_items) -> None:
-    """ Given two iterables of content_items and their old_content_items, assign each content_item its matching old_content_item.
+    """Given two iterables of content_items and their old_content_items, assign each content_item its matching old_content_item.
 
     Args:
         content_items (Iterable): Iterables object of content_items.

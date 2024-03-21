@@ -223,10 +223,6 @@ def test_IsImageExistsInReadmeValidator_is_valid(
         ]
     )
 
-<<<<<<< HEAD
-=======
-
->>>>>>> origin
 def test_IsPackReadmeNotEqualPackDescriptionValidator_not_valid():
     """
     Given:

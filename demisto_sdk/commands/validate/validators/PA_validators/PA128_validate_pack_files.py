@@ -23,7 +23,7 @@ class PackFilesValidator(BaseValidator[ContentTypes]):
     rationale = "These files are required by the platform."
     error_message = "Packs require a .secrets_ignore, .pack-ignore and README"
     fix_message = "Created required files, empty."
-    related_field = ""  # TODO?
+    related_field = "secrets-ignore,pack-ignore,readme"
     is_auto_fixable = True
     related_file_type = [
         RelatedFileType.README,

@@ -1,0 +1,4 @@
+changes:
+- description: Updated the **validate** command (`BC107`) to verify that the toversion property was not changed on existing Content files.
+  type: internal
+pr_number: 4164

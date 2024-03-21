@@ -1,29 +1,21 @@
 name: Generate Validate Docs
-
-on: pull_request
+on: push
 
 jobs:
-  hash_previous_readme:
+  generate_validate_docs:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
       - uses: actions/checkout@v4
         with:
-          path: previous_release
           fetch-depth: 0
       - id: find-last-release-commit
         run: |
           import git
           import os
-
           last_tag = sorted(
               filter(lambda tag: tag.name.startswith("v"), git.Repo().tags),  # noqa: TID251
               key=lambda t: t.commit.committed_datetime,
           )[-1]
-
           print(
               "\n".join(
                   [
@@ -37,36 +29,15 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
             print(f'{ref}={str(last_tag.commit)}', file=fh)
         shell: python
-      - name: Setup Poetry
-        uses: Gr1N/setup-poetry@v9
-        env:
-          POETRY_VIRTUALENVS_PATH: venv_last_release
-      - run: cd previous_release
-      - run: git checkout ${{ steps.find-last-release-commit.outputs.ref }}
-      - run: poetry install
-      - run: venv_last_release/bin/python demisto_sdk/commands/validate/generate_validate_docs.py last_release_validation_docs.md
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          path: last_release_validation_docs.md
-          if-no-files-found: error
-          name: last_release_validation_docs
-      - name: Store doc hash
-        id: store-hash
-        run: echo "{hash}={${{hashFiles('last_release_validation_docs.md')}}}" >> "$GITHUB_OUTPUT"
-  
-  generate_validate_docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Check whether validate files changed
         id: changed-files
         uses: tj-actions/changed-files@v42
         with:
-          files: demisto_sdk/commands/validate/**
+          files: |
+            demisto_sdk/commands/validate/**
+            demisto_sdk/commands/validate/generate_validate_docs.py
+          base_sha: ${{ steps.find-last-release-commit.outputs.ref }}
 
       - name: Setup Environment
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -93,5 +64,6 @@ jobs:
         id: store-hash
         run: echo "{hash}={${{hashFiles('validation_docs.md')}}}" >> "$GITHUB_OUTPUT"
 
-  notify_modified_readme:
-    runs-on: ubuntu-latest
+      - name: Notify
+        run: poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'

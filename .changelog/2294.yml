@@ -1,4 +1,4 @@
 changes:
-- description: Add `BC106` validation.
-  type: feature
+- description: Updated the **validate** command (`BC106`) to verify that the fromversion property was not changed on existing Content files.
+  type: internal
 pr_number: 2294

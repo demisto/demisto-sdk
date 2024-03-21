@@ -1227,7 +1227,9 @@ def test_IsEntityNameContainExcludedWordValidator(
         pytest.param([create_incident_type_object()], 0, [], id="incident_type"),
         pytest.param([create_generic_type_object()], 0, [], id="generic_type"),
         pytest.param([create_outgoing_mapper_object()], 0, [], id="outgoing_mapper"),
-        pytest.param([create_generic_definition_object()], 0, [], id="generic_definition"),
+        pytest.param(
+            [create_generic_definition_object()], 0, [], id="generic_definition"
+        ),
         pytest.param([create_classifier_object()], 0, [], id="classifier"),
         pytest.param([create_xsiam_dashboard_object()], 0, [], id="xsiam_dashboard"),
         pytest.param([create_job_object()], 0, [], id="job"),
@@ -1236,7 +1238,9 @@ def test_IsEntityNameContainExcludedWordValidator(
         pytest.param([create_playbook_object()], 0, [], id="playbook"),
         pytest.param([create_generic_field_object()], 0, [], id="generic_field"),
         pytest.param([create_correlation_rule_object()], 0, [], id="correlation_rule"),
-        pytest.param([create_assets_modeling_rule_object()], 0, [], id="assets_modeling_rule"),
+        pytest.param(
+            [create_assets_modeling_rule_object()], 0, [], id="assets_modeling_rule"
+        ),
         pytest.param([create_layout_object()], 0, [], id="layout"),
         pytest.param(
             [
@@ -1410,7 +1414,10 @@ def test_IsContentItemNameContainTrailingSpacesValidator_is_valid(
     results = IsContentItemNameContainTrailingSpacesValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     if results:
-        assert results[0].message == f"The following fields have a trailing spaces: {expected_field_error_messages[0]}."
+        assert (
+            results[0].message
+            == f"The following fields have a trailing spaces: {expected_field_error_messages[0]}."
+        )
 
 
 @pytest.mark.parametrize(

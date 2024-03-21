@@ -45,7 +45,10 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
             last_updated = docker_image.creation_date
             return not last_updated or three_months_ago > last_updated
         except DockerHubRequestException as error:
-            if error.exception.response and error.exception.response.status_code == requests.codes.not_found:
+            if (
+                error.exception.response
+                and error.exception.response.status_code == requests.codes.not_found
+            ):
                 logger.debug(
                     f"Could not get {docker_image} creation time because the image does not have the tag {docker_image.tag}"
                 )
@@ -75,7 +78,11 @@ class DockerImageTagIsNotOutdated(BaseValidator[ContentTypes]):
                     docker_image_latest_tag = str(docker_image.latest_tag)
                 except DockerHubRequestException as error:
                     logger.error(f"DO106 - Error when fetching latest tag:\n{error}")
-                    if error.exception.response and error.exception.response.status_code == requests.codes.not_found:
+                    if (
+                        error.exception.response
+                        and error.exception.response.status_code
+                        == requests.codes.not_found
+                    ):
                         message = f"The docker-image {content_item.docker_image} does not exist, hence could not validate its latest tag"
                     else:
                         message = str(error)

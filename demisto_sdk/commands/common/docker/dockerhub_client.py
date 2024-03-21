@@ -105,7 +105,11 @@ class DockerHubClient:
             logger.warning(
                 f"Error when trying to get dockerhub token, error\n:{_error}"
             )
-            if _error.response.status_code == requests.codes.unauthorized and self.auth:
+            if (
+                _error.response
+                and _error.response.status_code == requests.codes.unauthorized
+                and self.auth
+            ):
                 logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
@@ -382,7 +386,10 @@ class DockerHubClient:
             self.get_image_tag_metadata(docker_image, tag=tag)
             return True
         except DockerHubRequestException as error:
-            if error.exception.response.status_code == requests.codes.not_found:
+            if (
+                error.exception.response
+                and error.exception.response.status_code == requests.codes.not_found
+            ):
                 logger.debug(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )

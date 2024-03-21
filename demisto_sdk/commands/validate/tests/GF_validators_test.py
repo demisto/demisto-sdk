@@ -28,6 +28,49 @@ def test_GenericFieldIdPrefixValidateValidator_not_valid():
     )
 
 
+def test_GenericFieldGroupValidator_not_valid():
+    """
+    Given:
+        - GenericField content items
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that the ValidationResult returned
+          for the GenericField whose 'group' field is not valid
+    """
+    generic_field = create_generic_field_object(paths=["group"], values=[0])
+    assert GenericFieldGroupValidator().is_valid([generic_field])
+
+
+def test_GenericFieldGroupValidator_valid():
+    """
+    Given:
+        - GenericField content items with a group value `4` (valid)
+    When:
+        - run is_valid method
+    Then:
+        - Ensure that no ValidationResult returned
+    """
+    generic_field = create_generic_field_object(paths=["group"], values=[4])
+    assert not GenericFieldGroupValidator().is_valid([generic_field])
+
+
+def test_GenericFieldGroupValidator_fix():
+    """
+    Given:
+        - invalid GenericField that 'group' field is not 4
+    When:
+        - run fix method
+    Then:
+        - Ensure the fix message as expected
+        - Ensure the field `group` is set to 4
+    """
+    generic_field = create_generic_field_object(paths=["group"], values=["0"])
+    result = GenericFieldGroupValidator().fix(generic_field)
+    assert result.message == f"`group` field is set to {REQUIRED_GROUP_VALUE}."
+    assert generic_field.group == REQUIRED_GROUP_VALUE
+
+
 def test_GenericFieldIdPrefixValidateValidator_fix():
     """
     Given:
@@ -45,32 +88,3 @@ def test_GenericFieldIdPrefixValidateValidator_fix():
     assert result
     assert result.message == "Change the value of `id` field to `generic_foo`."
 
-
-def test_GenericFieldGroupValidator_not_valid():
-    """
-    Given:
-        - GenericField content items
-    When:
-        - run is_valid method
-    Then:
-        - Ensure that the ValidationResult returned
-          for the GenericField whose 'group' field is not valid
-    """
-    generic_field = create_generic_field_object(paths=["group"], values=["0"])
-    assert GenericFieldGroupValidator().is_valid([generic_field])
-
-
-def test_GenericFieldGroupValidator_fix():
-    """
-    Given:
-        - invalid GenericField that 'group' field is not 4
-    When:
-        - run fix method
-    Then:
-        - Ensure the fix message as expected
-        - Ensure the field `group` is set to 4
-    """
-    generic_field = create_generic_field_object(paths=["group"], values=["0"])
-    result = GenericFieldGroupValidator().fix(generic_field)
-    assert result.message == f"`group` field is set to {REQUIRED_GROUP_VALUE}."
-    assert generic_field.group == REQUIRED_GROUP_VALUE

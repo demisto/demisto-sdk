@@ -1,7 +1,6 @@
 import pytest
 
 from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
-from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_incident_type_object,
@@ -665,6 +664,17 @@ def test_WasMarketplaceModifiedValidator__renamed__passes():
             ],
             id="Case 3: incident type - fromversion changed",
         ),
+        pytest.param(
+            [
+                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            [
+                create_incoming_mapper_object(paths=["fromversion"], values=["6.0.0"]),
+                create_incoming_mapper_object(paths=["fromversion"], values=["5.0.0"]),
+            ],
+            id="Case 3: incident type - fromversion changed",
+        ),
     ],
 )
 def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
@@ -675,6 +685,7 @@ def test_IsValidFromversionOnModifiedValidator_is_valid_fails(
         - Case 1: two content item of type 'Integration', one with modified `fromversion`.
         - Case 2: two content item of type 'Script', one with modified `fromversion`.
         - Case 3: two content item of type 'Incident Type', one with modified `fromversion`.
+        - Case 4: two content item of type 'Mapper', one with modified `fromversion`.
     When:
         - Calling the `IsValidFromversionOnModifiedValidator` validator.
     Then:

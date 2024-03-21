@@ -103,7 +103,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
-    is_fetch_assets: bool = False
+    is_fetch_assets: bool = Field(False, alias="isfetchassets")
     is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     is_beta: bool = False
@@ -140,6 +140,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
+        if marketplace == MarketplaceVersions.XSOAR:
+            summary["isfetchevents"] = False
+            summary["isfetchassets"] = False
         if self.unified_data:
             summary["name"] = self.unified_data.get("display")
         return summary
@@ -156,6 +159,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     },  # for all commands, keep the name and description
                     "is_fetch": True,
                     "is_fetch_events": True,
+                    "is_fetch_assets": True,
                 }
             )
         )

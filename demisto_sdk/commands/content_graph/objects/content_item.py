@@ -274,6 +274,11 @@ class ContentItem(BaseContent):
                         ),
                     }
                 )
+        # elif marketplace == MarketplaceVersions.XSOAR:
+        #     if summary_res.get('isfetchevents'):
+        #         summary_res['isfetchevents'] = False
+        #     if summary_res.get('isfetchassets'):
+        #         summary_res['isfetchassets'] = False
 
         return summary_res
 

@@ -3,6 +3,58 @@ name: Generate Validate Docs
 on: pull_request
 
 jobs:
+  hash_previous_readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - uses: actions/checkout@v4
+        with:
+          path: previous_release
+          fetch-depth: 0
+      - id: find-last-release-commit
+        run: |
+          import git
+          import os
+
+          last_tag = sorted(
+              filter(lambda tag: tag.name.startswith("v"), git.Repo().tags),  # noqa: TID251
+              key=lambda t: t.commit.committed_datetime,
+          )[-1]
+
+          print(
+              "\n".join(
+                  [
+                      "last tag found:",
+                      f"\ttag={last_tag.name}",
+                      f"\tdate={last_tag.commit.committed_datetime}",
+                      f"\tcommit={last_tag.commit}",
+                  ]
+              )
+          )
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+            print(f'{ref}={str(last_tag.commit)}', file=fh)
+        shell: python
+      - name: Setup Poetry
+        uses: Gr1N/setup-poetry@v9
+        env:
+          POETRY_VIRTUALENVS_PATH: venv_last_release
+      - run: cd previous_release
+      - run: git checkout ${{ steps.find-last-release-commit.outputs.ref }}
+      - run: poetry install
+      - run: venv_last_release/bin/python demisto_sdk/commands/validate/generate_validate_docs.py last_release_validation_docs.md
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: last_release_validation_docs.md
+          if-no-files-found: error
+          name: last_release_validation_docs
+      - name: Store doc hash
+        id: store-hash
+        run: echo "{hash}={${{hashFiles('last_release_validation_docs.md')}}}" >> "$GITHUB_OUTPUT"
+  
   generate_validate_docs:
     runs-on: ubuntu-latest
     steps:
@@ -36,3 +88,10 @@ jobs:
 
       - name: Output to GitHub Action Summary
         run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Store doc hash
+        id: store-hash
+        run: echo "{hash}={${{hashFiles('validation_docs.md')}}}" >> "$GITHUB_OUTPUT"
+
+  notify_modified_readme:
+    runs-on: ubuntu-latest

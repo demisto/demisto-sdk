@@ -22,7 +22,7 @@ from demisto_sdk.scripts.validate_content_path import (
     PathIsFolder,
     PathIsUnified,
     PathUnderDeprecatedContent,
-    SpacesInFileNameError,
+    SpacesInFileName,
     _validate,
 )
 
@@ -208,7 +208,7 @@ MALFORMED_DUMMY_INTEGRATION_NAME = DUMMY_INTEGRATION_NAME + "-"
 
 
 def test_space_invalid():
-    with pytest.raises(SpacesInFileNameError):
+    with pytest.raises(SpacesInFileName):
         _validate(DUMMY_INTEGRATION_PATH / "foo bar.yml")
 
 

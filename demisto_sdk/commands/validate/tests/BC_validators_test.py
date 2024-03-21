@@ -14,6 +14,7 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backw
 from demisto_sdk.commands.validate.validators.BC_validators.BC105_id_changed import (
     IdChangedValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_toversion_on_modified import IsValidToversionOnModifiedValidator
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
 )

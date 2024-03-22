@@ -170,6 +170,12 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
+        if MarketplaceVersions.MarketplaceV2 not in current_marketplace:
+            script: dict = data.get("script", {})
+            if script.get("isfetchevents"):
+                data["script"]["isfetchevents"] = False
+            if script.get("isfetchassets"):
+                data["script"]["isfetchassets"] = False
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,

@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -590,7 +591,7 @@ def create_generic_definition_object(
 
 def create_generic_field_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> GenericField:
     """Creating an generic_field object with altered fields from a default generic_field json structure.
 
     Args:
@@ -604,7 +605,7 @@ def create_generic_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_generic_field(name="generic_field", content=json_content)
-    return BaseContent.from_path(Path(pack.generic_fields[0].path))
+    return cast(GenericField, BaseContent.from_path(Path(pack.generic_fields[0].path)))
 
 
 def create_generic_type_object(

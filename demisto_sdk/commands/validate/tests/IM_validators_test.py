@@ -137,15 +137,22 @@ def test_DefaultImageValidator_is_valid(mocker: MockerFixture):
         - Case 2: Shouldn't fail.
     """
     from pathlib import Path
-    default_image = ImageRelatedFile(main_file_path=Path(DEFAULT_IMAGE))
-    sample_image = ImageRelatedFile(main_file_path=Path("TestSuite/assets/default_integration/sample_image.png"))
 
-    content_items = [
-        create_integration_object(),
-        create_integration_object()
-    ]
-    mocker.patch.object(content_items[0].image, "load_image", return_value=default_image.load_image())
-    mocker.patch.object(content_items[1].image, "load_image", return_value=sample_image.load_image())
+    default_image = ImageRelatedFile(main_file_path=Path(DEFAULT_IMAGE))
+    sample_image = ImageRelatedFile(
+        main_file_path=Path("TestSuite/assets/default_integration/sample_image.png")
+    )
+
+    content_items = [create_integration_object(), create_integration_object()]
+    mocker.patch.object(
+        content_items[0].image, "load_image", return_value=default_image.load_image()
+    )
+    mocker.patch.object(
+        content_items[1].image, "load_image", return_value=sample_image.load_image()
+    )
     results = DefaultImageValidator().is_valid(content_items)
     assert len(results) == 1
-    assert results[0].message == "This is the default image, please change to the integration image."
+    assert (
+        results[0].message
+        == "This is the default image, please change to the integration image."
+    )

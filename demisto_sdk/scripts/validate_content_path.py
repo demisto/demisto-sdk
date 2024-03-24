@@ -176,6 +176,10 @@ class InvalidCommandExampleFile(InvalidPathException):
     message = "This file's name must be command_examples"
 
 
+class InvalidXDRCTemplatesFileName(InvalidPathException):
+    message = "Files in the XDRC templates directory must be titled exactly as the pack, e.g. `myPack.yml`"
+
+
 class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
@@ -260,11 +264,15 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidLayoutFileName
 
-    if depth == 2 and first_level_folder in {
-        ContentType.INTEGRATION.as_folder,
-        ContentType.SCRIPT.as_folder,
-    }:
-        _validate_integration_script_file(path, parts_after_packs)
+    if depth == 2:
+        if first_level_folder in {
+            ContentType.INTEGRATION.as_folder,
+            ContentType.SCRIPT.as_folder,
+        }:
+            _validate_integration_script_file(path, parts_after_packs)
+        elif first_level_folder in {ContentType.XDRC_TEMPLATE.as_folder}:
+            if path.stem != path.parent.name:
+                raise InvalidXDRCTemplatesFileName()
 
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):

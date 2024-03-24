@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_FOLDER,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
+    XDRC_TEMPLATE_DIR,
 )
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
@@ -22,6 +23,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidIntegrationScriptFileType,
     InvalidLayoutFileName,
     InvalidSuffix,
+    InvalidXDRCTemplatesFileName,
     PathIsFolder,
     PathIsTestOrDocData,
     PathIsUnified,
@@ -29,6 +31,31 @@ from demisto_sdk.scripts.validate_content_path import (
     SpacesInFileName,
     _validate,
 )
+
+
+@pytest.mark.parametrize(
+    "templates_folder, template_name",
+    (
+        ("template_foo", "template_foo.json"),
+        ("template_foo", "template_foo.yml"),
+    ),
+)
+def test_xdrc_template_file_valid(templates_folder: str, template_name: str):
+    _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / templates_folder / template_name)
+
+
+@pytest.mark.parametrize(
+    "templates_folder, template_name",
+    (
+        ("template_foo", "template_foo_test.json"),
+        ("template_foo", "template_foo_test.yml"),
+    ),
+)
+def test_xdrc_template_file_invalid(templates_folder: str, template_name: str):
+    with pytest.raises(InvalidXDRCTemplatesFileName):
+        _validate(
+            DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / templates_folder / template_name
+        )
 
 
 def test_content_entities_dir_length():

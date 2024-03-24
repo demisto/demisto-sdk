@@ -208,7 +208,7 @@ class InvalidContentItemResult(BaseResult, BaseModel):
         path: Path = self.path
         if path.is_absolute():
             path = path.relative_to(CONTENT_PATH)
-        return f"{str(path)}: [{self.error_code}] - {self.message}"
+        return f"{path}: [{self.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):

@@ -20,18 +20,18 @@ class DefaultImageValidator(BaseValidator[ContentTypes]):
     error_code = "IM106"
     description = "Checks if the integration has an image other than the default ones."
     rationale = "If an image is provided, it must not be the default ones."
-    error_message = "This is the default image, please change to the integration image."
+    error_message = "The integration is using the default image at {0}, please change to the integration image."
     related_field = "image"
     is_auto_fixable = False
-    # No need for git statuses, since git statuses are relevant for content type, and not
-    # related field
     related_file_type = [RelatedFileType.IMAGE]
 
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(
+                    "TestSuite/assets/default_integration/sample_image.png",
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

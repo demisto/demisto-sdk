@@ -177,7 +177,7 @@ class InvalidCommandExampleFile(InvalidPathException):
 
 
 class InvalidXDRCTemplatesFileName(InvalidPathException):
-    message = "Files in the XDRC templates directory must be titled exactly as the pack, e.g. `myPack.yml`"
+    message = "Names XDRC template files must match the directory containing them."
 
 
 class ExemptedPath(Exception, ABC):

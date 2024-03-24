@@ -139,7 +139,7 @@ class PreCommitRunner:
             int: return code - 0 if hooks passed, 1 if failed
         """
         process = PreCommitRunner._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout, command=["run", hook_id]
+            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout, command=["run", "-a", hook_id]
         )
 
         if process.stdout:
@@ -208,13 +208,23 @@ class PreCommitRunner:
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
 
+        # repos = pre_commit_context._get_repos(pre_commit_context.precommit_template)
+        # local_repo = repos["local"]
+        # docker_hooks, non_docker_hooks = pre_commit_context._get_docker_and_no_docker_hooks(local_repo)
+        # local_repo["hooks"] = non_docker_hooks
+
         # install main hook
-        PreCommitRunner._run_pre_commit_process(
+        install_result = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
             verbose,
             command=["install-hooks"],
         )
+
+        # local_repo["hooks"] = non_docker_hooks + docker_hooks
+        stdout = subprocess.PIPE if any(
+            len(hook_ids) > 1 for hook_ids in PreCommitRunner.original_hook_id_to_generated_hook_ids.values()
+        ) else None
 
         num_processes = cpu_count()
         results = []
@@ -225,6 +235,7 @@ class PreCommitRunner:
                         PreCommitRunner.run_hooks,
                         precommit_env=precommit_env,
                         verbose=verbose,
+                        stdout=stdout
                     ),
                     generated_hook_ids,
                 )

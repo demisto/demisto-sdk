@@ -419,6 +419,7 @@ def configure_vscode_launch(
                         "console": "integratedTerminal",
                         "cwd": "${workspaceFolder}",
                         "justMyCode": False,
+                        "env": {"PYTHONPATH": PYTHONPATH},
                     },
                     {
                         "name": "Python: Debug Tests",

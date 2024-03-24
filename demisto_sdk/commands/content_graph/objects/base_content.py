@@ -268,6 +268,7 @@ class BaseContent(BaseNode):
         git_sha: Optional[str] = None,
         raise_on_exception: bool = False,
         metadata_only: bool = False,
+        strict: bool = False,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
 
@@ -278,14 +279,21 @@ class BaseContent(BaseNode):
         ):  # if the path given is a pack
             try:
                 return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
-                    PackParser(path, git_sha=git_sha, metadata_only=metadata_only)
+                    PackParser(
+                        path,
+                        git_sha=git_sha,
+                        metadata_only=metadata_only,
+                        strict=strict,
+                    )
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {str(path)}")
                 return None
         try:
             content_item.MARKETPLACE_MIN_VERSION = "0.0.0"
-            content_item_parser = ContentItemParser.from_path(path, git_sha=git_sha)
+            content_item_parser = ContentItemParser.from_path(
+                path, git_sha=git_sha, strict=strict
+            )
             content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
 
         except NotAContentItemException:

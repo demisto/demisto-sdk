@@ -405,7 +405,7 @@ jobs:
         with:
           artifacts-path-dir: test-old-validate-command
           artifact-name: test-old-validate-command-artifacts
-          validate-script-path: Tests/scripts/validate.sh
+          validate-script-path: Utils/github_workflow_scripts/validate_sdk_flow/validate_sdk_flow.sh
 
   validate-files-new-validate:
     runs-on: ubuntu-latest
@@ -422,7 +422,7 @@ jobs:
         with:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
-          validate-script-path: Tests/scripts/new_validate.sh
+          validate-script-path: Utils/github_workflow_scripts/validate_sdk_flow/new_validate_sdk_flow.sh
 
   test-lint:
     runs-on: ubuntu-latest

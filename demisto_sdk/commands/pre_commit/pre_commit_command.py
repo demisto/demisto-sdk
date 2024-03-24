@@ -56,52 +56,54 @@ class PreCommitRunner:
     @staticmethod
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
         hooks = pre_commit_context.hooks
-        if "pycln" in hooks:
-            PreCommitRunner.original_hook_id_to_generated_hook_ids["pycln"] = PyclnHook(
-                **hooks.pop("pycln"), context=pre_commit_context
-            ).prepare_hook()
-        if "ruff" in hooks:
-            PreCommitRunner.original_hook_id_to_generated_hook_ids["ruff"] = RuffHook(
-                **hooks.pop("ruff"), context=pre_commit_context
-            ).prepare_hook()
-        if "mypy" in hooks:
-            PreCommitRunner.original_hook_id_to_generated_hook_ids["mypy"] = MypyHook(
-                **hooks.pop("mypy"), context=pre_commit_context
-            ).prepare_hook()
-        if "sourcery" in hooks:
-            PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                "sourcery"
-            ] = SourceryHook(
-                **hooks.pop("sourcery"), context=pre_commit_context
-            ).prepare_hook()
-        if "validate" in hooks:
-            PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                "validate"
-            ] = ValidateFormatHook(
-                **hooks.pop("validate"), context=pre_commit_context
-            ).prepare_hook()
-        if "format" in hooks:
-            PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                "format"
-            ] = ValidateFormatHook(
-                **hooks.pop("format"), context=pre_commit_context
-            ).prepare_hook()
 
+        un_prepared_custom_hook_ids = {"pycln", "ruff", "sourcery", "validate", "format", "mypy"}
         for hook_id in hooks.copy():
-            if hook_id.endswith("in-docker"):
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = DockerHook(
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
+            if hook_id in un_prepared_custom_hook_ids:
+                if "pycln" in hooks:
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids["pycln"] = PyclnHook(
+                        **hooks.pop("pycln"), context=pre_commit_context
+                    ).prepare_hook()
+                if "ruff" in hooks:
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids["ruff"] = RuffHook(
+                        **hooks.pop("ruff"), context=pre_commit_context
+                    ).prepare_hook()
+                if "mypy" in hooks:
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids["mypy"] = MypyHook(
+                        **hooks.pop("mypy"), context=pre_commit_context
+                    ).prepare_hook()
+                if "sourcery" in hooks:
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                        "sourcery"
+                    ] = SourceryHook(
+                        **hooks.pop("sourcery"), context=pre_commit_context
+                    ).prepare_hook()
+                if "validate" in hooks:
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                        "validate"
+                    ] = ValidateFormatHook(
+                        **hooks.pop("validate"), context=pre_commit_context
+                    ).prepare_hook()
+                if "format" in hooks:
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                        "format"
+                    ] = ValidateFormatHook(
+                        **hooks.pop("format"), context=pre_commit_context
+                    ).prepare_hook()
+            else:
+                # this is used to handle the mode property correctly even for non-custom hooks which do not require
+                # special preparation
+                if hook_id.endswith("in-docker"):
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                        hook_id
+                    ] = DockerHook(
+                        **hooks.pop(hook_id), context=pre_commit_context
+                    ).prepare_hook()
+                else:
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
+                        **hooks.pop(hook_id), context=pre_commit_context
+                    ).prepare_hook()
 
-        # iterate the rest of the hooks
-        for hook_id in hooks.copy():
-            # this is used to handle the mode property correctly
-            if hook_id not in PreCommitRunner.original_hook_id_to_generated_hook_ids:
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
-                    **hooks.pop(hook_id), context=pre_commit_context
-                ).prepare_hook()
         # get the hooks again because we want to get all the hooks, including the once that already prepared
         hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
         system_hooks = [
@@ -110,33 +112,30 @@ class PreCommitRunner:
             if hook["hook"].get("language") == "system"
         ]
         for hook_id in system_hooks.copy():
-            if hook_id not in PreCommitRunner.original_hook_id_to_generated_hook_ids:
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                    hook_id
-                ] = SystemHook(
-                    **hooks[hook_id], context=pre_commit_context
-                ).prepare_hook()
+            SystemHook(
+                **hooks[hook_id], context=pre_commit_context
+            ).prepare_hook()
 
         print()
 
     @staticmethod
-    def run_hooks(
+    def run_hook(
         hook_id: str,
         precommit_env: dict,
         verbose: bool = False,
         stdout: Optional[int] = subprocess.PIPE,
-    ):
+    ) -> int:
         """This function runs the pre-commit process and waits until finished.
         We run this function in multithread.
 
         Args:
-            hook_id (Optional[int]): The index of the docker hook. if None, runs main pre-commit config
+            hook_id (str): The hook ID to run
             precommit_env (dict): The pre-commit environment variables
             verbose (bool, optional): Whether print verbose output. Defaults to False.
             stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
 
         Returns:
-            int: return code - 0 if hooks passed, 1 if failed
+            int: return code - 0 if hook passed, 1 if failed
         """
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout, command=["run", "-a", hook_id]
@@ -226,7 +225,7 @@ class PreCommitRunner:
             with ThreadPool(num_processes) as pool:
                 current_hook_exit_codes = pool.map(
                     partial(
-                        PreCommitRunner.run_hooks,
+                        PreCommitRunner.run_hook,
                         precommit_env=precommit_env,
                         verbose=verbose,
                         stdout=stdout

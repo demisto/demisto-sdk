@@ -65,37 +65,37 @@ class PreCommitRunner:
                 "format",
                 "mypy",
             }:
-                if "pycln" in hooks:
+                if "pycln" == hook_id:
                     PreCommitRunner.original_hook_id_to_generated_hook_ids[
                         "pycln"
                     ] = PyclnHook(
                         **hooks.pop("pycln"), context=pre_commit_context
                     ).prepare_hook()
-                if "ruff" in hooks:
+                if "ruff" == hook_id:
                     PreCommitRunner.original_hook_id_to_generated_hook_ids[
                         "ruff"
                     ] = RuffHook(
                         **hooks.pop("ruff"), context=pre_commit_context
                     ).prepare_hook()
-                if "mypy" in hooks:
+                if "mypy" == hook_id:
                     PreCommitRunner.original_hook_id_to_generated_hook_ids[
                         "mypy"
                     ] = MypyHook(
                         **hooks.pop("mypy"), context=pre_commit_context
                     ).prepare_hook()
-                if "sourcery" in hooks:
+                if "sourcery" == hook_id:
                     PreCommitRunner.original_hook_id_to_generated_hook_ids[
                         "sourcery"
                     ] = SourceryHook(
                         **hooks.pop("sourcery"), context=pre_commit_context
                     ).prepare_hook()
-                if "validate" in hooks:
+                if "validate" == hook_id:
                     PreCommitRunner.original_hook_id_to_generated_hook_ids[
                         "validate"
                     ] = ValidateFormatHook(
                         **hooks.pop("validate"), context=pre_commit_context
                     ).prepare_hook()
-                if "format" in hooks:
+                if "format" == hook_id:
                     PreCommitRunner.original_hook_id_to_generated_hook_ids[
                         "format"
                     ] = ValidateFormatHook(
@@ -117,6 +117,8 @@ class PreCommitRunner:
                         **hooks.pop(hook_id), context=pre_commit_context
                     ).prepare_hook()
 
+            logger.debug(f"Prepared hook {hook_id} successfully")
+
         # get the hooks again because we want to get all the hooks, including the once that already prepared
         hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
         system_hooks = [
@@ -126,6 +128,7 @@ class PreCommitRunner:
         ]
         for hook_id in system_hooks.copy():
             SystemHook(**hooks[hook_id], context=pre_commit_context).prepare_hook()
+            logger.debug(f"Prepared system hook {hook_id} successfully")
 
     @staticmethod
     def run_hook(

@@ -117,6 +117,8 @@ class PreCommitRunner:
                     **hooks[hook_id], context=pre_commit_context
                 ).prepare_hook()
 
+        print()
+
     @staticmethod
     def run_hooks(
         hook_id: str,
@@ -203,17 +205,6 @@ class PreCommitRunner:
             )
         if pre_commit_context.run_hook:
             logger.info(f"[yellow]Running hook {pre_commit_context.run_hook}[/yellow]")
-        # repos = pre_commit_context._get_repos(pre_commit_context.precommit_template)
-        # local_repo = repos["local"]
-        # (
-        #     split_hooks,
-        #     non_split_hooks,
-        # ) = pre_commit_context._get_split_and_non_split_hooks(local_repo)
-        #
-        # # all the hooks which do not split will run on the main template
-        # local_repo["hooks"] = non_split_hooks
-        #
-        # full_hooks_need_docker = pre_commit_context._filter_hooks_need_docker(repos)
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
 
@@ -224,15 +215,6 @@ class PreCommitRunner:
             verbose,
             command=["install-hooks"],
         )
-
-        # for hook in split_hooks:
-        #     # each split hook will be written to a pre-commit file of its own
-        #     pre_commit_context.precommit_template["repos"] = [local_repo]
-        #     local_repo["hooks"] = [hook]
-        #     path = (
-        #         PRECOMMIT_SPLIT_HOOKS_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
-        #     )
-        #     write_dict(path, data=pre_commit_context.precommit_template)
 
         num_processes = cpu_count()
         results = []
@@ -249,47 +231,7 @@ class PreCommitRunner:
 
             results.extend(hooks_results)
 
-
-        results = [
-            PreCommitRunner.run_hooks(
-                "main", precommit_env=precommit_env, verbose=verbose
-            )
-        ]
-
-        # run the split hooks if exist, if there wasn't any split hook, won't run any multi-processing
-        if split_hooks:
-            num_processes = cpu_count()
-            logger.info(
-                f"Pre-Commit will use {num_processes} processes to run split hooks"
-            )
-            for split_hook_ids in pre_commit_context._yield_split_hooks():
-                with ThreadPool(num_processes) as pool:
-                    hooks_results = pool.map(
-                        partial(
-                            PreCommitRunner.run_hooks,
-                            precommit_env=precommit_env,
-                            verbose=verbose,
-                            stdout=stdout,
-                        ),
-                        split_hook_ids,
-                    )
-
-                results.extend(hooks_results)
-
         return_code = int(any(results))
-        if pre_commit_context.hooks_need_docker:
-            # run hooks that needs docker after all the docker hooks finished
-            pre_commit_context._update_hooks_needs_docker(full_hooks_need_docker)
-            path = PRECOMMIT_CONFIG_MAIN_PATH.with_name(
-                f"{PRECOMMIT_CONFIG_MAIN_PATH.stem}-needs.yaml"
-            )
-            write_dict(path, pre_commit_context.precommit_template)
-            process_needs_docker = PreCommitRunner._run_pre_commit_process(
-                path, precommit_env, verbose=verbose
-            )
-
-            return_code = return_code or process_needs_docker.returncode
-
         if return_code and show_diff_on_failure:
             logger.info(
                 "Pre-Commit changed the following. If you experience this in CI, please run `demisto-sdk pre-commit`"

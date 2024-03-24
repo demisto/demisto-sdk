@@ -136,17 +136,10 @@ class PreCommitRunner:
         Returns:
             int: return code - 0 if hooks passed, 1 if failed
         """
-        if hook_id == "main":
-            process = PreCommitRunner._run_pre_commit_process(
-                PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout
-            )
-        else:
-            process = PreCommitRunner._run_pre_commit_process(
-                PRECOMMIT_SPLIT_HOOKS_CONFIGS / f"pre-commit-config-{hook_id}.yaml",
-                precommit_env,
-                verbose,
-                stdout,
-            )
+        process = PreCommitRunner._run_pre_commit_process(
+            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout, command=["run", hook_id]
+        )
+
         if process.stdout:
             logger.info(process.stdout)
         if process.stderr:
@@ -210,22 +203,20 @@ class PreCommitRunner:
             )
         if pre_commit_context.run_hook:
             logger.info(f"[yellow]Running hook {pre_commit_context.run_hook}[/yellow]")
-        repos = pre_commit_context._get_repos(pre_commit_context.precommit_template)
-        local_repo = repos["local"]
-        (
-            split_hooks,
-            non_split_hooks,
-        ) = pre_commit_context._get_split_and_non_split_hooks(local_repo)
-        logger.info(f'Split hooks: {[hook["id"] for hook in split_hooks]}')
-        logger.info(f'Non-split hooks: {[hook["id"] for hook in non_split_hooks]}')
-        # all the hooks which do not split will run on the main template
-        local_repo["hooks"] = non_split_hooks
-
-        full_hooks_need_docker = pre_commit_context._filter_hooks_need_docker(repos)
+        # repos = pre_commit_context._get_repos(pre_commit_context.precommit_template)
+        # local_repo = repos["local"]
+        # (
+        #     split_hooks,
+        #     non_split_hooks,
+        # ) = pre_commit_context._get_split_and_non_split_hooks(local_repo)
+        #
+        # # all the hooks which do not split will run on the main template
+        # local_repo["hooks"] = non_split_hooks
+        #
+        # full_hooks_need_docker = pre_commit_context._filter_hooks_need_docker(repos)
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
 
-        stdout = subprocess.PIPE if split_hooks else None
         # install main hook
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
@@ -234,19 +225,34 @@ class PreCommitRunner:
             command=["install-hooks"],
         )
 
-        for hook in split_hooks:
-            # each split hook will be written to a pre-commit file of its own
-            pre_commit_context.precommit_template["repos"] = [local_repo]
-            local_repo["hooks"] = [hook]
-            path = (
-                PRECOMMIT_SPLIT_HOOKS_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
-            )
-            write_dict(path, data=pre_commit_context.precommit_template)
+        # for hook in split_hooks:
+        #     # each split hook will be written to a pre-commit file of its own
+        #     pre_commit_context.precommit_template["repos"] = [local_repo]
+        #     local_repo["hooks"] = [hook]
+        #     path = (
+        #         PRECOMMIT_SPLIT_HOOKS_CONFIGS / f"pre-commit-config-{hook['id']}.yaml"
+        #     )
+        #     write_dict(path, data=pre_commit_context.precommit_template)
 
-        # run the main hook first
+        num_processes = cpu_count()
+        results = []
+        for generated_hook_ids in PreCommitRunner.original_hook_id_to_generated_hook_ids.values():
+            with ThreadPool(num_processes) as pool:
+                hooks_results = pool.map(
+                    partial(
+                        PreCommitRunner.run_hooks,
+                        precommit_env=precommit_env,
+                        verbose=verbose,
+                    ),
+                    generated_hook_ids,
+                )
+
+            results.extend(hooks_results)
+
+
         results = [
             PreCommitRunner.run_hooks(
-                "main", precommit_env=precommit_env, verbose=verbose, stdout=stdout
+                "main", precommit_env=precommit_env, verbose=verbose
             )
         ]
 

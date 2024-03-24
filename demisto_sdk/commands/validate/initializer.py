@@ -488,7 +488,7 @@ class Initializer:
                             )
                         except (NotAContentItemException, InvalidContentItemException):
                             logger.debug(
-                                f"Could not parse the old_base_content_object for {str(obj.path)}, setting a copy of the object as the old_base_content_object."
+                                f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
                             )
                             obj.old_base_content_object = obj.copy(deep=True)
                     else:

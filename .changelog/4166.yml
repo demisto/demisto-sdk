@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in **setup-env** where the pack was not uploaded correctly to XSOAR/XSIAM.
+  type: fix
+pr_number: 4166

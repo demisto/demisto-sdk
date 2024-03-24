@@ -56,16 +56,15 @@ class PreCommitRunner:
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
         hooks = pre_commit_context.hooks
 
-        un_prepared_custom_hook_ids = {
-            "pycln",
-            "ruff",
-            "sourcery",
-            "validate",
-            "format",
-            "mypy",
-        }
         for hook_id in hooks.copy():
-            if hook_id in un_prepared_custom_hook_ids:
+            if hook_id in {
+                "pycln",
+                "ruff",
+                "sourcery",
+                "validate",
+                "format",
+                "mypy",
+            }:
                 if "pycln" in hooks:
                     PreCommitRunner.original_hook_id_to_generated_hook_ids[
                         "pycln"

@@ -158,6 +158,7 @@ class IntegrationDocUpdateManager:
             IndexError,
         ) as e:
             msg = f"{e.__class__.__name__}: Could not find file '{resource_path}' in {'remote' if remote else 'local'}."
+            logger.debug(msg)
             self.update_errors.append(msg)
             path = None
         except InvalidGitRepositoryError as err:

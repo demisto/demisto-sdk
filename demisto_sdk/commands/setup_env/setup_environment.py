@@ -428,6 +428,7 @@ def configure_vscode_launch(
                         "purpose": ["debug-test"],
                         "console": "integratedTerminal",
                         "justMyCode": False,
+                        "env": {"PYTHONPATH": PYTHONPATH},
                     },
                 ],
             }

@@ -7,6 +7,8 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
     PACKS_FOLDER,
+    PLAYBOOKS_DIR,
+    SCRIPTS_DIR,
 )
 from demisto_sdk.scripts.validate_content_path import (
     DEPTH_ONE_FOLDERS,
@@ -19,10 +21,12 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidIntegrationScriptFileName,
     InvalidIntegrationScriptFileType,
     InvalidLayoutFileName,
+    InvalidSuffix,
     PathIsFolder,
+    PathIsTestOrDocData,
     PathIsUnified,
     PathUnderDeprecatedContent,
-    SpacesInFileNameError,
+    SpacesInFileName,
     _validate,
 )
 
@@ -111,6 +115,8 @@ def test_depth_one_pass(folder: str):
     try:
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "file"))
         _validate(Path(DUMMY_PACK_PATH, folder, "nested", "nested_deeper", "file"))
+    except PathIsTestOrDocData:
+        pass
     except (InvalidIntegrationScriptFileType, InvalidIntegrationScriptFileName):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         pass
@@ -208,7 +214,7 @@ MALFORMED_DUMMY_INTEGRATION_NAME = DUMMY_INTEGRATION_NAME + "-"
 
 
 def test_space_invalid():
-    with pytest.raises(SpacesInFileNameError):
+    with pytest.raises(SpacesInFileName):
         _validate(DUMMY_INTEGRATION_PATH / "foo bar.yml")
 
 
@@ -271,13 +277,28 @@ def test_integration_script_file_valid(file_name: str):
         "Layout-.json",
         "Layoutscontainer-.json",
         "layout_.json",
-        "layout-foo.NOTjson",
-        "layoutscontainer-foo.NOTjson",
+        "layout-foo.py",
+        "layoutscontainer-foo.py",
     ),
 )
 def test_layout_invalid(file_name: str):
     with pytest.raises(InvalidLayoutFileName):
         _validate(DUMMY_PACK_PATH / LAYOUTS_DIR / file_name)
+
+
+@pytest.mark.parametrize(
+    "folder",
+    (
+        LAYOUTS_DIR,
+        PLAYBOOKS_DIR,
+        f"{INTEGRATIONS_DIR}/myIntegration",
+        f"{SCRIPTS_DIR}/myScript",
+    ),
+)
+@pytest.mark.parametrize("suffix", (".yaml", ".json5", ".bar", ".docx"))
+def test_invalid_suffix(folder: str, suffix: str):
+    with pytest.raises(InvalidSuffix):
+        _validate(DUMMY_PACK_PATH / folder / f"foo.{suffix}")
 
 
 @pytest.mark.parametrize(

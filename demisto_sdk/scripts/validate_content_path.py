@@ -469,6 +469,7 @@ def validate_all(
     if invalid:
         raise typer.Exit(1)
 
+
 def main():
     logging_setup()
     app()

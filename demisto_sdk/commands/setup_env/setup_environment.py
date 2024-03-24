@@ -593,6 +593,10 @@ def upload_and_create_instance(
     client = get_client_from_server_type()
     pack = integration_script.in_pack
     assert isinstance(pack, Pack)
+    # we need to reparse the pack, since by default it is not parsed with the integration script
+    pack = BaseContent.from_path(pack.path)
+    assert isinstance(pack, Pack)
+
     with tempfile.TemporaryDirectory() as temp_dir:
         pack.upload(
             client=client.xsoar_client,

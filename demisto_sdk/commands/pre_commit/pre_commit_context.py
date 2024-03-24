@@ -115,13 +115,6 @@ class PreCommitContext:
                 support_level_to_files[obj.support_level].add(path)
         return support_level_to_files
 
-    @staticmethod
-    def _get_repos(pre_commit_config: dict) -> dict:
-        repos = {}
-        for repo in pre_commit_config["repos"]:
-            repos[repo["repo"]] = repo
-        return repos
-
     def _get_hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
         for repo in pre_commit_config.get("repos", []):
@@ -155,57 +148,3 @@ class PreCommitContext:
             and any("in-docker" in need for need in needs)
         }
 
-    def _get_docker_and_no_docker_hooks(
-        self, local_repo: dict
-    ) -> Tuple[List[dict], List[dict]]:
-        """This function separates the docker and no docker hooks of a local repo
-        Args:
-            local_repo (dict): The local repo
-        Returns:
-            Tuple[List[dict], List[dict]]: The first item is the list of docker hooks, the second is the list of no docker hooks
-        """
-        local_repo_hooks = local_repo["hooks"]
-        docker_hooks = [hook for hook in local_repo_hooks if "in-docker" in hook["id"]]
-        no_docker_hooks = [
-            hook for hook in local_repo_hooks if "in-docker" not in hook["id"]
-        ]
-        return docker_hooks, no_docker_hooks
-
-    def _filter_hooks_need_docker(self, repos: dict) -> dict:
-        """
-        This filters the pre-commit config file the hooks that needed docker, so we will be able to execute them after the docker hooks are finished
-        """
-        full_hooks_need_docker = {}
-        for repo, repo_dict in repos.items():
-            hooks = []
-            for hook in repo_dict["hooks"]:
-                if hook["id"] not in self.hooks_need_docker:
-                    hooks.append(hook)
-                else:
-                    full_hooks_need_docker[hook["id"]] = {
-                        "repo": repo_dict,
-                        "hook": hook,
-                    }
-            repo_dict["hooks"] = hooks
-        return full_hooks_need_docker
-
-    def _update_hooks_needs_docker(self, hooks_needs_docker: dict):
-        """
-        This is to populate the pre-commit config file only for hooks that needs docker
-        This is needed because we need to execute this after all docker hooks are finished
-        """
-        self.precommit_template["repos"] = []
-        for _, hook in hooks_needs_docker.items():
-            repos = {repo["repo"] for repo in self.precommit_template["repos"]}
-            repo_in_hook = hook["repo"]["repo"]
-            if repo_in_hook not in repos:
-                hook["repo"]["hooks"] = []
-                self.precommit_template["repos"].append(hook["repo"])
-                repo = self.precommit_template["repos"][-1]
-            else:
-                repo = next(
-                    repo
-                    for repo in self.precommit_template["repos"]
-                    if repo["repo"] == repo_in_hook
-                )
-            repo["hooks"].append(hook["hook"])

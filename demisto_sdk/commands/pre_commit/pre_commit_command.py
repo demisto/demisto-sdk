@@ -208,29 +208,23 @@ class PreCommitRunner:
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
 
-        # repos = pre_commit_context._get_repos(pre_commit_context.precommit_template)
-        # local_repo = repos["local"]
-        # docker_hooks, non_docker_hooks = pre_commit_context._get_docker_and_no_docker_hooks(local_repo)
-        # local_repo["hooks"] = non_docker_hooks
-
         # install main hook
-        install_result = PreCommitRunner._run_pre_commit_process(
+        PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
             verbose,
             command=["install-hooks"],
         )
 
-        # local_repo["hooks"] = non_docker_hooks + docker_hooks
         stdout = subprocess.PIPE if any(
             len(hook_ids) > 1 for hook_ids in PreCommitRunner.original_hook_id_to_generated_hook_ids.values()
         ) else None
 
         num_processes = cpu_count()
-        results = []
+        all_hooks_exit_codes = []
         for generated_hook_ids in PreCommitRunner.original_hook_id_to_generated_hook_ids.values():
             with ThreadPool(num_processes) as pool:
-                hooks_results = pool.map(
+                current_hook_exit_codes = pool.map(
                     partial(
                         PreCommitRunner.run_hooks,
                         precommit_env=precommit_env,
@@ -240,9 +234,9 @@ class PreCommitRunner:
                     generated_hook_ids,
                 )
 
-            results.extend(hooks_results)
+            all_hooks_exit_codes.extend(current_hook_exit_codes)
 
-        return_code = int(any(results))
+        return_code = int(any(all_hooks_exit_codes))
         if return_code and show_diff_on_failure:
             logger.info(
                 "Pre-Commit changed the following. If you experience this in CI, please run `demisto-sdk pre-commit`"

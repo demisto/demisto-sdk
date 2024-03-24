@@ -4189,7 +4189,7 @@ def get_file_by_status(
             )
 
         # handle renamed files which are in tuples
-        elif file_path in file:
+        elif isinstance(file, tuple) and file_path in file:
             filtered_modified_files.add(file)
             return (
                 filtered_modified_files,

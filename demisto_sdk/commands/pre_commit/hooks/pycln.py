@@ -27,4 +27,5 @@ class PyclnHook(Hook):
         skip_imports = f"--skip-imports={','.join(paths_to_skip + builtins_to_skip)}"
         safe_update_hook_args(self.base_hook, skip_imports)
 
+        self.hooks.insert(self.hook_index, self.base_hook)
         return [self.base_hook["id"]]

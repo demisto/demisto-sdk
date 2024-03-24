@@ -48,7 +48,8 @@ class SourceryHook(Hook):
             hook["files"] = join_files(
                 self.context.python_version_to_files[python_version]
             )
-
+            hook["id"] = f"sourcery-py{python_version}"
+            self.hooks.append(hook)
             sourcery_hook_ids.append(hook["id"])
 
         return sourcery_hook_ids

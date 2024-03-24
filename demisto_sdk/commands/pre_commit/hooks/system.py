@@ -21,4 +21,5 @@ class SystemHook(Hook):
             entry = self.base_hook["entry"]
             bin_path = Path(sys.executable).parent
             self.base_hook["entry"] = f"{bin_path}/{entry}"
+        self.hooks.insert(self.hook_index, self.base_hook)
         return [self.base_hook["id"]]

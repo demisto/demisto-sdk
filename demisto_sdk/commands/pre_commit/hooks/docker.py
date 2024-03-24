@@ -303,6 +303,7 @@ class DockerHook(Hook):
                 )
         for result in results:
             hooks = result.result()
+            self.hooks.extend(hooks)
             docker_hook_ids.extend([hook["id"] for hook in hooks])
 
         end_time = time.time()

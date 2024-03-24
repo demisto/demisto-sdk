@@ -52,7 +52,7 @@ class Docker:
         """Builds docker stats and grep command string.
 
         Example of returned value:
-        ssh -o StrictHostKeyChecking=no ec2-user@server_ip
+        ssh -o StrictHostKeyChecking=no gcp-user@server_ip
         'sudo docker stats --no-stream --no-trunc --format "{{json .}}" | grep -Ei "demistopython33.7.2.214--"'
         Grep is based on docker images names regex.
 

@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.constants import (
@@ -9,8 +9,10 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
@@ -200,14 +202,16 @@ def create_script_object(
     return BaseContent.from_path(Path(script.path))
 
 
-def create_metadata_object(
+def create_pack_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     fields_to_delete: Optional[List[str]] = None,
     readme_text: str = "",
     image: Optional[str] = None,
-) -> PackMetadata:
-    """Creating an pack_metadata object with altered fields from a default pack_metadata json structure.
+    playbooks: int = 0,
+    name: Optional[str] = None,
+) -> Pack:
+    """Creating an pack object with altered fields from a default pack_metadata json structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
@@ -225,6 +229,9 @@ def create_metadata_object(
     pack.readme.write_text(readme_text)
     if image is not None:
         pack.author_image.write(image)
+    if playbooks:
+        for _ in range(playbooks):
+            pack.create_playbook()
     return BaseContent.from_path(Path(pack.path))
 
 
@@ -338,7 +345,7 @@ def create_incident_type_object(
 
 def create_incident_field_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> IncidentField:
     """Creating an incident_field object with altered fields from a default incident_field json structure.
 
     Args:
@@ -352,7 +359,9 @@ def create_incident_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_incident_field(name="incident_field", content=json_content)
-    return BaseContent.from_path(Path(pack.incident_fields[0].path))
+    return cast(
+        IncidentField, BaseContent.from_path(Path(pack.incident_fields[0].path))
+    )
 
 
 def create_report_object(
@@ -582,7 +591,7 @@ def create_generic_definition_object(
 
 def create_generic_field_object(
     paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
-):
+) -> GenericField:
     """Creating an generic_field object with altered fields from a default generic_field json structure.
 
     Args:
@@ -596,7 +605,7 @@ def create_generic_field_object(
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
     pack.create_generic_field(name="generic_field", content=json_content)
-    return BaseContent.from_path(Path(pack.generic_fields[0].path))
+    return cast(GenericField, BaseContent.from_path(Path(pack.generic_fields[0].path)))
 
 
 def create_generic_type_object(

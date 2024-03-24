@@ -154,6 +154,10 @@ class InvalidLayoutFileName(InvalidPathException):
     message = "The Layout folder can only contain JSON files, with names starting with `layout-` or `layoutscontainer-`"
 
 
+class InvalidClassifier(InvalidPathException):
+    message = "The Classifiers folder can only contain JSON files, with names starting with `classifier-` or `mapper-`"
+
+
 class InvalidIntegrationScriptFileName(InvalidPathException):
     message = "This file's name must start with the name of its parent folder."
 
@@ -259,6 +263,12 @@ def _validate(path: Path) -> None:
             and path.suffix == ".json"
         ):
             raise InvalidLayoutFileName
+
+        if first_level_folder == CLASSIFIERS_DIR and not (
+            path.suffix == ".json"
+            and (path.stem.startswith("classifier-") or path.stem.startswith("mapper-"))
+        ):
+            raise InvalidClassifier
 
     if depth == 2 and first_level_folder in {
         ContentType.INTEGRATION.as_folder,

@@ -147,4 +147,3 @@ class PreCommitContext:
             if (needs := hook["hook"].pop("needs", None))
             and any("in-docker" in need for need in needs)
         }
-

@@ -39,7 +39,6 @@ from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_context import (
     PRECOMMIT_CONFIG_MAIN_PATH,
-    PRECOMMIT_SPLIT_HOOKS_CONFIGS,
     PreCommitContext,
 )
 
@@ -57,19 +56,32 @@ class PreCommitRunner:
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
         hooks = pre_commit_context.hooks
 
-        un_prepared_custom_hook_ids = {"pycln", "ruff", "sourcery", "validate", "format", "mypy"}
+        un_prepared_custom_hook_ids = {
+            "pycln",
+            "ruff",
+            "sourcery",
+            "validate",
+            "format",
+            "mypy",
+        }
         for hook_id in hooks.copy():
             if hook_id in un_prepared_custom_hook_ids:
                 if "pycln" in hooks:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids["pycln"] = PyclnHook(
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                        "pycln"
+                    ] = PyclnHook(
                         **hooks.pop("pycln"), context=pre_commit_context
                     ).prepare_hook()
                 if "ruff" in hooks:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids["ruff"] = RuffHook(
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                        "ruff"
+                    ] = RuffHook(
                         **hooks.pop("ruff"), context=pre_commit_context
                     ).prepare_hook()
                 if "mypy" in hooks:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids["mypy"] = MypyHook(
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                        "mypy"
+                    ] = MypyHook(
                         **hooks.pop("mypy"), context=pre_commit_context
                     ).prepare_hook()
                 if "sourcery" in hooks:
@@ -100,7 +112,9 @@ class PreCommitRunner:
                         **hooks.pop(hook_id), context=pre_commit_context
                     ).prepare_hook()
                 else:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
+                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                        hook_id
+                    ] = Hook(
                         **hooks.pop(hook_id), context=pre_commit_context
                     ).prepare_hook()
 
@@ -112,11 +126,7 @@ class PreCommitRunner:
             if hook["hook"].get("language") == "system"
         ]
         for hook_id in system_hooks.copy():
-            SystemHook(
-                **hooks[hook_id], context=pre_commit_context
-            ).prepare_hook()
-
-        print()
+            SystemHook(**hooks[hook_id], context=pre_commit_context).prepare_hook()
 
     @staticmethod
     def run_hook(
@@ -138,7 +148,11 @@ class PreCommitRunner:
             int: return code - 0 if hook passed, 1 if failed
         """
         process = PreCommitRunner._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH, precommit_env, verbose, stdout, command=["run", "-a", hook_id]
+            PRECOMMIT_CONFIG_MAIN_PATH,
+            precommit_env,
+            verbose,
+            stdout,
+            command=["run", "-a", hook_id],
         )
 
         if process.stdout:
@@ -215,25 +229,44 @@ class PreCommitRunner:
             command=["install-hooks"],
         )
 
-        stdout = subprocess.PIPE if any(
-            len(hook_ids) > 1 for hook_ids in PreCommitRunner.original_hook_id_to_generated_hook_ids.values()
-        ) else None
+        stdout = (
+            subprocess.PIPE
+            if any(
+                len(hook_ids) > 1
+                for hook_ids in PreCommitRunner.original_hook_id_to_generated_hook_ids.values()
+            )
+            else None
+        )
 
         num_processes = cpu_count()
         all_hooks_exit_codes = []
-        for generated_hook_ids in PreCommitRunner.original_hook_id_to_generated_hook_ids.values():
-            with ThreadPool(num_processes) as pool:
-                current_hook_exit_codes = pool.map(
-                    partial(
-                        PreCommitRunner.run_hook,
-                        precommit_env=precommit_env,
-                        verbose=verbose,
-                        stdout=stdout
-                    ),
-                    generated_hook_ids,
+        for (
+            original_hook_id,
+            generated_hook_ids,
+        ) in PreCommitRunner.original_hook_id_to_generated_hook_ids.items():
+            if generated_hook_ids:
+                logger.debug(
+                    f"Running hook {original_hook_id} with generated-hook-ids: {generated_hook_ids}"
+                )
+                # if len(generated_hook_ids) > 1:
+                with ThreadPool(num_processes) as pool:
+                    current_hooks_exit_codes = pool.map(
+                        partial(
+                            PreCommitRunner.run_hook,
+                            precommit_env=precommit_env,
+                            verbose=verbose,
+                            stdout=stdout,
+                        ),
+                        generated_hook_ids,
+                    )
+                # else:
+                #     current_hooks_exit_codes = [PreCommitRunner.run_hook(hook_id=generated_hook_ids[0], precommit_env=precommit_env, verbose=verbose, stdout=stdout)]
+            else:
+                logger.debug(
+                    f"Skipping hook {original_hook_id} as it does not have any generated-hook-ids"
                 )
 
-            all_hooks_exit_codes.extend(current_hook_exit_codes)
+            all_hooks_exit_codes.extend(current_hooks_exit_codes)
 
         return_code = int(any(all_hooks_exit_codes))
         if return_code and show_diff_on_failure:

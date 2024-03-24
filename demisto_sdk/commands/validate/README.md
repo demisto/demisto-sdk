@@ -1,6 +1,9 @@
+This file contains information about our new validate flow, for more information about the old validate flow, please refer to [old_validate_readme](demisto_sdk/commands/validate/old_validate_readme.md)
+
 ## Validate
 
 Makes sure your content repository files are in order and have valid file scheme.
+This file 
 
 **Use Cases**
 This command is used to make sure that the content repo files are valid and are able to be processed by the platform.
@@ -75,9 +78,12 @@ The default configuration covers basic validations, which prevent successful upl
 #### How to define a configuration file
 You can define the following sections:
 **ignorable_errors** - a list of the error codes that can be ignored for individual content items in the .pack-ignore file.
-**validate_all** - the configurations to run when running with -a / -i flags.
+**path_based_validations** - the configurations to run when running with -a / -i flags.
 **use_git** - the configurations to run when running with -g flag.
 You can also define custom sections - which can be configured to run with the **category-to-run** flag.
+Two example custom categories are given with the default config file:
+**xsoar_best_practices_use_git** - our recommended set of validations to run when running with -g, may be modified from time to time.
+**xsoar_best_practices_path_based_validations** - our recommended set of validations to run when running with -a / -i, may be modified from time to time.
 Each section will have the following options:
 **select** - The validations to run.
 **warning** - Validations for which to only throw warnings (will not fail the flow).

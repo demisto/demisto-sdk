@@ -331,19 +331,30 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check whether validate_content_path changed
+        id: files-changed
+        uses: tj-actions/changed-files@v43
+        with:
+          files: |
+            demisto_sdk/scripts/validate_content_path.py
+            demisto_sdk/tests/validate_content_path_test.py
+
       - name: Checkout Content
+        if: steps.files-changed.outputs.any_changed == 'true'
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           repository: demisto/content
           path: content
 
       - name: Setup Python Environment
+        if: steps.files-changed.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
           python-version: "3.10"
 
       - name: Validate content master paths
+        if: steps.files-changed.outputs.any_changed == 'true'
         run: |
           source $(poetry env info --path)/bin/activate
           validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown --skip-suffix

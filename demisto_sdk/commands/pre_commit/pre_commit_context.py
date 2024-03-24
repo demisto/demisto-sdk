@@ -27,7 +27,6 @@ PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_FOLDER = CACHE_DIR / "pre-commit"
 PRECOMMIT_CONFIG = PRECOMMIT_FOLDER / "config"
 PRECOMMIT_CONFIG_MAIN_PATH = PRECOMMIT_CONFIG / "pre-commit-config-main.yaml"
-PRECOMMIT_SPLIT_HOOKS_CONFIGS = PRECOMMIT_CONFIG / "split-hooks"
 
 # This has to be relative to content path so the docker will be able to write to it
 PRE_COMMIT_FOLDER_SHARED = CONTENT_PATH / ".pre-commit"
@@ -57,7 +56,6 @@ class PreCommitContext:
         shutil.rmtree(PRE_COMMIT_FOLDER_SHARED, ignore_errors=True)
         PRECOMMIT_FOLDER.mkdir(parents=True)
         PRECOMMIT_CONFIG.mkdir()
-        PRECOMMIT_SPLIT_HOOKS_CONFIGS.mkdir()
         self.precommit_template: dict = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)  # type: ignore[assignment]
         remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
         if remote_config_file and remote_config_file != self.precommit_template:

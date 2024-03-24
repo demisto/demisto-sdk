@@ -1,6 +1,7 @@
 import logging
 import tempfile
 from pathlib import Path
+from typing import Set
 from unittest.mock import patch
 
 import pytest
@@ -592,3 +593,21 @@ def test_get_items_status(repo):
         expected_results[item_path] == git_status
         for item_path, git_status in results.items()
     )
+
+
+def test_all_error_codes_configured():
+    """
+    test that the set of all validation errors that exist in the new format and the set of all the validation errors configured in the sdk_validation_config are equal to ensure all new validations are being tested.
+    """
+    config_file_path = "sdk_validation_config.toml"
+    config_file_content: dict = toml.load(config_file_path)
+    configured_errors_set: Set[str] = set()
+    for section in ("use_git", "validate_all"):
+        for key in ("select", "warning"):
+            configured_errors_set = configured_errors_set.union(
+                set(config_file_content[section][key])
+            )
+    existing_error_codes: Set[str] = set(
+        [validator.error_code for validator in BaseValidator.__subclasses__()]
+    )
+    assert existing_error_codes == configured_errors_set

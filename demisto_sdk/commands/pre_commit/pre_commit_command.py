@@ -149,7 +149,7 @@ class PreCommitRunner:
         Returns:
             int: return code - 0 if hook passed, 1 if failed
         """
-        logger.debug(f'Running hook {hook_id}')
+        logger.debug(f"Running hook {hook_id}")
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,

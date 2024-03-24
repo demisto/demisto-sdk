@@ -24,8 +24,7 @@ class MypyHook(Hook):
             hook["files"] = join_files(
                 self.context.python_version_to_files[python_version]
             )
-            # hook["id"] = f"mypy-py{python_version}"
             self.hooks.append(hook)
             mypy_hook_ids.append(hook["id"])
 
-        return mypy_hook_ids
+        return [self.base_hook["id"]]

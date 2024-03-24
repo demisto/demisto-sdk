@@ -221,6 +221,7 @@ def test_IsImageExistsInReadmeValidator_is_valid(
         ]
     )
 
+
 def test_IsPackReadmeNotEqualPackDescriptionValidator_not_valid():
     """
     Given:
@@ -259,6 +260,7 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
     ]
     assert not IsPackReadmeNotEqualPackDescriptionValidator().is_valid(content_items)
 
+
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
@@ -280,7 +282,7 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
             1,
             [
                 "The Script doesn't have a README file. Please add a README.md file in the content item's directory."
-            ]
+            ],
         ),
         (
             [
@@ -290,12 +292,10 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
             1,
             [
                 "The Integration doesn't have a README file. Please add a README.md file in the content item's directory."
-            ]
-        )
-    ]
+            ],
+        ),
+    ],
 )
-
-
 def test_IsReadmeExistsValidator_is_valid(
     content_items, expected_number_of_failures, expected_msgs
 ):
@@ -307,7 +307,7 @@ def test_IsReadmeExistsValidator_is_valid(
     Then:
         - Ensure that for each test only one ValidationResult returns with the correct message
     """
-    content_items[1].readme.exist= False
+    content_items[1].readme.exist = False
     results = IsReadmeExistsValidator().is_valid(content_items)
     assert len(results) == expected_number_of_failures
     assert all(

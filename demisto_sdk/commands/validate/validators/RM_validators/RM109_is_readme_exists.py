@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List, Union
@@ -24,7 +23,6 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
     related_field = "readme"
     related_file_type = [RelatedFileType.README]
 
-    
     def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -37,6 +35,3 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (not content_item.readme.exist)
         ]
-    
-
-    

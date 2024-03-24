@@ -5,7 +5,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 
 
 class MypyHook(Hook):
-    def prepare_hook(self) -> List[Dict[str, Any]]:
+    def prepare_hook(self) -> List[str]:
         """
         Prepares the MyPy hook for each Python version.
         Changes the hook's name, files and the "--python-version" argument according to the Python version.
@@ -13,7 +13,7 @@ class MypyHook(Hook):
         Returns:
             None
         """
-        mypy_hooks = []
+        mypy_hook_ids = []
 
         for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
@@ -25,6 +25,6 @@ class MypyHook(Hook):
                 self.context.python_version_to_files[python_version]
             )
 
-            mypy_hooks.append(hook)
+            mypy_hook_ids.append(hook["id"])
 
-        return mypy_hooks
+        return mypy_hook_ids

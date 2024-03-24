@@ -24,7 +24,7 @@ class SourceryHook(Hook):
         tools.write_dict(tf.name, data=config_file)
         return tf.name
 
-    def prepare_hook(self) -> List[Dict[str, Any]]:
+    def prepare_hook(self) -> List[str]:
         """
         Prepares the Sourcery hook for each Python version.
         Changes the hook's name, files and the "--config" argument according to the Python version.
@@ -36,7 +36,7 @@ class SourceryHook(Hook):
         if not config_file.exists():
             return []
         self.base_hook.pop("config_file", None)
-        sourcery_hooks = []
+        sourcery_hook_ids = []
         for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"sourcery-py{python_version}",
@@ -49,6 +49,6 @@ class SourceryHook(Hook):
                 self.context.python_version_to_files[python_version]
             )
 
-            sourcery_hooks.append(hook)
+            sourcery_hook_ids.append(hook["id"])
 
-        return sourcery_hooks
+        return sourcery_hook_ids

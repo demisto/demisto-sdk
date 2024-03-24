@@ -23,13 +23,13 @@ class RuffHook(Hook):
 
     def prepare_hook(
         self,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[str]:
         """
         Prepares the Ruff hook for each Python version.
         Changes the hook's name, files and the "--target-version" argument according to the Python version.
         Args:
         """
-        ruff_hooks = []
+        ruff_hook_ids = []
 
         for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
@@ -50,6 +50,6 @@ class RuffHook(Hook):
                 }
             )
 
-            ruff_hooks.append(hook)
+            ruff_hook_ids.append(hook["id"])
 
-        return ruff_hooks
+        return ruff_hook_ids

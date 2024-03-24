@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple, Any
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from docker.errors import DockerException
 from packaging.version import Version
@@ -241,7 +241,7 @@ class DockerHook(Hook):
 
     def prepare_hook(
         self,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[str]:
         """
         Group all the files by dockerimages
         Split those images by config files
@@ -286,7 +286,7 @@ class DockerHook(Hook):
         start_time = time.time()
         logger.debug(f"{len(tag_to_files_objs)} images were collected from files")
         logger.debug(f'collected images: {" ".join(tag_to_files_objs.keys())}')
-        docker_hooks = []
+        docker_hook_ids = []
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
             results = []
             for image, files_objs in sorted(
@@ -303,14 +303,14 @@ class DockerHook(Hook):
                 )
         for result in results:
             hooks = result.result()
-            docker_hooks.extend(hooks)
+            docker_hook_ids.extend([hook["id"] for hook in hooks])
 
         end_time = time.time()
         logger.debug(
             f"DockerHook - prepared images in {round(end_time - start_time, 2)} seconds"
         )
 
-        return docker_hooks
+        return docker_hook_ids
 
     def generate_hooks(
         self,
@@ -333,11 +333,8 @@ class DockerHook(Hook):
             All the hooks to be appended for this image
         """
         new_hook = deepcopy(self.base_hook)
-        _image = image.replace("/", "-").replace(
-            ":", "-"
-        )  # avoid adding / to the ids as these are saved as files
-        new_hook["id"] = f"{new_hook.get('id')}-{_image}"
-        new_hook["name"] = f"{new_hook.get('name')}-{_image}"
+        new_hook["id"] = f"{new_hook.get('id')}-{image}"
+        new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
         docker_version = DockerBase.version()

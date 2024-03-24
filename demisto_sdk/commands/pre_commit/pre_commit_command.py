@@ -7,7 +7,7 @@ from collections import defaultdict
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import more_itertools
 from packaging.version import Version
@@ -51,97 +51,71 @@ INTEGRATIONS_BATCH = 300
 
 class PreCommitRunner:
 
-    original_hook_id_to_generated_hooks: Dict[str, Set[str]] = {}
+    original_hook_id_to_generated_hook_ids: Dict[str, List[str]] = {}
 
     @staticmethod
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
         hooks = pre_commit_context.hooks
         if "pycln" in hooks:
-            pycln = hooks.pop("pycln")
-            repo_hooks: List[Dict] = pycln.get("repo").get("hooks")
-            hook = pycln.get("hook")
-            index = repo_hooks.index(hook)
-            repo_hooks.remove(hook)
-
-            pycln_hooks = PyclnHook(hook, context=pre_commit_context).prepare_hook()
-            repo_hooks.insert(index, pycln_hooks)
-            PreCommitRunner.original_hook_id_to_generated_hooks[
-                "pycln"
-            ] = PreCommitRunner.get_hook_ids(pycln_hooks)
+            PreCommitRunner.original_hook_id_to_generated_hook_ids["pycln"] = PyclnHook(
+                **hooks.pop("pycln"), context=pre_commit_context
+            ).prepare_hook()
         if "ruff" in hooks:
-            hook_id = hooks["ruff"]["hook"]["id"]
-            ruff_hooks = RuffHook(
-                **hooks.get("ruff"), context=pre_commit_context
+            PreCommitRunner.original_hook_id_to_generated_hook_ids["ruff"] = RuffHook(
+                **hooks.pop("ruff"), context=pre_commit_context
             ).prepare_hook()
-            hooks["ruff"]["repo"]["hooks"] = ruff_hooks
-            PreCommitRunner.original_hook_id_to_generated_hooks[
-                hook_id
-            ] = PreCommitRunner.get_hook_ids(ruff_hooks)
         if "mypy" in hooks:
-            hook_id = hooks["mypy"]["hook"]["id"]
-            mypy_hooks = MypyHook(
-                **hooks.get("mypy"), context=pre_commit_context
+            PreCommitRunner.original_hook_id_to_generated_hook_ids["mypy"] = MypyHook(
+                **hooks.pop("mypy"), context=pre_commit_context
             ).prepare_hook()
-            hooks["mypy"]["repo"]["hooks"] = mypy_hooks
-            PreCommitRunner.original_hook_id_to_generated_hooks[
-                hook_id
-            ] = PreCommitRunner.get_hook_ids(mypy_hooks)
         if "sourcery" in hooks:
-            hook_id = hooks["sourcery"]["hook"]["id"]
-            sourcery_hooks = SourceryHook(
-                **hooks.get("sourcery"), context=pre_commit_context
+            PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                "sourcery"
+            ] = SourceryHook(
+                **hooks.pop("sourcery"), context=pre_commit_context
             ).prepare_hook()
-            hooks["sourcery"]["repo"]["hooks"] = sourcery_hooks
-            PreCommitRunner.original_hook_id_to_generated_hooks[
-                hook_id
-            ] = PreCommitRunner.get_hook_ids(sourcery_hooks)
         if "validate" in hooks:
-            hook_id = hooks["validate"]["hook"]["id"]
-            validate_hooks = ValidateFormatHook(
-                **hooks.get("validate"), context=pre_commit_context
+            PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                "validate"
+            ] = ValidateFormatHook(
+                **hooks.pop("validate"), context=pre_commit_context
             ).prepare_hook()
-            hooks["validate"]["repo"]["hooks"] = validate_hooks
-            PreCommitRunner.original_hook_id_to_generated_hooks[
-                hook_id
-            ] = PreCommitRunner.get_hook_ids(validate_hooks)
         if "format" in hooks:
-            hook_id = hooks["format"]["hook"]["id"]
-            format_hooks = ValidateFormatHook(
-                **hooks.get("format"), context=pre_commit_context
+            PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                "format"
+            ] = ValidateFormatHook(
+                **hooks.pop("format"), context=pre_commit_context
             ).prepare_hook()
-            hooks["format"]["repo"]["hooks"] = format_hooks
-            PreCommitRunner.original_hook_id_to_generated_hooks[
-                hook_id
-            ] = PreCommitRunner.get_hook_ids(format_hooks)
 
-        for hook_id in hooks:
+        for hook_id in hooks.copy():
             if hook_id.endswith("in-docker"):
-                docker_hooks = DockerHook(**hooks.get(hook_id), context=pre_commit_context).prepare_hook()
-                hooks[hook_id]["repo"]["hooks"] = docker_hooks
-                PreCommitRunner.original_hook_id_to_generated_hooks[hook_id] = PreCommitRunner.get_hook_ids(docker_hooks)
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                    hook_id
+                ] = DockerHook(
+                    **hooks.pop(hook_id), context=pre_commit_context
+                ).prepare_hook()
 
         # iterate the rest of the hooks
-        # for hook_id in hooks.copy():
-        #     # this is used to handle the mode property correctly
-        #     Hook(**hooks.pop(hook_id), context=pre_commit_context).prepare_hook()
-
+        for hook_id in hooks.copy():
+            # this is used to handle the mode property correctly
+            if hook_id not in PreCommitRunner.original_hook_id_to_generated_hook_ids:
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
+                    **hooks.pop(hook_id), context=pre_commit_context
+                ).prepare_hook()
         # get the hooks again because we want to get all the hooks, including the once that already prepared
-        # hooks = pre_commit_context._get_hooks(hooks)
+        hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
         system_hooks = [
             hook_id
             for hook_id, hook in hooks.items()
             if hook["hook"].get("language") == "system"
         ]
-        for hook_id in system_hooks:
-            system_hooks = SystemHook(**hooks[hook_id], context=pre_commit_context).prepare_hook()
-            hooks[hook_id]["repo"]["hooks"] = system_hooks
-            PreCommitRunner.original_hook_id_to_generated_hooks[hook_id] = PreCommitRunner.get_hook_ids(system_hooks)
-
-        print()
-
-    @staticmethod
-    def get_hook_ids(hooks: List[Dict[str, Any]]) -> Set[str]:
-        return {hook["id"] for hook in hooks}
+        for hook_id in system_hooks.copy():
+            if hook_id not in PreCommitRunner.original_hook_id_to_generated_hook_ids:
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                    hook_id
+                ] = SystemHook(
+                    **hooks[hook_id], context=pre_commit_context
+                ).prepare_hook()
 
     @staticmethod
     def run_hooks(

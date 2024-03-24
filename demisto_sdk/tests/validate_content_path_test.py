@@ -35,24 +35,22 @@ from demisto_sdk.scripts.validate_content_path import (
 
 @pytest.mark.parametrize(
     "suffix",
-    ( ".json", ".yml"),
+    ("json", "yml"),
 )
-def test_xdrc_template_file_valid(templates_folder: str, template_name: str):
+def test_xdrc_template_file_valid(suffix: str):
     folder = "foo"
     _validate(DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{folder}.{suffix}")
 
 
 @pytest.mark.parametrize(
-    "templates_folder, template_name",
-    (
-        ("template_foo", "template_foo_test.json"),
-        ("template_foo", "template_foo_test.yml"),
-    ),
+    "suffix",
+    ("json", "yml"),
 )
-def test_xdrc_template_file_invalid(templates_folder: str, template_name: str):
+def test_xdrc_template_file_invalid(suffix: str):
+    folder = "MyXDRCTemplate"
     with pytest.raises(InvalidXDRCTemplatesFileName):
         _validate(
-            DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / templates_folder / template_name
+            DUMMY_PACK_PATH / XDRC_TEMPLATE_DIR / folder / f"{folder}_test.{suffix}"
         )
 
 

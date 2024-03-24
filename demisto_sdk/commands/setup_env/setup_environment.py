@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     COMMON_SERVER_PYTHON_PATH,
     CONTENT_PATH,
     PYTHONPATH,
+    PYTHONPATH_STR,
 )
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.files import FileReadError, TextFile
@@ -419,7 +420,7 @@ def configure_vscode_launch(
                         "console": "integratedTerminal",
                         "cwd": "${workspaceFolder}",
                         "justMyCode": False,
-                        "env": {"PYTHONPATH": PYTHONPATH},
+                        "env": {"PYTHONPATH": PYTHONPATH_STR},
                     },
                     {
                         "name": "Python: Debug Tests",
@@ -429,7 +430,7 @@ def configure_vscode_launch(
                         "purpose": ["debug-test"],
                         "console": "integratedTerminal",
                         "justMyCode": False,
-                        "env": {"PYTHONPATH": PYTHONPATH},
+                        "env": {"PYTHONPATH": PYTHONPATH_STR},
                     },
                 ],
             }

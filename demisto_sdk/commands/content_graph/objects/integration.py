@@ -170,7 +170,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        if MarketplaceVersions.MarketplaceV2 not in current_marketplace:
+        if current_marketplace != MarketplaceVersions.MarketplaceV2:
             script: dict = data.get("script", {})
             if script.get("isfetchevents"):
                 data["script"]["isfetchevents"] = False

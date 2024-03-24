@@ -49,7 +49,7 @@ class RuffHook(Hook):
                     if file.suffix == ".py"
                 }
             )
-            hook["id"] = f"ruff-py{python_version}"
+            # hook["id"] = f"ruff-py{python_version}"
             self.hooks.append(hook)
             ruff_hook_ids.append(hook["id"])
 

@@ -56,51 +56,22 @@ class PreCommitRunner:
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
         hooks = pre_commit_context.hooks
 
+        custom_hooks_to_classes = {
+            "pycln": PyclnHook,
+            "ruff": RuffHook,
+            "sourcery": SourceryHook,
+            "validate": ValidateFormatHook,
+            "format": ValidateFormatHook,
+            "mypy": MypyHook,
+        }
+
         for hook_id in hooks.copy():
-            if hook_id in {
-                "pycln",
-                "ruff",
-                "sourcery",
-                "validate",
-                "format",
-                "mypy",
-            }:
-                if "pycln" == hook_id:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                        "pycln"
-                    ] = PyclnHook(
-                        **hooks.pop("pycln"), context=pre_commit_context
-                    ).prepare_hook()
-                if "ruff" == hook_id:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                        "ruff"
-                    ] = RuffHook(
-                        **hooks.pop("ruff"), context=pre_commit_context
-                    ).prepare_hook()
-                if "mypy" == hook_id:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                        "mypy"
-                    ] = MypyHook(
-                        **hooks.pop("mypy"), context=pre_commit_context
-                    ).prepare_hook()
-                if "sourcery" == hook_id:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                        "sourcery"
-                    ] = SourceryHook(
-                        **hooks.pop("sourcery"), context=pre_commit_context
-                    ).prepare_hook()
-                if "validate" == hook_id:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                        "validate"
-                    ] = ValidateFormatHook(
-                        **hooks.pop("validate"), context=pre_commit_context
-                    ).prepare_hook()
-                if "format" == hook_id:
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                        "format"
-                    ] = ValidateFormatHook(
-                        **hooks.pop("format"), context=pre_commit_context
-                    ).prepare_hook()
+            if hook_id in custom_hooks_to_classes:
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                    hook_id
+                ] = custom_hooks_to_classes[hook_id](
+                    **hooks.pop(hook_id), context=pre_commit_context
+                ).prepare_hook()
             else:
                 if hook_id.endswith("in-docker"):
                     PreCommitRunner.original_hook_id_to_generated_hook_ids[

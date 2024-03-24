@@ -461,6 +461,76 @@ def configure_vscode(
     configure_devcontainer(integration_script, test_docker_image)
 
 
+def install_uv_all(requirements: List[str], env: dict) -> bool:
+    """This installs all requirements with uv
+
+    Args:
+        requirements (List[str]): List of requirements to install
+        env (dict): The environment variables
+
+    Returns:
+        bool: True if all requirements were installed successfully, False otherwise
+    """
+    try:
+        subprocess.run(
+            [
+                str(Path(sys.executable).parent / "uv"),
+                "pip",
+                "-q",
+                "install",
+            ]
+            + requirements,
+            check=True,
+            env=env,
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def install_one_by_one(requirements: List[str], env: dict, venv_path: Path) -> None:
+    """Install requirements one by one
+    First try to install with uv, if fails try with pip, if fails skip and log an error
+
+    Args:
+        requirements (List[str]): List of requirements to install
+        env (dict): The environment variables
+        venv_path (Path): The virtualenv path
+    """
+    for req in requirements:
+        try:
+            subprocess.run(
+                [
+                    str(Path(sys.executable).parent / "uv"),
+                    "pip",
+                    "-q",
+                    "install",
+                    req,
+                ],
+                check=True,
+                env=env,
+            )
+            logger.info(f"Installed {req} (individually) using uv")
+
+        except subprocess.CalledProcessError:
+            logger.warning(f"Could not install {req} using uv, trying with pip")
+            try:
+                subprocess.run(
+                    [
+                        f"{venv_path / 'bin' / 'pip'}",
+                        "-q",
+                        "install",
+                        req,
+                    ],
+                    check=True,
+                )
+                logger.info(f"Installed {req} (individually) using pip")
+            except subprocess.CalledProcessError:
+                logger.error(
+                    f"Failed to install {req} with pip, skipping. Install manually if needed."
+                )
+
+
 def install_virtualenv(
     integration_script: IntegrationScript,
     test_docker_image: str,
@@ -495,53 +565,12 @@ def install_virtualenv(
     env = os.environ.copy()
     env.update({"VIRTUAL_ENV": str(venv_path)})
     requirements = [req for req in requirements if req]
-    try:
-        subprocess.run(
-            [
-                str(Path(sys.executable).parent / "uv"),
-                "pip",
-                "-q",
-                "install",
-            ]
-            + requirements,
-            check=True,
-            env=env,
-        )
-    except subprocess.CalledProcessError:
+    install_uv_all_success = install_uv_all(requirements, env)
+    if not install_uv_all_success:
         logger.warning("Failed to install all requirements, trying one by one...")
+        install_one_by_one(requirements, env, venv_path)
 
-        for req in requirements:
-            try:
-                subprocess.run(
-                    [
-                        str(Path(sys.executable).parent / "uv"),
-                        "pip",
-                        "-q",
-                        "install",
-                        req,
-                    ],
-                    check=True,
-                    env=env,
-                )
-                logger.info(f"Installed {req}")
-            except subprocess.CalledProcessError:
-                logger.warning(f"Could not install {req} with uv, trying with pip")
-                try:
-                    subprocess.run(
-                        [
-                            f"{venv_path / 'bin' / 'pip'}",
-                            "-q",
-                            "install",
-                            req,
-                        ],
-                        check=True,
-                    )
-                    logger.info(f"Installed {req}")
-                except subprocess.CalledProcessError:
-                    logger.error(
-                        f"Failed to install {req}, skipping. Install manually if needed."
-                    )
-    logger.info(f"Installed all requirements to {venv_path}")
+    logger.info(f"Installed requirements to {venv_path}")
     return interpreter_path
 
 

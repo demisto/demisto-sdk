@@ -149,6 +149,7 @@ class PreCommitRunner:
         Returns:
             int: return code - 0 if hook passed, 1 if failed
         """
+        logger.debug(f'Running hook {hook_id}')
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
@@ -250,7 +251,6 @@ class PreCommitRunner:
                 logger.debug(
                     f"Running hook {original_hook_id} with generated-hook-ids: {generated_hook_ids}"
                 )
-                # if len(generated_hook_ids) > 1:
                 with ThreadPool(num_processes) as pool:
                     current_hooks_exit_codes = pool.map(
                         partial(
@@ -261,8 +261,6 @@ class PreCommitRunner:
                         ),
                         generated_hook_ids,
                     )
-                # else:
-                #     current_hooks_exit_codes = [PreCommitRunner.run_hook(hook_id=generated_hook_ids[0], precommit_env=precommit_env, verbose=verbose, stdout=stdout)]
             else:
                 logger.debug(
                     f"Skipping hook {original_hook_id} as it does not have any generated-hook-ids"

@@ -34,9 +34,9 @@ Path for a config file to run, if not given - will run the default path at: [dem
 * **--ignore-support-level**
 Wether to skip validations based on their support level or not.
 * **--run-old-validate**
-Wether to skip the old validate flow.
+"Wether to run the old validate flow or not. Alteratively, you can configure the RUN_OLD_VALIDATE env variable.
 * **--skip-new-validate**
-Wether to run the new validate flow.
+Wether to skip the new validate flow or not. Alteratively, you can configure the SKIP_NEW_VALIDATE env variable.
 
 **Examples**:
 

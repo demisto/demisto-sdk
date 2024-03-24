@@ -781,14 +781,14 @@ def zip_packs(ctx, **kwargs) -> int:
     is_flag=True,
     show_default=True,
     default=False,
-    help="Wether to skip the old validate flow.",
+    help="Wether to run the old validate flow or not. Alteratively, you can configure the RUN_OLD_VALIDATE env variable.",
 )
 @click.option(
     "--skip-new-validate",
     is_flag=True,
     show_default=True,
     default=False,
-    help="Wether to run the new validate flow.",
+    help="Wether to skip the new validate flow or not. Alteratively, you can configure the SKIP_NEW_VALIDATE env variable.",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
@@ -824,7 +824,53 @@ def validate(ctx, config, file_paths: str, **kwargs):
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
         exit_code = 0
-        if kwargs["run_old_validate"]:
+        run_new_validate = not kwargs["skip_new_validate"] or (
+            (env_flag := os.getenv("SKIP_NEW_VALIDATE"))
+            and str(env_flag).lower() == "true"
+        )
+        run_old_validate = kwargs["run_old_validate"] or (
+            (env_flag := os.getenv("RUN_OLD_VALIDATE"))
+            and str(env_flag).lower() == "true"
+        )
+        if not run_new_validate:
+            for new_validate_flag in [
+                "fix",
+                "ignore_support_level",
+                "config_path",
+                "category_to_run",
+            ]:
+                if kwargs[new_validate_flag]:
+                    logger.warning(
+                        f"The following flag {new_validate_flag.replace('_', '-')} is related only to the new validate and is being called while not running the new validate flow, therefore the flag will be ignored."
+                    )
+        if run_old_validate:
+            for old_validate_flag in [
+                "no_backward_comp",
+                "no_conf_json",
+                "id_set",
+                "graph",
+                "skip_pack_release_notes",
+                "print_ignored_errors",
+                "print_ignored_files",
+                "no_docker_checks",
+                "silence_init_prints",
+                "skip_pack_dependencies",
+                "id_set_path",
+                "create_id_set",
+                "skip_schema_check",
+                "debug_git",
+                "include_untracked",
+                "quiet_bc_validation",
+                "allow_skipped",
+                "run_specific_validations",
+                "no_multiprocessing",
+            ]:
+                if kwargs[old_validate_flag]:
+                    logger.warning(
+                        f"The following flag {old_validate_flag.replace('_', '-')} is related only to the old validate and is being called while not running the old validate flow, therefore the flag will be ignored."
+                    )
+
+        if run_old_validate:
             if not kwargs["skip_new_validate"]:
                 kwargs["graph"] = False
             validator = OldValidateManager(
@@ -857,7 +903,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
                 specific_validations=kwargs.get("run_specific_validations"),
             )
             exit_code += validator.run_validation()
-        if not kwargs["skip_new_validate"]:
+        if run_new_validate:
             validation_results = ResultWriter(
                 json_file_path=kwargs.get("json_file"),
             )

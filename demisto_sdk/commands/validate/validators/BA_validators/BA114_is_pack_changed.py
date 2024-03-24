@@ -19,12 +19,8 @@ class PackNameValidator(BaseValidator[ContentTypes]):
     description = (
         "Validate that we didn't move a content item from one pack to another."
     )
-    rationale = (
-        "Pack of a content item should not be changed."
-    )
-    error_message = (
-        "Pack for content item '{0}' and all related files were changed from '{1}' to '{2}', please undo."
-    )
+    rationale = "Pack of a content item should not be changed."
+    error_message = "Pack for content item '{0}' and all related files were changed from '{1}' to '{2}', please undo."
     related_field = "path"
     expected_git_statuses = [GitStatuses.RENAMED]
     new_pack_name = ""
@@ -55,4 +51,3 @@ class PackNameValidator(BaseValidator[ContentTypes]):
             self.old_pack_name = old_pack_name
             self.new_path = str(content_item.path).split(PACKS_FOLDER)[-1]
         return name_has_changed
-

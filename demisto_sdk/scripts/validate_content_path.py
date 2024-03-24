@@ -456,7 +456,8 @@ def validate_all(
     )
     valid = (total := len(paths)) - invalid
     logger.info(f"{total=},[green]{valid=}[/green],[red]{invalid=}[/red]")
-
+    if invalid:
+        raise typer.Exit(1)
 
 def main():
     logging_setup()

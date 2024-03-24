@@ -335,7 +335,9 @@ jobs:
         id: validate-content-path-changed
         uses: tj-actions/changed-files@v43
         with:
-          files: demisto-sdk/demisto_sdk/scripts/validate_content_path.py
+          files: |
+            demisto-sdk/demisto_sdk/scripts/validate_content_path.py
+            demisto-sdk/demisto_sdk/tests/validate_content_path_test.py
 
       - name: Checkout Content
         if: steps.validate-content-path-changed.outputs.any_changed == 'true'

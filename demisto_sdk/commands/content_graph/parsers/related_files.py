@@ -207,7 +207,7 @@ class PNGFiles(ImageFiles):
     def get_file_size(self):
         return self.file_path.stat()
 
-    def load_image(self) -> str | bytearray | memoryview:
+    def load_image(self) -> Union[str, bytearray, memoryview]:
         encoded_image = ""
         with open(self.file_path, "rb") as image:
             image_data = image.read()
@@ -219,7 +219,7 @@ class PNGFiles(ImageFiles):
 
 class SVGFiles(ImageFiles):
     def load_image(self) -> bytes:
-        encoded_image = ""
+        encoded_image = b""
         with open(self.file_path, "rb") as image_file:
             encoded_image = image_file.read()  # type: ignore
         return encoded_image

@@ -272,7 +272,7 @@ def _validate(path: Path) -> None:
             _validate_integration_script_file(path, parts_after_packs)
         elif first_level_folder in {ContentType.XDRC_TEMPLATE.as_folder}:
             if path.stem != path.parent.name:
-                raise InvalidXDRCTemplatesFileName()
+                raise InvalidXDRCTemplatesFileName
 
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):

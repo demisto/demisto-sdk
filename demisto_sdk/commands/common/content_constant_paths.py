@@ -41,3 +41,5 @@ else:
     logger.debug(
         "Could not add API modules to 'PYTHONPATH' as the base directory does not exist."
     )
+
+PYTHONPATH_STR = ":".join(str(path) for path in PYTHONPATH)

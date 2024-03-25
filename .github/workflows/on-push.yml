@@ -211,7 +211,7 @@ jobs:
         run: |
           if [ -n "${{ secrets.COVERALLS_REPO_TOKEN }}" ]; then
             pip install coveralls
-            coveralls
+            coveralls -r "${{ secrets.COVERALLS_REPO_TOKEN }}"
           else
             echo "Skipping coveralls"
           fi

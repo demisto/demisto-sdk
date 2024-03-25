@@ -361,7 +361,7 @@ def group_by_language(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
         with multiprocessing.Pool(processes=cpu_count()) as pool:
-            chunk = pool.map(BaseContent.from_path, integration_script_paths)
+            content_items = pool.map(BaseContent.from_path, integration_script_paths)
             for content_item in content_items:
                 if not content_item or not isinstance(content_item, IntegrationScript):
                     continue

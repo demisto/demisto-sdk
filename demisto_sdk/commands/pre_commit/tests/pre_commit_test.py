@@ -25,6 +25,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     subprocess,
 )
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA_PATH = (
     Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"
@@ -193,6 +194,22 @@ def test_config_files(mocker, repo: Repo):
     assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
     assert list((Path(repo.path) / "docker-config").iterdir())
     assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
+
+
+def test_handle_api_modules(mocker, git_repo: Repo):
+    pack1 = git_repo.create_pack("ApiModules")
+    script = pack1.create_script("TestApiModule")
+    pack2 = git_repo.create_pack("Pack2")
+    integration = pack2.create_integration(
+        "integration1", code="from TestApiModule import *"
+    )
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(git_repo.path))
+    with ChangeCWD(git_repo.path):
+        git_repo.create_graph()
+        files_to_run = group_by_language(
+            {Path(script.yml.path).relative_to(git_repo.path)}
+        )
+        print()
 
 
 def test_mypy_hooks(mocker):

@@ -262,7 +262,7 @@ jobs:
 
   test-pre-commit-command:
     runs-on: ubuntu-latest
-    name: Test Demisto-SDK Pre-Commit Command
+    name: Test Pre-Commit Command
     steps:
       - name: Checkout
         uses: actions/checkout@v4

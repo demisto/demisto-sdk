@@ -205,9 +205,11 @@ jobs:
           coverage combine **/.coverage
           coverage report
           coverage xml
-      - name: Coveralls
+      - name: Coveralls-Action
         uses: coverallsapp/github-action@v2
-      - name: Coveralls v2
+      - name: Coveralls-Comment
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
           if [ -n "$COVERALLS_REPO_TOKEN" ]; then
             pip install coveralls

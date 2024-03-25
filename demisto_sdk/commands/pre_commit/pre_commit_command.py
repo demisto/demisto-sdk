@@ -234,7 +234,7 @@ class PreCommitRunner:
                             PreCommitRunner.run_hook,
                             precommit_env=precommit_env,
                             verbose=verbose,
-                            stdout=stdout,
+                            stdout=subprocess.PIPE if len(generated_hook_ids) > 1 else None,
                         ),
                         generated_hook_ids,
                     )

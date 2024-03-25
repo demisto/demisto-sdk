@@ -18,6 +18,7 @@ DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement
 class DeprecatedDescriptionValidator(BaseValidator[ContentTypes]):
     error_code = "PB104"
     description = "Validate whether a deprecated playbook has a valid description"
+    run_on_deprecated = True
     error_message = (
         "The deprecated playbook '{playbook_name}' has invalid description.\n"
         "The description of all deprecated playbooks should follow one of the formats:\n"
@@ -29,8 +30,8 @@ class DeprecatedDescriptionValidator(BaseValidator[ContentTypes]):
 
     @staticmethod
     def _is_deprecated_with_invalid_description(content_item: ContentTypes) -> bool:
-        is_deprecated = content_item.data.get("deprecated", False)
-        description = content_item.data.get("description", "")
+        is_deprecated = content_item.deprecated
+        description = content_item.description
 
         if is_deprecated and not any(
             re.search(pattern, description)

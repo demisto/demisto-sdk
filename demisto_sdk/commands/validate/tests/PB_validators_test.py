@@ -185,7 +185,7 @@ def test_is_deprecated_with_invalid_description(content_item, expected_result):
         Case 3: The playbook is deprecated and has invalid description.
 
     When:
-    - Validating the playbook
+    - calling DeprecatedDescriptionValidator.is_valid.
 
     Then:
     - The results should be as expected:

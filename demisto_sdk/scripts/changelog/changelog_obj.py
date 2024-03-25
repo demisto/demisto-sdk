@@ -20,7 +20,7 @@ class LogType(str, Enum):
     breaking = "breaking"
     feature = "feature"
     fix = "fix"
-    internal = "internal"
+    docs = "docs"
 
     @staticmethod
     def list():

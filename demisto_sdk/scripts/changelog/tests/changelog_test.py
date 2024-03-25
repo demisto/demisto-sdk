@@ -36,7 +36,7 @@ LOG_FILE_2 = {
 LOG_FILE_3 = {
     "changes": [
         {"description": "added a feature that test", "type": "fix"},
-        {"description": "breaking changes: test", "type": "internal"},
+        {"description": "breaking changes: test", "type": "docs"},
     ],
     "pr_number": "43524",
 }

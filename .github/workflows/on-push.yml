@@ -209,7 +209,7 @@ jobs:
         uses: coverallsapp/github-action@v2
       - name: Coveralls v2
         run: |
-          if [ -n "${{secrets.$COVERALLS_REPO_TOKEN}}" ]; then
+          if [ -n "${{ secrets.COVERALLS_REPO_TOKEN }}" ]; then
             pip install coveralls
             coveralls
           else

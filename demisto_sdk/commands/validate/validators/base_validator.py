@@ -175,13 +175,16 @@ def is_error_ignored(
     if err_code not in ignorable_errors:
         return False
     if related_file_type:
-        content_item_as_dict = content_item.dict()
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
-            if related_file_object := content_item_as_dict.get(related_file.value):
-                return err_code in content_item.ignored_errors_related_files(
+            try:
+                related_file_object = getattr(content_item, related_file.value)
+                if err_code in content_item.ignored_errors_related_files(
                     related_file_object.file_path
-                )
+                ):
+                    return True
+            except Exception:
+                continue
         return False
     else:
         # If the validation should run on the main content, will check if the validation's error code is ignored by the file.

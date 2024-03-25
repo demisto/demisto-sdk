@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     PARTNER_SUPPORT,
-    XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -37,7 +36,7 @@ class EmptyReadmeValidator(BaseValidator[ContentTypes]):
             if (
                 # if the pack is partner/xsoar supported or contains playbooks, it must have a full README.md file
                 (
-                    content_item.support in (PARTNER_SUPPORT, XSOAR_SUPPORT)
+                    content_item.support == PARTNER_SUPPORT
                     or content_item.content_items.playbook
                 )
                 and not content_item.readme.file_content

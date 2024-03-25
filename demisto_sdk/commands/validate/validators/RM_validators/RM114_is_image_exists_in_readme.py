@@ -5,6 +5,7 @@ from typing import Iterable, List, Union
 from demisto_sdk.commands.common.tools import (
     extract_image_paths_from_str,
     get_full_image_paths_from_relative,
+    get_pack_name,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -40,7 +41,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                     invalid_lines := [
                         str(image_path)
                         for image_path in get_full_image_paths_from_relative(
-                            content_item.pack_name,
+                            get_pack_name(content_item.path),
                             extract_image_paths_from_str(
                                 text=content_item.readme.file_content
                             ),

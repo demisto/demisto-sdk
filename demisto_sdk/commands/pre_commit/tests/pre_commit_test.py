@@ -2,8 +2,7 @@ import itertools
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Dict
-from unittest.mock import MagicMock
+from typing import Dict, List, Optional
 
 import pytest
 
@@ -153,7 +152,7 @@ def test_config_files(mocker, repo: Repo, native_image_config):
     incident_field = pack1.create_incident_field("incident_field")
     classifier = pack1.create_classifier("classifier")
     mocker.patch.object(yaml, "dump", side_effect=lambda *args: [])
-    subprocess_run: MagicMock = mocker.patch.object(subprocess, "run", return_value=MockProcess())
+    mocker.patch.object(subprocess, "run", return_value=MockProcess())
 
     relative_paths = {
         path.relative_to(repo.path)
@@ -608,6 +607,7 @@ def test_skip_hook_with_mode(mocker):
     Then:
         Don't generate the skipped hooks
     """
+
     def get_repos(_pre_commit_config: Dict) -> Dict:
         repos = {}
         for repo in _pre_commit_config["repos"]:

@@ -296,6 +296,7 @@ def compile_changelog_md(
         ]:
             new_changelog.append(f"### {header}")
             new_changelog.extend(current_changelogs)
+            new_changelog.append(f'\n')
     # A new line separates versions
     new_changelog.append("\n")
     # Collecting the old changelog

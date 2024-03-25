@@ -13,6 +13,7 @@ import more_itertools
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
+    API_MODULES_PACK,
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     PACKS_FOLDER,
@@ -25,6 +26,8 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     write_dict,
 )
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
@@ -321,8 +324,10 @@ def group_by_language(
     Returns:
         Dict[str, set]: The files grouped by their python version, and a set of excluded paths
     """
+    graph = ContentGraphInterface()
     integrations_scripts_mapping = defaultdict(set)
     infra_files = []
+    api_modules = []
     for file in files:
         if file.is_dir():
             continue
@@ -347,19 +352,36 @@ def group_by_language(
             infra_files.append(file)
 
     language_to_files: Dict[str, Set] = defaultdict(set)
-    integrations_scripts = []
+    integrations_scripts: Set[IntegrationScript] = set()
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
         with multiprocessing.Pool(processes=cpu_count()) as pool:
-            integrations_scripts.extend(
-                pool.map(BaseContent.from_path, integration_script_paths)
-            )
+            chunk = pool.map(BaseContent.from_path, integration_script_paths)
+            for i in chunk:
+                if not i or not isinstance(
+                    i, IntegrationScript
+                ):
+                    continue
+                integrations_scripts.add(i)
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
-        if not integration_script or not isinstance(
-            integration_script, IntegrationScript
-        ):
+        if (pack := integration_script.in_pack) and pack == API_MODULES_PACK:
+            # add api modules to the api_modules list, we will handle them later
+            api_modules.append(integration_script)
+            continue
+    if api_modules:
+        update_content_graph(graph)
+        api_modules: List[IntegrationScript] = graph.search(object_id=[api_module.object_id for api_module in api_modules])
+        for api_module in api_modules:
+            for used_by in api_module.used_by:
+                content_item_to: IntegrationScript = used_by.content_item_to
+                # we need to add the api module for each integration that uses it, so it will execute the api module check
+                integrations_scripts.add(content_item_to)
+                integrations_scripts_mapping[content_item_to.path.parent].update(add_related_files(api_module.path))
+                
+    for integration_script in integrations_scripts:
+        if (pack := integration_script.in_pack) and pack == API_MODULES_PACK:
             continue
         if integration_script.deprecated:
             # we exclude deprecate integrations and scripts from pre-commit.
@@ -387,7 +409,7 @@ def group_by_language(
             },
             {(integration_script.path.relative_to(CONTENT_PATH), integration_script)},
         )
-
+        
     if infra_files:
         language_to_files[DEFAULT_PYTHON_VERSION].update(
             [(infra, None) for infra in infra_files]
@@ -485,6 +507,21 @@ def pre_commit_manager(
         dry_run,
     )
 
+def add_related_files(file: Path) -> Set[Path]:
+    files_to_run = set()
+    files_to_run.add(file)
+    if file.suffix == ".yml":
+        py_file_path = file.with_suffix(".py")
+        if py_file_path.exists():
+            files_to_run.add(py_file_path)
+    if file.suffix in (".py", ".ps1"):
+        if file.suffix == ".py":
+            test_file = file.with_name(f"{file.stem}_test.py")
+        else:
+            test_file = file.with_name(f"{file.stem}.Tests.ps1")
+        if test_file.exists():
+            files_to_run.add(test_file)
+    return files_to_run
 
 def preprocess_files(
     input_files: Optional[Iterable[Path]] = None,
@@ -493,6 +530,7 @@ def preprocess_files(
     use_git: bool = False,
     all_files: bool = False,
 ) -> Set[Path]:
+    api_modules = []
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)
@@ -515,20 +553,7 @@ def preprocess_files(
         if file.is_dir():
             files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
-            files_to_run.add(file)
-            # If the current file is a yml file, add the matching python file to files_to_run
-            if file.suffix == ".yml":
-                py_file_path = file.with_suffix(".py")
-                if py_file_path.exists():
-                    files_to_run.add(py_file_path)
-            if file.suffix in (".py", ".ps1"):
-                if file.suffix == ".py":
-                    test_file = file.with_name(f"{file.stem}_test.py")
-                else:
-                    test_file = file.with_name(f"{file.stem}.Tests.ps1")
-                if test_file.exists():
-                    files_to_run.add(test_file)
-
+            files_to_run.update(add_related_files(file))
     # convert to relative file to content path
     relative_paths = {
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file

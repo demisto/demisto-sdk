@@ -960,8 +960,7 @@ def get_script_or_integration_id(file_path):
                 "-",
             ],
         )
-
-
+    
 def get_api_module_integrations_set(changed_api_modules: Set, integration_set: Set):
     integrations_set = list()
     for integration in integration_set:

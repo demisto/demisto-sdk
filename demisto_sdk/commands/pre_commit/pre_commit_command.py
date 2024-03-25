@@ -362,10 +362,11 @@ def group_by_language(
     ):
         with multiprocessing.Pool(processes=cpu_count()) as pool:
             chunk = pool.map(BaseContent.from_path, integration_script_paths)
-            for i in chunk:
-                if not i or not isinstance(i, IntegrationScript):
+            for content_item in content_items:
+                if not content_item or not isinstance(content_item, IntegrationScript):
                     continue
-                integrations_scripts.add(i)
+                # content-item is a script/integration
+                integrations_scripts.add(content_item)
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
         if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:

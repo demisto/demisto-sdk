@@ -264,7 +264,7 @@ jobs:
 
   test-pre-commit-command:
     runs-on: ubuntu-latest
-    name: Test Demisto-SDK Pre-Commit Command
+    name: Test Pre-Commit Command
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -307,7 +307,7 @@ jobs:
 
           echo "# test" >> Tests/collect_tests.py
           git add .
-          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose
+          demisto-sdk pre-commit --validate --show-diff-on-failure --verbose --mode=ci
 
       - name: run pre-commit on input files
         timeout-minutes: 60

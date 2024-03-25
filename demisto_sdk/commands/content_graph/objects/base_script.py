@@ -15,8 +15,8 @@ from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseNode,
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Integration,
 )
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
@@ -62,12 +62,12 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         return data
 
     @property
-    def imported_by(self) -> List[BaseNode]:
+    def imported_by(self) -> List[Integration]:
         return [
-            r.content_item_to
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IMPORTS]
             if r.content_item_to.database_id == r.source_id
-        ]
+        ]  # type: ignore[return-value]
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)

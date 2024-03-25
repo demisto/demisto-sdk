@@ -29,9 +29,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration import (
-    Integration,
-)
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -328,7 +325,6 @@ def group_by_language(
     Returns:
         Dict[str, set]: The files grouped by their python version, and a set of excluded paths
     """
-    graph = ContentGraphInterface()
     integrations_scripts_mapping = defaultdict(set)
     infra_files = []
     api_modules = []
@@ -373,15 +369,15 @@ def group_by_language(
             api_modules.append(integration_script)
             continue
     if api_modules:
-        update_content_graph(graph)
-        api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
-            object_id=[api_module.object_id for api_module in api_modules]
-        )
+        with ContentGraphInterface() as graph:
+            update_content_graph(graph)
+            api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
+                object_id=[api_module.object_id for api_module in api_modules]
+            )
         for api_module in api_modules:
             assert isinstance(api_module, Script)
             for imported_by in api_module.imported_by:
                 # we need to add the api module for each integration that uses it, so it will execute the api module check
-                assert isinstance(imported_by, Integration)
                 integrations_scripts.add(imported_by)
                 integrations_scripts_mapping[imported_by.path.parent].update(
                     add_related_files(api_module.path.relative_to(CONTENT_PATH))

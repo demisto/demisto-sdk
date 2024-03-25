@@ -209,15 +209,6 @@ class PreCommitRunner:
             command=["install-hooks"],
         )
 
-        stdout = (
-            subprocess.PIPE
-            if any(
-                len(hook_ids) > 1
-                for hook_ids in PreCommitRunner.original_hook_id_to_generated_hook_ids.values()
-            )
-            else None
-        )
-
         num_processes = cpu_count()
         all_hooks_exit_codes = []
         for (
@@ -234,7 +225,9 @@ class PreCommitRunner:
                             PreCommitRunner.run_hook,
                             precommit_env=precommit_env,
                             verbose=verbose,
-                            stdout=subprocess.PIPE if len(generated_hook_ids) > 1 else None,
+                            stdout=subprocess.PIPE
+                            if len(generated_hook_ids) > 1
+                            else None,
                         ),
                         generated_hook_ids,
                     )

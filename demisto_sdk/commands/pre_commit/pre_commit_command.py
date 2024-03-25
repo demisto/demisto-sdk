@@ -54,6 +54,15 @@ class PreCommitRunner:
 
     @staticmethod
     def prepare_hooks(pre_commit_context: PreCommitContext) -> None:
+        """
+        Prepares the hooks for a pre-commit execution.
+
+        Note:
+            The hooks execution will be ordered according to their order definition at the template file.
+
+        Args:
+            pre_commit_context: pre-commit context object
+        """
         hooks = pre_commit_context.hooks
 
         custom_hooks_to_classes = {

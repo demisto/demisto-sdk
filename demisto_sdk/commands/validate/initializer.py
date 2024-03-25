@@ -322,6 +322,7 @@ class Initializer:
                 set(self.load_files(self.file_path.split(",")))
             )
         elif self.all_files:
+            logger.info("Running validation on all files.")
             content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")

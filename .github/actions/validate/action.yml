@@ -13,10 +13,10 @@ inputs:
     type: string
     description: "The name of of the artifact to upload"
 
-  validate-script-path:
+  command-to-run:
     required: false
     type: string
-    description: "The path to the validate script to run"
+    description: "The validate terminal command to run."
 
 
 runs:
@@ -42,7 +42,7 @@ runs:
           source $(poetry env info --path)/bin/activate
           cd content
           mkdir -p ${{ inputs.artifacts-path-dir }}
-          ./${{ inputs.validate-script-path }}
+          inputs.command-to-run
         shell: bash
 
       - name: Upload artifacts

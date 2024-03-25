@@ -205,7 +205,10 @@ class InvalidContentItemResult(BaseResult, BaseModel):
 
     @property
     def format_readable_message(self):
-        return f"{str(self.path.relative_to(CONTENT_PATH))}: [{self.error_code}] - {self.message}"
+        path: Path = self.path
+        if path.is_absolute():
+            path = path.relative_to(CONTENT_PATH)
+        return f"{path}: [{self.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):

@@ -483,9 +483,15 @@ class Initializer:
                     obj.git_status = git_status
                     # Check if the file exists
                     if git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED):
-                        obj.old_base_content_object = BaseContent.from_path(
-                            old_path, git_sha=git_sha, raise_on_exception=True
-                        )
+                        try:
+                            obj.old_base_content_object = BaseContent.from_path(
+                                old_path, git_sha=git_sha, raise_on_exception=True
+                            )
+                        except (NotAContentItemException, InvalidContentItemException):
+                            logger.debug(
+                                f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
+                            )
+                            obj.old_base_content_object = obj.copy(deep=True)
                     else:
                         obj.old_base_content_object = obj.copy(deep=True)
                     if obj.old_base_content_object:

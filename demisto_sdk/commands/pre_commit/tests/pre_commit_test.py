@@ -197,6 +197,17 @@ def test_config_files(mocker, repo: Repo):
 
 
 def test_handle_api_modules(mocker, git_repo: Repo):
+    """
+    Given:
+        - A repository with a pack that contains an API module and a pack that contains an integration that uses the API module
+
+    When:
+        - Running demisto-sdk pre-commit
+
+    Then:
+        - Ensure that the API module is added to the files to run
+        - Ensure that the integration that uses the API module is added to the files to run, both related to the *integration*
+    """
     pack1 = git_repo.create_pack("ApiModules")
     script = pack1.create_script("TestApiModule")
     pack2 = git_repo.create_pack("Pack2")
@@ -205,11 +216,19 @@ def test_handle_api_modules(mocker, git_repo: Repo):
     )
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(git_repo.path))
     with ChangeCWD(git_repo.path):
-        git_repo.create_graph()
+        graph = git_repo.create_graph()
         files_to_run = group_by_language(
             {Path(script.yml.path).relative_to(git_repo.path)}
         )
-        print()
+    integration_graph_object = integration.get_graph_object(graph)
+    assert (
+        Path(script.yml.path).relative_to(git_repo.path),
+        integration_graph_object,
+    ) in files_to_run[0]["2.7"]
+    assert (
+        Path(integration.yml.path).relative_to(git_repo.path),
+        integration_graph_object,
+    ) in files_to_run[0]["2.7"]
 
 
 def test_mypy_hooks(mocker):

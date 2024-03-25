@@ -2,7 +2,7 @@ import itertools
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 from unittest.mock import MagicMock
 
 import pytest
@@ -460,7 +460,7 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
     )
     PreCommitRunner.prepare_hooks(pre_commit_context)
 
-    hooks = pre_commit_context._filter_hooks(pre_commit_context.precommit_template)
+    hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
     assert hooks["validate"]["hook"].get("exclude") is None
     assert "file1.py" in hooks["ruff"]["hook"]["exclude"]
 
@@ -492,7 +492,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
 
     PreCommitRunner.prepare_hooks(pre_commit_context)
 
-    hooks = pre_commit_context._filter_hooks(pre_commit_context.precommit_template)
+    hooks = pre_commit_context._get_hooks(pre_commit_context.precommit_template)
     assert hooks["pycln"]["hook"].get("exclude") is None
     assert "file2.py" in hooks["autopep8"]["hook"]["exclude"]
 
@@ -608,6 +608,12 @@ def test_skip_hook_with_mode(mocker):
     Then:
         Don't generate the skipped hooks
     """
+    def get_repos(_pre_commit_config: Dict) -> Dict:
+        repos = {}
+        for repo in _pre_commit_config["repos"]:
+            repos[repo["repo"]] = repo
+        return repos
+
     mocker.patch.object(
         context,
         "PRECOMMIT_TEMPLATE_PATH",
@@ -620,7 +626,7 @@ def test_skip_hook_with_mode(mocker):
     pre_commit_runner = pre_commit_command.PreCommitContext(
         None, None, "nightly", python_version_to_files, ""
     )
-    repos = pre_commit_runner._get_repos(pre_commit_runner.precommit_template)
+    repos = get_repos(pre_commit_runner.precommit_template)
     assert not repos["https://github.com/charliermarsh/ruff-pre-commit"]["hooks"]
     assert "is-gitlab-changed" not in {
         hook.get("id") for hook in repos["local"]["hooks"]

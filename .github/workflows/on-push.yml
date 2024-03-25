@@ -433,7 +433,7 @@ jobs:
         with:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
-        run: demisto-sdk validate -a --graph --skip-pack-dependencies --prev-ver $PREV_VER --run-new-validate --config-path sdk_validation_config.toml
+          command-to-run: demisto-sdk validate -a --graph --skip-pack-dependencies --prev-ver $PREV_VER --run-new-validate --config-path sdk_validation_config.toml
 
   test-lint:
     runs-on: ubuntu-latest

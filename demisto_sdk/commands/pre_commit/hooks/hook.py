@@ -37,6 +37,11 @@ class Hook:
         This method should be implemented in each hook.
         Since we removed the base hook from the hooks list, we must add it back.
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
+
+        Each original hook can be split into multiple hooks, see docker-hook for example.
+
+        Returns:
+            a list of generated hook IDs
         """
         self.hooks.append(deepcopy(self.base_hook))
         return [self.base_hook["id"]]

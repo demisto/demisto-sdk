@@ -13,15 +13,21 @@ class MypyHook(Hook):
         Returns:
             None
         """
+        mypy_hook_ids = []
+
         for python_version in self.context.python_version_to_files:
+            mypy_python_version = f"mypy-py{python_version}"
             hook: Dict[str, Any] = {
-                "name": f"mypy-py{python_version}",
+                "name": mypy_python_version,
+                "alias": mypy_python_version,
             }
             hook.update(deepcopy(self.base_hook))
             hook["args"].append(f"--python-version={python_version}")
             hook["files"] = join_files(
                 self.context.python_version_to_files[python_version]
             )
+
+            mypy_hook_ids.append(mypy_python_version)
             self.hooks.append(hook)
 
-        return [self.base_hook["id"]]
+        return mypy_hook_ids

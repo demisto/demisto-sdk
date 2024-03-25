@@ -81,21 +81,18 @@ class PreCommitRunner:
                 ] = custom_hooks_to_classes[hook_id](
                     **hooks.pop(hook_id), context=pre_commit_context
                 ).prepare_hook()
+            elif hook_id.endswith("in-docker"):
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[
+                    hook_id
+                ] = DockerHook(
+                    **hooks.pop(hook_id), context=pre_commit_context
+                ).prepare_hook()
             else:
-                if hook_id.endswith("in-docker"):
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                        hook_id
-                    ] = DockerHook(
-                        **hooks.pop(hook_id), context=pre_commit_context
-                    ).prepare_hook()
-                else:
-                    # this is used to handle the mode property correctly even for non-custom hooks which do not require
-                    # special preparation
-                    PreCommitRunner.original_hook_id_to_generated_hook_ids[
-                        hook_id
-                    ] = Hook(
-                        **hooks.pop(hook_id), context=pre_commit_context
-                    ).prepare_hook()
+                # this is used to handle the mode property correctly even for non-custom hooks which do not require
+                # special preparation
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
+                    **hooks.pop(hook_id), context=pre_commit_context
+                ).prepare_hook()
 
             logger.debug(f"Prepared hook {hook_id} successfully")
 

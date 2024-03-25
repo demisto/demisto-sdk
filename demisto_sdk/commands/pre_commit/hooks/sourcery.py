@@ -36,9 +36,13 @@ class SourceryHook(Hook):
         if not config_file.exists():
             return []
         self.base_hook.pop("config_file", None)
+
+        sourcery_hook_ids = []
         for python_version in self.context.python_version_to_files:
+            sourcery_python_version = f"sourcery-py{python_version}"
             hook: Dict[str, Any] = {
-                "name": f"sourcery-py{python_version}",
+                "name": sourcery_python_version,
+                "alias": sourcery_python_version,
             }
             hook.update(deepcopy(self.base_hook))
             hook["args"].append(
@@ -47,6 +51,7 @@ class SourceryHook(Hook):
             hook["files"] = join_files(
                 self.context.python_version_to_files[python_version]
             )
+            sourcery_hook_ids.append(sourcery_python_version)
             self.hooks.append(hook)
 
-        return [self.base_hook["id"]]
+        return sourcery_hook_ids

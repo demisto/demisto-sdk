@@ -29,9 +29,13 @@ class RuffHook(Hook):
         Changes the hook's name, files and the "--target-version" argument according to the Python version.
         Args:
         """
+        ruff_hook_ids = []
+
         for python_version in self.context.python_version_to_files:
+            ruff_python_version = f"ruff-py{python_version}"
             hook: Dict[str, Any] = {
-                "name": f"ruff-py{python_version}",
+                "name": ruff_python_version,
+                "alias": ruff_python_version,
             }
             hook.update(deepcopy(self.base_hook))
             target_version = (
@@ -47,6 +51,7 @@ class RuffHook(Hook):
                     if file.suffix == ".py"
                 }
             )
+            ruff_hook_ids.append(hook["alias"])
             self.hooks.append(hook)
 
-        return [self.base_hook["id"]]
+        return ruff_hook_ids

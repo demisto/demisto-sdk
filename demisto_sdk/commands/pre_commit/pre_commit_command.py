@@ -374,16 +374,18 @@ def group_by_language(
             continue
     if api_modules:
         update_content_graph(graph)
-        api_modules: List[Script] = graph.search(
+        api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
             object_id=[api_module.object_id for api_module in api_modules]
-        )  # type: ignore[no-redef]
+        )
         for api_module in api_modules:
+            assert isinstance(api_module, Script)
             for imported_by in api_module.imported_by:
                 # we need to add the api module for each integration that uses it, so it will execute the api module check
                 assert isinstance(imported_by, Integration)
                 integrations_scripts.add(imported_by)
                 integrations_scripts_mapping[imported_by.path.parent].update(
                     add_related_files(api_module.path.relative_to(CONTENT_PATH))
+                    | add_related_files(imported_by.path.relative_to(CONTENT_PATH))
                 )
 
     for integration_script in integrations_scripts:

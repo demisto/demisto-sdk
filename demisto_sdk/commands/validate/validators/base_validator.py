@@ -180,7 +180,7 @@ def is_error_ignored(
         for related_file in related_file_type:
             if related_file_object := content_item_as_dict.get(related_file.value):
                 return err_code in content_item.ignored_errors_related_files(
-                    related_file_object.path
+                    related_file_object.file_path
                 )
         return False
     else:

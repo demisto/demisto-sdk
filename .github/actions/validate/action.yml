@@ -43,7 +43,6 @@ runs:
           cd content
           mkdir -p ${{ inputs.artifacts-path-dir }}
           ${{inputs.command-to-run}}
-        shell: bash
 
       - name: Upload artifacts
         if: always()

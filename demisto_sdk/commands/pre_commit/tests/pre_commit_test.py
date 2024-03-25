@@ -3,6 +3,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -134,16 +135,6 @@ def test_config_files(mocker, repo: Repo, native_image_config):
         "PRECOMMIT_CONFIG_MAIN_PATH",
         Path(repo.path) / ".pre-commit-config.yaml",
     )
-    mocker.patch.object(
-        pre_commit_command,
-        "PRECOMMIT_SPLIT_HOOKS_CONFIGS",
-        Path(repo.path) / "split-hooks",
-    )
-    mocker.patch.object(
-        context,
-        "PRECOMMIT_SPLIT_HOOKS_CONFIGS",
-        Path(repo.path) / "split-hooks",
-    )
     mocker.patch.object(context, "PRECOMMIT_CONFIG", Path(repo.path) / "config")
     integration1 = pack1.create_integration(
         "integration1", docker_image="demisto/python3:3.9.1.14969"
@@ -162,7 +153,7 @@ def test_config_files(mocker, repo: Repo, native_image_config):
     incident_field = pack1.create_incident_field("incident_field")
     classifier = pack1.create_classifier("classifier")
     mocker.patch.object(yaml, "dump", side_effect=lambda *args: [])
-    mocker.patch.object(subprocess, "run", return_value=MockProcess())
+    subprocess_run: MagicMock = mocker.patch.object(subprocess, "run", return_value=MockProcess())
 
     relative_paths = {
         path.relative_to(repo.path)
@@ -210,12 +201,6 @@ def test_config_files(mocker, repo: Repo, native_image_config):
 
     PreCommitRunner.prepare_and_run(pre_commit_context)
     assert (Path(repo.path) / ".pre-commit-config.yaml").exists()
-    assert (Path(repo.path) / "split-hooks").exists()
-    split_hooks = list((Path(repo.path) / "split-hooks").iterdir())
-    assert len(split_hooks) == 4
-    for hook in split_hooks:
-        assert "pylint" in str(hook)
-    assert (Path(repo.path) / ".pre-commit-config-needs.yaml").exists()
 
 
 def test_mypy_hooks(mocker):

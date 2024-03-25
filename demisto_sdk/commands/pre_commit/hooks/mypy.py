@@ -13,8 +13,6 @@ class MypyHook(Hook):
         Returns:
             None
         """
-        mypy_hook_ids = []
-
         for python_version in self.context.python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"mypy-py{python_version}",
@@ -25,6 +23,5 @@ class MypyHook(Hook):
                 self.context.python_version_to_files[python_version]
             )
             self.hooks.append(hook)
-            mypy_hook_ids.append(hook["id"])
 
         return [self.base_hook["id"]]

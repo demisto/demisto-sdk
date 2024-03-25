@@ -271,7 +271,7 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
             ],
             1,
             [
-                "The Playbook doesn't have a README file. Please add a README.md file in the content item's directory."
+                "The Playbook in pack 'pack_18' doesn't have a README file. Please add a README.md file in the content item's directory."
             ],
         ),
         (
@@ -281,7 +281,7 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
             ],
             1,
             [
-                "The Script doesn't have a README file. Please add a README.md file in the content item's directory."
+                "The Script in pack 'pack_20' doesn't have a README file. Please add a README.md file in the content item's directory."
             ],
         ),
         (
@@ -291,7 +291,7 @@ def test_IsPackReadmeNotEqualPackDescriptionValidator_valid():
             ],
             1,
             [
-                "The Integration doesn't have a README file. Please add a README.md file in the content item's directory."
+                "The Integration in pack 'pack_22' doesn't have a README file. Please add a README.md file in the content item's directory."
             ],
         ),
     ],

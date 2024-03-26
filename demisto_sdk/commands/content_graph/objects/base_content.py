@@ -12,7 +12,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    Union,
     cast,
 )
 
@@ -229,7 +228,7 @@ class BaseContent(BaseNode):
     def ignored_errors(self) -> List[str]:
         raise NotImplementedError
 
-    def ignored_errors_related_files(self, file_path: Union[str, Path]) -> List[str]:
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         """Return the errors that should be ignored for the given related file path.
 
         Args:

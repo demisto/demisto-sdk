@@ -4454,3 +4454,20 @@ def remove_nulls_from_dictionary(data):
     for key in list_of_keys:
         if data[key] in ("", None, [], {}, ()):
             del data[key]
+
+
+def safe_get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
+    """Extract the relative path that is relative to the given path.
+
+    Args:
+        file_path (Union[str, Path]): The path to extract the relative path from.
+        relative_to (Path): The path to get the relative path to.
+
+    Returns:
+        Path: The extracted relative path.
+    """
+    if isinstance(file_path, str):
+        file_path = Path(file_path)
+    if file_path.is_absolute():
+        file_path = file_path.relative_to(relative_to)
+    return file_path

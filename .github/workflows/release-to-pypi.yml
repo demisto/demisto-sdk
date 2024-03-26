@@ -12,6 +12,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Fetch and checkout release tag ${{ github.event.pull_request.head.ref }}
+        run: |
+          git fetch --tags
+          git checkout tags/v${{ github.event.pull_request.head.ref }}
+
       - uses: tj-actions/branch-names@v8
         id: branch-name
 

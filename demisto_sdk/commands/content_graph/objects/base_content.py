@@ -88,22 +88,6 @@ class BaseContentMetaclass(ModelMetaclass):
         }:
             model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
 
-        cached_properties = {
-            i
-            for i in dir(model_cls)
-            if isinstance(getattr(model_cls, i), cached_property)
-        }
-
-        super_dict = model_cls.dict
-        model_cls.dict = lambda *args, **kwargs: super_dict(  # type: ignore[assignment]
-            *args, **kwargs | {"exclude": cached_properties}  # type: ignore[operator]
-        )
-
-        super_json = model_cls.json
-        model_cls.json = lambda *args, **kwargs: super_json(  # type: ignore[assignment]
-            *args, **kwargs | {"exclude": cached_properties}  # type: ignore[operator]
-        )
-
         return model_cls
 
 
@@ -177,8 +161,12 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             Dict[str, Any]: JSON dictionary representation of the class.
         """
         self.__add_lazy_properties()
-
-        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        cached_properties = {
+            i for i in dir(self) if isinstance(getattr(self, i), cached_property)
+        }
+        json_dct = json.loads(
+            self.json(exclude={"commands", "database_id"} | cached_properties)
+        )
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type

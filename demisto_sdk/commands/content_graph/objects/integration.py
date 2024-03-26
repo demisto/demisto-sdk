@@ -96,7 +96,8 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
         remove_nulls_from_dictionary(command)
         return command
 
-    def get_outputs_context_path(self) -> list:
+    @property
+    def outputs_context_paths(self) -> list:
         """
         This method returns a list of the all command's outputs context path.
         """

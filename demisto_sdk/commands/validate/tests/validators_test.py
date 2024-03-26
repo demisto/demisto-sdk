@@ -618,6 +618,7 @@ def test_all_error_codes_configured():
         not non_configured_existing_error_codes
     ), f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."
 
+
 def test_validation_prefix():
     """
     Given   All validators

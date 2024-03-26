@@ -88,14 +88,21 @@ class BaseContentMetaclass(ModelMetaclass):
         }:
             model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
 
-        
-        cached_properties = {i for i in dir(model_cls) if isinstance(getattr(model_cls, i), cached_property)}
+        cached_properties = {
+            i
+            for i in dir(model_cls)
+            if isinstance(getattr(model_cls, i), cached_property)
+        }
 
         super_dict = model_cls.dict
-        model_cls.dict = lambda *args, **kwargs: super_dict(*args, **kwargs | {'exclude': cached_properties})
+        model_cls.dict = lambda *args, **kwargs: super_dict(  # type: ignore[assignment]
+            *args, **kwargs | {"exclude": cached_properties}  # type: ignore[operator]
+        )
 
         super_json = model_cls.json
-        model_cls.json = lambda *args, **kwargs: super_json(*args, **kwargs | {'exclude': cached_properties})
+        model_cls.json = lambda *args, **kwargs: super_json(  # type: ignore[assignment]
+            *args, **kwargs | {"exclude": cached_properties}  # type: ignore[operator]
+        )
 
         return model_cls
 

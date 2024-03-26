@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, Collection, Dict, List, Optional, Set, Tuple
+from typing import Collection, Dict, List, Optional, Set, Tuple
 
 import typer
 from github import Github, WorkflowRun
@@ -146,7 +146,7 @@ def construct_slack_message(
 main = typer.Typer(pretty_exceptions_enable=False)
 
 
-@main.command("workflow-status")
+@main.command()
 def slack_notifier(
     ctx: typer.Context,
     workflow_id: int = typer.Option(
@@ -189,35 +189,6 @@ def slack_notifier(
         logger.info("Successfully reported failed jobs to slack")
     else:
         logger.info("There are not any failed jobs to report to slack")
-
-
-@main.command("validate-doc-gen")
-def validate_doc_gen(
-    doc_path: Annotated[Path, typer.Argument(..., dir_okay=False, exists=True)],
-    slack_token: Annotated[
-        str,
-        typer.Argument(
-            ...,
-            "--slack-token",
-            help="The token for slack api",
-        ),
-    ],
-):
-    client = WebClient(token=slack_token)
-    thread = client.chat_postMessage(
-        channel=slack_channel,
-        attachments=slack_message,
-        username="Demisto-SDK Github-Actions",
-    )
-    
-    file_response = client.files_upload_v2(
-        filename="validate-docs.md",  # TODO customize name
-        file=doc_path.read_text(),
-        title="validate docs",  # TODO customize name
-        thread_ts=thread.
-    )
-
-    logger.info("Successfully reported failed jobs to slack")
 
 
 if __name__ == "__main__":

@@ -163,11 +163,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return self.get_ignored_errors(file_path / PACK_METADATA_FILENAME)
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
-        ignored_errors = self.get_ignored_errors((Path(file_path)).name)
-        if not ignored_errors:
-            file_path = safe_get_relative_path(file_path, CONTENT_PATH)
-            ignored_errors = self.get_ignored_errors(file_path)
-        return ignored_errors
+        if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
+            return ignored_errors
+         file_path = safe_get_relative_path(file_path, CONTENT_PATH)
+         return self.get_ignored_errors(file_path)
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:

@@ -1,6 +1,5 @@
 name: Generate Validate Docs
-
-on: pull_request
+on: push
 
 jobs:
   generate_validate_docs:
@@ -9,18 +8,41 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Setup Environment
+        uses: ./.github/actions/setup_environment
+        with:
+          python-version: "3.10"
+      - run: poetry shell
+      - id: find-last-release-commit
+        run: |
+          import git
+          import os
+          last_tag = sorted(
+              filter(lambda tag: tag.name.startswith("v"), git.Repo().tags),  # noqa: TID251
+              key=lambda t: t.commit.committed_datetime,
+          )[-1]
+          print(
+              "\n".join(
+                  [
+                      "last tag found:",
+                      f"\ttag={last_tag.name}",
+                      f"\tdate={last_tag.commit.committed_datetime}",
+                      f"\tcommit={last_tag.commit}",
+                  ]
+              )
+          )
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+            print(f'{ref}={str(last_tag.commit)}', file=fh)
+        shell: python
 
       - name: Check whether validate files changed
         id: changed-files
         uses: tj-actions/changed-files@v42
         with:
-          files: demisto_sdk/commands/validate/**
-
-      - name: Setup Environment
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup_environment
-        with:
-          python-version: "3.10"
+          files: |
+            demisto_sdk/commands/validate/**
+            demisto_sdk/commands/validate/generate_validate_docs.py
+          base_sha: ${{ steps.find-last-release-commit.outputs.ref }}
 
       - name: Generate Docs
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -36,3 +58,11 @@ jobs:
 
       - name: Output to GitHub Action Summary
         run: cat validation_docs.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Store doc hash
+        id: store-hash
+        run: echo "{hash}={${{hashFiles('validation_docs.md')}}}" >> "$GITHUB_OUTPUT"
+
+      - name: Notify
+        run: poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'

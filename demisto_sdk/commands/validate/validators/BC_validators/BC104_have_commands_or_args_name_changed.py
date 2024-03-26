@@ -32,7 +32,7 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
         for content_item in content_items:
             old_content_item = content_item.old_base_content_object
 
-            # commands name changed or deleted
+            # commands name changed
             new_commands_names = [command.name for command in content_item.commands]
             old_commands_names = [command.name for command in old_content_item.commands]  # type: ignore
 
@@ -47,19 +47,26 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
                     )
                 )
 
-            # arguments name changed or deleted
-            new_args_names = [
-                arg.name for command in content_item.commands for arg in command.args
-            ]
-            old_args_names = [
-                arg.name
-                for command in old_content_item.commands  # type: ignore
-                for arg in command.args
-            ]
-
-            args_diff = self.compare_names(old_args_names, new_args_names)
+            # arguments name changed
+            args_diff = []
+            for command in content_item.old_base_content_object.commands:  # type: ignore
+                new_args_names = []
+                checking_command = command.name
+                old_args_names = [argument.name for argument in command.args]
+                for command in content_item.commands:
+                    if command.name == checking_command:
+                        new_args_names = [argument.name for argument in command.args]
+                        break
+                if new_args_names:
+                    diff_per_command = self.compare_names(
+                        old_args_names, new_args_names
+                    )
+                    if diff_per_command:
+                        args_diff.append(
+                            f"In command '{checking_command}' the following existing arguments have been changed: {', '.join(diff_per_command)}"
+                        )
             if args_diff:
-                type_and_list = f"arguments: {', '.join(args_diff)}."
+                type_and_list = f"{', '.join(args_diff)}."
                 results.append(
                     ValidationResult(
                         validator=self,
